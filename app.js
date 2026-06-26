@@ -4444,19 +4444,7 @@ class FDTDSim {
           ? clamp(rawMapped, 0, 1)
           : clamp(rawMapped, -1, 1)
         : Math.sign(value || 0);
-      let r;
-      let g;
-      let b;
-      if (mapped >= 0) {
-        r = Math.round(255 - 10 * mapped);
-        g = Math.round(255 - 215 * mapped);
-        b = Math.round(255 - 239 * mapped);
-      } else {
-        const v = -mapped;
-        r = Math.round(255 - 240 * v);
-        g = Math.round(255 - 189 * v);
-        b = Math.round(255 - 7 * v);
-      }
+      let [r, g, b] = cmasherColor(currentFieldColormapName(isMagnitude), mapped, 1, !isMagnitude);
 
       if (this.material[i] === 1) {
         r = Math.round(r * 0.78 + 36);
@@ -4489,27 +4477,8 @@ class FDTDSim {
   }
 
   surfaceFieldColor(mapped, shade = 1) {
-    const stops = [
-      { t: 0, c: [17, 18, 74] },
-      { t: 0.28, c: [96, 31, 145] },
-      { t: 0.5, c: [226, 89, 56] },
-      { t: 0.76, c: [255, 208, 24] },
-      { t: 1, c: [255, 249, 204] },
-    ];
-    const t = clamp((mapped + 1) * 0.5, 0, 1);
-    let left = stops[0];
-    let right = stops[stops.length - 1];
-    for (let i = 0; i < stops.length - 1; i += 1) {
-      if (t >= stops[i].t && t <= stops[i + 1].t) {
-        left = stops[i];
-        right = stops[i + 1];
-        break;
-      }
-    }
-    const local = right.t === left.t ? 0 : (t - left.t) / (right.t - left.t);
-    const r = Math.round((left.c[0] + (right.c[0] - left.c[0]) * local) * shade);
-    const g = Math.round((left.c[1] + (right.c[1] - left.c[1]) * local) * shade);
-    const b = Math.round((left.c[2] + (right.c[2] - left.c[2]) * local) * shade);
+    const magnitude = this.fieldDisplayIsMagnitude();
+    const [r, g, b] = cmasherColor(currentFieldColormapName(magnitude), mapped, shade, !magnitude);
     return `rgb(${clamp(r, 0, 255)}, ${clamp(g, 0, 255)}, ${clamp(b, 0, 255)})`;
   }
 
@@ -4563,20 +4532,11 @@ class FDTDSim {
     return Number.isFinite(rawMapped) ? clamp(rawMapped, -1, 1) : Math.sign(value || 0);
   }
 
-  materialSurfaceColor(mapped, shade = 1) {
-    let r;
-    let g;
-    let b;
-    if (mapped >= 0) {
-      r = Math.round((255 - 10 * mapped) * shade);
-      g = Math.round((255 - 215 * mapped) * shade);
-      b = Math.round((255 - 239 * mapped) * shade);
-    } else {
-      const v = -mapped;
-      r = Math.round((255 - 240 * v) * shade);
-      g = Math.round((255 - 189 * v) * shade);
-      b = Math.round((255 - 7 * v) * shade);
-    }
+  materialSurfaceColor(mapped, shade = 1, materialContext = null) {
+    const context = materialContext || this.materialViewContext();
+    const materialMapName = currentMaterialColormapName(context);
+    const materialMapSigned = state.materialPart === "imag" || (context.min < context.center && context.max > context.center);
+    const [r, g, b] = cmasherColor(materialMapName, materialMapSigned ? mapped : 0.5 + 0.5 * mapped, shade, materialMapSigned);
     return `rgb(${clamp(r, 0, 255)}, ${clamp(g, 0, 255)}, ${clamp(b, 0, 255)})`;
   }
 
@@ -4607,7 +4567,7 @@ class FDTDSim {
   }
 
   surfaceColor(mapped, shade, context) {
-    return context.kind === "material" ? this.materialSurfaceColor(mapped, shade) : this.surfaceFieldColor(mapped, shade);
+    return context.kind === "material" ? this.materialSurfaceColor(mapped, shade, context.material) : this.surfaceFieldColor(mapped, shade);
   }
 
   projectSurfacePoint(x, y, mapped, dims) {
@@ -4711,22 +4671,14 @@ class FDTDSim {
 
   renderMaterialImage(data) {
     const materialContext = this.materialViewContext();
+    const materialMapName = currentMaterialColormapName(materialContext);
+    const materialMapSigned = state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
+    const materialSpan = Math.max(1e-9, materialContext.max - materialContext.min);
 
     for (let i = 0; i < this.n; i += 1) {
       const mapped = this.materialMappedValue(materialContext.values[i], materialContext);
-      let r;
-      let g;
-      let b;
-      if (mapped >= 0) {
-        r = Math.round(255 - 10 * mapped);
-        g = Math.round(255 - 215 * mapped);
-        b = Math.round(255 - 239 * mapped);
-      } else {
-        const v = -mapped;
-        r = Math.round(255 - 240 * v);
-        g = Math.round(255 - 189 * v);
-        b = Math.round(255 - 7 * v);
-      }
+      const normalized = (materialContext.values[i] - materialContext.min) / materialSpan;
+      let [r, g, b] = cmasherColor(materialMapName, materialMapSigned ? mapped : normalized, 1, materialMapSigned);
 
       if (this.material[i] === 2) {
         r = 8;
@@ -5038,8 +4990,8 @@ class FDTDSim {
     const arrowLength = 34 * dpr;
     const x0 = 22 * dpr;
     const y0 = 22 * dpr;
-    this.drawOverlayArrow(x0, y0, x0 + arrowLength * direction.cos, y0 - arrowLength * direction.sin);
-    this.drawOverlayLabel("k", x0 + arrowLength * direction.cos + 13 * dpr, y0 - arrowLength * direction.sin, "center");
+    this.drawOverlayArrow(x0, y0, x0 + arrowLength * direction.cos, y0 - arrowLength * direction.sin, true);
+    this.drawOverlayLabel("k", x0 + arrowLength * direction.cos + 13 * dpr, y0 - arrowLength * direction.sin, "center", true);
   }
 
   drawReferenceOverlay() {
@@ -5074,9 +5026,9 @@ class FDTDSim {
     ctx.lineTo(x0, y + tick);
     ctx.moveTo(x1, y - tick);
     ctx.lineTo(x1, y + tick);
-    this.strokeOverlayPath(5 * dpr, 2 * dpr);
+    this.strokeOverlayPath(5 * dpr, 2 * dpr, true);
 
-    this.drawOverlayLabel(`${formatScaleBarValue(scaleLambda)} λ₀`, (x0 + x1) / 2, y - 17 * dpr, "center");
+    this.drawOverlayLabel(`${formatScaleBarValue(scaleLambda)} λ₀`, (x0 + x1) / 2, y - 17 * dpr, "center", true);
     ctx.restore();
   }
 
@@ -5092,14 +5044,18 @@ class FDTDSim {
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    this.drawOverlayArrow(originX, originY, originX + size, originY);
-    this.drawOverlayArrow(originX, originY, originX, originY - size);
-    this.drawOverlayLabel("x", originX + size + 13 * dpr, originY, "center");
-    this.drawOverlayLabel("y", originX, originY - size - 13 * dpr, "center");
+    this.drawOverlayArrow(originX, originY, originX + size, originY, true);
+    this.drawOverlayArrow(originX, originY, originX, originY - size, true);
+    this.drawOverlayLabel("x", originX + size + 13 * dpr, originY, "center", true);
+    this.drawOverlayLabel("y", originX, originY - size - 13 * dpr, "center", true);
     ctx.restore();
   }
 
-  drawOverlayArrow(x0, y0, x1, y1) {
+  overlayReferenceColor() {
+    return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
+  }
+
+  drawOverlayArrow(x0, y0, x1, y1, plain = false) {
     const ctx = this.ctx;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     const angle = Math.atan2(y1 - y0, x1 - x0);
@@ -5113,11 +5069,17 @@ class FDTDSim {
     ctx.lineTo(x1 - head * Math.cos(angle - wing), y1 - head * Math.sin(angle - wing));
     ctx.moveTo(x1, y1);
     ctx.lineTo(x1 - head * Math.cos(angle + wing), y1 - head * Math.sin(angle + wing));
-    this.strokeOverlayPath(5 * dpr, 2 * dpr);
+    this.strokeOverlayPath(5 * dpr, 2 * dpr, plain);
   }
 
-  strokeOverlayPath(shadowWidth, lineWidth) {
+  strokeOverlayPath(shadowWidth, lineWidth, plain = false) {
     const ctx = this.ctx;
+    if (plain) {
+      ctx.strokeStyle = this.overlayReferenceColor();
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+      return;
+    }
     ctx.strokeStyle = "rgba(255, 255, 255, 0.78)";
     ctx.lineWidth = shadowWidth;
     ctx.stroke();
@@ -5126,7 +5088,7 @@ class FDTDSim {
     ctx.stroke();
   }
 
-  drawOverlayLabel(text, x, y, align) {
+  drawOverlayLabel(text, x, y, align, plain = false) {
     const ctx = this.ctx;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
@@ -5139,9 +5101,11 @@ class FDTDSim {
     const top = y - height / 2;
 
     ctx.save();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.68)";
-    ctx.fillRect(left, top, width, height);
-    ctx.fillStyle = "rgba(5, 11, 15, 0.94)";
+    if (!plain) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.68)";
+      ctx.fillRect(left, top, width, height);
+    }
+    ctx.fillStyle = plain ? this.overlayReferenceColor() : "rgba(5, 11, 15, 0.94)";
     ctx.textAlign = align;
     ctx.textBaseline = "middle";
     ctx.fillText(text, x, y);
@@ -5366,6 +5330,123 @@ function clamp(value, min, max) {
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
+
+const CMASHER_COLORMAPS = {
+  redshift: {
+    kind: "diverging",
+    stops: [
+      { t: 0, c: [24, 10, 50] },
+      { t: 0.125, c: [92, 26, 179] },
+      { t: 0.25, c: [72, 126, 220] },
+      { t: 0.375, c: [127, 197, 220] },
+      { t: 0.5, c: [255, 255, 255] },
+      { t: 0.625, c: [211, 178, 117] },
+      { t: 0.75, c: [192, 89, 32] },
+      { t: 0.875, c: [131, 15, 49] },
+      { t: 1, c: [39, 4, 18] },
+    ],
+  },
+  iceburn: {
+    kind: "diverging",
+    stops: [
+      { t: 0, c: [148, 241, 243] },
+      { t: 0.125, c: [56, 173, 226] },
+      { t: 0.25, c: [58, 101, 190] },
+      { t: 0.375, c: [42, 48, 78] },
+      { t: 0.5, c: [0, 0, 0] },
+      { t: 0.625, c: [76, 35, 38] },
+      { t: 0.75, c: [159, 70, 38] },
+      { t: 0.875, c: [215, 136, 22] },
+      { t: 1, c: [245, 222, 69] },
+    ],
+  },
+  ember: {
+    kind: "sequential",
+    stops: [
+      { t: 0, c: [252, 249, 239] },
+      { t: 0.2, c: [248, 218, 153] },
+      { t: 0.42, c: [238, 150, 72] },
+      { t: 0.68, c: [184, 68, 54] },
+      { t: 1, c: [72, 28, 52] },
+    ],
+  },
+  torch: {
+    kind: "sequential",
+    stops: [
+      { t: 0, c: [12, 18, 55] },
+      { t: 0.22, c: [51, 50, 122] },
+      { t: 0.45, c: [131, 55, 131] },
+      { t: 0.7, c: [219, 93, 78] },
+      { t: 1, c: [255, 218, 107] },
+    ],
+  },
+  rainforest: {
+    kind: "sequential",
+    stops: [
+      { t: 0, c: [247, 250, 244] },
+      { t: 0.24, c: [190, 222, 196] },
+      { t: 0.5, c: [93, 170, 146] },
+      { t: 0.75, c: [32, 109, 124] },
+      { t: 1, c: [20, 45, 83] },
+    ],
+  },
+  ocean: {
+    kind: "sequential",
+    stops: [
+      { t: 0, c: [9, 13, 22] },
+      { t: 0.22, c: [24, 52, 100] },
+      { t: 0.5, c: [24, 125, 157] },
+      { t: 0.76, c: [98, 207, 196] },
+      { t: 1, c: [240, 251, 227] },
+    ],
+  },
+};
+
+function interpolateColorStops(stops, t, shade = 1) {
+  const clampedT = clamp(t, 0, 1);
+  let left = stops[0];
+  let right = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i += 1) {
+    if (clampedT >= stops[i].t && clampedT <= stops[i + 1].t) {
+      left = stops[i];
+      right = stops[i + 1];
+      break;
+    }
+  }
+  const local = right.t === left.t ? 0 : (clampedT - left.t) / (right.t - left.t);
+  return [
+    clamp(Math.round((left.c[0] + (right.c[0] - left.c[0]) * local) * shade), 0, 255),
+    clamp(Math.round((left.c[1] + (right.c[1] - left.c[1]) * local) * shade), 0, 255),
+    clamp(Math.round((left.c[2] + (right.c[2] - left.c[2]) * local) * shade), 0, 255),
+  ];
+}
+
+function cmasherMap(name) {
+  return CMASHER_COLORMAPS[name] || CMASHER_COLORMAPS.redshift;
+}
+
+function currentFieldColormapName(magnitude = false) {
+  if (magnitude) return state.theme === "dark" ? "torch" : "ember";
+  return state.theme === "dark" ? "iceburn" : "redshift";
+}
+
+function currentMaterialColormapName(context) {
+  const crossesCenter = context.min < context.center && context.max > context.center;
+  if (state.materialPart === "imag" || crossesCenter) return state.theme === "dark" ? "iceburn" : "redshift";
+  return state.theme === "dark" ? "ocean" : "rainforest";
+}
+
+function cmasherColor(name, value, shade = 1, signed = false) {
+  const t = signed ? 0.5 + 0.5 * clamp(value, -1, 1) : clamp(value, 0, 1);
+  return interpolateColorStops(cmasherMap(name).stops, t, shade);
+}
+
+function cmasherGradient(name) {
+  const parts = [...cmasherMap(name).stops]
+    .reverse()
+    .map((stop) => `rgb(${stop.c[0]}, ${stop.c[1]}, ${stop.c[2]}) ${((1 - stop.t) * 100).toFixed(1)}%`);
+  return `linear-gradient(to bottom, ${parts.join(", ")})`;
 }
 
 function clampInt(value, min, max) {
@@ -5926,6 +6007,8 @@ function applyTheme(theme, persist = true) {
     }
   }
   updateThemeControls();
+  sim.render();
+  updateStats();
 }
 
 function updateThemeControls() {
@@ -7013,22 +7096,30 @@ function updateColorbar() {
     const centerStop = clamp(((max - center) / span) * 100, 0, 100);
     const formatBound = state.materialPart === "imag" ? formatSignedMaterialMapValue : formatMaterialMapValue;
     const symbol = state.viewMode === "mu" ? "&mu;" : "&epsilon;";
+    const materialContext = { center, min, max };
+    const materialMapName = currentMaterialColormapName(materialContext);
+    const materialMapSigned = state.materialPart === "imag" || (min < center && max > center);
     el.colorbarTitle.innerHTML = `${state.materialPart === "imag" ? "Im" : "Re"}(${symbol})`;
-    if (centerStop >= 99.9) {
+    if (!materialMapSigned) {
+      el.colorbarMax.textContent = formatBound(max);
+      el.colorbarMid.textContent = formatBound((min + max) * 0.5);
+      el.colorbarMin.textContent = formatBound(min);
+      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
+    } else if (centerStop >= 99.9) {
       el.colorbarMax.textContent = formatBound(max);
       el.colorbarMid.textContent = formatBound((max + center) * 0.5);
       el.colorbarMin.textContent = formatMaterialMapValue(center);
-      el.colorbarGradient.style.background = "linear-gradient(to bottom, rgb(245, 40, 16) 0%, rgb(255, 255, 255) 100%)";
+      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
     } else if (centerStop <= 0.1) {
       el.colorbarMax.textContent = formatMaterialMapValue(center);
       el.colorbarMid.textContent = formatBound((min + center) * 0.5);
       el.colorbarMin.textContent = formatBound(min);
-      el.colorbarGradient.style.background = "linear-gradient(to bottom, rgb(255, 255, 255) 0%, rgb(15, 66, 248) 100%)";
+      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
     } else {
       el.colorbarMax.textContent = formatBound(max);
       el.colorbarMid.textContent = formatMaterialMapValue(center);
       el.colorbarMin.textContent = formatBound(min);
-      el.colorbarGradient.style.background = `linear-gradient(to bottom, rgb(245, 40, 16) 0%, rgb(255, 255, 255) ${centerStop.toFixed(1)}%, rgb(15, 66, 248) 100%)`;
+      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
     }
     el.colorbarGradient.classList.add("is-epsilon-map");
     return;
@@ -7046,12 +7137,7 @@ function updateColorbar() {
     el.colorbarMid.textContent = "0";
     el.colorbarMin.textContent = `-${formatFieldMetric(range, sim.lastViewRangeLog10)}`;
   }
-  el.colorbarGradient.style.background =
-    state.viewProjection === "3d"
-      ? "linear-gradient(to bottom, rgb(255, 249, 204) 0%, rgb(255, 208, 24) 24%, rgb(226, 89, 56) 50%, rgb(96, 31, 145) 73%, rgb(17, 18, 74) 100%)"
-      : displayConfig.magnitude
-        ? "linear-gradient(to bottom, rgb(245, 40, 16) 0%, rgb(255, 255, 255) 100%)"
-      : "";
+  el.colorbarGradient.style.background = cmasherGradient(currentFieldColormapName(displayConfig.magnitude));
   el.colorbarGradient.classList.remove("is-epsilon-map");
 }
 
