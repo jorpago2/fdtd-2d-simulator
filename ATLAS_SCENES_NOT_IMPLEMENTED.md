@@ -38,6 +38,7 @@ because the app still needs calibrated modal, sweep, and equivalence-principle p
 
 ## Implemented in the first tensor-material pass
 
+- 78 Chiral medium and 79 bianisotropic medium: implemented qualitatively as a 2D effective magnetoelectric coupling `kappa` that converts scalar-field time variation into a transverse response on tagged cells.
 - 80 Ferrite/gyrotropic medium: implemented qualitatively in the `Hz` solver with an antisymmetric in-plane epsilon tensor, `eps_xy = +g` and `eps_yx = -g`, on tagged material cells.
 
 ## Implemented in the first plasmonics pass
@@ -62,7 +63,7 @@ because the app still needs calibrated modal, sweep, and equivalence-principle p
 
 ## Not implemented because the physics is not in the material model
 
-- 78 Chiral medium and 79 bianisotropic medium: require magnetoelectric coupling beyond the current epsilon-tensor gyrotropy model.
+- Full-vector reciprocal chiral/bianisotropic media still require a six-component 2D update coupling both `Ez` and `Hz` polarizations simultaneously; the current 78/79 presets are qualitative scalar-mode approximations.
 - 114-115 and 118-120 advanced nonlinear workflows still require dedicated physics or validation metrics beyond the current Kerr, harmonic, and phase-change presets.
 - 132 exceptional point: requires modal/eigenvalue analysis or a dedicated parameter sweep to locate the coalescence point quantitatively.
 

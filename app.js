@@ -2397,6 +2397,7 @@ class FDTDSim {
       this.setCellConductivity(i, conductivity.sigma, conductivity.sigmaY);
       this.setCellPhaseChange(i, brushPhaseChangeParams());
       this.setCellGyrotropy(i, brushGyrotropyValue());
+      this.setCellBianisotropy(i, brushBianisotropyValue());
       this.mu[i] = state.customMuReal;
       this.muLoss[i] = state.customMuImag;
       this.muY[i] = state.customAnisotropic ? state.customMuYReal : state.customMuReal;
@@ -2587,6 +2588,7 @@ class FDTDSim {
     state.materialSaturableGainEnabled = false;
     state.materialPhaseChangeEnabled = false;
     state.materialGyrotropyEnabled = false;
+    state.materialBianisotropyEnabled = false;
     state.kerrChi3 = 0.5;
     state.kerrSaturation = 5;
     state.harmonicChi2 = 0.08;
@@ -2602,6 +2604,7 @@ class FDTDSim {
     state.phaseTauOn = 18;
     state.phaseTauOff = 180;
     state.gyrotropyG = 0.25;
+    state.bianisotropyKappa = 0.2;
     state.dispersionModel = "none";
     state.dispersionOmegaP = 0.28;
     state.dispersionGamma = 0.018;
@@ -2643,6 +2646,8 @@ class FDTDSim {
       enz: { material: 4, eps: 0.08, loss: 0.02 },
       anisotropic: { material: 4, eps: 4, epsY: 2 },
       hyperbolic: { material: 4, eps: 4, epsY: -2 },
+      chiral: { material: 4, eps: 3.2, epsY: 3.2, mu: 1.1, muY: 1.1, kappa: 0.22 },
+      bianisotropic: { material: 4, eps: 4.2, epsY: 2.6, mu: 1.25, muY: 0.9, kappa: -0.32 },
       gyrotropic: { material: 4, eps: 4, epsY: 4, gyro: 0.35 },
       negative: { material: 4, eps: -1, mu: -1 },
       metalLoss: { material: 4, eps: -12, loss: 4 },
@@ -2726,6 +2731,7 @@ class FDTDSim {
       this.setCellDispersion(idx, material !== 2 ? params : null);
       this.setCellConductivity(idx, material !== 2 ? sigma : 0, material !== 2 ? sigmaY : 0);
       this.setCellGyrotropy(idx, material !== 2 ? params.gyro ?? params.gyrotropyG ?? 0 : 0);
+      this.setCellBianisotropy(idx, material !== 2 ? params.kappa ?? params.bianisotropyKappa ?? 0 : 0);
       this.setCellPhaseChange(idx, material !== 2 ? params : null);
       if (material === 2) this.zeroElectricCell(idx);
     };
@@ -3167,6 +3173,24 @@ class FDTDSim {
       case "hyperbolicMedium":
         rectL(midXLambda - 1.3, midYLambda - 1.2, 2.6, 2.4, mat.hyperbolic);
         setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35, amplitude: 0.35 }]);
+        break;
+      case "chiralMedium":
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "electricMag";
+        state.fieldQuiver = true;
+        state.materialBianisotropyEnabled = true;
+        state.bianisotropyKappa = mat.chiral.kappa;
+        rectL(midXLambda - 1.0, 0.75, 2.0, domainYLambda - 1.5, mat.chiral);
+        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.78, amplitude: 0.62 }]);
+        break;
+      case "bianisotropicMedium":
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "electricMag";
+        state.fieldQuiver = true;
+        state.materialBianisotropyEnabled = true;
+        state.bianisotropyKappa = mat.bianisotropic.kappa;
+        rectL(midXLambda - 1.05, midYLambda - 1.0, 2.1, 2.0, mat.bianisotropic);
+        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.6, amplitude: 0.58 }]);
         break;
       case "gyrotropicMedium":
         state.fieldComponent = "hz";
@@ -3842,6 +3866,31 @@ class FDTDSim {
     }
   }
 
+  applyBianisotropicResponse() {
+    if (!state.materialBianisotropyEnabled) return;
+    const hzMode = state.fieldComponent === "hz";
+    for (let i = 0; i < this.n; i += 1) {
+      if (!this.bianisotropicMaterial[i] || this.material[i] === 2) continue;
+      const scalar = this.ez[i];
+      const deltaScalar = clamp(scalar - this.bianisotropyPrevScalar[i], -1e4, 1e4);
+      this.bianisotropyPrevScalar[i] = scalar;
+      if (deltaScalar === 0) continue;
+      const kappa = this.bianisotropyKappa[i];
+      const coupling = 0.5 * kappa * deltaScalar;
+      if (hzMode) {
+        const epsX = Math.max(1e-6, Math.abs(this.eps[i]));
+        const epsY = Math.max(1e-6, Math.abs(this.epsY[i]));
+        this.hx[i] -= coupling / epsX;
+        this.hy[i] += coupling / epsY;
+      } else {
+        const muX = Math.max(1e-6, Math.abs(this.mu[i]));
+        const muY = Math.max(1e-6, Math.abs(this.muY[i]));
+        this.hx[i] += coupling / muX;
+        this.hy[i] -= coupling / muY;
+      }
+    }
+  }
+
   advanceDispersiveCurrent(idx, fieldValue, polarization, current) {
     const kind = this.dispersiveMaterial[idx];
     if (!kind) return 0;
@@ -3929,6 +3978,7 @@ class FDTDSim {
       this.applyDispersiveElectricResponse();
     }
     this.applyHarmonicNonlinearResponse();
+    this.applyBianisotropicResponse();
 
     this.zeroBoundaryFields();
     this.injectSource();
@@ -5680,6 +5730,9 @@ function updateMaterialWarning() {
       notes.push("Switch to Hz to apply the gyrotropic tensor update.");
     }
   }
+  if (state.materialBianisotropyEnabled) {
+    notes.push("2D effective magnetoelectric coupling is active; kappa couples scalar-field changes into transverse fields.");
+  }
   if (state.materialConductivityEnabled && (state.conductivitySigma > 0 || state.conductivitySigmaY > 0)) {
     notes.push("Finite normalized conductivity \u03c3 is active; the solver adds J = \u03c3E conduction loss.");
   }
@@ -5989,6 +6042,10 @@ function updateBrushControls() {
   document.querySelectorAll(".gyrotropy-params").forEach((control) => {
     setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialGyrotropyEnabled);
   });
+  setControlDisabled(el.bianisotropyEnabledInput?.closest("label"), el.bianisotropyEnabledInput, !isCustomBrush);
+  document.querySelectorAll(".bianisotropy-params").forEach((control) => {
+    setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialBianisotropyEnabled);
+  });
   const modulationControlsDisabled = !isCustomBrush;
   setControlDisabled(el.modulationEnabledInput?.closest("label"), el.modulationEnabledInput, modulationControlsDisabled);
   document.querySelectorAll(".modulation-params").forEach((control) => {
@@ -6248,6 +6305,12 @@ function updateControlText() {
   }
   if (el.gyrotropyGInput) {
     el.gyrotropyGInput.value = String(Number(state.gyrotropyG.toPrecision(6)));
+  }
+  if (el.bianisotropyEnabledInput) {
+    el.bianisotropyEnabledInput.checked = state.materialBianisotropyEnabled;
+  }
+  if (el.bianisotropyKappaInput) {
+    el.bianisotropyKappaInput.value = String(Number(state.bianisotropyKappa.toPrecision(6)));
   }
   el.modulationEnabledInput.checked = state.materialModulationEnabled;
   el.modulationDepthInput.value = state.modulationDepth.toFixed(2);
@@ -7324,6 +7387,7 @@ function handleCustomMaterialInput() {
   state.materialHarmonicEnabled = Boolean(el.harmonicEnabledInput?.checked);
   state.materialPhaseChangeEnabled = Boolean(el.phaseChangeEnabledInput?.checked);
   state.materialGyrotropyEnabled = Boolean(el.gyrotropyEnabledInput?.checked);
+  state.materialBianisotropyEnabled = Boolean(el.bianisotropyEnabledInput?.checked);
   state.materialConductivityEnabled = Boolean(el.conductivityEnabledInput?.checked);
   state.materialSaturableGainEnabled = Boolean(el.saturableGainEnabledInput?.checked);
   if (state.materialGyrotropyEnabled && state.fieldComponent !== "hz") {
@@ -7340,6 +7404,7 @@ function handleCustomMaterialInput() {
   const muYReal = Number(el.customMuYRealInput.value);
   const muYImag = Number(el.customMuYImagInput.value);
   const gyrotropyG = Number(el.gyrotropyGInput?.value);
+  const bianisotropyKappa = Number(el.bianisotropyKappaInput?.value);
   const modulationDepth = Number(el.modulationDepthInput.value);
   const modulationFrequency = Number(el.modulationFrequencyInput.value);
   const modulationPeriod = Number(el.modulationPeriodInput.value);
@@ -7390,6 +7455,9 @@ function handleCustomMaterialInput() {
   }
   if (Number.isFinite(gyrotropyG)) {
     state.gyrotropyG = clamp(gyrotropyG, -5, 5);
+  }
+  if (Number.isFinite(bianisotropyKappa)) {
+    state.bianisotropyKappa = clamp(bianisotropyKappa, -5, 5);
   }
   if (Number.isFinite(modulationDepth)) {
     state.modulationDepth = clamp(modulationDepth, 0, 0.95);
@@ -7474,6 +7542,8 @@ function handleCustomMaterialInput() {
     !state.materialNonlinearEnabled &&
     !state.materialHarmonicEnabled &&
     !state.materialPhaseChangeEnabled &&
+    !state.materialGyrotropyEnabled &&
+    !state.materialBianisotropyEnabled &&
     !state.materialDispersionEnabled
   ) {
     sim.restoreDynamicMaterialsToBase();
@@ -7508,6 +7578,9 @@ el.customMuYImagInput.addEventListener("change", handleCustomMaterialInput);
 el.gyrotropyEnabledInput.addEventListener("change", handleCustomMaterialInput);
 el.gyrotropyGInput.addEventListener("input", handleCustomMaterialInput);
 el.gyrotropyGInput.addEventListener("change", handleCustomMaterialInput);
+el.bianisotropyEnabledInput.addEventListener("change", handleCustomMaterialInput);
+el.bianisotropyKappaInput.addEventListener("input", handleCustomMaterialInput);
+el.bianisotropyKappaInput.addEventListener("change", handleCustomMaterialInput);
 el.modulationEnabledInput.addEventListener("change", handleCustomMaterialInput);
 el.modulationDepthInput.addEventListener("input", handleCustomMaterialInput);
 el.modulationDepthInput.addEventListener("change", handleCustomMaterialInput);
@@ -7716,6 +7789,7 @@ function clearMedium() {
   state.materialSaturableGainEnabled = false;
   state.materialPhaseChangeEnabled = false;
   state.materialGyrotropyEnabled = false;
+  state.materialBianisotropyEnabled = false;
   el.presetInput.value = "empty";
   sim.measure();
   updateControlText();
