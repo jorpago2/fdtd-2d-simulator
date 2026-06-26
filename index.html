@@ -1,0 +1,758 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EM Simulator</title>
+    <script>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20260626-dark-contrast-1" />
+  </head>
+  <body>
+    <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="liquidGlassControl" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="11" result="surfaceNoise" />
+        <feDisplacementMap in="SourceGraphic" in2="surfaceNoise" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="refracted" />
+        <feGaussianBlur in="refracted" stdDeviation="0.08" result="softened" />
+        <feComponentTransfer in="softened">
+          <feFuncA type="table" tableValues="0 0.98" />
+        </feComponentTransfer>
+      </filter>
+    </svg>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <p class="eyebrow">Computational electromagnetics</p>
+          <div class="brand-main">
+            <h1 class="brand-title"><span>EM</span> Simulator</h1>
+            <div class="maxwell-strip" aria-label="Maxwell equations">
+              <span class="maxwell-eq"><span class="law-label">Gauss</span><span>&nabla;&middot;<i>D</i> = &rho;</span></span>
+              <span class="maxwell-eq"><span class="law-label">Gauss for magnetism</span><span>&nabla;&middot;<i>B</i> = 0</span></span>
+              <span class="maxwell-eq"><span class="law-label">Faraday</span><span>&nabla;&times;<i>E</i> = &minus;<span class="frac">&part;<i>B</i>/<span>&part;<i>t</i></span></span></span></span>
+              <span class="maxwell-eq"><span class="law-label">Ampere-Maxwell</span><span>&nabla;&times;<i>H</i> = <i>J</i> + <span class="frac">&part;<i>D</i>/<span>&part;<i>t</i></span></span></span></span>
+            </div>
+          </div>
+        </div>
+        <div class="canvas-mode-toggle theme-toggle" role="group" aria-label="Color theme">
+          <button class="mode-toggle-button is-active" type="button" data-theme-choice="light" aria-pressed="true" title="Use light theme">Light</button>
+          <button class="mode-toggle-button" type="button" data-theme-choice="dark" aria-pressed="false" title="Use dark theme">Dark</button>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Simulator">
+        <div class="stage">
+          <div class="canvas-toolbar">
+            <div class="tool-group compact">
+              <button id="playPauseBtn" class="icon-button primary" type="button" title="Start or pause" aria-label="Start or pause">
+                <span id="playPauseIcon" aria-hidden="true">▶</span>
+              </button>
+              <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭</button>
+              <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
+              <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩</button>
+              <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Projection">
+                <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
+                <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
+              </div>
+            </div>
+            <div class="canvas-mode-toggle" aria-label="Canvas interaction mode">
+              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
+              <button id="brushModeBtn" class="mode-toggle-button" type="button" aria-pressed="false" title="Draw materials and geometries">Draw</button>
+            </div>
+            <div class="canvas-view-controls" aria-label="Canvas display">
+              <div class="canvas-mode-toggle view-toggle" role="group" aria-label="View">
+                <button class="mode-toggle-button is-active" type="button" data-view-mode="field" aria-pressed="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
+                <button class="mode-toggle-button" type="button" data-view-mode="poynting" aria-pressed="false" title="Show Poynting vector flux"><i>S</i></button>
+                <button class="mode-toggle-button" type="button" data-view-mode="epsilon" aria-pressed="false" title="Show permittivity map">&epsilon;</button>
+                <button class="mode-toggle-button" type="button" data-view-mode="mu" aria-pressed="false" title="Show permeability map">&mu;</button>
+              </div>
+              <div id="fieldDisplayControl" class="canvas-mode-toggle field-display-toggle" role="group" aria-label="Field component">
+                <button class="mode-toggle-button is-active" type="button" data-field-display="scalar" aria-pressed="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
+                <button class="mode-toggle-button" type="button" data-field-display="transverseX" aria-pressed="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
+                <button class="mode-toggle-button" type="button" data-field-display="transverseY" aria-pressed="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
+                <button class="mode-toggle-button" type="button" data-field-display="electricMag" aria-pressed="false" title="Show electric-field magnitude">|<i>E</i>|</button>
+                <button class="mode-toggle-button" type="button" data-field-display="magneticMag" aria-pressed="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
+              </div>
+              <label id="fieldQuiverControl" class="toolbar-switch quiver-switch" title="Overlay vector arrows">
+                <input id="fieldQuiverInput" type="checkbox" />
+                <span id="fieldQuiverLabel"><i>H</i> quiver</span>
+              </label>
+              <div id="materialPartControl" class="canvas-mode-toggle material-part-toggle" role="group" aria-label="Material component" hidden>
+                <button class="mode-toggle-button is-active" type="button" data-material-part="real" aria-pressed="true">Re</button>
+                <button class="mode-toggle-button" type="button" data-material-part="imag" aria-pressed="false">Im</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-frame">
+            <canvas id="simCanvas" width="900" height="600" aria-label="Normalized E z field of the FDTD simulation"></canvas>
+            <div class="colorbar" aria-label="Normalized E z over E 0 color scale">
+              <span id="colorbarTitle" class="colorbar-title"><i>E</i><sub>z</sub> / <i>E</i><sub>0</sub></span>
+              <div class="colorbar-body">
+                <div id="colorbarGradient" class="colorbar-gradient" aria-hidden="true"></div>
+                <div class="colorbar-labels" aria-hidden="true">
+                  <span id="colorbarMax">+1.000</span>
+                  <span id="colorbarMid">0</span>
+                  <span id="colorbarMin">-1.000</span>
+                </div>
+              </div>
+            </div>
+            <div class="hud">
+              <span id="gridLabel">180 x 120</span>
+            </div>
+            <div id="sourceMenu" class="source-menu" role="dialog" aria-label="Source editor" hidden>
+              <div class="source-menu-header">
+                <div>
+                  <p id="sourceMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
+                  <h2 id="sourceMenuTitle">Add source</h2>
+                </div>
+                <button id="sourceCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close source editor">×</button>
+              </div>
+              <div class="source-menu-body">
+                <label>
+                  <span>Time profile</span>
+                  <select id="sourceTypeInput">
+                    <option value="sine">Sine</option>
+                    <option value="gaussian">Gaussian pulse</option>
+                    <option value="ricker">Ricker</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Spatial profile</span>
+                  <select id="sourceShapeInput">
+                    <optgroup label="Out-of-plane electric current, Jz">
+                      <option value="point">Jz filament</option>
+                      <option value="gaussianSpot">Gaussian Jz patch</option>
+                      <option value="pointDipole">Point electric dipole</option>
+                      <option value="dipole">Jz dipole pair</option>
+                      <option value="circularDipoleCw">Circular dipole +90 deg</option>
+                      <option value="circularDipoleCcw">Circular dipole -90 deg</option>
+                      <option value="janusDipole">Janus dipole</option>
+                      <option value="huygens">Huygens source</option>
+                      <option value="quadrupole">Jz quadrupole pattern</option>
+                      <option value="multipole">2D Jz multipole pattern</option>
+                    </optgroup>
+                    <optgroup label="In-plane electric current, Jx/Jy">
+                      <option value="inPlaneElectricDipole">In-plane electric dipole</option>
+                    </optgroup>
+                    <optgroup label="Incident fields">
+                      <option value="line">Plane wave</option>
+                      <option value="gaussianProfile">Gaussian line</option>
+                    </optgroup>
+                  </select>
+                </label>
+                <label class="control-row">
+                  <span><i>f</i></span>
+                  <input id="frequencyInput" type="range" min="6" max="95" step="1" value="24" />
+                  <output id="frequencyOutput">0.024</output>
+                </label>
+                <label class="control-row">
+                  <span id="sourceAmplitudeLabel"><i>J</i><sub>z,0</sub></span>
+                  <input id="amplitudeInput" type="range" min="5" max="120" step="5" value="55" />
+                  <output id="amplitudeOutput">0.55</output>
+                </label>
+                <div class="two-col">
+                  <label>
+                    <span><i>x</i> / λ<sub>0</sub></span>
+                    <input id="sourceXInput" type="number" min="0.2" max="8.8" step="0.05" value="1.2" />
+                  </label>
+                  <label>
+                    <span><i>y</i> / λ<sub>0</sub></span>
+                    <input id="sourceYInput" type="number" min="0.2" max="5.8" step="0.05" value="3.0" />
+                  </label>
+                </div>
+                <label id="sourceWidthControl" class="control-row is-disabled">
+                  <span>FWHM / λ<sub>0</sub></span>
+                  <input id="sourceWidthInput" type="range" min="0.05" max="1.5" step="0.05" value="0.35" disabled />
+                  <output id="sourceWidthOutput">0.35</output>
+                </label>
+                <label id="sourceAngleControl" class="control-row is-disabled">
+                  <span>J<sub>z</sub> axis θ</span>
+                  <input id="sourceAngleInput" type="range" min="0" max="360" step="1" value="0" disabled />
+                  <output id="sourceAngleOutput">0°</output>
+                </label>
+                <label id="sourceTimePhaseControl" class="control-row">
+                  <span>phase φ</span>
+                  <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
+                  <output id="sourceTimePhaseOutput">0°</output>
+                </label>
+                <div class="two-col source-order-controls">
+                  <label id="sourceOrderControl" class="is-disabled">
+                    <span><i>n</i></span>
+                    <input id="sourceOrderInput" type="number" min="1" max="8" step="1" value="3" disabled />
+                  </label>
+                  <label id="sourcePhaseControl" class="is-disabled">
+                    <span>angular part</span>
+                    <select id="sourcePhaseInput" disabled>
+                      <option value="cos">cos(nφ)</option>
+                      <option value="sin">sin(nφ)</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="source-menu-actions">
+                <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
+                <button id="sourceApplyBtn" class="text-button primary-button" type="button">Add source</button>
+              </div>
+            </div>
+            <div id="brushMenu" class="source-menu brush-menu" role="dialog" aria-label="Draw editor" hidden>
+              <div class="source-menu-header">
+                <div>
+                  <p id="brushMenuHint" class="source-menu-hint">Draw medium</p>
+                  <h2>Draw</h2>
+                </div>
+                <button id="brushMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close draw editor">×</button>
+              </div>
+              <div id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="group" aria-label="Draw tool">
+                <button class="mode-toggle-button is-active" type="button" data-brush-tool="paint" aria-pressed="true">Brush</button>
+                <button class="mode-toggle-button" type="button" data-brush-tool="geometry" aria-pressed="false">Geometry</button>
+              </div>
+              <div id="brushGeometryPanel" class="modulation-panel brush-geometry-panel" hidden>
+                <label>
+                  <span>Geometry</span>
+                  <select id="brushGeometryInput">
+                    <option value="rectangle">Rectangle</option>
+                    <option value="disk">Circle</option>
+                    <option value="ellipse">Ellipse</option>
+                    <option value="ring">Donut / ring</option>
+                  </select>
+                </label>
+                <div class="two-col material-params geometry-params">
+                  <label id="geometryWidthControl">
+                    <span><i>w</i> / &lambda;<sub>0</sub></span>
+                    <input id="geometryWidthInput" type="number" min="0.05" max="50" step="0.05" value="1.00" />
+                  </label>
+                  <label id="geometryHeightControl">
+                    <span><i>h</i> / &lambda;<sub>0</sub></span>
+                    <input id="geometryHeightInput" type="number" min="0.05" max="50" step="0.05" value="0.50" />
+                  </label>
+                </div>
+                <div class="two-col material-params geometry-params">
+                  <label id="geometryRadiusControl">
+                    <span><i>r</i> / &lambda;<sub>0</sub></span>
+                    <input id="geometryRadiusInput" type="number" min="0.05" max="25" step="0.05" value="0.45" />
+                  </label>
+                  <label id="geometryInnerRadiusControl">
+                    <span><i>r</i><sub>in</sub> / &lambda;<sub>0</sub></span>
+                    <input id="geometryInnerRadiusInput" type="number" min="0.01" max="25" step="0.05" value="0.25" />
+                  </label>
+                </div>
+              </div>
+              <label id="brushSizeControl" class="control-row">
+                <span>Brush size</span>
+                <input id="brushMenuSizeInput" type="range" min="0.05" max="0.8" step="0.05" value="0.2" />
+                <output id="brushMenuSizeOutput">0.20 λ₀</output>
+              </label>
+              <div class="segmented" role="group" aria-label="Material">
+                <button class="segment is-active" type="button" data-brush="custom">Custom ε, μ</button>
+                <button class="segment" type="button" data-brush="pec">PEC</button>
+                <button class="segment" type="button" data-brush="lossy">Loss</button>
+                <button class="segment" type="button" data-brush="erase">Erase</button>
+              </div>
+              <label class="toggle-row brush-anisotropy-toggle">
+                <input id="customAnisotropyInput" type="checkbox" />
+                <span>Anisotropic ε, μ</span>
+              </label>
+              <div class="two-col material-params brush-material-params brush-isotropic-params">
+                <label>
+                  <span id="customEpsRealLabel">ε′</span>
+                  <input id="customEpsRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                </label>
+                <label>
+                  <span id="customEpsImagLabel">ε″</span>
+                  <input id="customEpsImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                </label>
+              </div>
+              <div class="two-col material-params brush-material-params brush-anisotropic-params" hidden>
+                <label>
+                  <span>ε<sub>y</sub>′</span>
+                  <input id="customEpsYRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                </label>
+                <label>
+                  <span>ε<sub>y</sub>″</span>
+                  <input id="customEpsYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                </label>
+              </div>
+              <div class="two-col material-params brush-material-params">
+                <label>
+                  <span id="customMuRealLabel">μ′</span>
+                  <input id="customMuRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                </label>
+                <label>
+                  <span id="customMuImagLabel">μ″</span>
+                  <input id="customMuImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                </label>
+              </div>
+              <div class="two-col material-params brush-material-params brush-anisotropic-params" hidden>
+                <label>
+                  <span>μ<sub>y</sub>′</span>
+                  <input id="customMuYRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                </label>
+                <label>
+                  <span>μ<sub>y</sub>″</span>
+                  <input id="customMuYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                </label>
+              </div>
+              <div class="modulation-panel gyrotropy-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="gyrotropyEnabledInput" type="checkbox" />
+                  <span>Gyrotropic &epsilon; tensor (Hz mode)</span>
+                </label>
+                <label class="gyrotropy-params">
+                  <span><i>g</i><sub>&epsilon;</sub></span>
+                  <input id="gyrotropyGInput" type="number" min="-5" max="5" step="0.01" value="0.25" />
+                </label>
+              </div>
+              <div class="modulation-panel bianisotropy-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="bianisotropyEnabledInput" type="checkbox" />
+                  <span>Magnetoelectric coupling &kappa; (2D effective)</span>
+                </label>
+                <label class="bianisotropy-params">
+                  <span>&kappa;</span>
+                  <input id="bianisotropyKappaInput" type="number" min="-5" max="5" step="0.01" value="0.20" />
+                </label>
+              </div>
+              <div class="modulation-panel conductivity-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="conductivityEnabledInput" type="checkbox" />
+                  <span>Finite conductivity <i>J</i> = &sigma;<i>E</i> (normalized)</span>
+                </label>
+                <div class="two-col material-params conductivity-params">
+                  <label>
+                    <span>&sigma;<sub>x</sub> norm.</span>
+                    <input id="conductivitySigmaInput" type="number" min="0" max="5" step="0.01" value="0.00" />
+                  </label>
+                  <label id="conductivitySigmaYControl" class="brush-anisotropic-params" hidden>
+                    <span>&sigma;<sub>y</sub> norm.</span>
+                    <input id="conductivitySigmaYInput" type="number" min="0" max="5" step="0.01" value="0.00" />
+                  </label>
+                </div>
+              </div>
+              <div class="modulation-panel saturable-gain-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="saturableGainEnabledInput" type="checkbox" />
+                  <span>Saturable gain for negative &epsilon;&Prime;</span>
+                </label>
+                <label class="saturable-gain-params">
+                  <span><i>I</i><sub>sat,g</sub></span>
+                  <input id="gainSaturationInput" type="number" min="0.05" max="100" step="0.05" value="4.00" />
+                </label>
+              </div>
+              <output id="materialWarning" class="material-warning brush-material-warning" aria-live="polite"></output>
+              <div class="modulation-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="modulationEnabledInput" type="checkbox" />
+                  <span>Space-time &epsilon;&prime; modulation</span>
+                </label>
+                <div class="two-col material-params modulation-params">
+                  <label>
+                    <span><i>m</i></span>
+                    <input id="modulationDepthInput" type="number" min="0" max="0.95" step="0.05" value="0.20" />
+                  </label>
+                  <label>
+                    <span><i>f</i><sub>m</sub></span>
+                    <input id="modulationFrequencyInput" type="number" min="-0.2" max="0.2" step="0.001" value="0.010" />
+                  </label>
+                </div>
+                <div class="two-col material-params modulation-params">
+                  <label>
+                    <span>&Lambda;<sub>m</sub> / &lambda;<sub>0</sub></span>
+                    <input id="modulationPeriodInput" type="number" min="0.1" max="20" step="0.1" value="2.0" />
+                  </label>
+                  <label>
+                    <span>&theta;<sub>m</sub></span>
+                    <input id="modulationAngleInput" type="number" min="0" max="360" step="5" value="0" />
+                  </label>
+                </div>
+                <label>
+                  <span>&phi;<sub>m</sub></span>
+                  <input id="modulationPhaseInput" type="number" min="-180" max="180" step="5" value="0" />
+                </label>
+              </div>
+              <div class="modulation-panel nonlinear-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="nonlinearEnabledInput" type="checkbox" />
+                  <span>Kerr &chi;<sup>(3)</sup> nonlinearity</span>
+                </label>
+                <div class="two-col material-params nonlinear-params">
+                  <label>
+                    <span>&chi;<sup>(3)</sup></span>
+                    <input id="kerrChi3Input" type="number" min="-20" max="20" step="0.05" value="0.50" />
+                  </label>
+                  <label>
+                    <span><i>I</i><sub>sat</sub></span>
+                    <input id="kerrSaturationInput" type="number" min="0.05" max="50" step="0.05" value="5.00" />
+                  </label>
+                </div>
+              </div>
+              <div class="modulation-panel harmonic-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="harmonicEnabledInput" type="checkbox" />
+                  <span>Harmonic polarization <i>P</i><sub>NL</sub></span>
+                </label>
+                <div class="two-col material-params harmonic-params">
+                  <label>
+                    <span>&chi;<sup>(2)</sup></span>
+                    <input id="harmonicChi2Input" type="number" min="-2" max="2" step="0.01" value="0.08" />
+                  </label>
+                  <label>
+                    <span>&chi;<sup>(3)</sup><sub>H</sub></span>
+                    <input id="harmonicChi3Input" type="number" min="-2" max="2" step="0.01" value="0.00" />
+                  </label>
+                </div>
+                <label class="harmonic-params">
+                  <span><i>I</i><sub>sat,H</sub></span>
+                  <input id="harmonicSaturationInput" type="number" min="0.05" max="50" step="0.05" value="6.00" />
+                </label>
+              </div>
+              <div class="modulation-panel phase-change-panel">
+                <label class="toggle-row modulation-toggle">
+                  <input id="phaseChangeEnabledInput" type="checkbox" />
+                  <span>Phase-change memory <i>s</i></span>
+                </label>
+                <div class="two-col material-params phase-change-params">
+                  <label>
+                    <span>&epsilon;<sub>on</sub>&prime;</span>
+                    <input id="phaseEpsOnInput" type="number" min="-30" max="30" step="0.05" value="9.00" />
+                  </label>
+                  <label>
+                    <span>&epsilon;<sub>on</sub>&Prime;</span>
+                    <input id="phaseLossOnInput" type="number" min="-30" max="30" step="0.0005" value="0.0800" />
+                  </label>
+                </div>
+                <div class="two-col material-params phase-change-params">
+                  <label>
+                    <span><i>I</i><sub>on</sub></span>
+                    <input id="phaseThresholdOnInput" type="number" min="0" max="100" step="0.05" value="0.80" />
+                  </label>
+                  <label>
+                    <span><i>I</i><sub>off</sub></span>
+                    <input id="phaseThresholdOffInput" type="number" min="0" max="100" step="0.05" value="0.20" />
+                  </label>
+                </div>
+                <div class="two-col material-params phase-change-params">
+                  <label>
+                    <span>&tau;<sub>on</sub></span>
+                    <input id="phaseTauOnInput" type="number" min="1" max="1000" step="1" value="18" />
+                  </label>
+                  <label>
+                    <span>&tau;<sub>off</sub></span>
+                    <input id="phaseTauOffInput" type="number" min="1" max="2000" step="1" value="180" />
+                  </label>
+                </div>
+              </div>
+              <div class="modulation-panel dispersion-panel">
+                <label>
+                  <span>Dispersive model</span>
+                  <select id="dispersionModelInput">
+                    <option value="none">None</option>
+                    <option value="drude">Drude metal</option>
+                    <option value="plasma">Plasma</option>
+                    <option value="lorentz">Lorentz oscillator</option>
+                    <option value="debye">Debye relaxation</option>
+                  </select>
+                </label>
+                <div class="two-col material-params dispersion-params">
+                  <label id="dispersionOmegaPControl">
+                    <span>&omega;<sub>p</sub></span>
+                    <input id="dispersionOmegaPInput" type="number" min="0" max="1.2" step="0.005" value="0.28" />
+                  </label>
+                  <label id="dispersionGammaControl">
+                    <span>&gamma;</span>
+                    <input id="dispersionGammaInput" type="number" min="0" max="0.5" step="0.001" value="0.018" />
+                  </label>
+                </div>
+                <div class="two-col material-params dispersion-params">
+                  <label id="dispersionOmega0Control">
+                    <span>&omega;<sub>0</sub></span>
+                    <input id="dispersionOmega0Input" type="number" min="0" max="1.2" step="0.005" value="0.15" />
+                  </label>
+                  <label id="dispersionDeltaEpsControl">
+                    <span>&Delta;&epsilon;</span>
+                    <input id="dispersionDeltaEpsInput" type="number" min="-20" max="20" step="0.05" value="2.00" />
+                  </label>
+                </div>
+                <label id="dispersionTauControl" class="dispersion-params">
+                  <span>&tau;</span>
+                  <input id="dispersionTauInput" type="number" min="1" max="200" step="1" value="18" />
+                </label>
+              </div>
+              <div class="button-row">
+                <button id="brushMenuClearMaterialsBtn" class="text-button" type="button">Clear medium</button>
+                <button id="brushMenuClearFieldsBtn" class="text-button" type="button">Clear field</button>
+              </div>
+            </div>
+            <div id="boundaryMenu" class="source-menu boundary-menu" role="dialog" aria-label="Boundary editor" hidden>
+              <div class="source-menu-header">
+                <div>
+                  <p id="boundaryMenuHint" class="source-menu-hint">PML region</p>
+                  <h2>Boundary</h2>
+                </div>
+                <button id="boundaryMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close boundary editor">&times;</button>
+              </div>
+              <div class="source-menu-body">
+                <label>
+                  <span>Boundary condition</span>
+                  <select id="boundaryMenuInput">
+                    <option value="absorbing">PML absorbing</option>
+                    <option value="reflective">Reflective</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="control-panel" aria-label="Controls">
+          <section class="panel-section run-section">
+            <h2>Run</h2>
+            <div class="solver-row">
+              <span>Simulate</span>
+              <div class="canvas-mode-toggle solver-toggle" role="group" aria-label="Simulated field component">
+                <button class="mode-toggle-button is-active" type="button" data-field-component="ez" aria-pressed="true" title="TMz: solve Ez, Hx, Hy"><i>E</i><sub>z</sub></button>
+                <button class="mode-toggle-button" type="button" data-field-component="hz" aria-pressed="false" title="TEz: solve Hz, Ex, Ey"><i>H</i><sub>z</sub></button>
+              </div>
+            </div>
+            <label class="control-row">
+              <span>Speed</span>
+              <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
+              <output id="speedOutput">1</output>
+            </label>
+            <label class="control-row">
+              <span>Gain</span>
+              <input id="gainInput" type="range" min="20" max="260" step="5" value="100" />
+              <output id="gainOutput">1.00</output>
+            </label>
+            <label class="toggle-row">
+              <input id="autoScaleInput" type="checkbox" checked />
+              <span>Autoscale</span>
+            </label>
+          </section>
+
+          <section class="panel-section scale-section">
+            <h2>Scale</h2>
+            <div class="two-col">
+              <label>
+                <span>λ<sub>0</sub> (µm)</span>
+                <input id="wavelengthInput" type="number" min="0.1" max="10" step="0.05" value="1.00" />
+              </label>
+              <label>
+                <span>cells / λ<sub>0</sub></span>
+                <input id="cellsPerWavelengthInput" type="number" min="8" max="80" step="1" value="20" />
+              </label>
+            </div>
+          </section>
+
+          <section class="panel-section scene-section">
+            <h2>Scene</h2>
+            <label>
+              <span>Example</span>
+              <select id="presetInput">
+                <option value="empty">Empty</option>
+                <optgroup label="1. Maxwell and propagation">
+                  <option value="planeWaveAir">1 · Plane wave in air</option>
+                  <option value="planeWaveDielectric">2 · Plane wave in dielectric</option>
+                  <option value="gaussianPulseAir">3 · Gaussian pulse in free space</option>
+                  <option value="twoSourceInterference">4 · Two-source interference</option>
+                  <option value="frequencyBeat">5 · Two-frequency beat</option>
+                  <option value="singleSlit">6 · Single slit diffraction</option>
+                  <option value="doubleSlit">7 · Double slit</option>
+                  <option value="circularAperture">8 · Circular aperture</option>
+                  <option value="poyntingPlaneWave">10 · Poynting vector</option>
+                  <option value="pmlAbsorption">12 · PML absorption check</option>
+                </optgroup>
+                <optgroup label="2. Interfaces">
+                  <option value="normalInterface">13 · Normal air-dielectric interface</option>
+                  <option value="obliqueRefraction">14 · Oblique refraction</option>
+                  <option value="totalInternalReflection">17 · Total internal reflection</option>
+                  <option value="frustratedTir">18 · Frustrated TIR</option>
+                  <option value="quarterWaveCoating">19 · Quarter-wave coating</option>
+                  <option value="braggMirror">20 · 1D Bragg mirror</option>
+                  <option value="lossyInterface">21 · Lossy interface</option>
+                  <option value="anisotropicInterface">22 · Anisotropic interface</option>
+                </optgroup>
+                <optgroup label="3. Sources and radiation">
+                  <option value="jzDipole">23 · Point electric dipole Jz</option>
+                  <option value="inPlaneDipole">24 · In-plane electric dipole Jx/Jy</option>
+                  <option value="mzDipole">25 · Effective magnetic dipole Mz</option>
+                  <option value="dipoleSubstrate">26 · Dipole over substrate</option>
+                  <option value="dipoleNearPec">27 · Dipole near PEC mirror</option>
+                  <option value="huygensRadiator">28 · Huygens source</option>
+                  <option value="circularDipole">29 · Circular dipole</option>
+                  <option value="janusDipole">30 · Janus dipole</option>
+                  <option value="dipoleArray">31 · Equal-phase dipole array</option>
+                  <option value="phasedDipoleArray">32 · Progressive-phase dipole array</option>
+                  <option value="apertureRadiator">33 · Slot aperture radiator</option>
+                </optgroup>
+                <optgroup label="4. Guided optics">
+                  <option value="slabWaveguide">35 · Single-mode slab waveguide</option>
+                  <option value="multimodeSlab">36 · Multimode slab waveguide</option>
+                  <option value="lossyGuide">37 · Lossy waveguide</option>
+                  <option value="taperWaveguide">39 · Tapered waveguide</option>
+                  <option value="widthStepWaveguide">40 · Width step waveguide</option>
+                  <option value="directionalCoupler">41 · Directional coupler</option>
+                  <option value="mmiWaveguide">42 · MMI section</option>
+                  <option value="guideScatterer">44 · Waveguide with scatterer</option>
+                  <option value="stubResonator">46 · Stub resonator</option>
+                </optgroup>
+                <optgroup label="5. Resonators">
+                  <option value="fabryPerot">47 · Fabry-Perot cavity</option>
+                  <option value="ringResonator">49 · Ring resonator</option>
+                  <option value="addDropRing">50 · Add-drop ring</option>
+                  <option value="dielectricCavity">52 · Dielectric defect cavity</option>
+                  <option value="pecCavity">53 · PEC half-wave cavity</option>
+                </optgroup>
+                <optgroup label="6-7. Scattering and materials">
+                  <option value="pecCylinder">59 · PEC cylinder scattering</option>
+                  <option value="dielectricCylinder">60 · Dielectric cylinder scattering</option>
+                  <option value="mieCylinder">61 · High-index Mie cylinder</option>
+                  <option value="lossyCylinder">63 · Lossy cylinder</option>
+                  <option value="dielectricDimer">64 · Dielectric dimer</option>
+                  <option value="multipleScattering">66 · Multiple scattering</option>
+                  <option value="weakLocalization">67 · Weak-localization disorder</option>
+                  <option value="finiteConductivity">70 · Finite-conductivity skin depth</option>
+                  <option value="drudeMetal">71 · Drude metal</option>
+                  <option value="lorentzMedium">72 · Lorentz resonant medium</option>
+                  <option value="debyeDielectric">73 · Debye dielectric</option>
+                  <option value="plasmaCutoff">74 · Plasma cutoff</option>
+                  <option value="enzSlab">75 · ENZ slab</option>
+                  <option value="anisotropicMedium">76 · Anisotropic medium</option>
+                  <option value="hyperbolicMedium">77 · Hyperbolic medium</option>
+                  <option value="chiralMedium">78 · Chiral medium</option>
+                  <option value="bianisotropicMedium">79 · Bianisotropic medium</option>
+                  <option value="gyrotropicMedium">80 · Gyrotropic medium</option>
+                </optgroup>
+                <optgroup label="8-9. Periodic and topological">
+                  <option value="braggStack">81 · 1D Bragg stack</option>
+                  <option value="photonicCrystal">82 · 2D photonic crystal</option>
+                  <option value="phcPointDefect">83 · PhC point defect</option>
+                  <option value="phcWaveguide">84 · PhC line-defect waveguide</option>
+                  <option value="phcDisorder">86 · Disordered photonic crystal</option>
+                  <option value="fanoResonator">90 · Fano side resonator</option>
+                  <option value="sshTrivial">91 · SSH chain, trivial</option>
+                  <option value="sshTopological">92 · SSH chain, topological</option>
+                  <option value="sshInterface">93 · SSH interface</option>
+                </optgroup>
+                <optgroup label="10-13. Metamaterials, nonlinear and non-Hermitian">
+                  <option value="sppInterface">101 · SPP metal-dielectric interface</option>
+                  <option value="sppGrating">102 · SPP grating coupler</option>
+                  <option value="localizedPlasmon">103 · Localized plasmon disk</option>
+                  <option value="plasmonicDimer">104 · Plasmonic dimer</option>
+                  <option value="metasurfacePhaseBars">105 · Phase-gradient metasurface</option>
+                  <option value="negativeIndexSlab">107 · Negative-index slab</option>
+                  <option value="superlensSlab">108 · Idealized superlens slab</option>
+                  <option value="enzEmitter">110 · Dipole near ENZ slab</option>
+                  <option value="kerrSlab">111 · Kerr nonlinear slab</option>
+                  <option value="shgSlab">112 · SHG χ² slab</option>
+                  <option value="thgSlab">113 · THG χ³ slab</option>
+                  <option value="vo2SwitchingSlab">116 · VO₂ switching slab</option>
+                  <option value="pcmMemoryCell">117 · PCM memory cell</option>
+                  <option value="temporalModulation">123 · Temporal epsilon modulation</option>
+                  <option value="travelingModulation">126 · Traveling epsilon modulation</option>
+                  <option value="ptSymmetricCoupler">131 · PT-symmetric gain/loss guides</option>
+                </optgroup>
+              </select>
+            </label>
+            <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
+            <label class="control-row is-disabled" id="slabThicknessControl" hidden>
+              <span>Thickness</span>
+              <input id="slabThicknessInput" type="range" min="0.1" max="2" step="0.05" value="0.5" disabled />
+              <output id="slabThicknessOutput">0.50 λ₀</output>
+            </label>
+          </section>
+
+          <section class="panel-section diagnostics-section">
+            <h2>Diagnostics</h2>
+            <label class="toggle-row">
+              <input id="diagnosticsInput" type="checkbox" checked />
+              <span>Line monitors</span>
+            </label>
+            <div class="diagnostics-grid">
+              <span>&theta;<sub>k</sub></span>
+              <output id="diagnosticAngleOutput">0°</output>
+              <span><i>P</i><sub>inc</sub></span>
+              <output id="fluxLeftOutput">0</output>
+              <span><i>P</i><sub>ref</sub></span>
+              <output id="reflectedPowerOutput">0</output>
+              <span><i>P</i><sub>trn</sub></span>
+              <output id="fluxRightOutput">0</output>
+              <span><i>R</i><sub>est</sub></span>
+              <output id="reflectanceOutput">0</output>
+              <span><i>T</i><sub>est</sub></span>
+              <output id="transmittanceOutput">0</output>
+            </div>
+            <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
+            <div class="sweep-panel">
+              <div class="two-col">
+                <label>
+                  <span>Sweep</span>
+                  <select id="sweepModeInput">
+                    <option value="angle">Angle θ</option>
+                    <option value="frequency">Frequency f</option>
+                  </select>
+                </label>
+                <label>
+                  <span>points</span>
+                  <input id="sweepSamplesInput" type="number" min="3" max="41" step="1" value="9" />
+                </label>
+              </div>
+              <div class="two-col">
+                <label>
+                  <span>start</span>
+                  <input id="sweepStartInput" type="number" min="-80" max="80" step="1" value="0" />
+                </label>
+                <label>
+                  <span>end</span>
+                  <input id="sweepEndInput" type="number" min="-80" max="80" step="1" value="70" />
+                </label>
+              </div>
+              <label>
+                <span>steps / point</span>
+                <input id="sweepStepsInput" type="number" min="120" max="4000" step="60" value="720" />
+              </label>
+              <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
+              <p id="sweepStatus" class="sweep-status">No sweep yet.</p>
+              <canvas id="sweepChart" class="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
+            </div>
+            <div class="analysis-panel">
+              <div class="analysis-panel-header">
+                <label class="toggle-row">
+                  <input id="analysisInput" type="checkbox" checked />
+                  <span>Spectral + far-field</span>
+                </label>
+                <button id="analysisResetBtn" class="text-button" type="button">Reset analysis</button>
+              </div>
+              <p id="analysisStatus" class="sweep-status">Waiting for samples.</p>
+              <div class="analysis-chart-grid">
+                <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
+                <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" aria-label="Near-to-far angular chart"></canvas>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-section grid-section">
+            <h2>Grid</h2>
+            <div class="two-col">
+              <label>
+                <span><i>N</i><sub>x</sub> cells</span>
+                <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="180" />
+              </label>
+              <label>
+                <span><i>N</i><sub>y</sub> cells</span>
+                <input id="gridNyInput" type="number" min="60" max="800" step="10" value="120" />
+              </label>
+            </div>
+          </section>
+
+        </aside>
+      </section>
+    </main>
+
+    <script src="app.js?v=20260626-bianisotropy-1"></script>
+  </body>
+</html>
