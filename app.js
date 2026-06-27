@@ -622,6 +622,14 @@ const el = {
   autoScaleInput: document.getElementById("autoScaleInput"),
   diagnosticsInput: document.getElementById("diagnosticsInput"),
   diagnosticsResetBtn: document.getElementById("diagnosticsResetBtn"),
+  performanceBackendOutput: document.getElementById("performanceBackendOutput"),
+  performanceGridOutput: document.getElementById("performanceGridOutput"),
+  performanceStepOutput: document.getElementById("performanceStepOutput"),
+  performanceRenderOutput: document.getElementById("performanceRenderOutput"),
+  performanceMeasureOutput: document.getElementById("performanceMeasureOutput"),
+  performanceThroughputOutput: document.getElementById("performanceThroughputOutput"),
+  performanceStatus: document.getElementById("performanceStatus"),
+  performanceResetBtn: document.getElementById("performanceResetBtn"),
   resultsStateOutput: document.getElementById("resultsStateOutput"),
   resultsInsightNote: document.getElementById("resultsInsightNote"),
   resultsDetailPanels: document.querySelectorAll(".results-detail-panel"),
@@ -1900,6 +1908,109 @@ function formatSpeed(value) {
   return Number(value).toFixed(1).replace(/\.0$/, "");
 }
 
+function performanceNowMs() {
+  return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+}
+
+function recordPerformanceMetric(name, elapsedMs, sampleCount = 1) {
+  const count = Math.max(1, Number(sampleCount) || 1);
+  const perSampleMs = Number(elapsedMs) / count;
+  if (!Number.isFinite(perSampleMs) || perSampleMs < 0) return;
+  const sampleKey = `${name.replace("Ms", "")}Samples`;
+  const previousSamples = performanceStats[sampleKey] || 0;
+  performanceStats[name] = previousSamples > 0
+    ? performanceStats[name] * (1 - PERF_EWMA_ALPHA) + perSampleMs * PERF_EWMA_ALPHA
+    : perSampleMs;
+  performanceStats[sampleKey] = previousSamples + count;
+}
+
+function timeStepBatch(stepCount, runner) {
+  const count = Math.max(1, Number(stepCount) || 1);
+  const startMs = performanceNowMs();
+  try {
+    return runner();
+  } finally {
+    recordPerformanceMetric("stepMs", performanceNowMs() - startMs, count);
+  }
+}
+
+function instrumentSimulationPerformance(targetSim) {
+  const rawRender = targetSim.render.bind(targetSim);
+  targetSim.render = (...args) => {
+    const startMs = performanceNowMs();
+    try {
+      return rawRender(...args);
+    } finally {
+      recordPerformanceMetric("renderMs", performanceNowMs() - startMs);
+    }
+  };
+
+  const rawMeasure = targetSim.measure.bind(targetSim);
+  targetSim.measure = (...args) => {
+    const startMs = performanceNowMs();
+    try {
+      return rawMeasure(...args);
+    } finally {
+      recordPerformanceMetric("measureMs", performanceNowMs() - startMs);
+    }
+  };
+}
+
+function resetPerformanceStats() {
+  performanceStats.stepMs = 0;
+  performanceStats.renderMs = 0;
+  performanceStats.measureMs = 0;
+  performanceStats.stepSamples = 0;
+  performanceStats.renderSamples = 0;
+  performanceStats.measureSamples = 0;
+  performanceStats.lastUiUpdateMs = 0;
+  updatePerformanceStats(true);
+}
+
+function formatPerformanceMs(value, samples) {
+  if (!samples) return "-";
+  if (!Number.isFinite(value)) return "-";
+  if (value < 0.005) return "<0.005 ms";
+  if (value < 1) return `${value.toFixed(3)} ms`;
+  if (value < 10) return `${value.toFixed(2)} ms`;
+  return `${value.toFixed(1)} ms`;
+}
+
+function formatPerformanceRate(stepMs, samples) {
+  if (!samples || !Number.isFinite(stepMs) || stepMs <= 0) return "-";
+  const rate = 1000 / stepMs;
+  if (rate >= 100000) return `${(rate / 1000).toFixed(0)}k step/s`;
+  if (rate >= 1000) return `${(rate / 1000).toFixed(1)}k step/s`;
+  if (rate >= 10) return `${rate.toFixed(0)} step/s`;
+  return `${rate.toFixed(1)} step/s`;
+}
+
+function updatePerformanceStats(force = false) {
+  const nowMs = performanceNowMs();
+  if (!force && nowMs - performanceStats.lastUiUpdateMs < PERF_UI_INTERVAL_MS) return;
+  performanceStats.lastUiUpdateMs = nowMs;
+
+  const engineText = sim.engineLabel();
+  const gridText = `${sim.nx} x ${sim.ny} (${sim.n.toLocaleString()} cells)`;
+  const stepText = formatPerformanceMs(performanceStats.stepMs, performanceStats.stepSamples);
+  const renderText = formatPerformanceMs(performanceStats.renderMs, performanceStats.renderSamples);
+  const measureText = formatPerformanceMs(performanceStats.measureMs, performanceStats.measureSamples);
+  const throughputText = formatPerformanceRate(performanceStats.stepMs, performanceStats.stepSamples);
+  const compiledAvailable = Boolean(sim.wasmBackend?.canStep(state.fieldComponent));
+  const dynamicFallback = sim.hasDynamicMaterialResponse?.() ? "dynamic material path" : "static-material path";
+  const statusText = performanceStats.stepSamples > 0
+    ? `${compiledAvailable ? "Compiled kernel available" : "JavaScript fallback"}; ${dynamicFallback}.`
+    : "Run or step the simulation to collect timing samples.";
+
+  if (el.performanceBackendOutput) el.performanceBackendOutput.textContent = engineText;
+  if (el.performanceGridOutput) el.performanceGridOutput.textContent = gridText;
+  if (el.performanceStepOutput) el.performanceStepOutput.textContent = stepText;
+  if (el.performanceRenderOutput) el.performanceRenderOutput.textContent = renderText;
+  if (el.performanceMeasureOutput) el.performanceMeasureOutput.textContent = measureText;
+  if (el.performanceThroughputOutput) el.performanceThroughputOutput.textContent = throughputText;
+  if (el.performanceStatus) el.performanceStatus.textContent = statusText;
+}
+
 function normalizeSource(source) {
   source.type = ["sine", "gaussian", "ricker"].includes(source.type) ? source.type : "sine";
   source.shape = Object.prototype.hasOwnProperty.call(sourceShapeLabels, source.shape) ? source.shape : "point";
@@ -2358,6 +2469,7 @@ function updateStabilitySummary() {
 }
 
 let sim = new FDTDSim(el.canvas, DEFAULT_GRID);
+instrumentSimulationPerformance(sim);
 let pointerDown = false;
 let paintPointerId = null;
 let panPointerId = null;
@@ -2377,6 +2489,17 @@ let pendingTouchInteraction = null;
 let lastCanvasTouchTap = null;
 let framesSinceMeasure = 0;
 let simStepAccumulator = 0;
+const PERF_EWMA_ALPHA = 0.14;
+const PERF_UI_INTERVAL_MS = 250;
+const performanceStats = {
+  stepMs: 0,
+  renderMs: 0,
+  measureMs: 0,
+  stepSamples: 0,
+  renderSamples: 0,
+  measureSamples: 0,
+  lastUiUpdateMs: 0,
+};
 let sourceMenuMode = "add";
 let sourceMenuDraft = null;
 let brushMenuMode = "brush";
@@ -3301,6 +3424,7 @@ function updateStats() {
     updateStabilitySummary();
   }
   updateAnalysisControls();
+  updatePerformanceStats();
 }
 
 function formatDiagnosticRatio(value) {
@@ -4606,9 +4730,11 @@ async function runSweep() {
       while (stepsDone < state.sweepSteps) {
         if (state.sweepCancelRequested) break;
         const chunk = Math.min(36, state.sweepSteps - stepsDone);
-        for (let step = 0; step < chunk; step += 1) {
-          sim.step();
-        }
+        timeStepBatch(chunk, () => {
+          for (let step = 0; step < chunk; step += 1) {
+            sim.step();
+          }
+        });
         stepsDone += chunk;
         sim.measure();
         const steadyMetrics = state.analysisEnabled ? sim.analysisMetricEstimate() : null;
@@ -5374,9 +5500,11 @@ function animate() {
     const stepsThisFrame = Math.floor(simStepAccumulator);
     simStepAccumulator -= stepsThisFrame;
     if (stepsThisFrame > 0) {
-      for (let i = 0; i < stepsThisFrame; i += 1) {
-        sim.step();
-      }
+      timeStepBatch(stepsThisFrame, () => {
+        for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
+          sim.step();
+        }
+      });
       advancedSimulation = true;
       framesSinceMeasure += 1;
       if (framesSinceMeasure >= 4) {
@@ -5433,7 +5561,9 @@ el.playPauseBtn.addEventListener("click", () => {
 });
 
 function advanceOneStep() {
-  sim.step();
+  timeStepBatch(1, () => {
+    sim.step();
+  });
   sim.measure();
   updateStats();
   sim.render();
@@ -5606,6 +5736,10 @@ el.diagnosticsResetBtn?.addEventListener("click", () => {
   sim.measure();
   updateStats();
   sim.render();
+});
+
+el.performanceResetBtn?.addEventListener("click", () => {
+  resetPerformanceStats();
 });
 
 el.analysisInput?.addEventListener("change", () => {
@@ -6894,6 +7028,7 @@ async function initWasmBackend() {
     updateControlText();
     updateStats();
     sim.render();
+    updatePerformanceStats(true);
     console.info("WASM FDTD backend enabled");
   } catch (error) {
     console.warn("WASM FDTD backend unavailable; using JavaScript", error);
@@ -6916,5 +7051,6 @@ updateControlPanelContext();
 updateControlText();
 updateStats();
 sim.render();
+updatePerformanceStats(true);
 initWasmBackend();
 requestAnimationFrame(animate);

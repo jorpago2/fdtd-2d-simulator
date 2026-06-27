@@ -1169,6 +1169,41 @@
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
               </details>
+              <details class="performance-panel results-detail-panel" data-ui-scope="advanced">
+                <summary>Performance</summary>
+                <div class="results-detail-body">
+                  <div class="performance-grid" aria-label="Performance summary">
+                    <div class="diagnostic-metric">
+                      <span>Engine</span>
+                      <output id="performanceBackendOutput">JS</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Grid cells</span>
+                      <output id="performanceGridOutput">180 x 120</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>FDTD step</span>
+                      <output id="performanceStepOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Render</span>
+                      <output id="performanceRenderOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Measure</span>
+                      <output id="performanceMeasureOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Capacity</span>
+                      <output id="performanceThroughputOutput">-</output>
+                    </div>
+                  </div>
+                  <div class="performance-actions">
+                    <button id="performanceResetBtn" class="text-button" type="button">Reset samples</button>
+                  </div>
+                  <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
+                </div>
+              </details>
               <details class="sweep-panel results-detail-panel" data-ui-scope="advanced">
                 <summary>Parameter sweep</summary>
                 <div class="results-detail-body">

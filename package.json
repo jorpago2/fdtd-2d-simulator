@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node scripts/validate-static.mjs",
     "validate": "node scripts/validate-static.mjs --json",
-    "test:browser": "node scripts/browser-smoke.mjs"
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "build:wasm:wat": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
+    "build:wasm:cpp": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm-cpp.ps1"
   },
   "devDependencies": {
     "playwright": "^1.55.0"

@@ -2741,7 +2741,8 @@ select option:checked {
     inset 0 -1px 0 rgba(0, 0, 0, 0.04);
 }
 
-.analysis-panel {
+.analysis-panel,
+.performance-panel {
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -3379,7 +3380,8 @@ body {
 .source-menu,
 .modulation-panel,
 .sweep-panel,
-.analysis-panel {
+.analysis-panel,
+.performance-panel {
   border: 1px solid rgba(255, 255, 255, 0.56) !important;
   background: var(--surface) !important;
   box-shadow: var(--neu-shadow) !important;
@@ -4101,6 +4103,11 @@ html[data-theme="dark"] .canvas-toolbar .mode-toggle-button.is-active {
   grid-column: 1 !important;
 }
 
+.diagnostics-section .performance-panel {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+}
+
 .diagnostics-section .sweep-panel {
   grid-column: 2 !important;
   grid-row: 1 / span 4 !important;
@@ -4112,7 +4119,8 @@ html[data-theme="dark"] .canvas-toolbar .mode-toggle-button.is-active {
 }
 
 .sweep-panel,
-.analysis-panel {
+.analysis-panel,
+.performance-panel {
   padding: 0 !important;
   border-top: 0 !important;
 }
@@ -4204,6 +4212,11 @@ html[data-theme="dark"] .maxwell-strip {
   .diagnostics-grid,
   .diagnostics-section > #diagnosticsResetBtn {
     grid-column: 1 !important;
+  }
+
+  .diagnostics-section .performance-panel {
+    grid-column: 1 !important;
+    grid-row: auto !important;
   }
 
   .diagnostics-section .sweep-panel {
@@ -4742,7 +4755,8 @@ input[type="range"] {
 }
 
 .button-row,
-.sweep-actions {
+.sweep-actions,
+.performance-actions {
   display: flex !important;
   flex-wrap: wrap !important;
   gap: 10px !important;
@@ -4765,13 +4779,15 @@ input[type="range"] {
 .diagnostics-grid,
 .diagnostics-section > #diagnosticsResetBtn,
 .diagnostics-section .sweep-panel,
-.diagnostics-section .analysis-panel {
+.diagnostics-section .analysis-panel,
+.diagnostics-section .performance-panel {
   grid-column: 1 !important;
   grid-row: auto !important;
 }
 
 .diagnostics-section .sweep-panel,
-.diagnostics-section .analysis-panel {
+.diagnostics-section .analysis-panel,
+.diagnostics-section .performance-panel {
   padding: 14px !important;
 }
 
@@ -4792,6 +4808,7 @@ html[data-theme="dark"] .control-panel,
 html[data-theme="dark"] .panel-section,
 html[data-theme="dark"] .sweep-panel,
 html[data-theme="dark"] .analysis-panel,
+html[data-theme="dark"] .performance-panel,
 html[data-theme="dark"] .modulation-panel,
 html[data-theme="dark"] .topbar {
   background: var(--neu-surface) !important;
@@ -5235,9 +5252,22 @@ html[data-theme="dark"] .scene-empty-state {
 }
 
 .sweep-panel,
-.analysis-panel {
+.analysis-panel,
+.performance-panel {
   display: grid !important;
   gap: calc(var(--neu-control-gap) + 1px) !important;
+}
+
+.performance-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--neu-control-gap) !important;
+}
+
+.performance-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
 }
 
 .analysis-panel-header {
@@ -5254,7 +5284,8 @@ html[data-theme="dark"] .diagnostic-metric {
 }
 
 @media (max-width: 420px) {
-  .diagnostics-grid {
+  .diagnostics-grid,
+  .performance-grid {
     grid-template-columns: 1fr !important;
   }
 }

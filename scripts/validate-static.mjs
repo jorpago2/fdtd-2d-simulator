@@ -200,6 +200,46 @@ function validateUiReproducibility(indexHtml, appJs) {
   );
 }
 
+function validatePerformanceRoute(indexHtml, appJs) {
+  const requiredIds = [
+    "performanceBackendOutput",
+    "performanceGridOutput",
+    "performanceStepOutput",
+    "performanceRenderOutput",
+    "performanceMeasureOutput",
+    "performanceThroughputOutput",
+    "performanceStatus",
+    "performanceResetBtn",
+  ];
+  const missingIds = requiredIds.filter((id) => !indexHtml.includes(`id="${id}"`));
+  const requiredSymbols = [
+    "performanceStats",
+    "timeStepBatch",
+    "instrumentSimulationPerformance",
+    "updatePerformanceStats",
+  ];
+  const missingSymbols = requiredSymbols.filter((symbol) => !appJs.includes(symbol));
+  const requiredFiles = [
+    ["docs", "PERFORMANCE.md"],
+    ["wasm-src", "fdtd-core.cpp"],
+    ["scripts", "build-wasm-cpp.ps1"],
+  ];
+  const missingFiles = requiredFiles
+    .map((parts) => ({ parts, filePath: repoPath(...parts) }))
+    .filter((item) => !fs.existsSync(item.filePath))
+    .map((item) => item.parts.join("/"));
+  const failures = [
+    ...missingIds.map((id) => `missing id ${id}`),
+    ...missingSymbols.map((symbol) => `missing symbol ${symbol}`),
+    ...missingFiles.map((file) => `missing file ${file}`),
+  ];
+  addCheck(
+    "performance route",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0 ? "Runtime panel and C++ WASM migration files found" : failures.join(", "),
+  );
+}
+
 function main() {
   const indexHtml = readText("index.html");
   const appJs = readText("app.js");
@@ -227,6 +267,7 @@ function main() {
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs);
+  validatePerformanceRoute(indexHtml, appJs);
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

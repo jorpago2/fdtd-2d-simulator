@@ -17,4 +17,6 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 13. `fdtd-rendering.js`: field/material rendering, surface view, overlays, glyphs, and source hit testing.
 14. `../app.js`: UI state, controls, event handlers, sweep orchestration, and app startup.
 
+The active compiled kernel is still `../fdtd-core.wat` -> `../fdtd-core.wasm`. The maintainable C++ migration source lives in `../wasm-src/fdtd-core.cpp`; see `../docs/PERFORMANCE.md` before replacing the active WASM binary.
+
 Next safe refactors are smaller: split viewport/canvas coordinate helpers from `fdtd-sim.js`, or move field reset/renormalization into a dedicated field-state module.
