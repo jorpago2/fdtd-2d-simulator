@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "description": "Prioritized validation matrix for the browser 2D-FDTD simulator.",
+  "profiles": {
+    "smoke": {
+      "steps": 12,
+      "maxMsPerStep": 80,
+      "purpose": "Fast guard against load failures, non-finite fields, and broken presets."
+    },
+    "physics": {
+      "steps": 720,
+      "purpose": "Numerical/physical validation intended for manual or scripted convergence runs."
+    },
+    "convergence": {
+      "cellsPerWavelength": [12, 20, 32],
+      "purpose": "Grid refinement for results used in teaching notes or publications."
+    }
+  },
+  "requiredP0Cases": [
+    "air_propagation",
+    "normal_interface_fresnel",
+    "brewster_tm_minimum",
+    "pml_reflection",
+    "slab_waveguide_confinement",
+    "resonator_ringdown_q",
+    "advanced_material_smoke"
+  ],
+  "cases": [
+    {
+      "id": "air_propagation",
+      "priority": "P0",
+      "preset": "planeWaveAir",
+      "profile": "smoke",
+      "browserSmoke": true,
+      "checks": [
+        "loads without console errors",
+        "step counter advances",
+        "max field remains finite",
+        "energy remains finite"
+      ],
+      "acceptance": {
+        "maxFieldFinite": true,
+        "noNaNOrInfinityInUi": true
+      },
+      "rationale": "Baseline homogeneous Yee propagation. If this fails, no higher-level validation is meaningful."
+    },
+    {
+      "id": "normal_interface_fresnel",
+      "priority": "P0",
+      "preset": "normalInterface",
+      "profile": "physics",
+      "browserSmoke": true,
+      "checks": [
+        "finite fields",
+        "R and T are bounded",
+        "R plus T is close to unity for low-loss media",
+        "compare R against normal-incidence Fresnel reference"
+      ],
+      "acceptance": {
+        "reflectanceAbsTolerance": 0.08,
+        "powerBalanceTolerance": 0.12
+      },
+      "reference": {
+        "type": "fresnel_normal_incidence",
+        "n1": 1.0,
+        "n2": 1.5,
+        "expectedR": 0.04
+      },
+      "rationale": "First quantitative check for interface monitors and material impedance."
+    },
+    {
+      "id": "brewster_tm_minimum",
+      "priority": "P0",
+      "preset": "brewsterTm",
+      "profile": "physics",
+      "browserSmoke": true,
+      "checks": [
+        "angle sweep runs",
+        "TM reflectance has a local minimum",
+        "minimum angle is near arctan(n2/n1)"
+      ],
+      "acceptance": {
+        "angleToleranceDeg": 6,
+        "maxMinimumReflectance": 0.12
+      },
+      "reference": {
+        "type": "brewster_angle",
+        "n1": 1.0,
+        "n2": 1.5,
+        "expectedAngleDeg": 56.31
+      },
+      "rationale": "Validates oblique incidence, polarization handling, and sweep diagnostics."
+    },
+    {
+      "id": "pml_reflection",
+      "priority": "P0",
+      "preset": "pmlAbsorption",
+      "profile": "physics",
+      "browserSmoke": true,
+      "checks": [
+        "pulse leaves the domain",
+        "late-time residual energy decreases",
+        "left/right monitor reflection remains small"
+      ],
+      "acceptance": {
+        "lateEnergyRatioMax": 0.08,
+        "reflectionMax": 0.08
+      },
+      "rationale": "PML quality controls every open-domain example."
+    },
+    {
+      "id": "slab_waveguide_confinement",
+      "priority": "P0",
+      "preset": "slabWaveguide",
+      "profile": "physics",
+      "browserSmoke": true,
+      "checks": [
+        "finite fields",
+        "guided flux is positive",
+        "field energy is concentrated near the guide"
+      ],
+      "acceptance": {
+        "guidedFluxPositive": true,
+        "coreEnergyFractionMin": 0.45
+      },
+      "rationale": "Core guided-optics workflow for integrated photonics examples."
+    },
+    {
+      "id": "resonator_ringdown_q",
+      "priority": "P0",
+      "preset": "qRingdown",
+      "profile": "physics",
+      "browserSmoke": true,
+      "checks": [
+        "analysis trace fills",
+        "energy envelope decays",
+        "Q proxy is finite and positive"
+      ],
+      "acceptance": {
+        "qProxyFinite": true,
+        "minAnalysisSamples": 128
+      },
+      "rationale": "Checks spectral/ringdown post-processing used by resonator teaching scenes."
+    },
+    {
+      "id": "advanced_material_smoke",
+      "priority": "P0",
+      "preset": "drudeMetal",
+      "profile": "smoke",
+      "browserSmoke": true,
+      "checks": [
+        "ADE material loads",
+        "finite fields after several steps",
+        "stability panel reports active media"
+      ],
+      "acceptance": {
+        "maxFieldFinite": true,
+        "requiresActiveMediaLabel": "ADE"
+      },
+      "rationale": "Fast guard for dispersive material state arrays and diagnostics."
+    },
+    {
+      "id": "json_reproducibility",
+      "priority": "P1",
+      "preset": "normalInterface",
+      "profile": "smoke",
+      "browserSmoke": true,
+      "checks": [
+        "export JSON action completes",
+        "share URL contains scene parameter",
+        "scene URL reloads without error"
+      ],
+      "acceptance": {
+        "shareUrlContainsSceneParam": true
+      },
+      "rationale": "Ensures examples can be reproduced across sessions."
+    },
+    {
+      "id": "negative_index_quantitative_gap",
+      "priority": "P1",
+      "preset": "negativeIndexSlab",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "finite fields",
+        "measure phase-front slope or refracted angle",
+        "power-balance residual",
+        "grid convergence"
+      ],
+      "acceptance": {
+        "status": "pending-calibrated-reference"
+      },
+      "rationale": "Documents the next quantitative gap for double-negative and superlens scenes."
+    },
+    {
+      "id": "bianisotropy_quantitative_gap",
+      "priority": "P1",
+      "preset": "chiralMedium",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "six-field path finite",
+        "cross-polarized energy finite",
+        "compare against calibrated omega/chiral reference",
+        "passivity/energy balance"
+      ],
+      "acceptance": {
+        "status": "pending-calibrated-reference"
+      },
+      "rationale": "Documents the publication-grade validation still needed for 6-field coupling."
+    }
+  ]
+}

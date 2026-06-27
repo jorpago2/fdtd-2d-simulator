@@ -7,6 +7,10 @@ Implemented dropdown scenes are geometry/source/material presets for the current
 FDTD engine. Some are qualitative visual presets rather than automated validation experiments,
 because the app still needs calibrated modal, sweep, and equivalence-principle post-processing.
 
+Validation is now tracked separately in `scripts/validation-matrix.json` and documented in
+`docs/VALIDATION.md`. Treat this file as the physics/workflow debt ledger, and the validation
+matrix as the executable acceptance plan.
+
 ## Implemented in the first source-physics pass
 
 - 11 Evanescent isolated wave: implemented as a monochromatic line source with imposed spatial phase `k_parallel > k0` and exponential normal decay.

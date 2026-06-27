@@ -1,0 +1,14 @@
+{
+  "name": "fdtd-2d-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-based 2D FDTD teaching and research simulator.",
+  "scripts": {
+    "test": "node scripts/validate-static.mjs",
+    "validate": "node scripts/validate-static.mjs --json",
+    "test:browser": "node scripts/browser-smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.0"
+  }
+}
