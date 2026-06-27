@@ -1180,6 +1180,10 @@ body {
     grid-template-rows: auto minmax(0, 1fr) !important;
   }
 
+  .app-shell[data-ui-depth="teaching"] .workspace {
+    grid-row: 2 / -1 !important;
+  }
+
   .app-shell[data-ui-depth="teaching"] .scientific-status-strip {
     display: none !important;
   }
@@ -1196,6 +1200,10 @@ body {
 @media (max-width: 520px) {
   .scientific-status-strip {
     display: none !important;
+  }
+
+  .workspace {
+    grid-row: 2 / -1 !important;
   }
 }
 
@@ -1270,8 +1278,45 @@ body {
 }
 
 @media (max-height: 520px) and (max-width: 1440px) {
+  .app-shell {
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
   .scientific-status-strip {
     display: none !important;
+  }
+
+  .workspace {
+    grid-row: 2 / -1 !important;
+  }
+
+  .selection-sheet {
+    position: absolute !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    z-index: 34 !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    margin-top: 0 !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--surface) 82%, transparent) !important;
+    backdrop-filter: blur(14px) saturate(1.25) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.25) !important;
+  }
+
+  .selection-sheet-title {
+    font-size: 0.7rem !important;
+  }
+
+  .selection-sheet-actions .icon-button {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+
+  .selection-sheet-copy {
+    min-width: 0 !important;
   }
 
   .topbar {
@@ -2365,5 +2410,43 @@ body {
 
   .mobile-canvas-stats output {
     font-size: 0.58rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .selection-sheet {
+    bottom: 50px !important;
+    align-items: center !important;
+    min-height: 38px !important;
+  }
+
+  .selection-sheet-kind,
+  .selection-sheet-details {
+    display: none !important;
+  }
+
+  .selection-sheet-title {
+    overflow: hidden !important;
+    font-size: 0.68rem !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-height: 520px) and (max-width: 1440px) {
+  .selection-sheet {
+    align-items: center !important;
+    min-height: 38px !important;
+  }
+
+  .selection-sheet-kind,
+  .selection-sheet-details {
+    display: none !important;
+  }
+
+  .selection-sheet-title {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
 }

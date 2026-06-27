@@ -958,9 +958,9 @@ function stageLayoutChildVisible(element) {
 }
 
 function availableCanvasFrameHeight(viewportHeight, compactViewport) {
-  const viewportTargetHeight = compactViewport
-    ? viewportHeight - Math.min(230, viewportHeight * 0.28)
-    : viewportHeight * CANVAS_DISPLAY_VIEWPORT_FRACTION;
+  const mobileViewport = mobileCanvasViewportActive();
+  const compactReserve = mobileViewport ? Math.min(130, viewportHeight * 0.16) : Math.min(230, viewportHeight * 0.28);
+  const viewportTargetHeight = compactViewport ? viewportHeight - compactReserve : viewportHeight * CANVAS_DISPLAY_VIEWPORT_FRACTION;
   if (!el.stage || !el.canvasFrame) return viewportTargetHeight;
 
   const stageRect = el.stage.getBoundingClientRect();
@@ -974,6 +974,9 @@ function availableCanvasFrameHeight(viewportHeight, compactViewport) {
     .filter((child) => child !== el.canvasFrame)
     .reduce((height, child) => height + child.getBoundingClientRect().height, 0);
   const stageCanvasHeight = stageRect.height - nonCanvasHeight - paddingY - rowGap * Math.max(0, flowChildren.length - 1);
+  if (mobileViewport) {
+    return Math.max(1, stageCanvasHeight);
+  }
   return Math.min(viewportTargetHeight, Math.max(1, stageCanvasHeight));
 }
 
