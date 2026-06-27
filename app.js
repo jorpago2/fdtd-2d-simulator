@@ -568,6 +568,8 @@ const el = {
   playPauseIcon: document.getElementById("playPauseIcon"),
   stepBtn: document.getElementById("stepBtn"),
   resetBtn: document.getElementById("resetBtn"),
+  canvasFocusBtn: document.getElementById("canvasFocusBtn"),
+  focusControlsBtn: document.getElementById("focusControlsBtn"),
   saveBtn: document.getElementById("saveBtn"),
   selectModeBtn: document.getElementById("selectModeBtn"),
   brushModeBtn: document.getElementById("brushModeBtn"),
@@ -1346,12 +1348,23 @@ function compactControlDrawerActive() {
   return window.matchMedia?.(COMPACT_CONTROLS_MEDIA_QUERY)?.matches ?? false;
 }
 
+function canvasFocusModeActive() {
+  return el.appShell?.classList.contains("canvas-focus-mode") ?? false;
+}
+
+function controlDrawerOverlayActive() {
+  return compactControlDrawerActive() || canvasFocusModeActive();
+}
+
 function setControlDrawerOpen(open) {
-  const isOpen = Boolean(open) && compactControlDrawerActive();
+  const isOpen = Boolean(open) && controlDrawerOverlayActive();
   el.appShell?.classList.toggle("controls-open", isOpen);
   document.body.classList.toggle("controls-drawer-open", isOpen);
   if (el.controlDrawerToggle) {
     el.controlDrawerToggle.setAttribute("aria-expanded", String(isOpen));
+  }
+  if (el.focusControlsBtn) {
+    el.focusControlsBtn.setAttribute("aria-expanded", String(isOpen));
   }
   if (el.controlDrawerBackdrop) {
     el.controlDrawerBackdrop.hidden = !isOpen;
@@ -1370,7 +1383,7 @@ function toggleControlDrawer() {
 }
 
 function canvasOptionsMenuActive() {
-  return window.matchMedia?.("(max-width: 1180px)")?.matches ?? false;
+  return canvasFocusModeActive() || (window.matchMedia?.("(max-width: 1180px)")?.matches ?? false);
 }
 
 function setCanvasOptionsOpen(open) {
@@ -1387,6 +1400,33 @@ function closeCanvasOptionsMenu() {
 
 function toggleCanvasOptionsMenu() {
   setCanvasOptionsOpen(!el.stage?.classList.contains("canvas-options-open"));
+}
+
+function refreshCanvasSizeAfterLayoutChange() {
+  requestAnimationFrame(() => {
+    sim.fitCanvas();
+    sim.render();
+  });
+}
+
+function setCanvasFocusMode(enabled) {
+  const isEnabled = Boolean(enabled);
+  closeContextMenus();
+  closeCanvasOptionsMenu();
+  setControlDrawerOpen(false);
+  el.appShell?.classList.toggle("canvas-focus-mode", isEnabled);
+  document.body.classList.toggle("canvas-focus-mode", isEnabled);
+  if (el.canvasFocusBtn) {
+    el.canvasFocusBtn.setAttribute("aria-pressed", String(isEnabled));
+    el.canvasFocusBtn.setAttribute("aria-label", isEnabled ? "Exit canvas focus" : "Focus canvas");
+    el.canvasFocusBtn.title = isEnabled ? "Exit canvas focus" : "Focus canvas";
+    el.canvasFocusBtn.textContent = isEnabled ? "×" : "⛶";
+  }
+  refreshCanvasSizeAfterLayoutChange();
+}
+
+function toggleCanvasFocusMode() {
+  setCanvasFocusMode(!canvasFocusModeActive());
 }
 
 function handleControlTabKeydown(event) {
@@ -4843,6 +4883,11 @@ el.brushModeBtn.addEventListener("click", () => {
   setCanvasMode("brush");
 });
 
+el.canvasFocusBtn?.addEventListener("click", toggleCanvasFocusMode);
+el.focusControlsBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleControlDrawer();
+});
 el.controlDrawerToggle?.addEventListener("click", toggleControlDrawer);
 el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
 el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);
@@ -6165,6 +6210,11 @@ document.addEventListener("keydown", (event) => {
     sim.render();
     return;
   }
+  if (event.key === "Escape" && canvasFocusModeActive()) {
+    setCanvasFocusMode(false);
+    event.preventDefault();
+    return;
+  }
   if ((event.key === "Delete" || event.key === "Backspace") && !isEditableKeyTarget(event.target)) {
     if (deleteSelectedElement()) {
       event.preventDefault();
@@ -6174,7 +6224,7 @@ document.addEventListener("keydown", (event) => {
 
 window.addEventListener("resize", () => {
   closeContextMenus();
-  if (!compactControlDrawerActive()) {
+  if (!controlDrawerOverlayActive()) {
     closeControlDrawer();
   }
   if (!canvasOptionsMenuActive()) {

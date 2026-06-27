@@ -917,6 +917,178 @@ body {
   display: none !important;
 }
 
+.focus-controls-toggle {
+  display: none !important;
+}
+
+.app-shell.canvas-focus-mode {
+  width: 100vw !important;
+  max-width: none !important;
+  grid-template-rows: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  padding: 6px !important;
+}
+
+.app-shell.canvas-focus-mode .topbar,
+.app-shell.canvas-focus-mode .scientific-status-strip,
+.app-shell.canvas-focus-mode .mobile-canvas-stats {
+  display: none !important;
+}
+
+.app-shell.canvas-focus-mode .workspace {
+  grid-template-columns: 1fr !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.app-shell.canvas-focus-mode .stage {
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar {
+  position: relative !important;
+  z-index: 42 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: 7px !important;
+  overflow: visible !important;
+  padding: 5px !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .tool-group.compact {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .tool-group.compact #saveBtn,
+.app-shell.canvas-focus-mode .canvas-toolbar .interaction-toggle {
+  display: none !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-focus-toggle,
+.app-shell.canvas-focus-mode .focus-controls-toggle,
+.app-shell.canvas-focus-mode .canvas-options-toggle {
+  display: inline-flex !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  z-index: 52 !important;
+  display: none !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: min(340px, calc(100vw - 24px)) !important;
+  min-width: 0 !important;
+  max-height: min(58vh, 430px) !important;
+  overflow: auto !important;
+  padding: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 65%, transparent) !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
+  box-shadow: var(--neu-shadow), var(--neu-inset-soft) !important;
+}
+
+.app-shell.canvas-focus-mode .stage.canvas-options-open .canvas-toolbar .canvas-view-controls {
+  display: flex !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .canvas-mode-toggle,
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .toolbar-switch {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .visual-options-divider {
+  display: block !important;
+  width: 100% !important;
+  height: 1px !important;
+  margin: 2px 0 !important;
+  background: color-mix(in srgb, var(--line-strong) 70%, transparent) !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .visual-profile-toggle,
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .visual-layer-switch {
+  display: inline-flex !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .canvas-mode-toggle {
+  justify-content: stretch !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .mode-toggle-button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding-inline: 7px !important;
+  font-size: 0.7rem !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .toolbar-switch {
+  justify-content: space-between !important;
+  padding-inline: 8px !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .toolbar-switch span {
+  display: inline !important;
+}
+
+.app-shell.canvas-focus-mode .canvas-frame {
+  align-self: stretch !important;
+  justify-self: center !important;
+  width: min(100%, var(--sim-frame-width-limit, 100%)) !important;
+  max-height: none !important;
+}
+
+.app-shell.canvas-focus-mode .control-panel {
+  position: fixed !important;
+  inset: 8px 8px 8px auto !important;
+  z-index: 90 !important;
+  width: min(430px, calc(100vw - 16px)) !important;
+  max-width: calc(100vw - 16px) !important;
+  height: calc(100dvh - 16px) !important;
+  max-height: calc(100dvh - 16px) !important;
+  transform: translateX(calc(100% + 20px)) !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition:
+    transform 180ms ease,
+    visibility 180ms ease !important;
+}
+
+.app-shell.canvas-focus-mode.controls-open .control-panel {
+  transform: translateX(0) !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.app-shell.canvas-focus-mode .control-drawer-backdrop:not([hidden]) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 80 !important;
+  display: block !important;
+  border: 0 !important;
+  padding: 0 !important;
+  background: color-mix(in srgb, #031016 38%, transparent) !important;
+  backdrop-filter: blur(3px) !important;
+}
+
 @media (max-width: 760px) {
   .scientific-status-strip {
     display: none !important;

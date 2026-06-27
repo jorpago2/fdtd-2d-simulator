@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-visual-layers-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-focus-mode-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -92,6 +92,18 @@
               </button>
               <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭</button>
               <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
+              <button id="canvasFocusBtn" class="icon-button canvas-focus-toggle" type="button" title="Focus canvas" aria-label="Focus canvas" aria-pressed="false">⛶</button>
+              <button
+                id="focusControlsBtn"
+                class="icon-button focus-controls-toggle"
+                type="button"
+                aria-controls="controlPanel"
+                aria-expanded="false"
+                title="Open controls"
+                aria-label="Open controls"
+              >
+                ☰
+              </button>
               <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩</button>
             </div>
             <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
@@ -1073,6 +1085,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-visual-layers-1"></script>
+    <script src="app.js?v=20260627-focus-mode-1"></script>
   </body>
 </html>
