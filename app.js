@@ -508,6 +508,9 @@ const el = {
   dispersionTauInput: document.getElementById("dispersionTauInput"),
   materialWarning: document.getElementById("materialWarning"),
   presetInput: document.getElementById("presetInput"),
+  sceneSearchInput: document.getElementById("sceneSearchInput"),
+  sceneFilterBar: document.getElementById("sceneFilterBar"),
+  sceneCards: document.getElementById("sceneCards"),
   sceneNote: document.getElementById("sceneNote"),
   slabThicknessControl: document.getElementById("slabThicknessControl"),
   slabThicknessInput: document.getElementById("slabThicknessInput"),
@@ -570,6 +573,11 @@ const el = {
   sourceCloseBtn: document.getElementById("sourceCloseBtn"),
 };
 
+const sceneBrowserState = {
+  records: [],
+  filter: "all",
+};
+
 function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   if (!el.canvasFrame) return;
   const safeNx = Math.max(1, Number(nx) || DEFAULT_GRID.nx);
@@ -598,6 +606,198 @@ function updateRangeProgress(input) {
 
 function updateAllRangeProgress() {
   document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+}
+
+function normalizeSceneText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function cleanSceneGroupLabel(label) {
+  return String(label || "General")
+    .replace(/^\d+(?:-\d+)?\.\s*/, "")
+    .trim();
+}
+
+function parseSceneOptionLabel(label) {
+  const text = String(label || "").trim();
+  const match = text.match(/^(\d+)\s*[\u00b7.-]\s*(.+)$/);
+  if (!match) return { index: null, title: text || "Untitled scene" };
+  return {
+    index: Number(match[1]),
+    title: match[2].trim(),
+  };
+}
+
+function sceneBadgeLabels(record) {
+  const haystack = normalizeSceneText(`${record.title} ${record.group} ${record.description}`);
+  const badges = [];
+  const add = (label) => {
+    if (!badges.includes(label)) badges.push(label);
+  };
+
+  if (record.value === "empty") add("Blank");
+  if (/(waveguide|guide|coupler|mmi|mach|microstrip|stub)/.test(haystack)) add("Guided");
+  if (/(resonator|cavity|ring|fabry|purcell|beta-factor|ringdown)/.test(haystack)) add("Resonator");
+  if (/(drude|lorentz|debye|plasma|enz|metal|spp|plasmon|negative-index|superlens|conductive|conductivity)/.test(haystack)) {
+    add("ADE/loss");
+  }
+  if (/(kerr|chi2|chi3|nonlinear|vo2|pcm|saturable|switch|limiter)/.test(haystack)) add("Nonlinear");
+  if (/(temporal|modulat|floquet|space-time|traveling)/.test(haystack)) add("Time-varying");
+  if (/(anisotropic|gyrotropic|bianisotropic|chiral|hyperbolic|tensor)/.test(haystack)) add("Tensor");
+  if (/(photonic crystal|phc|ssh|valley|topolog|bic|honeycomb|bloch)/.test(haystack)) add("Periodic/topology");
+  if (/(ntff|far-field|rcs|scattering|kerker|mie)/.test(haystack)) add("NTFF");
+  if (/(pml|absorbing)/.test(haystack)) add("PML");
+  if (/(tez|hz solver|in-plane|magnetic mz)/.test(haystack)) add("TEz");
+  if (/(tm|jz|ez|electric dipole)/.test(haystack) && !badges.includes("TEz")) add("TMz");
+
+  return badges.length > 0 ? badges.slice(0, 4) : ["FDTD"];
+}
+
+function collectSceneRecords() {
+  if (!el.presetInput) return [];
+  return Array.from(el.presetInput.querySelectorAll("option")).map((option) => {
+    const rawLabel = option.textContent || option.value;
+    const parsed = parseSceneOptionLabel(rawLabel);
+    const groupLabel = option.parentElement?.tagName === "OPTGROUP" ? option.parentElement.label : "General";
+    const group = cleanSceneGroupLabel(groupLabel);
+    const record = {
+      value: option.value,
+      index: parsed.index,
+      title: parsed.title,
+      group,
+      groupLabel,
+      description: sceneDescriptions[option.value] || "",
+      badges: [],
+      haystack: "",
+    };
+    record.badges = sceneBadgeLabels(record);
+    record.haystack = normalizeSceneText(
+      `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
+    );
+    return record;
+  });
+}
+
+function visibleSceneRecords() {
+  const query = normalizeSceneText(el.sceneSearchInput?.value || "");
+  const terms = query.split(/\s+/).filter(Boolean);
+  return sceneBrowserState.records.filter((record) => {
+    if (sceneBrowserState.filter !== "all" && record.groupLabel !== sceneBrowserState.filter) return false;
+    return terms.every((term) => record.haystack.includes(term));
+  });
+}
+
+function renderSceneFilterBar() {
+  if (!el.sceneFilterBar) return;
+  const groups = Array.from(new Set(sceneBrowserState.records.map((record) => record.groupLabel)));
+  const filters = [{ value: "all", label: "All" }, ...groups.map((groupLabel) => ({
+    value: groupLabel,
+    label: cleanSceneGroupLabel(groupLabel),
+  }))];
+
+  el.sceneFilterBar.replaceChildren();
+  filters.forEach((filter) => {
+    const button = document.createElement("button");
+    const active = sceneBrowserState.filter === filter.value;
+    button.type = "button";
+    button.className = `scene-filter-button${active ? " is-active" : ""}`;
+    button.dataset.sceneFilter = filter.value;
+    button.setAttribute("aria-pressed", String(active));
+    button.textContent = filter.label;
+    button.addEventListener("click", () => {
+      sceneBrowserState.filter = filter.value;
+      renderSceneFilterBar();
+      renderSceneCards();
+    });
+    el.sceneFilterBar.appendChild(button);
+  });
+}
+
+function renderSceneCards() {
+  if (!el.sceneCards) return;
+  const records = visibleSceneRecords();
+  el.sceneCards.replaceChildren();
+
+  if (records.length === 0) {
+    const emptyState = document.createElement("p");
+    emptyState.className = "scene-empty-state";
+    emptyState.textContent = "No matching scenes.";
+    el.sceneCards.appendChild(emptyState);
+    return;
+  }
+
+  records.forEach((record) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "scene-card";
+    card.dataset.sceneCard = record.value;
+    card.setAttribute("aria-pressed", String(record.value === state.preset));
+
+    const header = document.createElement("span");
+    header.className = "scene-card-header";
+
+    const number = document.createElement("span");
+    number.className = "scene-card-number";
+    number.textContent = record.index == null ? "-" : String(record.index);
+
+    const title = document.createElement("span");
+    title.className = "scene-card-title";
+    title.textContent = record.title;
+
+    header.append(number, title);
+
+    const group = document.createElement("span");
+    group.className = "scene-card-group";
+    group.textContent = record.group;
+
+    const description = document.createElement("span");
+    description.className = "scene-card-description";
+    description.textContent = record.description || "Custom FDTD scene.";
+
+    const badgeRow = document.createElement("span");
+    badgeRow.className = "scene-card-badges";
+    record.badges.forEach((badgeLabel) => {
+      const badge = document.createElement("span");
+      badge.className = "scene-card-badge";
+      badge.textContent = badgeLabel;
+      badgeRow.appendChild(badge);
+    });
+
+    card.append(header, group, description, badgeRow);
+    card.addEventListener("click", () => {
+      selectScenePreset(record.value);
+    });
+    el.sceneCards.appendChild(card);
+  });
+
+  syncSceneBrowserSelection();
+}
+
+function syncSceneBrowserSelection() {
+  if (!el.sceneCards) return;
+  const currentPreset = el.presetInput?.value || state.preset;
+  el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
+    const active = card.dataset.sceneCard === currentPreset;
+    card.classList.toggle("is-active", active);
+    card.setAttribute("aria-pressed", String(active));
+    if (active) card.setAttribute("aria-current", "true");
+    else card.removeAttribute("aria-current");
+  });
+}
+
+function buildSceneBrowser() {
+  sceneBrowserState.records = collectSceneRecords();
+  renderSceneFilterBar();
+  renderSceneCards();
+}
+
+function selectScenePreset(value) {
+  if (!el.presetInput || !value) return;
+  el.presetInput.value = value;
+  applySelectedPreset();
 }
 
 function activateControlTab(tabName) {
@@ -1684,6 +1884,7 @@ function updateControlText() {
   if (el.sceneNote) {
     el.sceneNote.textContent = sceneDescriptions[state.preset] || sceneDescriptions.empty;
   }
+  syncSceneBrowserSelection();
   el.slabThicknessOutput.value = formatLambdaOutput(state.slabThicknessLambda);
   el.slabThicknessInput.value = String(state.slabThicknessLambda);
   const showSlabThickness = state.preset === "customSlab";
@@ -3511,6 +3712,10 @@ el.controlTabButtons?.forEach((button) => {
   });
 });
 
+el.sceneSearchInput?.addEventListener("input", () => {
+  renderSceneCards();
+});
+
 el.themeButtons?.forEach((button) => {
   button.addEventListener("click", () => {
     applyTheme(button.dataset.themeChoice);
@@ -4029,7 +4234,7 @@ el.dispersionDeltaEpsInput.addEventListener("change", handleCustomMaterialInput)
 el.dispersionTauInput.addEventListener("input", handleCustomMaterialInput);
 el.dispersionTauInput.addEventListener("change", handleCustomMaterialInput);
 
-el.presetInput.addEventListener("change", () => {
+function applySelectedPreset() {
   clearMaterialSelection(false);
   state.preset = el.presetInput.value;
   sim.applyPreset(state.preset);
@@ -4037,7 +4242,10 @@ el.presetInput.addEventListener("change", () => {
   updateControlText();
   updateStats();
   sim.render();
-});
+  syncSceneBrowserSelection();
+}
+
+el.presetInput.addEventListener("change", applySelectedPreset);
 
 el.slabThicknessInput.addEventListener("input", () => {
   state.slabThicknessLambda = Number(el.slabThicknessInput.value);
@@ -4594,6 +4802,7 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
   input.addEventListener("input", () => updateRangeProgress(input));
 });
 
+buildSceneBrowser();
 sim.measure();
 updateControlText();
 updateStats();

@@ -11,7 +11,7 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-1" />
+    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -527,7 +527,7 @@
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
 <section class="panel-section scene-section">
               <h2>Scene</h2>
-              <label>
+              <label class="scene-select-fallback">
                 <span>Example</span>
                 <select id="presetInput">
                   <option value="empty">Empty</option>
@@ -687,6 +687,14 @@
                   </optgroup>
                 </select>
               </label>
+              <div class="scene-browser" aria-label="Scene library">
+                <label class="scene-search-label">
+                  <span>Search</span>
+                  <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
+                </label>
+                <div id="sceneFilterBar" class="scene-filter-bar" role="group" aria-label="Scene families"></div>
+                <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
+              </div>
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
               <label class="control-row is-disabled" id="slabThicknessControl" hidden>
                 <span>Thickness</span>
@@ -879,6 +887,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-split-5"></script>
-    <script src="app.js?v=20260627-neu-tabs-1"></script>
+    <script src="app.js?v=20260627-neu-tabs-2"></script>
   </body>
 </html>
