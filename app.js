@@ -561,6 +561,8 @@ const el = {
   canvasOptionsToggle: document.getElementById("canvasOptionsToggle"),
   appShell: document.querySelector(".app-shell"),
   controlPanel: document.getElementById("controlPanel"),
+  controlPanelKicker: document.getElementById("controlPanelKicker"),
+  controlPanelTitle: document.getElementById("controlPanelTitle"),
   controlDrawerToggle: document.getElementById("controlDrawerToggle"),
   controlDrawerCloseBtn: document.getElementById("controlDrawerCloseBtn"),
   controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
@@ -1444,6 +1446,7 @@ function setMobileLayerActive(layerName) {
   if (el.controlPanel) {
     el.controlPanel.dataset.mobileLayer = layerName;
   }
+  updateControlPanelContext(layerName);
   el.mobileLayerButtons?.forEach((button) => {
     const active = button.dataset.mobileLayer === layerName;
     button.classList.toggle("is-active", active);
@@ -1466,6 +1469,28 @@ function focusControlPanelSection(selector) {
 
 function activeControlTabName() {
   return Array.from(el.controlTabButtons || []).find((button) => button.classList.contains("is-active"))?.dataset.controlTab || "scenes";
+}
+
+const CONTROL_PANEL_CONTEXTS = {
+  scenes: { kicker: "Step 1 · Scene", title: "Scene setup" },
+  simulation: { kicker: "Step 2 · Run", title: "Simulation control" },
+  visual: { kicker: "Step 3 · Visual", title: "Canvas display" },
+  objects: { kicker: "Step 4 · Edit", title: "Object editor" },
+  results: { kicker: "Step 5 · Results", title: "Measurements" },
+  config: { kicker: "Step 6 · Config", title: "Numerics" },
+};
+
+function updateControlPanelContext(layerName = activeMobileLayerName() || controlTabLayerName(activeControlTabName())) {
+  const context = CONTROL_PANEL_CONTEXTS[layerName] || CONTROL_PANEL_CONTEXTS.scenes;
+  if (el.controlPanelKicker) {
+    el.controlPanelKicker.textContent = context.kicker;
+  }
+  if (el.controlPanelTitle) {
+    el.controlPanelTitle.textContent = context.title;
+  }
+  if (el.controlPanel) {
+    el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
+  }
 }
 
 function controlTabLayerName(tabName) {
@@ -6701,6 +6726,7 @@ if (!sceneLoadedFromUrl) {
   applyResponsiveGridOrientation({ render: false });
 }
 sim.measure();
+updateControlPanelContext();
 updateControlText();
 updateStats();
 sim.render();

@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-workflow-nav-2" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-panel-context-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -655,11 +655,11 @@
           </div>
         </div>
 
-        <aside id="controlPanel" class="control-panel" aria-label="Controls" tabindex="-1" data-mobile-layer="scenes">
+        <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" tabindex="-1" data-mobile-layer="scenes">
           <div class="control-panel-header">
-            <div>
-              <p class="panel-kicker">Control center</p>
-              <h2>FDTD workspace</h2>
+            <div class="control-panel-title-block">
+              <p id="controlPanelKicker" class="panel-kicker">Step 1 · Scene</p>
+              <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
             <div class="control-panel-actions">
               <div class="canvas-mode-toggle ui-depth-toggle" role="group" aria-label="Interface depth">
@@ -1238,6 +1238,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-mobile-canvas-fill-5"></script>
+    <script src="app.js?v=20260627-panel-context-2"></script>
   </body>
 </html>

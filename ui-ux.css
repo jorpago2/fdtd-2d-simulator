@@ -1935,6 +1935,20 @@ body {
   box-shadow: var(--neu-shadow-soft) !important;
 }
 
+.control-panel-title-block {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+.control-panel-title-block h2,
+.control-panel-title-block .panel-kicker {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
 @media (max-width: 1440px) {
   .mobile-layer-nav {
     display: grid !important;
@@ -1955,6 +1969,10 @@ body {
 @media (max-width: 430px) {
   .control-panel-header {
     gap: 8px !important;
+  }
+
+  .control-panel-title-block {
+    max-width: 148px !important;
   }
 
   .control-panel-actions {
