@@ -452,6 +452,23 @@ html[data-theme="dark"] .share-url-output {
     min-height: 58px !important;
     padding: 8px 9px !important;
   }
+
+  .control-panel[data-mobile-layer="simulation"] .simulation-guide-section,
+  .control-panel[data-mobile-layer="simulation"] .inspector-section,
+  .control-panel[data-mobile-layer="simulation"] .status-section,
+  .control-panel[data-mobile-layer="simulation"] .edit-section {
+    display: none !important;
+  }
+
+  .control-panel[data-mobile-layer="objects"] .simulation-guide-section,
+  .control-panel[data-mobile-layer="objects"] .run-section,
+  .control-panel[data-mobile-layer="objects"] .status-section {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .control-panel[data-mobile-layer="objects"] .edit-section {
+    display: none !important;
+  }
 }
 
 /* Responsive simulator shell: prioritize the canvas and move controls into a drawer on compact viewports. */

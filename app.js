@@ -563,7 +563,7 @@ const el = {
   controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
   controlTabButtons: document.querySelectorAll("[data-control-tab]"),
   controlTabPanels: document.querySelectorAll("[data-control-panel]"),
-  mobileLayerButtons: document.querySelectorAll("[data-mobile-layer]"),
+  mobileLayerButtons: document.querySelectorAll(".mobile-layer-button[data-mobile-layer]"),
   themeButtons: document.querySelectorAll("[data-theme-choice]"),
   uiDepthButtons: document.querySelectorAll("[data-ui-depth-choice]"),
   fieldComponentButtons: document.querySelectorAll("[data-field-component]"),
@@ -1426,6 +1426,9 @@ function updateInspector() {
 }
 
 function setMobileLayerActive(layerName) {
+  if (el.controlPanel) {
+    el.controlPanel.dataset.mobileLayer = layerName;
+  }
   el.mobileLayerButtons?.forEach((button) => {
     const active = button.dataset.mobileLayer === layerName;
     button.classList.toggle("is-active", active);
