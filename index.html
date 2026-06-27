@@ -1190,6 +1190,18 @@
                       <output id="performanceRenderOutput">-</output>
                     </div>
                     <div class="diagnostic-metric">
+                      <span>Map pixels</span>
+                      <output id="performanceRenderMapOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Present</span>
+                      <output id="performanceRenderPresentOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Overlays</span>
+                      <output id="performanceRenderOverlayOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
                       <span>Measure</span>
                       <output id="performanceMeasureOutput">-</output>
                     </div>
@@ -1376,16 +1388,16 @@
     <script src="src/constants.js?v=20260627-phone-grid-1"></script>
     <script src="src/wasm-backend.js?v=20260627-split-1"></script>
     <script src="src/numerics.js?v=20260627-split-2"></script>
-    <script src="src/colormaps.js?v=20260627-split-1"></script>
+    <script src="src/colormaps.js?v=20260628-render-lut-1"></script>
     <script src="src/catalog.js?v=20260627-split-3"></script>
     <script src="src/fdtd-sim.js?v=20260627-split-12"></script>
     <script src="src/fdtd-materials.js?v=20260627-split-9"></script>
     <script src="src/fdtd-boundaries.js?v=20260627-split-11"></script>
     <script src="src/fdtd-presets.js?v=20260627-split-10"></script>
     <script src="src/fdtd-sources.js?v=20260627-split-7"></script>
-    <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
+    <script src="src/fdtd-diagnostics.js?v=20260628-measure-fast-1"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
-    <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-polish-2"></script>
+    <script src="src/fdtd-rendering.js?v=20260628-render-breakdown-1"></script>
+    <script src="app.js?v=20260628-perf-breakdown-1"></script>
   </body>
 </html>

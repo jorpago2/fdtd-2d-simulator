@@ -626,6 +626,9 @@ const el = {
   performanceGridOutput: document.getElementById("performanceGridOutput"),
   performanceStepOutput: document.getElementById("performanceStepOutput"),
   performanceRenderOutput: document.getElementById("performanceRenderOutput"),
+  performanceRenderMapOutput: document.getElementById("performanceRenderMapOutput"),
+  performanceRenderPresentOutput: document.getElementById("performanceRenderPresentOutput"),
+  performanceRenderOverlayOutput: document.getElementById("performanceRenderOverlayOutput"),
   performanceMeasureOutput: document.getElementById("performanceMeasureOutput"),
   performanceThroughputOutput: document.getElementById("performanceThroughputOutput"),
   performanceStatus: document.getElementById("performanceStatus"),
@@ -1924,6 +1927,11 @@ function recordPerformanceMetric(name, elapsedMs, sampleCount = 1) {
   performanceStats[sampleKey] = previousSamples + count;
 }
 
+window.fdtdPerformance = {
+  now: performanceNowMs,
+  record: recordPerformanceMetric,
+};
+
 function timeStepBatch(stepCount, runner) {
   const count = Math.max(1, Number(stepCount) || 1);
   const startMs = performanceNowMs();
@@ -1959,9 +1967,15 @@ function instrumentSimulationPerformance(targetSim) {
 function resetPerformanceStats() {
   performanceStats.stepMs = 0;
   performanceStats.renderMs = 0;
+  performanceStats.renderMapMs = 0;
+  performanceStats.renderPresentMs = 0;
+  performanceStats.renderOverlayMs = 0;
   performanceStats.measureMs = 0;
   performanceStats.stepSamples = 0;
   performanceStats.renderSamples = 0;
+  performanceStats.renderMapSamples = 0;
+  performanceStats.renderPresentSamples = 0;
+  performanceStats.renderOverlaySamples = 0;
   performanceStats.measureSamples = 0;
   performanceStats.lastUiUpdateMs = 0;
   updatePerformanceStats(true);
@@ -1994,6 +2008,9 @@ function updatePerformanceStats(force = false) {
   const gridText = `${sim.nx} x ${sim.ny} (${sim.n.toLocaleString()} cells)`;
   const stepText = formatPerformanceMs(performanceStats.stepMs, performanceStats.stepSamples);
   const renderText = formatPerformanceMs(performanceStats.renderMs, performanceStats.renderSamples);
+  const renderMapText = formatPerformanceMs(performanceStats.renderMapMs, performanceStats.renderMapSamples);
+  const renderPresentText = formatPerformanceMs(performanceStats.renderPresentMs, performanceStats.renderPresentSamples);
+  const renderOverlayText = formatPerformanceMs(performanceStats.renderOverlayMs, performanceStats.renderOverlaySamples);
   const measureText = formatPerformanceMs(performanceStats.measureMs, performanceStats.measureSamples);
   const throughputText = formatPerformanceRate(performanceStats.stepMs, performanceStats.stepSamples);
   const compiledAvailable = Boolean(sim.wasmBackend?.canStep(state.fieldComponent));
@@ -2006,6 +2023,9 @@ function updatePerformanceStats(force = false) {
   if (el.performanceGridOutput) el.performanceGridOutput.textContent = gridText;
   if (el.performanceStepOutput) el.performanceStepOutput.textContent = stepText;
   if (el.performanceRenderOutput) el.performanceRenderOutput.textContent = renderText;
+  if (el.performanceRenderMapOutput) el.performanceRenderMapOutput.textContent = renderMapText;
+  if (el.performanceRenderPresentOutput) el.performanceRenderPresentOutput.textContent = renderPresentText;
+  if (el.performanceRenderOverlayOutput) el.performanceRenderOverlayOutput.textContent = renderOverlayText;
   if (el.performanceMeasureOutput) el.performanceMeasureOutput.textContent = measureText;
   if (el.performanceThroughputOutput) el.performanceThroughputOutput.textContent = throughputText;
   if (el.performanceStatus) el.performanceStatus.textContent = statusText;
@@ -2494,9 +2514,15 @@ const PERF_UI_INTERVAL_MS = 250;
 const performanceStats = {
   stepMs: 0,
   renderMs: 0,
+  renderMapMs: 0,
+  renderPresentMs: 0,
+  renderOverlayMs: 0,
   measureMs: 0,
   stepSamples: 0,
   renderSamples: 0,
+  renderMapSamples: 0,
+  renderPresentSamples: 0,
+  renderOverlaySamples: 0,
   measureSamples: 0,
   lastUiUpdateMs: 0,
 };

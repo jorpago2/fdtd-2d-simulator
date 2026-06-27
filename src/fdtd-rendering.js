@@ -307,9 +307,15 @@ renderMaterialImage(data) {
 render() {
   this.fitCanvas();
   this.clampView();
+  const perf = window.fdtdPerformance;
+  const canRecordRenderBreakdown = typeof perf?.record === "function" && typeof perf?.now === "function";
+  let renderPhaseStart = canRecordRenderBreakdown ? perf.now() : 0;
   if (state.viewProjection === "3d") {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.renderSurfaceField();
+    if (canRecordRenderBreakdown) {
+      perf.record("renderMapMs", perf.now() - renderPhaseStart);
+    }
     updateColorbar();
     updateMaterialWarning();
     return;
@@ -320,6 +326,10 @@ render() {
     this.renderMaterialImage(data);
   } else {
     this.renderFieldImage(data);
+  }
+  if (canRecordRenderBreakdown) {
+    perf.record("renderMapMs", perf.now() - renderPhaseStart);
+    renderPhaseStart = perf.now();
   }
 
   this.offscreenCtx.putImageData(this.image, 0, 0);
@@ -336,6 +346,10 @@ render() {
     this.canvas.width,
     this.canvas.height
   );
+  if (canRecordRenderBreakdown) {
+    perf.record("renderPresentMs", perf.now() - renderPhaseStart);
+    renderPhaseStart = perf.now();
+  }
   if (visualLayerEnabled("boundaries")) {
     this.drawPmlOverlay();
   }
@@ -348,6 +362,9 @@ render() {
   this.drawReferenceOverlay();
   if (visualLayerEnabled("sources")) {
     this.drawSourceMarkers();
+  }
+  if (canRecordRenderBreakdown) {
+    perf.record("renderOverlayMs", perf.now() - renderPhaseStart);
   }
   updateColorbar();
   updateMaterialWarning();

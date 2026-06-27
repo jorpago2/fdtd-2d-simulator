@@ -8,6 +8,7 @@ Open the advanced `Results -> Performance` panel while the simulator is running.
 
 - FDTD step cost, in ms per simulated step.
 - Render cost, in ms per canvas redraw.
+- Render sub-costs for field/material pixel mapping, canvas presentation, and overlays.
 - Measurement cost, in ms per diagnostic `measure()` call.
 - Estimated solver capacity, in steps per second.
 - Active engine label and grid size.

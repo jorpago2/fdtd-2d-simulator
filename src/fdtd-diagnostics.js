@@ -1656,11 +1656,21 @@ measure() {
 
   let maxAbs = 0;
   let energy = 0;
-  for (let i = 0; i < this.n; i += 1) {
-    const value = this.fieldValueAt(i);
-    const abs = Math.abs(value);
-    if (abs > maxAbs) maxAbs = abs;
-    energy += value * value;
+  if (state.viewMode !== "poynting" && state.fieldDisplay === "scalar") {
+    const scalarField = this.ez;
+    for (let i = 0; i < this.n; i += 1) {
+      const value = scalarField[i];
+      const abs = Math.abs(value);
+      if (abs > maxAbs) maxAbs = abs;
+      energy += value * value;
+    }
+  } else {
+    for (let i = 0; i < this.n; i += 1) {
+      const value = this.fieldValueAt(i);
+      const abs = Math.abs(value);
+      if (abs > maxAbs) maxAbs = abs;
+      energy += value * value;
+    }
   }
   const physicalLogScale = this.fieldPhysicalLogScale();
   this.lastMaxLog10 = maxAbs === 0 ? -Infinity : Math.log10(maxAbs) + physicalLogScale;
