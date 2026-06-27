@@ -2304,6 +2304,25 @@ function updateCanvasModeControls() {
   el.canvas.classList.toggle("is-brush-mode", !isSelect);
 }
 
+function runStateLabel() {
+  return state.running ? "Run" : "Paused";
+}
+
+function updateRunControls() {
+  const isRunning = Boolean(state.running);
+  el.appShell?.classList.toggle("simulation-running", isRunning);
+  if (el.appShell) {
+    el.appShell.dataset.simState = isRunning ? "running" : "paused";
+  }
+  el.playPauseBtn?.classList.toggle("is-running", isRunning);
+  el.playPauseBtn?.setAttribute("aria-pressed", String(isRunning));
+  el.playPauseBtn?.setAttribute("aria-label", isRunning ? "Pause simulation" : "Start simulation");
+  el.playPauseBtn?.setAttribute("title", isRunning ? "Pause simulation" : "Start simulation");
+  if (el.playPauseIcon) {
+    el.playPauseIcon.textContent = isRunning ? "⏸" : "▶";
+  }
+}
+
 function interactionStateLabel() {
   if (dragSourcePointerId != null) return "Moving source";
   if (dragMaterialPointerId != null) return "Moving material";
@@ -2329,12 +2348,12 @@ function updateCanvasInteractionState() {
   el.canvasFrame?.classList.toggle("is-dragging-source", draggingSource);
   el.canvasFrame?.classList.toggle("is-dragging-material", draggingMaterial);
   el.canvasFrame?.classList.toggle("has-selection", hasSelection);
-  const stateText = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
+  const interactionText = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
   if (el.canvasStateBadge) {
-    el.canvasStateBadge.textContent = stateText;
+    el.canvasStateBadge.textContent = interactionText;
   }
   if (el.mobileCanvasStateValue) {
-    el.mobileCanvasStateValue.textContent = stateText;
+    el.mobileCanvasStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
   }
 }
 
@@ -2816,7 +2835,7 @@ function updateControlText() {
   if (el.brushSizeInput) {
     el.brushSizeInput.value = String(state.brushSizeLambda);
   }
-  el.playPauseIcon.textContent = state.running ? "⏸" : "▶";
+  updateRunControls();
   updateCanvasModeControls();
   updateCanvasInteractionState();
   updateVisualControls();
