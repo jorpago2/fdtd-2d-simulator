@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-focus-mode-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-selection-sheet-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -603,6 +603,17 @@
               </div>
             </div>
           </div>
+          <div id="selectionSheet" class="selection-sheet" aria-live="polite" hidden>
+            <div class="selection-sheet-copy">
+              <span id="selectionSheetKind" class="selection-sheet-kind">Source</span>
+              <strong id="selectionSheetTitle">No selection</strong>
+              <div id="selectionSheetDetails" class="selection-sheet-details"></div>
+            </div>
+            <div class="selection-sheet-actions">
+              <button id="selectionSheetEditBtn" class="icon-button compact-button" type="button" title="Edit selected" aria-label="Edit selected">✎</button>
+              <button id="selectionSheetClearBtn" class="icon-button compact-button" type="button" title="Clear selection" aria-label="Clear selection">×</button>
+            </div>
+          </div>
           <div class="mobile-canvas-stats" aria-label="Compact simulation status">
             <span><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
             <span><small>engine</small><output id="mobileEngineValue">JS</output></span>
@@ -1085,6 +1096,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-focus-mode-1"></script>
+    <script src="app.js?v=20260627-selection-sheet-1"></script>
   </body>
 </html>

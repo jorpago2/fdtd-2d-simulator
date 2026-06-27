@@ -750,6 +750,12 @@ const el = {
   inspectorNote: document.getElementById("inspectorNote"),
   inspectorEditBtn: document.getElementById("inspectorEditBtn"),
   inspectorClearBtn: document.getElementById("inspectorClearBtn"),
+  selectionSheet: document.getElementById("selectionSheet"),
+  selectionSheetKind: document.getElementById("selectionSheetKind"),
+  selectionSheetTitle: document.getElementById("selectionSheetTitle"),
+  selectionSheetDetails: document.getElementById("selectionSheetDetails"),
+  selectionSheetEditBtn: document.getElementById("selectionSheetEditBtn"),
+  selectionSheetClearBtn: document.getElementById("selectionSheetClearBtn"),
   fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
   fieldMetricUnit: document.getElementById("fieldMetricUnit"),
   energyValue: document.getElementById("energyValue"),
@@ -1166,6 +1172,31 @@ function setInspectorDetails(rows) {
   });
 }
 
+function setSelectionSheet(kind, title, rows) {
+  if (!el.selectionSheet || !el.selectionSheetKind || !el.selectionSheetTitle || !el.selectionSheetDetails) return;
+  el.selectionSheet.hidden = false;
+  el.stage?.classList.toggle("selection-sheet-open", true);
+  el.selectionSheetKind.textContent = kind;
+  el.selectionSheetTitle.textContent = title;
+  el.selectionSheetDetails.replaceChildren();
+  rows.slice(0, 5).forEach(([label, value]) => {
+    const chip = document.createElement("span");
+    const labelNode = document.createElement("small");
+    const valueNode = document.createElement("output");
+    labelNode.textContent = label;
+    valueNode.textContent = value;
+    chip.append(labelNode, valueNode);
+    el.selectionSheetDetails.appendChild(chip);
+  });
+}
+
+function hideSelectionSheet() {
+  if (!el.selectionSheet) return;
+  el.selectionSheet.hidden = true;
+  el.stage?.classList.toggle("selection-sheet-open", false);
+  el.selectionSheetDetails?.replaceChildren();
+}
+
 function materialRegionSignature(region) {
   if (!region?.bounds) return "";
   const b = region.bounds;
@@ -1287,6 +1318,13 @@ function updateInspector() {
       ["Loss", stats ? formatFieldValue(stats.loss) : "-"],
       ["Flags", stats?.features.length ? stats.features.join(", ") : "static"],
     ]);
+    setSelectionSheet("Material", el.inspectorTitle.textContent, [
+      ["Cells", String(region.cells.length)],
+      ["Width", `${formatLambda(cellsToLambda(b.maxX - b.minX + 1))} λ0`],
+      ["Height", `${formatLambda(cellsToLambda(b.maxY - b.minY + 1))} λ0`],
+      ["eps avg", stats ? formatFieldValue(stats.eps) : "-"],
+      ["loss", stats ? formatFieldValue(stats.loss) : "-"],
+    ]);
     if (el.inspectorNote) {
       el.inspectorNote.textContent = "Region values are averaged over selected grid cells.";
     }
@@ -1305,6 +1343,13 @@ function updateInspector() {
       ["Amplitude", source.amplitude.toFixed(2)],
       ["Phase", `${Math.round(source.phaseDeg || 0)} deg`],
       ["Angle", `${Math.round(source.angleDeg || 0)} deg`],
+    ]);
+    setSelectionSheet("Source", el.inspectorTitle.textContent, [
+      ["Time", sourceTypeLabel(source.type)],
+      ["Coupling", sourceCouplingLabel(source.shape)],
+      ["x", `${formatLambda(source.xLambda)} λ0`],
+      ["y", `${formatLambda(source.yLambda)} λ0`],
+      ["f dt", source.frequency.toFixed(3)],
     ]);
     if (el.inspectorNote) {
       el.inspectorNote.textContent = sourceUsesWidth(source.shape)
@@ -1325,6 +1370,7 @@ function updateInspector() {
     ["Boundary", boundarySummaryLabel()],
     ["Engine", sim.engineLabel()],
   ]);
+  hideSelectionSheet();
   if (el.inspectorNote) {
     el.inspectorNote.textContent = "Select a source or material region on the canvas.";
   }
@@ -4934,6 +4980,14 @@ el.inspectorClearBtn?.addEventListener("click", () => {
   sim.render();
 });
 
+el.selectionSheetEditBtn?.addEventListener("click", () => {
+  el.inspectorEditBtn?.click();
+});
+
+el.selectionSheetClearBtn?.addEventListener("click", () => {
+  el.inspectorClearBtn?.click();
+});
+
 el.themeButtons?.forEach((button) => {
   button.addEventListener("click", () => {
     applyTheme(button.dataset.themeChoice);
@@ -5892,6 +5946,7 @@ function updateSourceDrag(event) {
   state.sourceDefaults = { ...source };
   delete state.sourceDefaults.id;
   updateControlText();
+  updateInspector();
   sim.render();
   return true;
 }
@@ -5936,6 +5991,7 @@ function updateMaterialDrag(event) {
   materialDragState.dy = dy;
   sim.measure();
   updateStats();
+  updateInspector();
   sim.render();
   return true;
 }
@@ -5946,6 +6002,7 @@ function endMaterialDrag(event) {
   materialDragState = null;
   sim.measure();
   updateStats();
+  updateInspector();
   sim.render();
 }
 
