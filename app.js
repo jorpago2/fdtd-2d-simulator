@@ -179,6 +179,7 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
   colorbar: "visualLayerColorbar",
 });
 const COMPACT_RESULTS_MEDIA_QUERY = "(max-width: 1180px)";
+const COMPACT_PANEL_TITLE_MEDIA_QUERY = "(max-width: 430px)";
 const VISUAL_PROFILE_LAYERS = Object.freeze({
   clean: Object.freeze({
     boundaries: false,
@@ -1473,21 +1474,23 @@ function activeControlTabName() {
 }
 
 const CONTROL_PANEL_CONTEXTS = {
-  scenes: { kicker: "Step 1 · Scene", nextLabel: "Run", nextLayer: "simulation", title: "Scene setup" },
-  simulation: { kicker: "Step 2 · Run", nextLabel: "Results", nextLayer: "results", title: "Simulation control" },
-  visual: { kicker: "Step 3 · Visual", nextLabel: "Edit", nextLayer: "objects", title: "Canvas display" },
-  objects: { kicker: "Step 4 · Edit", nextLabel: "Results", nextLayer: "results", title: "Object editor" },
-  results: { kicker: "Step 5 · Results", nextLabel: "Config", nextLayer: "config", title: "Measurements" },
-  config: { kicker: "Step 6 · Config", nextLabel: "Scene", nextLayer: "scenes", title: "Numerics" },
+  scenes: { compactTitle: "Scene", kicker: "Step 1 · Scene", nextLabel: "Run", nextLayer: "simulation", title: "Scene setup" },
+  simulation: { compactTitle: "Run", kicker: "Step 2 · Run", nextLabel: "Results", nextLayer: "results", title: "Simulation control" },
+  visual: { compactTitle: "Visual", kicker: "Step 3 · Visual", nextLabel: "Edit", nextLayer: "objects", title: "Canvas display" },
+  objects: { compactTitle: "Edit", kicker: "Step 4 · Edit", nextLabel: "Results", nextLayer: "results", title: "Object editor" },
+  results: { compactTitle: "Results", kicker: "Step 5 · Results", nextLabel: "Config", nextLayer: "config", title: "Measurements" },
+  config: { compactTitle: "Config", kicker: "Step 6 · Config", nextLabel: "Scene", nextLayer: "scenes", title: "Numerics" },
 };
 
 function updateControlPanelContext(layerName = activeMobileLayerName() || controlTabLayerName(activeControlTabName())) {
   const context = CONTROL_PANEL_CONTEXTS[layerName] || CONTROL_PANEL_CONTEXTS.scenes;
+  const compactTitleActive = window.matchMedia?.(COMPACT_PANEL_TITLE_MEDIA_QUERY)?.matches ?? false;
+  const panelTitle = compactTitleActive ? context.compactTitle || context.title : context.title;
   if (el.controlPanelKicker) {
     el.controlPanelKicker.textContent = context.kicker;
   }
   if (el.controlPanelTitle) {
-    el.controlPanelTitle.textContent = context.title;
+    el.controlPanelTitle.textContent = panelTitle;
   }
   if (el.controlPanel) {
     el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
@@ -6707,6 +6710,7 @@ window.addEventListener("resize", () => {
     sim.fitCanvas();
   }
   updateVisualControls();
+  updateControlPanelContext();
   sim.render();
 });
 

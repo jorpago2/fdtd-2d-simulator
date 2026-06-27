@@ -529,6 +529,16 @@ html[data-theme="dark"] .results-state-pill[data-health-level] {
   font-variant-numeric: tabular-nums !important;
 }
 
+.simulation-guide-card output,
+.config-status-grid output,
+.config-summary-card output {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.15 !important;
+}
+
 .config-detail-panel {
   grid-column: 1 / -1 !important;
   justify-self: stretch !important;
