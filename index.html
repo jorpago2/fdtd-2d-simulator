@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-focus-status-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-visual-panel-3" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -174,9 +174,9 @@
                 <button class="mode-toggle-button" type="button" data-field-display="electricMag" aria-pressed="false" title="Show electric-field magnitude">|<i>E</i>|</button>
                 <button class="mode-toggle-button" type="button" data-field-display="magneticMag" aria-pressed="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
               </div>
-              <label id="fieldQuiverControl" class="toolbar-switch quiver-switch" title="Overlay vector arrows">
-                <input id="fieldQuiverInput" type="checkbox" />
-                <span id="fieldQuiverLabel"><i>H</i> quiver</span>
+              <label id="fieldQuiverControl" class="toolbar-switch quiver-switch" title="Overlay vector arrows" data-field-quiver-control>
+                <input id="fieldQuiverInput" type="checkbox" data-field-quiver-input />
+                <span id="fieldQuiverLabel" data-field-quiver-label><i>H</i> quiver</span>
               </label>
               <div id="materialPartControl" class="canvas-mode-toggle material-part-toggle" role="group" aria-label="Material component" hidden>
                 <button class="mode-toggle-button is-active" type="button" data-material-part="real" aria-pressed="true">Re</button>
@@ -702,11 +702,14 @@
             <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">
               <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulation</span>
             </button>
+            <button class="control-tab-button" type="button" role="tab" id="tab-visual-button" aria-controls="tab-visual" aria-selected="false" data-control-tab="visual">
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Visual</span>
+            </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-results-button" aria-controls="tab-results" aria-selected="false" data-control-tab="results">
-              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Results</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-config-button" aria-controls="tab-config" aria-selected="false" data-control-tab="config">
-              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Config</span>
+              <span class="nav-step" aria-hidden="true">5</span><span class="nav-label">Config</span>
             </button>
           </div>
           <div class="control-tab-panels">
@@ -998,6 +1001,106 @@
             </div>
           </section>
             </div>
+            <div id="tab-visual" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-visual-button" data-control-panel="visual" hidden>
+<section class="panel-section visual-summary-section">
+              <div class="visual-panel-head">
+                <div>
+                  <p class="panel-kicker">Display</p>
+                  <h2>Visual</h2>
+                </div>
+                <output id="visualGuideProfile" class="visual-profile-pill">Auto</output>
+              </div>
+              <div class="visual-summary-grid" aria-label="Current visual display">
+                <div class="visual-summary-card">
+                  <span>Projection</span>
+                  <output id="visualGuideProjection">2D map</output>
+                </div>
+                <div class="visual-summary-card">
+                  <span>Field</span>
+                  <output id="visualGuideField"><i>E</i><sub>z</sub></output>
+                </div>
+                <div class="visual-summary-card">
+                  <span>Scale</span>
+                  <output id="visualGuideScale">1.00 um · 20 cells/lambda0</output>
+                </div>
+                <div class="visual-summary-card">
+                  <span>Overlays</span>
+                  <output id="visualGuideOverlays">PML, monitors, axes</output>
+                </div>
+              </div>
+              <p id="visualGuideNote" class="simulation-guide-note">Use this panel to choose what physical quantity is shown on the canvas.</p>
+            </section>
+<section class="panel-section visual-field-section">
+              <h2>Field map</h2>
+              <div class="visual-control-stack">
+                <div class="visual-control-row">
+                  <span>Projection</span>
+                  <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Visual panel projection">
+                    <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
+                    <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
+                  </div>
+                </div>
+                <div class="visual-control-row">
+                  <span>Quantity</span>
+                  <div class="canvas-mode-toggle view-toggle" role="group" aria-label="Visual panel quantity">
+                    <button class="mode-toggle-button is-active" type="button" data-view-mode="field" aria-pressed="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
+                    <button class="mode-toggle-button" type="button" data-view-mode="poynting" aria-pressed="false" title="Show Poynting vector flux"><i>S</i></button>
+                    <button class="mode-toggle-button" type="button" data-view-mode="epsilon" aria-pressed="false" title="Show permittivity map">&epsilon;</button>
+                    <button class="mode-toggle-button" type="button" data-view-mode="mu" aria-pressed="false" title="Show permeability map">&mu;</button>
+                  </div>
+                </div>
+                <div class="visual-control-row visual-component-row">
+                  <span>Component</span>
+                  <div class="canvas-mode-toggle field-display-toggle" role="group" aria-label="Visual panel field component">
+                    <button class="mode-toggle-button is-active" type="button" data-field-display="scalar" aria-pressed="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
+                    <button class="mode-toggle-button" type="button" data-field-display="transverseX" aria-pressed="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
+                    <button class="mode-toggle-button" type="button" data-field-display="transverseY" aria-pressed="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
+                    <button class="mode-toggle-button" type="button" data-field-display="electricMag" aria-pressed="false" title="Show electric-field magnitude">|<i>E</i>|</button>
+                    <button class="mode-toggle-button" type="button" data-field-display="magneticMag" aria-pressed="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
+                  </div>
+                </div>
+                <label class="toggle-row visual-quiver-row" title="Overlay vector arrows" data-field-quiver-control>
+                  <input type="checkbox" data-field-quiver-input />
+                  <span data-field-quiver-label><i>H</i> quiver</span>
+                </label>
+              </div>
+            </section>
+<section class="panel-section visual-overlays-section">
+              <h2>Overlays</h2>
+              <div class="canvas-mode-toggle visual-profile-toggle visual-panel-profile" role="group" aria-label="Visual profile">
+                <button class="mode-toggle-button is-active" type="button" data-visual-profile="auto" aria-pressed="true" title="Choose a responsive visual profile">Auto</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="clean" aria-pressed="false" title="Minimal overlays">Clean</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="teaching" aria-pressed="false" title="Show teaching overlays">Teach</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
+              </div>
+              <div class="visual-layer-grid" aria-label="Canvas overlay layers">
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show PML and reflective boundary overlays">
+                  <input type="checkbox" data-visual-layer="boundaries" checked />
+                  <span>PML/bounds</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show monitor lines and incident direction">
+                  <input type="checkbox" data-visual-layer="diagnostics" checked />
+                  <span>L/R/k</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show x and y axis glyph">
+                  <input type="checkbox" data-visual-layer="axes" checked />
+                  <span>axes</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show wavelength scale bar">
+                  <input type="checkbox" data-visual-layer="scale" checked />
+                  <span>scale</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show source markers">
+                  <input type="checkbox" data-visual-layer="sources" checked />
+                  <span>sources</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show color scale">
+                  <input type="checkbox" data-visual-layer="colorbar" checked />
+                  <span>colorbar</span>
+                </label>
+              </div>
+            </section>
+            </div>
             <div id="tab-results" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-results-button" data-control-panel="results" hidden>
 <section class="panel-section diagnostics-section">
               <div class="results-panel-head">
@@ -1243,6 +1346,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-focus-status-1"></script>
+    <script src="app.js?v=20260627-visual-panel-1"></script>
   </body>
 </html>

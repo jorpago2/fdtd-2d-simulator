@@ -2008,6 +2008,10 @@ body {
   color: var(--neu-accent) !important;
 }
 
+.control-tabs {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
 .mobile-layer-button.is-active {
   color: #ffffff !important;
   background: linear-gradient(145deg, var(--neu-accent), #05606a) !important;
@@ -2047,6 +2051,206 @@ body {
 
 .panel-next-button:hover {
   filter: brightness(1.04) !important;
+}
+
+.visual-panel-head,
+.visual-summary-grid,
+.visual-control-stack,
+.visual-layer-grid {
+  min-width: 0 !important;
+}
+
+.visual-panel-head {
+  display: flex !important;
+  align-items: start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+.visual-panel-head > div {
+  min-width: 0 !important;
+}
+
+.visual-panel-head h2,
+.visual-panel-head .panel-kicker {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.visual-profile-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 86px !important;
+  max-width: 126px !important;
+  min-height: 30px !important;
+  border-radius: 999px !important;
+  padding: 6px 10px !important;
+  color: #ffffff !important;
+  background: linear-gradient(145deg, var(--neu-accent), #05606a) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.visual-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.visual-summary-card {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 58px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 82%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 9px 10px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.visual-summary-card span,
+.visual-summary-card output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.visual-summary-card span {
+  color: var(--neu-muted) !important;
+  font-size: 0.64rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+}
+
+.visual-summary-card output {
+  color: var(--neu-ink) !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.visual-control-stack {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.visual-control-row {
+  display: grid !important;
+  grid-template-columns: minmax(72px, 0.7fr) minmax(0, 1.6fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.visual-control-row[hidden] {
+  display: none !important;
+}
+
+.visual-control-row > span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.visual-control-row .canvas-mode-toggle {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.visual-control-row .mode-toggle-button {
+  min-width: 0 !important;
+  padding-inline: 8px !important;
+}
+
+.visual-quiver-row {
+  width: 100% !important;
+}
+
+.visual-panel-profile {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.visual-panel-profile .mode-toggle-button {
+  min-width: 0 !important;
+  padding-inline: 6px !important;
+}
+
+.visual-layer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.visual-panel-layer {
+  display: inline-flex !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  justify-content: flex-start !important;
+  padding-inline: 10px !important;
+}
+
+.visual-panel-layer span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 430px) {
+  .visual-summary-grid,
+  .visual-layer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .visual-summary-card {
+    min-height: 52px !important;
+    padding: 7px 8px !important;
+  }
+
+  .visual-control-row {
+    grid-template-columns: minmax(62px, 0.56fr) minmax(0, 1.6fr) !important;
+    gap: 6px !important;
+  }
+
+  .visual-control-row > span {
+    font-size: 0.66rem !important;
+  }
+
+  .visual-summary-section .simulation-guide-note {
+    padding: 8px 9px !important;
+    font-size: 0.68rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .visual-panel-profile {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .visual-control-row {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 1440px) {

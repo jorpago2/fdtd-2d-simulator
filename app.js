@@ -178,6 +178,14 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
   sources: "visualLayerSources",
   colorbar: "visualLayerColorbar",
 });
+const VISUAL_LAYER_LABELS = Object.freeze({
+  boundaries: "PML/bounds",
+  diagnostics: "L/R/k",
+  axes: "axes",
+  scale: "scale",
+  sources: "sources",
+  colorbar: "colorbar",
+});
 const COMPACT_RESULTS_MEDIA_QUERY = "(max-width: 1180px)";
 const COMPACT_PANEL_TITLE_MEDIA_QUERY = "(max-width: 430px)";
 const VISUAL_PROFILE_LAYERS = Object.freeze({
@@ -581,8 +589,18 @@ const el = {
   fieldQuiverControl: document.getElementById("fieldQuiverControl"),
   fieldQuiverInput: document.getElementById("fieldQuiverInput"),
   fieldQuiverLabel: document.getElementById("fieldQuiverLabel"),
+  fieldQuiverControls: document.querySelectorAll("[data-field-quiver-control]"),
+  fieldQuiverInputs: document.querySelectorAll("[data-field-quiver-input]"),
+  fieldQuiverLabels: document.querySelectorAll("[data-field-quiver-label]"),
   visualProfileButtons: document.querySelectorAll("[data-visual-profile]"),
   visualLayerInputs: document.querySelectorAll("[data-visual-layer]"),
+  visualGuideProfile: document.getElementById("visualGuideProfile"),
+  visualGuideProjection: document.getElementById("visualGuideProjection"),
+  visualGuideField: document.getElementById("visualGuideField"),
+  visualGuideScale: document.getElementById("visualGuideScale"),
+  visualGuideOverlays: document.getElementById("visualGuideOverlays"),
+  visualGuideNote: document.getElementById("visualGuideNote"),
+  visualComponentRows: document.querySelectorAll(".visual-component-row"),
   viewProjectionButtons: document.querySelectorAll("[data-view-projection]"),
   materialPartControl: document.getElementById("materialPartControl"),
   materialPartButtons: document.querySelectorAll("[data-material-part]"),
@@ -896,6 +914,56 @@ function visualLayerEnabled(layer) {
   const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
   if (!stateKey) return true;
   return Boolean(visualLayerSnapshot()[layer]);
+}
+
+function projectionLabel() {
+  return state.viewProjection === "3d" ? "3D surface" : "2D map";
+}
+
+function visualProfileLabel() {
+  const profile = normalizedVisualProfile(state.visualProfile);
+  const labels = {
+    auto: `Auto (${effectiveVisualProfile()})`,
+    clean: "Clean",
+    teaching: "Teach",
+    analysis: "Analysis",
+    custom: "Custom",
+  };
+  return labels[profile] || "Auto";
+}
+
+function visualQuantityLabelHtml() {
+  if (state.viewMode === "epsilon") return `${state.materialPart === "imag" ? "Im" : "Re"}(&epsilon;)`;
+  if (state.viewMode === "mu") return `${state.materialPart === "imag" ? "Im" : "Re"}(&mu;)`;
+  const modePrefix = state.viewMode === "poynting" ? "Poynting" : "Field";
+  return `${modePrefix} · ${fieldDisplayConfig().labelHtml}`;
+}
+
+function visualOverlaySummary() {
+  const enabled = Object.entries(visualLayerSnapshot())
+    .filter(([, active]) => active)
+    .map(([layer]) => VISUAL_LAYER_LABELS[layer] || layer);
+  if (enabled.length === 0) return "none";
+  if (enabled.length <= 3) return enabled.join(", ");
+  return `${enabled.slice(0, 3).join(", ")} +${enabled.length - 3}`;
+}
+
+function visualGuideNoteText() {
+  const profile = effectiveVisualProfile();
+  if (profile === "clean") return "Clean view keeps the field readable on compact screens.";
+  if (profile === "analysis") return "Analysis view keeps monitors and scale visible for measurements.";
+  return "Teaching view shows boundaries, axes, scale and source markers.";
+}
+
+function updateVisualGuideText() {
+  if (el.visualGuideProfile) el.visualGuideProfile.textContent = visualProfileLabel();
+  if (el.visualGuideProjection) el.visualGuideProjection.textContent = projectionLabel();
+  if (el.visualGuideField) el.visualGuideField.innerHTML = visualQuantityLabelHtml();
+  if (el.visualGuideScale) {
+    el.visualGuideScale.textContent = `${state.wavelengthUm.toFixed(2)} um · ${state.cellsPerWavelength} cells/lambda0`;
+  }
+  if (el.visualGuideOverlays) el.visualGuideOverlays.textContent = visualOverlaySummary();
+  if (el.visualGuideNote) el.visualGuideNote.textContent = visualGuideNoteText();
 }
 
 function applyVisualProfile(profile) {
@@ -1480,7 +1548,7 @@ function activeControlTabName() {
 
 const CONTROL_PANEL_CONTEXTS = {
   scenes: { compactTitle: "Scene", kicker: "Step 1 · Scene", nextLabel: "Run", nextLayer: "simulation", title: "Scene setup" },
-  simulation: { compactTitle: "Run", kicker: "Step 2 · Run", nextLabel: "Results", nextLayer: "results", title: "Simulation control" },
+  simulation: { compactTitle: "Run", kicker: "Step 2 · Run", nextLabel: "Visual", nextLayer: "visual", title: "Simulation control" },
   visual: { compactTitle: "Visual", kicker: "Step 3 · Visual", nextLabel: "Edit", nextLayer: "objects", title: "Canvas display" },
   objects: { compactTitle: "Edit", kicker: "Step 4 · Edit", nextLabel: "Results", nextLayer: "results", title: "Object editor" },
   results: { compactTitle: "Results", kicker: "Step 5 · Results", nextLabel: "Config", nextLayer: "config", title: "Measurements" },
@@ -1512,6 +1580,7 @@ function controlTabLayerName(tabName) {
   return {
     scenes: "scenes",
     simulation: "simulation",
+    visual: "visual",
     results: "results",
     config: "config",
   }[tabName] || "scenes";
@@ -1538,10 +1607,7 @@ function activateControlTab(tabName, options = {}) {
 function activateMobileLayer(layerName) {
   const layer = layerName || "scenes";
   if (layer === "visual") {
-    setMobileLayerActive("visual");
-    closeControlDrawer();
-    setCanvasOptionsOpen(true);
-    el.canvasOptionsToggle?.focus?.({ preventScroll: true });
+    activateControlTab("visual", { layer: "visual", focusSelector: ".visual-summary-section" });
     return;
   }
   if (layer === "objects") {
@@ -2566,6 +2632,7 @@ function updateVisualControls() {
   if (el.colorbar) {
     el.colorbar.hidden = !visualLayerEnabled("colorbar");
   }
+  updateVisualGuideText();
 }
 
 function updateFieldDisplayControls() {
@@ -2583,9 +2650,12 @@ function updateFieldDisplayControls() {
   if (el.fieldDisplayControl) {
     el.fieldDisplayControl.hidden = !fieldViewActive;
   }
-  if (el.fieldQuiverControl) {
-    el.fieldQuiverControl.hidden = !fieldViewActive || state.viewProjection !== "2d";
-  }
+  el.visualComponentRows?.forEach((row) => {
+    row.hidden = !fieldViewActive;
+  });
+  el.fieldQuiverControls?.forEach((control) => {
+    control.hidden = !fieldViewActive || state.viewProjection !== "2d";
+  });
   el.fieldDisplayButtons.forEach((button) => {
     const display = button.dataset.fieldDisplay || "scalar";
     button.hidden = poyntingViewActive && !["scalar", "transverseX", "transverseY"].includes(display);
@@ -2596,14 +2666,16 @@ function updateFieldDisplayControls() {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
-  if (el.fieldQuiverInput) {
-    const quiverLetter = poyntingViewActive ? "S" : transverseFieldLetter();
-    el.fieldQuiverInput.checked = state.fieldQuiver;
-    el.fieldQuiverControl.title = `Overlay ${quiverLetter} vector arrows`;
-    if (el.fieldQuiverLabel) {
-      el.fieldQuiverLabel.innerHTML = `${fieldComponentHtml(quiverLetter)} quiver`;
-    }
-  }
+  const quiverLetter = poyntingViewActive ? "S" : transverseFieldLetter();
+  el.fieldQuiverInputs?.forEach((input) => {
+    input.checked = state.fieldQuiver;
+  });
+  el.fieldQuiverControls?.forEach((control) => {
+    control.title = `Overlay ${quiverLetter} vector arrows`;
+  });
+  el.fieldQuiverLabels?.forEach((label) => {
+    label.innerHTML = `${fieldComponentHtml(quiverLetter)} quiver`;
+  });
   if (el.fieldMetricSymbol) {
     el.fieldMetricSymbol.innerHTML = selectedConfig.metricHtml;
   }
@@ -5557,10 +5629,12 @@ el.fieldDisplayButtons.forEach((button) => {
   });
 });
 
-el.fieldQuiverInput?.addEventListener("change", () => {
-  state.fieldQuiver = el.fieldQuiverInput.checked;
-  updateControlText();
-  sim.render();
+el.fieldQuiverInputs?.forEach((input) => {
+  input.addEventListener("change", () => {
+    state.fieldQuiver = input.checked;
+    updateControlText();
+    sim.render();
+  });
 });
 
 el.visualProfileButtons?.forEach((button) => {
