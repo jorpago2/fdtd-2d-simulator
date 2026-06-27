@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-layer-sections-3" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-canvas-actions-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -90,21 +90,47 @@
               <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
               </button>
-              <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭</button>
-              <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
-              <button id="canvasFocusBtn" class="icon-button canvas-focus-toggle" type="button" title="Focus canvas" aria-label="Focus canvas" aria-pressed="false">⛶</button>
               <button
-                id="focusControlsBtn"
-                class="icon-button focus-controls-toggle"
+                id="canvasActionToggle"
+                class="icon-button canvas-action-toggle"
                 type="button"
-                aria-controls="controlPanel"
+                aria-controls="canvasActionMenu"
                 aria-expanded="false"
-                title="Open controls"
-                aria-label="Open controls"
+                aria-label="More simulation actions"
+                title="More simulation actions"
               >
-                ☰
+                ⋮
               </button>
-              <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩</button>
+              <div id="canvasActionMenu" class="canvas-action-menu" aria-label="Simulation actions">
+                <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">
+                  <span aria-hidden="true">⏭</span>
+                  <span class="canvas-action-label">Step</span>
+                </button>
+                <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">
+                  <span aria-hidden="true">↻</span>
+                  <span class="canvas-action-label">Reset</span>
+                </button>
+                <button id="canvasFocusBtn" class="icon-button canvas-focus-toggle" type="button" title="Focus canvas" aria-label="Focus canvas" aria-pressed="false">
+                  <span aria-hidden="true">⛶</span>
+                  <span class="canvas-action-label">Focus</span>
+                </button>
+                <button
+                  id="focusControlsBtn"
+                  class="icon-button focus-controls-toggle"
+                  type="button"
+                  aria-controls="controlPanel"
+                  aria-expanded="false"
+                  title="Open controls"
+                  aria-label="Open controls"
+                >
+                  <span aria-hidden="true">☰</span>
+                  <span class="canvas-action-label">Panel</span>
+                </button>
+                <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">
+                  <span aria-hidden="true">⇩</span>
+                  <span class="canvas-action-label">PNG</span>
+                </button>
+              </div>
             </div>
             <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
               <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
@@ -1137,6 +1163,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-mobile-layer-sections-2"></script>
+    <script src="app.js?v=20260627-canvas-actions-1"></script>
   </body>
 </html>

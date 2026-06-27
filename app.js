@@ -554,6 +554,8 @@ const el = {
   canvasFrame: document.querySelector(".canvas-frame"),
   stage: document.querySelector(".stage"),
   canvasToolbar: document.querySelector(".canvas-toolbar"),
+  canvasActionMenu: document.getElementById("canvasActionMenu"),
+  canvasActionToggle: document.getElementById("canvasActionToggle"),
   canvasViewControls: document.getElementById("canvasViewControls"),
   canvasOptionsToggle: document.getElementById("canvasOptionsToggle"),
   appShell: document.querySelector(".app-shell"),
@@ -1534,6 +1536,7 @@ function setControlDrawerOpen(open) {
     el.controlDrawerBackdrop.hidden = !isOpen;
   }
   if (isOpen) {
+    closeCanvasActionsMenu();
     closeCanvasOptionsMenu();
     if (activeMobileLayerName() === "visual") {
       setMobileLayerActive(controlTabLayerName(activeControlTabName()));
@@ -1550,6 +1553,29 @@ function toggleControlDrawer() {
   setControlDrawerOpen(!el.appShell?.classList.contains("controls-open"));
 }
 
+function canvasActionsMenuActive() {
+  return canvasFocusModeActive() || (window.matchMedia?.("(max-width: 1180px)")?.matches ?? false);
+}
+
+function setCanvasActionsOpen(open) {
+  const isOpen = Boolean(open) && canvasActionsMenuActive();
+  el.stage?.classList.toggle("canvas-actions-open", isOpen);
+  if (el.canvasActionToggle) {
+    el.canvasActionToggle.setAttribute("aria-expanded", String(isOpen));
+  }
+  if (isOpen) {
+    closeCanvasOptionsMenu();
+  }
+}
+
+function closeCanvasActionsMenu() {
+  setCanvasActionsOpen(false);
+}
+
+function toggleCanvasActionsMenu() {
+  setCanvasActionsOpen(!el.stage?.classList.contains("canvas-actions-open"));
+}
+
 function canvasOptionsMenuActive() {
   return canvasFocusModeActive() || (window.matchMedia?.("(max-width: 1180px)")?.matches ?? false);
 }
@@ -1561,6 +1587,7 @@ function setCanvasOptionsOpen(open) {
     el.canvasOptionsToggle.setAttribute("aria-expanded", String(isOpen));
   }
   if (isOpen) {
+    closeCanvasActionsMenu();
     setMobileLayerActive("visual");
   }
 }
@@ -1587,6 +1614,7 @@ function refreshCanvasSizeAfterLayoutChange() {
 function setCanvasFocusMode(enabled) {
   const isEnabled = Boolean(enabled);
   closeContextMenus();
+  closeCanvasActionsMenu();
   closeCanvasOptionsMenu();
   setControlDrawerOpen(false);
   el.appShell?.classList.toggle("canvas-focus-mode", isEnabled);
@@ -5164,6 +5192,15 @@ el.focusControlsBtn?.addEventListener("click", (event) => {
 el.controlDrawerToggle?.addEventListener("click", toggleControlDrawer);
 el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
 el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);
+el.canvasActionToggle?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleCanvasActionsMenu();
+});
+el.canvasActionMenu?.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest("button")) {
+    window.setTimeout(closeCanvasActionsMenu, 0);
+  }
+});
 el.canvasOptionsToggle?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleCanvasOptionsMenu();
@@ -6487,6 +6524,9 @@ el.canvas.addEventListener("pointercancel", endPointer);
 el.canvas.addEventListener("pointerleave", () => clearCanvasHover());
 
 document.addEventListener("pointerdown", (event) => {
+  if (el.stage?.classList.contains("canvas-actions-open") && !el.canvasToolbar?.contains(event.target)) {
+    closeCanvasActionsMenu();
+  }
   if (el.stage?.classList.contains("canvas-options-open") && !el.canvasToolbar?.contains(event.target)) {
     closeCanvasOptionsMenu();
   }
@@ -6501,6 +6541,11 @@ document.addEventListener("pointerdown", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && el.stage?.classList.contains("canvas-actions-open")) {
+    closeCanvasActionsMenu();
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Escape" && el.stage?.classList.contains("canvas-options-open")) {
     closeCanvasOptionsMenu();
     event.preventDefault();
@@ -6535,6 +6580,9 @@ window.addEventListener("resize", () => {
   }
   if (!canvasOptionsMenuActive()) {
     closeCanvasOptionsMenu();
+  }
+  if (!canvasActionsMenuActive()) {
+    closeCanvasActionsMenu();
   }
   const gridChanged = applyResponsiveGridOrientation({ render: false });
   if (!gridChanged) {
