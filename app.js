@@ -583,6 +583,8 @@ const el = {
   playPauseIcon: document.getElementById("playPauseIcon"),
   stepBtn: document.getElementById("stepBtn"),
   resetBtn: document.getElementById("resetBtn"),
+  runStepBtn: document.getElementById("runStepBtn"),
+  runResetBtn: document.getElementById("runResetBtn"),
   canvasFocusBtn: document.getElementById("canvasFocusBtn"),
   focusControlsBtn: document.getElementById("focusControlsBtn"),
   saveBtn: document.getElementById("saveBtn"),
@@ -5117,19 +5119,24 @@ el.playPauseBtn.addEventListener("click", () => {
   updateControlText();
 });
 
-el.stepBtn.addEventListener("click", () => {
+function advanceOneStep() {
   sim.step();
   sim.measure();
   updateStats();
   sim.render();
-});
+}
 
-el.resetBtn.addEventListener("click", () => {
+function resetSimulationFields() {
   sim.resetFields();
   sim.measure();
   updateStats();
   sim.render();
-});
+}
+
+el.stepBtn.addEventListener("click", advanceOneStep);
+el.runStepBtn?.addEventListener("click", advanceOneStep);
+el.resetBtn.addEventListener("click", resetSimulationFields);
+el.runResetBtn?.addEventListener("click", resetSimulationFields);
 
 el.saveBtn.addEventListener("click", () => {
   const link = document.createElement("a");

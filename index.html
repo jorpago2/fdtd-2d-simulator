@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-toolbar-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-run-actions-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -890,6 +890,16 @@
                 <span>Engine</span>
                 <output id="engineValue">JS</output>
               </div>
+              <div class="button-row run-actions-row" aria-label="Secondary run controls">
+                <button id="runStepBtn" class="text-button" type="button" title="Advance one FDTD step">
+                  <span aria-hidden="true">⏭</span>
+                  <span>Step</span>
+                </button>
+                <button id="runResetBtn" class="text-button" type="button" title="Reset electromagnetic fields">
+                  <span aria-hidden="true">↻</span>
+                  <span>Reset</span>
+                </button>
+              </div>
               <label class="control-row">
                 <span>Speed</span>
                 <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
@@ -1127,6 +1137,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-layout-fit-1"></script>
+    <script src="app.js?v=20260627-run-actions-1"></script>
   </body>
 </html>
