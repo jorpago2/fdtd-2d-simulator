@@ -842,7 +842,10 @@ function normalizedVisualProfile(profile) {
 
 function effectiveVisualProfile() {
   const profile = normalizedVisualProfile(state.visualProfile);
-  if (profile === "auto") return mobileCanvasViewportActive() ? "clean" : "teaching";
+  if (profile === "auto") {
+    if (state.uiDepth === "advanced") return "analysis";
+    return mobileCanvasViewportActive() ? "clean" : "teaching";
+  }
   if (profile === "custom") return "custom";
   return profile;
 }
@@ -2281,6 +2284,8 @@ function applyUiDepth(depth, persist = true) {
     el.appShell.dataset.uiDepth = state.uiDepth;
   }
   updateUiDepthControls();
+  updateVisualControls();
+  sim.render();
   if (persist) {
     try {
       window.localStorage?.setItem(UI_DEPTH_STORAGE_KEY, state.uiDepth);
@@ -2364,7 +2369,11 @@ function updateCanvasInteractionState() {
 function updateVisualControls() {
   state.visualProfile = normalizedVisualProfile(state.visualProfile);
   const activeProfile = state.visualProfile;
+  const effectiveProfile = effectiveVisualProfile();
   const activeLayers = visualLayerSnapshot();
+  if (el.appShell) {
+    el.appShell.dataset.effectiveVisualProfile = effectiveProfile;
+  }
   el.visualProfileButtons?.forEach((button) => {
     const active = button.dataset.visualProfile === activeProfile;
     button.classList.toggle("is-active", active);
@@ -6484,6 +6493,7 @@ window.addEventListener("resize", () => {
     updateControlText();
     sim.fitCanvas();
   }
+  updateVisualControls();
   sim.render();
 });
 
