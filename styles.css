@@ -5174,3 +5174,79 @@ html[data-theme="dark"] .scene-empty-state {
     font-size: 0.68rem !important;
   }
 }
+
+/* Results dashboard */
+.diagnostics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 10px !important;
+  border-radius: 20px !important;
+}
+
+.diagnostic-metric {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 70px !important;
+  border: 1px solid var(--neu-border) !important;
+  border-radius: 17px !important;
+  padding: 10px 11px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.diagnostic-metric span,
+.diagnostic-metric output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.diagnostic-metric span {
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+}
+
+.diagnostic-metric output {
+  color: var(--neu-ink) !important;
+  text-align: left !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.diagnostic-metric:nth-child(5),
+.diagnostic-metric:nth-child(6) {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-accent) 10%, var(--neu-surface)), var(--neu-surface)) !important;
+}
+
+.sweep-panel,
+.analysis-panel {
+  display: grid !important;
+  gap: 11px !important;
+}
+
+.analysis-panel-header {
+  gap: 10px !important;
+}
+
+.sweep-chart,
+.analysis-chart {
+  min-height: 150px !important;
+}
+
+html[data-theme="dark"] .diagnostic-metric {
+  background-color: var(--neu-surface) !important;
+}
+
+@media (max-width: 420px) {
+  .diagnostics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

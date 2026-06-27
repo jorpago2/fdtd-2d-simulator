@@ -11,7 +11,7 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-3" />
+    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-4" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -797,18 +797,30 @@
                 <span>Line monitors</span>
               </label>
               <div class="diagnostics-grid">
-                <span>&theta;<sub>k</sub></span>
-                <output id="diagnosticAngleOutput">0°</output>
-                <span><i>P</i><sub>inc</sub></span>
-                <output id="fluxLeftOutput">0</output>
-                <span><i>P</i><sub>ref</sub></span>
-                <output id="reflectedPowerOutput">0</output>
-                <span><i>P</i><sub>trn</sub></span>
-                <output id="fluxRightOutput">0</output>
-                <span><i>R</i><sub>est</sub></span>
-                <output id="reflectanceOutput">0</output>
-                <span><i>T</i><sub>est</sub></span>
-                <output id="transmittanceOutput">0</output>
+                <div class="diagnostic-metric">
+                  <span>&theta;<sub>k</sub></span>
+                  <output id="diagnosticAngleOutput">0°</output>
+                </div>
+                <div class="diagnostic-metric">
+                  <span><i>P</i><sub>inc</sub></span>
+                  <output id="fluxLeftOutput">0</output>
+                </div>
+                <div class="diagnostic-metric">
+                  <span><i>P</i><sub>ref</sub></span>
+                  <output id="reflectedPowerOutput">0</output>
+                </div>
+                <div class="diagnostic-metric">
+                  <span><i>P</i><sub>trn</sub></span>
+                  <output id="fluxRightOutput">0</output>
+                </div>
+                <div class="diagnostic-metric">
+                  <span><i>R</i><sub>est</sub></span>
+                  <output id="reflectanceOutput">0</output>
+                </div>
+                <div class="diagnostic-metric">
+                  <span><i>T</i><sub>est</sub></span>
+                  <output id="transmittanceOutput">0</output>
+                </div>
               </div>
               <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
               <div class="sweep-panel">
