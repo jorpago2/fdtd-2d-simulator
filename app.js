@@ -1908,6 +1908,12 @@ let dragSourceOffset = null;
 let dragMaterialPointerId = null;
 let materialDragState = null;
 const activePointers = new Map();
+const TOUCH_DRAG_START_PX = 8;
+const TOUCH_TAP_MAX_DISTANCE_PX = 10;
+const TOUCH_DOUBLE_TAP_MS = 320;
+const TOUCH_DOUBLE_TAP_DISTANCE_PX = 34;
+let pendingTouchInteraction = null;
+let lastCanvasTouchTap = null;
 let framesSinceMeasure = 0;
 let simStepAccumulator = 0;
 let sourceMenuMode = "add";
@@ -5736,7 +5742,80 @@ function updatePan(event) {
   return true;
 }
 
-function beginSourceDrag(event, source) {
+function clearPendingTouchInteraction() {
+  pendingTouchInteraction = null;
+}
+
+function beginPendingTouchInteraction(event, kind, data = {}) {
+  pendingTouchInteraction = {
+    pointerId: event.pointerId,
+    kind,
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false,
+    ...data,
+  };
+  if (kind !== "empty") {
+    lastCanvasTouchTap = null;
+  }
+}
+
+function pendingTouchDistance(event) {
+  if (!pendingTouchInteraction || pendingTouchInteraction.pointerId !== event.pointerId) return 0;
+  return Math.hypot(event.clientX - pendingTouchInteraction.startX, event.clientY - pendingTouchInteraction.startY);
+}
+
+function markPendingTouchMoved(event, threshold = TOUCH_TAP_MAX_DISTANCE_PX) {
+  if (!pendingTouchInteraction || pendingTouchInteraction.pointerId !== event.pointerId) return false;
+  if (pendingTouchDistance(event) >= threshold) {
+    pendingTouchInteraction.moved = true;
+  }
+  return pendingTouchInteraction.moved;
+}
+
+function handleCanvasTouchTap(event, interaction) {
+  if (!interaction || interaction.kind !== "empty" || interaction.moved || event.pointerType !== "touch" || event.type !== "pointerup") {
+    return false;
+  }
+  const now = event.timeStamp || performance.now();
+  const currentTap = { x: interaction.startX, y: interaction.startY, time: now };
+  const previousTap = lastCanvasTouchTap;
+  lastCanvasTouchTap = currentTap;
+  if (!previousTap) return false;
+  const elapsed = now - previousTap.time;
+  const distance = Math.hypot(currentTap.x - previousTap.x, currentTap.y - previousTap.y);
+  if (elapsed > TOUCH_DOUBLE_TAP_MS || distance > TOUCH_DOUBLE_TAP_DISTANCE_PX) return false;
+  lastCanvasTouchTap = null;
+  closeContextMenus();
+  sim.resetView();
+  updateViewInteraction();
+  return true;
+}
+
+function promotePendingTouchDrag(event) {
+  if (!pendingTouchInteraction || pendingTouchInteraction.pointerId !== event.pointerId || pendingTouchInteraction.kind === "empty") {
+    return false;
+  }
+  if (pendingTouchDistance(event) < TOUCH_DRAG_START_PX) return false;
+  const interaction = pendingTouchInteraction;
+  interaction.moved = true;
+  clearPendingTouchInteraction();
+  if (interaction.kind === "source") {
+    const source = state.sources.find((candidate) => candidate.id === interaction.sourceId);
+    if (!source) return true;
+    beginSourceDrag(event, source, interaction.startX, interaction.startY);
+    updateSourceDrag(event);
+    return true;
+  }
+  if (interaction.kind === "material" && interaction.region) {
+    beginMaterialDrag(event, interaction.region, interaction.startX, interaction.startY);
+    updateMaterialDrag(event);
+    return true;
+  }
+  return true;
+}
+
+function beginSourceDrag(event, source, originClientX = event.clientX, originClientY = event.clientY) {
   disableResponsiveGridOrientation();
   closeContextMenus();
   clearMaterialSelection(false);
@@ -5744,7 +5823,7 @@ function beginSourceDrag(event, source) {
   updateInspector();
   dragSourcePointerId = event.pointerId;
   dragSourceId = source.id;
-  const point = sim.clientToGridFloat(event.clientX, event.clientY);
+  const point = sim.clientToGridFloat(originClientX, originClientY);
   dragSourceOffset = {
     x: sim.sourceXCell(source) - point.x,
     y: sim.sourceYCell(source) - point.y,
@@ -5779,12 +5858,12 @@ function endSourceDrag(event) {
   dragSourceOffset = null;
 }
 
-function beginMaterialDrag(event, region) {
+function beginMaterialDrag(event, region, originClientX = event.clientX, originClientY = event.clientY) {
   disableResponsiveGridOrientation();
   closeContextMenus();
   selectMaterialRegion(region, false);
   dragMaterialPointerId = event.pointerId;
-  const point = sim.clientToGridFloat(event.clientX, event.clientY);
+  const point = sim.clientToGridFloat(originClientX, originClientY);
   materialDragState = {
     region,
     base: sim.snapshotMaterialArraysWithoutRegion(region),
@@ -5881,12 +5960,16 @@ el.canvas.addEventListener("pointerdown", (event) => {
   if (activePointers.size >= 2) {
     pointerDown = false;
     paintPointerId = null;
+    panPointerId = null;
+    lastPanPoint = null;
     dragSourcePointerId = null;
     dragSourceId = null;
     dragSourceOffset = null;
     dragMaterialPointerId = null;
     materialDragState = null;
     pinchState = null;
+    clearPendingTouchInteraction();
+    lastCanvasTouchTap = null;
     beginPinchGesture();
     event.preventDefault();
     return;
@@ -5908,17 +5991,35 @@ el.canvas.addEventListener("pointerdown", (event) => {
 
   if (event.button === 0 || event.pointerType === "touch") {
     if (state.canvasMode === "select") {
+      const isTouchPointer = event.pointerType === "touch";
       const source = sim.sourceAtClientPoint(event.clientX, event.clientY);
       closeContextMenus();
       if (source && !event.shiftKey && !event.altKey) {
-        beginSourceDrag(event, source);
+        if (isTouchPointer) {
+          clearMaterialSelection(false);
+          state.selectedSourceId = source.id;
+          updateInspector();
+          beginPendingTouchInteraction(event, "source", { sourceId: source.id });
+          sim.render();
+        } else {
+          beginSourceDrag(event, source);
+        }
       } else {
         const region = selectMaterialRegionAt(event.clientX, event.clientY, false);
         state.selectedSourceId = null;
         if (region && !event.shiftKey && !event.altKey) {
-          beginMaterialDrag(event, region);
+          if (isTouchPointer) {
+            beginPendingTouchInteraction(event, "material", { region });
+            sim.render();
+          } else {
+            beginMaterialDrag(event, region);
+          }
         } else {
           clearMaterialSelection(false);
+          if (isTouchPointer) {
+            beginPan(event);
+            beginPendingTouchInteraction(event, "empty");
+          }
           sim.render();
         }
       }
@@ -5948,12 +6049,27 @@ el.canvas.addEventListener("pointermove", (event) => {
   if (activePointers.size >= 2) {
     pointerDown = false;
     paintPointerId = null;
+    panPointerId = null;
+    lastPanPoint = null;
     dragSourcePointerId = null;
     dragSourceId = null;
     dragSourceOffset = null;
     dragMaterialPointerId = null;
     materialDragState = null;
+    clearPendingTouchInteraction();
+    lastCanvasTouchTap = null;
     updatePinchGesture();
+    event.preventDefault();
+    return;
+  }
+
+  if (promotePendingTouchDrag(event)) {
+    event.preventDefault();
+    return;
+  }
+
+  if (pendingTouchInteraction?.pointerId === event.pointerId && pendingTouchInteraction.kind !== "empty") {
+    markPendingTouchMoved(event, TOUCH_DRAG_START_PX);
     event.preventDefault();
     return;
   }
@@ -5966,6 +6082,10 @@ el.canvas.addEventListener("pointermove", (event) => {
   if (updateMaterialDrag(event)) {
     event.preventDefault();
     return;
+  }
+
+  if (pendingTouchInteraction?.pointerId === event.pointerId && pendingTouchInteraction.kind === "empty") {
+    markPendingTouchMoved(event);
   }
 
   if (updatePan(event)) {
@@ -5983,7 +6103,17 @@ el.canvas.addEventListener("pointermove", (event) => {
 });
 
 function endPointer(event) {
+  const finishedTouchInteraction =
+    pendingTouchInteraction?.pointerId === event.pointerId ? pendingTouchInteraction : null;
   activePointers.delete(event.pointerId);
+  if (finishedTouchInteraction) {
+    if (event.type !== "pointerup" || (finishedTouchInteraction.kind === "empty" && finishedTouchInteraction.moved)) {
+      lastCanvasTouchTap = null;
+    } else {
+      handleCanvasTouchTap(event, finishedTouchInteraction);
+    }
+    clearPendingTouchInteraction();
+  }
   endSourceDrag(event);
   endMaterialDrag(event);
   if (paintPointerId === event.pointerId) {
