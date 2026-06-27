@@ -5327,6 +5327,109 @@ html[data-theme="dark"] .simulation-guide-note {
   background-color: var(--neu-surface-low) !important;
 }
 
+.inspector-section {
+  align-content: start !important;
+}
+
+.inspector-head {
+  display: grid !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  border-radius: var(--neu-radius-card) !important;
+  padding: 12px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.inspector-kind {
+  display: inline-flex !important;
+  width: fit-content !important;
+  min-height: 24px !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  padding: 0 9px !important;
+  color: var(--neu-accent) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+}
+
+.inspector-head strong {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  color: var(--neu-ink) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.25 !important;
+}
+
+.inspector-details {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inspector-details div {
+  display: grid !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  min-height: 56px !important;
+  border: 1px solid var(--neu-border) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 9px 10px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.inspector-details span,
+.inspector-details output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.inspector-details span {
+  color: var(--neu-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+}
+
+.inspector-details output {
+  color: var(--neu-ink) !important;
+  text-align: left !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.inspector-note {
+  margin: 0 !important;
+  border-radius: var(--neu-radius-note) !important;
+  padding: 10px 12px !important;
+  color: var(--neu-muted) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.38 !important;
+}
+
+.inspector-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: var(--neu-control-gap) !important;
+}
+
+html[data-theme="dark"] .inspector-head,
+html[data-theme="dark"] .inspector-note {
+  background-color: var(--neu-surface-low) !important;
+}
+
+html[data-theme="dark"] .inspector-details div {
+  background-color: var(--neu-surface) !important;
+}
+
 @media (min-width: 1121px) {
   .control-panel .control-tab-panel.is-active {
     grid-template-columns: 1fr !important;

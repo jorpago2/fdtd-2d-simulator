@@ -11,7 +11,7 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-6" />
+    <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -760,6 +760,23 @@
               </div>
               <p id="simGuideWarning" class="simulation-guide-note">Ready</p>
             </section>
+<section class="panel-section inspector-section" aria-live="polite">
+              <h2>Inspector</h2>
+              <div class="inspector-head">
+                <span id="inspectorKind" class="inspector-kind">Scene</span>
+                <strong id="inspectorTitle">No explicit selection</strong>
+              </div>
+              <div id="inspectorDetails" class="inspector-details">
+                <div><span>Preset</span><output>Empty</output></div>
+                <div><span>Sources</span><output>1</output></div>
+                <div><span>Medium</span><output>Air</output></div>
+              </div>
+              <p id="inspectorNote" class="inspector-note">Select a source or material region on the canvas.</p>
+              <div class="inspector-actions">
+                <button id="inspectorEditBtn" class="text-button" type="button" disabled>Edit selected</button>
+                <button id="inspectorClearBtn" class="text-button" type="button" disabled>Clear selection</button>
+              </div>
+            </section>
 <section class="panel-section run-section">
               <h2>Run</h2>
               <div class="solver-row">
@@ -954,7 +971,7 @@
     <script src="src/fdtd-sources.js?v=20260627-split-7"></script>
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
-    <script src="src/fdtd-rendering.js?v=20260627-split-5"></script>
-    <script src="app.js?v=20260627-neu-tabs-5"></script>
+    <script src="src/fdtd-rendering.js?v=20260627-uiux-1"></script>
+    <script src="app.js?v=20260627-uiux-1"></script>
   </body>
 </html>

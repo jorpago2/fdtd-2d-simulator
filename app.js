@@ -182,6 +182,7 @@ const state = {
   viewProjection: "2d",
   materialPart: "real",
   canvasMode: "select",
+  hoveredSourceId: null,
   sources: [{ id: 1, ...defaultSourceConfig }],
   selectedSourceId: 1,
   nextSourceId: 2,
@@ -253,6 +254,7 @@ const state = {
 document.documentElement.dataset.theme = state.theme;
 
 let selectedMaterialRegion = null;
+let hoveredMaterialRegion = null;
 
 function normalizeBoundaryMode(mode) {
   return mode === "reflective" ? "reflective" : "absorbing";
@@ -570,6 +572,12 @@ const el = {
   simGuideMaterial: document.getElementById("simGuideMaterial"),
   simGuideCfl: document.getElementById("simGuideCfl"),
   simGuideWarning: document.getElementById("simGuideWarning"),
+  inspectorKind: document.getElementById("inspectorKind"),
+  inspectorTitle: document.getElementById("inspectorTitle"),
+  inspectorDetails: document.getElementById("inspectorDetails"),
+  inspectorNote: document.getElementById("inspectorNote"),
+  inspectorEditBtn: document.getElementById("inspectorEditBtn"),
+  inspectorClearBtn: document.getElementById("inspectorClearBtn"),
   fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
   fieldMetricUnit: document.getElementById("fieldMetricUnit"),
   energyValue: document.getElementById("energyValue"),
@@ -826,6 +834,184 @@ function selectScenePreset(value) {
   applySelectedPreset();
 }
 
+function setInspectorDetails(rows) {
+  if (!el.inspectorDetails) return;
+  el.inspectorDetails.replaceChildren();
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    const labelNode = document.createElement("span");
+    const valueNode = document.createElement("output");
+    labelNode.textContent = label;
+    valueNode.textContent = value;
+    row.append(labelNode, valueNode);
+    el.inspectorDetails.appendChild(row);
+  });
+}
+
+function materialRegionSignature(region) {
+  if (!region?.bounds) return "";
+  const b = region.bounds;
+  return `${region.cells?.length || 0}:${b.minX},${b.minY},${b.maxX},${b.maxY}`;
+}
+
+function materialRegionStats(region) {
+  const cells = region?.cells || [];
+  if (cells.length === 0) return null;
+  const sums = {
+    eps: 0,
+    loss: 0,
+    epsY: 0,
+    mu: 0,
+    muLoss: 0,
+    sigma: 0,
+  };
+  const features = new Set();
+  for (const cell of cells) {
+    const idx = sim.id(cell.x, cell.y);
+    sums.eps += sim.eps[idx] || 0;
+    sums.loss += sim.loss[idx] || 0;
+    sums.epsY += sim.epsY[idx] || 0;
+    sums.mu += sim.mu[idx] || 0;
+    sums.muLoss += sim.muLoss[idx] || 0;
+    sums.sigma += sim.conductivity[idx] || 0;
+    if (sim.material[idx] === 2) features.add("PEC");
+    if (sim.dispersiveMaterial[idx] || sim.muDispersiveMaterial[idx]) features.add("ADE");
+    if (sim.nonlinearMaterial[idx]) features.add("Kerr");
+    if (sim.modulatedMaterial[idx]) features.add("modulated");
+    if (sim.phaseChangeMaterial[idx]) features.add("memory");
+    if (sim.gyrotropicMaterial[idx]) features.add("gyro");
+    if (sim.bianisotropicMaterial[idx]) features.add("bianiso");
+    if (sim.electricTensorMaterial[idx]) features.add("tensor");
+    if (sim.conductivity[idx] > 0 || sim.conductivityY[idx] > 0) features.add("sigma");
+  }
+  const inv = 1 / cells.length;
+  return {
+    eps: sums.eps * inv,
+    loss: sums.loss * inv,
+    epsY: sums.epsY * inv,
+    mu: sums.mu * inv,
+    muLoss: sums.muLoss * inv,
+    sigma: sums.sigma * inv,
+    features: Array.from(features),
+  };
+}
+
+function sourceClientPoint(source) {
+  const rect = el.canvas.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const x = sim.gridToCanvasX(sim.sourceXCell(source) + 0.5) / dpr + rect.left;
+  const y = sim.gridToCanvasY(sim.sourceYCell(source) + 0.5) / dpr + rect.top;
+  return { x, y };
+}
+
+function materialRegionClientPoint(region) {
+  const rect = el.canvas.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const b = region.bounds;
+  const centerX = (b.minX + b.maxX + 1) * 0.5;
+  const centerY = (b.minY + b.maxY + 1) * 0.5;
+  return {
+    x: sim.gridToCanvasX(centerX) / dpr + rect.left,
+    y: sim.gridToCanvasY(centerY) / dpr + rect.top,
+  };
+}
+
+function clearCanvasHover(render = true) {
+  if (state.hoveredSourceId == null && !hoveredMaterialRegion) return;
+  state.hoveredSourceId = null;
+  hoveredMaterialRegion = null;
+  if (render) sim.render();
+}
+
+function updateCanvasHover(event) {
+  if (state.canvasMode !== "select" || pointerDown || dragSourcePointerId != null || dragMaterialPointerId != null || panPointerId != null) {
+    clearCanvasHover();
+    return;
+  }
+  const source = sim.sourceAtClientPoint(event.clientX, event.clientY);
+  const previousSourceId = state.hoveredSourceId;
+  const previousRegionKey = materialRegionSignature(hoveredMaterialRegion);
+  if (source) {
+    state.hoveredSourceId = source.id;
+    hoveredMaterialRegion = null;
+  } else {
+    state.hoveredSourceId = null;
+    hoveredMaterialRegion = sim.findMaterialRegionAtClientPoint(event.clientX, event.clientY);
+  }
+  const nextRegionKey = materialRegionSignature(hoveredMaterialRegion);
+  if (previousSourceId !== state.hoveredSourceId || previousRegionKey !== nextRegionKey) {
+    sim.render();
+  }
+}
+
+function updateInspector() {
+  if (!el.inspectorKind || !el.inspectorTitle || !el.inspectorDetails) return;
+  const source = explicitlySelectedSource();
+  const region = selectedMaterialRegion;
+  const hasRegion = Boolean(region?.cells?.length);
+  const hasSource = Boolean(source) && !hasRegion;
+
+  el.inspectorEditBtn.disabled = !(hasSource || hasRegion);
+  el.inspectorClearBtn.disabled = !(hasSource || hasRegion);
+
+  if (hasRegion) {
+    const stats = materialRegionStats(region);
+    const b = region.bounds;
+    el.inspectorKind.textContent = "Material";
+    el.inspectorTitle.textContent = `${dominantMaterialKind(region).toUpperCase()} region`;
+    setInspectorDetails([
+      ["Cells", String(region.cells.length)],
+      ["Bounds", `${formatLambda(cellsToLambda(b.minX))}-${formatLambda(cellsToLambda(b.maxX + 1))} λ0`],
+      ["Height", `${formatLambda(cellsToLambda(b.maxY - b.minY + 1))} λ0`],
+      ["εx avg", stats ? formatFieldValue(stats.eps) : "-"],
+      ["εy avg", stats ? formatFieldValue(stats.epsY) : "-"],
+      ["μ avg", stats ? formatFieldValue(stats.mu) : "-"],
+      ["Loss", stats ? formatFieldValue(stats.loss) : "-"],
+      ["Flags", stats?.features.length ? stats.features.join(", ") : "static"],
+    ]);
+    if (el.inspectorNote) {
+      el.inspectorNote.textContent = "Region values are averaged over selected grid cells.";
+    }
+    return;
+  }
+
+  if (hasSource) {
+    el.inspectorKind.textContent = "Source";
+    el.inspectorTitle.textContent = `Source ${source.id}: ${sourceShapeLabel(source.shape)}`;
+    setInspectorDetails([
+      ["Time", sourceTypeLabel(source.type)],
+      ["Coupling", sourceCouplingLabel(source.shape)],
+      ["x / λ0", formatLambda(source.xLambda)],
+      ["y / λ0", formatLambda(source.yLambda)],
+      ["f Δt", source.frequency.toFixed(3)],
+      ["Amplitude", source.amplitude.toFixed(2)],
+      ["Phase", `${Math.round(source.phaseDeg || 0)} deg`],
+      ["Angle", `${Math.round(source.angleDeg || 0)} deg`],
+    ]);
+    if (el.inspectorNote) {
+      el.inspectorNote.textContent = sourceUsesWidth(source.shape)
+        ? `FWHM / λ0 ${formatLambda(source.widthLambda)}.`
+        : "Point or line source; spatial width control is inactive.";
+    }
+    return;
+  }
+
+  const presetLabel = el.presetInput?.selectedOptions?.[0]?.textContent?.trim() || state.preset;
+  el.inspectorKind.textContent = "Scene";
+  el.inspectorTitle.textContent = "No explicit selection";
+  setInspectorDetails([
+    ["Preset", presetLabel],
+    ["Sources", String(state.sources.length)],
+    ["Grid", `${sim.nx} x ${sim.ny}`],
+    ["Mode", solverModeLabel()],
+    ["Boundary", boundarySummaryLabel()],
+    ["Engine", sim.engineLabel()],
+  ]);
+  if (el.inspectorNote) {
+    el.inspectorNote.textContent = "Select a source or material region on the canvas.";
+  }
+}
+
 function activateControlTab(tabName) {
   const selected = tabName || "scenes";
   el.controlTabButtons?.forEach((button) => {
@@ -1030,6 +1216,7 @@ function clearMaterialSelection(render = true) {
   selectedMaterialRegion = null;
   dragMaterialPointerId = null;
   materialDragState = null;
+  updateInspector();
   if (render) sim.render();
 }
 
@@ -1066,6 +1253,7 @@ function selectMaterialRegion(region, render = true) {
     state.selectedSourceId = null;
     state.brush = dominantMaterialKind(region);
   }
+  updateInspector();
   if (render) {
     updateControlText();
     sim.render();
@@ -1977,6 +2165,7 @@ function updateControlText() {
     el.modePill.textContent = `Sources: ${sourceLabel} - ${boundary} boundary`;
   }
   updateMaterialWarning();
+  updateInspector();
   updateAllRangeProgress();
   updateSweepControls();
   updateAnalysisControls();
@@ -3785,6 +3974,26 @@ el.sceneSearchInput?.addEventListener("input", () => {
   renderSceneCards();
 });
 
+el.inspectorEditBtn?.addEventListener("click", () => {
+  const source = explicitlySelectedSource();
+  if (selectedMaterialRegion) {
+    const point = materialRegionClientPoint(selectedMaterialRegion);
+    openBrushMenuAt(point.x, point.y, { mode: "region" });
+    return;
+  }
+  if (source) {
+    const point = sourceClientPoint(source);
+    openSourceMenuAt(point.x, point.y, source);
+  }
+});
+
+el.inspectorClearBtn?.addEventListener("click", () => {
+  state.selectedSourceId = null;
+  clearMaterialSelection(false);
+  updateControlText();
+  sim.render();
+});
+
 el.themeButtons?.forEach((button) => {
   button.addEventListener("click", () => {
     applyTheme(button.dataset.themeChoice);
@@ -4305,6 +4514,7 @@ el.dispersionTauInput.addEventListener("change", handleCustomMaterialInput);
 
 function applySelectedPreset() {
   clearMaterialSelection(false);
+  clearCanvasHover(false);
   state.preset = el.presetInput.value;
   sim.applyPreset(state.preset);
   sim.measure();
@@ -4329,6 +4539,7 @@ el.slabThicknessInput.addEventListener("input", () => {
 
 function applyBoundaryMode(mode, side = boundaryMenuSide) {
   clearMaterialSelection(false);
+  clearCanvasHover(false);
   const previousMode = boundarySideMode(side);
   setBoundarySideMode(side, mode);
   sim.buildBoundary();
@@ -4351,6 +4562,7 @@ el.boundaryMenuInput.addEventListener("change", () => {
 
 function applyGridSizeFromInputs() {
   clearMaterialSelection(false);
+  clearCanvasHover(false);
   const nx = clampInt(el.gridNxInput.value, 80, MAX_GRID.nx);
   const ny = clampInt(el.gridNyInput.value, 60, MAX_GRID.ny);
   state.gridNx = nx;
@@ -4565,6 +4777,7 @@ function beginSourceDrag(event, source) {
   closeContextMenus();
   clearMaterialSelection(false);
   state.selectedSourceId = source.id;
+  updateInspector();
   dragSourcePointerId = event.pointerId;
   dragSourceId = source.id;
   const point = sim.clientToGridFloat(event.clientX, event.clientY);
@@ -4691,6 +4904,7 @@ el.canvas.addEventListener("contextmenu", (event) => {
 });
 
 el.canvas.addEventListener("pointerdown", (event) => {
+  clearCanvasHover(false);
   storePointer(event);
   try {
     el.canvas.setPointerCapture(event.pointerId);
@@ -4795,7 +5009,10 @@ el.canvas.addEventListener("pointermove", (event) => {
   if (pointerDown && paintPointerId === event.pointerId) {
     paintFromEvent(event);
     event.preventDefault();
+    return;
   }
+
+  updateCanvasHover(event);
 });
 
 function endPointer(event) {
@@ -4819,6 +5036,7 @@ function endPointer(event) {
 
 el.canvas.addEventListener("pointerup", endPointer);
 el.canvas.addEventListener("pointercancel", endPointer);
+el.canvas.addEventListener("pointerleave", () => clearCanvasHover());
 
 document.addEventListener("pointerdown", (event) => {
   const sourceHidden = el.sourceMenu?.hidden ?? true;

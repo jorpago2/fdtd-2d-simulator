@@ -317,6 +317,7 @@ render() {
   );
   this.drawPmlOverlay();
   this.drawDiagnosticsOverlay();
+  this.drawMaterialHoverOverlay();
   this.drawMaterialSelectionOverlay();
   this.drawFieldQuiverOverlay();
   this.drawReferenceOverlay();
@@ -350,6 +351,32 @@ drawMaterialSelectionOverlay() {
   ctx.textBaseline = "bottom";
   const label = `${selectedMaterialRegion.cells.length} cells`;
   ctx.fillText(label, rect.left + 6 * dpr, Math.max(14 * dpr, rect.top - 5 * dpr));
+  ctx.restore();
+},
+
+drawMaterialHoverOverlay() {
+  if (!hoveredMaterialRegion || hoveredMaterialRegion.cells.length === 0) return;
+  if (selectedMaterialRegion && materialRegionSignature(hoveredMaterialRegion) === materialRegionSignature(selectedMaterialRegion)) return;
+  const rect = this.gridRectToCanvas(
+    hoveredMaterialRegion.bounds.minX,
+    hoveredMaterialRegion.bounds.minY,
+    hoveredMaterialRegion.bounds.maxX + 1,
+    hoveredMaterialRegion.bounds.maxY + 1
+  );
+  if (!rect) return;
+  const ctx = this.ctx;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  ctx.save();
+  ctx.fillStyle = "rgba(69, 192, 201, 0.08)";
+  ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
+  ctx.strokeStyle = "rgba(69, 192, 201, 0.78)";
+  ctx.lineWidth = Math.max(1.25 * dpr, 1);
+  ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
+  ctx.fillStyle = "rgba(11, 31, 36, 0.84)";
+  ctx.font = `${10.5 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
+  ctx.fillText("material", rect.left + 6 * dpr, Math.max(13 * dpr, rect.top - 4 * dpr));
   ctx.restore();
 },
 
@@ -721,6 +748,8 @@ drawSourceMarker(source) {
   this.ctx.lineWidth = Math.max(1, window.devicePixelRatio || 1);
   if (source.id === state.selectedSourceId) {
     this.drawSourceSelectionHalo(x, y, source);
+  } else if (source.id === state.hoveredSourceId) {
+    this.drawSourceHoverHalo(x, y, source);
   }
   if (source.shape === "line" || source.shape === "evanescentLine") {
     this.ctx.beginPath();
@@ -766,6 +795,23 @@ drawSourceSelectionHalo(x, y, source) {
   ctx.lineWidth = 2 * dpr;
   ctx.setLineDash([5 * dpr, 4 * dpr]);
   ctx.stroke();
+  ctx.restore();
+},
+
+drawSourceHoverHalo(x, y, source) {
+  const ctx = this.ctx;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const radius =
+    localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)
+      ? this.sourceFwhmCanvasRadius(source) + 5 * dpr
+      : 16 * dpr;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(69, 192, 201, 0.78)";
+  ctx.lineWidth = 1.5 * dpr;
+  ctx.stroke();
+  this.drawOverlayLabel(`S${source.id}`, x + radius + 10 * dpr, y, "left");
   ctx.restore();
 },
 
