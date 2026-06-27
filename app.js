@@ -713,6 +713,11 @@ const el = {
   stabilityMediaValue: document.getElementById("stabilityMediaValue"),
   stabilityEstimateValue: document.getElementById("stabilityEstimateValue"),
   stabilityNote: document.getElementById("stabilityNote"),
+  configScaleOutput: document.getElementById("configScaleOutput"),
+  configGridOutput: document.getElementById("configGridOutput"),
+  configBoundaryOutput: document.getElementById("configBoundaryOutput"),
+  configCflOutput: document.getElementById("configCflOutput"),
+  configStabilityOutput: document.getElementById("configStabilityOutput"),
   exportSceneBtn: document.getElementById("exportSceneBtn"),
   importSceneBtn: document.getElementById("importSceneBtn"),
   importSceneFileInput: document.getElementById("importSceneFileInput"),
@@ -2148,6 +2153,10 @@ function updateStabilitySummary() {
   el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / lambda0`;
   el.stabilityMediaValue.textContent = media.join(", ");
   el.stabilityEstimateValue.textContent = level;
+  if (el.configStabilityOutput) {
+    el.configStabilityOutput.textContent = level;
+    el.configStabilityOutput.classList.toggle("is-warning", level !== "stable");
+  }
   if (el.stabilityNote) {
     const base = `Explicit 2D Yee check: S must stay below 1/sqrt(2). Current S=${COURANT.toFixed(2)}.`;
     el.stabilityNote.textContent =
@@ -2981,6 +2990,19 @@ function updateControlText() {
   }
   if (el.topBoundaryValue) {
     el.topBoundaryValue.textContent = boundary;
+  }
+  if (el.configScaleOutput) {
+    el.configScaleOutput.textContent = `${state.wavelengthUm.toFixed(2)} um · ${state.cellsPerWavelength} cells/lambda0`;
+  }
+  if (el.configGridOutput) {
+    el.configGridOutput.textContent = compactGridSummary;
+    el.configGridOutput.title = fullGridSummary;
+  }
+  if (el.configBoundaryOutput) {
+    el.configBoundaryOutput.textContent = boundary;
+  }
+  if (el.configCflOutput) {
+    el.configCflOutput.textContent = `S = ${COURANT.toFixed(2)}`;
   }
   const sourceLabel = sourceSummaryLabel();
   const materialLabel = currentBrushLabel();

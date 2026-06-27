@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-results-panel-3" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-config-panel-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -1113,6 +1113,33 @@
             </section>
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
+            <section class="panel-section config-summary-section">
+              <div class="results-panel-head">
+                <div>
+                  <p class="panel-kicker">Numerics</p>
+                  <h2>Config</h2>
+                </div>
+                <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">stable</output>
+              </div>
+              <div class="config-summary-grid" aria-label="Configuration summary">
+                <div class="config-summary-card">
+                  <span>Scale</span>
+                  <output id="configScaleOutput">1.00 um · 20 cells/lambda0</output>
+                </div>
+                <div class="config-summary-card">
+                  <span>Grid</span>
+                  <output id="configGridOutput">180 x 120</output>
+                </div>
+                <div class="config-summary-card">
+                  <span>Boundary</span>
+                  <output id="configBoundaryOutput">PML absorbing</output>
+                </div>
+                <div class="config-summary-card">
+                  <span>CFL</span>
+                  <output id="configCflOutput">S = 0.48</output>
+                </div>
+              </div>
+            </section>
             <section class="panel-section scale-section">
               <h2>Scale</h2>
               <div class="two-col">
@@ -1126,40 +1153,46 @@
                 </label>
               </div>
             </section>
-            <section class="panel-section grid-section" data-ui-scope="advanced">
-              <h2>Grid</h2>
-              <div class="two-col">
-                <label>
-                  <span><i>N</i><sub>x</sub> cells</span>
-                  <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="180" />
-                </label>
-                <label>
-                  <span><i>N</i><sub>y</sub> cells</span>
-                  <input id="gridNyInput" type="number" min="60" max="800" step="10" value="120" />
-                </label>
+            <details class="panel-section grid-section config-detail-panel" data-ui-scope="advanced">
+              <summary>Grid</summary>
+              <div class="config-detail-body">
+                <div class="two-col">
+                  <label>
+                    <span><i>N</i><sub>x</sub> cells</span>
+                    <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="180" />
+                  </label>
+                  <label>
+                    <span><i>N</i><sub>y</sub> cells</span>
+                    <input id="gridNyInput" type="number" min="60" max="800" step="10" value="120" />
+                  </label>
+                </div>
               </div>
-            </section>
-            <section class="panel-section stability-section" data-ui-scope="advanced">
-              <h2>Stability</h2>
-              <div class="config-status-grid">
-                <div><span>CFL</span><output id="stabilityCflValue">S = 0.48</output></div>
-                <div><span>Resolution</span><output id="stabilityResolutionValue">20 cells / λ₀</output></div>
-                <div><span>Dynamic media</span><output id="stabilityMediaValue">static</output></div>
-                <div><span>Estimate</span><output id="stabilityEstimateValue">stable</output></div>
+            </details>
+            <details class="panel-section stability-section config-detail-panel" data-ui-scope="advanced">
+              <summary>Stability</summary>
+              <div class="config-detail-body">
+                <div class="config-status-grid">
+                  <div><span>CFL</span><output id="stabilityCflValue">S = 0.48</output></div>
+                  <div><span>Resolution</span><output id="stabilityResolutionValue">20 cells / lambda0</output></div>
+                  <div><span>Dynamic media</span><output id="stabilityMediaValue">static</output></div>
+                  <div><span>Estimate</span><output id="stabilityEstimateValue">stable</output></div>
+                </div>
+                <p id="stabilityNote" class="simulation-guide-note">Explicit 2D Yee stability is checked against S &lt; 1/sqrt(2).</p>
               </div>
-              <p id="stabilityNote" class="simulation-guide-note">Explicit 2D Yee stability is checked against S &lt; 1/√2.</p>
-            </section>
-            <section class="panel-section reproducibility-section" data-ui-scope="advanced">
-              <h2>Reproducibility</h2>
-              <div class="button-row">
-                <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
-                <button id="importSceneBtn" class="text-button" type="button">Import JSON</button>
-                <button id="copySceneUrlBtn" class="text-button" type="button">Copy URL</button>
+            </details>
+            <details class="panel-section reproducibility-section config-detail-panel" data-ui-scope="advanced">
+              <summary>Reproducibility</summary>
+              <div class="config-detail-body">
+                <div class="button-row">
+                  <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
+                  <button id="importSceneBtn" class="text-button" type="button">Import JSON</button>
+                  <button id="copySceneUrlBtn" class="text-button" type="button">Copy URL</button>
+                </div>
+                <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
+                <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
+                <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
               </div>
-              <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
-              <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
-              <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
-            </section>
+            </details>
             </div>
           </div>
         </aside>
@@ -1180,6 +1213,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-results-panel-3"></script>
+    <script src="app.js?v=20260627-config-panel-2"></script>
   </body>
 </html>

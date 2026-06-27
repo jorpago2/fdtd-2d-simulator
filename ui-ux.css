@@ -425,6 +425,111 @@
   white-space: nowrap !important;
 }
 
+.config-summary-section {
+  grid-column: 1 / -1 !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 12px !important;
+}
+
+.config-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.config-summary-card {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 54px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 76%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 9px 10px !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 86%, white), var(--neu-surface)) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.config-summary-card span,
+.config-summary-card output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.config-summary-card span {
+  color: var(--neu-muted) !important;
+  font-size: 0.64rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+}
+
+.config-summary-card output {
+  color: var(--neu-ink) !important;
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.config-detail-panel {
+  grid-column: 1 / -1 !important;
+  justify-self: stretch !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+}
+
+.config-detail-panel > summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 30px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  border-radius: 12px !important;
+  padding: 0 2px !important;
+  color: var(--neu-ink) !important;
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+}
+
+.config-detail-panel > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.config-detail-panel > summary::after {
+  content: "+" !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 999px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+  color: var(--neu-muted) !important;
+  font-size: 0.86rem !important;
+  line-height: 1 !important;
+}
+
+.config-detail-panel[open] > summary::after {
+  content: "-" !important;
+}
+
+.config-detail-body {
+  display: grid !important;
+  gap: var(--neu-control-gap) !important;
+  min-width: 0 !important;
+  padding-top: 8px !important;
+}
+
 .reproducibility-section .button-row {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -456,6 +561,7 @@
 
 html[data-theme="dark"] .chart-footer,
 html[data-theme="dark"] .config-status-grid > div,
+html[data-theme="dark"] .config-summary-card,
 html[data-theme="dark"] .results-detail-panel,
 html[data-theme="dark"] .scene-card-thumb,
 html[data-theme="dark"] .share-url-output {
@@ -495,6 +601,24 @@ html[data-theme="dark"] .share-url-output {
 
   .config-status-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .config-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .config-summary-card {
+    min-height: 56px !important;
+    padding: 8px 9px !important;
+  }
+
+  .config-summary-card span {
+    font-size: 0.6rem !important;
+  }
+
+  .config-summary-card output {
+    font-size: 0.78rem !important;
   }
 
   .scene-card {
@@ -600,6 +724,21 @@ html[data-theme="dark"] .share-url-output {
     min-height: 32px !important;
     padding-inline: 8px !important;
     font-size: 0.68rem !important;
+  }
+
+  .control-panel[data-mobile-layer="config"] .config-summary-section,
+  .control-panel[data-mobile-layer="config"] .scale-section,
+  .control-panel[data-mobile-layer="config"] .config-detail-panel {
+    grid-column: 1 !important;
+  }
+
+  .control-panel[data-mobile-layer="config"] .config-detail-panel {
+    padding: 10px !important;
+  }
+
+  .control-panel[data-mobile-layer="config"] .config-detail-panel > summary {
+    min-height: 32px !important;
+    font-size: 0.7rem !important;
   }
 
   .control-panel[data-mobile-layer="simulation"] .simulation-guide-section,
