@@ -315,13 +315,19 @@ render() {
     this.canvas.width,
     this.canvas.height
   );
-  this.drawPmlOverlay();
-  this.drawDiagnosticsOverlay();
+  if (visualLayerEnabled("boundaries")) {
+    this.drawPmlOverlay();
+  }
+  if (visualLayerEnabled("diagnostics")) {
+    this.drawDiagnosticsOverlay();
+  }
   this.drawMaterialHoverOverlay();
   this.drawMaterialSelectionOverlay();
   this.drawFieldQuiverOverlay();
   this.drawReferenceOverlay();
-  this.drawSourceMarkers();
+  if (visualLayerEnabled("sources")) {
+    this.drawSourceMarkers();
+  }
   updateColorbar();
   updateMaterialWarning();
 },
@@ -611,8 +617,12 @@ drawDiagnosticsOverlay() {
 },
 
 drawReferenceOverlay() {
-  this.drawScaleBarOverlay();
-  this.drawAxisGlyphOverlay();
+  if (visualLayerEnabled("scale")) {
+    this.drawScaleBarOverlay();
+  }
+  if (visualLayerEnabled("axes")) {
+    this.drawAxisGlyphOverlay();
+  }
 },
 
 drawScaleBarOverlay() {

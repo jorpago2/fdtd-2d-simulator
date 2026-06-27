@@ -157,6 +157,42 @@ function initialTheme() {
   }
 }
 
+const VISUAL_PROFILE_NAMES = Object.freeze(["auto", "clean", "teaching", "analysis", "custom"]);
+const VISUAL_LAYER_STATE_KEYS = Object.freeze({
+  boundaries: "visualLayerBoundaries",
+  diagnostics: "visualLayerDiagnostics",
+  axes: "visualLayerAxes",
+  scale: "visualLayerScale",
+  sources: "visualLayerSources",
+  colorbar: "visualLayerColorbar",
+});
+const VISUAL_PROFILE_LAYERS = Object.freeze({
+  clean: Object.freeze({
+    boundaries: false,
+    diagnostics: false,
+    axes: false,
+    scale: false,
+    sources: true,
+    colorbar: true,
+  }),
+  teaching: Object.freeze({
+    boundaries: true,
+    diagnostics: true,
+    axes: true,
+    scale: true,
+    sources: true,
+    colorbar: true,
+  }),
+  analysis: Object.freeze({
+    boundaries: true,
+    diagnostics: true,
+    axes: false,
+    scale: true,
+    sources: true,
+    colorbar: true,
+  }),
+});
+
 const state = {
   running: false,
   theme: initialTheme(),
@@ -167,6 +203,13 @@ const state = {
   fieldDisplay: "scalar",
   fieldQuiver: false,
   diagnosticsEnabled: true,
+  visualProfile: "auto",
+  visualLayerBoundaries: true,
+  visualLayerDiagnostics: true,
+  visualLayerAxes: true,
+  visualLayerScale: true,
+  visualLayerSources: true,
+  visualLayerColorbar: true,
   analysisEnabled: true,
   analysisSampleEvery: 4,
   sweepMode: "angle",
@@ -262,6 +305,13 @@ const SERIALIZABLE_STATE_KEYS = Object.freeze([
   "fieldDisplay",
   "fieldQuiver",
   "diagnosticsEnabled",
+  "visualProfile",
+  "visualLayerBoundaries",
+  "visualLayerDiagnostics",
+  "visualLayerAxes",
+  "visualLayerScale",
+  "visualLayerSources",
+  "visualLayerColorbar",
   "analysisEnabled",
   "analysisSampleEvery",
   "sweepMode",
@@ -509,6 +559,8 @@ const el = {
   fieldQuiverControl: document.getElementById("fieldQuiverControl"),
   fieldQuiverInput: document.getElementById("fieldQuiverInput"),
   fieldQuiverLabel: document.getElementById("fieldQuiverLabel"),
+  visualProfileButtons: document.querySelectorAll("[data-visual-profile]"),
+  visualLayerInputs: document.querySelectorAll("[data-visual-layer]"),
   viewProjectionButtons: document.querySelectorAll("[data-view-projection]"),
   materialPartControl: document.getElementById("materialPartControl"),
   materialPartButtons: document.querySelectorAll("[data-material-part]"),
@@ -710,6 +762,7 @@ const el = {
   hudStepLabel: document.getElementById("hudStepLabel"),
   hudFieldLabel: document.getElementById("hudFieldLabel"),
   materialLabel: document.getElementById("materialLabel"),
+  colorbar: document.querySelector(".colorbar"),
   colorbarTitle: document.getElementById("colorbarTitle"),
   colorbarGradient: document.getElementById("colorbarGradient"),
   colorbarMax: document.getElementById("colorbarMax"),
@@ -749,6 +802,55 @@ function viewportPrefersPortraitGrid() {
   const width = Math.max(1, window.innerWidth || 1);
   const height = Math.max(1, window.innerHeight || 1);
   return compactControlDrawerActive() && height > width * 1.05;
+}
+
+function mobileCanvasViewportActive() {
+  return window.matchMedia?.("(max-width: 760px)")?.matches ?? false;
+}
+
+function normalizedVisualProfile(profile) {
+  return VISUAL_PROFILE_NAMES.includes(profile) ? profile : "auto";
+}
+
+function effectiveVisualProfile() {
+  const profile = normalizedVisualProfile(state.visualProfile);
+  if (profile === "auto") return mobileCanvasViewportActive() ? "clean" : "teaching";
+  if (profile === "custom") return "custom";
+  return profile;
+}
+
+function visualLayerSnapshot(profile = effectiveVisualProfile()) {
+  if (profile === "custom") {
+    return Object.fromEntries(
+      Object.entries(VISUAL_LAYER_STATE_KEYS).map(([layer, stateKey]) => [layer, Boolean(state[stateKey])])
+    );
+  }
+  return { ...(VISUAL_PROFILE_LAYERS[profile] || VISUAL_PROFILE_LAYERS.teaching) };
+}
+
+function visualLayerEnabled(layer) {
+  const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
+  if (!stateKey) return true;
+  return Boolean(visualLayerSnapshot()[layer]);
+}
+
+function applyVisualProfile(profile) {
+  state.visualProfile = normalizedVisualProfile(profile);
+  updateVisualControls();
+  sim.render();
+}
+
+function setCustomVisualLayer(layer, enabled) {
+  const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
+  if (!stateKey) return;
+  const snapshot = visualLayerSnapshot();
+  Object.entries(VISUAL_LAYER_STATE_KEYS).forEach(([snapshotLayer, snapshotKey]) => {
+    state[snapshotKey] = Boolean(snapshot[snapshotLayer]);
+  });
+  state.visualProfile = "custom";
+  state[stateKey] = Boolean(enabled);
+  updateVisualControls();
+  sim.render();
 }
 
 function responsiveDefaultGrid() {
@@ -2006,6 +2108,24 @@ function updateCanvasModeControls() {
   el.canvas.classList.toggle("is-brush-mode", !isSelect);
 }
 
+function updateVisualControls() {
+  state.visualProfile = normalizedVisualProfile(state.visualProfile);
+  const activeProfile = state.visualProfile;
+  const activeLayers = visualLayerSnapshot();
+  el.visualProfileButtons?.forEach((button) => {
+    const active = button.dataset.visualProfile === activeProfile;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  el.visualLayerInputs?.forEach((input) => {
+    const layer = input.dataset.visualLayer;
+    input.checked = Boolean(activeLayers[layer]);
+  });
+  if (el.colorbar) {
+    el.colorbar.hidden = !visualLayerEnabled("colorbar");
+  }
+}
+
 function updateFieldDisplayControls() {
   const fieldViewActive = state.viewMode === "field" || state.viewMode === "poynting";
   const poyntingViewActive = state.viewMode === "poynting";
@@ -2468,6 +2588,7 @@ function updateControlText() {
   }
   el.playPauseIcon.textContent = state.running ? "⏸" : "▶";
   updateCanvasModeControls();
+  updateVisualControls();
   updateBrushControls();
   updateBoundaryMenuControls();
   if (editorSource) {
@@ -4145,6 +4266,10 @@ function normalizeImportedStateValues() {
     : "scalar";
   state.fieldQuiver = Boolean(state.fieldQuiver);
   state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
+  state.visualProfile = normalizedVisualProfile(state.visualProfile);
+  Object.values(VISUAL_LAYER_STATE_KEYS).forEach((stateKey) => {
+    state[stateKey] = state[stateKey] == null ? true : Boolean(state[stateKey]);
+  });
   state.analysisEnabled = Boolean(state.analysisEnabled);
   state.analysisSampleEvery = clampInt(state.analysisSampleEvery, 1, 16);
   state.sweepMode = normalizeSweepMode(state.sweepMode);
@@ -4563,6 +4688,10 @@ function formatSignedMaterialMapValue(value) {
 }
 
 function updateColorbar() {
+  if (!el.colorbar) return;
+  el.colorbar.hidden = !visualLayerEnabled("colorbar");
+  if (el.colorbar.hidden) return;
+
   if (state.viewMode === "epsilon" || state.viewMode === "mu") {
     const center = Number.isFinite(sim.lastMaterialViewCenter)
       ? sim.lastMaterialViewCenter
@@ -4716,7 +4845,9 @@ el.canvasOptionsToggle?.addEventListener("click", (event) => {
   toggleCanvasOptionsMenu();
 });
 el.canvasViewControls?.addEventListener("click", (event) => {
-  if (event.target instanceof Element && event.target.closest("button, input")) {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest(".visual-layer-switch")) return;
+  if (event.target.closest("button, input")) {
     window.setTimeout(closeCanvasOptionsMenu, 0);
   }
 });
@@ -4917,6 +5048,18 @@ el.fieldQuiverInput?.addEventListener("change", () => {
   state.fieldQuiver = el.fieldQuiverInput.checked;
   updateControlText();
   sim.render();
+});
+
+el.visualProfileButtons?.forEach((button) => {
+  button.addEventListener("click", () => {
+    applyVisualProfile(button.dataset.visualProfile || "auto");
+  });
+});
+
+el.visualLayerInputs?.forEach((input) => {
+  input.addEventListener("change", () => {
+    setCustomVisualLayer(input.dataset.visualLayer, input.checked);
+  });
 });
 
 el.viewModeButtons.forEach((button) => {

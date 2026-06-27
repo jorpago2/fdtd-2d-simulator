@@ -821,6 +821,37 @@ body {
   .canvas-toolbar .canvas-view-controls .toolbar-switch span {
     display: inline !important;
   }
+
+  .canvas-toolbar .canvas-view-controls .visual-options-divider {
+    display: block !important;
+    width: 100% !important;
+    height: 1px !important;
+    margin: 2px 0 !important;
+    background: color-mix(in srgb, var(--line-strong) 70%, transparent) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle {
+    display: inline-flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle .mode-toggle-button {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding-inline: 5px !important;
+    font-size: 0.66rem !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-layer-switch {
+    display: inline-flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-layer-switch input[type="checkbox"] {
+    flex: 0 0 auto !important;
+  }
 }
 
 @media (max-width: 620px) {
@@ -853,6 +884,33 @@ body {
 
 .canvas-toolbar .canvas-view-controls [hidden] {
   display: none !important;
+}
+
+.colorbar[hidden] {
+  display: none !important;
+}
+
+.visual-options-divider,
+.visual-profile-toggle,
+.visual-layer-switch,
+.canvas-toolbar .visual-options-divider,
+.canvas-toolbar .visual-profile-toggle,
+.canvas-toolbar .visual-layer-switch,
+.canvas-toolbar .canvas-view-controls .visual-options-divider,
+.canvas-toolbar .canvas-view-controls .visual-profile-toggle,
+.canvas-toolbar .canvas-view-controls .visual-layer-switch {
+  display: none !important;
+}
+
+@media (max-width: 1180px) {
+  .canvas-toolbar .canvas-view-controls .visual-options-divider {
+    display: block !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle,
+  .canvas-toolbar .canvas-view-controls .visual-layer-switch {
+    display: inline-flex !important;
+  }
 }
 
 .mobile-canvas-stats {

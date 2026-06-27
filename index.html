@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-hud-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-visual-layers-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -135,6 +135,37 @@
                 <button class="mode-toggle-button is-active" type="button" data-material-part="real" aria-pressed="true">Re</button>
                 <button class="mode-toggle-button" type="button" data-material-part="imag" aria-pressed="false">Im</button>
               </div>
+              <span class="visual-options-divider" aria-hidden="true"></span>
+              <div class="canvas-mode-toggle visual-profile-toggle" role="group" aria-label="Visual profile">
+                <button class="mode-toggle-button is-active" type="button" data-visual-profile="auto" aria-pressed="true" title="Choose a responsive visual profile">Auto</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="clean" aria-pressed="false" title="Minimal overlays">Clean</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="teaching" aria-pressed="false" title="Show teaching overlays">Teach</button>
+                <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
+              </div>
+              <label class="toolbar-switch visual-layer-switch" title="Show PML and reflective boundary overlays">
+                <input type="checkbox" data-visual-layer="boundaries" checked />
+                <span>PML/bounds</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show monitor lines and incident direction">
+                <input type="checkbox" data-visual-layer="diagnostics" checked />
+                <span>L/R/k</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show x and y axis glyph">
+                <input type="checkbox" data-visual-layer="axes" checked />
+                <span>axes</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show wavelength scale bar">
+                <input type="checkbox" data-visual-layer="scale" checked />
+                <span>scale</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show source markers">
+                <input type="checkbox" data-visual-layer="sources" checked />
+                <span>sources</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show color scale">
+                <input type="checkbox" data-visual-layer="colorbar" checked />
+                <span>colorbar</span>
+              </label>
             </div>
           </div>
 
@@ -1041,7 +1072,7 @@
     <script src="src/fdtd-sources.js?v=20260627-split-7"></script>
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
-    <script src="src/fdtd-rendering.js?v=20260627-uiux-1"></script>
-    <script src="app.js?v=20260627-mobile-hud-1"></script>
+    <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
+    <script src="app.js?v=20260627-visual-layers-1"></script>
   </body>
 </html>
