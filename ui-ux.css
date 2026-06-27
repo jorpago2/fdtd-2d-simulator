@@ -1133,7 +1133,7 @@ body {
 }
 
 .stage.selection-sheet-open .mobile-canvas-stats {
-  display: none !important;
+  margin-top: 4px !important;
 }
 
 .mobile-layer-nav {
@@ -1437,7 +1437,7 @@ body {
 
   .mobile-canvas-stats {
     display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-columns: minmax(92px, 1.35fr) repeat(4, minmax(0, 1fr)) !important;
     gap: 5px !important;
     min-width: 0 !important;
     margin-top: 6px !important;
@@ -1484,6 +1484,26 @@ body {
     font-variant-numeric: tabular-nums !important;
   }
 
+  .mobile-canvas-stats [data-mobile-stat="state"] output {
+    color: var(--neu-accent) !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .colorbar {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-state-badge {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-frame.is-zoomed .canvas-state-badge,
+  .app-shell[data-ui-depth="teaching"] .canvas-frame.is-panning .canvas-state-badge,
+  .app-shell[data-ui-depth="teaching"] .canvas-frame.is-pinching .canvas-state-badge,
+  .app-shell[data-ui-depth="teaching"] .canvas-frame.is-dragging-source .canvas-state-badge,
+  .app-shell[data-ui-depth="teaching"] .canvas-frame.is-dragging-material .canvas-state-badge {
+    display: block !important;
+  }
+
   .colorbar {
     right: 5px !important;
     padding: 5px !important;
@@ -1509,8 +1529,13 @@ body {
 
 @media (max-width: 380px) {
   .mobile-canvas-stats {
+    grid-template-columns: minmax(86px, 1.25fr) repeat(3, minmax(0, 1fr)) !important;
     gap: 4px !important;
     padding: 4px !important;
+  }
+
+  .mobile-canvas-stats [data-mobile-stat="mode"] {
+    display: none !important;
   }
 
   .mobile-canvas-stats span {

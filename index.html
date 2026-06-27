@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-ui-depth-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-hud-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -616,11 +616,11 @@
             </div>
           </div>
           <div class="mobile-canvas-stats" aria-label="Compact simulation status">
-            <span><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
-            <span><small>engine</small><output id="mobileEngineValue">JS</output></span>
-            <span><small>grid</small><output id="mobileGridValue">180x120</output></span>
-            <span><small>step</small><output id="mobileStepValue">0</output></span>
-            <span><small>max</small><output id="mobileMaxFieldValue">0</output></span>
+            <span data-mobile-stat="state"><small>state</small><output id="mobileCanvasStateValue">Select 1.00x</output></span>
+            <span data-mobile-stat="mode"><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
+            <span data-mobile-stat="grid"><small>grid</small><output id="mobileGridValue">180x120</output></span>
+            <span data-mobile-stat="step"><small>step</small><output id="mobileStepValue">0</output></span>
+            <span data-mobile-stat="max"><small>max</small><output id="mobileMaxFieldValue">0</output></span>
           </div>
         </div>
 
@@ -1109,6 +1109,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-ui-depth-1"></script>
+    <script src="app.js?v=20260627-mobile-hud-1"></script>
   </body>
 </html>

@@ -749,7 +749,7 @@ const el = {
   topStepValue: document.getElementById("topStepValue"),
   topMaxFieldValue: document.getElementById("topMaxFieldValue"),
   mobileModeValue: document.getElementById("mobileModeValue"),
-  mobileEngineValue: document.getElementById("mobileEngineValue"),
+  mobileCanvasStateValue: document.getElementById("mobileCanvasStateValue"),
   mobileGridValue: document.getElementById("mobileGridValue"),
   mobileStepValue: document.getElementById("mobileStepValue"),
   mobileMaxFieldValue: document.getElementById("mobileMaxFieldValue"),
@@ -2329,8 +2329,12 @@ function updateCanvasInteractionState() {
   el.canvasFrame?.classList.toggle("is-dragging-source", draggingSource);
   el.canvasFrame?.classList.toggle("is-dragging-material", draggingMaterial);
   el.canvasFrame?.classList.toggle("has-selection", hasSelection);
+  const stateText = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
   if (el.canvasStateBadge) {
-    el.canvasStateBadge.textContent = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
+    el.canvasStateBadge.textContent = stateText;
+  }
+  if (el.mobileCanvasStateValue) {
+    el.mobileCanvasStateValue.textContent = stateText;
   }
 }
 
@@ -2896,7 +2900,6 @@ function updateStats() {
   if (el.topEngineValue) el.topEngineValue.textContent = engineText;
   if (el.mobileStepValue) el.mobileStepValue.textContent = stepText;
   if (el.mobileMaxFieldValue) el.mobileMaxFieldValue.textContent = maxFieldText;
-  if (el.mobileEngineValue) el.mobileEngineValue.textContent = engineText;
   if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
   if (el.hudFieldLabel) el.hudFieldLabel.textContent = `max ${maxFieldText}`;
   if (el.fluxLeftOutput) el.fluxLeftOutput.textContent = formatFieldValue(sim.diagnosticIncidentPower || 0);
