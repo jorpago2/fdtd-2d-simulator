@@ -491,6 +491,8 @@ const el = {
   canvasFrame: document.querySelector(".canvas-frame"),
   stage: document.querySelector(".stage"),
   canvasToolbar: document.querySelector(".canvas-toolbar"),
+  canvasViewControls: document.getElementById("canvasViewControls"),
+  canvasOptionsToggle: document.getElementById("canvasOptionsToggle"),
   appShell: document.querySelector(".app-shell"),
   controlPanel: document.getElementById("controlPanel"),
   controlDrawerToggle: document.getElementById("controlDrawerToggle"),
@@ -1258,6 +1260,26 @@ function closeControlDrawer() {
 
 function toggleControlDrawer() {
   setControlDrawerOpen(!el.appShell?.classList.contains("controls-open"));
+}
+
+function canvasOptionsMenuActive() {
+  return window.matchMedia?.("(max-width: 1180px)")?.matches ?? false;
+}
+
+function setCanvasOptionsOpen(open) {
+  const isOpen = Boolean(open) && canvasOptionsMenuActive();
+  el.stage?.classList.toggle("canvas-options-open", isOpen);
+  if (el.canvasOptionsToggle) {
+    el.canvasOptionsToggle.setAttribute("aria-expanded", String(isOpen));
+  }
+}
+
+function closeCanvasOptionsMenu() {
+  setCanvasOptionsOpen(false);
+}
+
+function toggleCanvasOptionsMenu() {
+  setCanvasOptionsOpen(!el.stage?.classList.contains("canvas-options-open"));
 }
 
 function handleControlTabKeydown(event) {
@@ -4674,6 +4696,15 @@ el.brushModeBtn.addEventListener("click", () => {
 el.controlDrawerToggle?.addEventListener("click", toggleControlDrawer);
 el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
 el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);
+el.canvasOptionsToggle?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleCanvasOptionsMenu();
+});
+el.canvasViewControls?.addEventListener("click", (event) => {
+  if (event.target instanceof Element && event.target.closest("button, input")) {
+    window.setTimeout(closeCanvasOptionsMenu, 0);
+  }
+});
 
 el.controlTabButtons?.forEach((button) => {
   button.addEventListener("click", () => {
@@ -5817,6 +5848,9 @@ el.canvas.addEventListener("pointercancel", endPointer);
 el.canvas.addEventListener("pointerleave", () => clearCanvasHover());
 
 document.addEventListener("pointerdown", (event) => {
+  if (el.stage?.classList.contains("canvas-options-open") && !el.canvasToolbar?.contains(event.target)) {
+    closeCanvasOptionsMenu();
+  }
   const sourceHidden = el.sourceMenu?.hidden ?? true;
   const brushHidden = el.brushMenu?.hidden ?? true;
   const boundaryHidden = el.boundaryMenu?.hidden ?? true;
@@ -5828,6 +5862,11 @@ document.addEventListener("pointerdown", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && el.stage?.classList.contains("canvas-options-open")) {
+    closeCanvasOptionsMenu();
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Escape" && el.appShell?.classList.contains("controls-open")) {
     closeControlDrawer();
     event.preventDefault();
@@ -5849,6 +5888,9 @@ window.addEventListener("resize", () => {
   closeContextMenus();
   if (!compactControlDrawerActive()) {
     closeControlDrawer();
+  }
+  if (!canvasOptionsMenuActive()) {
+    closeCanvasOptionsMenu();
   }
   const gridChanged = applyResponsiveGridOrientation({ render: false });
   if (!gridChanged) {

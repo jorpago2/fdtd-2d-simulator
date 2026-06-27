@@ -407,7 +407,8 @@ body {
 
 .control-drawer-toggle,
 .control-drawer-close,
-.control-drawer-backdrop {
+.control-drawer-backdrop,
+.canvas-options-toggle {
   display: none !important;
 }
 
@@ -613,7 +614,7 @@ body {
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 1180px) {
   .app-shell {
     padding: 6px !important;
     gap: 6px !important;
@@ -707,4 +708,149 @@ body {
   .canvas-toolbar .toolbar-switch span {
     display: none !important;
   }
+}
+
+@media (max-width: 1180px) {
+  .canvas-toolbar {
+    position: relative !important;
+    z-index: 32 !important;
+    display: grid !important;
+    grid-template-columns: auto minmax(132px, 1fr) auto !important;
+    grid-template-areas: "run mode options" !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 6px !important;
+    overflow: visible !important;
+    padding: 5px !important;
+  }
+
+  .canvas-toolbar .tool-group.compact {
+    grid-area: run !important;
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .canvas-toolbar .tool-group.compact #saveBtn {
+    display: none !important;
+  }
+
+  .canvas-toolbar .tool-group.compact .icon-button {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+
+  .canvas-toolbar .interaction-toggle {
+    grid-area: mode !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 156px !important;
+    justify-self: center !important;
+  }
+
+  .canvas-toolbar .interaction-toggle .mode-toggle-button {
+    min-width: 0 !important;
+    width: 50% !important;
+    padding-inline: 7px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .canvas-options-toggle {
+    grid-area: options !important;
+    display: inline-flex !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    justify-self: end !important;
+    font-size: 1.1rem !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls {
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    z-index: 45 !important;
+    display: none !important;
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: min(330px, calc(100vw - 24px)) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: min(56vh, 420px) !important;
+    overflow: auto !important;
+    padding: 10px !important;
+    border: 1px solid color-mix(in srgb, var(--line-strong) 65%, transparent) !important;
+    border-radius: 18px !important;
+    background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
+    box-shadow: var(--neu-shadow), var(--neu-inset-soft) !important;
+  }
+
+  .stage.canvas-options-open .canvas-toolbar .canvas-view-controls {
+    display: flex !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle,
+  .canvas-toolbar .canvas-view-controls .toolbar-switch {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle {
+    justify-content: stretch !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .mode-toggle-button {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding-inline: 7px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .toolbar-switch {
+    justify-content: space-between !important;
+    padding-inline: 8px !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .toolbar-switch span {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 620px) {
+  .canvas-toolbar .tool-group.compact .icon-button,
+  .canvas-options-toggle {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .canvas-toolbar {
+    grid-template-columns: auto minmax(118px, 1fr) auto !important;
+    gap: 5px !important;
+  }
+
+  .canvas-toolbar .tool-group.compact .icon-button,
+  .canvas-options-toggle {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  .canvas-toolbar .interaction-toggle .mode-toggle-button {
+    padding-inline: 5px !important;
+    font-size: 0.64rem !important;
+  }
+}
+
+.canvas-toolbar .canvas-view-controls [hidden] {
+  display: none !important;
 }

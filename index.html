@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-responsive-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-toolbar-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -93,16 +93,27 @@
               <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭</button>
               <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
               <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩</button>
-              <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Projection">
-                <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
-                <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
-              </div>
             </div>
             <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
               <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
               <button id="brushModeBtn" class="mode-toggle-button" type="button" aria-pressed="false" title="Draw materials and geometries">Draw</button>
             </div>
-            <div class="canvas-view-controls" aria-label="Canvas display">
+            <button
+              id="canvasOptionsToggle"
+              class="icon-button canvas-options-toggle"
+              type="button"
+              aria-controls="canvasViewControls"
+              aria-expanded="false"
+              aria-label="Canvas display options"
+              title="Canvas display options"
+            >
+              ⋯
+            </button>
+            <div id="canvasViewControls" class="canvas-view-controls" aria-label="Canvas display">
+              <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Projection">
+                <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
+                <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
+              </div>
               <div class="canvas-mode-toggle view-toggle" role="group" aria-label="View">
                 <button class="mode-toggle-button is-active" type="button" data-view-mode="field" aria-pressed="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
                 <button class="mode-toggle-button" type="button" data-view-mode="poynting" aria-pressed="false" title="Show Poynting vector flux"><i>S</i></button>
@@ -1024,6 +1035,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-uiux-1"></script>
-    <script src="app.js?v=20260627-responsive-domain-1"></script>
+    <script src="app.js?v=20260627-mobile-toolbar-2"></script>
   </body>
 </html>
