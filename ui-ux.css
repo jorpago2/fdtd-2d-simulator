@@ -2423,6 +2423,27 @@ body {
     font-size: 0.58rem !important;
   }
 
+  .hud {
+    right: 8px !important;
+    bottom: 8px !important;
+    left: 8px !important;
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  #gridLabel,
+  #hudModeLabel {
+    display: none !important;
+  }
+
+  .hud span {
+    max-width: calc(50% - 3px) !important;
+    min-height: 22px !important;
+    padding: 4px 7px !important;
+    font-size: 0.58rem !important;
+  }
+
   .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats {
     grid-template-columns: minmax(112px, 1.45fr) repeat(3, minmax(0, 0.7fr)) !important;
     gap: 3px !important;
@@ -2456,6 +2477,10 @@ body {
   }
 
   .app-shell[data-ui-depth="teaching"] .canvas-state-badge {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .hud {
     display: none !important;
   }
 
