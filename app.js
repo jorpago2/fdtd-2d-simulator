@@ -963,7 +963,7 @@ function updateVisualGuideText() {
   if (el.visualGuideProjection) el.visualGuideProjection.textContent = projectionLabel();
   if (el.visualGuideField) el.visualGuideField.innerHTML = visualQuantityLabelHtml();
   if (el.visualGuideScale) {
-    el.visualGuideScale.textContent = `${state.wavelengthUm.toFixed(2)} um · ${state.cellsPerWavelength} cells/lambda0`;
+    el.visualGuideScale.textContent = `${state.wavelengthUm.toFixed(2)} µm · ${state.cellsPerWavelength}/λ₀`;
   }
   if (el.visualGuideOverlays) el.visualGuideOverlays.textContent = visualOverlaySummary();
   if (el.visualGuideNote) el.visualGuideNote.textContent = visualGuideNoteText();
@@ -2344,7 +2344,7 @@ function updateStabilitySummary() {
   const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
   const healthReason = healthStatusReason(cflStable, flags, limit);
   el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
-  el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / lambda0`;
+  el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / λ₀`;
   el.stabilityMediaValue.textContent = media.join(", ");
   updateHealthStatusOutputs(level, healthReason);
   if (el.stabilityNote) {
@@ -2352,7 +2352,7 @@ function updateStabilitySummary() {
     el.stabilityNote.textContent =
       flags.length > 0
         ? `${base} Watch: ${flags.join(", ")}. Run convergence checks for publishable results.`
-        : `${base} Resolution is ${state.cellsPerWavelength} cells/lambda0; still verify convergence before quantitative claims.`;
+        : `${base} Resolution is ${state.cellsPerWavelength} cells/λ₀; still verify convergence before quantitative claims.`;
     el.stabilityNote.classList.toggle("is-warning", level !== "stable");
   }
 }
@@ -3191,7 +3191,7 @@ function updateControlText() {
     el.topBoundaryValue.textContent = boundary;
   }
   if (el.configScaleOutput) {
-    el.configScaleOutput.textContent = `${state.wavelengthUm.toFixed(2)} um · ${state.cellsPerWavelength} cells/lambda0`;
+    el.configScaleOutput.textContent = `${state.wavelengthUm.toFixed(2)} µm · ${state.cellsPerWavelength}/λ₀`;
   }
   if (el.configGridOutput) {
     el.configGridOutput.textContent = compactGridSummary;
@@ -4277,11 +4277,11 @@ function drawFarFieldChart() {
   ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillText(scatteringMode ? "Scattering width / lambda0" : "NTFF angular pattern", 12 * dpr, 11 * dpr);
+  ctx.fillText(scatteringMode ? "Scattering width / λ₀" : "NTFF angular pattern", 12 * dpr, 11 * dpr);
   if (scatteringMode && sim.analysisScatteringTotal > 0) {
     ctx.fillStyle = colors.muted;
     ctx.textAlign = "right";
-    ctx.fillText(`sigma/lambda0 ${formatFieldValue(sim.analysisScatteringTotal)}`, width - 12 * dpr, 11 * dpr);
+    ctx.fillText(`σ/λ₀ ${formatFieldValue(sim.analysisScatteringTotal)}`, width - 12 * dpr, 11 * dpr);
     ctx.fillStyle = colors.text;
   }
   ctx.textAlign = "center";
@@ -4320,7 +4320,7 @@ function updateAnalysisControls() {
       sim.analysisScatteringBackward > 1e-24 ? sim.analysisScatteringForward / sim.analysisScatteringBackward : Infinity;
     const scatteringText =
       scatteringMode && sim.analysisScatteringTotal > 0
-        ? ` | sigma/lambda0=${formatFieldValue(sim.analysisScatteringTotal)} | F/B=${
+        ? ` | σ/λ₀=${formatFieldValue(sim.analysisScatteringTotal)} | F/B=${
             Number.isFinite(forwardBackward) ? formatFieldValue(forwardBackward) : "inf"
           }`
         : "";
