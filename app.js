@@ -1410,12 +1410,20 @@ function setMobileLayerActive(layerName) {
   });
 }
 
+function activeMobileLayerName() {
+  return Array.from(el.mobileLayerButtons || []).find((button) => button.classList.contains("is-active"))?.dataset.mobileLayer;
+}
+
 function focusControlPanelSection(selector) {
   if (!selector) return;
   requestAnimationFrame(() => {
     const section = el.controlPanel?.querySelector(selector);
     section?.scrollIntoView?.({ block: "start", inline: "nearest" });
   });
+}
+
+function activeControlTabName() {
+  return Array.from(el.controlTabButtons || []).find((button) => button.classList.contains("is-active"))?.dataset.controlTab || "scenes";
 }
 
 function controlTabLayerName(tabName) {
@@ -1499,6 +1507,10 @@ function setControlDrawerOpen(open) {
     el.controlDrawerBackdrop.hidden = !isOpen;
   }
   if (isOpen) {
+    closeCanvasOptionsMenu();
+    if (activeMobileLayerName() === "visual") {
+      setMobileLayerActive(controlTabLayerName(activeControlTabName()));
+    }
     el.controlPanel?.focus?.({ preventScroll: true });
   }
 }
@@ -1527,7 +1539,11 @@ function setCanvasOptionsOpen(open) {
 }
 
 function closeCanvasOptionsMenu() {
+  const restorePanelLayer = activeMobileLayerName() === "visual";
   setCanvasOptionsOpen(false);
+  if (restorePanelLayer) {
+    setMobileLayerActive(controlTabLayerName(activeControlTabName()));
+  }
 }
 
 function toggleCanvasOptionsMenu() {
