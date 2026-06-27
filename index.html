@@ -11,7 +11,7 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-2" />
+    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-3" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -43,6 +43,33 @@
           <button class="mode-toggle-button" type="button" data-theme-choice="dark" aria-pressed="false" title="Use dark theme">Dark</button>
         </div>
       </header>
+
+      <section class="scientific-status-strip" aria-label="Simulation summary">
+        <div class="scientific-status-item">
+          <span>Mode</span>
+          <output id="topModeValue">TMz / Ez</output>
+        </div>
+        <div class="scientific-status-item">
+          <span>Engine</span>
+          <output id="topEngineValue">JS</output>
+        </div>
+        <div class="scientific-status-item">
+          <span>Grid</span>
+          <output id="topGridValue">180 x 120</output>
+        </div>
+        <div class="scientific-status-item">
+          <span>Boundary</span>
+          <output id="topBoundaryValue">PML absorbing</output>
+        </div>
+        <div class="scientific-status-item">
+          <span>Step</span>
+          <output id="topStepValue">0</output>
+        </div>
+        <div class="scientific-status-item">
+          <span>Max field</span>
+          <output id="topMaxFieldValue">0</output>
+        </div>
+      </section>
 
       <section class="workspace" aria-label="Simulator">
         <div class="stage">
@@ -103,6 +130,9 @@
             </div>
             <div class="hud">
               <span id="gridLabel">180 x 120</span>
+              <span id="hudModeLabel">TMz / Ez</span>
+              <span id="hudStepLabel">step 0</span>
+              <span id="hudFieldLabel">max 0</span>
             </div>
             <div id="sourceMenu" class="source-menu" role="dialog" aria-label="Source editor" hidden>
               <div class="source-menu-header">
@@ -887,6 +917,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-split-5"></script>
-    <script src="app.js?v=20260627-neu-tabs-2"></script>
+    <script src="app.js?v=20260627-neu-tabs-3"></script>
   </body>
 </html>

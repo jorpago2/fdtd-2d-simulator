@@ -5068,3 +5068,109 @@ html[data-theme="dark"] .scene-empty-state {
     max-height: 460px !important;
   }
 }
+
+/* Scientific status band and canvas HUD */
+.scientific-status-strip {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin: 0 0 16px !important;
+  padding: 10px !important;
+  border: 1px solid var(--neu-border) !important;
+  border-radius: 24px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.scientific-status-item {
+  display: grid !important;
+  align-content: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  min-height: 58px !important;
+  border-radius: 18px !important;
+  padding: 10px 12px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.scientific-status-item span,
+.scientific-status-item output {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.scientific-status-item span {
+  color: var(--neu-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+}
+
+.scientific-status-item output {
+  color: var(--neu-ink) !important;
+  font-size: 0.84rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.hud {
+  align-items: flex-end !important;
+  flex-wrap: wrap !important;
+  max-width: calc(100% - 98px) !important;
+}
+
+.hud span,
+#gridLabel {
+  display: inline-flex !important;
+  align-items: center !important;
+  max-width: min(100%, 360px) !important;
+  min-height: 28px !important;
+  border-radius: 999px !important;
+  padding: 6px 10px !important;
+  overflow: hidden !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#hudModeLabel {
+  color: #c8fbff !important;
+}
+
+@media (max-width: 1120px) {
+  .scientific-status-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .scientific-status-strip {
+    grid-template-columns: repeat(3, minmax(88px, 1fr)) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .scientific-status-item {
+    min-height: 54px !important;
+    padding: 9px 10px !important;
+  }
+
+  .hud {
+    max-width: calc(100% - 72px) !important;
+  }
+
+  .hud span,
+  #gridLabel {
+    max-width: 100% !important;
+    min-height: 26px !important;
+    font-size: 0.68rem !important;
+  }
+}

@@ -16,6 +16,10 @@ function scalarFieldComponentKey() {
   return state.fieldComponent === "hz" ? "Hz" : "Ez";
 }
 
+function solverModeLabel() {
+  return state.fieldComponent === "hz" ? "TEz / Hz" : "TMz / Ez";
+}
+
 function transverseFieldLetter() {
   return state.fieldComponent === "hz" ? "E" : "H";
 }
@@ -547,6 +551,12 @@ const el = {
   clearFieldsBtn: document.getElementById("clearFieldsBtn"),
   stepCounter: document.getElementById("stepCounter"),
   maxField: document.getElementById("maxField"),
+  topModeValue: document.getElementById("topModeValue"),
+  topEngineValue: document.getElementById("topEngineValue"),
+  topGridValue: document.getElementById("topGridValue"),
+  topBoundaryValue: document.getElementById("topBoundaryValue"),
+  topStepValue: document.getElementById("topStepValue"),
+  topMaxFieldValue: document.getElementById("topMaxFieldValue"),
   fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
   fieldMetricUnit: document.getElementById("fieldMetricUnit"),
   energyValue: document.getElementById("energyValue"),
@@ -557,6 +567,9 @@ const el = {
   reflectanceOutput: document.getElementById("reflectanceOutput"),
   transmittanceOutput: document.getElementById("transmittanceOutput"),
   gridLabel: document.getElementById("gridLabel"),
+  hudModeLabel: document.getElementById("hudModeLabel"),
+  hudStepLabel: document.getElementById("hudStepLabel"),
+  hudFieldLabel: document.getElementById("hudFieldLabel"),
   materialLabel: document.getElementById("materialLabel"),
   colorbarTitle: document.getElementById("colorbarTitle"),
   colorbarGradient: document.getElementById("colorbarGradient"),
@@ -1904,12 +1917,28 @@ function updateControlText() {
   if (editorSource) {
     populateSourceEditor(editorSource);
   }
-  el.gridLabel.textContent = `${sim.nx} x ${sim.ny} · ${formatLambda(cellsToLambda(sim.nx))} λ₀ x ${formatLambda(cellsToLambda(sim.ny))} λ₀ · ${sim.viewZoom.toFixed(2)}x`;
+  const gridSummary = `${sim.nx} x ${sim.ny}`;
+  const domainSummary = `${formatLambda(cellsToLambda(sim.nx))} \u03bb\u2080 x ${formatLambda(cellsToLambda(sim.ny))} \u03bb\u2080`;
+  const zoomSummary = `${sim.viewZoom.toFixed(2)}x`;
+  const solverSummary = solverModeLabel();
+  const boundary = boundarySummaryLabel();
+  el.gridLabel.textContent = `${gridSummary} \u00b7 ${domainSummary} \u00b7 ${zoomSummary}`;
+  if (el.hudModeLabel) {
+    el.hudModeLabel.textContent = solverSummary;
+  }
+  if (el.topModeValue) {
+    el.topModeValue.textContent = solverSummary;
+  }
+  if (el.topGridValue) {
+    el.topGridValue.textContent = `${gridSummary} \u00b7 ${domainSummary}`;
+  }
+  if (el.topBoundaryValue) {
+    el.topBoundaryValue.textContent = boundary;
+  }
   if (el.materialLabel) {
     el.materialLabel.textContent = `Material: ${currentBrushLabel()}`;
   }
   if (el.modePill) {
-    const boundary = boundarySummaryLabel();
     const sourceLabel =
       state.sources.length === 1
         ? `${sourceShapeLabel(state.sources[0].shape)} · ${sourceCouplingLabel(state.sources[0].shape)}`
@@ -1923,9 +1952,18 @@ function updateControlText() {
 }
 
 function updateStats() {
-  if (el.stepCounter) el.stepCounter.textContent = String(sim.time);
-  if (el.maxField) el.maxField.textContent = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
-  if (el.energyValue) el.energyValue.textContent = formatFieldMetric(sim.lastEnergy, sim.lastEnergyLog10);
+  const stepText = String(sim.time);
+  const maxFieldText = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
+  const energyText = formatFieldMetric(sim.lastEnergy, sim.lastEnergyLog10);
+  const engineText = sim.engineLabel();
+  if (el.stepCounter) el.stepCounter.textContent = stepText;
+  if (el.maxField) el.maxField.textContent = maxFieldText;
+  if (el.energyValue) el.energyValue.textContent = energyText;
+  if (el.topStepValue) el.topStepValue.textContent = stepText;
+  if (el.topMaxFieldValue) el.topMaxFieldValue.textContent = maxFieldText;
+  if (el.topEngineValue) el.topEngineValue.textContent = engineText;
+  if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
+  if (el.hudFieldLabel) el.hudFieldLabel.textContent = `max ${maxFieldText}`;
   if (el.fluxLeftOutput) el.fluxLeftOutput.textContent = formatFieldValue(sim.diagnosticIncidentPower || 0);
   if (el.diagnosticAngleOutput) {
     const diagnosticAngle = sim.diagnosticSamples > 0 ? sim.diagnosticAngleDeg : sim.diagnosticDirection().angleDeg;
@@ -1935,7 +1973,7 @@ function updateStats() {
   if (el.fluxRightOutput) el.fluxRightOutput.textContent = formatFieldValue(sim.diagnosticTransmittedPower || 0);
   if (el.reflectanceOutput) el.reflectanceOutput.textContent = formatDiagnosticRatio(sim.diagnosticReflectance || 0);
   if (el.transmittanceOutput) el.transmittanceOutput.textContent = formatDiagnosticRatio(sim.diagnosticTransmittance || 0);
-  if (el.engineValue) el.engineValue.textContent = sim.engineLabel();
+  if (el.engineValue) el.engineValue.textContent = engineText;
   updateMaterialWarning();
   updateAnalysisControls();
 }
