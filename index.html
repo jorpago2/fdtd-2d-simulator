@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-scenes-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-results-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -945,7 +945,7 @@
             <div id="tab-results" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-results-button" data-control-panel="results" hidden>
 <section class="panel-section diagnostics-section">
               <h2>Diagnostics</h2>
-              <label class="toggle-row">
+              <label class="toggle-row" data-ui-scope="advanced">
                 <input id="diagnosticsInput" type="checkbox" checked />
                 <span>Line monitors</span>
               </label>
@@ -993,7 +993,7 @@
                   <output id="transmittanceOutput">0</output>
                 </div>
               </div>
-              <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
+              <button id="diagnosticsResetBtn" class="text-button" type="button" data-ui-scope="advanced">Reset monitors</button>
               <div class="sweep-panel" data-ui-scope="advanced">
                 <div class="two-col">
                   <label>

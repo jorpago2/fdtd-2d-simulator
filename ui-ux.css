@@ -435,6 +435,23 @@ html[data-theme="dark"] .share-url-output {
   .scene-browser {
     display: none !important;
   }
+
+  .app-shell[data-ui-depth="teaching"] .diagnostics-section {
+    gap: 10px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .diagnostics-section h2 {
+    margin-bottom: 0 !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-grid {
+    gap: 6px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-card {
+    min-height: 58px !important;
+    padding: 8px 9px !important;
+  }
 }
 
 /* Responsive simulator shell: prioritize the canvas and move controls into a drawer on compact viewports. */
