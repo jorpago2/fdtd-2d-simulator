@@ -723,6 +723,8 @@ const el = {
   presetInput: document.getElementById("presetInput"),
   sceneSearchInput: document.getElementById("sceneSearchInput"),
   sceneFilterBar: document.getElementById("sceneFilterBar"),
+  sceneBrowserCount: document.getElementById("sceneBrowserCount"),
+  sceneBrowserActive: document.getElementById("sceneBrowserActive"),
   sceneCards: document.getElementById("sceneCards"),
   sceneNote: document.getElementById("sceneNote"),
   slabThicknessControl: document.getElementById("slabThicknessControl"),
@@ -1172,18 +1174,35 @@ function collectSceneRecords() {
   });
 }
 
-function visibleSceneRecords() {
+function sceneSearchTerms() {
   const query = normalizeSceneText(el.sceneSearchInput?.value || "");
-  const terms = query.split(/\s+/).filter(Boolean);
+  return query.split(/\s+/).filter(Boolean);
+}
+
+function sceneRecordMatchesSearch(record, terms = sceneSearchTerms()) {
+  return terms.every((term) => record.haystack.includes(term));
+}
+
+function visibleSceneRecords() {
+  const terms = sceneSearchTerms();
   return sceneBrowserState.records.filter((record) => {
     if (sceneBrowserState.filter !== "all" && record.groupLabel !== sceneBrowserState.filter) return false;
-    return terms.every((term) => record.haystack.includes(term));
+    return sceneRecordMatchesSearch(record, terms);
   });
 }
 
 function renderSceneFilterBar() {
   if (!el.sceneFilterBar) return;
   const groups = Array.from(new Set(sceneBrowserState.records.map((record) => record.groupLabel)));
+  const terms = sceneSearchTerms();
+  const matchingRecords = sceneBrowserState.records.filter((record) => sceneRecordMatchesSearch(record, terms));
+  const counts = new Map([["all", matchingRecords.length]]);
+  groups.forEach((groupLabel) => {
+    counts.set(
+      groupLabel,
+      matchingRecords.filter((record) => record.groupLabel === groupLabel).length
+    );
+  });
   const filters = [{ value: "all", label: "All" }, ...groups.map((groupLabel) => ({
     value: groupLabel,
     label: cleanSceneGroupLabel(groupLabel),
@@ -1197,7 +1216,16 @@ function renderSceneFilterBar() {
     button.className = `scene-filter-button${active ? " is-active" : ""}`;
     button.dataset.sceneFilter = filter.value;
     button.setAttribute("aria-pressed", String(active));
-    button.textContent = filter.label;
+    const filterCount = counts.get(filter.value) || 0;
+    button.disabled = !active && filterCount === 0;
+    button.setAttribute("aria-label", `${filter.label}: ${filterCount} scenes`);
+    const label = document.createElement("span");
+    label.className = "scene-filter-label";
+    label.textContent = filter.label;
+    const count = document.createElement("span");
+    count.className = "scene-filter-count";
+    count.textContent = String(filterCount);
+    button.append(label, count);
     button.addEventListener("click", () => {
       sceneBrowserState.filter = filter.value;
       renderSceneFilterBar();
@@ -1207,15 +1235,35 @@ function renderSceneFilterBar() {
   });
 }
 
+function sceneRecordByValue(value) {
+  return sceneBrowserState.records.find((record) => record.value === value) || null;
+}
+
+function updateSceneBrowserMeta(records) {
+  const visibleCount = records.length;
+  const totalCount = sceneBrowserState.records.length;
+  const searchActive = Boolean((el.sceneSearchInput?.value || "").trim());
+  const filterActive = sceneBrowserState.filter !== "all";
+  if (el.sceneBrowserCount) {
+    el.sceneBrowserCount.textContent =
+      searchActive || filterActive ? `${visibleCount} of ${totalCount} scenes` : `${totalCount} scenes`;
+  }
+  if (el.sceneBrowserActive) {
+    const current = sceneRecordByValue(el.presetInput?.value || state.preset);
+    el.sceneBrowserActive.textContent = current ? `Selected: ${current.title}` : "Selected: custom scene";
+  }
+}
+
 function renderSceneCards() {
   if (!el.sceneCards) return;
   const records = visibleSceneRecords();
   el.sceneCards.replaceChildren();
+  updateSceneBrowserMeta(records);
 
   if (records.length === 0) {
     const emptyState = document.createElement("p");
     emptyState.className = "scene-empty-state";
-    emptyState.textContent = "No matching scenes.";
+    emptyState.textContent = "No matching scenes. Clear the search or switch back to All.";
     el.sceneCards.appendChild(emptyState);
     return;
   }
@@ -1276,6 +1324,7 @@ function renderSceneCards() {
 function syncSceneBrowserSelection() {
   if (!el.sceneCards) return;
   const currentPreset = el.presetInput?.value || state.preset;
+  updateSceneBrowserMeta(visibleSceneRecords());
   el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
     const active = card.dataset.sceneCard === currentPreset;
     card.classList.toggle("is-active", active);
@@ -5431,6 +5480,7 @@ el.mobileLayerButtons?.forEach((button) => {
 });
 
 el.sceneSearchInput?.addEventListener("input", () => {
+  renderSceneFilterBar();
   renderSceneCards();
 });
 

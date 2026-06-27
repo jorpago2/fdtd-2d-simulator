@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-visual-panel-3" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-scene-filters-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -882,6 +882,10 @@
                   <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
                 </label>
                 <div id="sceneFilterBar" class="scene-filter-bar" role="group" aria-label="Scene families"></div>
+                <div class="scene-browser-meta" aria-live="polite">
+                  <output id="sceneBrowserCount">140 scenes</output>
+                  <output id="sceneBrowserActive">Selected: Empty</output>
+                </div>
                 <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
               </div>
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
@@ -1346,6 +1350,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-visual-panel-1"></script>
+    <script src="app.js?v=20260627-scene-filters-2"></script>
   </body>
 </html>

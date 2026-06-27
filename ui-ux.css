@@ -293,6 +293,79 @@ html[data-theme="dark"] .results-state-pill[data-health-level] {
   align-items: start !important;
 }
 
+.scene-filter-button {
+  display: inline-grid !important;
+  grid-template-columns: minmax(0, max-content) auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+.scene-filter-button:disabled {
+  opacity: 0.46 !important;
+  cursor: not-allowed !important;
+}
+
+.scene-filter-button:disabled:hover {
+  color: var(--neu-muted) !important;
+  transform: none !important;
+}
+
+.scene-filter-label {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.scene-filter-count {
+  display: inline-grid !important;
+  place-items: center !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  border-radius: 999px !important;
+  padding-inline: 6px !important;
+  color: var(--neu-muted) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.62rem !important;
+  font-weight: 950 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.scene-filter-button.is-active .scene-filter-count {
+  color: #ffffff !important;
+  background: color-mix(in srgb, var(--neu-accent) 90%, #ffffff) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+
+.scene-browser-meta {
+  display: grid !important;
+  grid-template-columns: minmax(86px, max-content) minmax(0, 1fr) !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.scene-browser-meta output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  padding: 7px 10px !important;
+  color: var(--neu-muted) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.scene-browser-meta output:first-child {
+  color: var(--neu-accent) !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
 .scene-card-thumb {
   grid-row: 1 / span 4 !important;
   display: grid !important;
