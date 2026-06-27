@@ -489,6 +489,13 @@ function sourceSummaryLabel() {
 const el = {
   canvas: document.getElementById("simCanvas"),
   canvasFrame: document.querySelector(".canvas-frame"),
+  stage: document.querySelector(".stage"),
+  canvasToolbar: document.querySelector(".canvas-toolbar"),
+  appShell: document.querySelector(".app-shell"),
+  controlPanel: document.getElementById("controlPanel"),
+  controlDrawerToggle: document.getElementById("controlDrawerToggle"),
+  controlDrawerCloseBtn: document.getElementById("controlDrawerCloseBtn"),
+  controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
   controlTabButtons: document.querySelectorAll("[data-control-tab]"),
   controlTabPanels: document.querySelectorAll("[data-control-panel]"),
   themeButtons: document.querySelectorAll("[data-theme-choice]"),
@@ -716,6 +723,30 @@ const sceneBrowserState = {
   filter: "all",
 };
 
+const COMPACT_CONTROLS_MEDIA_QUERY = "(max-width: 1440px)";
+
+function cssPixelValue(value) {
+  const numeric = Number.parseFloat(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function availableCanvasFrameHeight(viewportHeight, compactViewport) {
+  const viewportTargetHeight = compactViewport
+    ? viewportHeight - Math.min(230, viewportHeight * 0.28)
+    : viewportHeight * CANVAS_DISPLAY_VIEWPORT_FRACTION;
+  if (!el.stage || !el.canvasToolbar) return viewportTargetHeight;
+
+  const stageRect = el.stage.getBoundingClientRect();
+  const toolbarRect = el.canvasToolbar.getBoundingClientRect();
+  if (!stageRect.height || !toolbarRect.height) return viewportTargetHeight;
+
+  const stageStyle = getComputedStyle(el.stage);
+  const paddingY = cssPixelValue(stageStyle.paddingTop) + cssPixelValue(stageStyle.paddingBottom);
+  const rowGap = cssPixelValue(stageStyle.rowGap);
+  const stageCanvasHeight = stageRect.height - toolbarRect.height - paddingY - rowGap;
+  return Math.min(viewportTargetHeight, Math.max(1, stageCanvasHeight));
+}
+
 function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   if (!el.canvasFrame) return;
   const safeNx = Math.max(1, Number(nx) || DEFAULT_GRID.nx);
@@ -723,11 +754,9 @@ function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   const physicalAspect = safeNx / safeNy;
   const displayAspect = clamp(physicalAspect, MIN_CANVAS_DISPLAY_ASPECT, MAX_CANVAS_DISPLAY_ASPECT);
   const viewportHeight = Math.max(1, window.innerHeight || MAX_CANVAS_DISPLAY_HEIGHT);
-  const targetHeight = clamp(
-    viewportHeight * CANVAS_DISPLAY_VIEWPORT_FRACTION,
-    MIN_CANVAS_DISPLAY_HEIGHT,
-    MAX_CANVAS_DISPLAY_HEIGHT
-  );
+  const compactViewport = window.matchMedia?.(COMPACT_CONTROLS_MEDIA_QUERY)?.matches;
+  const availableHeight = availableCanvasFrameHeight(viewportHeight, compactViewport);
+  const targetHeight = clamp(availableHeight, 1, MAX_CANVAS_DISPLAY_HEIGHT);
   el.canvasFrame.style.setProperty("--sim-aspect-ratio", `${displayAspect} / 1`);
   el.canvasFrame.style.setProperty("--sim-frame-width-limit", `${displayAspect * targetHeight}px`);
   el.canvasFrame.dataset.aspectCapped = String(Math.abs(displayAspect - physicalAspect) > 1e-6);
@@ -1148,6 +1177,33 @@ function activateControlTab(tabName) {
     panel.classList.toggle("is-active", active);
     panel.hidden = !active;
   });
+}
+
+function compactControlDrawerActive() {
+  return window.matchMedia?.(COMPACT_CONTROLS_MEDIA_QUERY)?.matches ?? false;
+}
+
+function setControlDrawerOpen(open) {
+  const isOpen = Boolean(open) && compactControlDrawerActive();
+  el.appShell?.classList.toggle("controls-open", isOpen);
+  document.body.classList.toggle("controls-drawer-open", isOpen);
+  if (el.controlDrawerToggle) {
+    el.controlDrawerToggle.setAttribute("aria-expanded", String(isOpen));
+  }
+  if (el.controlDrawerBackdrop) {
+    el.controlDrawerBackdrop.hidden = !isOpen;
+  }
+  if (isOpen) {
+    el.controlPanel?.focus?.({ preventScroll: true });
+  }
+}
+
+function closeControlDrawer() {
+  setControlDrawerOpen(false);
+}
+
+function toggleControlDrawer() {
+  setControlDrawerOpen(!el.appShell?.classList.contains("controls-open"));
 }
 
 function handleControlTabKeydown(event) {
@@ -4539,6 +4595,10 @@ el.brushModeBtn.addEventListener("click", () => {
   setCanvasMode("brush");
 });
 
+el.controlDrawerToggle?.addEventListener("click", toggleControlDrawer);
+el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
+el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);
+
 el.controlTabButtons?.forEach((button) => {
   button.addEventListener("click", () => {
     activateControlTab(button.dataset.controlTab);
@@ -5688,6 +5748,11 @@ document.addEventListener("pointerdown", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && el.appShell?.classList.contains("controls-open")) {
+    closeControlDrawer();
+    event.preventDefault();
+    return;
+  }
   if (event.key === "Escape" && (!el.sourceMenu?.hidden || !el.brushMenu?.hidden || !el.boundaryMenu?.hidden)) {
     closeContextMenus();
     sim.render();
@@ -5702,6 +5767,9 @@ document.addEventListener("keydown", (event) => {
 
 window.addEventListener("resize", () => {
   closeContextMenus();
+  if (!compactControlDrawerActive()) {
+    closeControlDrawer();
+  }
   updateCanvasAspectRatio(sim.nx, sim.ny);
   sim.fitCanvas();
   sim.render();
