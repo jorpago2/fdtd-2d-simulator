@@ -74,6 +74,66 @@
   white-space: nowrap !important;
 }
 
+.results-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.results-summary-card {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 76%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 10px 11px !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 86%, white), var(--neu-surface)) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.results-summary-card span,
+.results-summary-card output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.results-summary-card span {
+  color: var(--neu-muted) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+}
+
+.results-summary-card output {
+  color: var(--neu-ink) !important;
+  font-size: 1.1rem !important;
+  font-weight: 950 !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+}
+
+.results-summary-card.reflectance {
+  border-color: color-mix(in srgb, rgb(13, 107, 245) 30%, var(--neu-border)) !important;
+}
+
+.results-summary-card.transmittance {
+  border-color: color-mix(in srgb, rgb(18, 143, 91) 32%, var(--neu-border)) !important;
+}
+
+.results-summary-card.balance {
+  border-color: color-mix(in srgb, rgb(183, 106, 37) 34%, var(--neu-border)) !important;
+}
+
+.results-summary-card.angle {
+  border-color: color-mix(in srgb, var(--neu-accent) 34%, var(--neu-border)) !important;
+}
+
 .scene-card {
   grid-template-columns: 52px minmax(0, 1fr) !important;
   align-items: start !important;
@@ -303,6 +363,19 @@ html[data-theme="dark"] .share-url-output {
   .chart-footer,
   .reproducibility-section .button-row {
     grid-template-columns: 1fr !important;
+  }
+
+  .results-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .results-summary-card {
+    min-height: 66px !important;
+    padding: 9px 10px !important;
+  }
+
+  .results-summary-card output {
+    font-size: 1rem !important;
   }
 
   .chart-footer {

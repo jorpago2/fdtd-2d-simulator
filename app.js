@@ -774,6 +774,10 @@ const el = {
   fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
   fieldMetricUnit: document.getElementById("fieldMetricUnit"),
   energyValue: document.getElementById("energyValue"),
+  summaryReflectanceOutput: document.getElementById("summaryReflectanceOutput"),
+  summaryTransmittanceOutput: document.getElementById("summaryTransmittanceOutput"),
+  summaryBalanceOutput: document.getElementById("summaryBalanceOutput"),
+  summaryAngleOutput: document.getElementById("summaryAngleOutput"),
   fluxLeftOutput: document.getElementById("fluxLeftOutput"),
   diagnosticAngleOutput: document.getElementById("diagnosticAngleOutput"),
   reflectedPowerOutput: document.getElementById("reflectedPowerOutput"),
@@ -2921,15 +2925,23 @@ function updateStats() {
   if (el.mobileMaxFieldValue) el.mobileMaxFieldValue.textContent = maxFieldText;
   if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
   if (el.hudFieldLabel) el.hudFieldLabel.textContent = `max ${maxFieldText}`;
+  const diagnosticAngle = sim.diagnosticSamples > 0 ? sim.diagnosticAngleDeg : sim.diagnosticDirection().angleDeg;
+  const diagnosticAngleText = `${formatMonitorAngle(diagnosticAngle)}°`;
+  const diagnosticReflectance = sim.diagnosticReflectance || 0;
+  const diagnosticTransmittance = sim.diagnosticTransmittance || 0;
+  const diagnosticBalance = sim.diagnosticSamples > 0 ? 1 - diagnosticReflectance - diagnosticTransmittance : 0;
+  if (el.summaryReflectanceOutput) el.summaryReflectanceOutput.textContent = formatDiagnosticRatio(diagnosticReflectance);
+  if (el.summaryTransmittanceOutput) el.summaryTransmittanceOutput.textContent = formatDiagnosticRatio(diagnosticTransmittance);
+  if (el.summaryBalanceOutput) el.summaryBalanceOutput.textContent = formatDiagnosticRatio(diagnosticBalance);
+  if (el.summaryAngleOutput) el.summaryAngleOutput.textContent = diagnosticAngleText;
   if (el.fluxLeftOutput) el.fluxLeftOutput.textContent = formatFieldValue(sim.diagnosticIncidentPower || 0);
   if (el.diagnosticAngleOutput) {
-    const diagnosticAngle = sim.diagnosticSamples > 0 ? sim.diagnosticAngleDeg : sim.diagnosticDirection().angleDeg;
-    el.diagnosticAngleOutput.textContent = `${formatMonitorAngle(diagnosticAngle)}°`;
+    el.diagnosticAngleOutput.textContent = diagnosticAngleText;
   }
   if (el.reflectedPowerOutput) el.reflectedPowerOutput.textContent = formatFieldValue(sim.diagnosticReflectedPower || 0);
   if (el.fluxRightOutput) el.fluxRightOutput.textContent = formatFieldValue(sim.diagnosticTransmittedPower || 0);
-  if (el.reflectanceOutput) el.reflectanceOutput.textContent = formatDiagnosticRatio(sim.diagnosticReflectance || 0);
-  if (el.transmittanceOutput) el.transmittanceOutput.textContent = formatDiagnosticRatio(sim.diagnosticTransmittance || 0);
+  if (el.reflectanceOutput) el.reflectanceOutput.textContent = formatDiagnosticRatio(diagnosticReflectance);
+  if (el.transmittanceOutput) el.transmittanceOutput.textContent = formatDiagnosticRatio(diagnosticTransmittance);
   if (el.engineValue) el.engineValue.textContent = engineText;
   updateMaterialWarning();
   updateAnalysisControls();
@@ -2937,6 +2949,7 @@ function updateStats() {
 
 function formatDiagnosticRatio(value) {
   if (!Number.isFinite(value)) return "0";
+  if (Math.abs(value) < 1e-12) return "0";
   if (value >= 10) return value.toFixed(1);
   if (value >= 1) return value.toFixed(2);
   if (value >= 0.01) return value.toFixed(3);

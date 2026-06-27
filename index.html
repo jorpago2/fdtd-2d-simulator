@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-status-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-results-summary-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -939,7 +939,25 @@
                 <input id="diagnosticsInput" type="checkbox" checked />
                 <span>Line monitors</span>
               </label>
-              <div class="diagnostics-grid">
+              <div class="results-summary-grid" aria-label="Results summary">
+                <div class="results-summary-card reflectance">
+                  <span><i>R</i><sub>est</sub></span>
+                  <output id="summaryReflectanceOutput">0</output>
+                </div>
+                <div class="results-summary-card transmittance">
+                  <span><i>T</i><sub>est</sub></span>
+                  <output id="summaryTransmittanceOutput">0</output>
+                </div>
+                <div class="results-summary-card balance">
+                  <span>1-R-T</span>
+                  <output id="summaryBalanceOutput">0</output>
+                </div>
+                <div class="results-summary-card angle">
+                  <span>&theta;<sub>k</sub></span>
+                  <output id="summaryAngleOutput">0°</output>
+                </div>
+              </div>
+              <div class="diagnostics-grid" data-ui-scope="advanced">
                 <div class="diagnostic-metric">
                   <span>&theta;<sub>k</sub></span>
                   <output id="diagnosticAngleOutput">0°</output>
@@ -1109,6 +1127,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-run-state-1"></script>
+    <script src="app.js?v=20260627-results-summary-1"></script>
   </body>
 </html>
