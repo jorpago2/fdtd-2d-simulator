@@ -288,6 +288,23 @@ html[data-theme="dark"] .results-state-pill[data-health-level] {
   border-color: color-mix(in srgb, var(--neu-accent) 34%, var(--neu-border)) !important;
 }
 
+.results-insight-note {
+  margin: 0 !important;
+  border-radius: var(--neu-radius-note) !important;
+  padding: 10px 12px !important;
+  color: var(--neu-muted) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.76rem !important;
+  font-weight: 780 !important;
+  line-height: 1.36 !important;
+}
+
+.results-insight-note.is-warning {
+  color: var(--danger) !important;
+  background: color-mix(in srgb, var(--danger) 8%, var(--neu-surface-low)) !important;
+}
+
 .scene-card {
   grid-template-columns: 52px minmax(0, 1fr) !important;
   align-items: start !important;

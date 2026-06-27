@@ -623,6 +623,7 @@ const el = {
   diagnosticsInput: document.getElementById("diagnosticsInput"),
   diagnosticsResetBtn: document.getElementById("diagnosticsResetBtn"),
   resultsStateOutput: document.getElementById("resultsStateOutput"),
+  resultsInsightNote: document.getElementById("resultsInsightNote"),
   resultsDetailPanels: document.querySelectorAll(".results-detail-panel"),
   sweepModeInput: document.getElementById("sweepModeInput"),
   sweepStartInput: document.getElementById("sweepStartInput"),
@@ -3233,6 +3234,32 @@ function updateControlText() {
   updateAnalysisControls();
 }
 
+function updateResultsInsight(diagnosticReflectance, diagnosticTransmittance, diagnosticBalance) {
+  if (!el.resultsInsightNote) return;
+  let text = "Run the simulation to collect monitor samples.";
+  let warning = false;
+  const samples = sim.diagnosticSamples || 0;
+  if (sim.lastDiverged) {
+    text = "Field diverged. Reset the field or reduce gain/material contrast before trusting R/T.";
+    warning = true;
+  } else if (!state.diagnosticsEnabled) {
+    text = "Line monitors are disabled; enable them to estimate reflectance and transmittance.";
+    warning = true;
+  } else if (samples <= 0) {
+    text = "Run the simulation until the wave reaches the monitor lines.";
+  } else if (samples < 20) {
+    text = `Collecting monitor samples (${samples}). R/T will stabilize after a few wave periods.`;
+  } else {
+    const residual = Math.abs(diagnosticBalance);
+    text = `R=${formatDiagnosticRatio(diagnosticReflectance)}, T=${formatDiagnosticRatio(diagnosticTransmittance)}, residual=${formatDiagnosticRatio(
+      diagnosticBalance
+    )} from ${samples} samples.`;
+    warning = residual > 0.25;
+  }
+  el.resultsInsightNote.textContent = text;
+  el.resultsInsightNote.classList.toggle("is-warning", warning);
+}
+
 function updateStats() {
   const stepText = String(sim.time);
   const maxFieldText = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
@@ -3259,6 +3286,7 @@ function updateStats() {
   if (el.summaryTransmittanceOutput) el.summaryTransmittanceOutput.textContent = formatDiagnosticRatio(diagnosticTransmittance);
   if (el.summaryBalanceOutput) el.summaryBalanceOutput.textContent = formatDiagnosticRatio(diagnosticBalance);
   if (el.summaryAngleOutput) el.summaryAngleOutput.textContent = diagnosticAngleText;
+  updateResultsInsight(diagnosticReflectance, diagnosticTransmittance, diagnosticBalance);
   if (el.fluxLeftOutput) el.fluxLeftOutput.textContent = formatFieldValue(sim.diagnosticIncidentPower || 0);
   if (el.diagnosticAngleOutput) {
     el.diagnosticAngleOutput.textContent = diagnosticAngleText;
