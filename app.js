@@ -251,6 +251,97 @@ const state = {
   modulationPhaseDeg: 0,
 };
 
+const SCENE_SNAPSHOT_VERSION = 1;
+const SCENE_SHARE_URL_LIMIT = 7600;
+const SERIALIZABLE_STATE_KEYS = Object.freeze([
+  "theme",
+  "stepsPerFrame",
+  "gain",
+  "autoScale",
+  "fieldComponent",
+  "fieldDisplay",
+  "fieldQuiver",
+  "diagnosticsEnabled",
+  "analysisEnabled",
+  "analysisSampleEvery",
+  "sweepMode",
+  "sweepStart",
+  "sweepEnd",
+  "sweepSamples",
+  "sweepSteps",
+  "sweepBidirectional",
+  "viewMode",
+  "viewProjection",
+  "materialPart",
+  "canvasMode",
+  "sources",
+  "selectedSourceId",
+  "nextSourceId",
+  "sourceDefaults",
+  "wavelengthUm",
+  "cellsPerWavelength",
+  "boundary",
+  "boundarySides",
+  "preset",
+  "gridNx",
+  "gridNy",
+  "slabThicknessLambda",
+  "customAnisotropic",
+  "customEpsReal",
+  "customEpsImag",
+  "customEpsYReal",
+  "customEpsYImag",
+  "customMuReal",
+  "customMuImag",
+  "customMuYReal",
+  "customMuYImag",
+  "brush",
+  "brushTool",
+  "brushGeometry",
+  "geometryWidthLambda",
+  "geometryHeightLambda",
+  "geometryRadiusLambda",
+  "geometryInnerRadiusLambda",
+  "brushSizeLambda",
+  "materialModulationEnabled",
+  "materialNonlinearEnabled",
+  "materialHarmonicEnabled",
+  "materialDispersionEnabled",
+  "materialConductivityEnabled",
+  "materialSaturableGainEnabled",
+  "materialPhaseChangeEnabled",
+  "materialGyrotropyEnabled",
+  "materialBianisotropyEnabled",
+  "materialFullVectorBianisotropyEnabled",
+  "kerrChi3",
+  "kerrSaturation",
+  "harmonicChi2",
+  "harmonicChi3",
+  "harmonicSaturation",
+  "conductivitySigma",
+  "conductivitySigmaY",
+  "gainSaturation",
+  "phaseEpsOn",
+  "phaseLossOn",
+  "phaseThresholdOn",
+  "phaseThresholdOff",
+  "phaseTauOn",
+  "phaseTauOff",
+  "gyrotropyG",
+  "bianisotropyKappa",
+  "dispersionModel",
+  "dispersionOmegaP",
+  "dispersionGamma",
+  "dispersionOmega0",
+  "dispersionDeltaEps",
+  "dispersionTau",
+  "modulationDepth",
+  "modulationFrequency",
+  "modulationPeriodLambda",
+  "modulationAngleDeg",
+  "modulationPhaseDeg",
+]);
+
 document.documentElement.dataset.theme = state.theme;
 
 let selectedMaterialRegion = null;
@@ -436,11 +527,13 @@ const el = {
   sweepExportBtn: document.getElementById("sweepExportBtn"),
   sweepStatus: document.getElementById("sweepStatus"),
   sweepChart: document.getElementById("sweepChart"),
+  sweepChartReadout: document.getElementById("sweepChartReadout"),
   analysisInput: document.getElementById("analysisInput"),
   analysisResetBtn: document.getElementById("analysisResetBtn"),
   analysisStatus: document.getElementById("analysisStatus"),
   spectrumChart: document.getElementById("spectrumChart"),
   farFieldChart: document.getElementById("farFieldChart"),
+  analysisChartReadout: document.getElementById("analysisChartReadout"),
   sourceTypeInput: document.getElementById("sourceTypeInput"),
   sourceShapeInput: document.getElementById("sourceShapeInput"),
   frequencyInput: document.getElementById("frequencyInput"),
@@ -530,6 +623,17 @@ const el = {
   slabThicknessOutput: document.getElementById("slabThicknessOutput"),
   gridNxInput: document.getElementById("gridNxInput"),
   gridNyInput: document.getElementById("gridNyInput"),
+  stabilityCflValue: document.getElementById("stabilityCflValue"),
+  stabilityResolutionValue: document.getElementById("stabilityResolutionValue"),
+  stabilityMediaValue: document.getElementById("stabilityMediaValue"),
+  stabilityEstimateValue: document.getElementById("stabilityEstimateValue"),
+  stabilityNote: document.getElementById("stabilityNote"),
+  exportSceneBtn: document.getElementById("exportSceneBtn"),
+  importSceneBtn: document.getElementById("importSceneBtn"),
+  importSceneFileInput: document.getElementById("importSceneFileInput"),
+  copySceneUrlBtn: document.getElementById("copySceneUrlBtn"),
+  shareSceneUrlOutput: document.getElementById("shareSceneUrlOutput"),
+  reproStatus: document.getElementById("reproStatus"),
   brushSizeInput: document.getElementById("brushSizeInput"),
   brushSizeOutput: document.getElementById("brushSizeOutput"),
   brushSizeControl: document.getElementById("brushSizeControl"),
@@ -690,6 +794,18 @@ function sceneBadgeLabels(record) {
   return badges.length > 0 ? badges.slice(0, 4) : ["FDTD"];
 }
 
+function sceneThumbnailKind(record) {
+  const haystack = normalizeSceneText(`${record.title} ${record.group} ${record.description} ${record.badges.join(" ")}`);
+  if (/(ring|resonator|cavity|fabry|purcell)/.test(haystack)) return "resonator";
+  if (/(waveguide|guide|coupler|mmi|mach|microstrip|stub)/.test(haystack)) return "waveguide";
+  if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|lattice)/.test(haystack)) return "lattice";
+  if (/(interface|refraction|brewster|tir|coating|mirror|slab)/.test(haystack)) return "interface";
+  if (/(slit|aperture|diffraction|scatter|cylinder|dimer|mie|kerker|rcs)/.test(haystack)) return "scatterer";
+  if (/(temporal|modulat|floquet|space-time|traveling)/.test(haystack)) return "temporal";
+  if (/(drude|plasmon|spp|enz|metal|negative-index|superlens|hyperlens)/.test(haystack)) return "dispersive";
+  return "wave";
+}
+
 function collectSceneRecords() {
   if (!el.presetInput) return [];
   return Array.from(el.presetInput.querySelectorAll("option")).map((option) => {
@@ -705,9 +821,11 @@ function collectSceneRecords() {
       groupLabel,
       description: sceneDescriptions[option.value] || "",
       badges: [],
+      thumbnail: "wave",
       haystack: "",
     };
     record.badges = sceneBadgeLabels(record);
+    record.thumbnail = sceneThumbnailKind(record);
     record.haystack = normalizeSceneText(
       `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
     );
@@ -768,7 +886,13 @@ function renderSceneCards() {
     card.type = "button";
     card.className = "scene-card";
     card.dataset.sceneCard = record.value;
+    card.dataset.sceneThumb = record.thumbnail;
     card.setAttribute("aria-pressed", String(record.value === state.preset));
+
+    const thumbnail = document.createElement("span");
+    thumbnail.className = "scene-card-thumb";
+    thumbnail.setAttribute("aria-hidden", "true");
+    thumbnail.append(document.createElement("span"), document.createElement("span"), document.createElement("span"));
 
     const header = document.createElement("span");
     header.className = "scene-card-header";
@@ -800,7 +924,7 @@ function renderSceneCards() {
       badgeRow.appendChild(badge);
     });
 
-    card.append(header, group, description, badgeRow);
+    card.append(thumbnail, header, group, description, badgeRow);
     card.addEventListener("click", () => {
       selectScenePreset(record.value);
     });
@@ -1024,6 +1148,23 @@ function activateControlTab(tabName) {
     panel.classList.toggle("is-active", active);
     panel.hidden = !active;
   });
+}
+
+function handleControlTabKeydown(event) {
+  const buttons = Array.from(el.controlTabButtons || []);
+  const currentIndex = buttons.indexOf(event.currentTarget);
+  if (currentIndex < 0) return;
+  const lastIndex = buttons.length - 1;
+  let nextIndex = currentIndex;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = currentIndex >= lastIndex ? 0 : currentIndex + 1;
+  else if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = currentIndex <= 0 ? lastIndex : currentIndex - 1;
+  else if (event.key === "Home") nextIndex = 0;
+  else if (event.key === "End") nextIndex = lastIndex;
+  else return;
+  event.preventDefault();
+  const nextButton = buttons[nextIndex];
+  nextButton.focus();
+  activateControlTab(nextButton.dataset.controlTab);
 }
 
 function lambdaToCells(valueLambda) {
@@ -1443,6 +1584,67 @@ function updateMaterialWarning() {
   if (el.simGuideWarning) {
     el.simGuideWarning.textContent = warningText || `CFL S = ${COURANT.toFixed(2)} < ${(1 / Math.sqrt(2)).toFixed(2)} explicit 2D Yee limit.`;
     el.simGuideWarning.classList.toggle("is-warning", Boolean(warningText));
+  }
+}
+
+function arrayHasNonzero(values) {
+  return Boolean(values?.some?.((value) => value !== 0));
+}
+
+function activeMediaLabels() {
+  const labels = [];
+  if (state.materialModulationEnabled || arrayHasNonzero(sim.modulatedMaterial)) labels.push("modulated");
+  if (state.materialNonlinearEnabled || state.materialHarmonicEnabled || arrayHasNonzero(sim.nonlinearMaterial)) labels.push("nonlinear");
+  if (state.materialPhaseChangeEnabled || arrayHasNonzero(sim.phaseChangeMaterial)) labels.push("phase-change");
+  if (state.materialDispersionEnabled || arrayHasNonzero(sim.dispersiveMaterial) || arrayHasNonzero(sim.muDispersiveMaterial)) labels.push("ADE");
+  if (state.materialGyrotropyEnabled || arrayHasNonzero(sim.gyrotropicMaterial)) labels.push("gyrotropic");
+  if (state.materialBianisotropyEnabled || arrayHasNonzero(sim.bianisotropicMaterial)) labels.push("bianisotropic");
+  if (state.materialConductivityEnabled || arrayHasNonzero(sim.conductivity) || arrayHasNonzero(sim.conductivityY)) labels.push("conductive");
+  if (state.materialSaturableGainEnabled) labels.push("gain-limited");
+  return labels.length > 0 ? labels : ["static"];
+}
+
+function materialStabilityFlags() {
+  const flags = [];
+  let minAbsEps = Infinity;
+  let minAbsMu = Infinity;
+  let negativeLossCells = 0;
+  for (let i = 0; i < sim.n; i += 1) {
+    if (sim.material[i] === 0 || sim.material[i] === 2) continue;
+    minAbsEps = Math.min(minAbsEps, Math.abs(sim.eps[i]), Math.abs(sim.epsY[i]));
+    minAbsMu = Math.min(minAbsMu, Math.abs(sim.mu[i]), Math.abs(sim.muY[i]));
+    if (sim.loss[i] < 0 || sim.lossY[i] < 0 || sim.muLoss[i] < 0 || sim.muLossY[i] < 0) {
+      negativeLossCells += 1;
+    }
+  }
+  if (state.cellsPerWavelength < 10) flags.push("low spatial resolution");
+  if (Number.isFinite(minAbsEps) && minAbsEps < 0.2) flags.push("near-zero eps");
+  if (Number.isFinite(minAbsMu) && minAbsMu < 0.2) flags.push("near-zero mu");
+  if (negativeLossCells > 0 || state.customEpsImag < 0 || state.customMuImag < 0) flags.push("gain or negative loss");
+  if (state.materialModulationEnabled && state.modulationDepth > 0.5) flags.push("deep modulation");
+  if (state.materialBianisotropyEnabled && Math.abs(state.bianisotropyKappa) > BIANISOTROPY_KAPPA_LIMIT * 0.8) flags.push("strong kappa");
+  if (sim.lastDiverged) flags.push("recent non-finite field");
+  return flags;
+}
+
+function updateStabilitySummary() {
+  if (!el.stabilityCflValue) return;
+  const limit = 1 / Math.sqrt(2);
+  const media = activeMediaLabels();
+  const flags = materialStabilityFlags();
+  const cflStable = COURANT < limit;
+  const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
+  el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
+  el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / lambda0`;
+  el.stabilityMediaValue.textContent = media.join(", ");
+  el.stabilityEstimateValue.textContent = level;
+  if (el.stabilityNote) {
+    const base = `Explicit 2D Yee check: S must stay below 1/sqrt(2). Current S=${COURANT.toFixed(2)}.`;
+    el.stabilityNote.textContent =
+      flags.length > 0
+        ? `${base} Watch: ${flags.join(", ")}. Run convergence checks for publishable results.`
+        : `${base} Resolution is ${state.cellsPerWavelength} cells/lambda0; still verify convergence before quantitative claims.`;
+    el.stabilityNote.classList.toggle("is-warning", level !== "stable");
   }
 }
 
@@ -2165,6 +2367,7 @@ function updateControlText() {
     el.modePill.textContent = `Sources: ${sourceLabel} - ${boundary} boundary`;
   }
   updateMaterialWarning();
+  updateStabilitySummary();
   updateInspector();
   updateAllRangeProgress();
   updateSweepControls();
@@ -2934,6 +3137,50 @@ function drawSweepChart() {
       padT + plotH / 2,
     );
   }
+  if (el.sweepChartReadout) {
+    el.sweepChartReadout.textContent =
+      results.length > 0 ? `${results.length} sweep points | ${sweepModeLabel()} ${formatSweepValue(results[results.length - 1].x)}` : "No sweep point";
+  }
+}
+
+function canvasRelativePoint(canvas, event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: clamp(event.clientX - rect.left, 0, rect.width),
+    y: clamp(event.clientY - rect.top, 0, rect.height),
+    width: Math.max(1, rect.width),
+    height: Math.max(1, rect.height),
+  };
+}
+
+function updateSweepChartReadout(event) {
+  if (!el.sweepChartReadout || !el.sweepChart) return;
+  const results = state.sweepResults || [];
+  if (results.length === 0) {
+    el.sweepChartReadout.textContent = "No sweep point";
+    return;
+  }
+  const point = canvasRelativePoint(el.sweepChart, event);
+  const xs = results.map((result) => result.x);
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const xValue = xMin + (point.x / point.width) * Math.max(1e-9, xMax - xMin);
+  let nearest = results[0];
+  let bestDistance = Infinity;
+  for (const result of results) {
+    const distance = Math.abs(result.x - xValue);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      nearest = result;
+    }
+  }
+  const values = [
+    `${sweepModeLabel()}=${formatSweepValue(nearest.x)}`,
+    Number.isFinite(nearest.r) ? `R=${formatDiagnosticRatio(nearest.r)}` : null,
+    Number.isFinite(nearest.t) ? `T=${formatDiagnosticRatio(nearest.t)}` : null,
+    nearest.branch ? nearest.branch : null,
+  ].filter(Boolean);
+  el.sweepChartReadout.textContent = values.join(" | ");
 }
 
 function chartPalette() {
@@ -3137,6 +3384,25 @@ function drawFarFieldChart() {
   ctx.textAlign = "center";
   ctx.fillText("0°", cx + radius + 10 * dpr, cy);
   ctx.fillText("90°", cx, cy + radius + 12 * dpr);
+}
+
+function updateSpectrumReadout(event) {
+  if (!el.analysisChartReadout || !el.spectrumChart) return;
+  const point = canvasRelativePoint(el.spectrumChart, event);
+  const f = clamp(point.x / point.width, 0, 1) * 0.1;
+  const db = -54 + (1 - clamp(point.y / point.height, 0, 1)) * 54;
+  el.analysisChartReadout.textContent = `Spectrum f=${formatFieldValue(f)} | ${db.toFixed(1)} dB`;
+}
+
+function updateFarFieldReadout(event) {
+  if (!el.analysisChartReadout || !el.farFieldChart) return;
+  const point = canvasRelativePoint(el.farFieldChart, event);
+  const cx = point.width * 0.5;
+  const cy = point.height * 0.56;
+  const theta = (Math.atan2(point.y - cy, point.x - cx) * 180) / Math.PI;
+  const normalized = ((theta % 360) + 360) % 360;
+  const scatteringMode = sim.analysisFarFieldMode === "scattering" || Boolean(sim.analysisScatteringSource());
+  el.analysisChartReadout.textContent = `${scatteringMode ? "Scattering" : "NTFF"} theta=${normalized.toFixed(1)}°`;
 }
 
 function updateAnalysisControls() {
@@ -3640,6 +3906,315 @@ function safeFilePart(text) {
     .slice(0, 48) || "scene";
 }
 
+function clonePlainData(value) {
+  return value == null ? value : JSON.parse(JSON.stringify(value));
+}
+
+function setReproStatus(text, isWarning = false) {
+  if (!el.reproStatus) return;
+  el.reproStatus.textContent = text;
+  el.reproStatus.classList.toggle("is-warning", isWarning);
+}
+
+function knownPresetValue(value) {
+  if (!el.presetInput) return false;
+  return Array.from(el.presetInput.options).some((option) => option.value === value);
+}
+
+function serializableStateSnapshot() {
+  const snapshot = {};
+  for (const key of SERIALIZABLE_STATE_KEYS) {
+    snapshot[key] = clonePlainData(state[key]);
+  }
+  return snapshot;
+}
+
+function snapshotDrawnMaterialCells() {
+  const cells = [];
+  for (let y = 1; y < sim.ny - 1; y += 1) {
+    for (let x = 1; x < sim.nx - 1; x += 1) {
+      if (sim.isInBoundaryControlRegion?.(x, y)) continue;
+      const idx = sim.id(x, y);
+      if (sim.material[idx] === 0) continue;
+      cells.push(sim.snapshotMaterialCell(x, y));
+    }
+  }
+  return cells;
+}
+
+function exportSceneState({ includeMaterials = true } = {}) {
+  return {
+    kind: "fdtd-2d-scene",
+    version: SCENE_SNAPSHOT_VERSION,
+    exportedAt: new Date().toISOString(),
+    grid: { nx: sim.nx, ny: sim.ny },
+    view: {
+      x: sim.viewX,
+      y: sim.viewY,
+      zoom: sim.viewZoom,
+    },
+    state: serializableStateSnapshot(),
+    materials: includeMaterials ? snapshotDrawnMaterialCells() : undefined,
+  };
+}
+
+function downloadTextFile(filename, text, type = "application/json") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function normalizeImportedStateValues() {
+  state.theme = normalizeTheme(state.theme);
+  state.stepsPerFrame = clamp(Number(state.stepsPerFrame) || 1, 0.2, 12);
+  state.gain = clamp(Number(state.gain) || 1, 0.1, 10);
+  state.autoScale = Boolean(state.autoScale);
+  state.fieldComponent = state.fieldComponent === "hz" ? "hz" : "ez";
+  state.fieldDisplay = ["scalar", "transverseX", "transverseY", "electricMag", "magneticMag"].includes(state.fieldDisplay)
+    ? state.fieldDisplay
+    : "scalar";
+  state.fieldQuiver = Boolean(state.fieldQuiver);
+  state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
+  state.analysisEnabled = Boolean(state.analysisEnabled);
+  state.analysisSampleEvery = clampInt(state.analysisSampleEvery, 1, 16);
+  state.sweepMode = normalizeSweepMode(state.sweepMode);
+  state.sweepSamples = clampInt(state.sweepSamples, 3, 41);
+  state.sweepSteps = clampInt(state.sweepSteps, 120, 4000);
+  state.sweepBidirectional = Boolean(state.sweepBidirectional);
+  state.viewMode = ["field", "epsilon", "mu", "poynting"].includes(state.viewMode) ? state.viewMode : "field";
+  state.viewProjection = state.viewProjection === "3d" ? "3d" : "2d";
+  state.materialPart = state.materialPart === "imag" ? "imag" : "real";
+  state.canvasMode = state.canvasMode === "brush" ? "brush" : "select";
+  state.wavelengthUm = clamp(Number(state.wavelengthUm) || 1, 0.1, 10);
+  state.cellsPerWavelength = clampInt(state.cellsPerWavelength, 8, 80);
+  state.gridNx = clampInt(state.gridNx, 80, MAX_GRID.nx);
+  state.gridNy = clampInt(state.gridNy, 60, MAX_GRID.ny);
+  state.boundary = normalizeBoundaryMode(state.boundary);
+  normalizeBoundarySides();
+  if (!knownPresetValue(state.preset)) state.preset = "empty";
+  state.slabThicknessLambda = clamp(Number(state.slabThicknessLambda) || 0.5, 0.05, 20);
+  state.customAnisotropic = Boolean(state.customAnisotropic);
+  state.dispersionModel = normalizeDispersionModel(state.dispersionModel);
+  state.materialDispersionEnabled = Boolean(state.materialDispersionEnabled) || state.dispersionModel !== "none";
+  state.materialModulationEnabled = Boolean(state.materialModulationEnabled);
+  state.materialNonlinearEnabled = Boolean(state.materialNonlinearEnabled);
+  state.materialHarmonicEnabled = Boolean(state.materialHarmonicEnabled);
+  state.materialConductivityEnabled = Boolean(state.materialConductivityEnabled);
+  state.materialSaturableGainEnabled = Boolean(state.materialSaturableGainEnabled);
+  state.materialPhaseChangeEnabled = Boolean(state.materialPhaseChangeEnabled);
+  state.materialGyrotropyEnabled = Boolean(state.materialGyrotropyEnabled);
+  state.materialBianisotropyEnabled = Boolean(state.materialBianisotropyEnabled);
+  state.brush = Object.prototype.hasOwnProperty.call(materialNames, state.brush) ? state.brush : "custom";
+  state.brushTool = state.brushTool === "geometry" ? "geometry" : "paint";
+  normalizeBrushGeometryState();
+}
+
+function sanitizeImportedSources(importedState) {
+  const rawSources = Array.isArray(importedState.sources) ? importedState.sources.slice(0, 32) : [];
+  const usedIds = new Set();
+  const sources = rawSources.map((rawSource, index) => {
+    const source = normalizeSource({
+      ...defaultSourceConfig,
+      ...(rawSource && typeof rawSource === "object" ? rawSource : {}),
+    });
+    const rawId = Number(rawSource?.id);
+    let id = Number.isFinite(rawId) && rawId > 0 ? Math.round(rawId) : index + 1;
+    while (usedIds.has(id)) id += 1;
+    usedIds.add(id);
+    source.id = id;
+    return source;
+  });
+  if (sources.length === 0) {
+    sources.push(normalizeSource({ id: 1, ...defaultSourceConfig }));
+  }
+  state.sources = sources;
+  const selectedId = Number(importedState.selectedSourceId);
+  state.selectedSourceId = sources.some((source) => source.id === selectedId) ? selectedId : sources[0].id;
+  const defaultSource = normalizeSource({
+    ...defaultSourceConfig,
+    ...(importedState.sourceDefaults && typeof importedState.sourceDefaults === "object" ? importedState.sourceDefaults : sources[0]),
+  });
+  delete defaultSource.id;
+  state.sourceDefaults = defaultSource;
+  const importedNextId = Number(importedState.nextSourceId);
+  state.nextSourceId = Math.max(Number.isFinite(importedNextId) ? Math.round(importedNextId) : 1, ...sources.map((source) => source.id + 1));
+}
+
+function applySceneState(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") {
+    throw new Error("Invalid scene JSON.");
+  }
+  const importedState = snapshot.state && typeof snapshot.state === "object" ? snapshot.state : {};
+  const grid = snapshot.grid && typeof snapshot.grid === "object" ? snapshot.grid : {};
+  for (const key of SERIALIZABLE_STATE_KEYS) {
+    if (key === "sources" || key === "sourceDefaults" || key === "selectedSourceId" || key === "nextSourceId") continue;
+    if (Object.prototype.hasOwnProperty.call(importedState, key)) {
+      state[key] = clonePlainData(importedState[key]);
+    }
+  }
+  state.gridNx = clampInt(grid.nx ?? importedState.gridNx ?? state.gridNx, 80, MAX_GRID.nx);
+  state.gridNy = clampInt(grid.ny ?? importedState.gridNy ?? state.gridNy, 60, MAX_GRID.ny);
+  normalizeImportedStateValues();
+  document.documentElement.dataset.theme = state.theme;
+  if (el.presetInput) el.presetInput.value = state.preset;
+  clearMaterialSelection(false);
+  clearCanvasHover(false);
+  closeContextMenus();
+  state.sweepResults = [];
+  state.sweepRunning = false;
+  state.sweepCancelRequested = false;
+  sim.resize(state.gridNx, state.gridNy);
+  sanitizeImportedSources(importedState);
+  if (Array.isArray(snapshot.materials)) {
+    sim.clearMaterials(false);
+    snapshot.materials.forEach((cell) => {
+      if (!cell || typeof cell !== "object") return;
+      sim.writeMaterialCell(clampInt(cell.x, 1, sim.nx - 2), clampInt(cell.y, 1, sim.ny - 2), cell);
+    });
+    sim.refreshPmlMaterialContinuation(false);
+  } else {
+    sim.applyPreset(state.preset);
+  }
+  if (snapshot.view && typeof snapshot.view === "object") {
+    sim.viewZoom = clamp(Number(snapshot.view.zoom) || 1, 1, sim.maxViewZoom());
+    sim.viewX = Number(snapshot.view.x) || 0;
+    sim.viewY = Number(snapshot.view.y) || 0;
+    sim.clampView();
+  }
+  sim.resetFields();
+  sim.resetDiagnostics();
+  sim.measure();
+  updateControlText();
+  updateStats();
+  drawSweepChart();
+  sim.render();
+}
+
+function encodeSceneSnapshot(snapshot) {
+  const bytes = new TextEncoder().encode(JSON.stringify(snapshot));
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeSceneSnapshot(encoded) {
+  const padded = String(encoded || "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(String(encoded || "").length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function downloadSceneJson() {
+  const snapshot = exportSceneState({ includeMaterials: true });
+  downloadTextFile(`fdtd-scene-${safeFilePart(state.preset)}.json`, JSON.stringify(snapshot, null, 2));
+  setReproStatus(`Exported JSON with ${snapshot.materials.length} material cells.`);
+}
+
+async function importSceneJsonFile(file) {
+  if (!file) return;
+  try {
+    const snapshot = JSON.parse(await file.text());
+    applySceneState(snapshot);
+    setReproStatus(`Imported ${file.name || "scene JSON"}.`);
+  } catch (error) {
+    console.warn("Scene import failed", error);
+    setReproStatus(`Import failed: ${error.message || "invalid JSON"}.`, true);
+  }
+}
+
+async function copyTextToClipboard(text) {
+  let clipboardError = null;
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      clipboardError = error;
+    }
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  window.focus();
+  textarea.focus({ preventScroll: true });
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) {
+    throw clipboardError || new Error("Clipboard unavailable");
+  }
+}
+
+async function copySceneUrl() {
+  let urlText = "";
+  let lightweight = false;
+  try {
+    let snapshot = exportSceneState({ includeMaterials: true });
+    let encoded = encodeSceneSnapshot(snapshot);
+    if (encoded.length > SCENE_SHARE_URL_LIMIT) {
+      snapshot = exportSceneState({ includeMaterials: false });
+      encoded = encodeSceneSnapshot(snapshot);
+      lightweight = true;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("scene", encoded);
+    urlText = url.toString();
+    await copyTextToClipboard(urlText);
+    if (el.shareSceneUrlOutput) {
+      el.shareSceneUrlOutput.hidden = true;
+      el.shareSceneUrlOutput.value = "";
+    }
+    setReproStatus(
+      lightweight
+        ? "Copied lightweight URL with parameters and preset; use JSON for drawn-cell exactness."
+        : "Copied URL with full scene state.",
+    );
+  } catch (error) {
+    console.warn("Scene URL copy failed", error);
+    if (urlText && el.shareSceneUrlOutput) {
+      el.shareSceneUrlOutput.value = urlText;
+      el.shareSceneUrlOutput.hidden = false;
+      el.shareSceneUrlOutput.focus({ preventScroll: true });
+      el.shareSceneUrlOutput.select();
+      setReproStatus(
+        lightweight
+          ? "Clipboard blocked; lightweight URL generated below. Use JSON for drawn-cell exactness."
+          : "Clipboard blocked; URL generated below.",
+        true,
+      );
+      return;
+    }
+    setReproStatus(`Copy failed: ${error.message || "clipboard unavailable"}.`, true);
+  }
+}
+
+function loadSceneFromUrlParam() {
+  const encoded = new URLSearchParams(window.location.search).get("scene");
+  if (!encoded) return;
+  try {
+    applySceneState(decodeSceneSnapshot(encoded));
+    setReproStatus("Loaded scene from URL.");
+  } catch (error) {
+    console.warn("Shared scene URL failed", error);
+    setReproStatus("Shared scene URL could not be loaded.", true);
+  }
+}
+
 function exportSweepCsv() {
   const results = state.sweepResults || [];
   if (results.length === 0) {
@@ -3968,6 +4543,7 @@ el.controlTabButtons?.forEach((button) => {
   button.addEventListener("click", () => {
     activateControlTab(button.dataset.controlTab);
   });
+  button.addEventListener("keydown", handleControlTabKeydown);
 });
 
 el.sceneSearchInput?.addEventListener("input", () => {
@@ -4062,6 +4638,14 @@ el.analysisResetBtn?.addEventListener("click", () => {
   sim.render();
 });
 
+el.spectrumChart?.addEventListener("pointermove", updateSpectrumReadout);
+el.farFieldChart?.addEventListener("pointermove", updateFarFieldReadout);
+[el.spectrumChart, el.farFieldChart].forEach((canvas) => {
+  canvas?.addEventListener("pointerleave", () => {
+    if (el.analysisChartReadout) el.analysisChartReadout.textContent = "Move over a chart";
+  });
+});
+
 el.sweepModeInput?.addEventListener("change", () => {
   const nextMode = normalizeSweepMode(el.sweepModeInput.value);
   state.sweepMode = nextMode;
@@ -4110,6 +4694,14 @@ el.sweepRunBtn?.addEventListener("click", () => {
 
 el.sweepExportBtn?.addEventListener("click", () => {
   exportSweepCsv();
+});
+
+el.sweepChart?.addEventListener("pointermove", updateSweepChartReadout);
+el.sweepChart?.addEventListener("pointerleave", () => {
+  if (!el.sweepChartReadout) return;
+  const results = state.sweepResults || [];
+  el.sweepChartReadout.textContent =
+    results.length > 0 ? `${results.length} sweep points | ${sweepModeLabel()} ${formatSweepValue(results[results.length - 1].x)}` : "No sweep point";
 });
 
 el.fieldComponentButtons.forEach((button) => {
@@ -4588,6 +5180,19 @@ el.gridNyInput.addEventListener("keydown", (event) => {
   }
 });
 
+el.exportSceneBtn?.addEventListener("click", downloadSceneJson);
+el.importSceneBtn?.addEventListener("click", () => {
+  el.importSceneFileInput?.click();
+});
+el.importSceneFileInput?.addEventListener("change", async () => {
+  const file = el.importSceneFileInput.files?.[0];
+  await importSceneJsonFile(file);
+  el.importSceneFileInput.value = "";
+});
+el.copySceneUrlBtn?.addEventListener("click", () => {
+  copySceneUrl();
+});
+
 function handleBrushSizeInput(input) {
   state.brushSizeLambda = Number(input.value);
   state.canvasMode = "brush";
@@ -4705,6 +5310,37 @@ el.boundaryMenuCloseBtn.addEventListener("click", () => {
 function updateViewInteraction() {
   updateControlText();
   sim.render();
+}
+
+function handleCanvasKeydown(event) {
+  if (isEditableKeyTarget(event.target)) return;
+  const rect = el.canvas.getBoundingClientRect();
+  const centerX = rect.left + rect.width * 0.5;
+  const centerY = rect.top + rect.height * 0.5;
+  const panStep = event.shiftKey ? 96 : 42;
+  let changed = false;
+  if (event.key === "+" || event.key === "=") {
+    changed = sim.zoomAtClientPoint(centerX, centerY, 1.18);
+  } else if (event.key === "-" || event.key === "_") {
+    changed = sim.zoomAtClientPoint(centerX, centerY, 1 / 1.18);
+  } else if (event.key === "0") {
+    sim.resetView();
+    changed = true;
+  } else if (event.key === "ArrowLeft") {
+    changed = sim.panByClientDelta(panStep, 0);
+  } else if (event.key === "ArrowRight") {
+    changed = sim.panByClientDelta(-panStep, 0);
+  } else if (event.key === "ArrowUp") {
+    changed = sim.panByClientDelta(0, panStep);
+  } else if (event.key === "ArrowDown") {
+    changed = sim.panByClientDelta(0, -panStep);
+  } else {
+    return;
+  }
+  event.preventDefault();
+  if (changed) {
+    updateViewInteraction();
+  }
 }
 
 function storePointer(event) {
@@ -4878,6 +5514,8 @@ el.canvas.addEventListener("dblclick", () => {
   sim.resetView();
   updateViewInteraction();
 });
+
+el.canvas.addEventListener("keydown", handleCanvasKeydown);
 
 el.canvas.addEventListener("contextmenu", (event) => {
   event.preventDefault();
@@ -5090,6 +5728,7 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
 });
 
 buildSceneBrowser();
+loadSceneFromUrlParam();
 sim.measure();
 updateControlText();
 updateStats();

@@ -12,6 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-uiux-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -116,7 +117,7 @@
           </div>
 
           <div class="canvas-frame">
-            <canvas id="simCanvas" width="900" height="600" aria-label="Normalized E z field of the FDTD simulation"></canvas>
+            <canvas id="simCanvas" width="900" height="600" tabindex="0" aria-label="Normalized E z field of the FDTD simulation"></canvas>
             <div class="colorbar" aria-label="Normalized E z over E 0 color scale">
               <span id="colorbarTitle" class="colorbar-title"><i>E</i><sub>z</sub> / <i>E</i><sub>0</sub></span>
               <div class="colorbar-body">
@@ -909,6 +910,14 @@
                 </div>
                 <p id="sweepStatus" class="sweep-status">No sweep yet.</p>
                 <canvas id="sweepChart" class="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
+                <div class="chart-footer">
+                  <div class="chart-legend" aria-hidden="true">
+                    <span><i class="legend-swatch reflectance"></i>R</span>
+                    <span><i class="legend-swatch transmittance"></i>T</span>
+                    <span><i class="legend-swatch auxiliary"></i>Aux</span>
+                  </div>
+                  <output id="sweepChartReadout" class="chart-readout">No sweep point</output>
+                </div>
               </div>
               <div class="analysis-panel">
                 <div class="analysis-panel-header">
@@ -923,11 +932,18 @@
                   <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
                   <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" aria-label="Near-to-far angular chart"></canvas>
                 </div>
+                <div class="chart-footer">
+                  <div class="chart-legend" aria-hidden="true">
+                    <span><i class="legend-swatch spectrum"></i>Spectrum</span>
+                    <span><i class="legend-swatch farfield"></i>Far field</span>
+                  </div>
+                  <output id="analysisChartReadout" class="chart-readout">Move over a chart</output>
+                </div>
               </div>
             </section>
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
-<section class="panel-section scale-section">
+            <section class="panel-section scale-section">
               <h2>Scale</h2>
               <div class="two-col">
                 <label>
@@ -940,7 +956,7 @@
                 </label>
               </div>
             </section>
-<section class="panel-section grid-section">
+            <section class="panel-section grid-section">
               <h2>Grid</h2>
               <div class="two-col">
                 <label>
@@ -952,6 +968,27 @@
                   <input id="gridNyInput" type="number" min="60" max="800" step="10" value="120" />
                 </label>
               </div>
+            </section>
+            <section class="panel-section stability-section">
+              <h2>Stability</h2>
+              <div class="config-status-grid">
+                <div><span>CFL</span><output id="stabilityCflValue">S = 0.48</output></div>
+                <div><span>Resolution</span><output id="stabilityResolutionValue">20 cells / λ₀</output></div>
+                <div><span>Dynamic media</span><output id="stabilityMediaValue">static</output></div>
+                <div><span>Estimate</span><output id="stabilityEstimateValue">stable</output></div>
+              </div>
+              <p id="stabilityNote" class="simulation-guide-note">Explicit 2D Yee stability is checked against S &lt; 1/√2.</p>
+            </section>
+            <section class="panel-section reproducibility-section">
+              <h2>Reproducibility</h2>
+              <div class="button-row">
+                <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
+                <button id="importSceneBtn" class="text-button" type="button">Import JSON</button>
+                <button id="copySceneUrlBtn" class="text-button" type="button">Copy URL</button>
+              </div>
+              <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
+              <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
+              <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
             </section>
             </div>
           </div>
@@ -972,6 +1009,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-uiux-1"></script>
-    <script src="app.js?v=20260627-uiux-1"></script>
+    <script src="app.js?v=20260627-uiux-2"></script>
   </body>
 </html>

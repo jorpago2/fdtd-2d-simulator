@@ -1,0 +1,328 @@
+/* UI/UX extensions for interactive readouts, scene thumbnails, and reproducibility tools. */
+
+.canvas-frame canvas:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--neu-accent) 70%, white) !important;
+  outline-offset: 4px !important;
+}
+
+.chart-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 8px 10px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.chart-legend {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+}
+
+.chart-legend span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+
+.legend-swatch {
+  display: inline-block !important;
+  width: 16px !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, black 18%, transparent) !important;
+}
+
+.legend-swatch.reflectance {
+  background: rgb(13, 107, 245) !important;
+}
+
+.legend-swatch.transmittance,
+.legend-swatch.spectrum {
+  background: rgb(18, 143, 91) !important;
+}
+
+.legend-swatch.auxiliary {
+  background: rgb(220, 72, 92) !important;
+}
+
+.legend-swatch.farfield {
+  background: rgb(183, 106, 37) !important;
+}
+
+.chart-readout {
+  min-width: min(100%, 190px) !important;
+  max-width: 100% !important;
+  color: var(--neu-ink) !important;
+  text-align: right !important;
+  font-size: 0.74rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.scene-card {
+  grid-template-columns: 52px minmax(0, 1fr) !important;
+  align-items: start !important;
+}
+
+.scene-card-thumb {
+  grid-row: 1 / span 4 !important;
+  display: grid !important;
+  position: relative !important;
+  width: 52px !important;
+  height: 52px !important;
+  overflow: hidden !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 82%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 92%, white), var(--neu-surface-low)),
+    repeating-linear-gradient(0deg, transparent 0 7px, color-mix(in srgb, var(--neu-border) 42%, transparent) 7px 8px),
+    repeating-linear-gradient(90deg, transparent 0 7px, color-mix(in srgb, var(--neu-border) 42%, transparent) 7px 8px) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.scene-card-thumb span {
+  position: absolute !important;
+  display: block !important;
+  border-radius: 999px !important;
+}
+
+.scene-card-header,
+.scene-card-group,
+.scene-card-description,
+.scene-card-badges {
+  grid-column: 2 !important;
+}
+
+.scene-card[data-scene-thumb="wave"] .scene-card-thumb span:nth-child(1) {
+  inset: 25px 5px auto 5px !important;
+  height: 3px !important;
+  background: rgb(13, 107, 245) !important;
+  box-shadow:
+    0 -10px 0 color-mix(in srgb, rgb(13, 107, 245) 58%, transparent),
+    0 10px 0 color-mix(in srgb, rgb(13, 107, 245) 48%, transparent) !important;
+}
+
+.scene-card[data-scene-thumb="wave"] .scene-card-thumb span:nth-child(2) {
+  inset: 8px auto auto 14px !important;
+  width: 8px !important;
+  height: 36px !important;
+  background: color-mix(in srgb, rgb(18, 143, 91) 72%, transparent) !important;
+}
+
+.scene-card[data-scene-thumb="interface"] .scene-card-thumb span:nth-child(1) {
+  inset: 0 auto 0 25px !important;
+  width: 8px !important;
+  border-radius: 0 !important;
+  background: color-mix(in srgb, rgb(13, 107, 245) 32%, transparent) !important;
+}
+
+.scene-card[data-scene-thumb="interface"] .scene-card-thumb span:nth-child(2) {
+  inset: 11px 6px auto 6px !important;
+  height: 3px !important;
+  transform: rotate(-22deg) !important;
+  transform-origin: left center !important;
+  background: rgb(220, 72, 92) !important;
+}
+
+.scene-card[data-scene-thumb="resonator"] .scene-card-thumb span:nth-child(1) {
+  inset: 10px !important;
+  border: 4px solid rgb(18, 143, 91) !important;
+  background: transparent !important;
+}
+
+.scene-card[data-scene-thumb="resonator"] .scene-card-thumb span:nth-child(2) {
+  inset: 24px 3px auto 3px !important;
+  height: 4px !important;
+  background: rgb(13, 107, 245) !important;
+}
+
+.scene-card[data-scene-thumb="waveguide"] .scene-card-thumb span:nth-child(1) {
+  inset: 20px 4px auto 4px !important;
+  height: 12px !important;
+  border-radius: 5px !important;
+  background: color-mix(in srgb, rgb(18, 143, 91) 82%, var(--neu-surface)) !important;
+}
+
+.scene-card[data-scene-thumb="waveguide"] .scene-card-thumb span:nth-child(2) {
+  inset: 24px 7px auto 7px !important;
+  height: 3px !important;
+  background: rgb(13, 107, 245) !important;
+}
+
+.scene-card[data-scene-thumb="scatterer"] .scene-card-thumb span:nth-child(1) {
+  inset: 17px !important;
+  background: rgb(183, 106, 37) !important;
+}
+
+.scene-card[data-scene-thumb="scatterer"] .scene-card-thumb span:nth-child(2) {
+  inset: 7px auto auto 6px !important;
+  width: 35px !important;
+  height: 3px !important;
+  transform: rotate(18deg) !important;
+  background: rgb(13, 107, 245) !important;
+}
+
+.scene-card[data-scene-thumb="temporal"] .scene-card-thumb span:nth-child(1) {
+  inset: 9px 9px auto 9px !important;
+  height: 4px !important;
+  background: rgb(13, 107, 245) !important;
+  box-shadow:
+    0 11px 0 rgb(220, 72, 92),
+    0 22px 0 rgb(18, 143, 91) !important;
+}
+
+.scene-card[data-scene-thumb="temporal"] .scene-card-thumb span:nth-child(2) {
+  inset: 5px auto 5px 24px !important;
+  width: 4px !important;
+  background: color-mix(in srgb, rgb(183, 106, 37) 80%, transparent) !important;
+}
+
+.scene-card[data-scene-thumb="dispersive"] .scene-card-thumb span:nth-child(1) {
+  inset: 8px 9px auto 9px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgb(13, 107, 245), rgb(220, 72, 92), rgb(183, 106, 37)) !important;
+}
+
+.scene-card[data-scene-thumb="dispersive"] .scene-card-thumb span:nth-child(2) {
+  inset: 14px 4px auto 4px !important;
+  height: 3px !important;
+  background: color-mix(in srgb, white 72%, transparent) !important;
+  box-shadow:
+    0 10px 0 color-mix(in srgb, white 58%, transparent),
+    0 20px 0 color-mix(in srgb, white 48%, transparent) !important;
+}
+
+.scene-card[data-scene-thumb="lattice"] .scene-card-thumb span {
+  width: 9px !important;
+  height: 9px !important;
+  background: rgb(13, 107, 245) !important;
+  box-shadow:
+    15px 0 0 rgb(18, 143, 91),
+    30px 0 0 rgb(13, 107, 245),
+    0 15px 0 rgb(18, 143, 91),
+    15px 15px 0 rgb(13, 107, 245),
+    30px 15px 0 rgb(18, 143, 91),
+    0 30px 0 rgb(13, 107, 245),
+    15px 30px 0 rgb(18, 143, 91),
+    30px 30px 0 rgb(13, 107, 245) !important;
+}
+
+.scene-card[data-scene-thumb="lattice"] .scene-card-thumb span:nth-child(1) {
+  left: 6px !important;
+  top: 6px !important;
+}
+
+.config-status-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--neu-control-gap) !important;
+}
+
+.config-status-grid > div {
+  display: grid !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 10px 11px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.config-status-grid span {
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+}
+
+.config-status-grid output {
+  min-width: 0 !important;
+  color: var(--neu-ink) !important;
+  text-align: left !important;
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.reproducibility-section .button-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: var(--neu-control-gap) !important;
+}
+
+.reproducibility-section .text-button {
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+.share-url-output {
+  width: 100% !important;
+  min-height: 72px !important;
+  resize: vertical !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 80%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 10px 11px !important;
+  color: var(--neu-ink) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font: 0.72rem/1.35 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace !important;
+  overflow-wrap: anywhere !important;
+}
+
+.share-url-output[hidden] {
+  display: none !important;
+}
+
+html[data-theme="dark"] .chart-footer,
+html[data-theme="dark"] .config-status-grid > div,
+html[data-theme="dark"] .scene-card-thumb,
+html[data-theme="dark"] .share-url-output {
+  background-color: var(--neu-surface-low) !important;
+}
+
+@media (max-width: 520px) {
+  .chart-footer,
+  .reproducibility-section .button-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-footer {
+    display: grid !important;
+  }
+
+  .chart-readout {
+    text-align: left !important;
+  }
+
+  .config-status-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .scene-card {
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+  }
+
+  .scene-card-thumb {
+    width: 46px !important;
+    height: 46px !important;
+  }
+}
