@@ -400,6 +400,43 @@ html[data-theme="dark"] .share-url-output {
   }
 }
 
+@media (max-width: 760px) {
+  .scene-section {
+    gap: 10px !important;
+  }
+
+  .scene-select-fallback {
+    display: grid !important;
+    gap: 7px !important;
+    min-width: 0 !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 76%, transparent) !important;
+    border-radius: var(--neu-radius-card-tight) !important;
+    padding: 10px !important;
+    background: var(--neu-surface-low) !important;
+    box-shadow: var(--neu-shadow-inset-tight) !important;
+  }
+
+  .scene-select-fallback > span {
+    color: var(--neu-muted) !important;
+    font-size: 0.68rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .scene-select-fallback select {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    border-radius: var(--neu-radius-card-tight) !important;
+    font-size: 0.82rem !important;
+  }
+
+  .scene-browser {
+    display: none !important;
+  }
+}
+
 /* Responsive simulator shell: prioritize the canvas and move controls into a drawer on compact viewports. */
 html,
 body {
