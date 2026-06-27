@@ -724,6 +724,60 @@ const sceneBrowserState = {
 };
 
 const COMPACT_CONTROLS_MEDIA_QUERY = "(max-width: 1440px)";
+let automaticGridOrientationEnabled = true;
+
+function disableResponsiveGridOrientation() {
+  automaticGridOrientationEnabled = false;
+}
+
+function gridSizeMatches(grid, nx = state.gridNx, ny = state.gridNy) {
+  return Number(nx) === grid.nx && Number(ny) === grid.ny;
+}
+
+function gridSizeIsAutoOrientable(nx = state.gridNx, ny = state.gridNy) {
+  return gridSizeMatches(DEFAULT_GRID, nx, ny) || gridSizeMatches(DEFAULT_PORTRAIT_GRID, nx, ny);
+}
+
+function viewportPrefersPortraitGrid() {
+  const width = Math.max(1, window.innerWidth || 1);
+  const height = Math.max(1, window.innerHeight || 1);
+  return compactControlDrawerActive() && height > width * 1.05;
+}
+
+function responsiveDefaultGrid() {
+  return viewportPrefersPortraitGrid() ? DEFAULT_PORTRAIT_GRID : DEFAULT_GRID;
+}
+
+function applySimulationGridSize(nx, ny, { applyPreset = true, render = true } = {}) {
+  clearMaterialSelection(false);
+  clearCanvasHover(false);
+  state.gridNx = clampInt(nx, 80, MAX_GRID.nx);
+  state.gridNy = clampInt(ny, 60, MAX_GRID.ny);
+  sim.resize(state.gridNx, state.gridNy);
+  clampAllSourcesToInterior();
+  if (applyPreset) {
+    sim.applyPreset(state.preset);
+  }
+  sim.measure();
+  updateControlText();
+  updateStats();
+  if (render) {
+    sim.render();
+  }
+}
+
+function applyResponsiveGridOrientation({ render = true } = {}) {
+  if (!automaticGridOrientationEnabled) return false;
+  if (!gridSizeIsAutoOrientable()) {
+    automaticGridOrientationEnabled = false;
+    return false;
+  }
+
+  const targetGrid = responsiveDefaultGrid();
+  if (gridSizeMatches(targetGrid)) return false;
+  applySimulationGridSize(targetGrid.nx, targetGrid.ny, { applyPreset: true, render });
+  return true;
+}
 
 function cssPixelValue(value) {
   const numeric = Number.parseFloat(value);
@@ -1273,6 +1327,12 @@ function formatLambda(value) {
   return Number(value).toFixed(2);
 }
 
+function formatCompactLambda(value) {
+  return Number(value)
+    .toFixed(1)
+    .replace(/\.0$/, "");
+}
+
 function formatLambdaOutput(value) {
   return `${formatLambda(value)} λ₀`;
 }
@@ -1420,6 +1480,7 @@ function clearMaterialSelection(render = true) {
 function deleteSelectedElement() {
   const source = explicitlySelectedSource();
   if (source) {
+    disableResponsiveGridOrientation();
     deleteSource(source.id);
     closeSourceMenu();
     clearMaterialSelection(false);
@@ -1428,6 +1489,7 @@ function deleteSelectedElement() {
     return true;
   }
   if (selectedMaterialRegion) {
+    disableResponsiveGridOrientation();
     selectedMaterialRegion = sim.applyMaterialKindToRegion(selectedMaterialRegion, "erase");
     closeBrushMenu();
     sim.measure();
@@ -1467,6 +1529,7 @@ function selectMaterialRegionAt(clientX, clientY, render = true) {
 
 function applyMaterialKindToSelection(kind) {
   if (!selectedMaterialRegion) return;
+  disableResponsiveGridOrientation();
   state.brush = kind;
   selectedMaterialRegion = sim.applyMaterialKindToRegion(selectedMaterialRegion, kind);
   sim.measure();
@@ -1852,6 +1915,7 @@ function readSourceEditorValues() {
 function syncSourceEditorTarget() {
   const target = activeSourceEditorTarget();
   if (!target) return;
+  disableResponsiveGridOrientation();
   const values = readSourceEditorValues();
   const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
   if (componentChanged) {
@@ -2195,6 +2259,7 @@ function closeContextMenus() {
 }
 
 function applySourceMenu() {
+  disableResponsiveGridOrientation();
   const values = readSourceEditorValues();
   const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
   if (componentChanged) {
@@ -2383,6 +2448,11 @@ function updateControlText() {
   }
   const gridSummary = `${sim.nx} x ${sim.ny}`;
   const domainSummary = `${formatLambda(cellsToLambda(sim.nx))} \u03bb\u2080 x ${formatLambda(cellsToLambda(sim.ny))} \u03bb\u2080`;
+  const compactGridSummary = `${sim.nx}x${sim.ny} \u00b7 ${formatCompactLambda(cellsToLambda(sim.nx))}x${formatCompactLambda(
+    cellsToLambda(sim.ny)
+  )} \u03bb\u2080`;
+  const fullGridSummary = `${gridSummary} \u00b7 ${domainSummary}`;
+  const topGridSummary = window.matchMedia?.("(max-width: 620px)")?.matches ? compactGridSummary : fullGridSummary;
   const zoomSummary = `${sim.viewZoom.toFixed(2)}x`;
   const solverSummary = solverModeLabel();
   const boundary = boundarySummaryLabel();
@@ -2394,7 +2464,8 @@ function updateControlText() {
     el.topModeValue.textContent = solverSummary;
   }
   if (el.topGridValue) {
-    el.topGridValue.textContent = `${gridSummary} \u00b7 ${domainSummary}`;
+    el.topGridValue.textContent = topGridSummary;
+    el.topGridValue.title = fullGridSummary;
   }
   if (el.topBoundaryValue) {
     el.topBoundaryValue.textContent = boundary;
@@ -4106,6 +4177,7 @@ function applySceneState(snapshot) {
   if (!snapshot || typeof snapshot !== "object") {
     throw new Error("Invalid scene JSON.");
   }
+  disableResponsiveGridOrientation();
   const importedState = snapshot.state && typeof snapshot.state === "object" ? snapshot.state : {};
   const grid = snapshot.grid && typeof snapshot.grid === "object" ? snapshot.grid : {};
   for (const key of SERIALIZABLE_STATE_KEYS) {
@@ -4261,13 +4333,15 @@ async function copySceneUrl() {
 
 function loadSceneFromUrlParam() {
   const encoded = new URLSearchParams(window.location.search).get("scene");
-  if (!encoded) return;
+  if (!encoded) return false;
   try {
     applySceneState(decodeSceneSnapshot(encoded));
     setReproStatus("Loaded scene from URL.");
+    return true;
   } catch (error) {
     console.warn("Shared scene URL failed", error);
     setReproStatus("Shared scene URL could not be loaded.", true);
+    return false;
   }
 }
 
@@ -4533,6 +4607,7 @@ function canvasToGrid(event) {
 }
 
 function paintFromEvent(event) {
+  disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   const point = canvasToGrid(event);
   sim.paint(point.x, point.y, Math.max(1, lambdaToCells(state.brushSizeLambda)), state.brush);
@@ -4541,6 +4616,7 @@ function paintFromEvent(event) {
 }
 
 function insertGeometryFromEvent(event) {
+  disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   normalizeBrushGeometryState();
   const point = canvasToGrid(event);
@@ -4643,6 +4719,7 @@ el.sourceApplyBtn.addEventListener("click", () => {
 el.sourceDeleteBtn.addEventListener("click", () => {
   const source = selectedSource();
   if (source) {
+    disableResponsiveGridOrientation();
     deleteSource(source.id);
     closeSourceMenu();
     updateControlText();
@@ -4881,6 +4958,7 @@ function handleWavelengthInput() {
 }
 
 function handleCellsPerWavelengthInput() {
+  disableResponsiveGridOrientation();
   const value = Number(el.cellsPerWavelengthInput.value);
   if (!Number.isFinite(value)) return;
   state.cellsPerWavelength = clampInt(value, 8, 80);
@@ -4908,6 +4986,7 @@ function handleCellsPerWavelengthInput() {
 }
 
 function handleCustomMaterialInput() {
+  disableResponsiveGridOrientation();
   state.customAnisotropic = Boolean(el.customAnisotropyInput.checked);
   state.materialModulationEnabled = Boolean(el.modulationEnabledInput.checked);
   state.materialNonlinearEnabled = Boolean(el.nonlinearEnabledInput.checked);
@@ -5168,7 +5247,13 @@ function applySelectedPreset() {
   clearMaterialSelection(false);
   clearCanvasHover(false);
   state.preset = el.presetInput.value;
-  sim.applyPreset(state.preset);
+  if (gridSizeIsAutoOrientable()) {
+    automaticGridOrientationEnabled = true;
+  }
+  const gridChanged = applyResponsiveGridOrientation({ render: false });
+  if (!gridChanged) {
+    sim.applyPreset(state.preset);
+  }
   sim.measure();
   updateControlText();
   updateStats();
@@ -5190,6 +5275,7 @@ el.slabThicknessInput.addEventListener("input", () => {
 });
 
 function applyBoundaryMode(mode, side = boundaryMenuSide) {
+  disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   clearCanvasHover(false);
   const previousMode = boundarySideMode(side);
@@ -5213,18 +5299,10 @@ el.boundaryMenuInput.addEventListener("change", () => {
 });
 
 function applyGridSizeFromInputs() {
-  clearMaterialSelection(false);
-  clearCanvasHover(false);
+  disableResponsiveGridOrientation();
   const nx = clampInt(el.gridNxInput.value, 80, MAX_GRID.nx);
   const ny = clampInt(el.gridNyInput.value, 60, MAX_GRID.ny);
-  state.gridNx = nx;
-  state.gridNy = ny;
-  sim.resize(nx, ny);
-  clampAllSourcesToInterior();
-  sim.applyPreset(state.preset);
-  updateControlText();
-  updateStats();
-  sim.render();
+  applySimulationGridSize(nx, ny);
 }
 
 el.gridNxInput.addEventListener("change", applyGridSizeFromInputs);
@@ -5470,6 +5548,7 @@ function updatePan(event) {
 }
 
 function beginSourceDrag(event, source) {
+  disableResponsiveGridOrientation();
   closeContextMenus();
   clearMaterialSelection(false);
   state.selectedSourceId = source.id;
@@ -5512,6 +5591,7 @@ function endSourceDrag(event) {
 }
 
 function beginMaterialDrag(event, region) {
+  disableResponsiveGridOrientation();
   closeContextMenus();
   selectMaterialRegion(region, false);
   dragMaterialPointerId = event.pointerId;
@@ -5770,8 +5850,11 @@ window.addEventListener("resize", () => {
   if (!compactControlDrawerActive()) {
     closeControlDrawer();
   }
-  updateCanvasAspectRatio(sim.nx, sim.ny);
-  sim.fitCanvas();
+  const gridChanged = applyResponsiveGridOrientation({ render: false });
+  if (!gridChanged) {
+    updateControlText();
+    sim.fitCanvas();
+  }
   sim.render();
 });
 
@@ -5796,7 +5879,10 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
 });
 
 buildSceneBrowser();
-loadSceneFromUrlParam();
+const sceneLoadedFromUrl = loadSceneFromUrlParam();
+if (!sceneLoadedFromUrl) {
+  applyResponsiveGridOrientation({ render: false });
+}
 sim.measure();
 updateControlText();
 updateStats();
