@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-hud-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-toolbar-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -94,6 +94,9 @@
               <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
               </button>
+              <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">
+                <span aria-hidden="true">↻</span>
+              </button>
               <button
                 id="canvasActionToggle"
                 class="icon-button canvas-action-toggle"
@@ -109,10 +112,6 @@
                 <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">
                   <span aria-hidden="true">⏭</span>
                   <span class="canvas-action-label">Step</span>
-                </button>
-                <button id="resetBtn" class="icon-button" type="button" title="Reset field" aria-label="Reset field">
-                  <span aria-hidden="true">↻</span>
-                  <span class="canvas-action-label">Reset</span>
                 </button>
                 <button id="canvasFocusBtn" class="icon-button canvas-focus-toggle" type="button" title="Focus canvas" aria-label="Focus canvas" aria-pressed="false">
                   <span aria-hidden="true">⛶</span>

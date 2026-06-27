@@ -1370,6 +1370,10 @@ body {
     min-width: 36px !important;
   }
 
+  .canvas-reset-button {
+    display: inline-flex !important;
+  }
+
   .canvas-toolbar .tool-group.compact #playPauseBtn {
     width: 40px !important;
     height: 40px !important;
@@ -1617,6 +1621,7 @@ body {
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-focus-toggle,
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .focus-controls-toggle,
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-action-toggle,
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-reset-button,
   .app-shell[data-ui-depth="teaching"] .canvas-options-toggle {
     width: 38px !important;
     height: 38px !important;
@@ -1625,6 +1630,35 @@ body {
 
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .interaction-toggle {
     max-width: 136px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar {
+    grid-template-columns: auto minmax(108px, 1fr) auto !important;
+    gap: 5px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact {
+    gap: 4px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact #playPauseBtn {
+    width: 40px !important;
+    height: 38px !important;
+    min-width: 40px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-reset-button,
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-action-toggle,
+  .app-shell[data-ui-depth="teaching"] .canvas-options-toggle {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .interaction-toggle {
+    max-width: 116px !important;
   }
 }
 
