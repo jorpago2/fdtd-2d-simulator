@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-selection-sheet-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-layers-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -634,6 +634,14 @@
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
           </div>
+          <div class="mobile-layer-nav" role="navigation" aria-label="Workspace layers">
+            <button class="mobile-layer-button is-active" type="button" data-mobile-layer="scenes" aria-current="page">Scene</button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation">Run</button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="visual">Visual</button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="objects">Objects</button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="results">Results</button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="config">Config</button>
+          </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
             <button class="control-tab-button is-active" type="button" role="tab" id="tab-scenes-button" aria-controls="tab-scenes" aria-selected="true" data-control-tab="scenes">Scenes</button>
             <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">Simulation</button>
@@ -1096,6 +1104,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-selection-sheet-1"></script>
+    <script src="app.js?v=20260627-mobile-layers-1"></script>
   </body>
 </html>

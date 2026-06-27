@@ -550,6 +550,7 @@ const el = {
   controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
   controlTabButtons: document.querySelectorAll("[data-control-tab]"),
   controlTabPanels: document.querySelectorAll("[data-control-panel]"),
+  mobileLayerButtons: document.querySelectorAll("[data-mobile-layer]"),
   themeButtons: document.querySelectorAll("[data-theme-choice]"),
   fieldComponentButtons: document.querySelectorAll("[data-field-component]"),
   viewModeButtons: document.querySelectorAll("[data-view-mode]"),
@@ -1376,7 +1377,33 @@ function updateInspector() {
   }
 }
 
-function activateControlTab(tabName) {
+function setMobileLayerActive(layerName) {
+  el.mobileLayerButtons?.forEach((button) => {
+    const active = button.dataset.mobileLayer === layerName;
+    button.classList.toggle("is-active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function focusControlPanelSection(selector) {
+  if (!selector) return;
+  requestAnimationFrame(() => {
+    const section = el.controlPanel?.querySelector(selector);
+    section?.scrollIntoView?.({ block: "start", inline: "nearest" });
+  });
+}
+
+function controlTabLayerName(tabName) {
+  return {
+    scenes: "scenes",
+    simulation: "simulation",
+    results: "results",
+    config: "config",
+  }[tabName] || "scenes";
+}
+
+function activateControlTab(tabName, options = {}) {
   const selected = tabName || "scenes";
   el.controlTabButtons?.forEach((button) => {
     const active = button.dataset.controlTab === selected;
@@ -1388,6 +1415,38 @@ function activateControlTab(tabName) {
     panel.classList.toggle("is-active", active);
     panel.hidden = !active;
   });
+  setMobileLayerActive(options.layer || controlTabLayerName(selected));
+  if (options.focusSelector) {
+    focusControlPanelSection(options.focusSelector);
+  }
+}
+
+function activateMobileLayer(layerName) {
+  const layer = layerName || "scenes";
+  if (layer === "visual") {
+    setMobileLayerActive("visual");
+    closeControlDrawer();
+    setCanvasOptionsOpen(true);
+    el.canvasOptionsToggle?.focus?.({ preventScroll: true });
+    return;
+  }
+  if (layer === "objects") {
+    activateControlTab("simulation", { layer: "objects", focusSelector: ".inspector-section" });
+    return;
+  }
+  if (layer === "simulation") {
+    activateControlTab("simulation", { layer: "simulation", focusSelector: ".run-section" });
+    return;
+  }
+  if (layer === "results") {
+    activateControlTab("results", { layer: "results", focusSelector: ".diagnostics-section" });
+    return;
+  }
+  if (layer === "config") {
+    activateControlTab("config", { layer: "config", focusSelector: ".scale-section" });
+    return;
+  }
+  activateControlTab("scenes", { layer: "scenes", focusSelector: ".scene-section" });
 }
 
 function compactControlDrawerActive() {
@@ -1437,6 +1496,9 @@ function setCanvasOptionsOpen(open) {
   el.stage?.classList.toggle("canvas-options-open", isOpen);
   if (el.canvasOptionsToggle) {
     el.canvasOptionsToggle.setAttribute("aria-expanded", String(isOpen));
+  }
+  if (isOpen) {
+    setMobileLayerActive("visual");
   }
 }
 
@@ -4954,6 +5016,12 @@ el.controlTabButtons?.forEach((button) => {
     activateControlTab(button.dataset.controlTab);
   });
   button.addEventListener("keydown", handleControlTabKeydown);
+});
+
+el.mobileLayerButtons?.forEach((button) => {
+  button.addEventListener("click", () => {
+    activateMobileLayer(button.dataset.mobileLayer);
+  });
 });
 
 el.sceneSearchInput?.addEventListener("input", () => {
