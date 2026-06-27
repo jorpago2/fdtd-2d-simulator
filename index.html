@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-canvas-fill-5" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-workflow-nav-2" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -671,18 +671,38 @@
             </div>
           </div>
           <div class="mobile-layer-nav" role="navigation" aria-label="Workspace layers">
-            <button class="mobile-layer-button is-active" type="button" data-mobile-layer="scenes" aria-current="page">Scene</button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation">Run</button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="visual">Visual</button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="objects">Objects</button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="results">Results</button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="config">Config</button>
+            <button class="mobile-layer-button is-active" type="button" data-mobile-layer="scenes" aria-current="page" aria-label="Scene layer">
+              <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
+            </button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation" aria-label="Run layer">
+              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Run</span>
+            </button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="visual" aria-label="Visual layer">
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Visual</span>
+            </button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="objects" aria-label="Objects layer">
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Edit</span>
+            </button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="results" aria-label="Results layer">
+              <span class="nav-step" aria-hidden="true">5</span><span class="nav-label">Results</span>
+            </button>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="config" aria-label="Configuration layer">
+              <span class="nav-step" aria-hidden="true">6</span><span class="nav-label">Config</span>
+            </button>
           </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
-            <button class="control-tab-button is-active" type="button" role="tab" id="tab-scenes-button" aria-controls="tab-scenes" aria-selected="true" data-control-tab="scenes">Scenes</button>
-            <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">Simulation</button>
-            <button class="control-tab-button" type="button" role="tab" id="tab-results-button" aria-controls="tab-results" aria-selected="false" data-control-tab="results">Results</button>
-            <button class="control-tab-button" type="button" role="tab" id="tab-config-button" aria-controls="tab-config" aria-selected="false" data-control-tab="config">Config</button>
+            <button class="control-tab-button is-active" type="button" role="tab" id="tab-scenes-button" aria-controls="tab-scenes" aria-selected="true" data-control-tab="scenes">
+              <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scenes</span>
+            </button>
+            <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">
+              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulation</span>
+            </button>
+            <button class="control-tab-button" type="button" role="tab" id="tab-results-button" aria-controls="tab-results" aria-selected="false" data-control-tab="results">
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
+            </button>
+            <button class="control-tab-button" type="button" role="tab" id="tab-config-button" aria-controls="tab-config" aria-selected="false" data-control-tab="config">
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Config</span>
+            </button>
           </div>
           <div class="control-tab-panels">
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
