@@ -71,6 +71,10 @@ const CMASHER_COLORMAPS = {
   },
 };
 
+const CMASHER_LUT_SIZE = 4096;
+const CMASHER_LUT_LAST = CMASHER_LUT_SIZE - 1;
+const CMASHER_LUT_CACHE = new Map();
+
 function interpolateColorStops(stops, t, shade = 1) {
   const clampedT = clamp(t, 0, 1);
   let left = stops[0];
@@ -108,6 +112,25 @@ function currentMaterialColormapName(context) {
 function cmasherColor(name, value, shade = 1, signed = false) {
   const t = signed ? 0.5 + 0.5 * clamp(value, -1, 1) : clamp(value, 0, 1);
   return interpolateColorStops(cmasherMap(name).stops, t, shade);
+}
+
+function cmasherColorLut(name, signed = false, shade = 1) {
+  const key = `${name}|${signed ? 1 : 0}|${shade}`;
+  const cached = CMASHER_LUT_CACHE.get(key);
+  if (cached) return cached;
+
+  const lut = new Uint8ClampedArray(CMASHER_LUT_SIZE * 3);
+  for (let i = 0; i < CMASHER_LUT_SIZE; i += 1) {
+    const t = i / CMASHER_LUT_LAST;
+    const value = signed ? 2 * t - 1 : t;
+    const [r, g, b] = cmasherColor(name, value, shade, signed);
+    const p = i * 3;
+    lut[p] = r;
+    lut[p + 1] = g;
+    lut[p + 2] = b;
+  }
+  CMASHER_LUT_CACHE.set(key, lut);
+  return lut;
 }
 
 function cmasherGradient(name) {

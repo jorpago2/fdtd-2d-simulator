@@ -6,9 +6,17 @@ fieldRenderScale() {
   let maxAbs = this.lastMax;
   if (state.autoScale || maxAbs === 0) {
     maxAbs = 0;
-    for (let i = 0; i < this.n; i += 1) {
-      const value = Math.abs(this.fieldValueAt(i));
-      if (value > maxAbs) maxAbs = value;
+    if (state.viewMode !== "poynting" && state.fieldDisplay === "scalar") {
+      const scalarField = this.ez;
+      for (let i = 0; i < this.n; i += 1) {
+        const value = Math.abs(scalarField[i]);
+        if (value > maxAbs) maxAbs = value;
+      }
+    } else {
+      for (let i = 0; i < this.n; i += 1) {
+        const value = Math.abs(this.fieldValueAt(i));
+        if (value > maxAbs) maxAbs = value;
+      }
     }
   } else {
     maxAbs = maxAbs / this.fieldPhysicalScale();
@@ -24,16 +32,24 @@ fieldRenderScale() {
 renderFieldImage(data) {
   const scale = this.fieldRenderScale();
   const isMagnitude = this.fieldDisplayIsMagnitude();
+  const fieldMapName = currentFieldColormapName(isMagnitude);
+  const colorLut = cmasherColorLut(fieldMapName, !isMagnitude);
+  const useScalarField = state.viewMode !== "poynting" && state.fieldDisplay === "scalar";
+  const scalarField = this.ez;
 
   for (let i = 0; i < this.n; i += 1) {
-    const value = this.fieldValueAt(i);
+    const value = useScalarField ? scalarField[i] : this.fieldValueAt(i);
     const rawMapped = Number.isFinite(value) ? value * scale : 0;
     const mapped = Number.isFinite(rawMapped)
       ? isMagnitude
         ? clamp(rawMapped, 0, 1)
         : clamp(rawMapped, -1, 1)
       : Math.sign(value || 0);
-    let [r, g, b] = cmasherColor(currentFieldColormapName(isMagnitude), mapped, 1, !isMagnitude);
+    const colorT = isMagnitude ? mapped : 0.5 + 0.5 * mapped;
+    const colorIndex = clamp(Math.round(colorT * CMASHER_LUT_LAST), 0, CMASHER_LUT_LAST) * 3;
+    let r = colorLut[colorIndex];
+    let g = colorLut[colorIndex + 1];
+    let b = colorLut[colorIndex + 2];
 
     if (this.material[i] === 1) {
       r = Math.round(r * 0.78 + 36);
@@ -263,11 +279,16 @@ renderMaterialImage(data) {
   const materialMapName = currentMaterialColormapName(materialContext);
   const materialMapSigned = state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
   const materialSpan = Math.max(1e-9, materialContext.max - materialContext.min);
+  const colorLut = cmasherColorLut(materialMapName, materialMapSigned);
 
   for (let i = 0; i < this.n; i += 1) {
     const mapped = this.materialMappedValue(materialContext.values[i], materialContext);
     const normalized = (materialContext.values[i] - materialContext.min) / materialSpan;
-    let [r, g, b] = cmasherColor(materialMapName, materialMapSigned ? mapped : normalized, 1, materialMapSigned);
+    const colorT = materialMapSigned ? 0.5 + 0.5 * mapped : clamp(normalized, 0, 1);
+    const colorIndex = clamp(Math.round(colorT * CMASHER_LUT_LAST), 0, CMASHER_LUT_LAST) * 3;
+    let r = colorLut[colorIndex];
+    let g = colorLut[colorIndex + 1];
+    let b = colorLut[colorIndex + 2];
 
     if (this.material[i] === 2) {
       r = 8;
