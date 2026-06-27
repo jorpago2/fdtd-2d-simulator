@@ -1949,6 +1949,27 @@ body {
   white-space: nowrap !important;
 }
 
+.panel-next-button {
+  width: auto !important;
+  min-width: 70px !important;
+  max-width: 82px !important;
+  border: 0 !important;
+  padding-inline: 9px !important;
+  color: #ffffff !important;
+  background: linear-gradient(145deg, var(--neu-accent), #05606a) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+  cursor: pointer !important;
+  font-size: 0.68rem !important;
+  letter-spacing: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.panel-next-button:hover {
+  filter: brightness(1.04) !important;
+}
+
 @media (max-width: 1440px) {
   .mobile-layer-nav {
     display: grid !important;
@@ -1972,7 +1993,7 @@ body {
   }
 
   .control-panel-title-block {
-    max-width: 148px !important;
+    max-width: 104px !important;
   }
 
   .control-panel-actions {
@@ -1980,9 +2001,9 @@ body {
   }
 
   .ui-depth-toggle {
-    flex-basis: 132px !important;
-    min-width: 124px !important;
-    max-width: 136px !important;
+    flex-basis: 120px !important;
+    min-width: 112px !important;
+    max-width: 124px !important;
   }
 
   .ui-depth-toggle .mode-toggle-button {
@@ -1992,7 +2013,14 @@ body {
   }
 
   .panel-chip {
-    width: 36px !important;
+    width: auto !important;
+    min-width: 62px !important;
+  }
+
+  .panel-next-button {
+    max-width: 66px !important;
+    padding-inline: 7px !important;
+    font-size: 0.6rem !important;
   }
 
   .mobile-layer-nav {

@@ -563,6 +563,7 @@ const el = {
   controlPanel: document.getElementById("controlPanel"),
   controlPanelKicker: document.getElementById("controlPanelKicker"),
   controlPanelTitle: document.getElementById("controlPanelTitle"),
+  controlPanelNextBtn: document.getElementById("controlPanelNextBtn"),
   controlDrawerToggle: document.getElementById("controlDrawerToggle"),
   controlDrawerCloseBtn: document.getElementById("controlDrawerCloseBtn"),
   controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
@@ -1472,12 +1473,12 @@ function activeControlTabName() {
 }
 
 const CONTROL_PANEL_CONTEXTS = {
-  scenes: { kicker: "Step 1 · Scene", title: "Scene setup" },
-  simulation: { kicker: "Step 2 · Run", title: "Simulation control" },
-  visual: { kicker: "Step 3 · Visual", title: "Canvas display" },
-  objects: { kicker: "Step 4 · Edit", title: "Object editor" },
-  results: { kicker: "Step 5 · Results", title: "Measurements" },
-  config: { kicker: "Step 6 · Config", title: "Numerics" },
+  scenes: { kicker: "Step 1 · Scene", nextLabel: "Run", nextLayer: "simulation", title: "Scene setup" },
+  simulation: { kicker: "Step 2 · Run", nextLabel: "Results", nextLayer: "results", title: "Simulation control" },
+  visual: { kicker: "Step 3 · Visual", nextLabel: "Edit", nextLayer: "objects", title: "Canvas display" },
+  objects: { kicker: "Step 4 · Edit", nextLabel: "Results", nextLayer: "results", title: "Object editor" },
+  results: { kicker: "Step 5 · Results", nextLabel: "Config", nextLayer: "config", title: "Measurements" },
+  config: { kicker: "Step 6 · Config", nextLabel: "Scene", nextLayer: "scenes", title: "Numerics" },
 };
 
 function updateControlPanelContext(layerName = activeMobileLayerName() || controlTabLayerName(activeControlTabName())) {
@@ -1490,6 +1491,12 @@ function updateControlPanelContext(layerName = activeMobileLayerName() || contro
   }
   if (el.controlPanel) {
     el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
+  }
+  if (el.controlPanelNextBtn) {
+    el.controlPanelNextBtn.textContent = context.nextLabel;
+    el.controlPanelNextBtn.dataset.nextLayer = context.nextLayer;
+    el.controlPanelNextBtn.setAttribute("aria-label", `Next step: ${context.nextLabel}`);
+    el.controlPanelNextBtn.title = `Next step: ${context.nextLabel}`;
   }
 }
 
@@ -5323,6 +5330,10 @@ el.controlTabButtons?.forEach((button) => {
     activateControlTab(button.dataset.controlTab);
   });
   button.addEventListener("keydown", handleControlTabKeydown);
+});
+
+el.controlPanelNextBtn?.addEventListener("click", () => {
+  activateMobileLayer(el.controlPanelNextBtn.dataset.nextLayer || "simulation");
 });
 
 el.mobileLayerButtons?.forEach((button) => {
