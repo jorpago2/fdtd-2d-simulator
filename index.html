@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-canvas-state-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-ui-depth-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -25,7 +25,7 @@
         </feComponentTransfer>
       </filter>
     </svg>
-    <main class="app-shell">
+    <main class="app-shell" data-ui-depth="teaching">
       <header class="topbar">
         <div class="brand-lockup">
           <p class="eyebrow">Computational electromagnetics</p>
@@ -273,12 +273,12 @@
                   <input id="sourceAngleInput" type="range" min="0" max="360" step="1" value="0" disabled />
                   <output id="sourceAngleOutput">0°</output>
                 </label>
-                <label id="sourceTimePhaseControl" class="control-row">
+                <label id="sourceTimePhaseControl" class="control-row" data-ui-scope="advanced">
                   <span>phase φ</span>
                   <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
                   <output id="sourceTimePhaseOutput">0°</output>
                 </label>
-                <div class="two-col source-order-controls">
+                <div class="two-col source-order-controls" data-ui-scope="advanced">
                   <label id="sourceOrderControl" class="is-disabled">
                     <span><i>n</i></span>
                     <input id="sourceOrderInput" type="number" min="1" max="8" step="1" value="3" disabled />
@@ -351,7 +351,7 @@
                 <button class="segment" type="button" data-brush="lossy">Loss</button>
                 <button class="segment" type="button" data-brush="erase">Erase</button>
               </div>
-              <label class="toggle-row brush-anisotropy-toggle">
+              <label class="toggle-row brush-anisotropy-toggle" data-ui-scope="advanced">
                 <input id="customAnisotropyInput" type="checkbox" />
                 <span>Anisotropic ε, μ</span>
               </label>
@@ -375,7 +375,7 @@
                   <input id="customEpsYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
                 </label>
               </div>
-              <div class="two-col material-params brush-material-params">
+              <div class="two-col material-params brush-material-params" data-ui-scope="advanced">
                 <label>
                   <span id="customMuRealLabel">μ′</span>
                   <input id="customMuRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
@@ -395,7 +395,7 @@
                   <input id="customMuYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
                 </label>
               </div>
-              <div class="modulation-panel gyrotropy-panel">
+              <div class="modulation-panel gyrotropy-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="gyrotropyEnabledInput" type="checkbox" />
                   <span>Gyrotropic &epsilon; tensor (Hz mode)</span>
@@ -405,7 +405,7 @@
                   <input id="gyrotropyGInput" type="number" min="-5" max="5" step="0.01" value="0.25" />
                 </label>
               </div>
-              <div class="modulation-panel bianisotropy-panel">
+              <div class="modulation-panel bianisotropy-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="bianisotropyEnabledInput" type="checkbox" />
                   <span>Magnetoelectric coupling &kappa; / &radic;&epsilon;&mu;</span>
@@ -415,7 +415,7 @@
                   <input id="bianisotropyKappaInput" type="number" min="-0.85" max="0.85" step="0.01" value="0.20" />
                 </label>
               </div>
-              <div class="modulation-panel conductivity-panel">
+              <div class="modulation-panel conductivity-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="conductivityEnabledInput" type="checkbox" />
                   <span>Finite conductivity <i>J</i> = &sigma;<i>E</i> (normalized)</span>
@@ -431,7 +431,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel saturable-gain-panel">
+              <div class="modulation-panel saturable-gain-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="saturableGainEnabledInput" type="checkbox" />
                   <span>Saturable gain for negative &epsilon;&Prime;</span>
@@ -442,7 +442,7 @@
                 </label>
               </div>
               <output id="materialWarning" class="material-warning brush-material-warning" aria-live="polite"></output>
-              <div class="modulation-panel">
+              <div class="modulation-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="modulationEnabledInput" type="checkbox" />
                   <span>Space-time &epsilon;&prime; modulation</span>
@@ -472,7 +472,7 @@
                   <input id="modulationPhaseInput" type="number" min="-180" max="180" step="5" value="0" />
                 </label>
               </div>
-              <div class="modulation-panel nonlinear-panel">
+              <div class="modulation-panel nonlinear-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="nonlinearEnabledInput" type="checkbox" />
                   <span>Kerr &chi;<sup>(3)</sup> nonlinearity</span>
@@ -488,7 +488,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel harmonic-panel">
+              <div class="modulation-panel harmonic-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="harmonicEnabledInput" type="checkbox" />
                   <span>Harmonic polarization <i>P</i><sub>NL</sub></span>
@@ -508,7 +508,7 @@
                   <input id="harmonicSaturationInput" type="number" min="0.05" max="50" step="0.05" value="6.00" />
                 </label>
               </div>
-              <div class="modulation-panel phase-change-panel">
+              <div class="modulation-panel phase-change-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="phaseChangeEnabledInput" type="checkbox" />
                   <span>Phase-change memory <i>s</i></span>
@@ -544,7 +544,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel dispersion-panel">
+              <div class="modulation-panel dispersion-panel" data-ui-scope="advanced">
                 <label>
                   <span>Dispersive model</span>
                   <select id="dispersionModelInput">
@@ -631,6 +631,10 @@
               <h2>FDTD workspace</h2>
             </div>
             <div class="control-panel-actions">
+              <div class="canvas-mode-toggle ui-depth-toggle" role="group" aria-label="Interface depth">
+                <button class="mode-toggle-button is-active" type="button" data-ui-depth-choice="teaching" aria-pressed="true" title="Show essential teaching controls">Teach</button>
+                <button class="mode-toggle-button" type="button" data-ui-depth-choice="advanced" aria-pressed="false" title="Show advanced controls">Advanced</button>
+              </div>
               <span class="panel-chip">2D</span>
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
@@ -962,7 +966,7 @@
                 </div>
               </div>
               <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
-              <div class="sweep-panel">
+              <div class="sweep-panel" data-ui-scope="advanced">
                 <div class="two-col">
                   <label>
                     <span>Sweep</span>
@@ -1014,7 +1018,7 @@
                   <output id="sweepChartReadout" class="chart-readout">No sweep point</output>
                 </div>
               </div>
-              <div class="analysis-panel">
+              <div class="analysis-panel" data-ui-scope="advanced">
                 <div class="analysis-panel-header">
                   <label class="toggle-row">
                     <input id="analysisInput" type="checkbox" checked />
@@ -1051,7 +1055,7 @@
                 </label>
               </div>
             </section>
-            <section class="panel-section grid-section">
+            <section class="panel-section grid-section" data-ui-scope="advanced">
               <h2>Grid</h2>
               <div class="two-col">
                 <label>
@@ -1064,7 +1068,7 @@
                 </label>
               </div>
             </section>
-            <section class="panel-section stability-section">
+            <section class="panel-section stability-section" data-ui-scope="advanced">
               <h2>Stability</h2>
               <div class="config-status-grid">
                 <div><span>CFL</span><output id="stabilityCflValue">S = 0.48</output></div>
@@ -1074,7 +1078,7 @@
               </div>
               <p id="stabilityNote" class="simulation-guide-note">Explicit 2D Yee stability is checked against S &lt; 1/√2.</p>
             </section>
-            <section class="panel-section reproducibility-section">
+            <section class="panel-section reproducibility-section" data-ui-scope="advanced">
               <h2>Reproducibility</h2>
               <div class="button-row">
                 <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
@@ -1092,7 +1096,7 @@
       </section>
     </main>
 
-    <script src="src/constants.js?v=20260627-responsive-domain-1"></script>
+    <script src="src/constants.js?v=20260627-ui-depth-1"></script>
     <script src="src/wasm-backend.js?v=20260627-split-1"></script>
     <script src="src/numerics.js?v=20260627-split-2"></script>
     <script src="src/colormaps.js?v=20260627-split-1"></script>
@@ -1105,6 +1109,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-canvas-state-1"></script>
+    <script src="app.js?v=20260627-ui-depth-1"></script>
   </body>
 </html>

@@ -403,6 +403,27 @@ body {
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.ui-depth-toggle {
+  flex: 0 1 178px !important;
+  min-width: 152px !important;
+  max-width: 188px !important;
+  padding: 3px !important;
+}
+
+.ui-depth-toggle .mode-toggle-button {
+  min-width: 68px !important;
+  min-height: 30px !important;
+  padding-inline: 8px !important;
+  font-size: 0.66rem !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.app-shell[data-ui-depth="teaching"] [data-ui-scope="advanced"] {
+  display: none !important;
 }
 
 .control-drawer-toggle,
@@ -453,6 +474,18 @@ body {
     min-height: 34px !important;
     padding-inline: 9px !important;
     font-size: 0.74rem !important;
+  }
+
+  .ui-depth-toggle {
+    flex-basis: 154px !important;
+    min-width: 138px !important;
+  }
+
+  .ui-depth-toggle .mode-toggle-button {
+    min-width: 60px !important;
+    min-height: 30px !important;
+    padding-inline: 6px !important;
+    font-size: 0.62rem !important;
   }
 
   .control-drawer-toggle,
@@ -1148,6 +1181,30 @@ body {
 }
 
 @media (max-width: 430px) {
+  .control-panel-header {
+    gap: 8px !important;
+  }
+
+  .control-panel-actions {
+    gap: 6px !important;
+  }
+
+  .ui-depth-toggle {
+    flex-basis: 132px !important;
+    min-width: 124px !important;
+    max-width: 136px !important;
+  }
+
+  .ui-depth-toggle .mode-toggle-button {
+    min-width: 54px !important;
+    padding-inline: 5px !important;
+    font-size: 0.58rem !important;
+  }
+
+  .panel-chip {
+    width: 36px !important;
+  }
+
   .mobile-layer-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }

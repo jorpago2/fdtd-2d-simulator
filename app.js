@@ -157,6 +157,18 @@ function initialTheme() {
   }
 }
 
+function normalizeUiDepth(depth) {
+  return depth === "advanced" ? "advanced" : "teaching";
+}
+
+function initialUiDepth() {
+  try {
+    return normalizeUiDepth(window.localStorage?.getItem(UI_DEPTH_STORAGE_KEY));
+  } catch {
+    return "teaching";
+  }
+}
+
 const VISUAL_PROFILE_NAMES = Object.freeze(["auto", "clean", "teaching", "analysis", "custom"]);
 const VISUAL_LAYER_STATE_KEYS = Object.freeze({
   boundaries: "visualLayerBoundaries",
@@ -196,6 +208,7 @@ const VISUAL_PROFILE_LAYERS = Object.freeze({
 const state = {
   running: false,
   theme: initialTheme(),
+  uiDepth: initialUiDepth(),
   stepsPerFrame: 1,
   gain: 1,
   autoScale: true,
@@ -552,6 +565,7 @@ const el = {
   controlTabPanels: document.querySelectorAll("[data-control-panel]"),
   mobileLayerButtons: document.querySelectorAll("[data-mobile-layer]"),
   themeButtons: document.querySelectorAll("[data-theme-choice]"),
+  uiDepthButtons: document.querySelectorAll("[data-ui-depth-choice]"),
   fieldComponentButtons: document.querySelectorAll("[data-field-component]"),
   viewModeButtons: document.querySelectorAll("[data-view-mode]"),
   fieldViewButton: document.querySelector('[data-view-mode="field"]'),
@@ -2252,6 +2266,29 @@ function applyTheme(theme, persist = true) {
 function updateThemeControls() {
   el.themeButtons?.forEach((button) => {
     const active = button.dataset.themeChoice === state.theme;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function applyUiDepth(depth, persist = true) {
+  state.uiDepth = normalizeUiDepth(depth);
+  if (el.appShell) {
+    el.appShell.dataset.uiDepth = state.uiDepth;
+  }
+  updateUiDepthControls();
+  if (persist) {
+    try {
+      window.localStorage?.setItem(UI_DEPTH_STORAGE_KEY, state.uiDepth);
+    } catch {
+      // Interface-depth persistence is optional.
+    }
+  }
+}
+
+function updateUiDepthControls() {
+  el.uiDepthButtons?.forEach((button) => {
+    const active = button.dataset.uiDepthChoice === state.uiDepth;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
@@ -5098,6 +5135,12 @@ el.themeButtons?.forEach((button) => {
   });
 });
 
+el.uiDepthButtons?.forEach((button) => {
+  button.addEventListener("click", () => {
+    applyUiDepth(button.dataset.uiDepthChoice);
+  });
+});
+
 el.sourceApplyBtn.addEventListener("click", () => {
   applySourceMenu();
 });
@@ -6429,6 +6472,7 @@ document.querySelectorAll('input[type="range"]').forEach((input) => {
   input.addEventListener("input", () => updateRangeProgress(input));
 });
 
+applyUiDepth(state.uiDepth, false);
 buildSceneBrowser();
 const sceneLoadedFromUrl = loadSceneFromUrlParam();
 if (!sceneLoadedFromUrl) {
