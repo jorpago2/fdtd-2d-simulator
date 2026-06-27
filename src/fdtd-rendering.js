@@ -343,19 +343,23 @@ drawMaterialSelectionOverlay() {
   if (!rect) return;
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const isMoving = dragMaterialPointerId != null;
   ctx.save();
-  ctx.fillStyle = "rgba(8, 124, 137, 0.12)";
+  ctx.fillStyle = isMoving ? "rgba(255, 178, 74, 0.16)" : "rgba(8, 124, 137, 0.12)";
   ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
-  ctx.strokeStyle = "rgba(0, 52, 58, 0.9)";
-  ctx.lineWidth = Math.max(1.5 * dpr, 1);
-  ctx.setLineDash([7 * dpr, 4 * dpr]);
+  ctx.strokeStyle = isMoving ? "rgba(196, 112, 16, 0.95)" : "rgba(0, 52, 58, 0.92)";
+  ctx.lineWidth = Math.max((isMoving ? 2.3 : 1.7) * dpr, 1);
+  ctx.setLineDash(isMoving ? [] : [7 * dpr, 4 * dpr]);
   ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
   ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(0, 52, 58, 0.86)";
+  ctx.strokeStyle = isMoving ? "rgba(255, 238, 198, 0.72)" : "rgba(255, 255, 255, 0.58)";
+  ctx.lineWidth = Math.max(1 * dpr, 1);
+  ctx.strokeRect(rect.left + 3 * dpr, rect.top + 3 * dpr, Math.max(0, rect.width - 6 * dpr), Math.max(0, rect.height - 6 * dpr));
+  ctx.fillStyle = isMoving ? "rgba(95, 52, 6, 0.9)" : "rgba(0, 52, 58, 0.86)";
   ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
-  const label = `${selectedMaterialRegion.cells.length} cells`;
+  const label = isMoving ? `moving · ${selectedMaterialRegion.cells.length} cells` : `${selectedMaterialRegion.cells.length} cells`;
   ctx.fillText(label, rect.left + 6 * dpr, Math.max(14 * dpr, rect.top - 5 * dpr));
   ctx.restore();
 },
@@ -798,13 +802,23 @@ drawSourceSelectionHalo(x, y, source) {
     localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)
       ? this.sourceFwhmCanvasRadius(source) + 6 * dpr
       : 18 * dpr;
+  const isMoving = dragSourcePointerId != null && dragSourceId === source.id;
   ctx.save();
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(0, 112, 244, 0.85)";
-  ctx.lineWidth = 2 * dpr;
-  ctx.setLineDash([5 * dpr, 4 * dpr]);
+  ctx.fillStyle = isMoving ? "rgba(255, 178, 74, 0.12)" : "rgba(0, 112, 244, 0.08)";
+  ctx.fill();
+  ctx.strokeStyle = isMoving ? "rgba(196, 112, 16, 0.96)" : "rgba(0, 112, 244, 0.9)";
+  ctx.lineWidth = (isMoving ? 2.6 : 2.1) * dpr;
+  ctx.setLineDash(isMoving ? [] : [5 * dpr, 4 * dpr]);
   ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.arc(x, y, radius + 4 * dpr, 0, Math.PI * 2);
+  ctx.strokeStyle = isMoving ? "rgba(255, 238, 198, 0.7)" : "rgba(255, 255, 255, 0.58)";
+  ctx.lineWidth = 1 * dpr;
+  ctx.stroke();
+  this.drawOverlayLabel(isMoving ? `moving S${source.id}` : `S${source.id}`, x + radius + 10 * dpr, y, "left");
   ctx.restore();
 },
 

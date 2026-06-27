@@ -770,6 +770,7 @@ const el = {
   hudModeLabel: document.getElementById("hudModeLabel"),
   hudStepLabel: document.getElementById("hudStepLabel"),
   hudFieldLabel: document.getElementById("hudFieldLabel"),
+  canvasStateBadge: document.getElementById("canvasStateBadge"),
   materialLabel: document.getElementById("materialLabel"),
   colorbar: document.querySelector(".colorbar"),
   colorbarTitle: document.getElementById("colorbarTitle"),
@@ -1189,6 +1190,7 @@ function setSelectionSheet(kind, title, rows) {
     chip.append(labelNode, valueNode);
     el.selectionSheetDetails.appendChild(chip);
   });
+  updateCanvasInteractionState();
 }
 
 function hideSelectionSheet() {
@@ -1196,6 +1198,7 @@ function hideSelectionSheet() {
   el.selectionSheet.hidden = true;
   el.stage?.classList.toggle("selection-sheet-open", false);
   el.selectionSheetDetails?.replaceChildren();
+  updateCanvasInteractionState();
 }
 
 function materialRegionSignature(region) {
@@ -2220,7 +2223,9 @@ function syncSourceEditorTarget() {
 function setCanvasMode(mode) {
   state.canvasMode = mode === "brush" ? "brush" : "select";
   if (state.canvasMode === "brush") {
+    state.selectedSourceId = null;
     clearMaterialSelection(false);
+    hideSelectionSheet();
   }
   closeSourceMenu();
   closeBrushMenu();
@@ -2260,6 +2265,36 @@ function updateCanvasModeControls() {
   el.brushModeBtn.setAttribute("aria-pressed", String(!isSelect));
   el.canvas.classList.toggle("is-select-mode", isSelect);
   el.canvas.classList.toggle("is-brush-mode", !isSelect);
+}
+
+function interactionStateLabel() {
+  if (dragSourcePointerId != null) return "Moving source";
+  if (dragMaterialPointerId != null) return "Moving material";
+  if (panPointerId != null) return "Pan";
+  if (pinchState) return "Zoom";
+  if (state.canvasMode === "brush") return currentBrushLabel() || "Draw";
+  if (selectedMaterialRegion?.cells?.length) return `${selectedMaterialRegion.cells.length} cells`;
+  const source = explicitlySelectedSource();
+  if (source) return `Source ${source.id}`;
+  return "Select";
+}
+
+function updateCanvasInteractionState() {
+  const zoomed = sim.viewZoom > 1.005;
+  const draggingSource = dragSourcePointerId != null;
+  const draggingMaterial = dragMaterialPointerId != null;
+  const panning = panPointerId != null;
+  const pinching = Boolean(pinchState);
+  const hasSelection = Boolean(explicitlySelectedSource() || selectedMaterialRegion?.cells?.length);
+  el.canvasFrame?.classList.toggle("is-zoomed", zoomed);
+  el.canvasFrame?.classList.toggle("is-panning", panning);
+  el.canvasFrame?.classList.toggle("is-pinching", pinching);
+  el.canvasFrame?.classList.toggle("is-dragging-source", draggingSource);
+  el.canvasFrame?.classList.toggle("is-dragging-material", draggingMaterial);
+  el.canvasFrame?.classList.toggle("has-selection", hasSelection);
+  if (el.canvasStateBadge) {
+    el.canvasStateBadge.textContent = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
+  }
 }
 
 function updateVisualControls() {
@@ -2742,6 +2777,7 @@ function updateControlText() {
   }
   el.playPauseIcon.textContent = state.running ? "⏸" : "▶";
   updateCanvasModeControls();
+  updateCanvasInteractionState();
   updateVisualControls();
   updateBrushControls();
   updateBoundaryMenuControls();
@@ -5809,6 +5845,7 @@ el.boundaryMenuCloseBtn.addEventListener("click", () => {
 
 function updateViewInteraction() {
   updateControlText();
+  updateCanvasInteractionState();
   sim.render();
 }
 
@@ -5896,6 +5933,7 @@ function beginPan(event) {
   lastPanPoint = { x: event.clientX, y: event.clientY };
   pointerDown = false;
   paintPointerId = null;
+  updateCanvasInteractionState();
 }
 
 function updatePan(event) {
@@ -5906,6 +5944,7 @@ function updatePan(event) {
   if (sim.panByClientDelta(dx, dy)) {
     updateViewInteraction();
   }
+  updateCanvasInteractionState();
   return true;
 }
 
@@ -5999,6 +6038,7 @@ function beginSourceDrag(event, source, originClientX = event.clientX, originCli
   paintPointerId = null;
   panPointerId = null;
   lastPanPoint = null;
+  updateCanvasInteractionState();
   sim.render();
 }
 
@@ -6015,6 +6055,7 @@ function updateSourceDrag(event) {
   delete state.sourceDefaults.id;
   updateControlText();
   updateInspector();
+  updateCanvasInteractionState();
   sim.render();
   return true;
 }
@@ -6024,6 +6065,7 @@ function endSourceDrag(event) {
   dragSourcePointerId = null;
   dragSourceId = null;
   dragSourceOffset = null;
+  updateCanvasInteractionState();
 }
 
 function beginMaterialDrag(event, region, originClientX = event.clientX, originClientY = event.clientY) {
@@ -6044,6 +6086,7 @@ function beginMaterialDrag(event, region, originClientX = event.clientX, originC
   paintPointerId = null;
   panPointerId = null;
   lastPanPoint = null;
+  updateCanvasInteractionState();
   sim.render();
 }
 
@@ -6060,6 +6103,7 @@ function updateMaterialDrag(event) {
   sim.measure();
   updateStats();
   updateInspector();
+  updateCanvasInteractionState();
   sim.render();
   return true;
 }
@@ -6071,6 +6115,7 @@ function endMaterialDrag(event) {
   sim.measure();
   updateStats();
   updateInspector();
+  updateCanvasInteractionState();
   sim.render();
 }
 
@@ -6299,6 +6344,7 @@ function endPointer(event) {
   } else {
     beginPinchGesture();
   }
+  updateCanvasInteractionState();
 }
 
 el.canvas.addEventListener("pointerup", endPointer);

@@ -942,6 +942,65 @@ body {
   display: none !important;
 }
 
+.canvas-state-badge {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 18 !important;
+  max-width: min(260px, calc(100% - 24px)) !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.36) !important;
+  border-radius: 999px !important;
+  padding: 6px 10px !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(4, 12, 17, 0.62) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 22px rgba(0, 0, 0, 0.22) !important;
+  backdrop-filter: blur(12px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.2) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.canvas-frame.has-selection {
+  box-shadow:
+    var(--neu-shadow-inset),
+    var(--neu-shadow-soft),
+    0 0 0 1px rgba(0, 152, 170, 0.3) !important;
+}
+
+.canvas-frame.is-dragging-source,
+.canvas-frame.is-dragging-material {
+  box-shadow:
+    var(--neu-shadow-inset),
+    var(--neu-shadow-soft),
+    0 0 0 2px rgba(221, 138, 30, 0.42) !important;
+}
+
+.canvas-frame.is-panning,
+.canvas-frame.is-pinching {
+  box-shadow:
+    var(--neu-shadow-inset),
+    var(--neu-shadow-soft),
+    0 0 0 2px rgba(72, 164, 244, 0.34) !important;
+}
+
+.canvas-frame.is-panning canvas,
+.canvas-frame.is-pinching canvas,
+.canvas-frame.is-dragging-source canvas,
+.canvas-frame.is-dragging-material canvas {
+  cursor: grabbing !important;
+}
+
+.canvas-frame.is-zoomed .canvas-state-badge {
+  border-color: rgba(106, 205, 218, 0.5) !important;
+}
+
 .selection-sheet {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto !important;
@@ -1309,6 +1368,14 @@ body {
 
   .hud {
     display: none !important;
+  }
+
+  .canvas-state-badge {
+    top: 9px !important;
+    left: 9px !important;
+    max-width: calc(100% - 18px) !important;
+    padding: 5px 8px !important;
+    font-size: 0.6rem !important;
   }
 
   .mobile-canvas-stats {
