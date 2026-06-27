@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-mobile-title-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-focus-status-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -135,10 +135,16 @@
                 </button>
               </div>
             </div>
+            <div id="canvasFocusStatus" class="canvas-focus-status" aria-live="polite">
+              <span id="canvasFocusStateValue">Paused · Select · 1.00x</span>
+              <span id="canvasFocusStepValue">step 0</span>
+              <span id="canvasFocusMaxValue">max 0</span>
+            </div>
             <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
               <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
               <button id="brushModeBtn" class="mode-toggle-button" type="button" aria-pressed="false" title="Draw materials and geometries">Draw</button>
             </div>
+            <button id="canvasFocusExitBtn" class="icon-button canvas-focus-exit" type="button" title="Exit canvas focus" aria-label="Exit canvas focus">&times;</button>
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
@@ -1237,6 +1243,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-mobile-title-1"></script>
+    <script src="app.js?v=20260627-focus-status-1"></script>
   </body>
 </html>

@@ -807,6 +807,11 @@ const el = {
   hudStepLabel: document.getElementById("hudStepLabel"),
   hudFieldLabel: document.getElementById("hudFieldLabel"),
   canvasStateBadge: document.getElementById("canvasStateBadge"),
+  canvasFocusStatus: document.getElementById("canvasFocusStatus"),
+  canvasFocusStateValue: document.getElementById("canvasFocusStateValue"),
+  canvasFocusStepValue: document.getElementById("canvasFocusStepValue"),
+  canvasFocusMaxValue: document.getElementById("canvasFocusMaxValue"),
+  canvasFocusExitBtn: document.getElementById("canvasFocusExitBtn"),
   materialLabel: document.getElementById("materialLabel"),
   colorbar: document.querySelector(".colorbar"),
   colorbarTitle: document.getElementById("colorbarTitle"),
@@ -1689,6 +1694,8 @@ function setCanvasFocusMode(enabled) {
     el.canvasFocusBtn.title = isEnabled ? "Exit canvas focus" : "Focus canvas";
     el.canvasFocusBtn.textContent = isEnabled ? "×" : "⛶";
   }
+  updateCanvasInteractionState();
+  updateStats();
   refreshCanvasSizeAfterLayoutChange();
 }
 
@@ -2531,6 +2538,9 @@ function updateCanvasInteractionState() {
   if (el.canvasStateBadge) {
     el.canvasStateBadge.textContent = interactionText;
   }
+  if (el.canvasFocusStateValue) {
+    el.canvasFocusStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
+  }
   if (el.mobileCanvasStateValue) {
     el.mobileCanvasStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
   }
@@ -3113,6 +3123,8 @@ function updateStats() {
   if (el.topStepValue) el.topStepValue.textContent = stepText;
   if (el.topMaxFieldValue) el.topMaxFieldValue.textContent = maxFieldText;
   if (el.topEngineValue) el.topEngineValue.textContent = engineText;
+  if (el.canvasFocusStepValue) el.canvasFocusStepValue.textContent = `step ${stepText}`;
+  if (el.canvasFocusMaxValue) el.canvasFocusMaxValue.textContent = `max ${maxFieldText}`;
   if (el.mobileStepValue) el.mobileStepValue.textContent = stepText;
   if (el.mobileMaxFieldValue) el.mobileMaxFieldValue.textContent = maxFieldText;
   if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
@@ -5300,6 +5312,7 @@ el.brushModeBtn.addEventListener("click", () => {
 });
 
 el.canvasFocusBtn?.addEventListener("click", toggleCanvasFocusMode);
+el.canvasFocusExitBtn?.addEventListener("click", () => setCanvasFocusMode(false));
 el.focusControlsBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleControlDrawer();

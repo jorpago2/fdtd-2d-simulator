@@ -1769,6 +1769,39 @@ body {
   white-space: nowrap !important;
 }
 
+.canvas-focus-status,
+.canvas-focus-exit {
+  display: none !important;
+}
+
+.canvas-focus-status {
+  min-width: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 58%, transparent) !important;
+  border-radius: 999px !important;
+  padding: 4px !important;
+  background: color-mix(in srgb, var(--surface-low) 92%, transparent) !important;
+  box-shadow: var(--neu-inset-soft) !important;
+}
+
+.canvas-focus-status span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  padding: 6px 9px !important;
+  color: var(--ink) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+  font-size: 0.66rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.canvas-focus-status span:first-child {
+  color: var(--neu-accent) !important;
+}
+
 .canvas-frame.has-selection {
   box-shadow:
     var(--neu-shadow-inset),
@@ -2168,6 +2201,14 @@ body {
   display: none !important;
 }
 
+.app-shell.canvas-focus-mode .canvas-focus-status {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.3fr) max-content max-content !important;
+  flex: 1 1 420px !important;
+  max-width: min(540px, 52vw) !important;
+  gap: 4px !important;
+}
+
 .app-shell.canvas-focus-mode .canvas-action-toggle {
   display: inline-flex !important;
 }
@@ -2218,6 +2259,7 @@ body {
 
 .app-shell.canvas-focus-mode .canvas-focus-toggle,
 .app-shell.canvas-focus-mode .focus-controls-toggle,
+.app-shell.canvas-focus-mode .canvas-focus-exit,
 .app-shell.canvas-focus-mode .canvas-options-toggle {
   display: inline-flex !important;
   width: 36px !important;
@@ -2294,6 +2336,23 @@ body {
 
 .app-shell.canvas-focus-mode .canvas-toolbar .canvas-view-controls .toolbar-switch span {
   display: inline !important;
+}
+
+@media (max-width: 560px) {
+  .app-shell.canvas-focus-mode .canvas-toolbar {
+    flex-wrap: wrap !important;
+  }
+
+  .app-shell.canvas-focus-mode .canvas-focus-status {
+    order: 2 !important;
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .app-shell.canvas-focus-mode #canvasFocusMaxValue {
+    display: none !important;
+  }
 }
 
 .app-shell.canvas-focus-mode .canvas-frame {
