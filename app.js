@@ -385,6 +385,8 @@ function currentBrushLabel() {
 const el = {
   canvas: document.getElementById("simCanvas"),
   canvasFrame: document.querySelector(".canvas-frame"),
+  controlTabButtons: document.querySelectorAll("[data-control-tab]"),
+  controlTabPanels: document.querySelectorAll("[data-control-panel]"),
   themeButtons: document.querySelectorAll("[data-theme-choice]"),
   fieldComponentButtons: document.querySelectorAll("[data-field-component]"),
   viewModeButtons: document.querySelectorAll("[data-view-mode]"),
@@ -596,6 +598,20 @@ function updateRangeProgress(input) {
 
 function updateAllRangeProgress() {
   document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+}
+
+function activateControlTab(tabName) {
+  const selected = tabName || "scenes";
+  el.controlTabButtons?.forEach((button) => {
+    const active = button.dataset.controlTab === selected;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  el.controlTabPanels?.forEach((panel) => {
+    const active = panel.dataset.controlPanel === selected;
+    panel.classList.toggle("is-active", active);
+    panel.hidden = !active;
+  });
 }
 
 function lambdaToCells(valueLambda) {
@@ -3487,6 +3503,12 @@ el.selectModeBtn.addEventListener("click", () => {
 
 el.brushModeBtn.addEventListener("click", () => {
   setCanvasMode("brush");
+});
+
+el.controlTabButtons?.forEach((button) => {
+  button.addEventListener("click", () => {
+    activateControlTab(button.dataset.controlTab);
+  });
 });
 
 el.themeButtons?.forEach((button) => {
