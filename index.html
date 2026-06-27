@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-canvas-actions-1" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-results-panel-3" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -970,129 +970,146 @@
             </div>
             <div id="tab-results" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-results-button" data-control-panel="results" hidden>
 <section class="panel-section diagnostics-section">
-              <h2>Diagnostics</h2>
-              <label class="toggle-row" data-ui-scope="advanced">
-                <input id="diagnosticsInput" type="checkbox" checked />
-                <span>Line monitors</span>
-              </label>
+              <div class="results-panel-head">
+                <div>
+                  <p class="panel-kicker">Monitor</p>
+                  <h2>Results</h2>
+                </div>
+                <output id="resultsStateOutput" class="results-state-pill" aria-live="polite">Paused</output>
+              </div>
               <div class="results-summary-grid" aria-label="Results summary">
-                <div class="results-summary-card reflectance">
+                <div class="results-summary-card reflectance is-primary">
                   <span><i>R</i><sub>est</sub></span>
                   <output id="summaryReflectanceOutput">0</output>
                 </div>
-                <div class="results-summary-card transmittance">
+                <div class="results-summary-card transmittance is-primary">
                   <span><i>T</i><sub>est</sub></span>
                   <output id="summaryTransmittanceOutput">0</output>
                 </div>
-                <div class="results-summary-card balance">
+                <div class="results-summary-card balance is-secondary">
                   <span>1-R-T</span>
                   <output id="summaryBalanceOutput">0</output>
                 </div>
-                <div class="results-summary-card angle">
+                <div class="results-summary-card angle is-secondary">
                   <span>&theta;<sub>k</sub></span>
                   <output id="summaryAngleOutput">0°</output>
                 </div>
               </div>
-              <div class="diagnostics-grid" data-ui-scope="advanced">
-                <div class="diagnostic-metric">
-                  <span>&theta;<sub>k</sub></span>
-                  <output id="diagnosticAngleOutput">0°</output>
-                </div>
-                <div class="diagnostic-metric">
-                  <span><i>P</i><sub>inc</sub></span>
-                  <output id="fluxLeftOutput">0</output>
-                </div>
-                <div class="diagnostic-metric">
-                  <span><i>P</i><sub>ref</sub></span>
-                  <output id="reflectedPowerOutput">0</output>
-                </div>
-                <div class="diagnostic-metric">
-                  <span><i>P</i><sub>trn</sub></span>
-                  <output id="fluxRightOutput">0</output>
-                </div>
-                <div class="diagnostic-metric">
-                  <span><i>R</i><sub>est</sub></span>
-                  <output id="reflectanceOutput">0</output>
-                </div>
-                <div class="diagnostic-metric">
-                  <span><i>T</i><sub>est</sub></span>
-                  <output id="transmittanceOutput">0</output>
-                </div>
-              </div>
-              <button id="diagnosticsResetBtn" class="text-button" type="button" data-ui-scope="advanced">Reset monitors</button>
-              <div class="sweep-panel" data-ui-scope="advanced">
-                <div class="two-col">
-                  <label>
-                    <span>Sweep</span>
-                    <select id="sweepModeInput">
-                      <option value="angle">Angle θ</option>
-                      <option value="frequency">Frequency f</option>
-                      <option value="amplitude">Source amplitude</option>
-                      <option value="gainLoss">Gain/loss γ</option>
-                      <option value="symmetry">Symmetry break δ</option>
-                      <option value="blochK">Bloch k/πa</option>
-                      <option value="direction">Direction F/R</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>points</span>
-                    <input id="sweepSamplesInput" type="number" min="3" max="41" step="1" value="9" />
-                  </label>
-                </div>
-                <div class="two-col">
-                  <label>
-                    <span>start</span>
-                    <input id="sweepStartInput" type="number" min="-80" max="80" step="1" value="0" />
-                  </label>
-                  <label>
-                    <span>end</span>
-                    <input id="sweepEndInput" type="number" min="-80" max="80" step="1" value="70" />
-                  </label>
-                </div>
-                <label>
-                  <span>steps / point</span>
-                  <input id="sweepStepsInput" type="number" min="120" max="4000" step="60" value="720" />
-                </label>
-                <label class="toggle-row sweep-memory-row">
-                  <input id="sweepBidirectionalInput" type="checkbox" />
-                  <span>Bidirectional</span>
-                </label>
-                <div class="sweep-actions">
-                  <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
-                  <button id="sweepExportBtn" class="text-button" type="button" disabled>Export CSV</button>
-                </div>
-                <p id="sweepStatus" class="sweep-status">No sweep yet.</p>
-                <canvas id="sweepChart" class="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
-                <div class="chart-footer">
-                  <div class="chart-legend" aria-hidden="true">
-                    <span><i class="legend-swatch reflectance"></i>R</span>
-                    <span><i class="legend-swatch transmittance"></i>T</span>
-                    <span><i class="legend-swatch auxiliary"></i>Aux</span>
-                  </div>
-                  <output id="sweepChartReadout" class="chart-readout">No sweep point</output>
-                </div>
-              </div>
-              <div class="analysis-panel" data-ui-scope="advanced">
-                <div class="analysis-panel-header">
+              <details class="monitor-panel results-detail-panel" data-ui-scope="advanced">
+                <summary>Line monitors</summary>
+                <div class="results-detail-body">
                   <label class="toggle-row">
-                    <input id="analysisInput" type="checkbox" checked />
-                    <span>Spectral + NTFF</span>
+                    <input id="diagnosticsInput" type="checkbox" checked />
+                    <span>Line monitors</span>
                   </label>
-                  <button id="analysisResetBtn" class="text-button" type="button">Reset analysis</button>
-                </div>
-                <p id="analysisStatus" class="sweep-status">Waiting for samples.</p>
-                <div class="analysis-chart-grid">
-                  <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
-                  <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" aria-label="Near-to-far angular chart"></canvas>
-                </div>
-                <div class="chart-footer">
-                  <div class="chart-legend" aria-hidden="true">
-                    <span><i class="legend-swatch spectrum"></i>Spectrum</span>
-                    <span><i class="legend-swatch farfield"></i>Far field</span>
+                  <div class="diagnostics-grid">
+                    <div class="diagnostic-metric">
+                      <span>&theta;<sub>k</sub></span>
+                      <output id="diagnosticAngleOutput">0°</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span><i>P</i><sub>inc</sub></span>
+                      <output id="fluxLeftOutput">0</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span><i>P</i><sub>ref</sub></span>
+                      <output id="reflectedPowerOutput">0</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span><i>P</i><sub>trn</sub></span>
+                      <output id="fluxRightOutput">0</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span><i>R</i><sub>est</sub></span>
+                      <output id="reflectanceOutput">0</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span><i>T</i><sub>est</sub></span>
+                      <output id="transmittanceOutput">0</output>
+                    </div>
                   </div>
-                  <output id="analysisChartReadout" class="chart-readout">Move over a chart</output>
+                  <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
-              </div>
+              </details>
+              <details class="sweep-panel results-detail-panel" data-ui-scope="advanced">
+                <summary>Parameter sweep</summary>
+                <div class="results-detail-body">
+                  <div class="two-col">
+                    <label>
+                      <span>Sweep</span>
+                      <select id="sweepModeInput">
+                        <option value="angle">Angle θ</option>
+                        <option value="frequency">Frequency f</option>
+                        <option value="amplitude">Source amplitude</option>
+                        <option value="gainLoss">Gain/loss γ</option>
+                        <option value="symmetry">Symmetry break δ</option>
+                        <option value="blochK">Bloch k/πa</option>
+                        <option value="direction">Direction F/R</option>
+                      </select>
+                    </label>
+                    <label>
+                      <span>points</span>
+                      <input id="sweepSamplesInput" type="number" min="3" max="41" step="1" value="9" />
+                    </label>
+                  </div>
+                  <div class="two-col">
+                    <label>
+                      <span>start</span>
+                      <input id="sweepStartInput" type="number" min="-80" max="80" step="1" value="0" />
+                    </label>
+                    <label>
+                      <span>end</span>
+                      <input id="sweepEndInput" type="number" min="-80" max="80" step="1" value="70" />
+                    </label>
+                  </div>
+                  <label>
+                    <span>steps / point</span>
+                    <input id="sweepStepsInput" type="number" min="120" max="4000" step="60" value="720" />
+                  </label>
+                  <label class="toggle-row sweep-memory-row">
+                    <input id="sweepBidirectionalInput" type="checkbox" />
+                    <span>Bidirectional</span>
+                  </label>
+                  <div class="sweep-actions">
+                    <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
+                    <button id="sweepExportBtn" class="text-button" type="button" disabled>Export CSV</button>
+                  </div>
+                  <p id="sweepStatus" class="sweep-status">No sweep yet.</p>
+                  <canvas id="sweepChart" class="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
+                  <div class="chart-footer">
+                    <div class="chart-legend" aria-hidden="true">
+                      <span><i class="legend-swatch reflectance"></i>R</span>
+                      <span><i class="legend-swatch transmittance"></i>T</span>
+                      <span><i class="legend-swatch auxiliary"></i>Aux</span>
+                    </div>
+                    <output id="sweepChartReadout" class="chart-readout">No sweep point</output>
+                  </div>
+                </div>
+              </details>
+              <details class="analysis-panel results-detail-panel" data-ui-scope="advanced">
+                <summary>Spectral / NTFF</summary>
+                <div class="results-detail-body">
+                  <div class="analysis-panel-header">
+                    <label class="toggle-row">
+                      <input id="analysisInput" type="checkbox" checked />
+                      <span>Spectral + NTFF</span>
+                    </label>
+                    <button id="analysisResetBtn" class="text-button" type="button">Reset analysis</button>
+                  </div>
+                  <p id="analysisStatus" class="sweep-status">Waiting for samples.</p>
+                  <div class="analysis-chart-grid">
+                    <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
+                    <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" aria-label="Near-to-far angular chart"></canvas>
+                  </div>
+                  <div class="chart-footer">
+                    <div class="chart-legend" aria-hidden="true">
+                      <span><i class="legend-swatch spectrum"></i>Spectrum</span>
+                      <span><i class="legend-swatch farfield"></i>Far field</span>
+                    </div>
+                    <output id="analysisChartReadout" class="chart-readout">Move over a chart</output>
+                  </div>
+                </div>
+              </details>
             </section>
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
@@ -1163,6 +1180,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-canvas-actions-1"></script>
+    <script src="app.js?v=20260627-results-panel-3"></script>
   </body>
 </html>

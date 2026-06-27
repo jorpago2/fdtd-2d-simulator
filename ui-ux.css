@@ -74,6 +74,39 @@
   white-space: nowrap !important;
 }
 
+.results-panel-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.results-panel-head h2 {
+  margin: 0 !important;
+}
+
+.results-state-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  min-width: 76px !important;
+  min-height: 30px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-accent) 36%, var(--neu-border)) !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  color: var(--neu-ink) !important;
+  background: color-mix(in srgb, var(--neu-accent-soft) 62%, var(--neu-surface-low)) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.68rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
 .results-summary-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
@@ -116,6 +149,75 @@
   font-weight: 950 !important;
   font-variant-numeric: tabular-nums !important;
   line-height: 1 !important;
+}
+
+.results-summary-card.is-primary output {
+  font-size: 1.22rem !important;
+}
+
+.results-detail-panel {
+  min-width: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 76%, transparent) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 8px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.results-detail-panel > summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 34px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  border-radius: 12px !important;
+  padding: 0 9px !important;
+  color: var(--neu-ink) !important;
+  font-size: 0.74rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+}
+
+.results-detail-panel > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.results-detail-panel > summary::after {
+  content: "+" !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 999px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+  color: var(--neu-muted) !important;
+  font-size: 0.86rem !important;
+  line-height: 1 !important;
+}
+
+.results-detail-panel[open] > summary::after {
+  content: "-" !important;
+}
+
+.results-detail-body {
+  display: grid !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  padding-top: 8px !important;
+}
+
+.diagnostics-section .monitor-panel {
+  grid-column: 1 !important;
+}
+
+.diagnostics-section .monitor-panel .diagnostics-grid {
+  padding-top: 0 !important;
+}
+
+.diagnostics-section .monitor-panel #diagnosticsResetBtn {
+  width: 100% !important;
 }
 
 .results-summary-card.reflectance {
@@ -354,6 +456,7 @@
 
 html[data-theme="dark"] .chart-footer,
 html[data-theme="dark"] .config-status-grid > div,
+html[data-theme="dark"] .results-detail-panel,
 html[data-theme="dark"] .scene-card-thumb,
 html[data-theme="dark"] .share-url-output {
   background-color: var(--neu-surface-low) !important;
@@ -376,6 +479,10 @@ html[data-theme="dark"] .share-url-output {
 
   .results-summary-card output {
     font-size: 1rem !important;
+  }
+
+  .results-summary-card.is-primary output {
+    font-size: 1.1rem !important;
   }
 
   .chart-footer {
@@ -440,17 +547,59 @@ html[data-theme="dark"] .share-url-output {
     gap: 10px !important;
   }
 
+  .app-shell[data-ui-depth="teaching"] .results-panel-head {
+    gap: 8px !important;
+  }
+
   .app-shell[data-ui-depth="teaching"] .diagnostics-section h2 {
     margin-bottom: 0 !important;
   }
 
+  .app-shell[data-ui-depth="teaching"] .results-state-pill {
+    min-width: 68px !important;
+    min-height: 28px !important;
+    padding-inline: 8px !important;
+    font-size: 0.62rem !important;
+  }
+
   .app-shell[data-ui-depth="teaching"] .results-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 6px !important;
   }
 
   .app-shell[data-ui-depth="teaching"] .results-summary-card {
-    min-height: 58px !important;
+    min-height: 56px !important;
     padding: 8px 9px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-card.is-primary {
+    min-height: 64px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-card span {
+    font-size: 0.61rem !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-card output {
+    font-size: 0.96rem !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .results-summary-card.is-primary output {
+    font-size: 1.12rem !important;
+  }
+
+  .control-panel[data-mobile-layer="results"] .diagnostics-section {
+    gap: 9px !important;
+  }
+
+  .control-panel[data-mobile-layer="results"] .results-detail-panel {
+    padding: 6px !important;
+  }
+
+  .control-panel[data-mobile-layer="results"] .results-detail-panel > summary {
+    min-height: 32px !important;
+    padding-inline: 8px !important;
+    font-size: 0.68rem !important;
   }
 
   .control-panel[data-mobile-layer="simulation"] .simulation-guide-section,

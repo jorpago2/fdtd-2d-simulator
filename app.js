@@ -178,6 +178,7 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
   sources: "visualLayerSources",
   colorbar: "visualLayerColorbar",
 });
+const COMPACT_RESULTS_MEDIA_QUERY = "(max-width: 1180px)";
 const VISUAL_PROFILE_LAYERS = Object.freeze({
   clean: Object.freeze({
     boundaries: false,
@@ -599,6 +600,8 @@ const el = {
   autoScaleInput: document.getElementById("autoScaleInput"),
   diagnosticsInput: document.getElementById("diagnosticsInput"),
   diagnosticsResetBtn: document.getElementById("diagnosticsResetBtn"),
+  resultsStateOutput: document.getElementById("resultsStateOutput"),
+  resultsDetailPanels: document.querySelectorAll(".results-detail-panel"),
   sweepModeInput: document.getElementById("sweepModeInput"),
   sweepStartInput: document.getElementById("sweepStartInput"),
   sweepEndInput: document.getElementById("sweepEndInput"),
@@ -1514,6 +1517,22 @@ function compactControlDrawerActive() {
   return window.matchMedia?.(COMPACT_CONTROLS_MEDIA_QUERY)?.matches ?? false;
 }
 
+let lastCompactResultsDetailState = null;
+
+function compactResultsDetailsActive() {
+  return window.matchMedia?.(COMPACT_RESULTS_MEDIA_QUERY)?.matches ?? false;
+}
+
+function syncResultsDetailPanels(force = false) {
+  const compact = compactResultsDetailsActive();
+  if (!force && compact === lastCompactResultsDetailState) return;
+  lastCompactResultsDetailState = compact;
+  if (!compact) return;
+  el.resultsDetailPanels?.forEach((panel) => {
+    panel.open = false;
+  });
+}
+
 function canvasFocusModeActive() {
   return el.appShell?.classList.contains("canvas-focus-mode") ?? false;
 }
@@ -2356,6 +2375,7 @@ function applyUiDepth(depth, persist = true) {
   }
   updateUiDepthControls();
   updateVisualControls();
+  syncResultsDetailPanels(true);
   sim.render();
   if (persist) {
     try {
@@ -2393,6 +2413,9 @@ function updateRunControls() {
   el.appShell?.classList.toggle("simulation-running", isRunning);
   if (el.appShell) {
     el.appShell.dataset.simState = isRunning ? "running" : "paused";
+  }
+  if (el.resultsStateOutput) {
+    el.resultsStateOutput.textContent = isRunning ? "Running" : "Paused";
   }
   el.playPauseBtn?.classList.toggle("is-running", isRunning);
   el.playPauseBtn?.setAttribute("aria-pressed", String(isRunning));
@@ -6584,6 +6607,7 @@ window.addEventListener("resize", () => {
   if (!canvasActionsMenuActive()) {
     closeCanvasActionsMenu();
   }
+  syncResultsDetailPanels();
   const gridChanged = applyResponsiveGridOrientation({ render: false });
   if (!gridChanged) {
     updateControlText();
