@@ -5368,21 +5368,27 @@ function updateColorbar() {
 }
 
 function animate() {
+  let advancedSimulation = false;
   if (state.running) {
     simStepAccumulator += state.stepsPerFrame;
     const stepsThisFrame = Math.floor(simStepAccumulator);
     simStepAccumulator -= stepsThisFrame;
-    for (let i = 0; i < stepsThisFrame; i += 1) {
-      sim.step();
-    }
-    framesSinceMeasure += 1;
-    if (framesSinceMeasure >= 4) {
-      sim.measure();
-      updateStats();
-      framesSinceMeasure = 0;
+    if (stepsThisFrame > 0) {
+      for (let i = 0; i < stepsThisFrame; i += 1) {
+        sim.step();
+      }
+      advancedSimulation = true;
+      framesSinceMeasure += 1;
+      if (framesSinceMeasure >= 4) {
+        sim.measure();
+        updateStats();
+        framesSinceMeasure = 0;
+      }
     }
   }
-  sim.render();
+  if (advancedSimulation) {
+    sim.render();
+  }
   requestAnimationFrame(animate);
 }
 
