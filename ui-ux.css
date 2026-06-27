@@ -1072,6 +1072,40 @@ body {
   }
 }
 
+@media (max-width: 520px) {
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar {
+    grid-template-columns: auto minmax(126px, 1fr) auto !important;
+    gap: 6px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact {
+    gap: 6px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact #stepBtn,
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact #resetBtn {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .tool-group.compact #playPauseBtn {
+    width: 46px !important;
+    height: 42px !important;
+    min-width: 46px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-focus-toggle,
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .focus-controls-toggle,
+  .app-shell[data-ui-depth="teaching"] .canvas-options-toggle {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .canvas-toolbar .interaction-toggle {
+    max-width: 136px !important;
+  }
+}
+
 .canvas-toolbar .canvas-view-controls [hidden] {
   display: none !important;
 }
@@ -1418,6 +1452,8 @@ body {
 }
 
 .app-shell.canvas-focus-mode .canvas-toolbar .tool-group.compact #saveBtn,
+.app-shell.canvas-focus-mode .canvas-toolbar .tool-group.compact #stepBtn,
+.app-shell.canvas-focus-mode .canvas-toolbar .tool-group.compact #resetBtn,
 .app-shell.canvas-focus-mode .canvas-toolbar .interaction-toggle {
   display: none !important;
 }
