@@ -1136,6 +1136,7 @@ body {
     transform: translateX(calc(100% + 20px)) !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    overscroll-behavior: contain !important;
     transition:
       transform 180ms ease,
       visibility 180ms ease !important;
@@ -1151,6 +1152,7 @@ body {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow: auto !important;
+    overscroll-behavior: contain !important;
   }
 
   .control-tab-panel.is-active {
@@ -2058,21 +2060,22 @@ body {
   }
 
   .mobile-layer-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    padding: 3px !important;
+    border-radius: 12px !important;
   }
 
   .mobile-layer-button {
-    grid-template-columns: auto minmax(0, 1fr) !important;
-    gap: 4px !important;
-    min-height: 32px !important;
-    padding-inline: 6px !important;
-    font-size: 0.62rem !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    min-height: 30px !important;
+    padding: 4px 2px !important;
+    font-size: 0.54rem !important;
   }
 
   .mobile-layer-button .nav-step {
-    width: 18px !important;
-    height: 18px !important;
-    font-size: 0.56rem !important;
+    display: none !important;
   }
 }
 
