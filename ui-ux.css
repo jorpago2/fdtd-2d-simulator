@@ -1555,6 +1555,56 @@ body {
     display: none !important;
   }
 
+  .selection-sheet {
+    position: absolute !important;
+    right: 10px !important;
+    bottom: 42px !important;
+    left: 10px !important;
+    z-index: 34 !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    margin-top: 0 !important;
+    padding: 6px !important;
+    border-radius: 14px !important;
+    background: color-mix(in srgb, var(--surface) 82%, transparent) !important;
+    backdrop-filter: blur(14px) saturate(1.25) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.25) !important;
+  }
+
+  .selection-sheet-copy {
+    gap: 3px !important;
+  }
+
+  .selection-sheet-kind {
+    font-size: 0.52rem !important;
+  }
+
+  .selection-sheet-title {
+    font-size: 0.7rem !important;
+  }
+
+  .selection-sheet-details {
+    gap: 4px !important;
+  }
+
+  .selection-sheet-details span {
+    padding: 3px 5px !important;
+    border-radius: 9px !important;
+  }
+
+  .selection-sheet-details small {
+    display: none !important;
+  }
+
+  .selection-sheet-details output {
+    font-size: 0.58rem !important;
+  }
+
+  .selection-sheet-actions .icon-button {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+
   .canvas-state-badge {
     top: 9px !important;
     left: 9px !important;
@@ -1566,11 +1616,11 @@ body {
   .mobile-canvas-stats {
     display: grid !important;
     grid-template-columns: minmax(92px, 1.35fr) repeat(4, minmax(0, 1fr)) !important;
-    gap: 5px !important;
+    gap: 4px !important;
     min-width: 0 !important;
-    margin-top: 6px !important;
-    padding: 5px !important;
-    border-radius: 16px !important;
+    margin-top: 4px !important;
+    padding: 4px !important;
+    border-radius: 14px !important;
     background: var(--surface-low) !important;
     box-shadow: var(--neu-inset-soft) !important;
   }
@@ -1580,8 +1630,8 @@ body {
     align-content: center !important;
     gap: 2px !important;
     min-width: 0 !important;
-    min-height: 34px !important;
-    border-radius: 12px !important;
+    min-height: 30px !important;
+    border-radius: 10px !important;
     padding: 4px 5px !important;
     background: var(--surface) !important;
     box-shadow: var(--neu-shadow-small) !important;
@@ -1614,6 +1664,34 @@ body {
 
   .mobile-canvas-stats [data-mobile-stat="state"] output {
     color: var(--neu-accent) !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats {
+    grid-template-columns: minmax(118px, 1.45fr) repeat(2, minmax(0, 0.7fr)) !important;
+    gap: 3px !important;
+    margin-top: 3px !important;
+    padding: 3px !important;
+    border-radius: 12px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats [data-mobile-stat="mode"],
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats [data-mobile-stat="grid"] {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats span {
+    min-height: 24px !important;
+    border-radius: 9px !important;
+    padding: 2px 5px !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats small {
+    display: none !important;
+  }
+
+  .app-shell[data-ui-depth="teaching"] .mobile-canvas-stats output {
+    font-size: 0.58rem !important;
+    line-height: 1 !important;
   }
 
   .app-shell[data-ui-depth="teaching"] .colorbar {

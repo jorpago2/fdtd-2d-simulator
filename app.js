@@ -823,13 +823,23 @@ function gridSizeMatches(grid, nx = state.gridNx, ny = state.gridNy) {
 }
 
 function gridSizeIsAutoOrientable(nx = state.gridNx, ny = state.gridNy) {
-  return gridSizeMatches(DEFAULT_GRID, nx, ny) || gridSizeMatches(DEFAULT_PORTRAIT_GRID, nx, ny);
+  return (
+    gridSizeMatches(DEFAULT_GRID, nx, ny) ||
+    gridSizeMatches(DEFAULT_PORTRAIT_GRID, nx, ny) ||
+    gridSizeMatches(PHONE_PORTRAIT_GRID, nx, ny)
+  );
 }
 
 function viewportPrefersPortraitGrid() {
   const width = Math.max(1, window.innerWidth || 1);
   const height = Math.max(1, window.innerHeight || 1);
   return compactControlDrawerActive() && height > width * 1.05;
+}
+
+function viewportPrefersPhonePortraitGrid() {
+  const width = Math.max(1, window.innerWidth || 1);
+  const height = Math.max(1, window.innerHeight || 1);
+  return width <= 520 && height > width * 1.35;
 }
 
 function mobileCanvasViewportActive() {
@@ -885,7 +895,8 @@ function setCustomVisualLayer(layer, enabled) {
 }
 
 function responsiveDefaultGrid() {
-  return viewportPrefersPortraitGrid() ? DEFAULT_PORTRAIT_GRID : DEFAULT_GRID;
+  if (!viewportPrefersPortraitGrid()) return DEFAULT_GRID;
+  return viewportPrefersPhonePortraitGrid() ? PHONE_PORTRAIT_GRID : DEFAULT_PORTRAIT_GRID;
 }
 
 function applySimulationGridSize(nx, ny, { applyPreset = true, render = true } = {}) {
@@ -924,20 +935,31 @@ function cssPixelValue(value) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+function stageLayoutChildVisible(element) {
+  if (!element || element.hidden) return false;
+  const style = getComputedStyle(element);
+  if (style.display === "none" || style.position === "absolute" || style.position === "fixed") return false;
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 || rect.height > 0;
+}
+
 function availableCanvasFrameHeight(viewportHeight, compactViewport) {
   const viewportTargetHeight = compactViewport
     ? viewportHeight - Math.min(230, viewportHeight * 0.28)
     : viewportHeight * CANVAS_DISPLAY_VIEWPORT_FRACTION;
-  if (!el.stage || !el.canvasToolbar) return viewportTargetHeight;
+  if (!el.stage || !el.canvasFrame) return viewportTargetHeight;
 
   const stageRect = el.stage.getBoundingClientRect();
-  const toolbarRect = el.canvasToolbar.getBoundingClientRect();
-  if (!stageRect.height || !toolbarRect.height) return viewportTargetHeight;
+  if (!stageRect.height) return viewportTargetHeight;
 
   const stageStyle = getComputedStyle(el.stage);
   const paddingY = cssPixelValue(stageStyle.paddingTop) + cssPixelValue(stageStyle.paddingBottom);
   const rowGap = cssPixelValue(stageStyle.rowGap);
-  const stageCanvasHeight = stageRect.height - toolbarRect.height - paddingY - rowGap;
+  const flowChildren = Array.from(el.stage.children).filter(stageLayoutChildVisible);
+  const nonCanvasHeight = flowChildren
+    .filter((child) => child !== el.canvasFrame)
+    .reduce((height, child) => height + child.getBoundingClientRect().height, 0);
+  const stageCanvasHeight = stageRect.height - nonCanvasHeight - paddingY - rowGap * Math.max(0, flowChildren.length - 1);
   return Math.min(viewportTargetHeight, Math.max(1, stageCanvasHeight));
 }
 

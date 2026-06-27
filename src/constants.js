@@ -3,6 +3,7 @@
 const COURANT = 0.48;
 const DEFAULT_GRID = { nx: 180, ny: 120 };
 const DEFAULT_PORTRAIT_GRID = { nx: DEFAULT_GRID.ny, ny: DEFAULT_GRID.nx };
+const PHONE_PORTRAIT_GRID = { nx: 104, ny: 192 };
 const MAX_GRID = { nx: 1200, ny: 800 };
 const MIN_CANVAS_DISPLAY_ASPECT = 0.5;
 const MAX_CANVAS_DISPLAY_ASPECT = 6;
