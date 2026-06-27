@@ -2711,6 +2711,16 @@ select option:checked {
   margin: 0;
 }
 
+.sweep-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sweep-actions .text-button {
+  width: 100%;
+}
+
 .sweep-status {
   margin: 0;
   color: rgba(58, 70, 78, 0.72);

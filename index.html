@@ -142,6 +142,7 @@
                     <optgroup label="Incident fields">
                       <option value="line">Plane wave</option>
                       <option value="gaussianProfile">Gaussian line</option>
+                      <option value="evanescentLine">Evanescent line</option>
                     </optgroup>
                   </select>
                 </label>
@@ -310,11 +311,11 @@
               <div class="modulation-panel bianisotropy-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="bianisotropyEnabledInput" type="checkbox" />
-                  <span>Magnetoelectric coupling &kappa; (2D effective)</span>
+                  <span>Magnetoelectric coupling &kappa; / &radic;&epsilon;&mu;</span>
                 </label>
                 <label class="bianisotropy-params">
-                  <span>&kappa;</span>
-                  <input id="bianisotropyKappaInput" type="number" min="-5" max="5" step="0.01" value="0.20" />
+                  <span>&kappa;<sub>n</sub></span>
+                  <input id="bianisotropyKappaInput" type="number" min="-0.85" max="0.85" step="0.01" value="0.20" />
                 </label>
               </div>
               <div class="modulation-panel conductivity-panel">
@@ -518,6 +519,10 @@
                 <button class="mode-toggle-button" type="button" data-field-component="hz" aria-pressed="false" title="TEz: solve Hz, Ex, Ey"><i>H</i><sub>z</sub></button>
               </div>
             </div>
+            <div class="control-row">
+              <span>Engine</span>
+              <output id="engineValue">JS</output>
+            </div>
             <label class="control-row">
               <span>Speed</span>
               <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
@@ -563,12 +568,16 @@
                   <option value="singleSlit">6 · Single slit diffraction</option>
                   <option value="doubleSlit">7 · Double slit</option>
                   <option value="circularAperture">8 · Circular aperture</option>
+                  <option value="teTmComparison">9 · TEz/TMz comparison</option>
                   <option value="poyntingPlaneWave">10 · Poynting vector</option>
+                  <option value="evanescentWave">11 · Evanescent isolated wave</option>
                   <option value="pmlAbsorption">12 · PML absorption check</option>
                 </optgroup>
                 <optgroup label="2. Interfaces">
                   <option value="normalInterface">13 · Normal air-dielectric interface</option>
                   <option value="obliqueRefraction">14 · Oblique refraction</option>
+                  <option value="brewsterTm">15 · Brewster TM minimum</option>
+                  <option value="brewsterTeTm">16 · TE/TM Brewster comparison</option>
                   <option value="totalInternalReflection">17 · Total internal reflection</option>
                   <option value="frustratedTir">18 · Frustrated TIR</option>
                   <option value="quarterWaveCoating">19 · Quarter-wave coating</option>
@@ -588,31 +597,44 @@
                   <option value="dipoleArray">31 · Equal-phase dipole array</option>
                   <option value="phasedDipoleArray">32 · Progressive-phase dipole array</option>
                   <option value="apertureRadiator">33 · Slot aperture radiator</option>
+                  <option value="nearFarFieldNtff">34 · Near-field / far-field NTFF</option>
                 </optgroup>
                 <optgroup label="4. Guided optics">
                   <option value="slabWaveguide">35 · Single-mode slab waveguide</option>
                   <option value="multimodeSlab">36 · Multimode slab waveguide</option>
                   <option value="lossyGuide">37 · Lossy waveguide</option>
+                  <option value="waveguideBend">38 · Waveguide bend</option>
                   <option value="taperWaveguide">39 · Tapered waveguide</option>
                   <option value="widthStepWaveguide">40 · Width step waveguide</option>
                   <option value="directionalCoupler">41 · Directional coupler</option>
                   <option value="mmiWaveguide">42 · MMI section</option>
+                  <option value="machZehnder">43 · Mach-Zehnder interferometer</option>
                   <option value="guideScatterer">44 · Waveguide with scatterer</option>
+                  <option value="microstrip">45 · Microstrip line</option>
                   <option value="stubResonator">46 · Stub resonator</option>
                 </optgroup>
                 <optgroup label="5. Resonators">
                   <option value="fabryPerot">47 · Fabry-Perot cavity</option>
+                  <option value="fabryPerotStanding">48 · Fabry-Perot standing field</option>
                   <option value="ringResonator">49 · Ring resonator</option>
                   <option value="addDropRing">50 · Add-drop ring</option>
+                  <option value="racetrackResonator">51 · Racetrack resonator</option>
                   <option value="dielectricCavity">52 · Dielectric defect cavity</option>
                   <option value="pecCavity">53 · PEC half-wave cavity</option>
+                  <option value="quarterWaveCavity">54 · Quarter-wave cavity</option>
+                  <option value="qRingdown">55 · Q by ringdown</option>
+                  <option value="purcell2d">56 · Purcell 2D proxy</option>
+                  <option value="betaFactor">57 · beta-factor guide coupling</option>
+                  <option value="degenerateModes">58 · Degenerate cavity modes</option>
                 </optgroup>
                 <optgroup label="6-7. Scattering and materials">
                   <option value="pecCylinder">59 · PEC cylinder scattering</option>
                   <option value="dielectricCylinder">60 · Dielectric cylinder scattering</option>
                   <option value="mieCylinder">61 · High-index Mie cylinder</option>
+                  <option value="rcsCylinder">62 · RCS 2D cylinder</option>
                   <option value="lossyCylinder">63 · Lossy cylinder</option>
                   <option value="dielectricDimer">64 · Dielectric dimer</option>
+                  <option value="kerker2d">65 · Kerker-like 2D scattering</option>
                   <option value="multipleScattering">66 · Multiple scattering</option>
                   <option value="weakLocalization">67 · Weak-localization disorder</option>
                   <option value="finiteConductivity">70 · Finite-conductivity skin depth</option>
@@ -623,8 +645,8 @@
                   <option value="enzSlab">75 · ENZ slab</option>
                   <option value="anisotropicMedium">76 · Anisotropic medium</option>
                   <option value="hyperbolicMedium">77 · Hyperbolic medium</option>
-                  <option value="chiralMedium">78 · Chiral medium</option>
-                  <option value="bianisotropicMedium">79 · Bianisotropic medium</option>
+                  <option value="chiralMedium">78 · 6-field chiral medium</option>
+                  <option value="bianisotropicMedium">79 · 6-field bianisotropic medium</option>
                   <option value="gyrotropicMedium">80 · Gyrotropic medium</option>
                 </optgroup>
                 <optgroup label="8-9. Periodic and topological">
@@ -632,11 +654,22 @@
                   <option value="photonicCrystal">82 · 2D photonic crystal</option>
                   <option value="phcPointDefect">83 · PhC point defect</option>
                   <option value="phcWaveguide">84 · PhC line-defect waveguide</option>
+                  <option value="phcOptimizedCavity">85 · Optimized PhC cavity</option>
                   <option value="phcDisorder">86 · Disordered photonic crystal</option>
+                  <option value="phcDarkMode">87 · Symmetry-dark mode</option>
+                  <option value="quasiBic">88 · Quasi-BIC cavity</option>
+                  <option value="symmetryProtectedBic">89 · Symmetry-protected BIC</option>
                   <option value="fanoResonator">90 · Fano side resonator</option>
                   <option value="sshTrivial">91 · SSH chain, trivial</option>
                   <option value="sshTopological">92 · SSH chain, topological</option>
                   <option value="sshInterface">93 · SSH interface</option>
+                  <option value="sshDisorder">94 · SSH with disorder</option>
+                  <option value="nonHermitianSsh">95 · Non-Hermitian SSH</option>
+                  <option value="honeycombLattice">96 · Honeycomb lattice</option>
+                  <option value="valleyHall">97 · Valley Hall interface</option>
+                  <option value="valleyHallBend">98 · Valley Hall bend</option>
+                  <option value="topologicalPumping">99 · Topological pumping</option>
+                  <option value="topologyDefect">100 · Topology with strong defect</option>
                 </optgroup>
                 <optgroup label="10-13. Metamaterials, nonlinear and non-Hermitian">
                   <option value="sppInterface">101 · SPP metal-dielectric interface</option>
@@ -644,17 +677,41 @@
                   <option value="localizedPlasmon">103 · Localized plasmon disk</option>
                   <option value="plasmonicDimer">104 · Plasmonic dimer</option>
                   <option value="metasurfacePhaseBars">105 · Phase-gradient metasurface</option>
+                  <option value="perfectAbsorber">106 · Perfect absorber</option>
                   <option value="negativeIndexSlab">107 · Negative-index slab</option>
-                  <option value="superlensSlab">108 · Idealized superlens slab</option>
+                  <option value="superlensSlab">108 · Drude superlens slab</option>
+                  <option value="hyperlens">109 · Hyperlens</option>
                   <option value="enzEmitter">110 · Dipole near ENZ slab</option>
                   <option value="kerrSlab">111 · Kerr nonlinear slab</option>
                   <option value="shgSlab">112 · SHG χ² slab</option>
                   <option value="thgSlab">113 · THG χ³ slab</option>
+                  <option value="spmKerrPulse">114 · Kerr SPM pulse</option>
+                  <option value="kerrBistableCavity">115 · Kerr bistable cavity</option>
                   <option value="vo2SwitchingSlab">116 · VO₂ switching slab</option>
                   <option value="pcmMemoryCell">117 · PCM memory cell</option>
+                  <option value="saturableAbsorber">118 · Saturable absorber</option>
+                  <option value="allOpticalSwitch">119 · All-optical switch</option>
+                  <option value="nonlinearLimiter">120 · Nonlinear limiter</option>
+                  <option value="temporalInterface">121 · Temporal interface</option>
+                  <option value="temporalSlab">122 · Temporal slab</option>
                   <option value="temporalModulation">123 · Temporal epsilon modulation</option>
+                  <option value="temporalCrystal">124 · Temporal crystal</option>
+                  <option value="modulatedGuide">125 · Temporally modulated guide</option>
                   <option value="travelingModulation">126 · Traveling epsilon modulation</option>
+                  <option value="temporalIsolator">127 · Temporal isolator analogue</option>
+                  <option value="modulatedRing">128 · Modulated ring</option>
+                  <option value="floquetResonators">129 · Floquet resonators</option>
+                  <option value="syntheticFrequency">130 · Synthetic frequency dimension</option>
                   <option value="ptSymmetricCoupler">131 · PT-symmetric gain/loss guides</option>
+                  <option value="exceptionalPointCoupler">132 · Exceptional point proxy</option>
+                  <option value="nonHermitianSkin">133 · Non-Hermitian skin analogue</option>
+                  <option value="bicKerr">134 · BIC + Kerr</option>
+                  <option value="bicEnz">135 · BIC + ENZ</option>
+                  <option value="janusTopologicalGuide">136 · Janus + topological guide</option>
+                  <option value="huygensCavity">137 · Huygens + cavity</option>
+                  <option value="topologyTemporalMod">138 · Topology + temporal modulation</option>
+                  <option value="nonreciprocalValleyHall">139 · Nonreciprocity + Valley Hall</option>
+                  <option value="spaceTimeCrystal">140 · Space-time crystal</option>
                 </optgroup>
               </select>
             </label>
@@ -694,6 +751,11 @@
                   <select id="sweepModeInput">
                     <option value="angle">Angle θ</option>
                     <option value="frequency">Frequency f</option>
+                    <option value="amplitude">Source amplitude</option>
+                    <option value="gainLoss">Gain/loss γ</option>
+                    <option value="symmetry">Symmetry break δ</option>
+                    <option value="blochK">Bloch k/πa</option>
+                    <option value="direction">Direction F/R</option>
                   </select>
                 </label>
                 <label>
@@ -715,7 +777,14 @@
                 <span>steps / point</span>
                 <input id="sweepStepsInput" type="number" min="120" max="4000" step="60" value="720" />
               </label>
-              <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
+              <label class="toggle-row sweep-memory-row">
+                <input id="sweepBidirectionalInput" type="checkbox" />
+                <span>Bidirectional</span>
+              </label>
+              <div class="sweep-actions">
+                <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
+                <button id="sweepExportBtn" class="text-button" type="button" disabled>Export CSV</button>
+              </div>
               <p id="sweepStatus" class="sweep-status">No sweep yet.</p>
               <canvas id="sweepChart" class="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
             </div>
@@ -723,7 +792,7 @@
               <div class="analysis-panel-header">
                 <label class="toggle-row">
                   <input id="analysisInput" type="checkbox" checked />
-                  <span>Spectral + far-field</span>
+                  <span>Spectral + NTFF</span>
                 </label>
                 <button id="analysisResetBtn" class="text-button" type="button">Reset analysis</button>
               </div>
@@ -753,6 +822,19 @@
       </section>
     </main>
 
-    <script src="app.js?v=20260627-theme-colormaps-4"></script>
+    <script src="src/constants.js?v=20260627-split-3"></script>
+    <script src="src/wasm-backend.js?v=20260627-split-1"></script>
+    <script src="src/numerics.js?v=20260627-split-2"></script>
+    <script src="src/colormaps.js?v=20260627-split-1"></script>
+    <script src="src/catalog.js?v=20260627-split-3"></script>
+    <script src="src/fdtd-sim.js?v=20260627-split-12"></script>
+    <script src="src/fdtd-materials.js?v=20260627-split-9"></script>
+    <script src="src/fdtd-boundaries.js?v=20260627-split-11"></script>
+    <script src="src/fdtd-presets.js?v=20260627-split-10"></script>
+    <script src="src/fdtd-sources.js?v=20260627-split-7"></script>
+    <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
+    <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
+    <script src="src/fdtd-rendering.js?v=20260627-split-5"></script>
+    <script src="app.js?v=20260627-split-app-12"></script>
   </body>
 </html>

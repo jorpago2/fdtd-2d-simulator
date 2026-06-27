@@ -1,60 +1,5 @@
 "use strict";
 
-const COURANT = 0.48;
-const DEFAULT_GRID = { nx: 180, ny: 120 };
-const MAX_GRID = { nx: 1200, ny: 800 };
-const MIN_CANVAS_DISPLAY_ASPECT = 0.75;
-const MAX_CANVAS_DISPLAY_ASPECT = 6;
-const MIN_CANVAS_DISPLAY_HEIGHT = 220;
-const MAX_CANVAS_DISPLAY_HEIGHT = 780;
-const CANVAS_DISPLAY_VIEWPORT_FRACTION = 0.68;
-const WASM_CORE_URL = "fdtd-core.wasm?v=20260626-tez-wasm-1";
-const WASM_PAGE_BYTES = 65536;
-const WASM_MAX_PAGES = 4096;
-const FIELD_RENORMALIZE_HIGH = 1e12;
-const FIELD_RENORMALIZE_TARGET = 1e3;
-const THEME_STORAGE_KEY = "fdtdTheme";
-
-const materialNames = {
-  custom: "Custom ε, μ",
-  dielectric: "Dielectric",
-  pec: "PEC",
-  lossy: "Loss",
-  erase: "Erase",
-};
-
-const localizedSourceShapes = new Set([
-  "gaussianSpot",
-  "pointDipole",
-  "dipole",
-  "circularDipoleCw",
-  "circularDipoleCcw",
-  "janusDipole",
-  "huygens",
-  "quadrupole",
-  "multipole",
-]);
-const inPlaneElectricCurrentShapes = new Set(["inPlaneElectricDipole"]);
-const currentSourceShapes = new Set(["point", ...localizedSourceShapes]);
-const incidentFieldSourceShapes = new Set(["line", "gaussianProfile"]);
-const circularDipoleSourceShapes = new Set(["circularDipoleCw", "circularDipoleCcw"]);
-
-const sourceShapeLabels = {
-  point: "Jz filament",
-  line: "Plane wave",
-  gaussianProfile: "Gaussian line",
-  gaussianSpot: "Gaussian Jz patch",
-  pointDipole: "Point electric dipole",
-  dipole: "Jz dipole pair",
-  circularDipoleCw: "Circular dipole +90 deg",
-  circularDipoleCcw: "Circular dipole -90 deg",
-  janusDipole: "Janus dipole",
-  huygens: "Huygens source",
-  quadrupole: "Jz quadrupole pattern",
-  multipole: "Jz multipole pattern",
-  inPlaneElectricDipole: "In-plane electric dipole",
-};
-
 function simulatedFieldLetter() {
   return state.fieldComponent === "hz" ? "H" : "E";
 }
@@ -183,6 +128,7 @@ function sourceShapeLabel(shape) {
     huygens: "Huygens source",
     quadrupole: `${sourceLetter}z quadrupole pattern`,
     multipole: `2D ${sourceLetter}z multipole pattern`,
+    evanescentLine: "Evanescent line",
   }[shape] || "Source";
 }
 
@@ -191,126 +137,9 @@ function sourceCouplingLabel(shape) {
   if (circularDipoleSourceShapes.has(shape)) return "quadrature dipole";
   if (shape === "janusDipole") return "quadrature Janus pair";
   if (shape === "huygens") return "cardioid Huygens pair";
+  if (shape === "evanescentLine") return "evanescent incident field";
   return incidentFieldSourceShapes.has(shape) ? "incident field" : `out-of-plane ${currentSourceLetter()}z`;
 }
-
-const defaultSourceConfig = {
-  type: "sine",
-  shape: "point",
-  frequency: COURANT / 20,
-  amplitude: 0.55,
-  xLambda: 1.2,
-  yLambda: 3,
-  widthLambda: 0.35,
-  angleDeg: 0,
-  phaseDeg: 0,
-  multipoleOrder: 3,
-  multipolePhase: "cos",
-};
-
-const sceneDescriptions = {
-  empty: "Blank domain. Use right-click menus to add sources, boundaries, and drawn materials.",
-  planeWaveAir: "Atlas 1: homogeneous air with a continuous line source.",
-  planeWaveDielectric: "Atlas 2: full dielectric domain, n = 1.5, to show shorter wavelength and slower phase velocity.",
-  gaussianPulseAir: "Atlas 3: Gaussian pulse in free space with absorbing boundaries.",
-  twoSourceInterference: "Atlas 4: two coherent point Jz sources separated by about 1.5 lambda0.",
-  frequencyBeat: "Atlas 5: two nearby CW frequencies to reveal a beat envelope.",
-  singleSlit: "Atlas 6: PEC screen with one subwavelength slit.",
-  doubleSlit: "Atlas 7: PEC screen with two slits for Young-type interference.",
-  circularAperture: "Atlas 8: 2D circular aperture cut into a PEC screen.",
-  poyntingPlaneWave: "Atlas 10: oblique plane wave shown as Poynting flux with vector arrows.",
-  pmlAbsorption: "Atlas 12: pulsed source aimed at the absorbing boundary for reflection checks.",
-  normalInterface: "Atlas 13: air to n = 1.5 vertical interface.",
-  obliqueRefraction: "Atlas 14: oblique Gaussian beam on an air-dielectric interface.",
-  totalInternalReflection: "Atlas 17: beam incident from n = 1.5 toward air above the critical angle.",
-  frustratedTir: "Atlas 18: two high-index regions separated by a narrow air gap.",
-  quarterWaveCoating: "Atlas 19: air, quarter-wave coating, and n = 1.5 substrate.",
-  braggMirror: "Atlas 20: six-pair n = 1.5 / n = 2.5 Bragg mirror.",
-  lossyInterface: "Atlas 21: air to n = 1.5 + 0.1i interface.",
-  anisotropicInterface: "Atlas 22: right-hand medium with eps_x != eps_y.",
-  jzDipole: "Atlas 23: localized electric Jz dipole in air.",
-  inPlaneDipole: "Atlas 24: in-plane electric Jx/Jy dipole using the Hz solver.",
-  mzDipole: "Atlas 25: localized magnetic Mz dipole using the Hz solver.",
-  dipoleSubstrate: "Atlas 26: Jz dipole close to a dielectric substrate.",
-  dipoleNearPec: "Atlas 27: Jz dipole close to a PEC mirror.",
-  huygensRadiator: "Atlas 28: analytic Huygens-like source for directional radiation.",
-  circularDipole: "Atlas 29: quadrature circular dipole source.",
-  janusDipole: "Atlas 30: Janus source near a dielectric waveguide.",
-  dipoleArray: "Atlas 31: equal-phase dipole array.",
-  phasedDipoleArray: "Atlas 32: progressive temporal phase per dipole for beam steering.",
-  apertureRadiator: "Atlas 33: source behind a PEC slot aperture.",
-  slabWaveguide: "Atlas 35: high-index slab guide with a Gaussian line source approximation.",
-  multimodeSlab: "Atlas 36: wider slab guide for multimode beating.",
-  lossyGuide: "Atlas 37: lossy high-index guide.",
-  taperWaveguide: "Atlas 39: width taper from narrow to wide guide.",
-  widthStepWaveguide: "Atlas 40: abrupt waveguide width step.",
-  directionalCoupler: "Atlas 41: two parallel guides separated by a small gap.",
-  mmiWaveguide: "Atlas 42: narrow input feeding a wider multimode section.",
-  guideScatterer: "Atlas 44: small dielectric scatterer beside a guide.",
-  stubResonator: "Atlas 46: side stub attached to a straight guide.",
-  fabryPerot: "Atlas 47: dielectric cavity placed between two Bragg reflectors.",
-  ringResonator: "Atlas 49: dielectric ring coupled to one bus waveguide.",
-  addDropRing: "Atlas 50: dielectric ring coupled to input and drop buses.",
-  dielectricCavity: "Atlas 52: high-index disk with an internal dipole source.",
-  pecCavity: "Atlas 53: PEC half-wave box cavity with a point source.",
-  pecCylinder: "Atlas 59: PEC cylinder under plane-wave illumination.",
-  dielectricCylinder: "Atlas 60: n = 2 cylinder scattering.",
-  mieCylinder: "Atlas 61: high-index cylinder for Mie-like resonances.",
-  lossyCylinder: "Atlas 63: absorbing dielectric cylinder.",
-  dielectricDimer: "Atlas 64: two high-index cylinders with a narrow gap.",
-  multipleScattering: "Atlas 66: deterministic random cluster of cylinders.",
-  weakLocalization: "Atlas 67: many weak inclusions for multiple scattering.",
-  finiteConductivity: "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation.",
-  drudeMetal: "Atlas 71: Drude ADE metal with plasma frequency and damping.",
-  lorentzMedium: "Atlas 72: Lorentz ADE resonant dielectric slab.",
-  debyeDielectric: "Atlas 73: Debye relaxation dielectric slab.",
-  plasmaCutoff: "Atlas 74: collisionless plasma slab near cutoff.",
-  enzSlab: "Atlas 75: epsilon-near-zero slab using constant complex epsilon.",
-  anisotropicMedium: "Atlas 76: anisotropic block, eps_x = 4, eps_y = 2.",
-  hyperbolicMedium: "Atlas 77: constant anisotropic medium with eps_x > 0 and eps_y < 0.",
-  chiralMedium: "Atlas 78: qualitative 2D effective chiral medium using a signed magnetoelectric coupling kappa.",
-  bianisotropicMedium: "Atlas 79: qualitative 2D effective bianisotropic block with magnetoelectric coupling kappa.",
-  gyrotropicMedium: "Atlas 80: qualitative gyrotropic epsilon tensor in the Hz solver, using eps_xy = +g and eps_yx = -g.",
-  braggStack: "Atlas 81: 1D periodic Bragg stack.",
-  photonicCrystal: "Atlas 82: square lattice of high-index rods.",
-  phcPointDefect: "Atlas 83: photonic crystal with one missing central rod.",
-  phcWaveguide: "Atlas 84: photonic crystal line-defect waveguide.",
-  phcDisorder: "Atlas 86: photonic crystal with deterministic positional disorder.",
-  fanoResonator: "Atlas 90: straight guide with a side-coupled dielectric resonator.",
-  sshTrivial: "Atlas 91: qualitative SSH chain with d1 > d2.",
-  sshTopological: "Atlas 92: qualitative SSH chain with d1 < d2.",
-  sshInterface: "Atlas 93: interface between two SSH dimerizations.",
-  sppInterface: "Atlas 101: Drude metal-dielectric interface excited by a near-field dipole.",
-  sppGrating: "Atlas 102: shallow Drude grating for qualitative SPP coupling.",
-  localizedPlasmon: "Atlas 103: localized plasmon on a Drude nanodisk.",
-  plasmonicDimer: "Atlas 104: two Drude disks with a narrow hot gap.",
-  metasurfacePhaseBars: "Atlas 105: phase-gradient metasurface approximated by dielectric bars.",
-  negativeIndexSlab: "Atlas 107: constant eps < 0 and mu < 0 slab. This is idealized and can be numerically delicate.",
-  superlensSlab: "Atlas 108: idealized eps = -1, mu = -1 superlens slab.",
-  enzEmitter: "Atlas 110: dipole close to an ENZ slab.",
-  kerrSlab: "Atlas 111: instantaneous Kerr slab with epsilon updated from normalized field intensity.",
-  shgSlab: "Atlas 112: chi2 nonlinear slab using a polarization-current source for second-harmonic generation.",
-  thgSlab: "Atlas 113: chi3 nonlinear slab using a polarization-current source for third-harmonic generation.",
-  vo2SwitchingSlab: "Atlas 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
-  pcmMemoryCell: "Atlas 117: small phase-change memory cell embedded in a guide; the switched state persists after the field is cleared.",
-  temporalModulation: "Atlas 123: region tagged with the current sinusoidal epsilon modulation model.",
-  travelingModulation: "Atlas 126: guide section tagged with traveling epsilon modulation.",
-  ptSymmetricCoupler: "Atlas 131: PT-symmetric coupled guides with balanced gain/loss and saturable gain stabilization.",
-};
-
-const BOUNDARY_SIDES = ["left", "right", "top", "bottom"];
-const defaultBoundarySides = {
-  left: "absorbing",
-  right: "absorbing",
-  top: "absorbing",
-  bottom: "absorbing",
-};
-const boundarySideLabels = {
-  left: "Left",
-  right: "Right",
-  top: "Top",
-  bottom: "Bottom",
-};
 
 function normalizeTheme(theme) {
   return theme === "dark" ? "dark" : "light";
@@ -341,6 +170,7 @@ const state = {
   sweepEnd: 70,
   sweepSamples: 9,
   sweepSteps: 720,
+  sweepBidirectional: false,
   sweepRunning: false,
   sweepCancelRequested: false,
   sweepResults: [],
@@ -386,6 +216,7 @@ const state = {
   materialPhaseChangeEnabled: false,
   materialGyrotropyEnabled: false,
   materialBianisotropyEnabled: false,
+  materialFullVectorBianisotropyEnabled: false,
   kerrChi3: 0.5,
   kerrSaturation: 5,
   harmonicChi2: 0.08,
@@ -427,11 +258,30 @@ function normalizeDispersionModel(model) {
   return ["drude", "plasma", "lorentz", "debye"].includes(model) ? model : "none";
 }
 
+function dispersionAxesMask(value, fallback = 3) {
+  if (typeof value === "number") return clampInt(value, 0, 3);
+  if (Array.isArray(value)) {
+    let mask = 0;
+    value.forEach((axis) => {
+      const normalized = String(axis).toLowerCase();
+      if (normalized === "x" || normalized === "z") mask |= 1;
+      if (normalized === "y") mask |= 2;
+    });
+    return mask || fallback;
+  }
+  const normalized = String(value || "").toLowerCase();
+  if (normalized === "x" || normalized === "z") return 1;
+  if (normalized === "y") return 2;
+  if (normalized === "xy" || normalized === "both" || normalized === "all") return 3;
+  return fallback;
+}
+
 function brushDispersionParams() {
   const model = normalizeDispersionModel(state.dispersionModel);
   if (model === "none") return null;
   return {
     dispersion: model,
+    dispersionAxes: 3,
     omegaP: state.dispersionOmegaP,
     gamma: state.dispersionGamma,
     omega0: state.dispersionOmega0,
@@ -466,8 +316,12 @@ function brushGyrotropyValue() {
   return state.materialGyrotropyEnabled ? clamp(Number(state.gyrotropyG) || 0, -5, 5) : 0;
 }
 
+function normalizeBianisotropyKappa(value) {
+  return clamp(Number(value) || 0, -BIANISOTROPY_KAPPA_LIMIT, BIANISOTROPY_KAPPA_LIMIT);
+}
+
 function brushBianisotropyValue() {
-  return state.materialBianisotropyEnabled ? clamp(Number(state.bianisotropyKappa) || 0, -5, 5) : 0;
+  return state.materialBianisotropyEnabled ? normalizeBianisotropyKappa(state.bianisotropyKappa) : 0;
 }
 
 function normalizeBoundarySides() {
@@ -523,7 +377,7 @@ function boundarySummaryLabel() {
 }
 
 function currentBrushLabel() {
-  if (state.brush === "custom" && state.materialBianisotropyEnabled) return "Custom magnetoelectric κ";
+  if (state.brush === "custom" && state.materialBianisotropyEnabled) return "Custom magnetoelectric κn";
   if (state.brush === "custom" && state.materialGyrotropyEnabled) return "Custom gyrotropic ε tensor";
   return state.brush === "custom" && state.customAnisotropic ? "Custom anisotropic ε, μ" : materialNames[state.brush];
 }
@@ -562,7 +416,9 @@ const el = {
   sweepEndInput: document.getElementById("sweepEndInput"),
   sweepSamplesInput: document.getElementById("sweepSamplesInput"),
   sweepStepsInput: document.getElementById("sweepStepsInput"),
+  sweepBidirectionalInput: document.getElementById("sweepBidirectionalInput"),
   sweepRunBtn: document.getElementById("sweepRunBtn"),
+  sweepExportBtn: document.getElementById("sweepExportBtn"),
   sweepStatus: document.getElementById("sweepStatus"),
   sweepChart: document.getElementById("sweepChart"),
   analysisInput: document.getElementById("analysisInput"),
@@ -712,10 +568,6 @@ const el = {
   sourceCloseBtn: document.getElementById("sourceCloseBtn"),
 };
 
-function align4(value) {
-  return (value + 3) & ~3;
-}
-
 function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   if (!el.canvasFrame) return;
   const safeNx = Math.max(1, Number(nx) || DEFAULT_GRID.nx);
@@ -731,4726 +583,6 @@ function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   el.canvasFrame.style.setProperty("--sim-aspect-ratio", `${displayAspect} / 1`);
   el.canvasFrame.style.setProperty("--sim-frame-width-limit", `${displayAspect * targetHeight}px`);
   el.canvasFrame.dataset.aspectCapped = String(Math.abs(displayAspect - physicalAspect) > 1e-6);
-}
-
-class WasmFdtdBackend {
-  constructor(memory, exports) {
-    this.memory = memory;
-    this.exports = exports;
-    this.layout = null;
-  }
-
-  static async load(url) {
-    const memory = new WebAssembly.Memory({ initial: 1, maximum: WASM_MAX_PAGES });
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`Could not load ${url}: ${response.status}`);
-    }
-    const bytes = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(bytes, { env: { memory } });
-    return new WasmFdtdBackend(memory, instance.exports);
-  }
-
-  createLayout(nx, ny) {
-    const offsets = {};
-    let cursor = 0;
-    const f32 = (name, length) => {
-      cursor = align4(cursor);
-      offsets[name] = cursor;
-      cursor += length * Float32Array.BYTES_PER_ELEMENT;
-    };
-    const u8 = (name, length) => {
-      offsets[name] = cursor;
-      cursor += length;
-    };
-
-    const n = nx * ny;
-    f32("ez", n);
-    f32("ezx", n);
-    f32("ezy", n);
-    f32("hx", n);
-    f32("hy", n);
-    f32("eps", n);
-    f32("loss", n);
-    f32("epsY", n);
-    f32("lossY", n);
-    f32("mu", n);
-    f32("muLoss", n);
-    f32("muY", n);
-    f32("muLossY", n);
-    u8("material", n);
-    f32("eCaX", nx);
-    f32("eCbX", nx);
-    f32("hCaX", nx);
-    f32("hCbX", nx);
-    f32("eCaY", ny);
-    f32("eCbY", ny);
-    f32("hCaY", ny);
-    f32("hCbY", ny);
-
-    return {
-      offsets,
-      totalBytes: align4(cursor),
-    };
-  }
-
-  ensureCapacity(totalBytes) {
-    const currentPages = this.memory.buffer.byteLength / WASM_PAGE_BYTES;
-    const requiredPages = Math.ceil(totalBytes / WASM_PAGE_BYTES);
-    if (requiredPages > WASM_MAX_PAGES) {
-      throw new Error("WASM memory limit exceeded");
-    }
-    if (requiredPages > currentPages) {
-      this.memory.grow(requiredPages - currentPages);
-    }
-  }
-
-  configure(sim) {
-    const layout = this.createLayout(sim.nx, sim.ny);
-    this.ensureCapacity(layout.totalBytes);
-    this.layout = layout;
-    const buffer = this.memory.buffer;
-    const n = sim.n;
-    const o = layout.offsets;
-
-    sim.ez = new Float32Array(buffer, o.ez, n);
-    sim.ezx = new Float32Array(buffer, o.ezx, n);
-    sim.ezy = new Float32Array(buffer, o.ezy, n);
-    sim.hx = new Float32Array(buffer, o.hx, n);
-    sim.hy = new Float32Array(buffer, o.hy, n);
-    sim.eps = new Float32Array(buffer, o.eps, n);
-    sim.loss = new Float32Array(buffer, o.loss, n);
-    sim.epsY = new Float32Array(buffer, o.epsY, n);
-    sim.lossY = new Float32Array(buffer, o.lossY, n);
-    sim.mu = new Float32Array(buffer, o.mu, n);
-    sim.muLoss = new Float32Array(buffer, o.muLoss, n);
-    sim.muY = new Float32Array(buffer, o.muY, n);
-    sim.muLossY = new Float32Array(buffer, o.muLossY, n);
-    sim.material = new Uint8Array(buffer, o.material, n);
-    sim.eCaX = new Float32Array(buffer, o.eCaX, sim.nx);
-    sim.eCbX = new Float32Array(buffer, o.eCbX, sim.nx);
-    sim.hCaX = new Float32Array(buffer, o.hCaX, sim.nx);
-    sim.hCbX = new Float32Array(buffer, o.hCbX, sim.nx);
-    sim.eCaY = new Float32Array(buffer, o.eCaY, sim.ny);
-    sim.eCbY = new Float32Array(buffer, o.eCbY, sim.ny);
-    sim.hCaY = new Float32Array(buffer, o.hCaY, sim.ny);
-    sim.hCbY = new Float32Array(buffer, o.hCbY, sim.ny);
-  }
-
-  step(sim) {
-    const o = this.layout.offsets;
-    const stepExport = state.fieldComponent === "hz" ? this.exports.step_hz : this.exports.step;
-    stepExport(
-      sim.nx,
-      sim.ny,
-      sim.courant,
-      o.ez,
-      o.ezx,
-      o.ezy,
-      o.hx,
-      o.hy,
-      o.eps,
-      o.loss,
-      o.epsY,
-      o.lossY,
-      o.mu,
-      o.muLoss,
-      o.muY,
-      o.muLossY,
-      o.material,
-      o.eCaX,
-      o.eCbX,
-      o.eCaY,
-      o.eCbY,
-      o.hCaX,
-      o.hCbX,
-      o.hCaY,
-      o.hCbY
-    );
-  }
-
-  canStep(component) {
-    return component === "hz" ? typeof this.exports.step_hz === "function" : typeof this.exports.step === "function";
-  }
-}
-
-class FDTDSim {
-  constructor(canvas, config) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext("2d", { alpha: false });
-    this.courant = COURANT;
-    this.wasmBackend = null;
-    this.viewX = 0;
-    this.viewY = 0;
-    this.viewZoom = 1;
-    this.fieldScale = 1;
-    this.fieldLog10Scale = 0;
-    this.renormalizedCount = 0;
-    this.lastRenormalized = false;
-    this.lastDiverged = false;
-    this.resize(config.nx, config.ny);
-  }
-
-  allocateArrays() {
-    if (this.wasmBackend) {
-      this.wasmBackend.configure(this);
-    } else {
-      this.ez = new Float32Array(this.n);
-      this.ezx = new Float32Array(this.n);
-      this.ezy = new Float32Array(this.n);
-      this.hx = new Float32Array(this.n);
-      this.hy = new Float32Array(this.n);
-      this.eps = new Float32Array(this.n);
-      this.loss = new Float32Array(this.n);
-      this.epsY = new Float32Array(this.n);
-      this.lossY = new Float32Array(this.n);
-      this.mu = new Float32Array(this.n);
-      this.muLoss = new Float32Array(this.n);
-      this.muY = new Float32Array(this.n);
-      this.muLossY = new Float32Array(this.n);
-      this.material = new Uint8Array(this.n);
-      this.eCaX = new Float32Array(this.nx);
-      this.eCbX = new Float32Array(this.nx);
-      this.hCaX = new Float32Array(this.nx);
-      this.hCbX = new Float32Array(this.nx);
-      this.eCaY = new Float32Array(this.ny);
-      this.eCbY = new Float32Array(this.ny);
-      this.hCaY = new Float32Array(this.ny);
-      this.hCbY = new Float32Array(this.ny);
-    }
-    this.modulatedMaterial = new Uint8Array(this.n);
-    this.nonlinearMaterial = new Uint8Array(this.n);
-    this.dispersiveMaterial = new Uint8Array(this.n);
-    this.gyrotropicMaterial = new Uint8Array(this.n);
-    this.gyrotropyG = new Float32Array(this.n);
-    this.bianisotropicMaterial = new Uint8Array(this.n);
-    this.bianisotropyKappa = new Float32Array(this.n);
-    this.bianisotropyPrevScalar = new Float32Array(this.n);
-    this.phaseChangeMaterial = new Uint8Array(this.n);
-    this.phaseState = new Float32Array(this.n);
-    this.phaseEpsOff = new Float32Array(this.n);
-    this.phaseLossOff = new Float32Array(this.n);
-    this.phaseEpsYOff = new Float32Array(this.n);
-    this.phaseLossYOff = new Float32Array(this.n);
-    this.phaseEpsOn = new Float32Array(this.n);
-    this.phaseLossOn = new Float32Array(this.n);
-    this.phaseEpsYOn = new Float32Array(this.n);
-    this.phaseLossYOn = new Float32Array(this.n);
-    this.conductivity = new Float32Array(this.n);
-    this.conductivityY = new Float32Array(this.n);
-    this.modulationBaseEps = new Float32Array(this.n);
-    this.modulationBaseEpsY = new Float32Array(this.n);
-    this.dispersionOmegaP = new Float32Array(this.n);
-    this.dispersionGamma = new Float32Array(this.n);
-    this.dispersionOmega0 = new Float32Array(this.n);
-    this.dispersionDeltaEps = new Float32Array(this.n);
-    this.dispersionTau = new Float32Array(this.n);
-    this.dispPz = new Float32Array(this.n);
-    this.dispJz = new Float32Array(this.n);
-    this.dispPx = new Float32Array(this.n);
-    this.dispJx = new Float32Array(this.n);
-    this.dispPy = new Float32Array(this.n);
-    this.dispJy = new Float32Array(this.n);
-    this.harmonicPrevPz = new Float32Array(this.n);
-    this.harmonicPrevPx = new Float32Array(this.n);
-    this.harmonicPrevPy = new Float32Array(this.n);
-  }
-
-  resize(nx, ny) {
-    this.nx = nx;
-    this.ny = ny;
-    this.n = nx * ny;
-    this.allocateArrays();
-    this.pmlLayer = 0;
-    this.time = 0;
-    this.lastMax = 0;
-    this.lastMaxLog10 = -Infinity;
-    this.lastEnergy = 0;
-    this.lastEnergyLog10 = -Infinity;
-    this.lastViewRange = 1;
-    this.lastViewRangeLog10 = 0;
-    this.resetDiagnostics();
-    this.fieldScale = 1;
-    this.fieldLog10Scale = 0;
-    this.renormalizedCount = 0;
-    this.lastRenormalized = false;
-    this.lastDiverged = false;
-    this.offscreen = document.createElement("canvas");
-    this.offscreen.width = nx;
-    this.offscreen.height = ny;
-    this.offscreenCtx = this.offscreen.getContext("2d", { alpha: false });
-    this.image = this.offscreenCtx.createImageData(nx, ny);
-    this.clearMaterials(false);
-    this.resetFields();
-    this.buildBoundary(state.boundary);
-    this.resetView();
-    updateCanvasAspectRatio(nx, ny);
-    this.fitCanvas();
-  }
-
-  maxViewZoom() {
-    return Math.max(1, Math.min(80, this.nx / 8, this.ny / 8));
-  }
-
-  visibleGridWidth() {
-    return this.nx / this.viewZoom;
-  }
-
-  visibleGridHeight() {
-    return this.ny / this.viewZoom;
-  }
-
-  resetView() {
-    this.viewZoom = 1;
-    this.viewX = 0;
-    this.viewY = 0;
-  }
-
-  clampView() {
-    this.viewZoom = clamp(this.viewZoom, 1, this.maxViewZoom());
-    const viewWidth = this.visibleGridWidth();
-    const viewHeight = this.visibleGridHeight();
-    this.viewX = viewWidth >= this.nx ? 0 : clamp(this.viewX, 0, this.nx - viewWidth);
-    this.viewY = viewHeight >= this.ny ? 0 : clamp(this.viewY, 0, this.ny - viewHeight);
-  }
-
-  zoomAtClientPoint(clientX, clientY, factor) {
-    const rect = this.canvas.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return false;
-    const fracX = clamp((clientX - rect.left) / rect.width, 0, 1);
-    const fracY = clamp((clientY - rect.top) / rect.height, 0, 1);
-    const worldX = this.viewX + fracX * this.visibleGridWidth();
-    const worldY = this.viewY + fracY * this.visibleGridHeight();
-    const nextZoom = clamp(this.viewZoom * factor, 1, this.maxViewZoom());
-    if (Math.abs(nextZoom - this.viewZoom) < 1e-6) return false;
-    this.viewZoom = nextZoom;
-    this.viewX = worldX - fracX * this.visibleGridWidth();
-    this.viewY = worldY - fracY * this.visibleGridHeight();
-    this.clampView();
-    return true;
-  }
-
-  setZoomFromGesture(anchorClientX, anchorClientY, anchorWorldX, anchorWorldY, nextZoom) {
-    const rect = this.canvas.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return false;
-    const fracX = clamp((anchorClientX - rect.left) / rect.width, 0, 1);
-    const fracY = clamp((anchorClientY - rect.top) / rect.height, 0, 1);
-    this.viewZoom = clamp(nextZoom, 1, this.maxViewZoom());
-    this.viewX = anchorWorldX - fracX * this.visibleGridWidth();
-    this.viewY = anchorWorldY - fracY * this.visibleGridHeight();
-    this.clampView();
-    return true;
-  }
-
-  panByClientDelta(deltaX, deltaY) {
-    if (this.viewZoom <= 1) return false;
-    const rect = this.canvas.getBoundingClientRect();
-    this.viewX -= (deltaX / Math.max(1, rect.width)) * this.visibleGridWidth();
-    this.viewY -= (deltaY / Math.max(1, rect.height)) * this.visibleGridHeight();
-    this.clampView();
-    return true;
-  }
-
-  clientToGridFloat(clientX, clientY) {
-    const rect = this.canvas.getBoundingClientRect();
-    const fracX = rect.width > 0 ? clamp((clientX - rect.left) / rect.width, 0, 1) : 0;
-    const fracY = rect.height > 0 ? clamp((clientY - rect.top) / rect.height, 0, 1) : 0;
-    return {
-      x: this.viewX + fracX * this.visibleGridWidth(),
-      y: this.viewY + fracY * this.visibleGridHeight(),
-    };
-  }
-
-  clientToGridCell(clientX, clientY) {
-    const point = this.clientToGridFloat(clientX, clientY);
-    return {
-      x: clampInt(Math.floor(point.x), 1, this.nx - 2),
-      y: clampInt(Math.floor(point.y), 1, this.ny - 2),
-    };
-  }
-
-  gridToCanvasX(x) {
-    return ((x - this.viewX) / this.visibleGridWidth()) * this.canvas.width;
-  }
-
-  gridToCanvasY(y) {
-    return ((y - this.viewY) / this.visibleGridHeight()) * this.canvas.height;
-  }
-
-  gridRectToCanvas(x0, y0, x1, y1) {
-    const visibleX0 = Math.max(x0, this.viewX);
-    const visibleY0 = Math.max(y0, this.viewY);
-    const visibleX1 = Math.min(x1, this.viewX + this.visibleGridWidth());
-    const visibleY1 = Math.min(y1, this.viewY + this.visibleGridHeight());
-    if (visibleX1 <= visibleX0 || visibleY1 <= visibleY0) return null;
-    const left = this.gridToCanvasX(visibleX0);
-    const top = this.gridToCanvasY(visibleY0);
-    const right = this.gridToCanvasX(visibleX1);
-    const bottom = this.gridToCanvasY(visibleY1);
-    return {
-      left,
-      top,
-      width: right - left,
-      height: bottom - top,
-    };
-  }
-
-  attachWasmBackend(backend) {
-    if (this.wasmBackend) return;
-    const previous = {
-      ez: new Float32Array(this.ez),
-      ezx: new Float32Array(this.ezx),
-      ezy: new Float32Array(this.ezy),
-      hx: new Float32Array(this.hx),
-      hy: new Float32Array(this.hy),
-      eps: new Float32Array(this.eps),
-      loss: new Float32Array(this.loss),
-      epsY: new Float32Array(this.epsY),
-      lossY: new Float32Array(this.lossY),
-      mu: new Float32Array(this.mu),
-      muLoss: new Float32Array(this.muLoss),
-      muY: new Float32Array(this.muY),
-      muLossY: new Float32Array(this.muLossY),
-      material: new Uint8Array(this.material),
-      modulatedMaterial: new Uint8Array(this.modulatedMaterial),
-      nonlinearMaterial: new Uint8Array(this.nonlinearMaterial),
-      dispersiveMaterial: new Uint8Array(this.dispersiveMaterial),
-      gyrotropicMaterial: new Uint8Array(this.gyrotropicMaterial),
-      gyrotropyG: new Float32Array(this.gyrotropyG),
-      bianisotropicMaterial: new Uint8Array(this.bianisotropicMaterial),
-      bianisotropyKappa: new Float32Array(this.bianisotropyKappa),
-      bianisotropyPrevScalar: new Float32Array(this.bianisotropyPrevScalar),
-      phaseChangeMaterial: new Uint8Array(this.phaseChangeMaterial),
-      phaseState: new Float32Array(this.phaseState),
-      phaseEpsOff: new Float32Array(this.phaseEpsOff),
-      phaseLossOff: new Float32Array(this.phaseLossOff),
-      phaseEpsYOff: new Float32Array(this.phaseEpsYOff),
-      phaseLossYOff: new Float32Array(this.phaseLossYOff),
-      phaseEpsOn: new Float32Array(this.phaseEpsOn),
-      phaseLossOn: new Float32Array(this.phaseLossOn),
-      phaseEpsYOn: new Float32Array(this.phaseEpsYOn),
-      phaseLossYOn: new Float32Array(this.phaseLossYOn),
-      conductivity: new Float32Array(this.conductivity),
-      conductivityY: new Float32Array(this.conductivityY),
-      modulationBaseEps: new Float32Array(this.modulationBaseEps),
-      modulationBaseEpsY: new Float32Array(this.modulationBaseEpsY),
-      dispersionOmegaP: new Float32Array(this.dispersionOmegaP),
-      dispersionGamma: new Float32Array(this.dispersionGamma),
-      dispersionOmega0: new Float32Array(this.dispersionOmega0),
-      dispersionDeltaEps: new Float32Array(this.dispersionDeltaEps),
-      dispersionTau: new Float32Array(this.dispersionTau),
-      harmonicPrevPz: new Float32Array(this.harmonicPrevPz),
-      harmonicPrevPx: new Float32Array(this.harmonicPrevPx),
-      harmonicPrevPy: new Float32Array(this.harmonicPrevPy),
-    };
-
-    this.wasmBackend = backend;
-    this.wasmBackend.configure(this);
-    this.modulatedMaterial = new Uint8Array(this.n);
-    this.nonlinearMaterial = new Uint8Array(this.n);
-    this.dispersiveMaterial = new Uint8Array(this.n);
-    this.gyrotropicMaterial = new Uint8Array(this.n);
-    this.gyrotropyG = new Float32Array(this.n);
-    this.bianisotropicMaterial = new Uint8Array(this.n);
-    this.bianisotropyKappa = new Float32Array(this.n);
-    this.bianisotropyPrevScalar = new Float32Array(this.n);
-    this.phaseChangeMaterial = new Uint8Array(this.n);
-    this.phaseState = new Float32Array(this.n);
-    this.phaseEpsOff = new Float32Array(this.n);
-    this.phaseLossOff = new Float32Array(this.n);
-    this.phaseEpsYOff = new Float32Array(this.n);
-    this.phaseLossYOff = new Float32Array(this.n);
-    this.phaseEpsOn = new Float32Array(this.n);
-    this.phaseLossOn = new Float32Array(this.n);
-    this.phaseEpsYOn = new Float32Array(this.n);
-    this.phaseLossYOn = new Float32Array(this.n);
-    this.conductivity = new Float32Array(this.n);
-    this.conductivityY = new Float32Array(this.n);
-    this.modulationBaseEps = new Float32Array(this.n);
-    this.modulationBaseEpsY = new Float32Array(this.n);
-    this.dispersionOmegaP = new Float32Array(this.n);
-    this.dispersionGamma = new Float32Array(this.n);
-    this.dispersionOmega0 = new Float32Array(this.n);
-    this.dispersionDeltaEps = new Float32Array(this.n);
-    this.dispersionTau = new Float32Array(this.n);
-    this.dispPz = new Float32Array(this.n);
-    this.dispJz = new Float32Array(this.n);
-    this.dispPx = new Float32Array(this.n);
-    this.dispJx = new Float32Array(this.n);
-    this.dispPy = new Float32Array(this.n);
-    this.dispJy = new Float32Array(this.n);
-    this.harmonicPrevPz = new Float32Array(this.n);
-    this.harmonicPrevPx = new Float32Array(this.n);
-    this.harmonicPrevPy = new Float32Array(this.n);
-    this.ez.set(previous.ez);
-    this.ezx.set(previous.ezx);
-    this.ezy.set(previous.ezy);
-    this.hx.set(previous.hx);
-    this.hy.set(previous.hy);
-    this.eps.set(previous.eps);
-    this.loss.set(previous.loss);
-    this.epsY.set(previous.epsY);
-    this.lossY.set(previous.lossY);
-    this.mu.set(previous.mu);
-    this.muLoss.set(previous.muLoss);
-    this.muY.set(previous.muY);
-    this.muLossY.set(previous.muLossY);
-    this.material.set(previous.material);
-    this.modulatedMaterial.set(previous.modulatedMaterial);
-    this.nonlinearMaterial.set(previous.nonlinearMaterial);
-    this.dispersiveMaterial.set(previous.dispersiveMaterial);
-    this.gyrotropicMaterial.set(previous.gyrotropicMaterial);
-    this.gyrotropyG.set(previous.gyrotropyG);
-    this.bianisotropicMaterial.set(previous.bianisotropicMaterial);
-    this.bianisotropyKappa.set(previous.bianisotropyKappa);
-    this.bianisotropyPrevScalar.set(previous.bianisotropyPrevScalar);
-    this.phaseChangeMaterial.set(previous.phaseChangeMaterial);
-    this.phaseState.set(previous.phaseState);
-    this.phaseEpsOff.set(previous.phaseEpsOff);
-    this.phaseLossOff.set(previous.phaseLossOff);
-    this.phaseEpsYOff.set(previous.phaseEpsYOff);
-    this.phaseLossYOff.set(previous.phaseLossYOff);
-    this.phaseEpsOn.set(previous.phaseEpsOn);
-    this.phaseLossOn.set(previous.phaseLossOn);
-    this.phaseEpsYOn.set(previous.phaseEpsYOn);
-    this.phaseLossYOn.set(previous.phaseLossYOn);
-    this.conductivity.set(previous.conductivity);
-    this.conductivityY.set(previous.conductivityY);
-    this.modulationBaseEps.set(previous.modulationBaseEps);
-    this.modulationBaseEpsY.set(previous.modulationBaseEpsY);
-    this.dispersionOmegaP.set(previous.dispersionOmegaP);
-    this.dispersionGamma.set(previous.dispersionGamma);
-    this.dispersionOmega0.set(previous.dispersionOmega0);
-    this.dispersionDeltaEps.set(previous.dispersionDeltaEps);
-    this.dispersionTau.set(previous.dispersionTau);
-    this.harmonicPrevPz.set(previous.harmonicPrevPz);
-    this.harmonicPrevPx.set(previous.harmonicPrevPx);
-    this.harmonicPrevPy.set(previous.harmonicPrevPy);
-    this.buildBoundary(state.boundary);
-    this.clearPmlMaterials();
-    this.zeroBoundaryFields();
-  }
-
-  engineLabel() {
-    if (
-      state.materialModulationEnabled ||
-      state.materialNonlinearEnabled ||
-      state.materialHarmonicEnabled ||
-      state.materialDispersionEnabled ||
-      state.materialSaturableGainEnabled ||
-      state.materialPhaseChangeEnabled ||
-      state.materialGyrotropyEnabled ||
-      state.materialBianisotropyEnabled
-    ) {
-      if (state.materialBianisotropyEnabled) return "JS bianiso";
-      if (state.materialGyrotropyEnabled) return "JS tensor";
-      if (state.materialPhaseChangeEnabled) return "JS memory";
-      return state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic";
-    }
-    if (state.materialConductivityEnabled) return "JS sigma";
-    return this.wasmBackend?.canStep(state.fieldComponent) ? "WASM" : "JS";
-  }
-
-  hasDynamicMaterialResponse() {
-    return Boolean(
-      state.materialModulationEnabled ||
-        state.materialNonlinearEnabled ||
-        state.materialHarmonicEnabled ||
-        state.materialDispersionEnabled ||
-        state.materialConductivityEnabled ||
-        state.materialSaturableGainEnabled ||
-        state.materialPhaseChangeEnabled ||
-        state.materialGyrotropyEnabled ||
-        state.materialBianisotropyEnabled
-    );
-  }
-
-  id(x, y) {
-    return x + y * this.nx;
-  }
-
-  fitCanvas() {
-    const rect = this.canvas.getBoundingClientRect();
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const width = Math.max(1, Math.round(rect.width * dpr));
-    const height = Math.max(1, Math.round(rect.height * dpr));
-    if (this.canvas.width !== width || this.canvas.height !== height) {
-      this.canvas.width = width;
-      this.canvas.height = height;
-      this.ctx.imageSmoothingEnabled = false;
-    }
-  }
-
-  buildBoundary() {
-    normalizeBoundarySides();
-    const layer = anyAbsorbingBoundarySide() ? this.nominalBoundaryLayer() : 0;
-    const order = 4;
-    const targetReflection = 1e-10;
-    const sigmaMax = layer > 0 ? (-Math.log(targetReflection) * (order + 1)) / (2 * layer) : 0;
-    this.pmlLayer = layer;
-
-    const fillProfile = (ca, cb, length, offset, minSideAbsorbing, maxSideAbsorbing) => {
-      const edge = length - 1;
-      for (let i = 0; i < length; i += 1) {
-        let sigma = 0;
-        if (layer > 0) {
-          const position = i + offset;
-          const leftDepth = minSideAbsorbing ? layer - position : 0;
-          const rightDepth = maxSideAbsorbing ? layer - (edge - position) : 0;
-          const depth = Math.max(leftDepth, rightDepth, 0);
-          if (depth > 0) {
-            const normalizedDepth = depth / layer;
-            sigma = this.courant * sigmaMax * Math.pow(normalizedDepth, order);
-          }
-        }
-
-        if (sigma > 1e-9) {
-          const decay = Math.exp(-sigma);
-          ca[i] = decay;
-          cb[i] = (1 - decay) / sigma;
-        } else {
-          ca[i] = 1;
-          cb[i] = 1;
-        }
-      }
-    };
-
-    fillProfile(this.eCaX, this.eCbX, this.nx, 0, boundarySideIsAbsorbing("left"), boundarySideIsAbsorbing("right"));
-    fillProfile(this.eCaY, this.eCbY, this.ny, 0, boundarySideIsAbsorbing("top"), boundarySideIsAbsorbing("bottom"));
-    fillProfile(this.hCaX, this.hCbX, this.nx, 0.5, boundarySideIsAbsorbing("left"), boundarySideIsAbsorbing("right"));
-    fillProfile(this.hCaY, this.hCbY, this.ny, 0.5, boundarySideIsAbsorbing("top"), boundarySideIsAbsorbing("bottom"));
-    this.refreshPmlMaterialContinuation(false);
-  }
-
-  nominalBoundaryLayer() {
-    const smallestDimension = Math.min(this.nx, this.ny);
-    const wavelengthLayer = Math.round(state.cellsPerWavelength * 0.9);
-    const fractionalLayer = Math.round(smallestDimension * 0.16);
-    const desiredLayer = Math.max(18, wavelengthLayer, fractionalLayer);
-    const maxLayer = Math.max(10, Math.floor(smallestDimension * 0.24));
-    return Math.min(desiredLayer, maxLayer);
-  }
-
-  boundaryControlLayer() {
-    return this.pmlLayer > 0 ? this.pmlLayer : this.nominalBoundaryLayer();
-  }
-
-  zeroOuterElectricField() {
-    const nx = this.nx;
-    const ny = this.ny;
-    for (let x = 0; x < nx; x += 1) {
-      this.zeroElectricCell(x);
-      this.zeroElectricCell(x + (ny - 1) * nx);
-    }
-    for (let y = 0; y < ny; y += 1) {
-      this.zeroElectricCell(y * nx);
-      this.zeroElectricCell(y * nx + nx - 1);
-    }
-  }
-
-  zeroOuterBoundaryFields() {
-    const nx = this.nx;
-    const ny = this.ny;
-    this.zeroOuterElectricField();
-    for (let x = 0; x < nx; x += 1) {
-      const top = x;
-      const bottom = x + (ny - 1) * nx;
-      this.hx[top] = 0;
-      this.hy[top] = 0;
-      this.hx[bottom] = 0;
-      this.hy[bottom] = 0;
-    }
-    for (let y = 0; y < ny; y += 1) {
-      const left = y * nx;
-      const right = left + nx - 1;
-      this.hx[left] = 0;
-      this.hy[left] = 0;
-      this.hx[right] = 0;
-      this.hy[right] = 0;
-    }
-  }
-
-  zeroReflectiveBoundaryFields() {
-    const layer = this.boundaryControlLayer();
-    if (layer <= 0) return;
-
-    const zeroRect = (x0, y0, x1, y1) => {
-      const minX = clampInt(x0, 0, this.nx);
-      const minY = clampInt(y0, 0, this.ny);
-      const maxX = clampInt(x1, 0, this.nx);
-      const maxY = clampInt(y1, 0, this.ny);
-      for (let y = minY; y < maxY; y += 1) {
-        const row = y * this.nx;
-        for (let x = minX; x < maxX; x += 1) {
-          const idx = row + x;
-          this.zeroElectricCell(idx);
-          this.hx[idx] = 0;
-          this.hy[idx] = 0;
-        }
-      }
-    };
-
-    if (!boundarySideIsAbsorbing("left")) zeroRect(0, 0, layer, this.ny);
-    if (!boundarySideIsAbsorbing("right")) zeroRect(this.nx - layer, 0, this.nx, this.ny);
-    if (!boundarySideIsAbsorbing("top")) zeroRect(0, 0, this.nx, layer);
-    if (!boundarySideIsAbsorbing("bottom")) zeroRect(0, this.ny - layer, this.nx, this.ny);
-  }
-
-  zeroBoundaryFields() {
-    this.zeroOuterBoundaryFields();
-    this.zeroReflectiveBoundaryFields();
-  }
-
-  resetFields() {
-    this.ez.fill(0);
-    this.ezx.fill(0);
-    this.ezy.fill(0);
-    this.hx.fill(0);
-    this.hy.fill(0);
-    this.restoreDynamicMaterialsToBase?.();
-    this.dispPz?.fill(0);
-    this.dispJz?.fill(0);
-    this.dispPx?.fill(0);
-    this.dispJx?.fill(0);
-    this.dispPy?.fill(0);
-    this.dispJy?.fill(0);
-    this.bianisotropyPrevScalar?.fill(0);
-    this.harmonicPrevPz?.fill(0);
-    this.harmonicPrevPx?.fill(0);
-    this.harmonicPrevPy?.fill(0);
-    this.time = 0;
-    this.lastMax = 0;
-    this.lastMaxLog10 = -Infinity;
-    this.lastEnergy = 0;
-    this.lastEnergyLog10 = -Infinity;
-    this.lastViewRange = 1;
-    this.lastViewRangeLog10 = 0;
-    this.resetDiagnostics();
-    this.fieldScale = 1;
-    this.fieldLog10Scale = 0;
-    this.lastRenormalized = false;
-    this.lastDiverged = false;
-  }
-
-  resetDiagnostics() {
-    this.diagnosticFluxLeft = 0;
-    this.diagnosticFluxRight = 0;
-    this.diagnosticReflectedPower = 0;
-    this.diagnosticIncidentPower = 0;
-    this.diagnosticTransmittedPower = 0;
-    this.diagnosticIncidentFlux = 0;
-    this.diagnosticReflectance = 0;
-    this.diagnosticTransmittance = 0;
-    this.diagnosticSamples = 0;
-    this.diagnosticAngleDeg = 0;
-    this.diagnosticPhasors = {
-      incident: { re: 0, im: 0 },
-      reflected: { re: 0, im: 0 },
-      transmitted: { re: 0, im: 0 },
-    };
-    this.diagnosticImpedanceLeft = 1;
-    this.diagnosticImpedanceRight = 1;
-    this.resetAnalysisDiagnostics();
-  }
-
-  resetAnalysisDiagnostics() {
-    this.analysisSamples = 0;
-    this.analysisProbeIndex = 0;
-    this.analysisProbeCount = 0;
-    this.analysisProbeSeries = new Float32Array(512);
-    this.analysisContourKey = "";
-    this.analysisContour = [];
-    this.analysisContourRe = new Float32Array(0);
-    this.analysisContourIm = new Float32Array(0);
-    this.analysisFarField = [];
-  }
-
-  analysisProbeCell() {
-    const x = clampInt(Math.round(this.nx * 0.58), this.activeInteriorMinX(), this.activeInteriorMaxX());
-    const y = clampInt(Math.round(this.ny * 0.5), this.activeInteriorMinY(), this.activeInteriorMaxY());
-    return this.id(x, y);
-  }
-
-  ensureAnalysisContour() {
-    const margin = Math.max(3, Math.round(state.cellsPerWavelength * 0.28));
-    const minX = clampInt(this.activeInteriorMinX() + margin, 1, this.nx - 2);
-    const maxX = clampInt(this.activeInteriorMaxX() - margin, minX + 1, this.nx - 2);
-    const minY = clampInt(this.activeInteriorMinY() + margin, 1, this.ny - 2);
-    const maxY = clampInt(this.activeInteriorMaxY() - margin, minY + 1, this.ny - 2);
-    const stride = Math.max(2, Math.round(state.cellsPerWavelength * 0.16));
-    const key = `${this.nx},${this.ny},${minX},${maxX},${minY},${maxY},${stride}`;
-    if (key === this.analysisContourKey) return;
-
-    const samples = [];
-    const push = (x, y, nx, ny) => samples.push({ x, y, idx: this.id(x, y), nx, ny });
-    for (let x = minX; x <= maxX; x += stride) push(x, minY, 0, -1);
-    for (let y = minY + stride; y <= maxY; y += stride) push(maxX, y, 1, 0);
-    for (let x = maxX - stride; x >= minX; x -= stride) push(x, maxY, 0, 1);
-    for (let y = maxY - stride; y > minY; y -= stride) push(minX, y, -1, 0);
-
-    this.analysisContourKey = key;
-    this.analysisContour = samples;
-    this.analysisContourRe = new Float32Array(samples.length);
-    this.analysisContourIm = new Float32Array(samples.length);
-    this.analysisFarField = [];
-  }
-
-  scalarAnalysisValueAt(idx) {
-    const value = this.fieldValueAt(idx, "scalar") * this.fieldPhysicalScale();
-    return Number.isFinite(value) ? value : 0;
-  }
-
-  updateAnalysisDiagnostics() {
-    if (!state.analysisEnabled || this.time % Math.max(1, state.analysisSampleEvery) !== 0) return;
-    this.ensureAnalysisContour();
-    const frequency = Math.max(1e-6, this.diagnosticFrequency());
-    const phase = 2 * Math.PI * frequency * this.time;
-    const cosPhase = Math.cos(phase);
-    const sinPhase = Math.sin(phase);
-    const alpha = this.analysisSamples < 32 ? 0.18 : 0.035;
-
-    const probeValue = this.scalarAnalysisValueAt(this.analysisProbeCell());
-    this.analysisProbeSeries[this.analysisProbeIndex] = probeValue;
-    this.analysisProbeIndex = (this.analysisProbeIndex + 1) % this.analysisProbeSeries.length;
-    this.analysisProbeCount = Math.min(this.analysisProbeCount + 1, this.analysisProbeSeries.length);
-
-    for (let i = 0; i < this.analysisContour.length; i += 1) {
-      const sample = this.analysisContour[i];
-      const value = this.scalarAnalysisValueAt(sample.idx);
-      this.analysisContourRe[i] = (1 - alpha) * this.analysisContourRe[i] + alpha * value * cosPhase;
-      this.analysisContourIm[i] = (1 - alpha) * this.analysisContourIm[i] - alpha * value * sinPhase;
-    }
-    this.analysisSamples += 1;
-    this.analysisFarField = [];
-  }
-
-  analysisFarFieldEstimate(angleCount = 96) {
-    if (!state.analysisEnabled || this.analysisSamples < 4) return [];
-    if (this.analysisFarField.length === angleCount) return this.analysisFarField;
-    this.ensureAnalysisContour();
-    if (this.analysisContour.length === 0) return [];
-    const frequency = Math.max(1e-6, this.diagnosticFrequency());
-    const k = (2 * Math.PI * frequency) / Math.max(1e-6, this.courant);
-    const cx = this.nx * 0.5;
-    const cy = this.ny * 0.5;
-    const values = [];
-    let maxAmp = 0;
-
-    for (let a = 0; a < angleCount; a += 1) {
-      const theta = (2 * Math.PI * a) / angleCount;
-      const ux = Math.cos(theta);
-      const uy = Math.sin(theta);
-      let re = 0;
-      let im = 0;
-      for (let i = 0; i < this.analysisContour.length; i += 1) {
-        const sample = this.analysisContour[i];
-        const projection = (sample.x - cx) * ux + (sample.y - cy) * uy;
-        const phase = k * projection;
-        const c = Math.cos(phase);
-        const s = Math.sin(phase);
-        const er = this.analysisContourRe[i];
-        const ei = this.analysisContourIm[i];
-        const normalWeight = 0.65 + 0.35 * Math.abs(sample.nx * ux + sample.ny * uy);
-        re += normalWeight * (er * c + ei * s);
-        im += normalWeight * (ei * c - er * s);
-      }
-      const amplitude = Math.hypot(re, im);
-      if (amplitude > maxAmp) maxAmp = amplitude;
-      values.push({ theta, amplitude });
-    }
-
-    const scale = maxAmp > 1e-12 ? 1 / maxAmp : 0;
-    this.analysisFarField = values.map((point) => ({ theta: point.theta, value: point.amplitude * scale }));
-    return this.analysisFarField;
-  }
-
-  setFieldLog10Scale(value) {
-    this.fieldLog10Scale = value;
-    this.fieldScale = value < 300 ? Math.pow(10, value) : Infinity;
-  }
-
-  renormalizeFields() {
-    const arrays = [this.ez, this.ezx, this.ezy, this.hx, this.hy];
-    let maxAbs = 0;
-
-    for (const array of arrays) {
-      for (let i = 0; i < array.length; i += 1) {
-        const value = array[i];
-        if (!Number.isFinite(value)) {
-          this.resetFields();
-          this.lastDiverged = true;
-          return;
-        }
-        const abs = Math.abs(value);
-        if (abs > maxAbs) maxAbs = abs;
-      }
-    }
-
-    if (maxAbs <= FIELD_RENORMALIZE_HIGH) {
-      this.lastRenormalized = false;
-      return;
-    }
-
-    const factor = maxAbs / FIELD_RENORMALIZE_TARGET;
-    for (const array of arrays) {
-      for (let i = 0; i < array.length; i += 1) {
-        array[i] /= factor;
-      }
-    }
-    this.setFieldLog10Scale(this.fieldLog10Scale + Math.log10(factor));
-    this.renormalizedCount += 1;
-    this.lastRenormalized = true;
-  }
-
-  clearMaterials(resetFields = true) {
-    this.material.fill(0);
-    this.eps.fill(1);
-    this.loss.fill(0);
-    this.epsY.fill(1);
-    this.lossY.fill(0);
-    this.mu.fill(1);
-    this.muLoss.fill(0);
-    this.muY.fill(1);
-    this.muLossY.fill(0);
-    this.modulatedMaterial.fill(0);
-    this.nonlinearMaterial.fill(0);
-    this.dispersiveMaterial.fill(0);
-    this.gyrotropicMaterial.fill(0);
-    this.gyrotropyG.fill(0);
-    this.bianisotropicMaterial.fill(0);
-    this.bianisotropyKappa.fill(0);
-    this.bianisotropyPrevScalar.fill(0);
-    this.phaseChangeMaterial.fill(0);
-    this.phaseState.fill(0);
-    this.phaseEpsOff.fill(1);
-    this.phaseLossOff.fill(0);
-    this.phaseEpsYOff.fill(1);
-    this.phaseLossYOff.fill(0);
-    this.phaseEpsOn.fill(1);
-    this.phaseLossOn.fill(0);
-    this.phaseEpsYOn.fill(1);
-    this.phaseLossYOn.fill(0);
-    this.conductivity.fill(0);
-    this.conductivityY.fill(0);
-    this.modulationBaseEps.fill(1);
-    this.modulationBaseEpsY.fill(1);
-    this.dispersionOmegaP.fill(0);
-    this.dispersionGamma.fill(0);
-    this.dispersionOmega0.fill(0);
-    this.dispersionDeltaEps.fill(0);
-    this.dispersionTau.fill(1);
-    this.dispPz.fill(0);
-    this.dispJz.fill(0);
-    this.dispPx.fill(0);
-    this.dispJx.fill(0);
-    this.dispPy.fill(0);
-    this.dispJy.fill(0);
-    this.harmonicPrevPz.fill(0);
-    this.harmonicPrevPx.fill(0);
-    this.harmonicPrevPy.fill(0);
-    this.refreshPmlMaterialContinuation(false);
-    if (resetFields) {
-      this.resetFields();
-    }
-  }
-
-  copyMaterialCellByIndex(targetIdx, sourceIdx) {
-    this.material[targetIdx] = this.material[sourceIdx];
-    this.eps[targetIdx] = this.eps[sourceIdx];
-    this.loss[targetIdx] = this.loss[sourceIdx];
-    this.epsY[targetIdx] = this.epsY[sourceIdx];
-    this.lossY[targetIdx] = this.lossY[sourceIdx];
-    this.mu[targetIdx] = this.mu[sourceIdx];
-    this.muLoss[targetIdx] = this.muLoss[sourceIdx];
-    this.muY[targetIdx] = this.muY[sourceIdx];
-    this.muLossY[targetIdx] = this.muLossY[sourceIdx];
-    this.modulatedMaterial[targetIdx] = this.modulatedMaterial[sourceIdx];
-    this.nonlinearMaterial[targetIdx] = this.nonlinearMaterial[sourceIdx];
-    this.dispersiveMaterial[targetIdx] = this.dispersiveMaterial[sourceIdx];
-    this.gyrotropicMaterial[targetIdx] = this.gyrotropicMaterial[sourceIdx];
-    this.gyrotropyG[targetIdx] = this.gyrotropyG[sourceIdx];
-    this.bianisotropicMaterial[targetIdx] = this.bianisotropicMaterial[sourceIdx];
-    this.bianisotropyKappa[targetIdx] = this.bianisotropyKappa[sourceIdx];
-    this.bianisotropyPrevScalar[targetIdx] = this.bianisotropyPrevScalar[sourceIdx];
-    this.phaseChangeMaterial[targetIdx] = this.phaseChangeMaterial[sourceIdx];
-    this.phaseState[targetIdx] = this.phaseState[sourceIdx];
-    this.phaseEpsOff[targetIdx] = this.phaseEpsOff[sourceIdx];
-    this.phaseLossOff[targetIdx] = this.phaseLossOff[sourceIdx];
-    this.phaseEpsYOff[targetIdx] = this.phaseEpsYOff[sourceIdx];
-    this.phaseLossYOff[targetIdx] = this.phaseLossYOff[sourceIdx];
-    this.phaseEpsOn[targetIdx] = this.phaseEpsOn[sourceIdx];
-    this.phaseLossOn[targetIdx] = this.phaseLossOn[sourceIdx];
-    this.phaseEpsYOn[targetIdx] = this.phaseEpsYOn[sourceIdx];
-    this.phaseLossYOn[targetIdx] = this.phaseLossYOn[sourceIdx];
-    this.conductivity[targetIdx] = this.conductivity[sourceIdx];
-    this.conductivityY[targetIdx] = this.conductivityY[sourceIdx];
-    this.modulationBaseEps[targetIdx] = this.modulationBaseEps[sourceIdx];
-    this.modulationBaseEpsY[targetIdx] = this.modulationBaseEpsY[sourceIdx];
-    this.dispersionOmegaP[targetIdx] = this.dispersionOmegaP[sourceIdx];
-    this.dispersionGamma[targetIdx] = this.dispersionGamma[sourceIdx];
-    this.dispersionOmega0[targetIdx] = this.dispersionOmega0[sourceIdx];
-    this.dispersionDeltaEps[targetIdx] = this.dispersionDeltaEps[sourceIdx];
-    this.dispersionTau[targetIdx] = this.dispersionTau[sourceIdx];
-    this.dispPz[targetIdx] = this.dispPz[sourceIdx];
-    this.dispJz[targetIdx] = this.dispJz[sourceIdx];
-    this.dispPx[targetIdx] = this.dispPx[sourceIdx];
-    this.dispJx[targetIdx] = this.dispJx[sourceIdx];
-    this.dispPy[targetIdx] = this.dispPy[sourceIdx];
-    this.dispJy[targetIdx] = this.dispJy[sourceIdx];
-    this.harmonicPrevPz[targetIdx] = this.harmonicPrevPz[sourceIdx];
-    this.harmonicPrevPx[targetIdx] = this.harmonicPrevPx[sourceIdx];
-    this.harmonicPrevPy[targetIdx] = this.harmonicPrevPy[sourceIdx];
-  }
-
-  refreshPmlMaterialContinuation(resetPmlFields = false) {
-    if (!anyAbsorbingBoundarySide() || this.pmlLayer <= 0) return;
-    const minX = boundarySideIsAbsorbing("left") ? this.pmlLayer : 0;
-    const minY = boundarySideIsAbsorbing("top") ? this.pmlLayer : 0;
-    const maxX = boundarySideIsAbsorbing("right") ? this.nx - this.pmlLayer - 1 : this.nx - 1;
-    const maxY = boundarySideIsAbsorbing("bottom") ? this.ny - this.pmlLayer - 1 : this.ny - 1;
-    if (maxX < minX || maxY < minY) return;
-
-    for (let y = 0; y < this.ny; y += 1) {
-      const sourceY = Math.max(minY, Math.min(maxY, y));
-      for (let x = 0; x < this.nx; x += 1) {
-        if (!this.isInPml(x, y)) continue;
-        const sourceX = Math.max(minX, Math.min(maxX, x));
-        const idx = this.id(x, y);
-        this.copyMaterialCellByIndex(idx, this.id(sourceX, sourceY));
-        if (resetPmlFields || this.material[idx] === 2) {
-          this.zeroElectricCell(idx);
-          this.hx[idx] = 0;
-          this.hy[idx] = 0;
-        }
-      }
-    }
-  }
-
-  clearPmlMaterials() {
-    this.refreshPmlMaterialContinuation(true);
-  }
-
-  isInPml(x, y) {
-    return (
-      this.pmlLayer > 0 &&
-      ((boundarySideIsAbsorbing("left") && x < this.pmlLayer) ||
-        (boundarySideIsAbsorbing("right") && x >= this.nx - this.pmlLayer) ||
-        (boundarySideIsAbsorbing("top") && y < this.pmlLayer) ||
-        (boundarySideIsAbsorbing("bottom") && y >= this.ny - this.pmlLayer))
-    );
-  }
-
-  isInReflectiveBoundary(x, y) {
-    const layer = this.boundaryControlLayer();
-    return (
-      layer > 0 &&
-      ((!boundarySideIsAbsorbing("left") && x < layer) ||
-        (!boundarySideIsAbsorbing("right") && x >= this.nx - layer) ||
-        (!boundarySideIsAbsorbing("top") && y < layer) ||
-        (!boundarySideIsAbsorbing("bottom") && y >= this.ny - layer))
-    );
-  }
-
-  boundarySideAtCell(x, y) {
-    const layer = this.boundaryControlLayer();
-    if (layer <= 0) return null;
-    const candidates = [];
-    if (x < layer) candidates.push({ side: "left", distance: x });
-    if (x >= this.nx - layer) candidates.push({ side: "right", distance: this.nx - 1 - x });
-    if (y < layer) candidates.push({ side: "top", distance: y });
-    if (y >= this.ny - layer) candidates.push({ side: "bottom", distance: this.ny - 1 - y });
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => a.distance - b.distance);
-    return candidates[0].side;
-  }
-
-  isInBoundaryControlRegion(x, y) {
-    return Boolean(this.boundarySideAtCell(x, y));
-  }
-
-  clientIsInBoundaryControlRegion(clientX, clientY) {
-    const point = this.clientToGridCell(clientX, clientY);
-    return this.isInBoundaryControlRegion(point.x, point.y);
-  }
-
-  boundarySideAtClientPoint(clientX, clientY) {
-    const point = this.clientToGridCell(clientX, clientY);
-    return this.boundarySideAtCell(point.x, point.y);
-  }
-
-  clearBoundarySideMaterials(side) {
-    const layer = this.boundaryControlLayer();
-    const clearCell = (x, y) => {
-      const idx = this.id(x, y);
-      this.writeAirCellAtIndex(idx);
-      this.zeroElectricCell(idx);
-      this.hx[idx] = 0;
-      this.hy[idx] = 0;
-    };
-    if (side === "left") {
-      for (let y = 1; y < this.ny - 1; y += 1) {
-        for (let x = 1; x < Math.min(this.nx - 1, layer); x += 1) clearCell(x, y);
-      }
-    } else if (side === "right") {
-      for (let y = 1; y < this.ny - 1; y += 1) {
-        for (let x = Math.max(1, this.nx - layer); x < this.nx - 1; x += 1) clearCell(x, y);
-      }
-    } else if (side === "top") {
-      for (let y = 1; y < Math.min(this.ny - 1, layer); y += 1) {
-        for (let x = 1; x < this.nx - 1; x += 1) clearCell(x, y);
-      }
-    } else if (side === "bottom") {
-      for (let y = Math.max(1, this.ny - layer); y < this.ny - 1; y += 1) {
-        for (let x = 1; x < this.nx - 1; x += 1) clearCell(x, y);
-      }
-    }
-  }
-
-  setCellModulation(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx]) {
-    this.modulatedMaterial[idx] = enabled ? 1 : 0;
-    this.modulationBaseEps[idx] = Number.isFinite(baseEps) ? baseEps : this.eps[idx];
-    this.modulationBaseEpsY[idx] = Number.isFinite(baseEpsY) ? baseEpsY : this.epsY[idx];
-  }
-
-  setCellNonlinearity(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx]) {
-    this.nonlinearMaterial[idx] = enabled ? 1 : 0;
-    this.modulationBaseEps[idx] = Number.isFinite(baseEps) ? baseEps : this.eps[idx];
-    this.modulationBaseEpsY[idx] = Number.isFinite(baseEpsY) ? baseEpsY : this.epsY[idx];
-    if (!enabled) {
-      this.harmonicPrevPz[idx] = 0;
-      this.harmonicPrevPx[idx] = 0;
-      this.harmonicPrevPy[idx] = 0;
-    }
-  }
-
-  setCellDispersion(idx, params = null) {
-    const model = params?.dispersion || "none";
-    const kind = model === "drude" || model === "plasma" ? 1 : model === "lorentz" ? 2 : model === "debye" ? 3 : 0;
-    this.dispersiveMaterial[idx] = kind;
-    this.dispersionOmegaP[idx] = kind ? Math.max(0, Number(params.omegaP) || 0) : 0;
-    this.dispersionGamma[idx] = kind ? Math.max(0, Number(params.gamma) || 0) : 0;
-    this.dispersionOmega0[idx] = kind ? Math.max(0, Number(params.omega0) || 0) : 0;
-    this.dispersionDeltaEps[idx] = kind ? Number(params.deltaEps) || 0 : 0;
-    this.dispersionTau[idx] = kind ? Math.max(1, Number(params.tau) || 1) : 1;
-    this.dispPz[idx] = 0;
-    this.dispJz[idx] = 0;
-    this.dispPx[idx] = 0;
-    this.dispJx[idx] = 0;
-    this.dispPy[idx] = 0;
-    this.dispJy[idx] = 0;
-  }
-
-  setCellConductivity(idx, sigma = 0, sigmaY = sigma) {
-    this.conductivity[idx] = Math.max(0, Number(sigma) || 0);
-    this.conductivityY[idx] = Math.max(0, Number(sigmaY) || 0);
-  }
-
-  setCellGyrotropy(idx, value = 0) {
-    const g = clamp(Number(value) || 0, -5, 5);
-    this.gyrotropicMaterial[idx] = g === 0 ? 0 : 1;
-    this.gyrotropyG[idx] = g;
-  }
-
-  setCellBianisotropy(idx, value = 0) {
-    const kappa = clamp(Number(value) || 0, -5, 5);
-    this.bianisotropicMaterial[idx] = kappa === 0 ? 0 : 1;
-    this.bianisotropyKappa[idx] = kappa;
-    this.bianisotropyPrevScalar[idx] = this.ez[idx] || 0;
-  }
-
-  setCellPhaseChange(idx, params = null) {
-    const enabled = Boolean(params?.phaseChange);
-    this.phaseChangeMaterial[idx] = enabled ? 1 : 0;
-    if (!enabled) {
-      this.phaseState[idx] = 0;
-      this.phaseEpsOff[idx] = this.eps[idx];
-      this.phaseLossOff[idx] = this.loss[idx];
-      this.phaseEpsYOff[idx] = this.epsY[idx];
-      this.phaseLossYOff[idx] = this.lossY[idx];
-      this.phaseEpsOn[idx] = this.eps[idx];
-      this.phaseLossOn[idx] = this.loss[idx];
-      this.phaseEpsYOn[idx] = this.epsY[idx];
-      this.phaseLossYOn[idx] = this.lossY[idx];
-      return;
-    }
-    const offEps = Number.isFinite(params.phaseEpsOff) ? params.phaseEpsOff : this.eps[idx];
-    const offLoss = Number.isFinite(params.phaseLossOff) ? params.phaseLossOff : this.loss[idx];
-    const offEpsY = Number.isFinite(params.phaseEpsYOff) ? params.phaseEpsYOff : this.epsY[idx];
-    const offLossY = Number.isFinite(params.phaseLossYOff) ? params.phaseLossYOff : this.lossY[idx];
-    const onEps = Number.isFinite(params.phaseEpsOn) ? params.phaseEpsOn : state.phaseEpsOn;
-    const onLoss = Number.isFinite(params.phaseLossOn) ? params.phaseLossOn : state.phaseLossOn;
-    this.phaseState[idx] = clamp(Number(params.phaseState) || 0, 0, 1);
-    this.phaseEpsOff[idx] = offEps;
-    this.phaseLossOff[idx] = offLoss;
-    this.phaseEpsYOff[idx] = offEpsY;
-    this.phaseLossYOff[idx] = offLossY;
-    this.phaseEpsOn[idx] = onEps;
-    this.phaseLossOn[idx] = onLoss;
-    this.phaseEpsYOn[idx] = Number.isFinite(params.phaseEpsYOn) ? params.phaseEpsYOn : onEps;
-    this.phaseLossYOn[idx] = Number.isFinite(params.phaseLossYOn) ? params.phaseLossYOn : onLoss;
-  }
-
-  setMaterial(x, y, kind) {
-    if (x < 1 || y < 1 || x >= this.nx - 1 || y >= this.ny - 1) return;
-    if (this.isInBoundaryControlRegion(x, y)) return;
-    const idx = this.id(x, y);
-    if (kind === "dielectric") {
-      this.material[idx] = 1;
-      this.eps[idx] = 4.2;
-      this.loss[idx] = 0.001;
-      this.epsY[idx] = 4.2;
-      this.lossY[idx] = 0.001;
-      this.mu[idx] = 1;
-      this.muLoss[idx] = 0;
-      this.muY[idx] = 1;
-      this.muLossY[idx] = 0;
-      this.setCellModulation(idx, false);
-      this.setCellNonlinearity(idx, false);
-      this.setCellDispersion(idx, null);
-      this.setCellConductivity(idx, 0, 0);
-      this.setCellGyrotropy(idx, 0);
-      this.setCellBianisotropy(idx, 0);
-      this.setCellPhaseChange(idx, null);
-    } else if (kind === "pec") {
-      this.material[idx] = 2;
-      this.eps[idx] = 1;
-      this.loss[idx] = 0;
-      this.epsY[idx] = 1;
-      this.lossY[idx] = 0;
-      this.mu[idx] = 1;
-      this.muLoss[idx] = 0;
-      this.muY[idx] = 1;
-      this.muLossY[idx] = 0;
-      this.setCellModulation(idx, false);
-      this.setCellNonlinearity(idx, false);
-      this.setCellDispersion(idx, null);
-      this.setCellConductivity(idx, 0, 0);
-      this.setCellGyrotropy(idx, 0);
-      this.setCellBianisotropy(idx, 0);
-      this.setCellPhaseChange(idx, null);
-      this.zeroElectricCell(idx);
-    } else if (kind === "lossy") {
-      this.material[idx] = 3;
-      this.eps[idx] = 2.6;
-      this.loss[idx] = 0.028;
-      this.epsY[idx] = 2.6;
-      this.lossY[idx] = 0.028;
-      this.mu[idx] = 1;
-      this.muLoss[idx] = 0;
-      this.muY[idx] = 1;
-      this.muLossY[idx] = 0;
-      this.setCellModulation(idx, false);
-      this.setCellNonlinearity(idx, false);
-      this.setCellDispersion(idx, null);
-      this.setCellConductivity(idx, 0, 0);
-      this.setCellGyrotropy(idx, 0);
-      this.setCellBianisotropy(idx, 0);
-      this.setCellPhaseChange(idx, null);
-    } else if (kind === "custom") {
-      this.material[idx] = 4;
-      this.eps[idx] = state.customEpsReal;
-      this.loss[idx] = state.customEpsImag;
-      this.epsY[idx] = state.customAnisotropic ? state.customEpsYReal : state.customEpsReal;
-      this.lossY[idx] = state.customAnisotropic ? state.customEpsYImag : state.customEpsImag;
-      this.mu[idx] = state.customMuReal;
-      this.muLoss[idx] = state.customMuImag;
-      this.muY[idx] = state.customAnisotropic ? state.customMuYReal : state.customMuReal;
-      this.muLossY[idx] = state.customAnisotropic ? state.customMuYImag : state.customMuImag;
-      this.setCellModulation(idx, state.materialModulationEnabled, this.eps[idx], this.epsY[idx]);
-      this.setCellNonlinearity(idx, state.materialNonlinearEnabled || state.materialHarmonicEnabled, this.eps[idx], this.epsY[idx]);
-      this.setCellDispersion(idx, brushDispersionParams());
-      const conductivity = brushConductivityParams();
-      this.setCellConductivity(idx, conductivity.sigma, conductivity.sigmaY);
-      this.setCellGyrotropy(idx, brushGyrotropyValue());
-      this.setCellBianisotropy(idx, brushBianisotropyValue());
-      this.setCellPhaseChange(idx, brushPhaseChangeParams());
-    } else if (kind === "sio2") {
-      this.material[idx] = 5;
-      this.eps[idx] = 2.07;
-      this.loss[idx] = 0;
-      this.epsY[idx] = 2.07;
-      this.lossY[idx] = 0;
-      this.mu[idx] = 1;
-      this.muLoss[idx] = 0;
-      this.muY[idx] = 1;
-      this.muLossY[idx] = 0;
-      this.setCellModulation(idx, false);
-      this.setCellNonlinearity(idx, false);
-      this.setCellDispersion(idx, null);
-      this.setCellConductivity(idx, 0, 0);
-      this.setCellGyrotropy(idx, 0);
-      this.setCellBianisotropy(idx, 0);
-      this.setCellPhaseChange(idx, null);
-    } else {
-      this.material[idx] = 0;
-      this.eps[idx] = 1;
-      this.loss[idx] = 0;
-      this.epsY[idx] = 1;
-      this.lossY[idx] = 0;
-      this.mu[idx] = 1;
-      this.muLoss[idx] = 0;
-      this.muY[idx] = 1;
-      this.muLossY[idx] = 0;
-      this.setCellModulation(idx, false);
-      this.setCellNonlinearity(idx, false);
-      this.setCellDispersion(idx, null);
-      this.setCellConductivity(idx, 0, 0);
-      this.setCellGyrotropy(idx, 0);
-      this.setCellBianisotropy(idx, 0);
-      this.setCellPhaseChange(idx, null);
-    }
-  }
-
-  snapshotMaterialCell(x, y) {
-    const idx = this.id(x, y);
-    return {
-      x,
-      y,
-      material: this.material[idx],
-      eps: this.eps[idx],
-      loss: this.loss[idx],
-      epsY: this.epsY[idx],
-      lossY: this.lossY[idx],
-      mu: this.mu[idx],
-      muLoss: this.muLoss[idx],
-      muY: this.muY[idx],
-      muLossY: this.muLossY[idx],
-      modulated: this.modulatedMaterial[idx],
-      nonlinear: this.nonlinearMaterial[idx],
-      dispersive: this.dispersiveMaterial[idx],
-      gyrotropic: this.gyrotropicMaterial[idx],
-      gyrotropyG: this.gyrotropyG[idx],
-      bianisotropic: this.bianisotropicMaterial[idx],
-      bianisotropyKappa: this.bianisotropyKappa[idx],
-      bianisotropyPrevScalar: this.bianisotropyPrevScalar[idx],
-      phaseChange: this.phaseChangeMaterial[idx],
-      phaseState: this.phaseState[idx],
-      phaseEpsOff: this.phaseEpsOff[idx],
-      phaseLossOff: this.phaseLossOff[idx],
-      phaseEpsYOff: this.phaseEpsYOff[idx],
-      phaseLossYOff: this.phaseLossYOff[idx],
-      phaseEpsOn: this.phaseEpsOn[idx],
-      phaseLossOn: this.phaseLossOn[idx],
-      phaseEpsYOn: this.phaseEpsYOn[idx],
-      phaseLossYOn: this.phaseLossYOn[idx],
-      conductivity: this.conductivity[idx],
-      conductivityY: this.conductivityY[idx],
-      modulationBaseEps: this.modulationBaseEps[idx],
-      modulationBaseEpsY: this.modulationBaseEpsY[idx],
-      dispersionOmegaP: this.dispersionOmegaP[idx],
-      dispersionGamma: this.dispersionGamma[idx],
-      dispersionOmega0: this.dispersionOmega0[idx],
-      dispersionDeltaEps: this.dispersionDeltaEps[idx],
-      dispersionTau: this.dispersionTau[idx],
-    };
-  }
-
-  writeMaterialCell(x, y, cell) {
-    if (x < 1 || y < 1 || x >= this.nx - 1 || y >= this.ny - 1) return false;
-    if (this.isInBoundaryControlRegion(x, y)) return false;
-    const idx = this.id(x, y);
-    this.material[idx] = cell.material;
-    this.eps[idx] = cell.eps;
-    this.loss[idx] = cell.loss;
-    this.epsY[idx] = cell.epsY;
-    this.lossY[idx] = cell.lossY;
-    this.mu[idx] = cell.mu;
-    this.muLoss[idx] = cell.muLoss;
-    this.muY[idx] = cell.muY;
-    this.muLossY[idx] = cell.muLossY;
-    this.modulatedMaterial[idx] = cell.modulated ? 1 : 0;
-    this.nonlinearMaterial[idx] = cell.nonlinear ? 1 : 0;
-    this.dispersiveMaterial[idx] = cell.dispersive || 0;
-    this.gyrotropicMaterial[idx] = cell.gyrotropic ? 1 : 0;
-    this.gyrotropyG[idx] = clamp(Number(cell.gyrotropyG) || 0, -5, 5);
-    this.bianisotropicMaterial[idx] = cell.bianisotropic ? 1 : 0;
-    this.bianisotropyKappa[idx] = clamp(Number(cell.bianisotropyKappa) || 0, -5, 5);
-    this.bianisotropyPrevScalar[idx] = Number.isFinite(cell.bianisotropyPrevScalar) ? cell.bianisotropyPrevScalar : this.ez[idx];
-    this.phaseChangeMaterial[idx] = cell.phaseChange ? 1 : 0;
-    this.phaseState[idx] = clamp(Number(cell.phaseState) || 0, 0, 1);
-    this.phaseEpsOff[idx] = Number.isFinite(cell.phaseEpsOff) ? cell.phaseEpsOff : cell.eps;
-    this.phaseLossOff[idx] = Number.isFinite(cell.phaseLossOff) ? cell.phaseLossOff : cell.loss;
-    this.phaseEpsYOff[idx] = Number.isFinite(cell.phaseEpsYOff) ? cell.phaseEpsYOff : cell.epsY;
-    this.phaseLossYOff[idx] = Number.isFinite(cell.phaseLossYOff) ? cell.phaseLossYOff : cell.lossY;
-    this.phaseEpsOn[idx] = Number.isFinite(cell.phaseEpsOn) ? cell.phaseEpsOn : cell.eps;
-    this.phaseLossOn[idx] = Number.isFinite(cell.phaseLossOn) ? cell.phaseLossOn : cell.loss;
-    this.phaseEpsYOn[idx] = Number.isFinite(cell.phaseEpsYOn) ? cell.phaseEpsYOn : this.phaseEpsOn[idx];
-    this.phaseLossYOn[idx] = Number.isFinite(cell.phaseLossYOn) ? cell.phaseLossYOn : this.phaseLossOn[idx];
-    this.conductivity[idx] = Math.max(0, Number(cell.conductivity) || 0);
-    this.conductivityY[idx] = Math.max(0, Number(cell.conductivityY) || 0);
-    this.modulationBaseEps[idx] = Number.isFinite(cell.modulationBaseEps) ? cell.modulationBaseEps : cell.eps;
-    this.modulationBaseEpsY[idx] = Number.isFinite(cell.modulationBaseEpsY) ? cell.modulationBaseEpsY : cell.epsY;
-    this.dispersionOmegaP[idx] = Number.isFinite(cell.dispersionOmegaP) ? cell.dispersionOmegaP : 0;
-    this.dispersionGamma[idx] = Number.isFinite(cell.dispersionGamma) ? cell.dispersionGamma : 0;
-    this.dispersionOmega0[idx] = Number.isFinite(cell.dispersionOmega0) ? cell.dispersionOmega0 : 0;
-    this.dispersionDeltaEps[idx] = Number.isFinite(cell.dispersionDeltaEps) ? cell.dispersionDeltaEps : 0;
-    this.dispersionTau[idx] = Number.isFinite(cell.dispersionTau) ? cell.dispersionTau : 1;
-    this.dispPz[idx] = 0;
-    this.dispJz[idx] = 0;
-    this.dispPx[idx] = 0;
-    this.dispJx[idx] = 0;
-    this.dispPy[idx] = 0;
-    this.dispJy[idx] = 0;
-    this.harmonicPrevPz[idx] = 0;
-    this.harmonicPrevPx[idx] = 0;
-    this.harmonicPrevPy[idx] = 0;
-    if (cell.material === 2) {
-      this.zeroElectricCell(idx);
-    }
-    return true;
-  }
-
-  writeAirCellAtIndex(idx) {
-    this.material[idx] = 0;
-    this.eps[idx] = 1;
-    this.loss[idx] = 0;
-    this.epsY[idx] = 1;
-    this.lossY[idx] = 0;
-    this.mu[idx] = 1;
-    this.muLoss[idx] = 0;
-    this.muY[idx] = 1;
-    this.muLossY[idx] = 0;
-    this.modulatedMaterial[idx] = 0;
-    this.nonlinearMaterial[idx] = 0;
-    this.dispersiveMaterial[idx] = 0;
-    this.gyrotropicMaterial[idx] = 0;
-    this.gyrotropyG[idx] = 0;
-    this.bianisotropicMaterial[idx] = 0;
-    this.bianisotropyKappa[idx] = 0;
-    this.bianisotropyPrevScalar[idx] = 0;
-    this.phaseChangeMaterial[idx] = 0;
-    this.phaseState[idx] = 0;
-    this.phaseEpsOff[idx] = 1;
-    this.phaseLossOff[idx] = 0;
-    this.phaseEpsYOff[idx] = 1;
-    this.phaseLossYOff[idx] = 0;
-    this.phaseEpsOn[idx] = 1;
-    this.phaseLossOn[idx] = 0;
-    this.phaseEpsYOn[idx] = 1;
-    this.phaseLossYOn[idx] = 0;
-    this.conductivity[idx] = 0;
-    this.conductivityY[idx] = 0;
-    this.modulationBaseEps[idx] = 1;
-    this.modulationBaseEpsY[idx] = 1;
-    this.dispersionOmegaP[idx] = 0;
-    this.dispersionGamma[idx] = 0;
-    this.dispersionOmega0[idx] = 0;
-    this.dispersionDeltaEps[idx] = 0;
-    this.dispersionTau[idx] = 1;
-    this.dispPz[idx] = 0;
-    this.dispJz[idx] = 0;
-    this.dispPx[idx] = 0;
-    this.dispJx[idx] = 0;
-    this.dispPy[idx] = 0;
-    this.dispJy[idx] = 0;
-    this.harmonicPrevPz[idx] = 0;
-    this.harmonicPrevPx[idx] = 0;
-    this.harmonicPrevPy[idx] = 0;
-  }
-
-  selectableMaterialAt(x, y) {
-    if (x < 1 || y < 1 || x >= this.nx - 1 || y >= this.ny - 1) return false;
-    if (this.isInBoundaryControlRegion(x, y)) return false;
-    return this.material[this.id(x, y)] !== 0;
-  }
-
-  materialRegionBounds(cells) {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const cell of cells) {
-      if (cell.x < minX) minX = cell.x;
-      if (cell.y < minY) minY = cell.y;
-      if (cell.x > maxX) maxX = cell.x;
-      if (cell.y > maxY) maxY = cell.y;
-    }
-    return { minX, minY, maxX, maxY };
-  }
-
-  findMaterialRegionAtCell(startX, startY) {
-    if (!this.selectableMaterialAt(startX, startY)) return null;
-    const visited = new Uint8Array(this.n);
-    const stack = [this.id(startX, startY)];
-    visited[this.id(startX, startY)] = 1;
-    const cells = [];
-    const pushNeighbor = (x, y) => {
-      if (!this.selectableMaterialAt(x, y)) return;
-      const idx = this.id(x, y);
-      if (visited[idx]) return;
-      visited[idx] = 1;
-      stack.push(idx);
-    };
-
-    while (stack.length > 0) {
-      const idx = stack.pop();
-      const x = idx % this.nx;
-      const y = Math.floor(idx / this.nx);
-      cells.push(this.snapshotMaterialCell(x, y));
-      pushNeighbor(x + 1, y);
-      pushNeighbor(x - 1, y);
-      pushNeighbor(x, y + 1);
-      pushNeighbor(x, y - 1);
-    }
-
-    return {
-      cells,
-      bounds: this.materialRegionBounds(cells),
-    };
-  }
-
-  findMaterialRegionAtClientPoint(clientX, clientY) {
-    const point = this.clientToGridCell(clientX, clientY);
-    return this.findMaterialRegionAtCell(point.x, point.y);
-  }
-
-  snapshotMaterialArrays() {
-    return {
-      material: new Uint8Array(this.material),
-      eps: new Float32Array(this.eps),
-      loss: new Float32Array(this.loss),
-      epsY: new Float32Array(this.epsY),
-      lossY: new Float32Array(this.lossY),
-      mu: new Float32Array(this.mu),
-      muLoss: new Float32Array(this.muLoss),
-      muY: new Float32Array(this.muY),
-      muLossY: new Float32Array(this.muLossY),
-      modulatedMaterial: new Uint8Array(this.modulatedMaterial),
-      nonlinearMaterial: new Uint8Array(this.nonlinearMaterial),
-      dispersiveMaterial: new Uint8Array(this.dispersiveMaterial),
-      gyrotropicMaterial: new Uint8Array(this.gyrotropicMaterial),
-      gyrotropyG: new Float32Array(this.gyrotropyG),
-      bianisotropicMaterial: new Uint8Array(this.bianisotropicMaterial),
-      bianisotropyKappa: new Float32Array(this.bianisotropyKappa),
-      bianisotropyPrevScalar: new Float32Array(this.bianisotropyPrevScalar),
-      phaseChangeMaterial: new Uint8Array(this.phaseChangeMaterial),
-      phaseState: new Float32Array(this.phaseState),
-      phaseEpsOff: new Float32Array(this.phaseEpsOff),
-      phaseLossOff: new Float32Array(this.phaseLossOff),
-      phaseEpsYOff: new Float32Array(this.phaseEpsYOff),
-      phaseLossYOff: new Float32Array(this.phaseLossYOff),
-      phaseEpsOn: new Float32Array(this.phaseEpsOn),
-      phaseLossOn: new Float32Array(this.phaseLossOn),
-      phaseEpsYOn: new Float32Array(this.phaseEpsYOn),
-      phaseLossYOn: new Float32Array(this.phaseLossYOn),
-      conductivity: new Float32Array(this.conductivity),
-      conductivityY: new Float32Array(this.conductivityY),
-      modulationBaseEps: new Float32Array(this.modulationBaseEps),
-      modulationBaseEpsY: new Float32Array(this.modulationBaseEpsY),
-      dispersionOmegaP: new Float32Array(this.dispersionOmegaP),
-      dispersionGamma: new Float32Array(this.dispersionGamma),
-      dispersionOmega0: new Float32Array(this.dispersionOmega0),
-      dispersionDeltaEps: new Float32Array(this.dispersionDeltaEps),
-      dispersionTau: new Float32Array(this.dispersionTau),
-    };
-  }
-
-  restoreMaterialArrays(snapshot) {
-    this.material.set(snapshot.material);
-    this.eps.set(snapshot.eps);
-    this.loss.set(snapshot.loss);
-    this.epsY.set(snapshot.epsY);
-    this.lossY.set(snapshot.lossY);
-    this.mu.set(snapshot.mu);
-    this.muLoss.set(snapshot.muLoss);
-    this.muY.set(snapshot.muY);
-    this.muLossY.set(snapshot.muLossY);
-    this.modulatedMaterial.set(snapshot.modulatedMaterial);
-    this.nonlinearMaterial.set(snapshot.nonlinearMaterial);
-    this.dispersiveMaterial.set(snapshot.dispersiveMaterial);
-    this.gyrotropicMaterial.set(snapshot.gyrotropicMaterial);
-    this.gyrotropyG.set(snapshot.gyrotropyG);
-    this.bianisotropicMaterial.set(snapshot.bianisotropicMaterial);
-    this.bianisotropyKappa.set(snapshot.bianisotropyKappa);
-    this.bianisotropyPrevScalar.set(snapshot.bianisotropyPrevScalar);
-    this.phaseChangeMaterial.set(snapshot.phaseChangeMaterial);
-    this.phaseState.set(snapshot.phaseState);
-    this.phaseEpsOff.set(snapshot.phaseEpsOff);
-    this.phaseLossOff.set(snapshot.phaseLossOff);
-    this.phaseEpsYOff.set(snapshot.phaseEpsYOff);
-    this.phaseLossYOff.set(snapshot.phaseLossYOff);
-    this.phaseEpsOn.set(snapshot.phaseEpsOn);
-    this.phaseLossOn.set(snapshot.phaseLossOn);
-    this.phaseEpsYOn.set(snapshot.phaseEpsYOn);
-    this.phaseLossYOn.set(snapshot.phaseLossYOn);
-    this.conductivity.set(snapshot.conductivity);
-    this.conductivityY.set(snapshot.conductivityY);
-    this.modulationBaseEps.set(snapshot.modulationBaseEps);
-    this.modulationBaseEpsY.set(snapshot.modulationBaseEpsY);
-    this.dispersionOmegaP.set(snapshot.dispersionOmegaP);
-    this.dispersionGamma.set(snapshot.dispersionGamma);
-    this.dispersionOmega0.set(snapshot.dispersionOmega0);
-    this.dispersionDeltaEps.set(snapshot.dispersionDeltaEps);
-    this.dispersionTau.set(snapshot.dispersionTau);
-  }
-
-  snapshotMaterialArraysWithoutRegion(region) {
-    const snapshot = this.snapshotMaterialArrays();
-    for (const cell of region.cells) {
-      const idx = this.id(cell.x, cell.y);
-      snapshot.material[idx] = 0;
-      snapshot.eps[idx] = 1;
-      snapshot.loss[idx] = 0;
-      snapshot.epsY[idx] = 1;
-      snapshot.lossY[idx] = 0;
-      snapshot.mu[idx] = 1;
-      snapshot.muLoss[idx] = 0;
-      snapshot.muY[idx] = 1;
-      snapshot.muLossY[idx] = 0;
-      snapshot.modulatedMaterial[idx] = 0;
-      snapshot.nonlinearMaterial[idx] = 0;
-      snapshot.dispersiveMaterial[idx] = 0;
-      snapshot.gyrotropicMaterial[idx] = 0;
-      snapshot.gyrotropyG[idx] = 0;
-      snapshot.bianisotropicMaterial[idx] = 0;
-      snapshot.bianisotropyKappa[idx] = 0;
-      snapshot.bianisotropyPrevScalar[idx] = 0;
-      snapshot.phaseChangeMaterial[idx] = 0;
-      snapshot.phaseState[idx] = 0;
-      snapshot.phaseEpsOff[idx] = 1;
-      snapshot.phaseLossOff[idx] = 0;
-      snapshot.phaseEpsYOff[idx] = 1;
-      snapshot.phaseLossYOff[idx] = 0;
-      snapshot.phaseEpsOn[idx] = 1;
-      snapshot.phaseLossOn[idx] = 0;
-      snapshot.phaseEpsYOn[idx] = 1;
-      snapshot.phaseLossYOn[idx] = 0;
-      snapshot.conductivity[idx] = 0;
-      snapshot.conductivityY[idx] = 0;
-      snapshot.modulationBaseEps[idx] = 1;
-      snapshot.modulationBaseEpsY[idx] = 1;
-      snapshot.dispersionOmegaP[idx] = 0;
-      snapshot.dispersionGamma[idx] = 0;
-      snapshot.dispersionOmega0[idx] = 0;
-      snapshot.dispersionDeltaEps[idx] = 0;
-      snapshot.dispersionTau[idx] = 1;
-    }
-    return snapshot;
-  }
-
-  clampMaterialRegionOffset(region, dx, dy) {
-    const minDx = this.activeInteriorMinX() - region.bounds.minX;
-    const maxDx = this.activeInteriorMaxX() - region.bounds.maxX;
-    const minDy = this.activeInteriorMinY() - region.bounds.minY;
-    const maxDy = this.activeInteriorMaxY() - region.bounds.maxY;
-    return {
-      dx: clampInt(dx, minDx, maxDx),
-      dy: clampInt(dy, minDy, maxDy),
-    };
-  }
-
-  shiftedMaterialRegion(region, dx, dy) {
-    const cells = region.cells.map((cell) => ({
-      ...cell,
-      x: cell.x + dx,
-      y: cell.y + dy,
-    }));
-    return {
-      cells,
-      bounds: this.materialRegionBounds(cells),
-    };
-  }
-
-  renderMaterialRegionFromBase(base, region, dx, dy) {
-    this.restoreMaterialArrays(base);
-    const shifted = this.shiftedMaterialRegion(region, dx, dy);
-    for (const cell of shifted.cells) {
-      this.writeMaterialCell(cell.x, cell.y, cell);
-    }
-    this.refreshPmlMaterialContinuation(false);
-    this.resetFields();
-    return shifted;
-  }
-
-  applyMaterialKindToRegion(region, kind) {
-    if (!region) return null;
-    if (kind === "erase") {
-      for (const cell of region.cells) {
-        this.setMaterial(cell.x, cell.y, "erase");
-      }
-      this.refreshPmlMaterialContinuation(false);
-      this.resetFields();
-      return null;
-    }
-    for (const cell of region.cells) {
-      this.setMaterial(cell.x, cell.y, kind);
-    }
-    this.refreshPmlMaterialContinuation(false);
-    this.resetFields();
-    const firstCell = region.cells[0];
-    return firstCell ? this.findMaterialRegionAtCell(firstCell.x, firstCell.y) : null;
-  }
-
-  updateCustomMaterialCells(resetFields = true) {
-    for (let i = 0; i < this.n; i += 1) {
-      if (this.material[i] !== 4) continue;
-      this.eps[i] = state.customEpsReal;
-      this.loss[i] = state.customEpsImag;
-      this.epsY[i] = state.customAnisotropic ? state.customEpsYReal : state.customEpsReal;
-      this.lossY[i] = state.customAnisotropic ? state.customEpsYImag : state.customEpsImag;
-      this.modulationBaseEps[i] = this.eps[i];
-      this.modulationBaseEpsY[i] = this.epsY[i];
-      this.modulatedMaterial[i] = state.materialModulationEnabled ? 1 : 0;
-      this.setCellNonlinearity(i, state.materialNonlinearEnabled || state.materialHarmonicEnabled, this.eps[i], this.epsY[i]);
-      this.setCellDispersion(i, brushDispersionParams());
-      const conductivity = brushConductivityParams();
-      this.setCellConductivity(i, conductivity.sigma, conductivity.sigmaY);
-      this.setCellPhaseChange(i, brushPhaseChangeParams());
-      this.setCellGyrotropy(i, brushGyrotropyValue());
-      this.setCellBianisotropy(i, brushBianisotropyValue());
-      this.mu[i] = state.customMuReal;
-      this.muLoss[i] = state.customMuImag;
-      this.muY[i] = state.customAnisotropic ? state.customMuYReal : state.customMuReal;
-      this.muLossY[i] = state.customAnisotropic ? state.customMuYImag : state.customMuImag;
-    }
-    this.refreshPmlMaterialContinuation(false);
-    if (resetFields) {
-      this.resetFields();
-    }
-  }
-
-  paint(x, y, radius, kind) {
-    const r2 = radius * radius;
-    for (let dy = -radius; dy <= radius; dy += 1) {
-      for (let dx = -radius; dx <= radius; dx += 1) {
-        if (dx * dx + dy * dy <= r2) {
-          this.setMaterial(x + dx, y + dy, kind);
-        }
-      }
-    }
-  }
-
-  rect(x0, y0, w, h, kind) {
-    const x1 = Math.min(this.nx - 2, x0 + w);
-    const y1 = Math.min(this.ny - 2, y0 + h);
-    for (let y = Math.max(1, y0); y <= y1; y += 1) {
-      for (let x = Math.max(1, x0); x <= x1; x += 1) {
-        this.setMaterial(x, y, kind);
-      }
-    }
-  }
-
-  ellipse(cx, cy, rx, ry, kind) {
-    for (let y = Math.max(1, Math.floor(cy - ry)); y <= Math.min(this.ny - 2, Math.ceil(cy + ry)); y += 1) {
-      for (let x = Math.max(1, Math.floor(cx - rx)); x <= Math.min(this.nx - 2, Math.ceil(cx + rx)); x += 1) {
-        const dx = (x - cx) / rx;
-        const dy = (y - cy) / ry;
-        if (dx * dx + dy * dy <= 1) {
-          this.setMaterial(x, y, kind);
-        }
-      }
-    }
-  }
-
-  insertBrushGeometry(cx, cy, kind, options) {
-    const geometry = options.geometry || "rectangle";
-    const width = Math.max(1, lambdaToCells(options.widthLambda));
-    const height = Math.max(1, lambdaToCells(options.heightLambda));
-    const outerRadius = Math.max(1, lambdaToCells(options.radiusLambda));
-    const innerRadius = Math.max(0, Math.min(outerRadius - 1, lambdaToCells(options.innerRadiusLambda)));
-    const inserted = [];
-    const seen = new Set();
-    const addCell = (x, y) => {
-      if (x < 1 || y < 1 || x >= this.nx - 1 || y >= this.ny - 1) return;
-      if (this.isInBoundaryControlRegion(x, y)) return;
-      this.setMaterial(x, y, kind);
-      if (kind === "erase") return;
-      const idx = this.id(x, y);
-      if (seen.has(idx) || this.material[idx] === 0) return;
-      seen.add(idx);
-      inserted.push(this.snapshotMaterialCell(x, y));
-    };
-    const addRectangle = (w, h) => {
-      const x0 = Math.round(cx - w / 2);
-      const y0 = Math.round(cy - h / 2);
-      for (let y = y0; y < y0 + h; y += 1) {
-        for (let x = x0; x < x0 + w; x += 1) {
-          addCell(x, y);
-        }
-      }
-    };
-    const addEllipse = (rx, ry, innerRx = 0, innerRy = 0) => {
-      const minX = Math.floor(cx - rx);
-      const maxX = Math.ceil(cx + rx);
-      const minY = Math.floor(cy - ry);
-      const maxY = Math.ceil(cy + ry);
-      const safeInnerRx = Math.max(0, innerRx);
-      const safeInnerRy = Math.max(0, innerRy);
-      for (let y = minY; y <= maxY; y += 1) {
-        for (let x = minX; x <= maxX; x += 1) {
-          const dx = (x - cx) / Math.max(1, rx);
-          const dy = (y - cy) / Math.max(1, ry);
-          const outer = dx * dx + dy * dy <= 1;
-          if (!outer) continue;
-          if (safeInnerRx > 0 && safeInnerRy > 0) {
-            const innerDx = (x - cx) / safeInnerRx;
-            const innerDy = (y - cy) / safeInnerRy;
-            if (innerDx * innerDx + innerDy * innerDy < 1) continue;
-          }
-          addCell(x, y);
-        }
-      }
-    };
-
-    if (geometry === "disk") {
-      addEllipse(outerRadius, outerRadius);
-    } else if (geometry === "ellipse") {
-      addEllipse(Math.max(1, Math.round(width / 2)), Math.max(1, Math.round(height / 2)));
-    } else if (geometry === "ring") {
-      addEllipse(outerRadius, outerRadius, innerRadius, innerRadius);
-    } else {
-      addRectangle(width, height);
-    }
-
-    this.refreshPmlMaterialContinuation(false);
-    if (kind === "erase" || inserted.length === 0) return null;
-    return {
-      cells: inserted,
-      bounds: this.materialRegionBounds(inserted),
-    };
-  }
-
-  slabCoreThicknessCells() {
-    return Math.max(2, lambdaToCells(state.slabThicknessLambda));
-  }
-
-  sourceXCell(source) {
-    return clampInt(lambdaToCells(source.xLambda), this.sourcePlacementMinX(), this.sourcePlacementMaxX());
-  }
-
-  sourceYCell(source) {
-    return clampInt(lambdaToCells(source.yLambda), this.sourcePlacementMinY(), this.sourcePlacementMaxY());
-  }
-
-  sourceEnvelopeFwhmCells(source) {
-    return Math.max(2, lambdaToCells(source.widthLambda));
-  }
-
-  activeInteriorMinX() {
-    return this.boundaryControlLayer() + 1;
-  }
-
-  activeInteriorMaxX() {
-    return this.nx - this.boundaryControlLayer() - 2;
-  }
-
-  activeInteriorMinY() {
-    return this.boundaryControlLayer() + 1;
-  }
-
-  activeInteriorMaxY() {
-    return this.ny - this.boundaryControlLayer() - 2;
-  }
-
-  sourceGuardMarginCells(side) {
-    if (!boundarySideIsAbsorbing(side)) return 0;
-    return Math.max(4, Math.round(state.cellsPerWavelength * 0.45));
-  }
-
-  sourcePlacementBounds(min, max, minSide, maxSide) {
-    const minMargin = this.sourceGuardMarginCells(minSide);
-    const maxMargin = this.sourceGuardMarginCells(maxSide);
-    if (max - min <= minMargin + maxMargin) return { min, max };
-    return { min: min + minMargin, max: max - maxMargin };
-  }
-
-  sourcePlacementMinX() {
-    return this.sourcePlacementBounds(this.activeInteriorMinX(), this.activeInteriorMaxX(), "left", "right").min;
-  }
-
-  sourcePlacementMaxX() {
-    return this.sourcePlacementBounds(this.activeInteriorMinX(), this.activeInteriorMaxX(), "left", "right").max;
-  }
-
-  sourcePlacementMinY() {
-    return this.sourcePlacementBounds(this.activeInteriorMinY(), this.activeInteriorMaxY(), "top", "bottom").min;
-  }
-
-  sourcePlacementMaxY() {
-    return this.sourcePlacementBounds(this.activeInteriorMinY(), this.activeInteriorMaxY(), "top", "bottom").max;
-  }
-
-  applyPreset(name) {
-    for (const side of BOUNDARY_SIDES) setBoundarySideMode(side, "absorbing");
-    this.buildBoundary();
-    this.clearMaterials(false);
-
-    state.fieldComponent = "ez";
-    state.fieldDisplay = "scalar";
-    state.fieldQuiver = false;
-    state.viewMode = "field";
-    state.materialPart = "real";
-    state.materialModulationEnabled = false;
-    state.materialNonlinearEnabled = false;
-    state.materialHarmonicEnabled = false;
-    state.materialDispersionEnabled = false;
-    state.materialConductivityEnabled = false;
-    state.materialSaturableGainEnabled = false;
-    state.materialPhaseChangeEnabled = false;
-    state.materialGyrotropyEnabled = false;
-    state.materialBianisotropyEnabled = false;
-    state.kerrChi3 = 0.5;
-    state.kerrSaturation = 5;
-    state.harmonicChi2 = 0.08;
-    state.harmonicChi3 = 0;
-    state.harmonicSaturation = 6;
-    state.conductivitySigma = 0;
-    state.conductivitySigmaY = 0;
-    state.gainSaturation = 4;
-    state.phaseEpsOn = 9;
-    state.phaseLossOn = 0.08;
-    state.phaseThresholdOn = 0.8;
-    state.phaseThresholdOff = 0.2;
-    state.phaseTauOn = 18;
-    state.phaseTauOff = 180;
-    state.gyrotropyG = 0.25;
-    state.bianisotropyKappa = 0.2;
-    state.dispersionModel = "none";
-    state.dispersionOmegaP = 0.28;
-    state.dispersionGamma = 0.018;
-    state.dispersionOmega0 = 0.15;
-    state.dispersionDeltaEps = 2;
-    state.dispersionTau = 18;
-    state.modulationDepth = 0.2;
-    state.modulationFrequency = 0.01;
-    state.modulationPeriodLambda = 2;
-    state.modulationAngleDeg = 0;
-    state.modulationPhaseDeg = 0;
-
-    const minX = this.activeInteriorMinX();
-    const maxX = this.activeInteriorMaxX();
-    const minY = this.activeInteriorMinY();
-    const maxY = this.activeInteriorMaxY();
-    const domainXLambda = cellsToLambda(this.nx);
-    const domainYLambda = cellsToLambda(this.ny);
-    const midXLambda = domainXLambda * 0.5;
-    const midYLambda = domainYLambda * 0.5;
-    const sourceFrequency = COURANT / Math.max(8, state.cellsPerWavelength);
-    const sourceX = (value) => clamp(value, minSourceXLambda(), maxSourceXLambda());
-    const sourceY = (value) => clamp(value, minSourceYLambda(), maxSourceYLambda());
-    const mat = {
-      air: { material: 0 },
-      pec: { material: 2 },
-      n12: { material: 4, eps: 1.44 },
-      n15: { material: 4, eps: 2.25 },
-      n20: { material: 4, eps: 4 },
-      n25: { material: 4, eps: 6.25 },
-      n34: { material: 4, eps: 11.56 },
-      coating: { material: 4, eps: 1.5 },
-      lossyN15: { material: 4, eps: 2.25, loss: 0.1 },
-      lossyGuide: { material: 4, eps: 11.56, loss: 0.02 },
-      finiteConductor: { material: 4, eps: 1, loss: 0, sigma: 0.42 },
-      ptGain: { material: 4, eps: 6.25, loss: -0.032 },
-      ptLoss: { material: 4, eps: 6.25, loss: 0.032 },
-      weak: { material: 4, eps: 1.35 },
-      enz: { material: 4, eps: 0.08, loss: 0.02 },
-      anisotropic: { material: 4, eps: 4, epsY: 2 },
-      hyperbolic: { material: 4, eps: 4, epsY: -2 },
-      chiral: { material: 4, eps: 3.2, epsY: 3.2, mu: 1.1, muY: 1.1, kappa: 0.22 },
-      bianisotropic: { material: 4, eps: 4.2, epsY: 2.6, mu: 1.25, muY: 0.9, kappa: -0.32 },
-      gyrotropic: { material: 4, eps: 4, epsY: 4, gyro: 0.35 },
-      negative: { material: 4, eps: -1, mu: -1 },
-      metalLoss: { material: 4, eps: -12, loss: 4 },
-      drudeMetal: { material: 4, eps: 1, loss: 0.002, dispersion: "drude", omegaP: 0.28, gamma: 0.018 },
-      plasmonicMetal: { material: 4, eps: 1, loss: 0.004, dispersion: "drude", omegaP: 0.34, gamma: 0.026 },
-      plasma: { material: 4, eps: 1, loss: 0, dispersion: "plasma", omegaP: 2 * Math.PI * sourceFrequency * 1.25, gamma: 0.001 },
-      lorentz: {
-        material: 4,
-        eps: 1.7,
-        loss: 0.002,
-        dispersion: "lorentz",
-        omega0: 2 * Math.PI * sourceFrequency * 1.05,
-        gamma: 0.025,
-        deltaEps: 2.0,
-      },
-      debye: { material: 4, eps: 1.8, loss: 0.001, dispersion: "debye", deltaEps: 3.0, tau: 18 },
-      phaseOff: { material: 4, eps: 3.2, loss: 0.002, phaseChange: true, phaseEpsOn: 9, phaseLossOn: 0.08 },
-      pcmOff: { material: 4, eps: 4, loss: 0.001, phaseChange: true, phaseEpsOn: 12, phaseLossOn: 0.03 },
-    };
-
-    const setSources = (configs) => {
-      const base = {
-        type: "sine",
-        shape: "line",
-        frequency: sourceFrequency,
-        amplitude: 0.55,
-        xLambda: sourceX(1),
-        yLambda: sourceY(midYLambda),
-        widthLambda: 0.35,
-        angleDeg: 0,
-        phaseDeg: 0,
-        multipoleOrder: 3,
-        multipolePhase: "cos",
-      };
-      state.sources = configs.map((config, index) => {
-        const source = normalizeSource({ ...base, ...config });
-        source.id = index + 1;
-        return source;
-      });
-      if (state.sources.length === 0) {
-        const source = normalizeSource({ ...defaultSourceConfig, frequency: sourceFrequency, yLambda: sourceY(midYLambda) });
-        source.id = 1;
-        state.sources = [source];
-      }
-      state.nextSourceId = state.sources.length + 1;
-      state.selectedSourceId = state.sources[0]?.id ?? null;
-      state.sourceDefaults = { ...(state.sources[0] || defaultSourceConfig) };
-      delete state.sourceDefaults.id;
-    };
-
-    const writeMaterialCell = (x, y, params = mat.air) => {
-      if (x < minX || y < minY || x > maxX || y > maxY) return;
-      if (this.isInBoundaryControlRegion(x, y)) return;
-      const idx = this.id(x, y);
-      if ((params.material ?? 0) === 0) {
-        this.writeAirCellAtIndex(idx);
-        return;
-      }
-      const material = params.material ?? 4;
-      const eps = params.eps ?? 1;
-      const loss = params.loss ?? 0;
-      const epsY = params.epsY ?? eps;
-      const lossY = params.lossY ?? loss;
-      const mu = params.mu ?? 1;
-      const muLoss = params.muLoss ?? 0;
-      const muY = params.muY ?? mu;
-      const muLossY = params.muLossY ?? muLoss;
-      const sigma = params.sigma ?? 0;
-      const sigmaY = params.sigmaY ?? sigma;
-      this.material[idx] = material;
-      this.eps[idx] = material === 2 ? 1 : eps;
-      this.loss[idx] = material === 2 ? 0 : loss;
-      this.epsY[idx] = material === 2 ? 1 : epsY;
-      this.lossY[idx] = material === 2 ? 0 : lossY;
-      this.mu[idx] = material === 2 ? 1 : mu;
-      this.muLoss[idx] = material === 2 ? 0 : muLoss;
-      this.muY[idx] = material === 2 ? 1 : muY;
-      this.muLossY[idx] = material === 2 ? 0 : muLossY;
-      this.setCellModulation(idx, Boolean(params.modulated) && material !== 2, this.eps[idx], this.epsY[idx]);
-      this.setCellNonlinearity(idx, Boolean(params.nonlinear) && material !== 2, this.eps[idx], this.epsY[idx]);
-      this.setCellDispersion(idx, material !== 2 ? params : null);
-      this.setCellConductivity(idx, material !== 2 ? sigma : 0, material !== 2 ? sigmaY : 0);
-      this.setCellGyrotropy(idx, material !== 2 ? params.gyro ?? params.gyrotropyG ?? 0 : 0);
-      this.setCellBianisotropy(idx, material !== 2 ? params.kappa ?? params.bianisotropyKappa ?? 0 : 0);
-      this.setCellPhaseChange(idx, material !== 2 ? params : null);
-      if (material === 2) this.zeroElectricCell(idx);
-    };
-
-    const rectCells = (x0, y0, w, h, params) => {
-      const xStart = Math.max(minX, Math.round(x0));
-      const xEnd = Math.min(maxX, Math.round(x0 + w - 1));
-      const yStart = Math.max(minY, Math.round(y0));
-      const yEnd = Math.min(maxY, Math.round(y0 + h - 1));
-      for (let y = yStart; y <= yEnd; y += 1) {
-        for (let x = xStart; x <= xEnd; x += 1) writeMaterialCell(x, y, params);
-      }
-    };
-    const rectL = (xL, yL, wL, hL, params) => {
-      rectCells(lambdaToCells(xL), lambdaToCells(yL), Math.max(1, lambdaToCells(wL)), Math.max(1, lambdaToCells(hL)), params);
-    };
-    const ellipseCells = (cx, cy, rx, ry, params) => {
-      const rX = Math.max(1, Math.round(rx));
-      const rY = Math.max(1, Math.round(ry));
-      for (let y = Math.max(minY, cy - rY); y <= Math.min(maxY, cy + rY); y += 1) {
-        const yy = (y - cy) / rY;
-        for (let x = Math.max(minX, cx - rX); x <= Math.min(maxX, cx + rX); x += 1) {
-          const xx = (x - cx) / rX;
-          if (xx * xx + yy * yy <= 1) writeMaterialCell(x, y, params);
-        }
-      }
-    };
-    const ellipseL = (cxL, cyL, rxL, ryL, params) => {
-      ellipseCells(lambdaToCells(cxL), lambdaToCells(cyL), lambdaToCells(rxL), lambdaToCells(ryL), params);
-    };
-    const ringL = (cxL, cyL, outerRxL, outerRyL, innerRxL, innerRyL, params) => {
-      const cx = lambdaToCells(cxL);
-      const cy = lambdaToCells(cyL);
-      const outerRx = Math.max(1, lambdaToCells(outerRxL));
-      const outerRy = Math.max(1, lambdaToCells(outerRyL));
-      const innerRx = Math.max(1, lambdaToCells(innerRxL));
-      const innerRy = Math.max(1, lambdaToCells(innerRyL));
-      for (let y = Math.max(minY, cy - outerRy); y <= Math.min(maxY, cy + outerRy); y += 1) {
-        const yo = (y - cy) / outerRy;
-        const yi = (y - cy) / innerRy;
-        for (let x = Math.max(minX, cx - outerRx); x <= Math.min(maxX, cx + outerRx); x += 1) {
-          const xo = (x - cx) / outerRx;
-          const xi = (x - cx) / innerRx;
-          if (xo * xo + yo * yo <= 1 && xi * xi + yi * yi >= 1) writeMaterialCell(x, y, params);
-        }
-      }
-    };
-    const rotatedRectL = (cxL, cyL, lengthL, widthL, angleDeg, params) => {
-      const cx = lambdaToCells(cxL);
-      const cy = lambdaToCells(cyL);
-      const halfLength = Math.max(1, lambdaToCells(lengthL) / 2);
-      const halfWidth = Math.max(1, lambdaToCells(widthL) / 2);
-      const theta = (angleDeg * Math.PI) / 180;
-      const cosTheta = Math.cos(theta);
-      const sinTheta = Math.sin(theta);
-      const radius = Math.ceil(Math.hypot(halfLength, halfWidth));
-      for (let y = Math.max(minY, cy - radius); y <= Math.min(maxY, cy + radius); y += 1) {
-        for (let x = Math.max(minX, cx - radius); x <= Math.min(maxX, cx + radius); x += 1) {
-          const dx = x - cx;
-          const dy = y - cy;
-          const u = dx * cosTheta + dy * sinTheta;
-          const v = -dx * sinTheta + dy * cosTheta;
-          if (Math.abs(u) <= halfLength && Math.abs(v) <= halfWidth) writeMaterialCell(x, y, params);
-        }
-      }
-    };
-    const rectFrameL = (cxL, cyL, wL, hL, tL, params) => {
-      rectL(cxL - wL / 2, cyL - hL / 2, wL, tL, params);
-      rectL(cxL - wL / 2, cyL + hL / 2 - tL, wL, tL, params);
-      rectL(cxL - wL / 2, cyL - hL / 2, tL, hL, params);
-      rectL(cxL + wL / 2 - tL, cyL - hL / 2, tL, hL, params);
-    };
-    const fillAll = (params) => rectCells(minX, minY, maxX - minX + 1, maxY - minY + 1, params);
-    const fillRightOf = (xL, params) => rectCells(lambdaToCells(xL), minY, maxX - lambdaToCells(xL) + 1, maxY - minY + 1, params);
-    const fillLeftOf = (xL, params) => rectCells(minX, minY, lambdaToCells(xL) - minX, maxY - minY + 1, params);
-    const braggLayers = (startL, pairs, y0L, hL, paramsA = mat.n15, paramsB = mat.n25) => {
-      let x = startL;
-      const dA = 1 / (4 * 1.5);
-      const dB = 1 / (4 * 2.5);
-      for (let i = 0; i < pairs; i += 1) {
-        rectL(x, y0L, dA, hL, paramsA);
-        x += dA;
-        rectL(x, y0L, dB, hL, paramsB);
-        x += dB;
-      }
-    };
-    const guide = (yL, widthL, params = mat.n34, x0L = 0.4, x1L = domainXLambda - 0.4) => {
-      rectL(x0L, yL - widthL / 2, Math.max(0.1, x1L - x0L), widthL, params);
-    };
-    const guideSource = (yL, overrides = {}) => {
-      setSources([{ shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(yL), widthLambda: 0.35, ...overrides }]);
-    };
-    const phc = ({ skip = () => false, disorder = false, rows = 9, cols = 15 } = {}) => {
-      let seed = 1337;
-      const rand = () => {
-        seed = (seed * 1664525 + 1013904223) >>> 0;
-        return seed / 4294967296;
-      };
-      const a = 0.45;
-      const r = 0.115;
-      for (let ix = -Math.floor(cols / 2); ix <= Math.floor(cols / 2); ix += 1) {
-        for (let iy = -Math.floor(rows / 2); iy <= Math.floor(rows / 2); iy += 1) {
-          if (skip(ix, iy)) continue;
-          const jitterX = disorder ? (rand() - 0.5) * 0.06 : 0;
-          const jitterY = disorder ? (rand() - 0.5) * 0.06 : 0;
-          ellipseL(midXLambda + ix * a + jitterX, midYLambda + iy * a + jitterY, r, r, mat.n34);
-        }
-      }
-    };
-    const scatterCluster = (count, params, radiusL, weak = false) => {
-      let seed = weak ? 911 : 503;
-      const rand = () => {
-        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-        return seed / 0x80000000;
-      };
-      for (let i = 0; i < count; i += 1) {
-        const x = 2.7 + rand() * Math.max(1, domainXLambda - 5.2);
-        const y = 1 + rand() * Math.max(1, domainYLambda - 2);
-        const r = radiusL * (0.75 + rand() * 0.5);
-        ellipseL(x, y, r, r, params);
-      }
-    };
-    const sshChain = (d1, d2, interfaceMode = false) => {
-      const r = 0.13;
-      let x = Math.max(1.2, midXLambda - 3.1);
-      for (let i = 0; i < 15; i += 1) {
-        ellipseL(x, midYLambda, r, r, mat.n34);
-        const useFirstGap = interfaceMode ? i < 7 ? i % 2 === 0 : i % 2 !== 0 : i % 2 === 0;
-        x += useFirstGap ? d1 : d2;
-      }
-    };
-
-    setSources([{ shape: "point", xLambda: sourceX(1.2), yLambda: sourceY(midYLambda) }]);
-
-    switch (name) {
-      case "planeWaveAir":
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "planeWaveDielectric":
-        fillAll(mat.n15);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "gaussianPulseAir":
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "twoSourceInterference":
-        setSources([
-          { shape: "point", xLambda: sourceX(1.7), yLambda: sourceY(midYLambda - 0.75), amplitude: 0.42 },
-          { shape: "point", xLambda: sourceX(1.7), yLambda: sourceY(midYLambda + 0.75), amplitude: 0.42 },
-        ]);
-        break;
-      case "frequencyBeat":
-        setSources([
-          { shape: "point", xLambda: sourceX(1.6), yLambda: sourceY(midYLambda - 0.45), frequency: sourceFrequency * 0.93 },
-          { shape: "point", xLambda: sourceX(1.6), yLambda: sourceY(midYLambda + 0.45), frequency: sourceFrequency * 1.08 },
-        ]);
-        break;
-      case "singleSlit":
-        rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        rectL(midXLambda - 0.08, midYLambda - 0.25, 0.22, 0.5, mat.air);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "doubleSlit":
-        rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        rectL(midXLambda - 0.08, midYLambda - 0.73, 0.22, 0.25, mat.air);
-        rectL(midXLambda - 0.08, midYLambda + 0.48, 0.22, 0.25, mat.air);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "circularAperture":
-        rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        ellipseL(midXLambda, midYLambda, 0.5, 0.5, mat.air);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "poyntingPlaneWave":
-        state.viewMode = "poynting";
-        state.fieldDisplay = "scalar";
-        state.fieldQuiver = true;
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), angleDeg: 25 }]);
-        break;
-      case "pmlAbsorption":
-        setSources([{ type: "gaussian", shape: "gaussianSpot", xLambda: sourceX(1.1), yLambda: sourceY(midYLambda), widthLambda: 0.45, amplitude: 1 }]);
-        break;
-      case "normalInterface":
-        fillRightOf(midXLambda, mat.n15);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "obliqueRefraction":
-        fillRightOf(midXLambda, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 28 }]);
-        break;
-      case "totalInternalReflection":
-        fillLeftOf(midXLambda, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.1), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 48 }]);
-        break;
-      case "frustratedTir":
-        fillLeftOf(midXLambda - 0.18, mat.n15);
-        fillRightOf(midXLambda + 0.18, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.1), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 48 }]);
-        break;
-      case "quarterWaveCoating": {
-        const d = 1 / (4 * Math.sqrt(1.5));
-        rectL(midXLambda - d, 0, d, domainYLambda, mat.coating);
-        fillRightOf(midXLambda, mat.n15);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      }
-      case "braggMirror":
-      case "braggStack":
-        braggLayers(midXLambda - 0.8, 6, 0, domainYLambda);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "lossyInterface":
-        fillRightOf(midXLambda, mat.lossyN15);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "anisotropicInterface":
-        fillRightOf(midXLambda, mat.anisotropic);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 24 }]);
-        break;
-      case "jzDipole":
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35 }]);
-        break;
-      case "inPlaneDipole":
-        state.fieldComponent = "hz";
-        setSources([
-          {
-            shape: "inPlaneElectricDipole",
-            xLambda: sourceX(midXLambda),
-            yLambda: sourceY(midYLambda),
-            widthLambda: 0.35,
-            angleDeg: 0,
-          },
-        ]);
-        break;
-      case "mzDipole":
-        state.fieldComponent = "hz";
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35 }]);
-        break;
-      case "dipoleSubstrate":
-        rectL(0, midYLambda + 0.35, domainXLambda, Math.max(0.1, domainYLambda - midYLambda - 0.35), mat.n15);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda + 0.1), widthLambda: 0.32 }]);
-        break;
-      case "dipoleNearPec":
-        rectL(midXLambda + 1.0, 0, 0.12, domainYLambda, mat.pec);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.32 }]);
-        break;
-      case "huygensRadiator":
-        setSources([{ shape: "huygens", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.45, angleDeg: 0 }]);
-        break;
-      case "circularDipole":
-        setSources([{ shape: "circularDipoleCw", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.45 }]);
-        break;
-      case "janusDipole":
-        guide(midYLambda, 0.28, mat.n34, midXLambda - 2.2, domainXLambda - 0.6);
-        setSources([{ shape: "janusDipole", xLambda: sourceX(midXLambda - 0.75), yLambda: sourceY(midYLambda - 0.42), widthLambda: 0.42, angleDeg: 0 }]);
-        break;
-      case "dipoleArray": {
-        const sources = [];
-        for (let i = 0; i < 8; i += 1) {
-          sources.push({ shape: "pointDipole", xLambda: sourceX(1.6), yLambda: sourceY(midYLambda - 1.75 + i * 0.5), widthLambda: 0.24, amplitude: 0.32 });
-        }
-        setSources(sources);
-        break;
-      }
-      case "phasedDipoleArray": {
-        const sources = [];
-        const phaseStep = 35;
-        for (let i = 0; i < 8; i += 1) {
-          sources.push({
-            shape: "pointDipole",
-            xLambda: sourceX(1.6),
-            yLambda: sourceY(midYLambda - 1.75 + i * 0.5),
-            widthLambda: 0.24,
-            amplitude: 0.32,
-            phaseDeg: (i - 3.5) * phaseStep,
-          });
-        }
-        setSources(sources);
-        break;
-      }
-      case "apertureRadiator":
-        rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        rectL(midXLambda - 0.08, midYLambda - 0.28, 0.22, 0.56, mat.air);
-        setSources([{ shape: "point", xLambda: sourceX(midXLambda - 0.55), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "slabWaveguide":
-        guide(midYLambda, 0.25, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "multimodeSlab":
-        guide(midYLambda, 0.8, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.45 });
-        break;
-      case "lossyGuide":
-        guide(midYLambda, 0.32, mat.lossyGuide);
-        guideSource(midYLambda, { widthLambda: 0.32 });
-        break;
-      case "taperWaveguide": {
-        const x0 = 1.4;
-        const length = 3.0;
-        for (let i = 0; i < 80; i += 1) {
-          const t = i / 79;
-          const width = 0.1 + t * 0.3;
-          rectL(x0 + t * length, midYLambda - width / 2, length / 80 + 0.02, width, mat.n34);
-        }
-        guide(midYLambda, 0.4, mat.n34, x0 + length, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.18 });
-        break;
-      }
-      case "widthStepWaveguide":
-        guide(midYLambda, 0.25, mat.n34, 0.5, midXLambda);
-        guide(midYLambda, 0.5, mat.n34, midXLambda, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "directionalCoupler":
-        guide(midYLambda - 0.23, 0.22, mat.n34, 0.6, domainXLambda - 0.6);
-        guide(midYLambda + 0.23, 0.22, mat.n34, 1.4, domainXLambda - 0.6);
-        guideSource(midYLambda - 0.23, { widthLambda: 0.22 });
-        break;
-      case "mmiWaveguide":
-        guide(midYLambda, 0.24, mat.n34, 0.5, 2.2);
-        rectL(2.2, midYLambda - 0.5, 3.5, 1.0, mat.n34);
-        guide(midYLambda - 0.25, 0.22, mat.n34, 5.7, domainXLambda - 0.5);
-        guide(midYLambda + 0.25, 0.22, mat.n34, 5.7, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "guideScatterer":
-        guide(midYLambda, 0.28, mat.n34);
-        ellipseL(midXLambda + 0.9, midYLambda - 0.32, 0.08, 0.08, mat.n20);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "stubResonator":
-        guide(midYLambda, 0.25, mat.n34);
-        rectL(midXLambda - 0.12, midYLambda - 1.05, 0.25, 1.05, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "fabryPerot":
-        braggLayers(midXLambda - 2.0, 4, 0, domainYLambda);
-        braggLayers(midXLambda + 0.65, 4, 0, domainYLambda);
-        rectL(midXLambda - 0.55, 0, 1.1, domainYLambda, mat.n15);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "ringResonator":
-        guide(midYLambda + 1.25, 0.24, mat.n34);
-        ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        guideSource(midYLambda + 1.25, { widthLambda: 0.24 });
-        break;
-      case "addDropRing":
-        guide(midYLambda + 1.25, 0.24, mat.n34);
-        guide(midYLambda - 1.25, 0.24, mat.n34);
-        ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        guideSource(midYLambda + 1.25, { widthLambda: 0.24 });
-        break;
-      case "dielectricCavity":
-        ellipseL(midXLambda, midYLambda, 0.42, 0.42, mat.n34);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.22, amplitude: 0.45 }]);
-        break;
-      case "pecCavity":
-        rectFrameL(midXLambda, midYLambda, 1.4, 1.0, 0.08, mat.pec);
-        setSources([{ type: "gaussian", shape: "point", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), amplitude: 0.8 }]);
-        break;
-      case "pecCylinder":
-        ellipseL(midXLambda + 0.7, midYLambda, 0.3, 0.3, mat.pec);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "dielectricCylinder":
-        ellipseL(midXLambda + 0.7, midYLambda, 0.3, 0.3, mat.n20);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "mieCylinder":
-        ellipseL(midXLambda + 0.7, midYLambda, 0.25, 0.25, mat.n34);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "lossyCylinder":
-        ellipseL(midXLambda + 0.7, midYLambda, 0.3, 0.3, { material: 4, eps: 4, loss: 0.2 });
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "dielectricDimer":
-        ellipseL(midXLambda + 0.45, midYLambda, 0.25, 0.25, mat.n34);
-        ellipseL(midXLambda + 1.05, midYLambda, 0.25, 0.25, mat.n34);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "multipleScattering":
-        scatterCluster(20, mat.n20, 0.13);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "weakLocalization":
-        scatterCluster(48, mat.weak, 0.07, true);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "finiteConductivity":
-        state.materialConductivityEnabled = true;
-        state.conductivitySigma = mat.finiteConductor.sigma;
-        state.conductivitySigmaY = mat.finiteConductor.sigma;
-        rectL(midXLambda - 0.15, 0.65, Math.max(0.25, domainXLambda - midXLambda - 0.5), domainYLambda - 1.3, mat.finiteConductor);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.65 }]);
-        break;
-      case "drudeMetal":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.drudeMetal.omegaP;
-        state.dispersionGamma = mat.drudeMetal.gamma;
-        rectL(midXLambda - 0.22, 0.65, 0.44, domainYLambda - 1.3, mat.drudeMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
-        break;
-      case "lorentzMedium":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "lorentz";
-        state.dispersionOmega0 = mat.lorentz.omega0;
-        state.dispersionGamma = mat.lorentz.gamma;
-        state.dispersionDeltaEps = mat.lorentz.deltaEps;
-        rectL(midXLambda - 0.75, 0.75, 1.5, domainYLambda - 1.5, mat.lorentz);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
-        break;
-      case "debyeDielectric":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "debye";
-        state.dispersionDeltaEps = mat.debye.deltaEps;
-        state.dispersionTau = mat.debye.tau;
-        rectL(midXLambda - 0.75, 0.75, 1.5, domainYLambda - 1.5, mat.debye);
-        setSources([{ type: "ricker", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
-        break;
-      case "plasmaCutoff":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "plasma";
-        state.dispersionOmegaP = mat.plasma.omegaP;
-        state.dispersionGamma = mat.plasma.gamma;
-        rectL(midXLambda - 0.7, 0.65, 1.4, domainYLambda - 1.3, mat.plasma);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.45 }]);
-        break;
-      case "enzSlab":
-        rectL(midXLambda - 0.15, 0, 0.3, domainYLambda, mat.enz);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "anisotropicMedium":
-        rectL(midXLambda - 1.2, midYLambda - 1.2, 2.4, 2.4, mat.anisotropic);
-        setSources([{ shape: "point", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
-        break;
-      case "hyperbolicMedium":
-        rectL(midXLambda - 1.3, midYLambda - 1.2, 2.6, 2.4, mat.hyperbolic);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35, amplitude: 0.35 }]);
-        break;
-      case "chiralMedium":
-        state.fieldComponent = "hz";
-        state.fieldDisplay = "electricMag";
-        state.fieldQuiver = true;
-        state.materialBianisotropyEnabled = true;
-        state.bianisotropyKappa = mat.chiral.kappa;
-        rectL(midXLambda - 1.0, 0.75, 2.0, domainYLambda - 1.5, mat.chiral);
-        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.78, amplitude: 0.62 }]);
-        break;
-      case "bianisotropicMedium":
-        state.fieldComponent = "hz";
-        state.fieldDisplay = "electricMag";
-        state.fieldQuiver = true;
-        state.materialBianisotropyEnabled = true;
-        state.bianisotropyKappa = mat.bianisotropic.kappa;
-        rectL(midXLambda - 1.05, midYLambda - 1.0, 2.1, 2.0, mat.bianisotropic);
-        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.6, amplitude: 0.58 }]);
-        break;
-      case "gyrotropicMedium":
-        state.fieldComponent = "hz";
-        state.fieldDisplay = "electricMag";
-        state.fieldQuiver = true;
-        state.materialGyrotropyEnabled = true;
-        state.gyrotropyG = mat.gyrotropic.gyro;
-        rectL(midXLambda - 1.0, 0.75, 2.0, domainYLambda - 1.5, mat.gyrotropic);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.65 }]);
-        break;
-      case "photonicCrystal":
-        phc();
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "phcPointDefect":
-        phc({ skip: (ix, iy) => ix === 0 && iy === 0 });
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.25, amplitude: 0.55 }]);
-        break;
-      case "phcWaveguide":
-        phc({ skip: (_ix, iy) => iy === 0 });
-        guideSource(midYLambda, { widthLambda: 0.32 });
-        break;
-      case "phcDisorder":
-        phc({ disorder: true });
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
-        break;
-      case "fanoResonator":
-        guide(midYLambda, 0.25, mat.n34);
-        ellipseL(midXLambda + 0.8, midYLambda - 0.62, 0.36, 0.36, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
-        break;
-      case "sshTrivial":
-        sshChain(0.42, 0.25);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda - 3), yLambda: sourceY(midYLambda), widthLambda: 0.24 }]);
-        break;
-      case "sshTopological":
-        sshChain(0.25, 0.42);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda - 3), yLambda: sourceY(midYLambda), widthLambda: 0.24 }]);
-        break;
-      case "sshInterface":
-        sshChain(0.25, 0.42, true);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.24 }]);
-        break;
-      case "sppInterface": {
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        const interfaceY = midYLambda + 0.45;
-        rectL(0, interfaceY, domainXLambda, Math.max(0.1, domainYLambda - interfaceY), mat.plasmonicMetal);
-        setSources([
-          {
-            shape: "pointDipole",
-            xLambda: sourceX(midXLambda - 2.2),
-            yLambda: sourceY(interfaceY - 0.16),
-            widthLambda: 0.22,
-            amplitude: 0.38,
-          },
-        ]);
-        break;
-      }
-      case "sppGrating": {
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        const interfaceY = midYLambda + 0.55;
-        rectL(0, interfaceY, domainXLambda, Math.max(0.1, domainYLambda - interfaceY), mat.plasmonicMetal);
-        const pitch = 0.42;
-        const start = Math.max(1.2, midXLambda - 2.2);
-        for (let i = 0; i < 11; i += 1) {
-          const x = start + i * pitch;
-          rectL(x, interfaceY - 0.13, 0.16, 0.13, mat.plasmonicMetal);
-          if (i % 2 === 0) {
-            rectL(x + 0.16, interfaceY, 0.10, 0.11, mat.air);
-          }
-        }
-        setSources([
-          {
-            shape: "gaussianProfile",
-            xLambda: sourceX(1.15),
-            yLambda: sourceY(interfaceY - 0.9),
-            widthLambda: 0.75,
-            angleDeg: 18,
-            amplitude: 0.42,
-          },
-        ]);
-        break;
-      }
-      case "localizedPlasmon":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        ellipseL(midXLambda + 0.35, midYLambda, 0.34, 0.34, mat.plasmonicMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.55, amplitude: 0.55 }]);
-        break;
-      case "plasmonicDimer":
-        state.materialDispersionEnabled = true;
-        state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        ellipseL(midXLambda + 0.15, midYLambda, 0.26, 0.26, mat.plasmonicMetal);
-        ellipseL(midXLambda + 0.75, midYLambda, 0.26, 0.26, mat.plasmonicMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.45, amplitude: 0.5 }]);
-        break;
-      case "metasurfacePhaseBars":
-        for (let i = -7; i <= 7; i += 1) {
-          const y = midYLambda + i * 0.28;
-          const h = 0.12 + (i + 7) * 0.018;
-          rectL(midXLambda - 0.04, y - h / 2, 0.08, h, mat.n34);
-        }
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "negativeIndexSlab":
-        rectL(midXLambda - 0.45, 0.5, 0.9, domainYLambda - 1.0, mat.negative);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 28, amplitude: 0.35 }]);
-        break;
-      case "superlensSlab":
-        rectL(midXLambda - 0.25, 0.6, 0.5, domainYLambda - 1.2, mat.negative);
-        setSources([{ shape: "point", xLambda: sourceX(midXLambda - 1.0), yLambda: sourceY(midYLambda), amplitude: 0.35 }]);
-        break;
-      case "enzEmitter":
-        rectL(midXLambda + 0.25, 0.7, 0.45, domainYLambda - 1.4, mat.enz);
-        setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda - 0.35), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.45 }]);
-        break;
-      case "kerrSlab":
-        state.materialNonlinearEnabled = true;
-        state.kerrChi3 = 0.65;
-        state.kerrSaturation = 3.5;
-        rectL(midXLambda - 0.9, 0.75, 1.8, domainYLambda - 1.5, { ...mat.n15, nonlinear: true });
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.75, amplitude: 0.75 }]);
-        break;
-      case "shgSlab":
-        state.materialHarmonicEnabled = true;
-        state.harmonicChi2 = 0.12;
-        state.harmonicChi3 = 0;
-        state.harmonicSaturation = 5.5;
-        rectL(midXLambda - 0.9, 0.75, 1.8, domainYLambda - 1.5, { ...mat.n15, nonlinear: true });
-        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.72, amplitude: 0.62 }]);
-        break;
-      case "thgSlab":
-        state.materialHarmonicEnabled = true;
-        state.harmonicChi2 = 0;
-        state.harmonicChi3 = 0.055;
-        state.harmonicSaturation = 5.5;
-        rectL(midXLambda - 0.9, 0.75, 1.8, domainYLambda - 1.5, { ...mat.n15, nonlinear: true });
-        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.72, amplitude: 0.68 }]);
-        break;
-      case "vo2SwitchingSlab":
-        state.materialPhaseChangeEnabled = true;
-        state.phaseEpsOn = 9;
-        state.phaseLossOn = 0.08;
-        state.phaseThresholdOn = 0.55;
-        state.phaseThresholdOff = 0.16;
-        state.phaseTauOn = 14;
-        state.phaseTauOff = 220;
-        rectL(midXLambda - 0.85, 0.75, 1.7, domainYLambda - 1.5, mat.phaseOff);
-        setSources([
-          {
-            type: "gaussian",
-            shape: "gaussianProfile",
-            xLambda: sourceX(0.9),
-            yLambda: sourceY(midYLambda),
-            widthLambda: 0.75,
-            amplitude: 0.9,
-          },
-        ]);
-        break;
-      case "pcmMemoryCell":
-        state.materialPhaseChangeEnabled = true;
-        state.phaseEpsOn = 12;
-        state.phaseLossOn = 0.03;
-        state.phaseThresholdOn = 0.45;
-        state.phaseThresholdOff = 0.08;
-        state.phaseTauOn = 20;
-        state.phaseTauOff = 900;
-        guide(midYLambda, 0.28, mat.n34, 0.6, domainXLambda - 0.6);
-        ellipseL(midXLambda + 0.45, midYLambda, 0.28, 0.18, mat.pcmOff);
-        guideSource(midYLambda, { type: "gaussian", widthLambda: 0.32, amplitude: 0.75 });
-        break;
-      case "temporalModulation":
-        state.materialModulationEnabled = true;
-        state.modulationDepth = 0.18;
-        state.modulationFrequency = 0.012;
-        state.modulationPeriodLambda = 20;
-        rectL(midXLambda - 1.25, midYLambda - 1.0, 2.5, 2.0, { ...mat.n15, modulated: true });
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.4 }]);
-        break;
-      case "travelingModulation":
-        state.materialModulationEnabled = true;
-        state.modulationDepth = 0.2;
-        state.modulationFrequency = 0.014;
-        state.modulationPeriodLambda = 1.2;
-        state.modulationAngleDeg = 0;
-        guide(midYLambda, 0.34, { ...mat.n15, modulated: true }, midXLambda - 2.0, midXLambda + 2.0);
-        guideSource(midYLambda, { widthLambda: 0.32, amplitude: 0.4 });
-        break;
-      case "ptSymmetricCoupler":
-        state.materialSaturableGainEnabled = true;
-        state.gainSaturation = 3.6;
-        guide(midYLambda - 0.24, 0.24, mat.ptGain, 0.7, domainXLambda - 0.7);
-        guide(midYLambda + 0.24, 0.24, mat.ptLoss, 0.7, domainXLambda - 0.7);
-        setSources([
-          {
-            type: "gaussian",
-            shape: "gaussianProfile",
-            xLambda: sourceX(0.95),
-            yLambda: sourceY(midYLambda + 0.24),
-            widthLambda: 0.28,
-            amplitude: 0.42,
-          },
-        ]);
-        break;
-      case "dielectricBlock":
-        rectL(midXLambda - 0.9, midYLambda - 1.0, 1.8, 2.0, mat.n15);
-        break;
-      case "lens":
-        ellipseL(midXLambda + 0.6, midYLambda, 0.55, 1.7, mat.n15);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "waveguide":
-        guide(midYLambda - 0.5, 0.12, mat.pec);
-        guide(midYLambda + 0.5, 0.12, mat.pec);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "scatterers":
-        scatterCluster(8, mat.n20, 0.16);
-        scatterCluster(4, mat.lossyN15, 0.14, true);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
-        break;
-      case "empty":
-      default:
-        break;
-    }
-    this.refreshPmlMaterialContinuation(false);
-    this.resetFields();
-  }
-
-  sourceSample(source, phaseRad = 0) {
-    const f = source.frequency;
-    const absolutePhase = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
-    const phaseTimeOffset = f > 0 ? (phaseRad + absolutePhase) / (2 * Math.PI * f) : 0;
-    return this.sourceSampleAtTime(source, this.time + phaseTimeOffset);
-  }
-
-  sourceSampleAtTime(source, t) {
-    const f = source.frequency;
-    const amp = source.amplitude;
-    if (source.type === "gaussian") {
-      const center = 48;
-      const width = 14;
-      return amp * Math.exp(-((t - center) * (t - center)) / (2 * width * width));
-    }
-    if (source.type === "ricker") {
-      const center = 48;
-      const a = Math.PI * f * (t - center);
-      const a2 = a * a;
-      return amp * (1 - 2 * a2) * Math.exp(-a2);
-    }
-    return amp * Math.sin(2 * Math.PI * f * t);
-  }
-
-  injectSource() {
-    for (const source of state.sources) {
-      this.injectSingleSource(source);
-    }
-  }
-
-  injectSingleSource(source) {
-    const sx = this.sourceXCell(source);
-    const sy = this.sourceYCell(source);
-    if (source.shape === "line") {
-      this.injectPlaneWaveIncidentField(source, sx, sy);
-      return;
-    }
-    if (source.shape === "gaussianProfile") {
-      this.injectGaussianLineIncidentField(source, sx, sy);
-      return;
-    }
-    const value = this.sourceSample(source);
-    if (inPlaneElectricCurrentShapes.has(source.shape)) {
-      this.injectInPlaneElectricCurrent(sx, sy, source, value);
-      return;
-    }
-    if (localizedSourceShapes.has(source.shape)) {
-      this.injectLocalizedAnalyticCurrent(sx, sy, source);
-      return;
-    }
-    this.injectPointCurrent(value, sx, sy);
-  }
-
-  incidentLinePhase(source, y, sy) {
-    const theta = (source.angleDeg * Math.PI) / 180;
-    const kCells = (2 * Math.PI * source.frequency) / Math.max(COURANT, 1e-9);
-    return -kCells * (y - sy) * Math.sin(theta);
-  }
-
-  injectPlaneWaveIncidentField(source, sx, sy) {
-    const halfWindow = Math.max(12, Math.round(this.ny * 0.42));
-    const y0 = Math.max(this.activeInteriorMinY(), sy - halfWindow);
-    const y1 = Math.min(this.activeInteriorMaxY(), sy + halfWindow);
-    for (let y = y0; y <= y1; y += 1) {
-      const taper = 0.54 + 0.46 * Math.sin(Math.PI * (y - y0) / Math.max(1, y1 - y0));
-      const idx = this.id(sx, y);
-      if (this.material[idx] !== 2) {
-        const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-        this.addIncidentScalarField(idx, value * taper);
-      }
-    }
-  }
-
-  injectGaussianLineIncidentField(source, sx, sy) {
-    const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-    const halfWindow = Math.max(3, Math.ceil(fwhm * 2.5));
-    const y0 = Math.max(this.activeInteriorMinY(), sy - halfWindow);
-    const y1 = Math.min(this.activeInteriorMaxY(), sy + halfWindow);
-    for (let y = y0; y <= y1; y += 1) {
-      const normalized = (y - sy) / fwhm;
-      const profile = Math.exp(-4 * Math.LN2 * normalized * normalized);
-      const idx = this.id(sx, y);
-      if (this.material[idx] !== 2) {
-        const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-        this.addIncidentScalarField(idx, value * profile);
-      }
-    }
-  }
-
-  injectPointCurrent(value, sx, sy) {
-    const x0 = Math.max(this.activeInteriorMinX(), sx - 1);
-    const x1 = Math.min(this.activeInteriorMaxX(), sx + 1);
-    const y0 = Math.max(this.activeInteriorMinY(), sy - 1);
-    const y1 = Math.min(this.activeInteriorMaxY(), sy + 1);
-    for (let y = y0; y <= y1; y += 1) {
-      for (let x = x0; x <= x1; x += 1) {
-        const idx = this.id(x, y);
-        if (this.material[idx] !== 2) {
-          this.addScalarCurrentSource(idx, value * (x === sx && y === sy ? 1 : 0.45), x, y);
-        }
-      }
-    }
-  }
-
-  injectLocalizedAnalyticCurrent(sx, sy, source) {
-    const shape = source.shape;
-    const order = this.localizedSourceOrder(shape, source);
-    const fwhm = this.sourceEnvelopeFwhmCells(source);
-    const sigma = Math.max(1, fwhm / (2 * Math.sqrt(2 * Math.LN2)));
-    const radiusSigma = shape === "gaussianSpot" ? 3 : Math.max(3.5, Math.sqrt(order) + 1.5);
-    const radius = Math.ceil(sigma * radiusSigma);
-    const minX = Math.max(this.activeInteriorMinX(), sx - radius);
-    const maxX = Math.min(this.activeInteriorMaxX(), sx + radius);
-    const minY = Math.max(this.activeInteriorMinY(), sy - radius);
-    const maxY = Math.min(this.activeInteriorMaxY(), sy + radius);
-    const theta = (source.angleDeg * Math.PI) / 180;
-    const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-    const sourceSamples = new Map();
-    const sampleAtPhase = (phaseRad) => {
-      const key = Math.round(phaseRad * 1e6);
-      if (!sourceSamples.has(key)) sourceSamples.set(key, this.sourceSample(source, phaseRad));
-      return sourceSamples.get(key);
-    };
-
-    for (let y = minY; y <= maxY; y += 1) {
-      for (let x = minX; x <= maxX; x += 1) {
-        const dx = x - sx;
-        const dy = sy - y;
-        const u = (dx * cosTheta + dy * sinTheta) / sigma;
-        const v = (-dx * sinTheta + dy * cosTheta) / sigma;
-        const terms = this.localizedSourceTerms(shape, order, u, v, source);
-        let value = 0;
-        for (const term of terms) {
-          if (Math.abs(term.profile) < 1e-4) continue;
-          value += sampleAtPhase(term.phaseRad || 0) * term.profile;
-        }
-        if (Math.abs(value) < 1e-5) continue;
-        const idx = this.id(x, y);
-        if (this.material[idx] !== 2) {
-          this.addScalarCurrentSource(idx, value, x, y);
-        }
-      }
-    }
-  }
-
-  injectInPlaneElectricCurrent(sx, sy, source, value) {
-    if (state.fieldComponent !== "hz") return;
-    const fwhm = this.sourceEnvelopeFwhmCells(source);
-    const sigma = Math.max(1, fwhm / (2 * Math.sqrt(2 * Math.LN2)));
-    const radius = Math.ceil(sigma * 3);
-    const theta = (source.angleDeg * Math.PI) / 180;
-    const ux = Math.cos(theta);
-    const uy = Math.sin(theta);
-    const minX = Math.max(this.activeInteriorMinX(), sx - radius);
-    const maxX = Math.min(this.activeInteriorMaxX(), sx + radius);
-    const minY = Math.max(this.activeInteriorMinY(), sy - radius);
-    const maxY = Math.min(this.activeInteriorMaxY(), sy + radius);
-    for (let y = minY; y <= maxY; y += 1) {
-      for (let x = minX; x <= maxX; x += 1) {
-        const dx = (x - sx) / sigma;
-        const dy = (y - sy) / sigma;
-        const profile = Math.exp(-0.5 * (dx * dx + dy * dy));
-        if (profile < 1e-4) continue;
-        const idx = this.id(x, y);
-        if (this.material[idx] === 2) continue;
-        this.addElectricCurrentJx(idx, value * profile * ux, x, y);
-        this.addElectricCurrentJy(idx, value * profile * uy, x, y);
-      }
-    }
-  }
-
-  localizedSourceOrder(shape, source) {
-    if (shape === "pointDipole" || circularDipoleSourceShapes.has(shape) || shape === "janusDipole" || shape === "huygens") return 1;
-    if (shape === "dipole") return 1;
-    if (shape === "quadrupole") return 2;
-    if (shape === "multipole") return clampInt(source.multipoleOrder, 1, 8);
-    return 0;
-  }
-
-  localizedSourceTerms(shape, order, u, v, source) {
-    const gaussian = this.localizedGaussianProfile(u, v);
-    const dipoleU = this.localizedHermiteProfile(1, u, v, false);
-    const dipoleV = this.localizedHermiteProfile(1, u, v, true);
-    if (shape === "gaussianSpot") return [{ profile: gaussian, phaseRad: 0 }];
-    if (shape === "pointDipole" || shape === "dipole") return [{ profile: dipoleU, phaseRad: 0 }];
-    if (shape === "circularDipoleCw") {
-      return [
-        { profile: dipoleU, phaseRad: 0 },
-        { profile: dipoleV, phaseRad: Math.PI / 2 },
-      ];
-    }
-    if (shape === "circularDipoleCcw") {
-      return [
-        { profile: dipoleU, phaseRad: 0 },
-        { profile: dipoleV, phaseRad: -Math.PI / 2 },
-      ];
-    }
-    if (shape === "janusDipole") {
-      return [
-        { profile: 0.72 * dipoleU, phaseRad: 0 },
-        { profile: 0.72 * gaussian, phaseRad: Math.PI / 2 },
-      ];
-    }
-    if (shape === "huygens") {
-      return [
-        { profile: 0.56 * gaussian, phaseRad: 0 },
-        { profile: 0.56 * dipoleU, phaseRad: 0 },
-      ];
-    }
-    return [{ profile: this.localizedSourceProfile(shape, order, u, v, source), phaseRad: 0 }];
-  }
-
-  localizedGaussianProfile(u, v) {
-    return Math.exp(-0.5 * (u * u + v * v));
-  }
-
-  localizedHermiteProfile(order, u, v, useSineAngular = false) {
-    const r2 = u * u + v * v;
-    if (r2 < 1e-12 || order < 1) return 0;
-    const rho = Math.sqrt(r2);
-    const phi = Math.atan2(v, u);
-    const angular = useSineAngular ? Math.sin(order * phi) : Math.cos(order * phi);
-    const envelope = Math.exp(-0.5 * r2);
-    const peak = Math.pow(order, order * 0.5) * Math.exp(-0.5 * order);
-    return (Math.pow(rho, order) * angular * envelope) / Math.max(peak, 1e-9);
-  }
-
-  localizedSourceProfile(shape, order, u, v, source) {
-    if (shape === "gaussianSpot") return this.localizedGaussianProfile(u, v);
-    return this.localizedHermiteProfile(order, u, v, shape === "multipole" && source.multipolePhase === "sin");
-  }
-
-  sourceFwhmCanvasRadius(source) {
-    const fwhm = this.sourceEnvelopeFwhmCells(source);
-    const pixelsPerCell = Math.min(this.canvas.width / this.visibleGridWidth(), this.canvas.height / this.visibleGridHeight());
-    return Math.max(6 * Math.max(1, window.devicePixelRatio || 1), 0.5 * fwhm * pixelsPerCell);
-  }
-
-  zeroElectricCell(idx) {
-    this.ez[idx] = 0;
-    this.ezx[idx] = 0;
-    this.ezy[idx] = 0;
-  }
-
-  addIncidentScalarField(idx, value) {
-    const scaledValue = Number.isFinite(this.fieldScale) ? value / this.fieldScale : 0;
-    const half = scaledValue * 0.5;
-    this.ezx[idx] += half;
-    this.ezy[idx] += half;
-    this.ez[idx] = this.ezx[idx] + this.ezy[idx];
-  }
-
-  addScalarCurrentSource(idx, value, x, y) {
-    if (state.fieldComponent === "hz") {
-      this.addMagneticCurrentMz(idx, value, x, y);
-    } else {
-      this.addElectricCurrentJz(idx, value, x, y);
-    }
-  }
-
-  addElectricCurrentJz(idx, jz, x, y) {
-    const scaledJz = Number.isFinite(this.fieldScale) ? jz / this.fieldScale : 0;
-    const halfJz = scaledJz * 0.5;
-    const currentScaleX = this.eCbX[x] * (this.courant / this.eps[idx]);
-    const currentScaleY = this.eCbY[y] * (this.courant / this.epsY[idx]);
-    const decayX = this.electricLossDecay(this.loss[idx], idx);
-    const decayY = this.electricLossDecay(this.lossY[idx], idx);
-    this.ezx[idx] -= currentScaleX * halfJz * decayX;
-    this.ezy[idx] -= currentScaleY * halfJz * decayY;
-    this.ez[idx] = this.ezx[idx] + this.ezy[idx];
-  }
-
-  addMagneticCurrentMz(idx, mz, x, y) {
-    const scaledMz = Number.isFinite(this.fieldScale) ? mz / this.fieldScale : 0;
-    const halfMz = scaledMz * 0.5;
-    const currentScaleX = this.hCbX[x] * (this.courant / this.mu[idx]);
-    const currentScaleY = this.hCbY[y] * (this.courant / this.muY[idx]);
-    const decayX = 1 / (1 + this.muLoss[idx]);
-    const decayY = 1 / (1 + this.muLossY[idx]);
-    this.ezx[idx] -= currentScaleX * halfMz * decayX;
-    this.ezy[idx] -= currentScaleY * halfMz * decayY;
-    this.ez[idx] = this.ezx[idx] + this.ezy[idx];
-  }
-
-  addElectricCurrentJx(idx, jx, x, y) {
-    const scaledJx = Number.isFinite(this.fieldScale) ? jx / this.fieldScale : 0;
-    const currentScale = this.eCbY[y] * (this.courant / this.eps[idx]);
-    const decay = this.electricLossDecay(this.loss[idx], idx);
-    this.hx[idx] -= currentScale * scaledJx * decay;
-  }
-
-  addElectricCurrentJy(idx, jy, x, y) {
-    const scaledJy = Number.isFinite(this.fieldScale) ? jy / this.fieldScale : 0;
-    const currentScale = this.eCbX[x] * (this.courant / this.epsY[idx]);
-    const decay = this.electricLossDecay(this.lossY[idx], idx);
-    this.hy[idx] -= currentScale * scaledJy * decay;
-  }
-
-  restoreDynamicMaterialsToBase() {
-    for (let i = 0; i < this.n; i += 1) {
-      if (!this.modulatedMaterial[i] && !this.nonlinearMaterial[i]) continue;
-      this.eps[i] = this.modulationBaseEps[i];
-      this.epsY[i] = this.modulationBaseEpsY[i];
-    }
-  }
-
-  restoreModulatedMaterialsToBase() {
-    this.restoreDynamicMaterialsToBase();
-  }
-
-  nonlinearIntensityAt(idx) {
-    if (state.fieldComponent === "hz") {
-      return this.hx[idx] * this.hx[idx] + this.hy[idx] * this.hy[idx];
-    }
-    return this.ez[idx] * this.ez[idx];
-  }
-
-  nonlinearPolarization(fieldValue) {
-    const chi2 = clamp(Number(state.harmonicChi2) || 0, -2, 2);
-    const chi3 = clamp(Number(state.harmonicChi3) || 0, -2, 2);
-    if (chi2 === 0 && chi3 === 0) return 0;
-    const field = clamp(fieldValue, -1e4, 1e4);
-    const saturation = Math.max(0.05, Number(state.harmonicSaturation) || 6);
-    const limiter = 1 / (1 + (field * field) / saturation);
-    return limiter * (chi2 * field * field + chi3 * field * field * field);
-  }
-
-  applyHarmonicNonlinearResponse() {
-    if (!state.materialHarmonicEnabled) return;
-    const nx = this.nx;
-    const ny = this.ny;
-    const s = this.courant;
-
-    if (state.fieldComponent === "hz") {
-      for (let y = 1; y < ny - 1; y += 1) {
-        const row = y * nx;
-        for (let x = 1; x < nx - 1; x += 1) {
-          const idx = row + x;
-          if (!this.nonlinearMaterial[idx] || this.material[idx] === 2) continue;
-          const px = this.nonlinearPolarization(this.hx[idx]);
-          const py = this.nonlinearPolarization(this.hy[idx]);
-          const jx = clamp(px - this.harmonicPrevPx[idx], -1e4, 1e4);
-          const jy = clamp(py - this.harmonicPrevPy[idx], -1e4, 1e4);
-          this.harmonicPrevPx[idx] = px;
-          this.harmonicPrevPy[idx] = py;
-          this.hx[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jx;
-          this.hy[idx] -= this.eCbX[x] * (s / Math.max(1e-6, Math.abs(this.epsY[idx]))) * jy;
-        }
-      }
-      return;
-    }
-
-    for (let y = 1; y < ny - 1; y += 1) {
-      const row = y * nx;
-      for (let x = 1; x < nx - 1; x += 1) {
-        const idx = row + x;
-        if (!this.nonlinearMaterial[idx] || this.material[idx] === 2) continue;
-        const pz = this.nonlinearPolarization(this.ez[idx]);
-        const jz = clamp(pz - this.harmonicPrevPz[idx], -1e4, 1e4);
-        this.harmonicPrevPz[idx] = pz;
-        this.ezx[idx] -= this.eCbX[x] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jz * 0.5;
-        this.ezy[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.epsY[idx]))) * jz * 0.5;
-        this.ez[idx] = this.ezx[idx] + this.ezy[idx];
-      }
-    }
-  }
-
-  applyDynamicMaterialResponse() {
-    if (!state.materialModulationEnabled && !state.materialNonlinearEnabled) return;
-    const modulationActive = state.materialModulationEnabled;
-    const nonlinearActive = state.materialNonlinearEnabled;
-    const depth = modulationActive ? clamp(Number(state.modulationDepth) || 0, 0, 0.95) : 0;
-    const periodCells = Math.max(1, lambdaToCells(Math.max(0.1, state.modulationPeriodLambda)));
-    const theta = (state.modulationAngleDeg * Math.PI) / 180;
-    const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-    const omegaCycles = Number(state.modulationFrequency) || 0;
-    const phase = (state.modulationPhaseDeg * Math.PI) / 180;
-    const chi3 = nonlinearActive ? clamp(Number(state.kerrChi3) || 0, -20, 20) : 0;
-    const saturation = Math.max(0.05, Number(state.kerrSaturation) || 5);
-
-    for (let y = 0; y < this.ny; y += 1) {
-      const row = y * this.nx;
-      for (let x = 0; x < this.nx; x += 1) {
-        const idx = row + x;
-        if (!this.modulatedMaterial[idx] && !this.nonlinearMaterial[idx]) continue;
-        let factor = 1;
-        if (depth > 0 && this.modulatedMaterial[idx]) {
-          const spatialCycles = (x * cosTheta + y * sinTheta) / periodCells;
-          const argument = 2 * Math.PI * (spatialCycles - omegaCycles * this.time) + phase;
-          factor += depth * Math.cos(argument);
-        }
-        let deltaEps = 0;
-        if (chi3 !== 0 && this.nonlinearMaterial[idx]) {
-          const rawIntensity = Math.min(this.nonlinearIntensityAt(idx), 1e6);
-          const saturatedIntensity = rawIntensity / (1 + rawIntensity / saturation);
-          deltaEps = chi3 * saturatedIntensity;
-        }
-        this.eps[idx] = clamp(this.modulationBaseEps[idx] * factor + deltaEps, -30, 30);
-        this.epsY[idx] = clamp(this.modulationBaseEpsY[idx] * factor + deltaEps, -30, 30);
-      }
-    }
-  }
-
-  applyPhaseChangeResponse() {
-    if (!state.materialPhaseChangeEnabled) return;
-    const thresholdOn = Math.max(0, Number(state.phaseThresholdOn) || 0);
-    const thresholdOff = Math.min(thresholdOn, Math.max(0, Number(state.phaseThresholdOff) || 0));
-    const tauOn = Math.max(1, Number(state.phaseTauOn) || 18);
-    const tauOff = Math.max(1, Number(state.phaseTauOff) || 180);
-    const alphaOn = 1 - Math.exp(-1 / tauOn);
-    const alphaOff = 1 - Math.exp(-1 / tauOff);
-
-    for (let i = 0; i < this.n; i += 1) {
-      if (!this.phaseChangeMaterial[i] || this.material[i] === 2) continue;
-      const intensity = Math.min(this.nonlinearIntensityAt(i), 1e12);
-      let s = this.phaseState[i];
-      if (intensity >= thresholdOn) {
-        s += (1 - s) * alphaOn;
-      } else if (intensity <= thresholdOff) {
-        s -= s * alphaOff;
-      }
-      s = clamp(s, 0, 1);
-      this.phaseState[i] = s;
-      this.eps[i] = clamp(lerp(this.phaseEpsOff[i], this.phaseEpsOn[i], s), -30, 30);
-      this.loss[i] = clamp(lerp(this.phaseLossOff[i], this.phaseLossOn[i], s), -30, 30);
-      this.epsY[i] = clamp(lerp(this.phaseEpsYOff[i], this.phaseEpsYOn[i], s), -30, 30);
-      this.lossY[i] = clamp(lerp(this.phaseLossYOff[i], this.phaseLossYOn[i], s), -30, 30);
-      if (this.modulatedMaterial[i] || this.nonlinearMaterial[i]) {
-        this.modulationBaseEps[i] = this.eps[i];
-        this.modulationBaseEpsY[i] = this.epsY[i];
-      }
-    }
-  }
-
-  applyBianisotropicResponse() {
-    if (!state.materialBianisotropyEnabled) return;
-    const hzMode = state.fieldComponent === "hz";
-    for (let i = 0; i < this.n; i += 1) {
-      if (!this.bianisotropicMaterial[i] || this.material[i] === 2) continue;
-      const scalar = this.ez[i];
-      const deltaScalar = clamp(scalar - this.bianisotropyPrevScalar[i], -1e4, 1e4);
-      this.bianisotropyPrevScalar[i] = scalar;
-      if (deltaScalar === 0) continue;
-      const kappa = this.bianisotropyKappa[i];
-      const coupling = 0.5 * kappa * deltaScalar;
-      if (hzMode) {
-        const epsX = Math.max(1e-6, Math.abs(this.eps[i]));
-        const epsY = Math.max(1e-6, Math.abs(this.epsY[i]));
-        this.hx[i] -= coupling / epsX;
-        this.hy[i] += coupling / epsY;
-      } else {
-        const muX = Math.max(1e-6, Math.abs(this.mu[i]));
-        const muY = Math.max(1e-6, Math.abs(this.muY[i]));
-        this.hx[i] += coupling / muX;
-        this.hy[i] -= coupling / muY;
-      }
-    }
-  }
-
-  advanceDispersiveCurrent(idx, fieldValue, polarization, current) {
-    const kind = this.dispersiveMaterial[idx];
-    if (!kind) return 0;
-    const gamma = Math.max(0, this.dispersionGamma[idx]);
-    const decay = Math.exp(-gamma);
-    const sourceCoeff = gamma > 1e-6 ? (1 - decay) / gamma : 1;
-    let p = polarization[idx];
-    let j = current[idx];
-
-    if (kind === 1) {
-      const omegaP = Math.max(0, this.dispersionOmegaP[idx]);
-      j = decay * j + sourceCoeff * omegaP * omegaP * fieldValue;
-      p += j;
-    } else if (kind === 2) {
-      const omega0 = Math.max(0, this.dispersionOmega0[idx]);
-      const deltaEps = this.dispersionDeltaEps[idx];
-      j = decay * j + sourceCoeff * (deltaEps * omega0 * omega0 * fieldValue - omega0 * omega0 * p);
-      p += j;
-    } else if (kind === 3) {
-      const tau = Math.max(1, this.dispersionTau[idx]);
-      const relax = Math.exp(-1 / tau);
-      const nextP = relax * p + (1 - relax) * this.dispersionDeltaEps[idx] * fieldValue;
-      j = nextP - p;
-      p = nextP;
-    }
-
-    polarization[idx] = clamp(p, -1e6, 1e6);
-    current[idx] = clamp(j, -1e6, 1e6);
-    return current[idx];
-  }
-
-  applyDispersiveElectricResponse() {
-    if (!state.materialDispersionEnabled) return;
-    const nx = this.nx;
-    const ny = this.ny;
-    const s = this.courant;
-    if (state.fieldComponent === "hz") {
-      for (let y = 1; y < ny - 1; y += 1) {
-        const row = y * nx;
-        for (let x = 1; x < nx - 1; x += 1) {
-          const idx = row + x;
-          if (!this.dispersiveMaterial[idx] || this.material[idx] === 2) continue;
-          const jx = this.advanceDispersiveCurrent(idx, this.hx[idx], this.dispPx, this.dispJx);
-          const jy = this.advanceDispersiveCurrent(idx, this.hy[idx], this.dispPy, this.dispJy);
-          const epsX = Math.max(1e-6, Math.abs(this.eps[idx]));
-          const epsY = Math.max(1e-6, Math.abs(this.epsY[idx]));
-          this.hx[idx] -= this.eCbY[y] * (s / epsX) * jx;
-          this.hy[idx] -= this.eCbX[x] * (s / epsY) * jy;
-        }
-      }
-      return;
-    }
-
-    for (let y = 1; y < ny - 1; y += 1) {
-      const row = y * nx;
-      for (let x = 1; x < nx - 1; x += 1) {
-        const idx = row + x;
-        if (!this.dispersiveMaterial[idx] || this.material[idx] === 2) continue;
-        const jz = this.advanceDispersiveCurrent(idx, this.ez[idx], this.dispPz, this.dispJz);
-        const epsX = Math.max(1e-6, Math.abs(this.eps[idx]));
-        const epsY = Math.max(1e-6, Math.abs(this.epsY[idx]));
-        this.ezx[idx] -= this.eCbX[x] * (s / epsX) * jz * 0.5;
-        this.ezy[idx] -= this.eCbY[y] * (s / epsY) * jz * 0.5;
-        this.ez[idx] = this.ezx[idx] + this.ezy[idx];
-      }
-    }
-  }
-
-  step() {
-    this.applyPhaseChangeResponse();
-    this.applyDynamicMaterialResponse();
-    if (!this.hasDynamicMaterialResponse() && this.wasmBackend?.canStep(state.fieldComponent)) {
-      this.wasmBackend.step(this);
-      this.zeroBoundaryFields();
-      this.injectSource();
-      this.time += 1;
-      this.updateDiagnostics();
-      return;
-    }
-
-    if (state.fieldComponent === "hz") {
-      this.stepHzMode();
-    } else {
-      this.stepEzMode();
-      this.applyDispersiveElectricResponse();
-    }
-    this.applyHarmonicNonlinearResponse();
-    this.applyBianisotropicResponse();
-
-    this.zeroBoundaryFields();
-    this.injectSource();
-    this.time += 1;
-    this.updateDiagnostics();
-  }
-
-  conductivityDamp(sigma, materialValue) {
-    const value = Number(sigma) || 0;
-    if (value <= 0) return 0;
-    const denominator = Math.max(1e-6, Math.abs(materialValue));
-    return Math.min(1e6, (value * this.courant) / (2 * denominator));
-  }
-
-  effectiveElectricLoss(lossValue, idx) {
-    let value = Number(lossValue) || 0;
-    if (state.materialSaturableGainEnabled && value < 0) {
-      const saturation = Math.max(0.05, Number(state.gainSaturation) || 4);
-      const intensity = Math.min(this.nonlinearIntensityAt(idx), 1e12);
-      value /= 1 + intensity / saturation;
-    }
-    return Math.max(-0.95, value);
-  }
-
-  electricLossDecay(lossValue, idx) {
-    return 1 / (1 + this.effectiveElectricLoss(lossValue, idx));
-  }
-
-  stepEzMode() {
-    const nx = this.nx;
-    const ny = this.ny;
-    const s = this.courant;
-    const ez = this.ez;
-    const ezx = this.ezx;
-    const ezy = this.ezy;
-    const hx = this.hx;
-    const hy = this.hy;
-    const eps = this.eps;
-    const loss = this.loss;
-    const epsY = this.epsY;
-    const lossY = this.lossY;
-    const conductivity = this.conductivity;
-    const conductivityY = this.conductivityY;
-    const mu = this.mu;
-    const muLoss = this.muLoss;
-    const muY = this.muY;
-    const muLossY = this.muLossY;
-    const eCaX = this.eCaX;
-    const eCbX = this.eCbX;
-    const eCaY = this.eCaY;
-    const eCbY = this.eCbY;
-    const hCaX = this.hCaX;
-    const hCbX = this.hCbX;
-    const hCaY = this.hCaY;
-    const hCbY = this.hCbY;
-
-    for (let y = 0; y < ny - 1; y += 1) {
-      const row = y * nx;
-      const ca = hCaY[y];
-      const cb = hCbY[y];
-      for (let x = 0; x < nx; x += 1) {
-        const i = row + x;
-        const magneticDecay = 1 / (1 + muLoss[i]);
-        const magneticScale = s / mu[i];
-        hx[i] = (ca * hx[i] - cb * magneticScale * (ez[i + nx] - ez[i])) * magneticDecay;
-      }
-    }
-
-    for (let y = 0; y < ny; y += 1) {
-      const row = y * nx;
-      for (let x = 0; x < nx - 1; x += 1) {
-        const i = row + x;
-        const magneticDecay = 1 / (1 + muLossY[i]);
-        const magneticScale = s / muY[i];
-        hy[i] = (hCaX[x] * hy[i] + hCbX[x] * magneticScale * (ez[i + 1] - ez[i])) * magneticDecay;
-      }
-    }
-
-    for (let y = 1; y < ny - 1; y += 1) {
-      const row = y * nx;
-      for (let x = 1; x < nx - 1; x += 1) {
-        const i = row + x;
-        if (this.material[i] === 2) {
-          this.zeroElectricCell(i);
-          continue;
-        }
-        const dHyDx = hy[i] - hy[i - 1];
-        const dHxDy = hx[i] - hx[i - nx];
-        const decayX = this.electricLossDecay(loss[i], i);
-        const decayY = this.electricLossDecay(lossY[i], i);
-        const materialScaleX = s / eps[i];
-        const materialScaleY = s / epsY[i];
-        const sigmaDampX = this.conductivityDamp(conductivity[i], eps[i]);
-        const sigmaDampY = this.conductivityDamp(conductivityY[i], epsY[i]);
-        const sigmaCaX = (1 - sigmaDampX) / (1 + sigmaDampX);
-        const sigmaCaY = (1 - sigmaDampY) / (1 + sigmaDampY);
-        const sigmaCbX = 1 / (1 + sigmaDampX);
-        const sigmaCbY = 1 / (1 + sigmaDampY);
-        ezx[i] = (sigmaCaX * eCaX[x] * ezx[i] + sigmaCbX * eCbX[x] * materialScaleX * dHyDx) * decayX;
-        ezy[i] = (sigmaCaY * eCaY[y] * ezy[i] - sigmaCbY * eCbY[y] * materialScaleY * dHxDy) * decayY;
-        ez[i] = ezx[i] + ezy[i];
-      }
-    }
-  }
-
-  stepHzMode() {
-    const nx = this.nx;
-    const ny = this.ny;
-    const s = this.courant;
-    const hz = this.ez;
-    const hzx = this.ezx;
-    const hzy = this.ezy;
-    const ex = this.hx;
-    const ey = this.hy;
-    const eps = this.eps;
-    const loss = this.loss;
-    const epsY = this.epsY;
-    const lossY = this.lossY;
-    const conductivity = this.conductivity;
-    const conductivityY = this.conductivityY;
-    const gyrotropicMaterial = this.gyrotropicMaterial;
-    const gyrotropyG = this.gyrotropyG;
-    const mu = this.mu;
-    const muLoss = this.muLoss;
-    const muY = this.muY;
-    const muLossY = this.muLossY;
-    const eCaX = this.eCaX;
-    const eCbX = this.eCbX;
-    const eCaY = this.eCaY;
-    const eCbY = this.eCbY;
-    const hCaX = this.hCaX;
-    const hCbX = this.hCbX;
-    const hCaY = this.hCaY;
-    const hCbY = this.hCbY;
-
-    for (let y = 0; y < ny - 1; y += 1) {
-      const row = y * nx;
-      const ca = eCaY[y];
-      const cb = eCbY[y];
-      for (let x = 0; x < nx; x += 1) {
-        const i = row + x;
-        if (this.material[i] === 2) {
-          ex[i] = 0;
-          continue;
-        }
-        if (gyrotropicMaterial[i]) continue;
-        const electricDecay = this.electricLossDecay(loss[i], i);
-        const electricScale = s / eps[i];
-        const sigmaDamp = this.conductivityDamp(conductivity[i], eps[i]);
-        const sigmaCa = (1 - sigmaDamp) / (1 + sigmaDamp);
-        const sigmaCb = 1 / (1 + sigmaDamp);
-        ex[i] = (sigmaCa * ca * ex[i] + sigmaCb * cb * electricScale * (hz[i + nx] - hz[i])) * electricDecay;
-      }
-    }
-
-    for (let y = 0; y < ny; y += 1) {
-      const row = y * nx;
-      for (let x = 0; x < nx - 1; x += 1) {
-        const i = row + x;
-        if (this.material[i] === 2) {
-          ey[i] = 0;
-          continue;
-        }
-        if (gyrotropicMaterial[i]) continue;
-        const electricDecay = this.electricLossDecay(lossY[i], i);
-        const electricScale = s / epsY[i];
-        const sigmaDamp = this.conductivityDamp(conductivityY[i], epsY[i]);
-        const sigmaCa = (1 - sigmaDamp) / (1 + sigmaDamp);
-        const sigmaCb = 1 / (1 + sigmaDamp);
-        ey[i] = (sigmaCa * eCaX[x] * ey[i] - sigmaCb * eCbX[x] * electricScale * (hz[i + 1] - hz[i])) * electricDecay;
-      }
-    }
-
-    for (let y = 0; y < ny - 1; y += 1) {
-      const row = y * nx;
-      const caX = eCaY[y];
-      const cbX = eCbY[y];
-      for (let x = 0; x < nx - 1; x += 1) {
-        const i = row + x;
-        if (!gyrotropicMaterial[i]) continue;
-        if (this.material[i] === 2) {
-          ex[i] = 0;
-          ey[i] = 0;
-          continue;
-        }
-        const epsX = eps[i];
-        const epsYi = epsY[i];
-        const g = gyrotropyG[i];
-        const det = epsX * epsYi + g * g;
-        const safeDet = Math.abs(det) < 1e-6 ? (det < 0 ? -1e-6 : 1e-6) : det;
-        const sigmaDampX = this.conductivityDamp(conductivity[i], epsX);
-        const sigmaDampY = this.conductivityDamp(conductivityY[i], epsYi);
-        const sigmaCaX = (1 - sigmaDampX) / (1 + sigmaDampX);
-        const sigmaCaY = (1 - sigmaDampY) / (1 + sigmaDampY);
-        const sigmaCbX = 1 / (1 + sigmaDampX);
-        const sigmaCbY = 1 / (1 + sigmaDampY);
-        const sourceX = sigmaCbX * cbX * s * (hz[i + nx] - hz[i]);
-        const sourceY = -sigmaCbY * eCbX[x] * s * (hz[i + 1] - hz[i]);
-        const coupledX = (epsYi * sourceX - g * sourceY) / safeDet;
-        const coupledY = (g * sourceX + epsX * sourceY) / safeDet;
-        const decayX = this.electricLossDecay(loss[i], i);
-        const decayY = this.electricLossDecay(lossY[i], i);
-        ex[i] = (sigmaCaX * caX * ex[i] + coupledX) * decayX;
-        ey[i] = (sigmaCaY * eCaX[x] * ey[i] + coupledY) * decayY;
-      }
-    }
-
-    this.applyDispersiveElectricResponse();
-
-    for (let y = 1; y < ny - 1; y += 1) {
-      const row = y * nx;
-      for (let x = 1; x < nx - 1; x += 1) {
-        const i = row + x;
-        if (this.material[i] === 2) {
-          this.zeroElectricCell(i);
-          ex[i] = 0;
-          ey[i] = 0;
-          continue;
-        }
-        const dEyDx = ey[i] - ey[i - 1];
-        const dExDy = ex[i] - ex[i - nx];
-        const decayX = 1 / (1 + muLoss[i]);
-        const decayY = 1 / (1 + muLossY[i]);
-        const materialScaleX = s / mu[i];
-        const materialScaleY = s / muY[i];
-        hzx[i] = (hCaX[x] * hzx[i] - hCbX[x] * materialScaleX * dEyDx) * decayX;
-        hzy[i] = (hCaY[y] * hzy[i] + hCbY[y] * materialScaleY * dExDy) * decayY;
-        hz[i] = hzx[i] + hzy[i];
-      }
-    }
-  }
-
-  fieldValueAt(i, display = state.fieldDisplay) {
-    if (state.viewMode === "poynting") {
-      const s = this.poyntingAt(i);
-      if (display === "transverseX") return s.x;
-      if (display === "transverseY") return s.y;
-      return Math.hypot(s.x, s.y);
-    }
-    if (display === "transverseX") return this.hx[i];
-    if (display === "transverseY") return this.hy[i];
-    if (display === "electricMag") {
-      if (state.fieldComponent === "hz") {
-        return Math.hypot(this.hx[i], this.hy[i]);
-      }
-      return Math.abs(this.ez[i]);
-    }
-    if (display === "magneticMag") {
-      if (state.fieldComponent === "hz") {
-        return Math.abs(this.ez[i]);
-      }
-      return Math.hypot(this.hx[i], this.hy[i]);
-    }
-    return this.ez[i];
-  }
-
-  poyntingAt(i) {
-    if (state.fieldComponent === "hz") {
-      return { x: this.hy[i] * this.ez[i], y: -this.hx[i] * this.ez[i] };
-    }
-    return { x: -this.ez[i] * this.hy[i], y: this.ez[i] * this.hx[i] };
-  }
-
-  fieldPhysicalScale() {
-    return state.viewMode === "poynting" ? this.fieldScale * this.fieldScale : this.fieldScale;
-  }
-
-  fieldPhysicalLogScale() {
-    return (state.viewMode === "poynting" ? 2 : 1) * this.fieldLog10Scale;
-  }
-
-  fieldDisplayIsMagnitude() {
-    return fieldDisplayConfig().magnitude;
-  }
-
-  transverseVectorAt(i) {
-    if (state.viewMode === "poynting") return this.poyntingAt(i);
-    return { x: this.hx[i], y: this.hy[i] };
-  }
-
-  diagnosticMonitorPositions() {
-    const min = this.activeInteriorMinX();
-    const max = this.activeInteriorMaxX();
-    const width = Math.max(1, max - min);
-    return {
-      left: clampInt(min + width * 0.28, min, max),
-      right: clampInt(min + width * 0.74, min, max),
-    };
-  }
-
-  diagnosticIncidentSource() {
-    return state.sources.find((source) => incidentFieldSourceShapes.has(source.shape)) || state.sources[0] || defaultSourceConfig;
-  }
-
-  diagnosticDirection() {
-    const source = this.diagnosticIncidentSource();
-    const theta = ((Number(source.angleDeg) || 0) * Math.PI) / 180;
-    return {
-      theta,
-      cos: Math.cos(theta),
-      sin: Math.sin(theta),
-      angleDeg: ((Number(source.angleDeg) || 0) % 360 + 360) % 360,
-    };
-  }
-
-  lineDirectionalFluxAt(x, direction = this.diagnosticDirection()) {
-    const y0 = this.activeInteriorMinY();
-    const y1 = this.activeInteriorMaxY();
-    let flux = 0;
-    let samples = 0;
-    for (let y = y0; y <= y1; y += 1) {
-      const idx = this.id(x, y);
-      if (this.material[idx] === 2) continue;
-      const s = this.poyntingAt(idx);
-      flux += s.x * direction.cos + s.y * direction.sin;
-      samples += 1;
-    }
-    return samples > 0 ? (flux / samples) * this.fieldPhysicalScale() : 0;
-  }
-
-  directionalTangentialFieldsAt(idx, direction) {
-    const cos = direction.cos;
-    const sin = direction.sin;
-    if (state.fieldComponent === "hz") {
-      const eParallel = this.hy[idx] * cos - this.hx[idx] * sin;
-      return { electric: eParallel, magnetic: this.ez[idx] };
-    }
-    const hParallel = this.hx[idx] * sin - this.hy[idx] * cos;
-    return { electric: this.ez[idx], magnetic: hParallel };
-  }
-
-  lineWaveSeparationAt(x, direction = this.diagnosticDirection()) {
-    const y0 = this.activeInteriorMinY();
-    const y1 = this.activeInteriorMaxY();
-    let forward = 0;
-    let backward = 0;
-    let impedance = 0;
-    let samples = 0;
-    for (let y = y0; y <= y1; y += 1) {
-      const idx = this.id(x, y);
-      if (this.material[idx] === 2) continue;
-      const epsValue = Math.max(1e-6, Math.abs(state.fieldComponent === "hz" ? this.epsY[idx] : this.eps[idx]));
-      const muValue = Math.max(1e-6, Math.abs(state.fieldComponent === "hz" ? this.mu[idx] : this.muY[idx]));
-      const z = Math.sqrt(muValue / epsValue);
-      if (!Number.isFinite(z) || z <= 0) continue;
-      const tangential = this.directionalTangentialFieldsAt(idx, direction);
-      forward += 0.5 * (tangential.electric + z * tangential.magnetic);
-      backward += 0.5 * (tangential.electric - z * tangential.magnetic);
-      impedance += z;
-      samples += 1;
-    }
-    if (samples <= 0) return { forward: 0, backward: 0, impedance: 1 };
-    return { forward: forward / samples, backward: backward / samples, impedance: impedance / samples };
-  }
-
-  diagnosticFrequency() {
-    const sineSource = state.sources.find((source) => source.type === "sine") || this.diagnosticIncidentSource();
-    return clamp(Number(sineSource?.frequency) || defaultSourceConfig.frequency, 0.006, 0.095);
-  }
-
-  accumulateDiagnosticPhasor(name, value, phase) {
-    const target = this.diagnosticPhasors[name];
-    if (!target || !Number.isFinite(value)) return;
-    const alpha = this.diagnosticSamples < 12 ? 0.22 : 0.035;
-    target.re = (1 - alpha) * target.re + alpha * value * Math.cos(phase);
-    target.im = (1 - alpha) * target.im - alpha * value * Math.sin(phase);
-  }
-
-  diagnosticPowerFromPhasor(name, impedance) {
-    const target = this.diagnosticPhasors[name];
-    if (!target || this.diagnosticSamples <= 0) return 0;
-    const amplitude = 2 * Math.hypot(target.re, target.im);
-    const z = Math.max(1e-9, Math.abs(impedance));
-    return (amplitude * amplitude * this.fieldPhysicalScale()) / (2 * z);
-  }
-
-  updateDiagnostics() {
-    if (!state.diagnosticsEnabled) {
-      this.resetDiagnostics();
-      return;
-    }
-    this.updateAnalysisDiagnostics();
-    const monitors = this.diagnosticMonitorPositions();
-    const direction = this.diagnosticDirection();
-    this.diagnosticAngleDeg = direction.angleDeg;
-    this.diagnosticFluxLeft = this.lineDirectionalFluxAt(monitors.left, direction);
-    this.diagnosticFluxRight = this.lineDirectionalFluxAt(monitors.right, direction);
-    const left = this.lineWaveSeparationAt(monitors.left, direction);
-    const right = this.lineWaveSeparationAt(monitors.right, direction);
-    const phase = 2 * Math.PI * this.diagnosticFrequency() * this.time;
-    this.accumulateDiagnosticPhasor("incident", left.forward, phase);
-    this.accumulateDiagnosticPhasor("reflected", left.backward, phase);
-    this.accumulateDiagnosticPhasor("transmitted", right.forward, phase);
-    this.diagnosticSamples += 1;
-    this.diagnosticImpedanceLeft = left.impedance;
-    this.diagnosticImpedanceRight = right.impedance;
-    this.diagnosticIncidentPower = this.diagnosticPowerFromPhasor("incident", this.diagnosticImpedanceLeft);
-    this.diagnosticReflectedPower = this.diagnosticPowerFromPhasor("reflected", this.diagnosticImpedanceLeft);
-    this.diagnosticTransmittedPower = this.diagnosticPowerFromPhasor("transmitted", this.diagnosticImpedanceRight);
-    if (this.diagnosticIncidentPower > 1e-12) {
-      this.diagnosticReflectance = clamp(this.diagnosticReflectedPower / this.diagnosticIncidentPower, 0, 9.999);
-      this.diagnosticTransmittance = clamp(this.diagnosticTransmittedPower / this.diagnosticIncidentPower, 0, 9.999);
-    } else {
-      this.diagnosticTransmittance = 0;
-      this.diagnosticReflectance = 0;
-    }
-  }
-
-  measure() {
-    this.renormalizeFields();
-    if (this.lastDiverged) {
-      this.lastMax = 0;
-      this.lastMaxLog10 = -Infinity;
-      this.lastEnergy = 0;
-      this.lastEnergyLog10 = -Infinity;
-      return;
-    }
-
-    let maxAbs = 0;
-    let energy = 0;
-    for (let i = 0; i < this.n; i += 1) {
-      const value = this.fieldValueAt(i);
-      const abs = Math.abs(value);
-      if (abs > maxAbs) maxAbs = abs;
-      energy += value * value;
-    }
-    const physicalLogScale = this.fieldPhysicalLogScale();
-    this.lastMaxLog10 = maxAbs === 0 ? -Infinity : Math.log10(maxAbs) + physicalLogScale;
-    this.lastEnergyLog10 = energy === 0 ? -Infinity : Math.log10(energy / this.n) + 2 * physicalLogScale;
-    this.lastMax = this.lastMaxLog10 < 300 ? Math.pow(10, this.lastMaxLog10) : Infinity;
-    this.lastEnergy = this.lastEnergyLog10 < 300 ? Math.pow(10, this.lastEnergyLog10) : Infinity;
-  }
-
-  fieldRenderScale() {
-    this.renormalizeFields();
-    let maxAbs = this.lastMax;
-    if (state.autoScale || maxAbs === 0) {
-      maxAbs = 0;
-      for (let i = 0; i < this.n; i += 1) {
-        const value = Math.abs(this.fieldValueAt(i));
-        if (value > maxAbs) maxAbs = value;
-      }
-    } else {
-      maxAbs = maxAbs / this.fieldPhysicalScale();
-    }
-    const scale = state.autoScale ? 0.94 / Math.max(0.02, maxAbs) : state.gain * this.fieldPhysicalScale();
-    this.lastViewRangeLog10 = state.autoScale
-      ? Math.log10(1 / Math.max(scale, 1e-300)) + this.fieldPhysicalLogScale()
-      : Math.log10(1 / Math.max(state.gain, 1e-300));
-    this.lastViewRange = this.lastViewRangeLog10 < 300 ? Math.pow(10, this.lastViewRangeLog10) : Infinity;
-    return scale;
-  }
-
-  renderFieldImage(data) {
-    const scale = this.fieldRenderScale();
-    const isMagnitude = this.fieldDisplayIsMagnitude();
-
-    for (let i = 0; i < this.n; i += 1) {
-      const value = this.fieldValueAt(i);
-      const rawMapped = Number.isFinite(value) ? value * scale : 0;
-      const mapped = Number.isFinite(rawMapped)
-        ? isMagnitude
-          ? clamp(rawMapped, 0, 1)
-          : clamp(rawMapped, -1, 1)
-        : Math.sign(value || 0);
-      let [r, g, b] = cmasherColor(currentFieldColormapName(isMagnitude), mapped, 1, !isMagnitude);
-
-      if (this.material[i] === 1) {
-        r = Math.round(r * 0.78 + 36);
-        g = Math.round(g * 0.78 + 62);
-        b = Math.round(b * 0.78 + 42);
-      } else if (this.material[i] === 2) {
-        r = 8;
-        g = 11;
-        b = 13;
-      } else if (this.material[i] === 3) {
-        r = Math.round(r * 0.72 + 92);
-        g = Math.round(g * 0.72 + 48);
-        b = Math.round(b * 0.72 + 12);
-      } else if (this.material[i] === 4) {
-        r = Math.round(r * 0.52 + 18);
-        g = Math.round(g * 0.52 + 24);
-        b = Math.round(b * 0.52 + 74);
-      } else if (this.material[i] === 5) {
-        r = Math.round(r * 0.84 + 26);
-        g = Math.round(g * 0.84 + 42);
-        b = Math.round(b * 0.84 + 52);
-      }
-
-      const p = i * 4;
-      data[p] = r;
-      data[p + 1] = g;
-      data[p + 2] = b;
-      data[p + 3] = 255;
-    }
-  }
-
-  surfaceFieldColor(mapped, shade = 1) {
-    const magnitude = this.fieldDisplayIsMagnitude();
-    const [r, g, b] = cmasherColor(currentFieldColormapName(magnitude), mapped, shade, !magnitude);
-    return `rgb(${clamp(r, 0, 255)}, ${clamp(g, 0, 255)}, ${clamp(b, 0, 255)})`;
-  }
-
-  materialViewContext() {
-    const showingMu = state.viewMode === "mu";
-    const values = showingMu
-      ? state.materialPart === "imag"
-        ? this.muLoss
-        : this.mu
-      : state.materialPart === "imag"
-        ? this.loss
-        : this.eps;
-    const center = state.materialPart === "imag" ? 0 : 1;
-    const minimumRange = state.materialPart === "imag" ? 0.001 : 0.25;
-    let minValue = Infinity;
-    let maxValue = -Infinity;
-    for (let i = 0; i < this.n; i += 1) {
-      const value = values[i];
-      if (!Number.isFinite(value)) continue;
-      if (value < minValue) minValue = value;
-      if (value > maxValue) maxValue = value;
-    }
-    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
-      minValue = center;
-      maxValue = center;
-    }
-    let min = Math.min(minValue, center);
-    let max = Math.max(maxValue, center);
-    if (max - min < minimumRange) {
-      min = center - minimumRange;
-      max = center + minimumRange;
-    }
-    this.lastMaterialViewCenter = center;
-    this.lastMaterialViewMin = min;
-    this.lastMaterialViewMax = max;
-    return { values, center, min, max };
-  }
-
-  materialMappedValue(value, context) {
-    let rawMapped = 0;
-    if (Number.isFinite(value)) {
-      rawMapped =
-        value >= context.center
-          ? context.max === context.center
-            ? 0
-            : (value - context.center) / (context.max - context.center)
-          : context.min === context.center
-            ? 0
-            : (value - context.center) / (context.center - context.min);
-    }
-    return Number.isFinite(rawMapped) ? clamp(rawMapped, -1, 1) : Math.sign(value || 0);
-  }
-
-  materialSurfaceColor(mapped, shade = 1, materialContext = null) {
-    const context = materialContext || this.materialViewContext();
-    const materialMapName = currentMaterialColormapName(context);
-    const materialMapSigned = state.materialPart === "imag" || (context.min < context.center && context.max > context.center);
-    const [r, g, b] = cmasherColor(materialMapName, materialMapSigned ? mapped : 0.5 + 0.5 * mapped, shade, materialMapSigned);
-    return `rgb(${clamp(r, 0, 255)}, ${clamp(g, 0, 255)}, ${clamp(b, 0, 255)})`;
-  }
-
-  surfaceRenderContext() {
-    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
-      return { kind: "material", material: this.materialViewContext() };
-    }
-    return { kind: "field", scale: this.fieldRenderScale() };
-  }
-
-  surfaceSample(x, y, context) {
-    const sx = Math.max(0, Math.min(this.nx - 1, Math.floor(x)));
-    const sy = Math.max(0, Math.min(this.ny - 1, Math.floor(y)));
-    const i = this.id(sx, sy);
-    let mapped;
-    if (context.kind === "material") {
-      mapped = this.materialMappedValue(context.material.values[i], context.material);
-    } else {
-      const value = this.fieldValueAt(i);
-      const rawMapped = Number.isFinite(value) ? value * context.scale : 0;
-      mapped = Number.isFinite(rawMapped)
-        ? this.fieldDisplayIsMagnitude()
-          ? clamp(rawMapped, 0, 1)
-          : clamp(rawMapped, -1, 1)
-        : Math.sign(value || 0);
-    }
-    return { mapped, material: this.material[i] };
-  }
-
-  surfaceColor(mapped, shade, context) {
-    return context.kind === "material" ? this.materialSurfaceColor(mapped, shade, context.material) : this.surfaceFieldColor(mapped, shade);
-  }
-
-  projectSurfacePoint(x, y, mapped, dims) {
-    const u = (x - this.viewX) / this.visibleGridWidth() - 0.5;
-    const v = (y - this.viewY) / this.visibleGridHeight() - 0.5;
-    return {
-      x: dims.cx + u * dims.planeW + v * dims.skewW,
-      y: dims.cy + v * dims.planeH - mapped * dims.heightScale,
-    };
-  }
-
-  renderSurfaceField() {
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const surfaceContext = this.surfaceRenderContext();
-    const background = ctx.createLinearGradient(0, 0, 0, h);
-    background.addColorStop(0, "rgb(3, 5, 9)");
-    background.addColorStop(0.58, "rgb(7, 8, 13)");
-    background.addColorStop(1, "rgb(0, 0, 0)");
-    ctx.fillStyle = background;
-    ctx.fillRect(0, 0, w, h);
-
-    const viewW = this.visibleGridWidth();
-    const viewH = this.visibleGridHeight();
-    const targetCols = clampInt(w / (13 * dpr), 42, 96);
-    const targetRows = clampInt(h / (12 * dpr), 32, 72);
-    const stepX = Math.max(1, Math.ceil(viewW / targetCols));
-    const stepY = Math.max(1, Math.ceil(viewH / targetRows));
-    const x0 = this.viewX;
-    const y0 = this.viewY;
-    const x1 = this.viewX + viewW;
-    const y1 = this.viewY + viewH;
-    const xs = [];
-    const ys = [];
-
-    for (let x = x0; x < x1; x += stepX) xs.push(Math.min(x, this.nx));
-    if (xs.length === 0 || xs[xs.length - 1] < x1) xs.push(Math.min(x1, this.nx));
-    for (let y = y0; y < y1; y += stepY) ys.push(Math.min(y, this.ny));
-    if (ys.length === 0 || ys[ys.length - 1] < y1) ys.push(Math.min(y1, this.ny));
-
-    const dims = {
-      cx: w * 0.48,
-      cy: h * 0.63,
-      planeW: w * 0.78,
-      planeH: h * 0.5,
-      skewW: w * 0.18,
-      heightScale: clamp(Math.min(w, h) * 0.2, 28 * dpr, 116 * dpr),
-    };
-
-    ctx.save();
-    ctx.lineJoin = "round";
-    ctx.lineWidth = Math.max(0.65 * dpr, 0.8);
-    for (let row = 0; row < ys.length - 1; row += 1) {
-      const rowLight = 0.86 + (row / Math.max(1, ys.length - 2)) * 0.12;
-      for (let col = 0; col < xs.length - 1; col += 1) {
-        const p00 = this.surfaceSample(xs[col], ys[row], surfaceContext);
-        const p10 = this.surfaceSample(xs[col + 1], ys[row], surfaceContext);
-        const p11 = this.surfaceSample(xs[col + 1], ys[row + 1], surfaceContext);
-        const p01 = this.surfaceSample(xs[col], ys[row + 1], surfaceContext);
-        const avg = (p00.mapped + p10.mapped + p11.mapped + p01.mapped) * 0.25;
-        const slope =
-          Math.abs((p10.mapped + p11.mapped - p00.mapped - p01.mapped) * 0.5) +
-          Math.abs((p01.mapped + p11.mapped - p00.mapped - p10.mapped) * 0.5);
-        const shade = clamp(rowLight - slope * 0.12 + Math.max(0, avg) * 0.08, 0.62, 1.08);
-        const allPec = p00.material === 2 && p10.material === 2 && p11.material === 2 && p01.material === 2;
-        const q00 = this.projectSurfacePoint(xs[col], ys[row], p00.mapped, dims);
-        const q10 = this.projectSurfacePoint(xs[col + 1], ys[row], p10.mapped, dims);
-        const q11 = this.projectSurfacePoint(xs[col + 1], ys[row + 1], p11.mapped, dims);
-        const q01 = this.projectSurfacePoint(xs[col], ys[row + 1], p01.mapped, dims);
-
-        ctx.beginPath();
-        ctx.moveTo(q00.x, q00.y);
-        ctx.lineTo(q10.x, q10.y);
-        ctx.lineTo(q11.x, q11.y);
-        ctx.lineTo(q01.x, q01.y);
-        ctx.closePath();
-        ctx.fillStyle = allPec ? "rgb(7, 8, 11)" : this.surfaceColor(avg, shade, surfaceContext);
-        ctx.fill();
-        ctx.strokeStyle = `rgba(255, 244, 170, ${0.035 + Math.abs(avg) * 0.04})`;
-        ctx.stroke();
-      }
-    }
-
-    const corners = [
-      this.projectSurfacePoint(x0, y0, 0, dims),
-      this.projectSurfacePoint(x1, y0, 0, dims),
-      this.projectSurfacePoint(x1, y1, 0, dims),
-      this.projectSurfacePoint(x0, y1, 0, dims),
-    ];
-    ctx.beginPath();
-    ctx.moveTo(corners[0].x, corners[0].y);
-    for (let i = 1; i < corners.length; i += 1) ctx.lineTo(corners[i].x, corners[i].y);
-    ctx.closePath();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = Math.max(1 * dpr, 1);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  renderMaterialImage(data) {
-    const materialContext = this.materialViewContext();
-    const materialMapName = currentMaterialColormapName(materialContext);
-    const materialMapSigned = state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
-    const materialSpan = Math.max(1e-9, materialContext.max - materialContext.min);
-
-    for (let i = 0; i < this.n; i += 1) {
-      const mapped = this.materialMappedValue(materialContext.values[i], materialContext);
-      const normalized = (materialContext.values[i] - materialContext.min) / materialSpan;
-      let [r, g, b] = cmasherColor(materialMapName, materialMapSigned ? mapped : normalized, 1, materialMapSigned);
-
-      if (this.material[i] === 2) {
-        r = 8;
-        g = 11;
-        b = 13;
-      }
-
-      const p = i * 4;
-      data[p] = r;
-      data[p + 1] = g;
-      data[p + 2] = b;
-      data[p + 3] = 255;
-    }
-  }
-
-  render() {
-    this.fitCanvas();
-    this.clampView();
-    if (state.viewProjection === "3d") {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.renderSurfaceField();
-      updateColorbar();
-      updateMaterialWarning();
-      return;
-    }
-
-    const data = this.image.data;
-    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
-      this.renderMaterialImage(data);
-    } else {
-      this.renderFieldImage(data);
-    }
-
-    this.offscreenCtx.putImageData(this.image, 0, 0);
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.imageSmoothingEnabled = false;
-    this.ctx.drawImage(
-      this.offscreen,
-      this.viewX,
-      this.viewY,
-      this.visibleGridWidth(),
-      this.visibleGridHeight(),
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
-    this.drawPmlOverlay();
-    this.drawDiagnosticsOverlay();
-    this.drawMaterialSelectionOverlay();
-    this.drawFieldQuiverOverlay();
-    this.drawReferenceOverlay();
-    this.drawSourceMarkers();
-    updateColorbar();
-    updateMaterialWarning();
-  }
-
-  drawMaterialSelectionOverlay() {
-    if (!selectedMaterialRegion || selectedMaterialRegion.cells.length === 0) return;
-    const rect = this.gridRectToCanvas(
-      selectedMaterialRegion.bounds.minX,
-      selectedMaterialRegion.bounds.minY,
-      selectedMaterialRegion.bounds.maxX + 1,
-      selectedMaterialRegion.bounds.maxY + 1
-    );
-    if (!rect) return;
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    ctx.save();
-    ctx.fillStyle = "rgba(8, 124, 137, 0.12)";
-    ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
-    ctx.strokeStyle = "rgba(0, 52, 58, 0.9)";
-    ctx.lineWidth = Math.max(1.5 * dpr, 1);
-    ctx.setLineDash([7 * dpr, 4 * dpr]);
-    ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
-    ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(0, 52, 58, 0.86)";
-    ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "bottom";
-    const label = `${selectedMaterialRegion.cells.length} cells`;
-    ctx.fillText(label, rect.left + 6 * dpr, Math.max(14 * dpr, rect.top - 5 * dpr));
-    ctx.restore();
-  }
-
-  drawPmlOverlay() {
-    normalizeBoundarySides();
-
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const spacing = Math.max(8 * dpr, Math.min(w, h) / 40);
-    const drawPmlRegion = (side, x0, y0, x1, y1) => {
-      const rect = this.gridRectToCanvas(x0, y0, x1, y1);
-      if (!rect) return;
-      ctx.save();
-      ctx.fillStyle = "rgba(0, 92, 102, 0.08)";
-      ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
-      ctx.beginPath();
-      ctx.rect(rect.left, rect.top, rect.width, rect.height);
-      ctx.clip();
-      ctx.strokeStyle = "rgba(0, 92, 102, 0.36)";
-      ctx.lineWidth = Math.max(1, dpr);
-      ctx.beginPath();
-      const startX = Math.floor(rect.left / spacing) * spacing;
-      const endX = rect.left + rect.width;
-      const startY = Math.floor(rect.top / spacing) * spacing;
-      const endY = rect.top + rect.height;
-      for (let x = startX; x <= endX; x += spacing) {
-        ctx.moveTo(x, rect.top);
-        ctx.lineTo(x, rect.top + rect.height);
-      }
-      for (let y = startY; y <= endY; y += spacing) {
-        ctx.moveTo(rect.left, y);
-        ctx.lineTo(rect.left + rect.width, y);
-      }
-      ctx.stroke();
-      if (rect.width > 36 * dpr && rect.height > 18 * dpr) {
-        ctx.fillStyle = "rgba(0, 58, 64, 0.82)";
-        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("PML", rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }
-      ctx.restore();
-    };
-
-    const drawReflectiveEdge = (side) => {
-      if (boundarySideIsAbsorbing(side)) return;
-      const layer = Math.max(1, this.boundaryControlLayer());
-      const metalCells = clampInt(Math.round(state.cellsPerWavelength * 0.14), 3, Math.max(3, Math.min(10, Math.floor(layer * 0.45))));
-      const rect =
-        side === "top"
-          ? this.gridRectToCanvas(0, layer - metalCells, this.nx, layer)
-          : side === "bottom"
-            ? this.gridRectToCanvas(0, this.ny - layer, this.nx, this.ny - layer + metalCells)
-            : side === "left"
-              ? this.gridRectToCanvas(layer - metalCells, 0, layer, this.ny)
-              : this.gridRectToCanvas(this.nx - layer, 0, this.nx - layer + metalCells, this.ny);
-      if (!rect) return;
-      const horizontal = side === "top" || side === "bottom";
-      const metalGradient = horizontal
-        ? ctx.createLinearGradient(rect.left, rect.top, rect.left, rect.top + rect.height)
-        : ctx.createLinearGradient(rect.left, rect.top, rect.left + rect.width, rect.top);
-      metalGradient.addColorStop(0, "rgba(255, 255, 255, 0.58)");
-      metalGradient.addColorStop(0.18, "rgba(154, 164, 170, 0.7)");
-      metalGradient.addColorStop(0.52, "rgba(42, 51, 58, 0.86)");
-      metalGradient.addColorStop(1, "rgba(6, 10, 14, 0.92)");
-      ctx.save();
-      ctx.fillStyle = metalGradient;
-      ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
-      ctx.beginPath();
-      ctx.rect(rect.left, rect.top, rect.width, rect.height);
-      ctx.clip();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.lineWidth = Math.max(1, dpr);
-      ctx.beginPath();
-      const hatchSpacing = Math.max(7 * dpr, metalCells * dpr * 0.65);
-      const hatchExtent = rect.width + rect.height;
-      for (let p = -hatchExtent; p <= hatchExtent * 2; p += hatchSpacing) {
-        ctx.moveTo(rect.left + p, rect.top + rect.height);
-        ctx.lineTo(rect.left + p + rect.height, rect.top);
-      }
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(3, 7, 10, 0.68)";
-      ctx.lineWidth = Math.max(1.2 * dpr, 1);
-      ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
-      ctx.restore();
-    };
-
-    if (this.pmlLayer > 0) {
-      const topInset = boundarySideIsAbsorbing("top") ? this.pmlLayer : 0;
-      const bottomInset = boundarySideIsAbsorbing("bottom") ? this.pmlLayer : 0;
-      if (boundarySideIsAbsorbing("top")) drawPmlRegion("top", 0, 0, this.nx, this.pmlLayer);
-      if (boundarySideIsAbsorbing("bottom")) drawPmlRegion("bottom", 0, this.ny - this.pmlLayer, this.nx, this.ny);
-      if (boundarySideIsAbsorbing("left")) drawPmlRegion("left", 0, topInset, this.pmlLayer, this.ny - bottomInset);
-      if (boundarySideIsAbsorbing("right")) drawPmlRegion("right", this.nx - this.pmlLayer, topInset, this.nx, this.ny - bottomInset);
-    }
-
-    BOUNDARY_SIDES.forEach((side) => drawReflectiveEdge(side));
-
-    const drawBoundaryInterfaceLine = (side) => {
-      const layer = this.boundaryControlLayer();
-      if (layer <= 0) return;
-      const absorbing = boundarySideIsAbsorbing(side);
-      ctx.save();
-      ctx.strokeStyle = absorbing ? "rgba(0, 92, 102, 0.75)" : "rgba(3, 7, 10, 0.88)";
-      ctx.lineWidth = Math.max(absorbing ? 1 : 1.35, dpr);
-      ctx.setLineDash(absorbing ? [6 * dpr, 4 * dpr] : []);
-      ctx.beginPath();
-      if (side === "left") {
-        const x = this.gridToCanvasX(layer);
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-      } else if (side === "right") {
-        const x = this.gridToCanvasX(this.nx - layer);
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-      } else if (side === "top") {
-        const y = this.gridToCanvasY(layer);
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-      } else if (side === "bottom") {
-        const y = this.gridToCanvasY(this.ny - layer);
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-      }
-      ctx.stroke();
-      ctx.restore();
-    };
-    BOUNDARY_SIDES.forEach((side) => drawBoundaryInterfaceLine(side));
-  }
-
-  drawFieldQuiverOverlay() {
-    if (!state.fieldQuiver || (state.viewMode !== "field" && state.viewMode !== "poynting") || state.viewProjection !== "2d") return;
-
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const viewW = this.visibleGridWidth();
-    const viewH = this.visibleGridHeight();
-    const cols = clampInt(this.canvas.width / (58 * dpr), 8, 26);
-    const rows = clampInt(this.canvas.height / (58 * dpr), 6, 22);
-    const samples = [];
-    let maxMag = 0;
-
-    for (let row = 0; row < rows; row += 1) {
-      const gy = this.viewY + ((row + 0.5) / rows) * viewH;
-      const y = clampInt(Math.round(gy), 1, this.ny - 2);
-      for (let col = 0; col < cols; col += 1) {
-        const gx = this.viewX + ((col + 0.5) / cols) * viewW;
-        const x = clampInt(Math.round(gx), 1, this.nx - 2);
-        const idx = this.id(x, y);
-        if (this.material[idx] === 2) continue;
-        const vector = this.transverseVectorAt(idx);
-        const mag = Math.hypot(vector.x, vector.y);
-        if (!Number.isFinite(mag) || mag <= 0) continue;
-        maxMag = Math.max(maxMag, mag);
-        samples.push({ x, y, vx: vector.x, vy: vector.y, mag });
-      }
-    }
-
-    if (maxMag <= 1e-12) return;
-
-    const maxLength = clamp(Math.min(this.canvas.width / cols, this.canvas.height / rows) * 0.42, 8 * dpr, 22 * dpr);
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (const sample of samples) {
-      const normalized = clamp(sample.mag / maxMag, 0, 1);
-      if (normalized < 0.04) continue;
-      const cx = this.gridToCanvasX(sample.x + 0.5);
-      const cy = this.gridToCanvasY(sample.y + 0.5);
-      const ux = sample.vx / sample.mag;
-      const uy = -sample.vy / sample.mag;
-      const length = maxLength * (0.28 + 0.72 * Math.sqrt(normalized));
-      const x0 = cx - ux * length * 0.35;
-      const y0 = cy - uy * length * 0.35;
-      const x1 = cx + ux * length * 0.65;
-      const y1 = cy + uy * length * 0.65;
-      const head = Math.max(3.8 * dpr, length * 0.28);
-      const angle = Math.atan2(y1 - y0, x1 - x0);
-      const alpha = 0.26 + 0.52 * normalized;
-
-      ctx.lineWidth = Math.max(3.2 * dpr, 3);
-      ctx.strokeStyle = `rgba(255, 255, 255, ${0.38 * alpha})`;
-      this.strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head);
-      ctx.lineWidth = Math.max(1.25 * dpr, 1);
-      ctx.strokeStyle = `rgba(5, 13, 18, ${alpha})`;
-      this.strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head);
-    }
-    ctx.restore();
-  }
-
-  strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head) {
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle - Math.PI / 7), y1 - head * Math.sin(angle - Math.PI / 7));
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle + Math.PI / 7), y1 - head * Math.sin(angle + Math.PI / 7));
-    ctx.stroke();
-  }
-
-  drawDiagnosticsOverlay() {
-    if (!state.diagnosticsEnabled || state.viewProjection !== "2d") return;
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const monitors = this.diagnosticMonitorPositions();
-    const direction = this.diagnosticDirection();
-    const drawLine = (xCell, label, color) => {
-      const x = this.gridToCanvasX(xCell + 0.5);
-      if (x < -2 * dpr || x > this.canvas.width + 2 * dpr) return;
-      ctx.save();
-      ctx.setLineDash([7 * dpr, 6 * dpr]);
-      ctx.lineWidth = Math.max(1.4 * dpr, 1);
-      ctx.strokeStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(x, 10 * dpr);
-      ctx.lineTo(x, this.canvas.height - 10 * dpr);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      this.drawOverlayLabel(label, x + 12 * dpr, 24 * dpr, "left");
-      ctx.restore();
-    };
-    drawLine(monitors.left, "L", "rgba(11, 98, 232, 0.74)");
-    drawLine(monitors.right, "R", "rgba(16, 136, 82, 0.74)");
-    const arrowLength = 34 * dpr;
-    const x0 = 22 * dpr;
-    const y0 = 22 * dpr;
-    this.drawOverlayArrow(x0, y0, x0 + arrowLength * direction.cos, y0 - arrowLength * direction.sin, true);
-    this.drawOverlayLabel("k", x0 + arrowLength * direction.cos + 13 * dpr, y0 - arrowLength * direction.sin, "center", true);
-  }
-
-  drawReferenceOverlay() {
-    this.drawScaleBarOverlay();
-    this.drawAxisGlyphOverlay();
-  }
-
-  drawScaleBarOverlay() {
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const visibleLambdaWidth = Math.max(cellsToLambda(this.visibleGridWidth()), 1e-6);
-    const scaleLambda = niceScaleLength(visibleLambdaWidth);
-    const colorbarReserve = 108 * dpr;
-    const rightPad = state.viewMode === "field" || state.viewMode === "poynting" || state.viewProjection === "3d" ? colorbarReserve : 22 * dpr;
-    const x1 = Math.max(96 * dpr, w - rightPad);
-    const availableWidth = Math.max(48 * dpr, x1 - 22 * dpr);
-    const scaleWidth = clamp((scaleLambda / visibleLambdaWidth) * w, 42 * dpr, availableWidth * 0.72);
-    const x0 = Math.max(22 * dpr, x1 - scaleWidth);
-    const y = h - 34 * dpr;
-    const tick = 8 * dpr;
-
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    ctx.beginPath();
-    ctx.moveTo(x0, y);
-    ctx.lineTo(x1, y);
-    ctx.moveTo(x0, y - tick);
-    ctx.lineTo(x0, y + tick);
-    ctx.moveTo(x1, y - tick);
-    ctx.lineTo(x1, y + tick);
-    this.strokeOverlayPath(5 * dpr, 2 * dpr, true);
-
-    this.drawOverlayLabel(`${formatScaleBarValue(scaleLambda)} λ₀`, (x0 + x1) / 2, y - 17 * dpr, "center", true);
-    ctx.restore();
-  }
-
-  drawAxisGlyphOverlay() {
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const size = clamp(Math.min(w, h) * 0.085, 36 * dpr, 56 * dpr);
-    const originX = 34 * dpr;
-    const originY = h - 74 * dpr;
-
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    this.drawOverlayArrow(originX, originY, originX + size, originY, true);
-    this.drawOverlayArrow(originX, originY, originX, originY - size, true);
-    this.drawOverlayLabel("x", originX + size + 13 * dpr, originY, "center", true);
-    this.drawOverlayLabel("y", originX, originY - size - 13 * dpr, "center", true);
-    ctx.restore();
-  }
-
-  overlayReferenceColor() {
-    return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
-  }
-
-  drawOverlayArrow(x0, y0, x1, y1, plain = false) {
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const angle = Math.atan2(y1 - y0, x1 - x0);
-    const head = 9 * dpr;
-    const wing = Math.PI / 6;
-
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle - wing), y1 - head * Math.sin(angle - wing));
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle + wing), y1 - head * Math.sin(angle + wing));
-    this.strokeOverlayPath(5 * dpr, 2 * dpr, plain);
-  }
-
-  strokeOverlayPath(shadowWidth, lineWidth, plain = false) {
-    const ctx = this.ctx;
-    if (plain) {
-      ctx.strokeStyle = this.overlayReferenceColor();
-      ctx.lineWidth = lineWidth;
-      ctx.stroke();
-      return;
-    }
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.78)";
-    ctx.lineWidth = shadowWidth;
-    ctx.stroke();
-    ctx.strokeStyle = "rgba(5, 11, 15, 0.94)";
-    ctx.lineWidth = lineWidth;
-    ctx.stroke();
-  }
-
-  drawOverlayLabel(text, x, y, align, plain = false) {
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-    const metrics = ctx.measureText(text);
-    const padX = 5 * dpr;
-    const padY = 3 * dpr;
-    const width = metrics.width + 2 * padX;
-    const height = 13 * dpr + 2 * padY;
-    const left = align === "center" ? x - width / 2 : x - padX;
-    const top = y - height / 2;
-
-    ctx.save();
-    if (!plain) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.68)";
-      ctx.fillRect(left, top, width, height);
-    }
-    ctx.fillStyle = plain ? this.overlayReferenceColor() : "rgba(5, 11, 15, 0.94)";
-    ctx.textAlign = align;
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, x, y);
-    ctx.restore();
-  }
-
-  drawSourceMarkers() {
-    for (const source of state.sources) {
-      this.drawSourceMarker(source);
-    }
-  }
-
-  drawSourceMarker(source) {
-    const sx = this.sourceXCell(source);
-    const sy = this.sourceYCell(source);
-    const x = this.gridToCanvasX(sx + 0.5);
-    const y = this.gridToCanvasY(sy + 0.5);
-    const margin = 12 * Math.max(1, window.devicePixelRatio || 1);
-    if (source.shape === "line" && (x < -margin || x > this.canvas.width + margin)) return;
-    if (source.shape !== "line" && (x < -margin || x > this.canvas.width + margin || y < -margin || y > this.canvas.height + margin)) return;
-    this.ctx.save();
-    this.ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-    this.ctx.lineWidth = Math.max(1, window.devicePixelRatio || 1);
-    if (source.id === state.selectedSourceId) {
-      this.drawSourceSelectionHalo(x, y, source);
-    }
-    if (source.shape === "line") {
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, 8);
-      this.ctx.lineTo(x, this.canvas.height - 8);
-      this.ctx.stroke();
-    } else if (source.shape === "gaussianProfile") {
-      const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-      const halfHeight = (fwhm * 0.5) * (this.canvas.height / this.visibleGridHeight());
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, y - halfHeight);
-      this.ctx.lineTo(x, y + halfHeight);
-      this.ctx.stroke();
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, 3 * Math.max(1, window.devicePixelRatio || 1), 0, Math.PI * 2);
-      this.ctx.stroke();
-    } else if (localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)) {
-      this.drawAnalyticSourceGlyph(x, y, source);
-    } else {
-      this.drawPointSourceGlyph(x, y);
-    }
-    this.ctx.restore();
-  }
-
-  drawSourceSelectionHalo(x, y, source) {
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const radius =
-      localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)
-        ? this.sourceFwhmCanvasRadius(source) + 6 * dpr
-        : 18 * dpr;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(0, 112, 244, 0.85)";
-    ctx.lineWidth = 2 * dpr;
-    ctx.setLineDash([5 * dpr, 4 * dpr]);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  drawPointSourceGlyph(x, y) {
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const radius = 7 * dpr;
-    const arm = 13 * dpr;
-
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.moveTo(x - arm, y);
-    ctx.lineTo(x - radius - 2 * dpr, y);
-    ctx.moveTo(x + radius + 2 * dpr, y);
-    ctx.lineTo(x + arm, y);
-    ctx.moveTo(x, y - arm);
-    ctx.lineTo(x, y - radius - 2 * dpr);
-    ctx.moveTo(x, y + radius + 2 * dpr);
-    ctx.lineTo(x, y + arm);
-    this.strokeOverlayPath(5 * dpr, 2 * dpr);
-
-    ctx.beginPath();
-    ctx.arc(x, y, 2.2 * dpr, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(5, 11, 15, 0.94)";
-    ctx.fill();
-    ctx.lineWidth = 1.5 * dpr;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.82)";
-    ctx.stroke();
-  }
-
-  drawAnalyticSourceGlyph(x, y, source) {
-    const ctx = this.ctx;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const radius = this.sourceFwhmCanvasRadius(source);
-    const theta = (source.angleDeg * Math.PI) / 180;
-
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    this.strokeOverlayPath(5 * dpr, 2 * dpr);
-
-    ctx.beginPath();
-    ctx.arc(x, y, 2.3 * dpr, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(5, 11, 15, 0.94)";
-    ctx.fill();
-
-    if (source.shape === "gaussianSpot") return;
-
-    const dx = Math.cos(theta) * radius;
-    const dy = -Math.sin(theta) * radius;
-    const wing = Math.PI / 6;
-    const head = 8 * dpr;
-    const angle = Math.atan2(dy, dx);
-    const x0 = x - dx;
-    const y0 = y - dy;
-    const x1 = x + dx;
-    const y1 = y + dy;
-
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle - wing), y1 - head * Math.sin(angle - wing));
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x1 - head * Math.cos(angle + wing), y1 - head * Math.sin(angle + wing));
-
-    if (source.shape === "quadrupole" || source.shape === "multipole") {
-      const crossDx = -dy * 0.45;
-      const crossDy = dx * 0.45;
-      ctx.moveTo(x - crossDx, y - crossDy);
-      ctx.lineTo(x + crossDx, y + crossDy);
-    }
-
-    this.strokeOverlayPath(5 * dpr, 2 * dpr);
-
-    if (circularDipoleSourceShapes.has(source.shape)) {
-      const spinRadius = Math.max(8 * dpr, radius * 0.42);
-      const spinSign = source.shape === "circularDipoleCw" ? 1 : -1;
-      const start = theta + spinSign * 0.15;
-      const end = theta + spinSign * 1.65 * Math.PI;
-      const headAngle = end + spinSign * Math.PI * 0.5;
-      const hx = x + spinRadius * Math.cos(end);
-      const hy = y - spinRadius * Math.sin(end);
-      ctx.beginPath();
-      ctx.arc(x, y, spinRadius, -start, -end, spinSign < 0);
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(hx - 6 * dpr * Math.cos(headAngle - 0.45), hy + 6 * dpr * Math.sin(headAngle - 0.45));
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(hx - 6 * dpr * Math.cos(headAngle + 0.45), hy + 6 * dpr * Math.sin(headAngle + 0.45));
-      this.strokeOverlayPath(4 * dpr, 1.6 * dpr);
-      this.drawOverlayLabel(source.shape === "circularDipoleCw" ? "+90" : "-90", x + radius + 14 * dpr, y, "left");
-      return;
-    }
-
-    if (source.shape === "janusDipole") {
-      this.drawOverlayLabel("Janus", x + radius + 14 * dpr, y, "left");
-      return;
-    }
-
-    if (source.shape === "huygens") {
-      this.drawOverlayLabel("Huygens", x + radius + 14 * dpr, y, "left");
-      return;
-    }
-
-    if (inPlaneElectricCurrentShapes.has(source.shape)) {
-      this.drawOverlayLabel("J||", x + radius + 14 * dpr, y, "left");
-      return;
-    }
-
-    if (source.shape === "pointDipole") {
-      this.drawOverlayLabel("p", x + radius + 14 * dpr, y, "left");
-      return;
-    }
-
-    if (source.shape === "multipole") {
-      this.drawOverlayLabel(`n=${this.localizedSourceOrder("multipole", source)}`, x + radius + 14 * dpr, y, "left");
-    }
-  }
-
-  sourceAtClientPoint(clientX, clientY) {
-    const rect = this.canvas.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return null;
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const cx = (clientX - rect.left) * dpr;
-    const cy = (clientY - rect.top) * dpr;
-    let best = null;
-    let bestDistance = Infinity;
-    for (const source of state.sources) {
-      const sx = this.sourceXCell(source);
-      const sy = this.sourceYCell(source);
-      const x = this.gridToCanvasX(sx + 0.5);
-      const y = this.gridToCanvasY(sy + 0.5);
-      const distance =
-        source.shape === "line" || source.shape === "gaussianProfile"
-          ? Math.abs(cx - x)
-          : Math.hypot(cx - x, cy - y);
-      const radius = this.sourceHitRadius(source);
-      if (distance <= radius && distance < bestDistance) {
-        best = source;
-        bestDistance = distance;
-      }
-    }
-    return best;
-  }
-
-  sourceHitRadius(source) {
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    if (localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)) {
-      return Math.max(18 * dpr, this.sourceFwhmCanvasRadius(source) + 8 * dpr);
-    }
-    if (source.shape === "line") return 18 * dpr;
-    if (source.shape === "gaussianProfile") return 22 * dpr;
-    return 18 * dpr;
-  }
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function lerp(a, b, t) {
-  return a + (b - a) * t;
-}
-
-const CMASHER_COLORMAPS = {
-  redshift: {
-    kind: "diverging",
-    stops: [
-      { t: 0, c: [24, 10, 50] },
-      { t: 0.125, c: [92, 26, 179] },
-      { t: 0.25, c: [72, 126, 220] },
-      { t: 0.375, c: [127, 197, 220] },
-      { t: 0.5, c: [255, 255, 255] },
-      { t: 0.625, c: [211, 178, 117] },
-      { t: 0.75, c: [192, 89, 32] },
-      { t: 0.875, c: [131, 15, 49] },
-      { t: 1, c: [39, 4, 18] },
-    ],
-  },
-  iceburn: {
-    kind: "diverging",
-    stops: [
-      { t: 0, c: [148, 241, 243] },
-      { t: 0.125, c: [56, 173, 226] },
-      { t: 0.25, c: [58, 101, 190] },
-      { t: 0.375, c: [42, 48, 78] },
-      { t: 0.5, c: [0, 0, 0] },
-      { t: 0.625, c: [76, 35, 38] },
-      { t: 0.75, c: [159, 70, 38] },
-      { t: 0.875, c: [215, 136, 22] },
-      { t: 1, c: [245, 222, 69] },
-    ],
-  },
-  ember: {
-    kind: "sequential",
-    stops: [
-      { t: 0, c: [252, 249, 239] },
-      { t: 0.2, c: [248, 218, 153] },
-      { t: 0.42, c: [238, 150, 72] },
-      { t: 0.68, c: [184, 68, 54] },
-      { t: 1, c: [72, 28, 52] },
-    ],
-  },
-  torch: {
-    kind: "sequential",
-    stops: [
-      { t: 0, c: [12, 18, 55] },
-      { t: 0.22, c: [51, 50, 122] },
-      { t: 0.45, c: [131, 55, 131] },
-      { t: 0.7, c: [219, 93, 78] },
-      { t: 1, c: [255, 218, 107] },
-    ],
-  },
-  rainforest: {
-    kind: "sequential",
-    stops: [
-      { t: 0, c: [247, 250, 244] },
-      { t: 0.24, c: [190, 222, 196] },
-      { t: 0.5, c: [93, 170, 146] },
-      { t: 0.75, c: [32, 109, 124] },
-      { t: 1, c: [20, 45, 83] },
-    ],
-  },
-  ocean: {
-    kind: "sequential",
-    stops: [
-      { t: 0, c: [9, 13, 22] },
-      { t: 0.22, c: [24, 52, 100] },
-      { t: 0.5, c: [24, 125, 157] },
-      { t: 0.76, c: [98, 207, 196] },
-      { t: 1, c: [240, 251, 227] },
-    ],
-  },
-};
-
-function interpolateColorStops(stops, t, shade = 1) {
-  const clampedT = clamp(t, 0, 1);
-  let left = stops[0];
-  let right = stops[stops.length - 1];
-  for (let i = 0; i < stops.length - 1; i += 1) {
-    if (clampedT >= stops[i].t && clampedT <= stops[i + 1].t) {
-      left = stops[i];
-      right = stops[i + 1];
-      break;
-    }
-  }
-  const local = right.t === left.t ? 0 : (clampedT - left.t) / (right.t - left.t);
-  return [
-    clamp(Math.round((left.c[0] + (right.c[0] - left.c[0]) * local) * shade), 0, 255),
-    clamp(Math.round((left.c[1] + (right.c[1] - left.c[1]) * local) * shade), 0, 255),
-    clamp(Math.round((left.c[2] + (right.c[2] - left.c[2]) * local) * shade), 0, 255),
-  ];
-}
-
-function cmasherMap(name) {
-  return CMASHER_COLORMAPS[name] || CMASHER_COLORMAPS.redshift;
-}
-
-function currentFieldColormapName(magnitude = false) {
-  if (magnitude) return state.theme === "dark" ? "torch" : "ember";
-  return state.theme === "dark" ? "iceburn" : "redshift";
-}
-
-function currentMaterialColormapName(context) {
-  const crossesCenter = context.min < context.center && context.max > context.center;
-  if (state.materialPart === "imag" || crossesCenter) return state.theme === "dark" ? "iceburn" : "redshift";
-  return state.theme === "dark" ? "ocean" : "rainforest";
-}
-
-function cmasherColor(name, value, shade = 1, signed = false) {
-  const t = signed ? 0.5 + 0.5 * clamp(value, -1, 1) : clamp(value, 0, 1);
-  return interpolateColorStops(cmasherMap(name).stops, t, shade);
-}
-
-function cmasherGradient(name) {
-  const parts = [...cmasherMap(name).stops]
-    .reverse()
-    .map((stop) => `rgb(${stop.c[0]}, ${stop.c[1]}, ${stop.c[2]}) ${((1 - stop.t) * 100).toFixed(1)}%`);
-  return `linear-gradient(to bottom, ${parts.join(", ")})`;
-}
-
-function clampInt(value, min, max) {
-  return Math.round(clamp(Number(value) || 0, min, max));
 }
 
 function updateRangeProgress(input) {
@@ -5531,7 +663,10 @@ function normalizeSource(source) {
   source.amplitude = clamp(Number(source.amplitude) || defaultSourceConfig.amplitude, 0.05, 1.2);
   source.xLambda = clamp(Number(source.xLambda) || defaultSourceConfig.xLambda, minSourceXLambda(), maxSourceXLambda());
   source.yLambda = clamp(Number(source.yLambda) || defaultSourceConfig.yLambda, minSourceYLambda(), maxSourceYLambda());
-  source.widthLambda = clamp(Number(source.widthLambda) || defaultSourceConfig.widthLambda, 0.05, 1.5);
+  source.widthLambda =
+    source.shape === "evanescentLine"
+      ? clamp(Number(source.widthLambda) || 1.25, 1.01, 2.5)
+      : clamp(Number(source.widthLambda) || defaultSourceConfig.widthLambda, 0.05, 1.5);
   source.angleDeg = clamp(Number(source.angleDeg) || 0, 0, 360);
   source.phaseDeg = clamp(Number(source.phaseDeg) || 0, -180, 180);
   source.multipoleOrder = clampInt(source.multipoleOrder, 1, 8);
@@ -5595,7 +730,7 @@ function clampAllSourcesToInterior() {
 }
 
 function sourceUsesWidth(shape) {
-  return localizedSourceShapes.has(shape) || inPlaneElectricCurrentShapes.has(shape);
+  return localizedSourceShapes.has(shape) || inPlaneElectricCurrentShapes.has(shape) || shape === "evanescentLine";
 }
 
 function sourceUsesAngle(shape) {
@@ -5812,7 +947,13 @@ function updateMaterialWarning() {
     }
   }
   if (state.materialBianisotropyEnabled) {
-    notes.push("2D effective magnetoelectric coupling is active; kappa couples scalar-field changes into transverse fields.");
+    if (sim.fullVectorBianisotropyActive?.()) {
+      const fullVector = sim.fullVectorBianisotropyDiagnostics?.();
+      const ratioText = fullVector ? ` Cross-polarized energy ratio ~${formatDiagnosticRatio(fullVector.crossEnergyRatio)}.` : "";
+      notes.push(`Six-component 2D bianisotropic FDTD is active; Ez/Hx/Hy and Hz/Ex/Ey are evolved and locally coupled by kappa_n.${ratioText}`);
+    } else {
+      notes.push("Passivity-limited reduced 2D magnetoelectric coupling is active; kappa_n locally mixes electric and magnetic field increments.");
+    }
   }
   if (state.materialConductivityEnabled && (state.conductivitySigma > 0 || state.conductivitySigmaY > 0)) {
     notes.push("Finite normalized conductivity \u03c3 is active; the solver adds J = \u03c3E conduction loss.");
@@ -5824,6 +965,43 @@ function updateMaterialWarning() {
     const model = normalizeDispersionModel(state.dispersionModel);
     const modelLabel = model === "none" ? "dispersive" : model;
     notes.push(`${modelLabel} ADE material is active; the response depends on frequency and field history.`);
+    if (state.preset === "hyperlens") {
+      notes.push("Hyperlens uses radial/tangential Drude ADE in Hz mode: the tangential in-plane component is dispersive and the radial component remains dielectric.");
+    } else if (state.preset === "enzSlab" || state.preset === "enzEmitter" || state.preset === "bicEnz") {
+      notes.push("ENZ uses a passive Drude ADE tuned so the real epsilon is near zero at the carrier frequency.");
+    } else if (state.preset === "negativeIndexSlab" || state.preset === "superlensSlab") {
+      const negativeIndex = sim.negativeIndexDiagnostics?.();
+      if (negativeIndex) {
+        notes.push(
+          `Negative-index ADE: eps_eff~${formatFieldValue(negativeIndex.epsEff)}, mu_eff~${formatFieldValue(
+            negativeIndex.muEff,
+          )}, n_eff~${formatFieldValue(negativeIndex.nEff)} at the carrier frequency.`,
+        );
+      }
+    }
+  }
+  if (state.fieldComponent === "hz") {
+    const tensorDiagnostics = sim.materialTensorDiagnostics();
+    if (tensorDiagnostics.checkedCells > 0) {
+      if (tensorDiagnostics.indefiniteCells > 0) {
+        notes.push(
+          `${tensorDiagnostics.indefiniteCells} cells have indefinite epsilon(omega); keep loss on and verify convergence for hyperbolic-field detail.`,
+        );
+      }
+      if (tensorDiagnostics.nearSingularCells > 0) {
+        notes.push(
+          `${tensorDiagnostics.nearSingularCells} cells are near-singular or ill-conditioned: min |lambda_epsilon|=${formatFieldValue(
+            tensorDiagnostics.minAbsEigenvalue,
+          )}, cond~${formatFieldValue(tensorDiagnostics.maxCondition)}.`,
+        );
+      } else if (tensorDiagnostics.tensorCells > 0 || tensorDiagnostics.dispersiveCells > 0) {
+        notes.push(
+          `Tensor epsilon check: ${tensorDiagnostics.checkedCells} cells, cond~${formatFieldValue(
+            tensorDiagnostics.maxCondition,
+          )}.`,
+        );
+      }
+    }
   }
   if (sim.lastDiverged) {
     notes.push("Non-finite field detected; fields were reset.");
@@ -5877,6 +1055,7 @@ function sourceAmplitudeLabelHtml(shape) {
 }
 
 function sourceAngleLabelHtml(shape) {
+  if (incidentFieldSourceShapes.has(shape)) return `incidence &theta;`;
   if (inPlaneElectricCurrentShapes.has(shape)) return `<i>J</i><sub>&parallel;</sub> angle &theta;`;
   if (shape === "huygens" || shape === "janusDipole") return `direction &theta;`;
   if (circularDipoleSourceShapes.has(shape)) return `spin axis &theta;`;
@@ -5912,8 +1091,22 @@ function populateSourceEditor(source) {
   el.sourceYInput.max = formatLambda(maxSourceYLambda());
   el.sourceXInput.value = formatLambda(normalized.xLambda);
   el.sourceYInput.value = formatLambda(normalized.yLambda);
-  el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
-  el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
+  const widthLabel = el.sourceWidthControl?.querySelector("span");
+  if (normalized.shape === "evanescentLine") {
+    if (widthLabel) widthLabel.innerHTML = `<i>k</i><sub>&parallel;</sub>/<i>k</i><sub>0</sub>`;
+    el.sourceWidthInput.min = "1.01";
+    el.sourceWidthInput.max = "2.50";
+    el.sourceWidthInput.step = "0.01";
+    el.sourceWidthInput.value = normalized.widthLambda.toFixed(2);
+    el.sourceWidthOutput.value = normalized.widthLambda.toFixed(2);
+  } else {
+    if (widthLabel) widthLabel.innerHTML = `FWHM / &lambda;<sub>0</sub>`;
+    el.sourceWidthInput.min = "0.05";
+    el.sourceWidthInput.max = "1.50";
+    el.sourceWidthInput.step = "0.05";
+    el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
+    el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
+  }
   el.sourceAngleInput.value = String(Math.round(normalized.angleDeg));
   el.sourceAngleOutput.value = `${Math.round(normalized.angleDeg)}°`;
   const angleLabel = el.sourceAngleControl?.querySelector("span");
@@ -6544,55 +1737,134 @@ function formatMonitorAngle(value) {
   return normalized.toFixed(Math.abs(normalized - Math.round(normalized)) < 0.05 ? 0 : 1);
 }
 
+const SWEEP_STEADY_WINDOW = 5;
+const SWEEP_STEADY_MIN_SAMPLES = 4;
+const SWEEP_STEADY_TOLERANCE = 0.035;
+const SWEEP_STEADY_ABSOLUTE_FLOOR = 1e-4;
+
 function sweepSourceTarget() {
   return state.sources.find((source) => incidentFieldSourceShapes.has(source.shape)) || selectedSource() || state.sources[0] || null;
 }
 
+function normalizeSweepMode(mode) {
+  if (
+    mode === "frequency" ||
+    mode === "amplitude" ||
+    mode === "gainLoss" ||
+    mode === "symmetry" ||
+    mode === "blochK" ||
+    mode === "direction"
+  ) {
+    return mode;
+  }
+  return "angle";
+}
+
 function sweepModeLabel(mode = state.sweepMode) {
-  return mode === "frequency" ? "f" : "θ";
+  if (mode === "frequency") return "f";
+  if (mode === "amplitude") return "A";
+  if (mode === "symmetry") return "d";
+  if (mode === "blochK") return "k";
+  if (mode === "direction") return "dir";
+  if (mode === "gainLoss") return "γ";
+  return "θ";
 }
 
 function sweepUnitLabel(mode = state.sweepMode) {
-  return mode === "frequency" ? "" : "°";
+  return mode === "angle" ? "°" : "";
 }
 
 function clampSweepRangeForMode(mode, value) {
+  const normalizedMode = normalizeSweepMode(mode);
   const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return mode === "frequency" ? defaultSourceConfig.frequency : 0;
-  return mode === "frequency" ? clamp(numeric, 0.006, 0.095) : clamp(numeric, -80, 80);
+  if (!Number.isFinite(numeric)) {
+    if (normalizedMode === "frequency") return defaultSourceConfig.frequency;
+    if (normalizedMode === "amplitude") return defaultSourceConfig.amplitude;
+    if (normalizedMode === "gainLoss") return 0.04;
+    if (normalizedMode === "symmetry") return 0;
+    if (normalizedMode === "blochK") return 0;
+    if (normalizedMode === "direction") return 0;
+    return 0;
+  }
+  if (normalizedMode === "frequency") return clamp(numeric, 0.006, 0.095);
+  if (normalizedMode === "amplitude") return clamp(numeric, 0.05, 1.2);
+  if (normalizedMode === "gainLoss") return clamp(numeric, 0, 0.1);
+  if (normalizedMode === "symmetry") return clamp(numeric, 0, 0.25);
+  if (normalizedMode === "blochK") return clamp(numeric, 0, 1);
+  if (normalizedMode === "direction") return clamp(numeric, 0, 1);
+  return clamp(numeric, -80, 80);
 }
 
 function formatSweepValue(value) {
-  return state.sweepMode === "frequency" ? Number(value).toFixed(3) : String(Math.round(Number(value)));
+  if (state.sweepMode === "frequency") return Number(value).toFixed(3);
+  if (state.sweepMode === "amplitude") return Number(value).toFixed(2);
+  if (state.sweepMode === "symmetry") return Number(value).toFixed(3);
+  if (state.sweepMode === "blochK") return Number(value).toFixed(3);
+  if (state.sweepMode === "gainLoss") return Number(value).toFixed(3);
+  if (state.sweepMode === "direction") return Number(value) >= 0.5 ? "R" : "F";
+  return String(Math.round(Number(value)));
 }
 
 function syncSweepStateFromInputs() {
-  state.sweepMode = el.sweepModeInput?.value === "frequency" ? "frequency" : "angle";
+  state.sweepMode = normalizeSweepMode(el.sweepModeInput?.value);
   state.sweepStart = clampSweepRangeForMode(state.sweepMode, el.sweepStartInput?.value);
   state.sweepEnd = clampSweepRangeForMode(state.sweepMode, el.sweepEndInput?.value);
   state.sweepSamples = clampInt(Number(el.sweepSamplesInput?.value) || 9, 3, 41);
+  if (state.sweepMode === "direction") state.sweepSamples = 2;
   state.sweepSteps = clampInt(Number(el.sweepStepsInput?.value) || 720, 120, 4000);
+  state.sweepBidirectional =
+    state.sweepMode === "amplitude" && Boolean(el.sweepBidirectionalInput?.checked);
 }
 
 function updateSweepControls() {
   if (!el.sweepModeInput) return;
   const frequencyMode = state.sweepMode === "frequency";
+  const amplitudeMode = state.sweepMode === "amplitude";
+  const gainLossMode = state.sweepMode === "gainLoss";
+  const symmetryMode = state.sweepMode === "symmetry";
+  const blochMode = state.sweepMode === "blochK";
+  const directionMode = state.sweepMode === "direction";
+  const bidirectionalEnabled = amplitudeMode && state.sweepBidirectional;
+  const sweepInputRange = () => {
+    if (frequencyMode) return { min: "0.006", max: "0.095", step: "0.001", decimals: 3 };
+    if (amplitudeMode) return { min: "0.05", max: "1.2", step: "0.05", decimals: 2 };
+    if (gainLossMode) return { min: "0", max: "0.1", step: "0.002", decimals: 3 };
+    if (symmetryMode) return { min: "0", max: "0.25", step: "0.005", decimals: 3 };
+    if (blochMode) return { min: "0", max: "1", step: "0.02", decimals: 3 };
+    if (directionMode) return { min: "0", max: "1", step: "1", decimals: 0 };
+    return { min: "-80", max: "80", step: "1", decimals: 0 };
+  };
+  const inputRange = sweepInputRange();
+  const formatSweepInput = (value) =>
+    inputRange.decimals > 0 ? Number(value).toFixed(inputRange.decimals) : String(Math.round(Number(value)));
   el.sweepModeInput.value = state.sweepMode;
   if (el.sweepStartInput) {
-    el.sweepStartInput.min = frequencyMode ? "0.006" : "-80";
-    el.sweepStartInput.max = frequencyMode ? "0.095" : "80";
-    el.sweepStartInput.step = frequencyMode ? "0.001" : "1";
-    el.sweepStartInput.value = frequencyMode ? state.sweepStart.toFixed(3) : String(Math.round(state.sweepStart));
+    el.sweepStartInput.min = inputRange.min;
+    el.sweepStartInput.max = inputRange.max;
+    el.sweepStartInput.step = inputRange.step;
+    el.sweepStartInput.value = formatSweepInput(state.sweepStart);
   }
   if (el.sweepEndInput) {
-    el.sweepEndInput.min = frequencyMode ? "0.006" : "-80";
-    el.sweepEndInput.max = frequencyMode ? "0.095" : "80";
-    el.sweepEndInput.step = frequencyMode ? "0.001" : "1";
-    el.sweepEndInput.value = frequencyMode ? state.sweepEnd.toFixed(3) : String(Math.round(state.sweepEnd));
+    el.sweepEndInput.min = inputRange.min;
+    el.sweepEndInput.max = inputRange.max;
+    el.sweepEndInput.step = inputRange.step;
+    el.sweepEndInput.value = formatSweepInput(state.sweepEnd);
   }
-  if (el.sweepSamplesInput) el.sweepSamplesInput.value = String(state.sweepSamples);
+  setControlDisabled(el.sweepStartInput?.closest("label"), el.sweepStartInput, directionMode);
+  setControlDisabled(el.sweepEndInput?.closest("label"), el.sweepEndInput, directionMode);
+  if (el.sweepSamplesInput) {
+    el.sweepSamplesInput.min = directionMode ? "2" : "3";
+    el.sweepSamplesInput.max = directionMode ? "2" : "41";
+    el.sweepSamplesInput.value = String(state.sweepSamples);
+    setControlDisabled(el.sweepSamplesInput.closest("label"), el.sweepSamplesInput, directionMode);
+  }
   if (el.sweepStepsInput) el.sweepStepsInput.value = String(state.sweepSteps);
+  if (el.sweepBidirectionalInput) {
+    el.sweepBidirectionalInput.checked = bidirectionalEnabled;
+    setControlDisabled(el.sweepBidirectionalInput.closest("label"), el.sweepBidirectionalInput, !amplitudeMode || state.sweepRunning);
+  }
   if (el.sweepRunBtn) el.sweepRunBtn.textContent = state.sweepRunning ? "Cancel sweep" : "Run sweep";
+  if (el.sweepExportBtn) el.sweepExportBtn.disabled = state.sweepRunning || state.sweepResults.length === 0;
   drawSweepChart();
 }
 
@@ -6600,8 +1872,342 @@ function setSweepStatus(text) {
   if (el.sweepStatus) el.sweepStatus.textContent = text;
 }
 
+function sweepReadyStatusText() {
+  if (state.sweepMode === "blochK") return "Bloch k sweep uses the current photonic-crystal geometry.";
+  if (state.preset === "hyperlens" && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return "Hyperlens sweep plots outer/inner ring transfer from FDTD field samples.";
+  }
+  return "Sweep uses the current scene and the active incident source.";
+}
+
 function nextAnimationFrame() {
   return new Promise((resolve) => requestAnimationFrame(resolve));
+}
+
+function brewsterSweepReference() {
+  if (state.sweepMode !== "angle") return null;
+  if (state.preset !== "brewsterTm" && state.preset !== "brewsterTeTm" && state.preset !== "teTmComparison") return null;
+  const n1 = 1;
+  const n2 = 1.5;
+  return {
+    n1,
+    n2,
+    thetaB: (Math.atan(n2 / n1) * 180) / Math.PI,
+    comparePolarizations: state.preset === "brewsterTeTm" || state.preset === "teTmComparison",
+  };
+}
+
+function dualPolarizationSweepEnabled() {
+  return (state.preset === "brewsterTeTm" || state.preset === "teTmComparison") && state.sweepMode === "angle";
+}
+
+function gainLossSweepCompatible() {
+  return state.preset === "ptSymmetricCoupler" || state.preset === "exceptionalPointCoupler";
+}
+
+function gainLossSweepSnapshot() {
+  return {
+    loss: new Float32Array(sim.loss),
+    lossY: new Float32Array(sim.lossY),
+  };
+}
+
+function restoreGainLossSweepSnapshot(snapshot) {
+  if (!snapshot) return;
+  sim.loss.set(snapshot.loss);
+  sim.lossY.set(snapshot.lossY);
+}
+
+function applyGainLossSweepValue(snapshot, value) {
+  if (!snapshot || !gainLossSweepCompatible()) return 0;
+  const gamma = clampSweepRangeForMode("gainLoss", value);
+  let count = 0;
+  for (let i = 0; i < sim.n; i += 1) {
+    const baseLoss = snapshot.loss[i];
+    if (Math.abs(baseLoss) < 0.01 || sim.material[i] === 2) continue;
+    const signedLoss = baseLoss < 0 ? -gamma : gamma;
+    sim.loss[i] = signedLoss;
+    sim.lossY[i] = Math.abs(snapshot.lossY[i]) >= 0.01 ? signedLoss : snapshot.lossY[i];
+    count += 1;
+  }
+  return count;
+}
+
+function symmetrySweepCompatible() {
+  return state.preset === "phcDarkMode" || state.preset === "quasiBic" || state.preset === "symmetryProtectedBic";
+}
+
+function blochSweepCompatible() {
+  return phcBlochAnalysisPresets.has(state.preset);
+}
+
+function directionSweepCompatible() {
+  return (
+    state.preset === "travelingModulation" ||
+    state.preset === "temporalIsolator" ||
+    state.preset === "topologyTemporalMod" ||
+    state.preset === "nonreciprocalValleyHall" ||
+    state.preset === "spaceTimeCrystal"
+  );
+}
+
+function applyDirectionSweepValue(source, value) {
+  if (!source) return "forward";
+  const reverse = Number(value) >= 0.5;
+  source.type = "sine";
+  source.shape = incidentFieldSourceShapes.has(source.shape) ? source.shape : "gaussianProfile";
+  source.angleDeg = reverse ? 180 : 0;
+  source.xLambda = reverse ? maxSourceXLambda() - 0.12 : minSourceXLambda() + 0.12;
+  normalizeSource(source);
+  return reverse ? "reverse" : "forward";
+}
+
+function symmetrySweepSnapshot() {
+  return sim.snapshotMaterialArrays();
+}
+
+function restoreSymmetrySweepSnapshot(snapshot) {
+  if (!snapshot) return;
+  sim.restoreMaterialArrays(snapshot);
+  sim.refreshPmlMaterialContinuation(false);
+}
+
+function applySymmetrySweepValue(snapshot, value) {
+  if (!snapshot || !symmetrySweepCompatible()) return 0;
+  const delta = clampSweepRangeForMode("symmetry", value);
+  sim.restoreMaterialArrays(snapshot);
+  if (delta <= 1e-9) {
+    sim.refreshPmlMaterialContinuation(false);
+    return 0;
+  }
+
+  const cx = (sim.nx - 1) * 0.5;
+  const cy = (sim.ny - 1) * 0.5;
+  const spanX = Math.max(4, state.cellsPerWavelength * 2.4);
+  const spanY = Math.max(4, state.cellsPerWavelength * 1.7);
+  const minX = Math.max(1, Math.floor(cx - spanX));
+  const maxX = Math.min(sim.nx - 2, Math.ceil(cx + spanX));
+  const minY = Math.max(1, Math.floor(cy - spanY));
+  const maxY = Math.min(sim.ny - 2, Math.ceil(cy + spanY));
+  let count = 0;
+
+  for (let y = minY; y <= maxY; y += 1) {
+    const dy = Math.abs((y - cy) / spanY);
+    if (dy > 1) continue;
+    for (let x = minX; x <= maxX; x += 1) {
+      const dx = (x - cx) / spanX;
+      if (Math.abs(dx) > 1) continue;
+      const idx = sim.id(x, y);
+      if (snapshot.material[idx] === 0 || snapshot.material[idx] === 2 || snapshot.eps[idx] <= 1.2) continue;
+      const weight = (1 - Math.abs(dx)) * (1 - dy);
+      const sign = x >= cx ? -1 : 1;
+      const scale = clamp(1 + sign * delta * weight, 0.65, 1.35);
+      sim.eps[idx] = clamp(snapshot.eps[idx] * scale, 1, 30);
+      sim.epsY[idx] = clamp(snapshot.epsY[idx] * scale, 1, 30);
+      if (snapshot.modulatedMaterial[idx] || snapshot.nonlinearMaterial[idx]) {
+        sim.modulationBaseEps[idx] = sim.eps[idx];
+        sim.modulationBaseEpsY[idx] = sim.epsY[idx];
+      }
+      count += 1;
+    }
+  }
+  sim.refreshPmlMaterialContinuation(false);
+  return count;
+}
+
+function bidirectionalSweepActive() {
+  return state.sweepMode === "amplitude" && Boolean(state.sweepBidirectional);
+}
+
+function buildSweepScanPoints() {
+  if (state.sweepMode === "direction") {
+    return [
+      { value: 0, branch: "forward", branchIndex: 0 },
+      { value: 1, branch: "reverse", branchIndex: 1 },
+    ];
+  }
+  const valueCount = Math.max(1, state.sweepSamples);
+  const values = Array.from({ length: valueCount }, (_unused, index) => {
+    const t = valueCount === 1 ? 0 : index / (valueCount - 1);
+    return state.sweepStart + (state.sweepEnd - state.sweepStart) * t;
+  });
+  if (!bidirectionalSweepActive()) {
+    return values.map((value, index) => ({ value, branch: "", branchIndex: index }));
+  }
+  return [
+    ...values.map((value, index) => ({ value, branch: "forward", branchIndex: index })),
+    ...values.slice().reverse().map((value, index) => ({ value, branch: "reverse", branchIndex: index })),
+  ];
+}
+
+function sweepAuxMetric() {
+  if (state.sweepMode === "gainLoss") return { key: "split", label: "df", only: true };
+  if (state.sweepMode === "symmetry") return { key: "leakage", label: "leak", only: true };
+  if (state.sweepMode === "blochK") return { key: "blochBandFrequency", label: "f1", only: true };
+  if (state.preset === "hyperlens" && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return { key: "hyperlensTransfer", label: "Hout/Hin", only: true };
+  }
+  if (
+    (state.sweepMode === "amplitude" || state.sweepMode === "frequency") &&
+    temporalFloquetAnalysisPresets.has(state.preset)
+  ) {
+    return { key: "floquetPowerSideband", label: "Pside" };
+  }
+  if (state.sweepMode !== "amplitude") return null;
+  if (state.preset === "shgSlab") return { key: "h2", label: "H2" };
+  if (state.preset === "thgSlab") return { key: "h3", label: "H3" };
+  if (phaseChangeAnalysisPresets.has(state.preset)) return { key: "phaseState", label: "s" };
+  if (state.preset === "exceptionalPointCoupler") return { key: "split", label: "df" };
+  if (nonlinearAnalysisPresets.has(state.preset)) return { key: "sideband", label: "side" };
+  return null;
+}
+
+function sweepMetricValue(metrics, key) {
+  if (key === "h2") return metrics?.harmonic2 || 0;
+  if (key === "h3") return metrics?.harmonic3 || 0;
+  if (key === "sideband") return metrics?.sidebandRatio || 0;
+  if (key === "phaseState") return metrics?.phaseAverage ?? sim.phaseChangeStateEstimate();
+  if (key === "split") return metrics?.split || 0;
+  if (key === "leakage") return metrics?.leakageRate || 0;
+  if (key === "blochLeakage") return metrics?.phcBloch?.leakage || 0;
+  if (key === "blochBandFrequency") return metrics?.phcBloch?.bandFrequency || 0;
+  if (key === "floquetPowerSideband") return metrics?.floquet?.sidebandPower || 0;
+  if (key === "hyperlensTransfer") return metrics?.hyperlens?.transfer || 0;
+  if (key === "hyperlensDetailTransfer") return metrics?.hyperlens?.detailTransfer || 0;
+  return 0;
+}
+
+function sweepSteadyObservation(metrics = null) {
+  const observation = {
+    r: sim.diagnosticReflectance || 0,
+    t: sim.diagnosticTransmittance || 0,
+  };
+  const auxMetric = sweepAuxMetric();
+  if (auxMetric) observation[auxMetric.key] = sweepMetricValue(metrics, auxMetric.key);
+  if (phaseChangeAnalysisPresets.has(state.preset)) {
+    observation.phaseState = sweepMetricValue(metrics, "phaseState");
+  }
+  return observation;
+}
+
+function sweepSteadyEstimate(history) {
+  const tail = history
+    .filter(Boolean)
+    .slice(-SWEEP_STEADY_WINDOW);
+  if (tail.length < SWEEP_STEADY_MIN_SAMPLES) {
+    return {
+      steady: false,
+      drift: Infinity,
+      key: "samples",
+      samples: tail.length,
+      tolerance: SWEEP_STEADY_TOLERANCE,
+    };
+  }
+  const keys = Array.from(new Set(tail.flatMap((sample) => Object.keys(sample))));
+  let worstDrift = 0;
+  let worstKey = "";
+  let validKeys = 0;
+
+  keys.forEach((key) => {
+    const values = tail
+      .map((sample) => Number(sample[key]))
+      .filter((value) => Number.isFinite(value));
+    if (values.length < SWEEP_STEADY_MIN_SAMPLES) return;
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const meanAbs = values.reduce((sum, value) => sum + Math.abs(value), 0) / values.length;
+    const scale = Math.max(SWEEP_STEADY_ABSOLUTE_FLOOR, meanAbs);
+    const drift = (maxValue - minValue) / scale;
+    validKeys += 1;
+    if (drift >= worstDrift) {
+      worstDrift = drift;
+      worstKey = key;
+    }
+  });
+
+  if (validKeys === 0) {
+    return {
+      steady: false,
+      drift: Infinity,
+      key: "metrics",
+      samples: tail.length,
+      tolerance: SWEEP_STEADY_TOLERANCE,
+    };
+  }
+
+  return {
+    steady: worstDrift <= SWEEP_STEADY_TOLERANCE,
+    drift: worstDrift,
+    key: worstKey,
+    samples: tail.length,
+    tolerance: SWEEP_STEADY_TOLERANCE,
+  };
+}
+
+function formatSweepDrift(value) {
+  if (!Number.isFinite(value)) return "n/a";
+  const percent = 100 * value;
+  if (percent >= 10) return `${percent.toFixed(0)}%`;
+  if (percent >= 1) return `${percent.toFixed(1)}%`;
+  return `${percent.toFixed(2)}%`;
+}
+
+function directionSweepIsolationEstimate(results = state.sweepResults) {
+  if (state.sweepMode !== "direction") return null;
+  const forward = results.find((result) => result.branch === "forward");
+  const reverse = results.find((result) => result.branch === "reverse");
+  if (!forward || !reverse) return null;
+  const floor = 1e-6;
+  const tForward = Math.max(0, Number(forward.t) || 0);
+  const tReverse = Math.max(0, Number(reverse.t) || 0);
+  const isolationDb = 10 * Math.log10((tForward + floor) / (tReverse + floor));
+  return {
+    tForward,
+    tReverse,
+    isolationDb: Number.isFinite(isolationDb) ? isolationDb : 0,
+  };
+}
+
+function formatIsolationDb(value) {
+  if (!Number.isFinite(value)) return "n/a";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(Math.abs(value) < 10 ? 2 : 1)} dB`;
+}
+
+function sweepResultStatusText(result, pointIndex, pointCount) {
+  const auxMetric = sweepAuxMetric();
+  const branchText = result.branch ? `${result.branch} ` : "";
+  const steadyText = result.steady ? " | steady" : ` | drift=${formatSweepDrift(result.steadyDrift)}`;
+  const epText =
+    state.sweepMode === "gainLoss" && result.epPhase
+      ? ` | ${result.epPhase} EPd=${formatDiagnosticRatio(result.epDistance || 0)}`
+      : "";
+  if (auxMetric) {
+    if (auxMetric.only) {
+      return `Recorded ${branchText}${pointIndex + 1}/${pointCount}: ${auxMetric.label}=${formatDiagnosticRatio(result[auxMetric.key] || 0)}${epText}${steadyText}`;
+    }
+    return `Recorded ${branchText}${pointIndex + 1}/${pointCount}: T=${formatDiagnosticRatio(result.t)}, ${auxMetric.label}=${formatDiagnosticRatio(result[auxMetric.key] || 0)}${epText}${steadyText}`;
+  }
+  return `Recorded ${branchText}${pointIndex + 1}/${pointCount}: R=${formatDiagnosticRatio(result.r)}, T=${formatDiagnosticRatio(result.t)}${steadyText}`;
+}
+
+function fresnelReflectance(angleDeg, n1, n2, polarization) {
+  const thetaI = (clamp(Number(angleDeg) || 0, -89.9, 89.9) * Math.PI) / 180;
+  const sinI = Math.sin(thetaI);
+  const cosI = Math.cos(thetaI);
+  const sinT = (n1 / n2) * sinI;
+  if (Math.abs(sinT) >= 1) return 1;
+  const cosT = Math.sqrt(Math.max(0, 1 - sinT * sinT));
+  const numerator =
+    polarization === "tm"
+      ? n2 * cosI - n1 * cosT
+      : n1 * cosI - n2 * cosT;
+  const denominator =
+    polarization === "tm"
+      ? n2 * cosI + n1 * cosT
+      : n1 * cosI + n2 * cosT;
+  if (Math.abs(denominator) < 1e-12) return 1;
+  const r = numerator / denominator;
+  return clamp(r * r, 0, 1);
 }
 
 function drawSweepChart() {
@@ -6624,6 +2230,7 @@ function drawSweepChart() {
   const text = dark ? "rgba(235, 241, 246, 0.86)" : "rgba(22, 32, 40, 0.82)";
   const rColor = "rgb(13, 107, 245)";
   const tColor = "rgb(18, 143, 91)";
+  const auxColor = "rgb(220, 72, 92)";
   const padL = 42 * dpr;
   const padR = 16 * dpr;
   const padT = 18 * dpr;
@@ -6636,13 +2243,25 @@ function drawSweepChart() {
   ctx.fillRect(0, 0, width, height);
 
   const results = state.sweepResults || [];
+  const dualPolarization = dualPolarizationSweepEnabled();
+  const auxMetric = sweepAuxMetric();
+  const branchResultsAvailable = results.some((point) => point.branch);
   const xValues = results.map((point) => point.x);
   const xMin = results.length ? Math.min(...xValues) : state.sweepStart;
   const xMax = results.length ? Math.max(...xValues) : state.sweepEnd;
-  const yMaxRaw = Math.max(1, ...results.flatMap((point) => [point.r || 0, point.t || 0]));
-  const yMax = yMaxRaw > 1.2 ? Math.ceil(yMaxRaw * 10) / 10 : 1;
+  const ySeries = dualPolarization
+    ? results.flatMap((point) => [point.rTm || 0, point.rTe || 0])
+    : auxMetric
+      ? auxMetric.only
+        ? results.map((point) => point[auxMetric.key] || 0)
+        : results.flatMap((point) => [point.t || 0, point[auxMetric.key] || 0])
+      : results.flatMap((point) => [point.r || 0, point.t || 0]);
+  const yMaxRaw = Math.max(1, ...ySeries);
+  const auxOnlyMax = Math.max(1e-4, ...ySeries);
+  const yMax = auxMetric?.only ? auxOnlyMax * 1.12 : yMaxRaw > 1.2 ? Math.ceil(yMaxRaw * 10) / 10 : 1;
   const toX = (value) => padL + ((value - xMin) / Math.max(1e-9, xMax - xMin)) * plotW;
   const toY = (value) => padT + plotH - (clamp(value, 0, yMax) / yMax) * plotH;
+  const reference = brewsterSweepReference();
 
   ctx.strokeStyle = grid;
   ctx.lineWidth = Math.max(1, dpr);
@@ -6667,48 +2286,178 @@ function drawSweepChart() {
   ctx.lineTo(width - padR, padT + plotH);
   ctx.stroke();
 
+  const drawReferenceCurve = (polarization, color) => {
+    if (!reference) return;
+    const samples = 120;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.3 * dpr, 1);
+    ctx.setLineDash([5 * dpr, 4 * dpr]);
+    ctx.beginPath();
+    for (let i = 0; i < samples; i += 1) {
+      const t = samples === 1 ? 0 : i / (samples - 1);
+      const angle = xMin + (xMax - xMin) * t;
+      const x = toX(angle);
+      const y = toY(fresnelReflectance(angle, reference.n1, reference.n2, polarization));
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  if (reference) {
+    drawReferenceCurve("tm", "rgba(183, 106, 37, 0.88)");
+    if (reference.comparePolarizations) {
+      drawReferenceCurve("te", "rgba(128, 86, 190, 0.82)");
+    }
+    if (reference.thetaB >= Math.min(xMin, xMax) && reference.thetaB <= Math.max(xMin, xMax)) {
+      const xb = toX(reference.thetaB);
+      ctx.save();
+      ctx.strokeStyle = "rgba(183, 106, 37, 0.72)";
+      ctx.lineWidth = Math.max(1.4 * dpr, 1);
+      ctx.setLineDash([3 * dpr, 4 * dpr]);
+      ctx.beginPath();
+      ctx.moveTo(xb, padT);
+      ctx.lineTo(xb, padT + plotH);
+      ctx.stroke();
+      ctx.fillStyle = text;
+      ctx.font = `${10 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(`thetaB ${reference.thetaB.toFixed(1)}${sweepUnitLabel()}`, xb, padT + 3 * dpr);
+      ctx.restore();
+    }
+  }
+
   const drawSeries = (key, color) => {
     if (results.length === 0) return;
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = Math.max(2 * dpr, 1.5);
-    ctx.beginPath();
-    results.forEach((point, index) => {
-      const x = toX(point.x);
-      const y = toY(point[key]);
-      if (index === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-    results.forEach((point) => {
+    if (!results.some((point) => Number.isFinite(point[key]))) return;
+    const groups = branchResultsAvailable
+      ? [
+          { name: "forward", dashed: false },
+          { name: "reverse", dashed: true },
+        ]
+      : [{ name: "", dashed: false }];
+    groups.forEach((group) => {
+      const points = group.name ? results.filter((point) => point.branch === group.name) : results;
+      if (!points.some((point) => Number.isFinite(point[key]))) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = Math.max(2 * dpr, 1.5);
+      if (group.dashed) ctx.setLineDash([5 * dpr, 4 * dpr]);
       ctx.beginPath();
-      ctx.arc(toX(point.x), toY(point[key]), 2.6 * dpr, 0, Math.PI * 2);
-      ctx.fill();
+      points.forEach((point, index) => {
+        const x = toX(point.x);
+        const y = toY(point[key]);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      points.forEach((point) => {
+        if (!Number.isFinite(point[key])) return;
+        ctx.beginPath();
+        ctx.arc(toX(point.x), toY(point[key]), 2.6 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
     });
   };
-  drawSeries("r", rColor);
-  drawSeries("t", tColor);
+  if (dualPolarization) {
+    drawSeries("rTm", rColor);
+    drawSeries("rTe", tColor);
+  } else if (auxMetric) {
+    if (!auxMetric.only) drawSeries("t", tColor);
+    drawSeries(auxMetric.key, auxColor);
+  } else {
+    drawSeries("r", rColor);
+    drawSeries("t", tColor);
+  }
 
   ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textBaseline = "middle";
   ctx.fillStyle = text;
   ctx.textAlign = "left";
-  ctx.fillText("R", padL + 8 * dpr, padT + 12 * dpr);
-  ctx.fillStyle = rColor;
-  ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
-  ctx.fillStyle = text;
-  ctx.fillText("T", padL + 48 * dpr, padT + 12 * dpr);
-  ctx.fillStyle = tColor;
-  ctx.fillRect(padL + 64 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+  if (dualPolarization) {
+    ctx.fillText("R_TM", padL + 8 * dpr, padT + 12 * dpr);
+    ctx.fillStyle = rColor;
+    ctx.fillRect(padL + 42 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+    ctx.fillStyle = text;
+    ctx.fillText("R_TE", padL + 64 * dpr, padT + 12 * dpr);
+    ctx.fillStyle = tColor;
+    ctx.fillRect(padL + 98 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+  } else if (auxMetric) {
+    const labelX = auxMetric.only ? 8 : 48;
+    if (!auxMetric.only) {
+      ctx.fillText("T", padL + 8 * dpr, padT + 12 * dpr);
+      ctx.fillStyle = tColor;
+      ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+      ctx.fillStyle = text;
+    }
+    ctx.fillText(auxMetric.label, padL + labelX * dpr, padT + 12 * dpr);
+    ctx.fillStyle = auxColor;
+    ctx.fillRect(padL + (labelX + 24) * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+  } else {
+    ctx.fillText("R", padL + 8 * dpr, padT + 12 * dpr);
+    ctx.fillStyle = rColor;
+    ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+    ctx.fillStyle = text;
+    ctx.fillText("T", padL + 48 * dpr, padT + 12 * dpr);
+    ctx.fillStyle = tColor;
+    ctx.fillRect(padL + 64 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+  }
+  if (reference) {
+    ctx.fillStyle = text;
+    const refX = dualPolarization ? 124 : 88;
+    ctx.fillText("TM ref", padL + refX * dpr, padT + 12 * dpr);
+    ctx.strokeStyle = "rgba(183, 106, 37, 0.88)";
+    ctx.lineWidth = Math.max(1.3 * dpr, 1);
+    ctx.setLineDash([5 * dpr, 4 * dpr]);
+    ctx.beginPath();
+    ctx.moveTo(padL + (refX + 42) * dpr, padT + 10 * dpr);
+    ctx.lineTo(padL + (refX + 58) * dpr, padT + 10 * dpr);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (reference.comparePolarizations) {
+      ctx.fillStyle = text;
+      ctx.fillText("TE ref", padL + (refX + 70) * dpr, padT + 12 * dpr);
+      ctx.strokeStyle = "rgba(128, 86, 190, 0.82)";
+      ctx.setLineDash([5 * dpr, 4 * dpr]);
+      ctx.beginPath();
+      ctx.moveTo(padL + (refX + 112) * dpr, padT + 10 * dpr);
+      ctx.lineTo(padL + (refX + 128) * dpr, padT + 10 * dpr);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  if (branchResultsAvailable) {
+    ctx.fillStyle = text;
+    ctx.textAlign = "right";
+    ctx.fillText("solid forward / dashed reverse", width - padR, padT + 12 * dpr);
+  }
   ctx.fillStyle = text;
   ctx.textAlign = "right";
-  ctx.fillText(yMax.toFixed(yMax > 1 ? 1 : 0), padL - 7 * dpr, padT + 2 * dpr);
+  ctx.fillText(auxMetric?.only ? formatDiagnosticRatio(yMax) : yMax.toFixed(yMax > 1 ? 1 : 0), padL - 7 * dpr, padT + 2 * dpr);
   ctx.fillText("0", padL - 7 * dpr, padT + plotH);
   ctx.textAlign = "center";
   ctx.fillText(`${sweepModeLabel()} ${sweepUnitLabel()}`.trim(), padL + plotW / 2, height - 12 * dpr);
   if (results.length === 0) {
     ctx.fillStyle = dark ? "rgba(224, 232, 238, 0.56)" : "rgba(51, 65, 74, 0.56)";
-    ctx.fillText("Run a sweep to plot R and T", padL + plotW / 2, padT + plotH / 2);
+    ctx.fillText(
+      dualPolarization
+          ? "Run a sweep to plot TE/TM reflectance"
+        : auxMetric
+          ? auxMetric.only
+            ? `Run ${state.sweepMode} sweep to plot ${auxMetric.label}`
+            : bidirectionalSweepActive()
+              ? `Run bidirectional amplitude sweep to plot T and ${auxMetric.label}`
+              : `Run amplitude sweep to plot T and ${auxMetric.label}`
+          : "Run a sweep to plot R and T",
+      padL + plotW / 2,
+      padT + plotH / 2,
+    );
   }
 }
 
@@ -6853,6 +2602,7 @@ function drawFarFieldChart() {
   const { ctx, width, height, dpr } = prepared;
   const colors = chartPalette();
   const data = sim.analysisFarFieldEstimate(96);
+  const scatteringMode = sim.analysisFarFieldMode === "scattering" || Boolean(sim.analysisScatteringSource());
   const cx = width * 0.5;
   const cy = height * 0.56;
   const radius = Math.min(width, height) * 0.34;
@@ -6895,14 +2645,20 @@ function drawFarFieldChart() {
     ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Collecting contour phasors", cx, cy);
+    ctx.fillText(scatteringMode ? "Collecting scattering phasors" : "Collecting NTFF contour phasors", cx, cy);
   }
 
   ctx.fillStyle = colors.text;
   ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  ctx.fillText("Near-to-far estimate", 12 * dpr, 11 * dpr);
+  ctx.fillText(scatteringMode ? "Scattering width / lambda0" : "NTFF angular pattern", 12 * dpr, 11 * dpr);
+  if (scatteringMode && sim.analysisScatteringTotal > 0) {
+    ctx.fillStyle = colors.muted;
+    ctx.textAlign = "right";
+    ctx.fillText(`sigma/lambda0 ${formatFieldValue(sim.analysisScatteringTotal)}`, width - 12 * dpr, 11 * dpr);
+    ctx.fillStyle = colors.text;
+  }
   ctx.textAlign = "center";
   ctx.fillText("0°", cx + radius + 10 * dpr, cy);
   ctx.fillText("90°", cx, cy + radius + 12 * dpr);
@@ -6910,15 +2666,191 @@ function drawFarFieldChart() {
 
 function updateAnalysisControls() {
   if (el.analysisInput) el.analysisInput.checked = state.analysisEnabled;
+  drawSpectrumChart();
+  drawFarFieldChart();
   if (el.analysisStatus) {
     const sampleText = `${sim.analysisSamples || 0} samples`;
     const contourText = `${sim.analysisContour?.length || 0} contour pts`;
+    const scatteringMode = sim.analysisFarFieldMode === "scattering" || Boolean(sim.analysisScatteringSource());
+    const forwardBackward =
+      sim.analysisScatteringBackward > 1e-24 ? sim.analysisScatteringForward / sim.analysisScatteringBackward : Infinity;
+    const scatteringText =
+      scatteringMode && sim.analysisScatteringTotal > 0
+        ? ` | sigma/lambda0=${formatFieldValue(sim.analysisScatteringTotal)} | F/B=${
+            Number.isFinite(forwardBackward) ? formatFieldValue(forwardBackward) : "inf"
+          }`
+        : "";
+    const metrics = sim.analysisMetricEstimate();
+    let resonatorText = "";
+    if (metrics && resonatorAnalysisPresets.has(state.preset)) {
+      if (metrics.ringdown?.q) resonatorText += ` | Q~${formatFieldValue(metrics.ringdown.q)}`;
+      if (purcellAnalysisPresets.has(state.preset) && metrics.purcellProxy > 0) {
+        resonatorText += ` | Q/Aeff=${formatFieldValue(metrics.purcellProxy)}`;
+      }
+      if (betaAnalysisPresets.has(state.preset) && metrics.beta > 0) {
+        resonatorText += ` | beta~${formatDiagnosticRatio(metrics.beta)}`;
+      }
+      if (degenerateAnalysisPresets.has(state.preset) && metrics.split > 0) {
+        resonatorText += ` | df=${formatFieldValue(metrics.split)}`;
+      }
+      if (ptModalAnalysisPresets.has(state.preset) && metrics.ptModal) {
+        resonatorText += ` | g/k=${formatDiagnosticRatio(metrics.ptModal.normalizedGamma)} | ${metrics.ptModal.phase}`;
+        resonatorText += ` | EPd=${formatDiagnosticRatio(metrics.ptModal.epDistance)}`;
+      }
+      if (leakageAnalysisPresets.has(state.preset) && metrics.leakageRate > 0) {
+        resonatorText += ` | leak~${formatFieldValue(metrics.leakageRate)}`;
+      }
+    }
+    let topologicalText = "";
+    if (metrics?.sshBloch) {
+      topologicalText += ` | W=${metrics.sshBloch.winding} | gap=${formatFieldValue(metrics.sshBloch.bandGap)}`;
+      if (metrics.sshBloch.edgeExpected) topologicalText += " | edge";
+      if (state.preset === "nonHermitianSsh") topologicalText += ` | nh-gap=${formatFieldValue(metrics.sshBloch.nonHermitianGap)}`;
+    }
+    if (metrics?.phcBloch) {
+      topologicalText += ` | BZ leak=${formatFieldValue(metrics.phcBloch.leakage)} | SF=${formatDiagnosticRatio(metrics.phcBloch.structureFactor)}`;
+      if (metrics.phcBloch.modal) {
+        topologicalText += ` | PWE b${metrics.phcBloch.modal.basisSize} f1=${formatFieldValue(metrics.phcBloch.modal.fundamentalFrequency)}`;
+        if (metrics.phcBloch.modal.bandGap > 0) topologicalText += ` | gap=${formatFieldValue(metrics.phcBloch.modal.bandGap)}`;
+        if (metrics.phcBloch.modal.path?.minGap > 0) topologicalText += ` | pathGap=${formatFieldValue(metrics.phcBloch.modal.path.minGap)}`;
+      }
+      if (leakageAnalysisPresets.has(state.preset)) topologicalText += ` | Qk~${formatFieldValue(metrics.phcBloch.qProxy)}`;
+    }
+    const absorptionText =
+      absorptionAnalysisPresets.has(state.preset) && sim.diagnosticSamples > 8
+        ? ` | A~${formatDiagnosticRatio(
+            clamp(1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0), 0, 1),
+          )}`
+        : "";
+    let nonlinearText = "";
+    if (metrics && nonlinearAnalysisPresets.has(state.preset)) {
+      if (harmonicAnalysisPresets.has(state.preset)) {
+        if (metrics.harmonic2 > 1e-4) nonlinearText += ` | H2~${formatDiagnosticRatio(metrics.harmonic2)}`;
+        if (metrics.harmonic3 > 1e-4) nonlinearText += ` | H3~${formatDiagnosticRatio(metrics.harmonic3)}`;
+      }
+      if (metrics.sidebandRatio > 0.05) {
+        nonlinearText += ` | side~${formatDiagnosticRatio(metrics.sidebandRatio)}`;
+      }
+      if (phaseChangeAnalysisPresets.has(state.preset)) {
+        nonlinearText += ` | s~${formatDiagnosticRatio(metrics.phaseAverage)}`;
+      }
+    }
+    const floquetPlusOrder = metrics?.floquet?.orders?.find((channel) => channel.order === 1);
+    const floquetText =
+      metrics?.floquet && temporalFloquetAnalysisPresets.has(state.preset)
+        ? metrics.floquet.scatteringMatrix
+          ? ` | DFT T+1=${formatDiagnosticRatio(metrics.floquet.firstUpper)} | T-1=${formatDiagnosticRatio(
+              metrics.floquet.firstLower,
+            )} | R+1=${formatDiagnosticRatio(floquetPlusOrder?.reflectedAmplitudeRatio || 0)} | Pout=${formatDiagnosticRatio(
+              metrics.floquet.scatteringMatrix.totalOutgoingPower,
+            )} | m*=${metrics.floquet.maxSidebandOrder}`
+          : ` | probe S+1=${formatDiagnosticRatio(metrics.floquet.firstUpper)} | S-1=${formatDiagnosticRatio(
+              metrics.floquet.firstLower,
+            )} | Pside=${formatDiagnosticRatio(metrics.floquet.sidebandPower)} | m*=${metrics.floquet.maxSidebandOrder}`
+        : "";
+    const hyperlensText =
+      metrics?.hyperlens && state.preset === "hyperlens"
+        ? ` | Hout/Hin=${formatDiagnosticRatio(metrics.hyperlens.transfer)} | detail=${formatDiagnosticRatio(
+            metrics.hyperlens.detailTransfer,
+          )}`
+        : "";
     el.analysisStatus.textContent = state.analysisEnabled
       ? `${sampleText} · ${contourText} · f=${formatFieldValue(sim.diagnosticFrequency())}`
       : "Analysis paused.";
+    if (state.analysisEnabled) {
+      el.analysisStatus.textContent = `${sampleText} | ${contourText} | f=${formatFieldValue(
+        sim.diagnosticFrequency(),
+      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}`;
+    }
   }
-  drawSpectrumChart();
-  drawFarFieldChart();
+}
+
+async function runBlochKSweep(scanPoints = buildSweepScanPoints()) {
+  if (!blochSweepCompatible()) {
+    setSweepStatus("Bloch k sweep is available for photonic-crystal and BIC presets.");
+    return;
+  }
+  const wasRunning = state.running;
+  state.running = false;
+  state.sweepRunning = true;
+  state.sweepCancelRequested = false;
+  state.sweepResults = [];
+  updateControlText();
+  updateStats();
+  drawSweepChart();
+  let completionMessage = "";
+
+  try {
+    for (let pointIndex = 0; pointIndex < scanPoints.length; pointIndex += 1) {
+      if (state.sweepCancelRequested) break;
+      const point = scanPoints[pointIndex];
+      const metrics = sim.phcBlochEstimate(point.value);
+      if (!metrics) {
+        completionMessage = "Bloch k sweep needs high-index photonic-crystal material in the active scene.";
+        break;
+      }
+      const modal = metrics.modal || {};
+      const result = {
+        x: metrics.k,
+        branch: point.branch,
+        branchIndex: point.branchIndex,
+        r: 0,
+        t: 0,
+        blochK: metrics.k,
+        blochLeakage: metrics.leakage,
+        blochQ: metrics.qProxy,
+        blochStructureFactor: metrics.structureFactor,
+        blochAsymmetry: metrics.asymmetry,
+        blochBandFrequency: metrics.bandFrequency,
+        blochSecondBandFrequency: modal.secondBandFrequency || 0,
+        blochBandGap: modal.bandGap || 0,
+        blochGapRatio: modal.gapRatio || 0,
+        blochNormalizedFrequency: modal.normalizedFrequency || 0,
+        blochPlaneWaveContrast: modal.inverseEpsContrast || 0,
+        blochPlaneWaveFill: modal.fillFraction || 0,
+        blochPlaneWaveBasis: modal.basisSize || 0,
+        blochPlaneWaveShells: modal.basisShells || 0,
+        blochPathGap: modal.path?.minGap || 0,
+        blochPathGapRatio: modal.path?.minGapRatio || 0,
+        blochPathGapLocation: modal.path?.minGapLabel || "",
+        blochPathSamples: modal.path?.pointCount || 0,
+        blochPathFirstBandMax: modal.path?.firstBandMax || 0,
+        blochPathSecondBandMin: modal.path?.secondBandMin || 0,
+        blochGroup: metrics.groupProxy,
+        blochAverageEps: metrics.averageEps,
+        blochCells: metrics.cells,
+        steady: true,
+        steadyDrift: 0,
+        steadyMetric: "bloch",
+        steadySamples: 1,
+        steadyTolerance: 0,
+      };
+      state.sweepResults.push(result);
+      drawSweepChart();
+      setSweepStatus(
+        `Recorded ${pointIndex + 1}/${scanPoints.length}: rad=${formatDiagnosticRatio(result.blochLeakage)}, Qk=${formatFieldValue(
+          result.blochQ,
+        )}, f1=${formatFieldValue(result.blochBandFrequency)}, pathGap=${formatFieldValue(result.blochPathGap)}`,
+      );
+      await nextAnimationFrame();
+    }
+  } finally {
+    const cancelled = state.sweepCancelRequested;
+    const pointLabel = state.sweepResults.length === 1 ? "point" : "points";
+    state.running = wasRunning && !cancelled;
+    state.sweepRunning = false;
+    state.sweepCancelRequested = false;
+    updateControlText();
+    updateStats();
+    sim.render();
+    drawSweepChart();
+    setSweepStatus(
+      completionMessage ||
+        (cancelled
+          ? `Bloch k sweep cancelled. ${state.sweepResults.length} ${pointLabel} recorded.`
+          : `Bloch k sweep complete. ${state.sweepResults.length} ${pointLabel} recorded.`),
+    );
+  }
 }
 
 async function runSweep() {
@@ -6929,6 +2861,27 @@ async function runSweep() {
   }
 
   syncSweepStateFromInputs();
+  const scanPoints = buildSweepScanPoints();
+  if (state.sweepMode === "blochK") {
+    if (!blochSweepCompatible()) {
+      setSweepStatus("Bloch k sweep is available for photonic-crystal and BIC presets.");
+      return;
+    }
+    await runBlochKSweep(scanPoints);
+    return;
+  }
+  if (state.sweepMode === "gainLoss" && !gainLossSweepCompatible()) {
+    setSweepStatus("Gain/loss sweep is available for PT and exceptional-point presets.");
+    return;
+  }
+  if (state.sweepMode === "symmetry" && !symmetrySweepCompatible()) {
+    setSweepStatus("Symmetry sweep is available for BIC and quasi-BIC photonic-crystal presets.");
+    return;
+  }
+  if (state.sweepMode === "direction" && !directionSweepCompatible()) {
+    setSweepStatus("Direction sweep is available for traveling-modulation and nonreciprocal presets.");
+    return;
+  }
   const target = sweepSourceTarget();
   if (!target) {
     setSweepStatus("Add a source before running a sweep.");
@@ -6936,15 +2889,15 @@ async function runSweep() {
   }
 
   const sourceSnapshots = state.sources.map((source) => ({ ...source }));
+  const lossSweepSnapshot = state.sweepMode === "gainLoss" ? gainLossSweepSnapshot() : null;
+  const symmetryMaterialSnapshot = state.sweepMode === "symmetry" ? symmetrySweepSnapshot() : null;
   const selectedSourceId = state.selectedSourceId;
   const sourceDefaults = { ...state.sourceDefaults };
   const diagnosticsEnabled = state.diagnosticsEnabled;
+  const fieldComponentSnapshot = state.fieldComponent;
   const wasRunning = state.running;
-  const valueCount = Math.max(1, state.sweepSamples);
-  const values = Array.from({ length: valueCount }, (_unused, index) => {
-    const t = valueCount === 1 ? 0 : index / (valueCount - 1);
-    return state.sweepStart + (state.sweepEnd - state.sweepStart) * t;
-  });
+  const dualPolarization = dualPolarizationSweepEnabled();
+  const memorySweep = bidirectionalSweepActive();
 
   state.running = false;
   state.diagnosticsEnabled = true;
@@ -6956,11 +2909,16 @@ async function runSweep() {
   sim.render();
 
   try {
-    for (let pointIndex = 0; pointIndex < values.length; pointIndex += 1) {
-      if (state.sweepCancelRequested) break;
-      const value = values[pointIndex];
+    const runSingleSweepSimulation = async (
+      value,
+      pointIndex,
+      component = state.fieldComponent,
+      label = "",
+      preserveFields = false,
+    ) => {
+      state.fieldComponent = component === "hz" ? "hz" : "ez";
       const activeTarget = sweepSourceTarget();
-      if (!activeTarget) break;
+      if (!activeTarget) return null;
 
       if (state.sweepMode === "frequency") {
         const frequency = clampSweepRangeForMode("frequency", value);
@@ -6969,6 +2927,15 @@ async function runSweep() {
           source.frequency = frequency;
           normalizeSource(source);
         });
+      } else if (state.sweepMode === "amplitude") {
+        activeTarget.amplitude = clampSweepRangeForMode("amplitude", value);
+        normalizeSource(activeTarget);
+      } else if (state.sweepMode === "gainLoss") {
+        applyGainLossSweepValue(lossSweepSnapshot, value);
+      } else if (state.sweepMode === "symmetry") {
+        applySymmetrySweepValue(symmetryMaterialSnapshot, value);
+      } else if (state.sweepMode === "direction") {
+        applyDirectionSweepValue(activeTarget, value);
       } else {
         activeTarget.type = "sine";
         activeTarget.angleDeg = ((clampSweepRangeForMode("angle", value) % 360) + 360) % 360;
@@ -6977,14 +2944,21 @@ async function runSweep() {
       state.sourceDefaults = { ...activeTarget };
       delete state.sourceDefaults.id;
 
-      sim.resetFields();
+      if (!preserveFields) sim.resetFields();
       sim.resetDiagnostics();
+      if (state.sweepMode === "gainLoss") {
+        applyGainLossSweepValue(lossSweepSnapshot, value);
+      } else if (state.sweepMode === "symmetry") {
+        applySymmetrySweepValue(symmetryMaterialSnapshot, value);
+      }
+      const labelText = label ? ` ${label}` : "";
       setSweepStatus(
-        `Point ${pointIndex + 1}/${values.length}: ${sweepModeLabel()}=${formatSweepValue(value)}${sweepUnitLabel()}`,
+        `Point ${pointIndex + 1}/${scanPoints.length}${labelText}: ${sweepModeLabel()}=${formatSweepValue(value)}${sweepUnitLabel()}`,
       );
       updateControlText();
 
       let stepsDone = 0;
+      const steadyHistory = [];
       while (stepsDone < state.sweepSteps) {
         if (state.sweepCancelRequested) break;
         const chunk = Math.min(36, state.sweepSteps - stepsDone);
@@ -6993,6 +2967,8 @@ async function runSweep() {
         }
         stepsDone += chunk;
         sim.measure();
+        const steadyMetrics = state.analysisEnabled ? sim.analysisMetricEstimate() : null;
+        steadyHistory.push(sweepSteadyObservation(steadyMetrics));
         updateStats();
         if (stepsDone % 144 === 0 || stepsDone >= state.sweepSteps) {
           sim.render();
@@ -7000,30 +2976,142 @@ async function runSweep() {
         }
       }
 
-      if (state.sweepCancelRequested) break;
+      if (state.sweepCancelRequested) return null;
       sim.measure();
-      const result = {
-        x: value,
+      const metrics = sim.analysisMetricEstimate();
+      const steadyEstimate = sweepSteadyEstimate(steadyHistory);
+      const floquetOrders = metrics?.floquet?.orders || [];
+      const floquetOrder = (order) => floquetOrders.find((channel) => channel.order === order);
+      const floquetMatrix = metrics?.floquet?.scatteringMatrix || null;
+      return {
         r: sim.diagnosticReflectance || 0,
         t: sim.diagnosticTransmittance || 0,
         pInc: sim.diagnosticIncidentPower || 0,
         pRef: sim.diagnosticReflectedPower || 0,
         pTrn: sim.diagnosticTransmittedPower || 0,
+        h2: metrics?.harmonic2 || 0,
+        h3: metrics?.harmonic3 || 0,
+        sideband: metrics?.sidebandRatio || 0,
+        floquetCarrier: metrics?.floquet?.carrierFrequency || 0,
+        floquetOmega: metrics?.floquet?.modulationFrequency || 0,
+        floquetSMinus2: floquetOrder(-2)?.amplitudeRatio || 0,
+        floquetSMinus1: metrics?.floquet?.firstLower || 0,
+        floquetS0: floquetOrder(0)?.amplitudeRatio || 0,
+        floquetSPlus1: metrics?.floquet?.firstUpper || 0,
+        floquetSPlus2: floquetOrder(2)?.amplitudeRatio || 0,
+        floquetRMinus2: floquetOrder(-2)?.reflectedAmplitudeRatio || 0,
+        floquetRMinus1: floquetOrder(-1)?.reflectedAmplitudeRatio || 0,
+        floquetR0: floquetOrder(0)?.reflectedAmplitudeRatio || 0,
+        floquetRPlus1: floquetOrder(1)?.reflectedAmplitudeRatio || 0,
+        floquetRPlus2: floquetOrder(2)?.reflectedAmplitudeRatio || 0,
+        floquetTPhasePlus1: floquetOrder(1)?.transmittedPhaseRad || 0,
+        floquetRPhasePlus1: floquetOrder(1)?.reflectedPhaseRad || 0,
+        floquetPowerTotal: floquetMatrix?.totalOutgoingPower || 0,
+        floquetPowerTransmitted: floquetMatrix?.totalTransmittedPower || 0,
+        floquetPowerReflected: floquetMatrix?.totalReflectedPower || 0,
+        floquetPowerSideband: metrics?.floquet?.sidebandPower || 0,
+        floquetPowerReflectedSideband: metrics?.floquet?.reflectedSidebandPower || 0,
+        floquetPowerUp: metrics?.floquet?.upPower || 0,
+        floquetPowerDown: metrics?.floquet?.downPower || 0,
+        floquetMaxSideband: metrics?.floquet?.maxSidebandRatio || 0,
+        floquetMaxOrder: metrics?.floquet?.maxSidebandOrder || 0,
+        floquetMethod: metrics?.floquet?.portDft ? "port-dft" : metrics?.floquet ? "probe-dft" : "",
+        hyperlensTransfer: metrics?.hyperlens?.transfer || 0,
+        hyperlensDetailTransfer: metrics?.hyperlens?.detailTransfer || 0,
+        hyperlensInnerEnergy: metrics?.hyperlens?.innerEnergy || 0,
+        hyperlensOuterEnergy: metrics?.hyperlens?.outerEnergy || 0,
+        phaseState: metrics?.phaseAverage || 0,
+        split: metrics?.split || 0,
+        spectralSplit: metrics?.spectralSplit || 0,
+        ptGamma: metrics?.ptModal?.gamma || 0,
+        ptCoupling: metrics?.ptModal?.coupling || 0,
+        ptGammaOverKappa: metrics?.ptModal?.normalizedGamma || 0,
+        epDistance: metrics?.ptModal?.epDistance || 0,
+        epCoalescence: metrics?.ptModal?.coalescence || 0,
+        modalSplitReal: metrics?.ptModal?.realSplit || 0,
+        modalSplitImag: metrics?.ptModal?.imagSplit || 0,
+        epPhase: metrics?.ptModal?.phase || "",
+        sshWinding: metrics?.sshBloch?.winding ?? 0,
+        sshBandGap: metrics?.sshBloch?.bandGap || 0,
+        sshNonHermitianGap: metrics?.sshBloch?.nonHermitianGap || 0,
+        sshEdgeExpected: metrics?.sshBloch?.edgeExpected ? 1 : 0,
+        leakage: metrics?.leakageRate || 0,
+        q: metrics?.ringdown?.q || 0,
+        steady: steadyEstimate.steady,
+        steadyDrift: steadyEstimate.drift,
+        steadyMetric: steadyEstimate.key,
+        steadySamples: steadyEstimate.samples,
+        steadyTolerance: steadyEstimate.tolerance,
+      };
+    };
+
+    for (let pointIndex = 0; pointIndex < scanPoints.length; pointIndex += 1) {
+      if (state.sweepCancelRequested) break;
+      const point = scanPoints[pointIndex];
+      const value = point.value;
+      const preserveFields = memorySweep && pointIndex > 0;
+
+      if (dualPolarization) {
+        const tm = await runSingleSweepSimulation(value, pointIndex, "hz", "TM");
+        if (state.sweepCancelRequested || !tm) break;
+        const te = await runSingleSweepSimulation(value, pointIndex, "ez", "TE");
+        if (state.sweepCancelRequested || !te) break;
+        const result = {
+          x: value,
+          branch: point.branch,
+          r: tm.r,
+          t: tm.t,
+          rTm: tm.r,
+          tTm: tm.t,
+          rTe: te.r,
+          tTe: te.t,
+          pIncTm: tm.pInc,
+          pRefTm: tm.pRef,
+          pTrnTm: tm.pTrn,
+          pIncTe: te.pInc,
+          pRefTe: te.pRef,
+          pTrnTe: te.pTrn,
+          steady: Boolean(tm.steady && te.steady),
+          steadyDrift: Math.max(tm.steadyDrift || 0, te.steadyDrift || 0),
+          steadyMetric: (tm.steadyDrift || 0) >= (te.steadyDrift || 0) ? `TM:${tm.steadyMetric}` : `TE:${te.steadyMetric}`,
+          steadySamples: Math.min(tm.steadySamples || 0, te.steadySamples || 0),
+          steadyTolerance: Math.max(tm.steadyTolerance || 0, te.steadyTolerance || 0),
+        };
+        state.sweepResults.push(result);
+        drawSweepChart();
+        setSweepStatus(
+          `Recorded ${pointIndex + 1}/${scanPoints.length}: R_TM=${formatDiagnosticRatio(result.rTm)}, R_TE=${formatDiagnosticRatio(result.rTe)}${
+            result.steady ? " | steady" : ` | drift=${formatSweepDrift(result.steadyDrift)}`
+          }`,
+        );
+        await nextAnimationFrame();
+        continue;
+      }
+
+      const single = await runSingleSweepSimulation(value, pointIndex, state.fieldComponent, point.branch, preserveFields);
+      if (state.sweepCancelRequested || !single) break;
+      const result = {
+        x: value,
+        branch: point.branch,
+        branchIndex: point.branchIndex,
+        direction: state.sweepMode === "direction" ? point.branch : "",
+        ...single,
       };
       state.sweepResults.push(result);
       drawSweepChart();
-      setSweepStatus(
-        `Recorded ${pointIndex + 1}/${values.length}: R=${formatDiagnosticRatio(result.r)}, T=${formatDiagnosticRatio(result.t)}`,
-      );
+      setSweepStatus(sweepResultStatusText(result, pointIndex, scanPoints.length));
       await nextAnimationFrame();
     }
   } finally {
     const cancelled = state.sweepCancelRequested;
     const pointLabel = state.sweepResults.length === 1 ? "point" : "points";
+    restoreGainLossSweepSnapshot(lossSweepSnapshot);
+    restoreSymmetrySweepSnapshot(symmetryMaterialSnapshot);
     state.sources = sourceSnapshots.map((source) => ({ ...source }));
     state.selectedSourceId = selectedSourceId;
     state.sourceDefaults = { ...sourceDefaults };
     state.diagnosticsEnabled = diagnosticsEnabled;
+    state.fieldComponent = fieldComponentSnapshot;
     state.running = wasRunning && !cancelled;
     state.sweepRunning = false;
     state.sweepCancelRequested = false;
@@ -7034,12 +3122,186 @@ async function runSweep() {
     updateStats();
     sim.render();
     drawSweepChart();
+    const isolation = directionSweepIsolationEstimate();
+    if (isolation) {
+      state.sweepResults.forEach((result) => {
+        result.tForward = isolation.tForward;
+        result.tReverse = isolation.tReverse;
+        result.isolationDb = isolation.isolationDb;
+      });
+    }
+    const driftingCount = state.sweepResults.filter((result) => result.steady === false).length;
+    const driftText =
+      driftingCount > 0
+        ? ` ${driftingCount} ${driftingCount === 1 ? "point is" : "points are"} still drifting; increase steps / point.`
+        : state.sweepResults.length > 0
+          ? ` All points steady within ${formatSweepDrift(SWEEP_STEADY_TOLERANCE)}.`
+          : "";
+    const isolationText = isolation
+      ? ` Isolation ${formatIsolationDb(isolation.isolationDb)} (Tf=${formatDiagnosticRatio(isolation.tForward)}, Tr=${formatDiagnosticRatio(
+          isolation.tReverse,
+        )}).`
+      : "";
     setSweepStatus(
       cancelled
-        ? `Sweep cancelled. ${state.sweepResults.length} ${pointLabel} recorded.`
-        : `Sweep complete. ${state.sweepResults.length} ${pointLabel} recorded.`,
+        ? `Sweep cancelled. ${state.sweepResults.length} ${pointLabel} recorded.${driftText}${isolationText}`
+        : `Sweep complete. ${state.sweepResults.length} ${pointLabel} recorded.${driftText}${isolationText}`,
     );
   }
+}
+
+function csvCell(value) {
+  if (value == null) return "";
+  if (typeof value === "number") return Number.isFinite(value) ? value.toPrecision(10) : "";
+  const text = String(value);
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function safeFilePart(text) {
+  return String(text || "scene")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "scene";
+}
+
+function exportSweepCsv() {
+  const results = state.sweepResults || [];
+  if (results.length === 0) {
+    setSweepStatus("Run a sweep before exporting CSV data.");
+    return;
+  }
+  const optionalColumns = [
+    "r",
+    "t",
+    "pInc",
+    "pRef",
+    "pTrn",
+    "rTm",
+    "tTm",
+    "rTe",
+    "tTe",
+    "pIncTm",
+    "pRefTm",
+    "pTrnTm",
+    "pIncTe",
+    "pRefTe",
+    "pTrnTe",
+    "h2",
+    "h3",
+    "sideband",
+    "floquetCarrier",
+    "floquetOmega",
+    "floquetSMinus2",
+    "floquetSMinus1",
+    "floquetS0",
+    "floquetSPlus1",
+    "floquetSPlus2",
+    "floquetRMinus2",
+    "floquetRMinus1",
+    "floquetR0",
+    "floquetRPlus1",
+    "floquetRPlus2",
+    "floquetTPhasePlus1",
+    "floquetRPhasePlus1",
+    "floquetPowerTotal",
+    "floquetPowerTransmitted",
+    "floquetPowerReflected",
+    "floquetPowerSideband",
+    "floquetPowerReflectedSideband",
+    "floquetPowerUp",
+    "floquetPowerDown",
+    "floquetMaxSideband",
+    "floquetMaxOrder",
+    "floquetMethod",
+    "hyperlensTransfer",
+    "hyperlensDetailTransfer",
+    "hyperlensInnerEnergy",
+    "hyperlensOuterEnergy",
+    "phaseState",
+    "split",
+    "spectralSplit",
+    "ptGamma",
+    "ptCoupling",
+    "ptGammaOverKappa",
+    "epDistance",
+    "epCoalescence",
+    "modalSplitReal",
+    "modalSplitImag",
+    "sshWinding",
+    "sshBandGap",
+    "sshNonHermitianGap",
+    "sshEdgeExpected",
+    "blochK",
+    "blochLeakage",
+    "blochQ",
+    "blochStructureFactor",
+    "blochAsymmetry",
+    "blochBandFrequency",
+    "blochSecondBandFrequency",
+    "blochBandGap",
+    "blochGapRatio",
+    "blochNormalizedFrequency",
+    "blochPlaneWaveContrast",
+    "blochPlaneWaveFill",
+    "blochPlaneWaveBasis",
+    "blochPlaneWaveShells",
+    "blochPathGap",
+    "blochPathGapRatio",
+    "blochPathGapLocation",
+    "blochPathSamples",
+    "blochPathFirstBandMax",
+    "blochPathSecondBandMin",
+    "blochGroup",
+    "blochAverageEps",
+    "blochCells",
+    "leakage",
+    "q",
+    "tForward",
+    "tReverse",
+    "isolationDb",
+  ];
+  const columns = [
+    "index",
+    "preset",
+    "sweepMode",
+    "branch",
+    "direction",
+    "epPhase",
+    "branchIndex",
+    "x",
+    "steady",
+    "steadyDrift",
+    "steadyMetric",
+    "steadySamples",
+    "steadyTolerance",
+    ...optionalColumns.filter((key) =>
+      results.some((row) => Number.isFinite(row[key]) || (typeof row[key] === "string" && row[key].length > 0)),
+    ),
+  ];
+  const lines = [
+    columns.join(","),
+    ...results.map((row, index) =>
+      columns
+        .map((column) => {
+          if (column === "index") return csvCell(index);
+          if (column === "preset") return csvCell(state.preset);
+          if (column === "sweepMode") return csvCell(state.sweepMode);
+          return csvCell(row[column]);
+        })
+        .join(","),
+    ),
+  ];
+  const blob = new Blob([`${lines.join("\n")}\n`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `fdtd-sweep-${safeFilePart(state.preset)}-${safeFilePart(state.sweepMode)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setSweepStatus(`Exported ${results.length} sweep rows to CSV.`);
 }
 
 function formatLogValue(logValue) {
@@ -7296,31 +3558,53 @@ el.analysisResetBtn?.addEventListener("click", () => {
 });
 
 el.sweepModeInput?.addEventListener("change", () => {
-  const nextMode = el.sweepModeInput.value === "frequency" ? "frequency" : "angle";
+  const nextMode = normalizeSweepMode(el.sweepModeInput.value);
   state.sweepMode = nextMode;
   if (nextMode === "frequency") {
     state.sweepStart = 0.012;
     state.sweepEnd = 0.055;
+  } else if (nextMode === "amplitude") {
+    state.sweepStart = 0.1;
+    state.sweepEnd = 1.0;
+  } else if (nextMode === "gainLoss") {
+    state.sweepStart = 0;
+    state.sweepEnd = 0.08;
+  } else if (nextMode === "symmetry") {
+    state.sweepStart = 0;
+    state.sweepEnd = 0.16;
+  } else if (nextMode === "blochK") {
+    state.sweepStart = 0;
+    state.sweepEnd = 1;
+    state.sweepSamples = 11;
+  } else if (nextMode === "direction") {
+    state.sweepStart = 0;
+    state.sweepEnd = 1;
+    state.sweepSamples = 2;
   } else {
     state.sweepStart = 0;
     state.sweepEnd = 70;
   }
+  state.sweepBidirectional = nextMode === "amplitude" && Boolean(el.sweepBidirectionalInput?.checked);
   state.sweepResults = [];
-  setSweepStatus("Sweep uses the current scene and the active incident source.");
+  setSweepStatus(sweepReadyStatusText());
   updateControlText();
 });
 
-[el.sweepStartInput, el.sweepEndInput, el.sweepSamplesInput, el.sweepStepsInput].forEach((input) => {
+[el.sweepStartInput, el.sweepEndInput, el.sweepSamplesInput, el.sweepStepsInput, el.sweepBidirectionalInput].forEach((input) => {
   input?.addEventListener("change", () => {
     syncSweepStateFromInputs();
     state.sweepResults = [];
-    setSweepStatus("Sweep uses the current scene and the active incident source.");
+    setSweepStatus(sweepReadyStatusText());
     updateControlText();
   });
 });
 
 el.sweepRunBtn?.addEventListener("click", () => {
   runSweep();
+});
+
+el.sweepExportBtn?.addEventListener("click", () => {
+  exportSweepCsv();
 });
 
 el.fieldComponentButtons.forEach((button) => {
@@ -7543,7 +3827,7 @@ function handleCustomMaterialInput() {
     state.gyrotropyG = clamp(gyrotropyG, -5, 5);
   }
   if (Number.isFinite(bianisotropyKappa)) {
-    state.bianisotropyKappa = clamp(bianisotropyKappa, -5, 5);
+    state.bianisotropyKappa = normalizeBianisotropyKappa(bianisotropyKappa);
   }
   if (Number.isFinite(modulationDepth)) {
     state.modulationDepth = clamp(modulationDepth, 0, 0.95);
