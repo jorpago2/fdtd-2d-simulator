@@ -386,6 +386,13 @@ function currentBrushLabel() {
   return state.brush === "custom" && state.customAnisotropic ? "Custom anisotropic ε, μ" : materialNames[state.brush];
 }
 
+function sourceSummaryLabel() {
+  if (state.sources.length === 1) {
+    return `${sourceShapeLabel(state.sources[0].shape)} \u00b7 ${sourceCouplingLabel(state.sources[0].shape)}`;
+  }
+  return `${state.sources.length} sources`;
+}
+
 const el = {
   canvas: document.getElementById("simCanvas"),
   canvasFrame: document.querySelector(".canvas-frame"),
@@ -557,6 +564,12 @@ const el = {
   topBoundaryValue: document.getElementById("topBoundaryValue"),
   topStepValue: document.getElementById("topStepValue"),
   topMaxFieldValue: document.getElementById("topMaxFieldValue"),
+  simGuideSolver: document.getElementById("simGuideSolver"),
+  simGuideSource: document.getElementById("simGuideSource"),
+  simGuideBoundary: document.getElementById("simGuideBoundary"),
+  simGuideMaterial: document.getElementById("simGuideMaterial"),
+  simGuideCfl: document.getElementById("simGuideCfl"),
+  simGuideWarning: document.getElementById("simGuideWarning"),
   fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
   fieldMetricUnit: document.getElementById("fieldMetricUnit"),
   energyValue: document.getElementById("energyValue"),
@@ -1237,7 +1250,12 @@ function updateMaterialWarning() {
   } else if (sim.fieldLog10Scale !== 0) {
     notes.push(`Field scale ${formatScaleFromLog(sim.fieldLog10Scale)}x.`);
   }
-  el.materialWarning.textContent = notes.join(" ");
+  const warningText = notes.join(" ");
+  el.materialWarning.textContent = warningText;
+  if (el.simGuideWarning) {
+    el.simGuideWarning.textContent = warningText || `CFL S = ${COURANT.toFixed(2)} < ${(1 / Math.sqrt(2)).toFixed(2)} explicit 2D Yee limit.`;
+    el.simGuideWarning.classList.toggle("is-warning", Boolean(warningText));
+  }
 }
 
 let sim = new FDTDSim(el.canvas, DEFAULT_GRID);
@@ -1935,14 +1953,27 @@ function updateControlText() {
   if (el.topBoundaryValue) {
     el.topBoundaryValue.textContent = boundary;
   }
+  const sourceLabel = sourceSummaryLabel();
+  const materialLabel = currentBrushLabel();
+  if (el.simGuideSolver) {
+    el.simGuideSolver.textContent = solverSummary;
+  }
+  if (el.simGuideSource) {
+    el.simGuideSource.textContent = sourceLabel;
+  }
+  if (el.simGuideBoundary) {
+    el.simGuideBoundary.textContent = boundary;
+  }
+  if (el.simGuideMaterial) {
+    el.simGuideMaterial.textContent = materialLabel;
+  }
+  if (el.simGuideCfl) {
+    el.simGuideCfl.textContent = `S = ${COURANT.toFixed(2)}`;
+  }
   if (el.materialLabel) {
-    el.materialLabel.textContent = `Material: ${currentBrushLabel()}`;
+    el.materialLabel.textContent = `Material: ${materialLabel}`;
   }
   if (el.modePill) {
-    const sourceLabel =
-      state.sources.length === 1
-        ? `${sourceShapeLabel(state.sources[0].shape)} · ${sourceCouplingLabel(state.sources[0].shape)}`
-        : `${state.sources.length} sources`;
     el.modePill.textContent = `Sources: ${sourceLabel} - ${boundary} boundary`;
   }
   updateMaterialWarning();

@@ -5250,3 +5250,87 @@ html[data-theme="dark"] .diagnostic-metric {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Simulation guidance */
+.simulation-guide-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.simulation-guide-card {
+  display: grid !important;
+  align-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 68px !important;
+  border: 1px solid var(--neu-border) !important;
+  border-radius: 17px !important;
+  padding: 10px 11px !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.simulation-guide-card:nth-child(5) {
+  grid-column: 1 / -1 !important;
+}
+
+.simulation-guide-card span,
+.simulation-guide-card output {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.simulation-guide-card span {
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+}
+
+.simulation-guide-card output {
+  color: var(--neu-ink) !important;
+  text-align: left !important;
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.simulation-guide-note {
+  margin: 0 !important;
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+  color: var(--neu-muted) !important;
+  background: var(--neu-surface-low) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.38 !important;
+}
+
+.simulation-guide-note.is-warning {
+  color: var(--danger) !important;
+  background: color-mix(in srgb, var(--danger) 8%, var(--neu-surface-low)) !important;
+}
+
+html[data-theme="dark"] .simulation-guide-card,
+html[data-theme="dark"] .simulation-guide-note {
+  background-color: var(--neu-surface-low) !important;
+}
+
+@media (min-width: 1121px) {
+  .control-panel .control-tab-panel.is-active {
+    grid-template-columns: 1fr !important;
+  }
+
+  .control-panel .control-tab-panel > .panel-section {
+    grid-column: 1 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .simulation-guide-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

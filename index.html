@@ -11,7 +11,7 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-4" />
+    <link rel="stylesheet" href="styles.css?v=20260627-neu-tabs-5" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -734,6 +734,32 @@
             </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
+<section class="panel-section simulation-guide-section">
+              <h2>Setup</h2>
+              <div class="simulation-guide-grid">
+                <div class="simulation-guide-card">
+                  <span>Solver</span>
+                  <output id="simGuideSolver">TMz / Ez</output>
+                </div>
+                <div class="simulation-guide-card">
+                  <span>Source</span>
+                  <output id="simGuideSource">Plane wave</output>
+                </div>
+                <div class="simulation-guide-card">
+                  <span>Boundary</span>
+                  <output id="simGuideBoundary">PML absorbing</output>
+                </div>
+                <div class="simulation-guide-card">
+                  <span>Medium</span>
+                  <output id="simGuideMaterial">Custom</output>
+                </div>
+                <div class="simulation-guide-card">
+                  <span>CFL</span>
+                  <output id="simGuideCfl">S = 0.50</output>
+                </div>
+              </div>
+              <p id="simGuideWarning" class="simulation-guide-note">Ready</p>
+            </section>
 <section class="panel-section run-section">
               <h2>Run</h2>
               <div class="solver-row">
@@ -929,6 +955,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-split-5"></script>
-    <script src="app.js?v=20260627-neu-tabs-3"></script>
+    <script src="app.js?v=20260627-neu-tabs-5"></script>
   </body>
 </html>
