@@ -4394,6 +4394,14 @@ html[data-theme="dark"] .colorbar-title {
   --neu-shadow-inset: inset 6px 6px 13px rgba(160, 176, 186, 0.28), inset -7px -7px 14px rgba(255, 255, 255, 0.88);
   --neu-shadow-inset-tight: inset 3px 3px 8px rgba(150, 166, 176, 0.28), inset -4px -4px 9px rgba(255, 255, 255, 0.86);
   --neu-border: rgba(255, 255, 255, 0.64);
+  --neu-radius-band: 24px;
+  --neu-radius-card: 18px;
+  --neu-radius-card-tight: 17px;
+  --neu-radius-note: 16px;
+  --neu-control-gap: 10px;
+  --neu-status-min-height: 58px;
+  --neu-metric-min-height: 70px;
+  --neu-guide-min-height: 68px;
 }
 
 html[data-theme="dark"] {
@@ -4884,7 +4892,7 @@ html[data-theme="dark"] .sweep-chart {
   width: 100% !important;
   min-height: 46px !important;
   border: 0 !important;
-  border-radius: 18px !important;
+  border-radius: var(--neu-radius-card) !important;
   padding: 10px 13px !important;
   color: var(--neu-ink) !important;
   background: var(--neu-surface-low) !important;
@@ -4896,7 +4904,7 @@ html[data-theme="dark"] .sweep-chart {
   gap: 8px !important;
   overflow-x: auto !important;
   padding: 7px !important;
-  border-radius: 18px !important;
+  border-radius: var(--neu-radius-card) !important;
   background: var(--neu-surface-low) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
   scrollbar-width: thin !important;
@@ -4929,7 +4937,7 @@ html[data-theme="dark"] .sweep-chart {
 
 .scene-cards {
   display: grid !important;
-  gap: 10px !important;
+  gap: var(--neu-control-gap) !important;
   max-height: min(52vh, 560px) !important;
   min-height: 180px !important;
   overflow: auto !important;
@@ -4943,7 +4951,7 @@ html[data-theme="dark"] .sweep-chart {
   gap: 7px !important;
   width: 100% !important;
   border: 1px solid var(--neu-border) !important;
-  border-radius: 18px !important;
+  border-radius: var(--neu-radius-card) !important;
   padding: 12px !important;
   color: var(--neu-ink) !important;
   text-align: left !important;
@@ -5043,7 +5051,7 @@ html[data-theme="dark"] .sweep-chart {
 .scene-empty-state {
   margin: 0 !important;
   padding: 14px !important;
-  border-radius: 16px !important;
+  border-radius: var(--neu-radius-note) !important;
   color: var(--neu-muted) !important;
   background: var(--neu-surface-low) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
@@ -5073,12 +5081,12 @@ html[data-theme="dark"] .scene-empty-state {
 .scientific-status-strip {
   display: grid !important;
   grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: var(--neu-control-gap) !important;
   width: 100% !important;
   margin: 0 0 16px !important;
   padding: 10px !important;
   border: 1px solid var(--neu-border) !important;
-  border-radius: 24px !important;
+  border-radius: var(--neu-radius-band) !important;
   background: var(--neu-surface-low) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
 }
@@ -5088,8 +5096,8 @@ html[data-theme="dark"] .scene-empty-state {
   align-content: center !important;
   gap: 4px !important;
   min-width: 0 !important;
-  min-height: 58px !important;
-  border-radius: 18px !important;
+  min-height: var(--neu-status-min-height) !important;
+  border-radius: var(--neu-radius-card) !important;
   padding: 10px 12px !important;
   background: var(--neu-surface) !important;
   box-shadow: var(--neu-shadow-soft) !important;
@@ -5179,7 +5187,7 @@ html[data-theme="dark"] .scene-empty-state {
 .diagnostics-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: var(--neu-control-gap) !important;
   padding: 10px !important;
   border-radius: 20px !important;
 }
@@ -5189,9 +5197,9 @@ html[data-theme="dark"] .scene-empty-state {
   align-content: center !important;
   gap: 5px !important;
   min-width: 0 !important;
-  min-height: 70px !important;
+  min-height: var(--neu-metric-min-height) !important;
   border: 1px solid var(--neu-border) !important;
-  border-radius: 17px !important;
+  border-radius: var(--neu-radius-card-tight) !important;
   padding: 10px 11px !important;
   background: var(--neu-surface) !important;
   box-shadow: var(--neu-shadow-soft) !important;
@@ -5229,11 +5237,11 @@ html[data-theme="dark"] .scene-empty-state {
 .sweep-panel,
 .analysis-panel {
   display: grid !important;
-  gap: 11px !important;
+  gap: calc(var(--neu-control-gap) + 1px) !important;
 }
 
 .analysis-panel-header {
-  gap: 10px !important;
+  gap: var(--neu-control-gap) !important;
 }
 
 .sweep-chart,
@@ -5255,7 +5263,7 @@ html[data-theme="dark"] .diagnostic-metric {
 .simulation-guide-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: var(--neu-control-gap) !important;
 }
 
 .simulation-guide-card {
@@ -5263,9 +5271,9 @@ html[data-theme="dark"] .diagnostic-metric {
   align-content: center !important;
   gap: 5px !important;
   min-width: 0 !important;
-  min-height: 68px !important;
+  min-height: var(--neu-guide-min-height) !important;
   border: 1px solid var(--neu-border) !important;
-  border-radius: 17px !important;
+  border-radius: var(--neu-radius-card-tight) !important;
   padding: 10px 11px !important;
   background: var(--neu-surface-low) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
@@ -5300,7 +5308,7 @@ html[data-theme="dark"] .diagnostic-metric {
 
 .simulation-guide-note {
   margin: 0 !important;
-  border-radius: 16px !important;
+  border-radius: var(--neu-radius-note) !important;
   padding: 10px 12px !important;
   color: var(--neu-muted) !important;
   background: var(--neu-surface-low) !important;
