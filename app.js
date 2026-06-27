@@ -679,6 +679,11 @@ const el = {
   topBoundaryValue: document.getElementById("topBoundaryValue"),
   topStepValue: document.getElementById("topStepValue"),
   topMaxFieldValue: document.getElementById("topMaxFieldValue"),
+  mobileModeValue: document.getElementById("mobileModeValue"),
+  mobileEngineValue: document.getElementById("mobileEngineValue"),
+  mobileGridValue: document.getElementById("mobileGridValue"),
+  mobileStepValue: document.getElementById("mobileStepValue"),
+  mobileMaxFieldValue: document.getElementById("mobileMaxFieldValue"),
   simGuideSolver: document.getElementById("simGuideSolver"),
   simGuideSource: document.getElementById("simGuideSource"),
   simGuideBoundary: document.getElementById("simGuideBoundary"),
@@ -2482,12 +2487,19 @@ function updateControlText() {
   if (el.hudModeLabel) {
     el.hudModeLabel.textContent = solverSummary;
   }
+  if (el.mobileModeValue) {
+    el.mobileModeValue.textContent = solverSummary;
+  }
   if (el.topModeValue) {
     el.topModeValue.textContent = solverSummary;
   }
   if (el.topGridValue) {
     el.topGridValue.textContent = topGridSummary;
     el.topGridValue.title = fullGridSummary;
+  }
+  if (el.mobileGridValue) {
+    el.mobileGridValue.textContent = `${sim.nx}x${sim.ny}`;
+    el.mobileGridValue.title = fullGridSummary;
   }
   if (el.topBoundaryValue) {
     el.topBoundaryValue.textContent = boundary;
@@ -2534,6 +2546,9 @@ function updateStats() {
   if (el.topStepValue) el.topStepValue.textContent = stepText;
   if (el.topMaxFieldValue) el.topMaxFieldValue.textContent = maxFieldText;
   if (el.topEngineValue) el.topEngineValue.textContent = engineText;
+  if (el.mobileStepValue) el.mobileStepValue.textContent = stepText;
+  if (el.mobileMaxFieldValue) el.mobileMaxFieldValue.textContent = maxFieldText;
+  if (el.mobileEngineValue) el.mobileEngineValue.textContent = engineText;
   if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
   if (el.hudFieldLabel) el.hudFieldLabel.textContent = `max ${maxFieldText}`;
   if (el.fluxLeftOutput) el.fluxLeftOutput.textContent = formatFieldValue(sim.diagnosticIncidentPower || 0);

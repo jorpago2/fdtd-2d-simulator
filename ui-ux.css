@@ -854,3 +854,112 @@ body {
 .canvas-toolbar .canvas-view-controls [hidden] {
   display: none !important;
 }
+
+.mobile-canvas-stats {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .scientific-status-strip {
+    display: none !important;
+  }
+
+  .stage {
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+  }
+
+  .hud {
+    display: none !important;
+  }
+
+  .mobile-canvas-stats {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    margin-top: 6px !important;
+    padding: 5px !important;
+    border-radius: 16px !important;
+    background: var(--surface-low) !important;
+    box-shadow: var(--neu-inset-soft) !important;
+  }
+
+  .mobile-canvas-stats span {
+    display: grid !important;
+    align-content: center !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+    border-radius: 12px !important;
+    padding: 4px 5px !important;
+    background: var(--surface) !important;
+    box-shadow: var(--neu-shadow-small) !important;
+  }
+
+  .mobile-canvas-stats small,
+  .mobile-canvas-stats output {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-align: center !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-canvas-stats small {
+    color: var(--muted) !important;
+    font-size: 0.52rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+  }
+
+  .mobile-canvas-stats output {
+    color: var(--ink) !important;
+    font-size: 0.62rem !important;
+    font-weight: 900 !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .colorbar {
+    right: 5px !important;
+    padding: 5px !important;
+    opacity: 0.86 !important;
+    transform: translateY(-50%) scale(0.78) !important;
+    transform-origin: right center !important;
+  }
+
+  .colorbar-title {
+    font-size: 0.58rem !important;
+  }
+
+  .colorbar-body {
+    grid-template-columns: 10px 34px !important;
+    gap: 5px !important;
+    height: 96px !important;
+  }
+
+  .colorbar-labels {
+    font-size: 0.56rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-canvas-stats {
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .mobile-canvas-stats span {
+    min-height: 32px !important;
+    padding-inline: 4px !important;
+  }
+
+  .mobile-canvas-stats small {
+    font-size: 0.49rem !important;
+  }
+
+  .mobile-canvas-stats output {
+    font-size: 0.58rem !important;
+  }
+}
