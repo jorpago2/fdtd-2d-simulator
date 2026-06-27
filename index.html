@@ -12,7 +12,7 @@
       }
     </script>
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260627-config-panel-2" />
+    <link rel="stylesheet" href="ui-ux.css?v=20260627-health-status-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -72,6 +72,10 @@
         <div class="scientific-status-item">
           <span>Boundary</span>
           <output id="topBoundaryValue">PML absorbing</output>
+        </div>
+        <div class="scientific-status-item health-status-item">
+          <span>Health</span>
+          <output id="topHealthValue" data-health-level="stable" aria-live="polite">stable</output>
         </div>
         <div class="scientific-status-item">
           <span>Step</span>
@@ -645,6 +649,7 @@
             <span data-mobile-stat="state"><small>state</small><output id="mobileCanvasStateValue">Select 1.00x</output></span>
             <span data-mobile-stat="mode"><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
             <span data-mobile-stat="grid"><small>grid</small><output id="mobileGridValue">180x120</output></span>
+            <span data-mobile-stat="health"><small>health</small><output id="mobileHealthValue" data-health-level="stable" aria-live="polite">stable</output></span>
             <span data-mobile-stat="step"><small>step</small><output id="mobileStepValue">0</output></span>
             <span data-mobile-stat="max"><small>max</small><output id="mobileMaxFieldValue">0</output></span>
           </div>
@@ -1213,6 +1218,6 @@
     <script src="src/fdtd-diagnostics.js?v=20260627-split-6"></script>
     <script src="src/fdtd-yee.js?v=20260627-split-12"></script>
     <script src="src/fdtd-rendering.js?v=20260627-visual-layers-1"></script>
-    <script src="app.js?v=20260627-config-panel-2"></script>
+    <script src="app.js?v=20260627-health-status-1"></script>
   </body>
 </html>

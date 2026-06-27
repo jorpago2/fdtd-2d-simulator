@@ -758,11 +758,13 @@ const el = {
   topEngineValue: document.getElementById("topEngineValue"),
   topGridValue: document.getElementById("topGridValue"),
   topBoundaryValue: document.getElementById("topBoundaryValue"),
+  topHealthValue: document.getElementById("topHealthValue"),
   topStepValue: document.getElementById("topStepValue"),
   topMaxFieldValue: document.getElementById("topMaxFieldValue"),
   mobileModeValue: document.getElementById("mobileModeValue"),
   mobileCanvasStateValue: document.getElementById("mobileCanvasStateValue"),
   mobileGridValue: document.getElementById("mobileGridValue"),
+  mobileHealthValue: document.getElementById("mobileHealthValue"),
   mobileStepValue: document.getElementById("mobileStepValue"),
   mobileMaxFieldValue: document.getElementById("mobileMaxFieldValue"),
   simGuideSolver: document.getElementById("simGuideSolver"),
@@ -2142,6 +2144,36 @@ function materialStabilityFlags() {
   return flags;
 }
 
+function healthStatusReason(cflStable, flags, limit) {
+  if (!cflStable) {
+    return `CFL S=${COURANT.toFixed(2)} exceeds the explicit 2D Yee limit ${limit.toFixed(2)}.`;
+  }
+  if (sim.lastDiverged) {
+    return "Non-finite field was detected and the fields were reset.";
+  }
+  if (flags.length > 0) {
+    return `Check before quantitative use: ${flags.join(", ")}.`;
+  }
+  return `CFL S=${COURANT.toFixed(2)} is below ${limit.toFixed(2)} and no material stability flags are active.`;
+}
+
+function applyHealthState(output, level, reason) {
+  if (!output) return;
+  output.textContent = level;
+  output.title = reason;
+  output.dataset.healthLevel = level;
+  output.setAttribute("aria-label", `Numerical health: ${level}. ${reason}`);
+  output.classList.toggle("is-warning", level === "caution");
+  output.classList.toggle("is-danger", level === "unstable");
+}
+
+function updateHealthStatusOutputs(level, reason) {
+  applyHealthState(el.topHealthValue, level, reason);
+  applyHealthState(el.mobileHealthValue, level, reason);
+  applyHealthState(el.configStabilityOutput, level, reason);
+  applyHealthState(el.stabilityEstimateValue, level, reason);
+}
+
 function updateStabilitySummary() {
   if (!el.stabilityCflValue) return;
   const limit = 1 / Math.sqrt(2);
@@ -2149,14 +2181,11 @@ function updateStabilitySummary() {
   const flags = materialStabilityFlags();
   const cflStable = COURANT < limit;
   const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
+  const healthReason = healthStatusReason(cflStable, flags, limit);
   el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
   el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / lambda0`;
   el.stabilityMediaValue.textContent = media.join(", ");
-  el.stabilityEstimateValue.textContent = level;
-  if (el.configStabilityOutput) {
-    el.configStabilityOutput.textContent = level;
-    el.configStabilityOutput.classList.toggle("is-warning", level !== "stable");
-  }
+  updateHealthStatusOutputs(level, healthReason);
   if (el.stabilityNote) {
     const base = `Explicit 2D Yee check: S must stay below 1/sqrt(2). Current S=${COURANT.toFixed(2)}.`;
     el.stabilityNote.textContent =
@@ -3069,6 +3098,9 @@ function updateStats() {
   if (el.transmittanceOutput) el.transmittanceOutput.textContent = formatDiagnosticRatio(diagnosticTransmittance);
   if (el.engineValue) el.engineValue.textContent = engineText;
   updateMaterialWarning();
+  if (sim.lastDiverged || sim.time % 20 === 0) {
+    updateStabilitySummary();
+  }
   updateAnalysisControls();
 }
 
