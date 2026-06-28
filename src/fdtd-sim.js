@@ -495,7 +495,11 @@ class FDTDSim {
 
   canUseCompiledMaterialStep() {
     if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
-    if (this.hasTfsfIncidentSource?.()) return false;
+    if (this.hasTfsfIncidentSource?.()) {
+      if (!this.wasmBackend.supportsTfsf?.()) return false;
+      if (!this.wasmBackend.canPackTfsfSources?.(this)) return false;
+      if (state.materialDispersionEnabled) return false;
+    }
     if (
       state.materialModulationEnabled ||
       state.materialHarmonicEnabled ||
@@ -525,6 +529,7 @@ class FDTDSim {
     if (state.materialSaturableGainEnabled) labels.push("gain");
     if (state.materialGyrotropyEnabled) labels.push("tensor");
     if (state.materialDispersionEnabled) labels.push("JS ADE");
+    if (this.hasTfsfIncidentSource?.()) labels.push("TFSF");
     return labels.length > 0 ? `WASM ${labels.join("+")}` : "WASM";
   }
 
@@ -546,6 +551,7 @@ class FDTDSim {
       if (state.materialBianisotropyEnabled) return "JS bianiso";
       if (state.materialGyrotropyEnabled) return "JS tensor";
       if (state.materialPhaseChangeEnabled) return "JS memory";
+      if (this.hasTfsfIncidentSource?.()) return "JS TFSF+dynamic";
       return state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic";
     }
     if (state.materialConductivityEnabled) {
@@ -553,7 +559,9 @@ class FDTDSim {
         ? "WASM sigma"
         : "JS sigma";
     }
-    if (this.hasTfsfIncidentSource?.()) return "JS TFSF";
+    if (this.hasTfsfIncidentSource?.()) {
+      return this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsTfsf?.() ? "WASM TFSF" : "JS TFSF";
+    }
     return this.wasmBackend?.canStep(state.fieldComponent) ? "WASM" : "JS";
   }
 

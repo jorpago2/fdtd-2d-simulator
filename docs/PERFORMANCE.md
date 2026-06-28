@@ -60,9 +60,9 @@ The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The acti
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
-- `kernel_features`: compiled-kernel capability bitmask. Bit 0 is finite electric conductivity, bit 1 is Kerr, bit 2 is saturable gain, and bit 3 is TEz tensor/gyrotropy.
+- `kernel_features`: compiled-kernel capability bitmask. Bit 0 is finite electric conductivity, bit 1 is Kerr, bit 2 is saturable gain, bit 3 is TEz tensor/gyrotropy, and bit 4 is exact TFSF injection.
 
-The compiled kernel includes finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, and TEz tensor/gyrotropic electric updates. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
+The compiled kernel includes finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, TEz tensor/gyrotropic electric updates, and exact rectangular TFSF boundary corrections for line and Gaussian incident fields. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order; when exact TFSF and ADE would conflict in update order, the app keeps the JavaScript path. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
 
 ## Worker Engine
 
@@ -74,7 +74,7 @@ This first worker route targets interactive responsiveness, not zero-copy throug
 
 ## C++ Migration Path
 
-`wasm-src/fdtd-core.cpp` mirrors the previous WAT kernel with the same exported signatures and byte-offset memory layout. It is the maintainable source for the compiled backend.
+`wasm-src/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF source parameters into the imported WebAssembly memory before each compiled step.
 
 Build it with a clang toolchain that supports `wasm32`:
 

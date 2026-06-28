@@ -174,6 +174,16 @@ magneticUpdateCoeffY(idx, y) {
   return this.hCbY[y] * (this.courant / muY) / (1 + this.muLossY[idx]);
 },
 
+transverseMagneticUpdateCoeffX(idx, x) {
+  const muY = this.safeMaterialDenominator(this.muY[idx]);
+  return this.hCbX[x] * (this.courant / muY) / (1 + this.muLossY[idx]);
+},
+
+transverseMagneticUpdateCoeffY(idx, y) {
+  const mu = this.safeMaterialDenominator(this.mu[idx]);
+  return this.hCbY[y] * (this.courant / mu) / (1 + this.muLoss[idx]);
+},
+
 applyTfsfTransverseCorrections() {
   for (const source of state.sources) {
     if (!this.isTfsfIncidentSource(source)) continue;
@@ -201,24 +211,24 @@ applyTfsfTmMagneticCorrections(params) {
     const leftIdx = this.id(x0 - 1, y);
     if (this.material[leftIdx] !== 2) {
       const eLeft = this.tfsfIncidentScalar(params, x0, y, t);
-      this.hy[leftIdx] -= this.magneticUpdateCoeffX(leftIdx, x0 - 1) * eLeft;
+      this.hy[leftIdx] -= this.transverseMagneticUpdateCoeffX(leftIdx, x0 - 1) * eLeft;
     }
     const rightIdx = this.id(x1, y);
     if (this.material[rightIdx] !== 2) {
       const eRight = this.tfsfIncidentScalar(params, x1, y, t);
-      this.hy[rightIdx] += this.magneticUpdateCoeffX(rightIdx, x1) * eRight;
+      this.hy[rightIdx] += this.transverseMagneticUpdateCoeffX(rightIdx, x1) * eRight;
     }
   }
   for (let x = x0; x <= x1; x += 1) {
     const topIdx = this.id(x, y0 - 1);
     if (this.material[topIdx] !== 2) {
       const eTop = this.tfsfIncidentScalar(params, x, y0, t);
-      this.hx[topIdx] += this.magneticUpdateCoeffY(topIdx, y0 - 1) * eTop;
+      this.hx[topIdx] += this.transverseMagneticUpdateCoeffY(topIdx, y0 - 1) * eTop;
     }
     const bottomIdx = this.id(x, y1);
     if (this.material[bottomIdx] !== 2) {
       const eBottom = this.tfsfIncidentScalar(params, x, y1, t);
-      this.hx[bottomIdx] -= this.magneticUpdateCoeffY(bottomIdx, y1) * eBottom;
+      this.hx[bottomIdx] -= this.transverseMagneticUpdateCoeffY(bottomIdx, y1) * eBottom;
     }
   }
 },

@@ -4,10 +4,14 @@ const WASM_FEATURE_CONDUCTIVITY = 1 << 0;
 const WASM_FEATURE_KERR = 1 << 1;
 const WASM_FEATURE_SATURABLE_GAIN = 1 << 2;
 const WASM_FEATURE_TENSOR_GYRO = 1 << 3;
+const WASM_FEATURE_TFSF = 1 << 4;
 
 const WASM_STEP_KERR = 1 << 0;
 const WASM_STEP_SATURABLE_GAIN = 1 << 1;
 const WASM_STEP_TENSOR_GYRO = 1 << 2;
+const WASM_MAX_TFSF_SOURCES = 32;
+const WASM_TFSF_STRIDE = 16;
+const WASM_TFSF_SOURCE_TYPE = { sine: 0, gaussian: 1, ricker: 2 };
 
 function wasmAlign4(value) {
   return (value + 3) & ~3;
@@ -27,7 +31,13 @@ class WasmFdtdBackend {
       throw new Error(`Could not load ${url}: ${response.status}`);
     }
     const bytes = await response.arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(bytes, { env: { memory } });
+    const { instance } = await WebAssembly.instantiate(bytes, {
+      env: {
+        memory,
+        fdtd_sinf: Math.sin,
+        fdtd_expf: Math.exp,
+      },
+    });
     return new WasmFdtdBackend(memory, instance.exports);
   }
 
@@ -81,6 +91,7 @@ class WasmFdtdBackend {
     f32("eCbY", ny);
     f32("hCaY", ny);
     f32("hCbY", ny);
+    f32("tfsfSources", WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
 
     return {
       offsets,
@@ -143,12 +154,64 @@ class WasmFdtdBackend {
     sim.eCbY = new Float32Array(buffer, o.eCbY, sim.ny);
     sim.hCaY = new Float32Array(buffer, o.hCaY, sim.ny);
     sim.hCbY = new Float32Array(buffer, o.hCbY, sim.ny);
+    this.tfsfSources = new Float32Array(buffer, o.tfsfSources, WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
+  }
+
+  packTfsfSources(sim) {
+    if (!this.tfsfSources) return 0;
+    this.tfsfSources.fill(0);
+    let count = 0;
+    for (const source of state.sources) {
+      if (count >= WASM_MAX_TFSF_SOURCES) break;
+      if (!sim.isTfsfIncidentSource?.(source)) continue;
+      const params = sim.tfsfSourceParams?.(source);
+      if (!params) continue;
+      const offset = count * WASM_TFSF_STRIDE;
+      const type = WASM_TFSF_SOURCE_TYPE[source.type] ?? WASM_TFSF_SOURCE_TYPE.sine;
+      const profile = source.shape === "gaussianProfile" ? 1 : 0;
+      const fwhm =
+        source.shape === "gaussianProfile"
+          ? state.preset === "customSlab"
+            ? sim.slabCoreThicknessCells()
+            : Math.max(4, Math.round(sim.ny * 0.09))
+          : 1;
+      this.tfsfSources[offset + 0] = type;
+      this.tfsfSources[offset + 1] = profile;
+      this.tfsfSources[offset + 2] = params.sx;
+      this.tfsfSources[offset + 3] = params.sy;
+      this.tfsfSources[offset + 4] = params.cosTheta;
+      this.tfsfSources[offset + 5] = params.sinTheta;
+      this.tfsfSources[offset + 6] = params.kCells;
+      this.tfsfSources[offset + 7] = params.z;
+      this.tfsfSources[offset + 8] = params.x0;
+      this.tfsfSources[offset + 9] = params.x1;
+      this.tfsfSources[offset + 10] = params.y0;
+      this.tfsfSources[offset + 11] = params.y1;
+      this.tfsfSources[offset + 12] = source.frequency;
+      this.tfsfSources[offset + 13] = source.amplitude;
+      this.tfsfSources[offset + 14] = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
+      this.tfsfSources[offset + 15] = fwhm;
+      count += 1;
+    }
+    return count;
+  }
+
+  canPackTfsfSources(sim) {
+    let count = 0;
+    for (const source of state.sources) {
+      if (!sim.isTfsfIncidentSource?.(source)) continue;
+      if (!sim.tfsfSourceParams?.(source)) continue;
+      count += 1;
+      if (count > WASM_MAX_TFSF_SOURCES) return false;
+    }
+    return true;
   }
 
   stepWithOffsets(sim, component, offsets) {
     const o = offsets;
     const stepExport = component === "hz" ? this.exports.step_hz : this.exports.step;
     const runtimeFlags = this.stepRuntimeFlags(component);
+    const tfsfCount = this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
     stepExport(
       sim.nx,
       sim.ny,
@@ -187,7 +250,11 @@ class WasmFdtdBackend {
       runtimeFlags,
       Number(state.kerrChi3) || 0,
       Math.max(0.05, Number(state.kerrSaturation) || 5),
-      Math.max(0.05, Number(state.gainSaturation) || 4)
+      Math.max(0.05, Number(state.gainSaturation) || 4),
+      sim.time,
+      Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1,
+      o.tfsfSources,
+      tfsfCount
     );
   }
 
@@ -237,6 +304,10 @@ class WasmFdtdBackend {
 
   supportsTensorGyro() {
     return this.supportsFeature(WASM_FEATURE_TENSOR_GYRO);
+  }
+
+  supportsTfsf() {
+    return this.supportsFeature(WASM_FEATURE_TFSF);
   }
 
   stepRuntimeFlags(component) {
