@@ -15,6 +15,38 @@ Open the advanced `Results -> Performance` panel while the simulator is running.
 
 Interpret these as profiling guides, not publication metrics. Browser scheduling, thermal throttling, device pixel ratio, active overlays, and the selected material model all affect the numbers.
 
+## Browser Benchmark
+
+For repeatable JS/WASM comparisons, run:
+
+```powershell
+npm run benchmark:perf -- --browser-channel=msedge
+```
+
+The benchmark opens the app in a browser, tests the default static TMz path on several grids, and reports separate costs for:
+
+- `sim.step()`, including source injection, boundary cleanup, and diagnostics updates.
+- `sim.render()`, including field-to-pixel mapping and overlays.
+- `sim.measure()`, for the diagnostic pass.
+
+Use custom grids when profiling a target device:
+
+```powershell
+npm run benchmark:perf -- --browser-channel=msedge --grids=180x120,360x240,720x480 --steps=240 --json
+```
+
+The reported WASM/JS speedup is meaningful for the static Yee update only. Dynamic materials that force the JavaScript path must be benchmarked separately before moving them to C++/WASM.
+
+Reference run on this Windows/Edge workstation after limiting renormalization to active fields:
+
+| Grid | WASM step | JS step | WASM speedup | Render | Measure |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 180 x 120 | 0.52 ms | 1.21 ms | 2.34x | 2.13 ms | 0.86 ms |
+| 360 x 240 | 1.65 ms | 4.66 ms | 2.82x | 3.64 ms | 1.42 ms |
+| 720 x 480 | 5.29 ms | 18.13 ms | 3.43x | 11.52 ms | 5.39 ms |
+
+These values are hardware- and browser-dependent. They are useful as a local regression baseline, not as universal performance claims.
+
 ## Current Backend
 
 The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The active kernel is now built from `wasm-src/fdtd-core.cpp`, which exports:

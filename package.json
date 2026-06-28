@@ -7,6 +7,7 @@
     "test": "node scripts/validate-static.mjs",
     "validate": "node scripts/validate-static.mjs --json",
     "test:browser": "node scripts/browser-smoke.mjs",
+    "benchmark:perf": "node scripts/performance-benchmark.mjs",
     "build:wasm:wat": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
     "build:wasm:cpp": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm-cpp.ps1"
   },

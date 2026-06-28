@@ -593,29 +593,40 @@ class FDTDSim {
     this.fieldScale = value < 300 ? Math.pow(10, value) : Infinity;
   }
 
-  renormalizeFields() {
+  renormalizationArrays() {
     const arrays = [
       this.ez,
       this.ezx,
       this.ezy,
       this.hx,
       this.hy,
-      this.dualEz,
-      this.dualEzx,
-      this.dualEzy,
-      this.dualHx,
-      this.dualHy,
-      this.bianisotropyPrevScalar,
-      this.bianisotropyPrevSplitX,
-      this.bianisotropyPrevSplitY,
-      this.bianisotropyPrevTx,
-      this.bianisotropyPrevTy,
-      this.bianisotropyPrevDualEz,
-      this.bianisotropyPrevDualEzx,
-      this.bianisotropyPrevDualEzy,
-      this.bianisotropyPrevDualHx,
-      this.bianisotropyPrevDualHy,
     ].filter(Boolean);
+
+    if (state.materialBianisotropyEnabled) {
+      arrays.push(
+        this.dualEz,
+        this.dualEzx,
+        this.dualEzy,
+        this.dualHx,
+        this.dualHy,
+        this.bianisotropyPrevScalar,
+        this.bianisotropyPrevSplitX,
+        this.bianisotropyPrevSplitY,
+        this.bianisotropyPrevTx,
+        this.bianisotropyPrevTy,
+        this.bianisotropyPrevDualEz,
+        this.bianisotropyPrevDualEzx,
+        this.bianisotropyPrevDualEzy,
+        this.bianisotropyPrevDualHx,
+        this.bianisotropyPrevDualHy,
+      );
+    }
+
+    return arrays.filter(Boolean);
+  }
+
+  renormalizeFields() {
+    const arrays = this.renormalizationArrays();
     let maxAbs = 0;
 
     for (const array of arrays) {

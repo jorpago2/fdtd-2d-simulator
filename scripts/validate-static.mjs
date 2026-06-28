@@ -261,6 +261,7 @@ function main() {
     "src/fdtd-yee.js",
     "src/fdtd-rendering.js",
     "app.js",
+    "scripts/performance-benchmark.mjs",
   ];
 
   runNodeSyntaxCheck(jsFiles);
