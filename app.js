@@ -1658,7 +1658,7 @@ function activateControlTab(tabName, options = {}) {
 function activateMobileLayer(layerName) {
   const layer = layerName || "scenes";
   if (layer === "visual") {
-    activateControlTab("visual", { layer: "visual", focusSelector: ".visual-summary-section" });
+    activateControlTab("visual", { layer: "visual", focusSelector: ".visual-field-section" });
     return;
   }
   if (layer === "objects") {

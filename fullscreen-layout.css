@@ -911,3 +911,476 @@ body.controls-drawer-open {
     font-size: 0.58rem !important;
   }
 }
+
+/* General drawer density and task-first ordering. */
+.control-panel {
+  gap: clamp(8px, 0.75vw, 12px) !important;
+  padding:
+    max(10px, env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left)) !important;
+}
+
+.control-panel-header {
+  gap: 8px !important;
+}
+
+.control-panel-title-block .panel-kicker {
+  margin-bottom: 1px !important;
+  font-size: 0.62rem !important;
+  line-height: 1.05 !important;
+}
+
+.control-panel-title-block h2 {
+  font-size: clamp(0.95rem, 1.25vw, 1.18rem) !important;
+  line-height: 1.08 !important;
+}
+
+.control-panel-actions {
+  gap: 6px !important;
+}
+
+.control-panel-actions .theme-toggle {
+  flex-basis: clamp(120px, 11vw, 150px) !important;
+  width: clamp(120px, 11vw, 150px) !important;
+  min-width: 120px !important;
+  max-width: 150px !important;
+}
+
+.control-panel-actions .theme-toggle .mode-toggle-button {
+  min-height: 30px !important;
+  padding-inline: 7px !important;
+  font-size: 0.64rem !important;
+}
+
+.control-panel .control-drawer-close {
+  flex-basis: 34px !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  font-size: 1rem !important;
+}
+
+.control-panel .mobile-layer-nav {
+  gap: 5px !important;
+  grid-auto-rows: minmax(34px, auto) !important;
+  padding: 5px !important;
+  border-radius: 16px !important;
+}
+
+.control-panel .mobile-layer-button {
+  min-height: 34px !important;
+  padding: 5px 8px !important;
+  border-radius: 12px !important;
+  font-size: 0.66rem !important;
+}
+
+.control-panel .mobile-layer-button .nav-step {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 0.56rem !important;
+}
+
+.control-tab-panels {
+  scrollbar-gutter: stable !important;
+}
+
+.control-tab-panel.is-active {
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)) !important;
+  gap: 9px !important;
+}
+
+.control-tab-panel > .panel-section,
+.control-tab-panel > details,
+.control-tab-panel > .config-detail-panel,
+.control-tab-panel > .sweep-panel,
+.control-tab-panel > .analysis-panel {
+  padding: 11px !important;
+  border-radius: 16px !important;
+}
+
+.control-panel .panel-section h2,
+.control-panel .results-panel-head h2,
+.control-panel .visual-panel-head h2,
+.control-panel details > summary {
+  font-size: 0.86rem !important;
+  line-height: 1.12 !important;
+}
+
+.control-panel .panel-section h2 {
+  margin-bottom: 7px !important;
+}
+
+.control-panel .panel-kicker,
+.control-panel label > span,
+.control-panel .control-row > span,
+.control-panel .toggle-row > span,
+.control-panel .visual-control-row > span,
+.control-panel .diagnostic-metric span,
+.control-panel .config-summary-card span,
+.control-panel .results-summary-card span,
+.control-panel .visual-summary-card span,
+.control-panel .simulation-guide-card span {
+  font-size: 0.68rem !important;
+  font-weight: 760 !important;
+  line-height: 1.14 !important;
+}
+
+.control-panel input[type="search"],
+.control-panel select,
+.control-panel input[type="number"] {
+  min-height: 36px !important;
+  border-radius: 12px !important;
+  padding: 6px 10px !important;
+  font-size: 0.74rem !important;
+  font-weight: 780 !important;
+}
+
+.control-panel input[type="range"] {
+  height: 24px !important;
+}
+
+.control-panel .control-row,
+.control-panel .solver-row {
+  gap: 7px !important;
+}
+
+.control-panel .control-row {
+  grid-template-columns: minmax(62px, 0.65fr) minmax(0, 1.6fr) minmax(54px, auto) !important;
+}
+
+.control-panel .two-col,
+.control-panel .button-row,
+.control-panel .inspector-actions,
+.control-panel .sweep-actions,
+.control-panel .performance-actions,
+.control-panel .analysis-panel-header {
+  gap: 7px !important;
+}
+
+.control-panel .control-row output,
+.control-panel label > output {
+  min-width: 54px !important;
+  min-height: 27px !important;
+  border-radius: 10px !important;
+  padding: 0 6px !important;
+  font-size: 0.69rem !important;
+  font-weight: 820 !important;
+}
+
+.control-panel .text-button {
+  min-height: 36px !important;
+  padding: 7px 10px !important;
+  font-size: 0.74rem !important;
+}
+
+.control-panel details > summary {
+  min-height: 34px !important;
+  padding: 7px 10px !important;
+}
+
+.control-panel .results-detail-body,
+.control-panel .config-detail-body {
+  gap: 8px !important;
+  padding-top: 8px !important;
+}
+
+#tab-scenes .scene-section {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+#tab-scenes .scene-browser {
+  order: 1 !important;
+}
+
+#tab-scenes .scene-note {
+  order: 2 !important;
+  margin: 0 !important;
+  font-size: 0.72rem !important;
+  line-height: 1.25 !important;
+}
+
+#tab-scenes #slabThicknessControl {
+  order: 3 !important;
+}
+
+#tab-scenes .scene-select-fallback {
+  order: 4 !important;
+}
+
+#tab-scenes .scene-browser,
+#tab-scenes .scene-filter-bar,
+#tab-scenes .scene-cards {
+  gap: 7px !important;
+}
+
+#tab-scenes .scene-filter-bar {
+  padding: 6px !important;
+}
+
+#tab-scenes .scene-filter-button {
+  min-height: 34px !important;
+  padding: 5px 9px !important;
+  font-size: 0.66rem !important;
+}
+
+#tab-scenes .scene-browser-meta output {
+  min-height: 28px !important;
+  font-size: 0.68rem !important;
+}
+
+#tab-scenes .scene-card {
+  min-height: 86px !important;
+  padding: 9px !important;
+}
+
+#tab-scenes .scene-card-title {
+  font-size: 0.82rem !important;
+  line-height: 1.16 !important;
+}
+
+#tab-scenes .scene-card-description {
+  font-size: 0.72rem !important;
+  line-height: 1.28 !important;
+}
+
+#tab-simulation .run-section {
+  order: 1 !important;
+}
+
+#tab-simulation .status-section {
+  order: 2 !important;
+}
+
+#tab-simulation .inspector-section {
+  order: 3 !important;
+}
+
+#tab-simulation .edit-section {
+  order: 4 !important;
+}
+
+#tab-simulation .simulation-guide-section {
+  order: 5 !important;
+}
+
+.control-panel[data-mobile-layer="objects"] #tab-simulation .inspector-section {
+  order: 1 !important;
+}
+
+.control-panel[data-mobile-layer="objects"] #tab-simulation .edit-section {
+  order: 2 !important;
+}
+
+.control-panel[data-mobile-layer="objects"] #tab-simulation .run-section {
+  order: 3 !important;
+}
+
+.control-panel[data-mobile-layer="objects"] #tab-simulation .status-section {
+  order: 4 !important;
+}
+
+.control-panel[data-mobile-layer="objects"] #tab-simulation .simulation-guide-section {
+  order: 5 !important;
+}
+
+#tab-simulation .simulation-guide-grid,
+#tab-simulation .status-grid,
+#tab-simulation .inspector-details {
+  gap: 7px !important;
+}
+
+#tab-simulation .simulation-guide-card {
+  min-height: 48px !important;
+  padding: 8px !important;
+}
+
+#tab-visual .visual-field-section {
+  order: 1 !important;
+}
+
+#tab-visual .visual-overlays-section {
+  order: 2 !important;
+}
+
+#tab-visual .visual-summary-section {
+  order: 3 !important;
+}
+
+#tab-visual .visual-control-stack,
+#tab-visual .visual-summary-grid,
+#tab-visual .visual-layer-grid {
+  gap: 7px !important;
+}
+
+.control-panel #tab-visual .canvas-mode-toggle,
+.control-panel #tab-visual .visual-panel-profile {
+  min-height: 38px !important;
+  padding: 4px !important;
+  border-radius: 14px !important;
+}
+
+.control-panel #tab-visual .mode-toggle-button {
+  min-height: 31px !important;
+  padding-inline: 6px !important;
+  font-size: 0.68rem !important;
+}
+
+.control-panel #tab-visual .visual-panel-layer {
+  min-height: 42px !important;
+  gap: 7px !important;
+  padding: 6px 8px !important;
+}
+
+.control-panel #tab-visual .visual-summary-card,
+.control-panel .results-summary-card,
+.control-panel .config-summary-card,
+.control-panel .diagnostic-metric,
+.control-panel .config-status-grid > div {
+  min-height: 50px !important;
+  padding: 8px !important;
+}
+
+#tab-results .diagnostics-section {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+#tab-results .results-panel-head {
+  order: 1 !important;
+}
+
+#tab-results .results-summary-grid {
+  order: 2 !important;
+}
+
+#tab-results .results-insight-note {
+  order: 3 !important;
+  margin: 0 !important;
+}
+
+#tab-results .monitor-panel {
+  order: 4 !important;
+}
+
+#tab-results .analysis-panel {
+  order: 5 !important;
+}
+
+#tab-results .sweep-panel {
+  order: 6 !important;
+}
+
+#tab-results .performance-panel {
+  order: 7 !important;
+}
+
+#tab-results .results-summary-grid,
+#tab-results .diagnostics-grid,
+#tab-results .performance-grid,
+#tab-results .analysis-chart-grid,
+#tab-config .config-summary-grid,
+#tab-config .config-status-grid {
+  gap: 7px !important;
+}
+
+#tab-config .scale-section {
+  order: 1 !important;
+}
+
+#tab-config .reproducibility-section {
+  order: 2 !important;
+}
+
+#tab-config .config-summary-section {
+  order: 3 !important;
+}
+
+#tab-config .grid-section {
+  order: 4 !important;
+}
+
+#tab-config .stability-section {
+  order: 5 !important;
+}
+
+#tab-config .share-url-output {
+  min-height: 56px !important;
+  font-size: 0.72rem !important;
+}
+
+@media (max-width: 760px) {
+  .control-panel {
+    gap: 8px !important;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left)) !important;
+  }
+
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(32px, auto) !important;
+    min-height: 0 !important;
+  }
+
+  .control-panel .mobile-layer-button {
+    min-height: 32px !important;
+    padding: 4px 6px !important;
+    font-size: 0.6rem !important;
+  }
+
+  .control-tab-panel.is-active {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .control-tab-panel > .panel-section,
+  .control-tab-panel > details,
+  .control-tab-panel > .config-detail-panel {
+    padding: 10px !important;
+  }
+
+  .control-panel .panel-section h2,
+  .control-panel .results-panel-head h2,
+  .control-panel .visual-panel-head h2 {
+    font-size: 0.82rem !important;
+  }
+
+  .control-panel .control-row {
+    grid-template-columns: minmax(54px, max-content) minmax(0, 1fr) minmax(48px, auto) !important;
+  }
+}
+
+@media (min-width: 761px) {
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(34px, auto) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .control-panel-actions .theme-toggle {
+    flex-basis: 110px !important;
+    width: 110px !important;
+    min-width: 110px !important;
+  }
+
+  .control-panel-actions .theme-toggle .mode-toggle-button {
+    min-height: 28px !important;
+    padding-inline: 4px !important;
+    font-size: 0.56rem !important;
+  }
+
+  .control-panel .control-drawer-close {
+    flex-basis: 32px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+}
