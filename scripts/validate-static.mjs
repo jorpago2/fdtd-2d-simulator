@@ -200,7 +200,7 @@ function validateUiReproducibility(indexHtml, appJs) {
   );
 }
 
-function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, wasmCpp) {
+function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, workerEngineJs, wasmCpp) {
   const requiredIds = [
     "performanceBackendOutput",
     "performanceGridOutput",
@@ -226,14 +226,18 @@ function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, wa
     "supportsTensorGyro",
     "canUseCompiledMaterialStep",
     "canUseCompiledKerrResponse",
+    "FdtdWorkerEngine",
+    "fdtd-worker.js",
     "kernel_features",
   ];
-  const performanceSources = `${appJs}\n${fdtdSimJs}\n${wasmBackendJs}\n${wasmCpp}`;
+  const performanceSources = `${indexHtml}\n${appJs}\n${fdtdSimJs}\n${wasmBackendJs}\n${workerEngineJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
     ["wasm-src", "fdtd-core.cpp"],
     ["scripts", "build-wasm-cpp.ps1"],
+    ["src", "fdtd-worker.js"],
+    ["src", "worker-engine.js"],
   ];
   const missingFiles = requiredFiles
     .map((parts) => ({ parts, filePath: repoPath(...parts) }))
@@ -256,6 +260,7 @@ function main() {
   const appJs = readText("app.js");
   const fdtdSimJs = readText("src", "fdtd-sim.js");
   const wasmBackendJs = readText("src", "wasm-backend.js");
+  const workerEngineJs = readText("src", "worker-engine.js");
   const wasmCpp = readText("wasm-src", "fdtd-core.cpp");
   const jsFiles = [
     "src/constants.js",
@@ -271,6 +276,9 @@ function main() {
     "src/fdtd-diagnostics.js",
     "src/fdtd-yee.js",
     "src/fdtd-rendering.js",
+    "src/fdtd-worker-protocol.js",
+    "src/worker-engine.js",
+    "src/fdtd-worker.js",
     "app.js",
     "scripts/performance-benchmark.mjs",
   ];
@@ -282,7 +290,7 @@ function main() {
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs);
-  validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, wasmCpp);
+  validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, workerEngineJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

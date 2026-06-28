@@ -15,7 +15,8 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 11. `fdtd-diagnostics.js`: analysis probes, spectra, Bloch/Floquet estimates, monitor DFTs, material diagnostics, and field measurement.
 12. `fdtd-yee.js`: one-step FDTD orchestration plus TMz/TEz Yee update kernels.
 13. `fdtd-rendering.js`: field/material rendering, surface view, overlays, glyphs, and source hit testing.
-14. `../app.js`: UI state, controls, event handlers, sweep orchestration, and app startup.
+14. `fdtd-worker-protocol.js`, `fdtd-worker.js`, and `worker-engine.js`: optional headless Worker stepping route for continuous Play.
+15. `../app.js`: UI state, controls, event handlers, sweep orchestration, and app startup.
 
 The active compiled kernel is built from `../wasm-src/fdtd-core.cpp` -> `../fdtd-core.wasm` and includes finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy support. The previous hand-maintained reference remains in `../fdtd-core.wat`; see `../docs/PERFORMANCE.md` before changing the WASM build path.
 

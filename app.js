@@ -1005,6 +1005,7 @@ function responsiveDefaultGrid() {
 }
 
 function applySimulationGridSize(nx, ny, { applyPreset = true, render = true } = {}) {
+  workerEngine?.markDirty();
   clearMaterialSelection(false);
   clearCanvasHover(false);
   state.gridNx = clampInt(nx, 80, MAX_GRID.nx);
@@ -1570,7 +1571,7 @@ function updateInspector() {
     ["Grid", `${sim.nx} x ${sim.ny}`],
     ["Mode", solverModeLabel()],
     ["Boundary", boundarySummaryLabel()],
-    ["Engine", sim.engineLabel()],
+    ["Engine", runtimeEngineLabel()],
   ]);
   hideSelectionSheet();
   if (el.inspectorNote) {
@@ -1999,12 +2000,19 @@ function formatPerformanceRate(stepMs, samples) {
   return `${rate.toFixed(1)} step/s`;
 }
 
+let workerEngine = null;
+
+function runtimeEngineLabel() {
+  const baseLabel = sim.engineLabel();
+  return workerEngine?.label ? workerEngine.label(baseLabel) : baseLabel;
+}
+
 function updatePerformanceStats(force = false) {
   const nowMs = performanceNowMs();
   if (!force && nowMs - performanceStats.lastUiUpdateMs < PERF_UI_INTERVAL_MS) return;
   performanceStats.lastUiUpdateMs = nowMs;
 
-  const engineText = sim.engineLabel();
+  const engineText = runtimeEngineLabel();
   const gridText = `${sim.nx} x ${sim.ny} (${sim.n.toLocaleString()} cells)`;
   const stepText = formatPerformanceMs(performanceStats.stepMs, performanceStats.stepSamples);
   const renderText = formatPerformanceMs(performanceStats.renderMs, performanceStats.renderSamples);
@@ -2498,6 +2506,23 @@ function updateStabilitySummary() {
 
 let sim = new FDTDSim(el.canvas, DEFAULT_GRID);
 instrumentSimulationPerformance(sim);
+workerEngine = window.FdtdWorkerEngine
+  ? new FdtdWorkerEngine(sim, {
+      onStep(message) {
+        recordPerformanceMetric("stepMs", message.elapsedMs, message.steps);
+        updateStats();
+        sim.render();
+      },
+      onSync() {
+        sim.measure();
+        updateStats();
+        sim.render();
+      },
+      onError() {
+        updateStats();
+      },
+    })
+  : null;
 let pointerDown = false;
 let paintPointerId = null;
 let panPointerId = null;
@@ -2668,6 +2693,7 @@ function readSourceEditorValues() {
 function syncSourceEditorTarget() {
   const target = activeSourceEditorTarget();
   if (!target) return;
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   const values = readSourceEditorValues();
   const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
@@ -3421,7 +3447,7 @@ function updateStats() {
   const stepText = String(sim.time);
   const maxFieldText = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
   const energyText = formatFieldMetric(sim.lastEnergy, sim.lastEnergyLog10);
-  const engineText = sim.engineLabel();
+  const engineText = runtimeEngineLabel();
   if (el.stepCounter) el.stepCounter.textContent = stepText;
   if (el.maxField) el.maxField.textContent = maxFieldText;
   if (el.energyValue) el.energyValue.textContent = energyText;
@@ -5117,6 +5143,7 @@ function applySceneState(snapshot) {
   if (!snapshot || typeof snapshot !== "object") {
     throw new Error("Invalid scene JSON.");
   }
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   const importedState = snapshot.state && typeof snapshot.state === "object" ? snapshot.state : {};
   const grid = snapshot.grid && typeof snapshot.grid === "object" ? snapshot.grid : {};
@@ -5534,17 +5561,21 @@ function animate() {
     const stepsThisFrame = Math.floor(simStepAccumulator);
     simStepAccumulator -= stepsThisFrame;
     if (stepsThisFrame > 0) {
-      timeStepBatch(stepsThisFrame, () => {
-        for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
-          sim.step();
+      if (workerEngine?.queueSteps(stepsThisFrame)) {
+        updatePerformanceStats();
+      } else {
+        timeStepBatch(stepsThisFrame, () => {
+          for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
+            sim.step();
+          }
+        });
+        advancedSimulation = true;
+        framesSinceMeasure += 1;
+        if (framesSinceMeasure >= 4) {
+          sim.measure();
+          updateStats();
+          framesSinceMeasure = 0;
         }
-      });
-      advancedSimulation = true;
-      framesSinceMeasure += 1;
-      if (framesSinceMeasure >= 4) {
-        sim.measure();
-        updateStats();
-        framesSinceMeasure = 0;
       }
     }
   }
@@ -5559,6 +5590,7 @@ function canvasToGrid(event) {
 }
 
 function paintFromEvent(event) {
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   const point = canvasToGrid(event);
@@ -5568,6 +5600,7 @@ function paintFromEvent(event) {
 }
 
 function insertGeometryFromEvent(event) {
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   normalizeBrushGeometryState();
@@ -5591,10 +5624,14 @@ function insertGeometryFromEvent(event) {
 
 el.playPauseBtn.addEventListener("click", () => {
   state.running = !state.running;
+  if (!state.running) {
+    workerEngine?.requestFullSync();
+  }
   updateControlText();
 });
 
 function advanceOneStep() {
+  workerEngine?.markDirty();
   timeStepBatch(1, () => {
     sim.step();
   });
@@ -5604,6 +5641,7 @@ function advanceOneStep() {
 }
 
 function resetSimulationFields() {
+  workerEngine?.markDirty();
   sim.resetFields();
   sim.measure();
   updateStats();
@@ -5859,6 +5897,7 @@ el.fieldComponentButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const component = button.dataset.fieldComponent === "hz" ? "hz" : "ez";
     if (state.fieldComponent === component) return;
+    workerEngine?.markDirty();
     state.fieldComponent = component;
     sim.resetFields();
     sim.measure();
@@ -6014,6 +6053,7 @@ function handleCellsPerWavelengthInput() {
 }
 
 function handleCustomMaterialInput() {
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   state.customAnisotropic = Boolean(el.customAnisotropyInput.checked);
   state.materialModulationEnabled = Boolean(el.modulationEnabledInput.checked);
@@ -6272,6 +6312,7 @@ el.dispersionTauInput.addEventListener("input", handleCustomMaterialInput);
 el.dispersionTauInput.addEventListener("change", handleCustomMaterialInput);
 
 function applySelectedPreset() {
+  workerEngine?.markDirty();
   clearMaterialSelection(false);
   clearCanvasHover(false);
   state.preset = el.presetInput.value;
@@ -6303,6 +6344,7 @@ el.slabThicknessInput.addEventListener("input", () => {
 });
 
 function applyBoundaryMode(mode, side = boundaryMenuSide) {
+  workerEngine?.markDirty();
   disableResponsiveGridOrientation();
   clearMaterialSelection(false);
   clearCanvasHover(false);
@@ -7058,6 +7100,7 @@ async function initWasmBackend() {
   try {
     const backend = await WasmFdtdBackend.load(WASM_CORE_URL);
     sim.attachWasmBackend(backend);
+    workerEngine?.markDirty();
     sim.measure();
     updateControlText();
     updateStats();
