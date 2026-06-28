@@ -568,7 +568,6 @@ const el = {
   controlPanel: document.getElementById("controlPanel"),
   controlPanelKicker: document.getElementById("controlPanelKicker"),
   controlPanelTitle: document.getElementById("controlPanelTitle"),
-  controlPanelNextBtn: document.getElementById("controlPanelNextBtn"),
   controlDrawerToggle: document.getElementById("controlDrawerToggle"),
   controlDrawerCloseBtn: document.getElementById("controlDrawerCloseBtn"),
   controlDrawerBackdrop: document.getElementById("controlDrawerBackdrop"),
@@ -1625,12 +1624,6 @@ function updateControlPanelContext(layerName = activeMobileLayerName() || contro
   }
   if (el.controlPanel) {
     el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
-  }
-  if (el.controlPanelNextBtn) {
-    el.controlPanelNextBtn.textContent = "Close";
-    delete el.controlPanelNextBtn.dataset.nextLayer;
-    el.controlPanelNextBtn.setAttribute("aria-label", "Close controls");
-    el.controlPanelNextBtn.title = "Close controls";
   }
 }
 
@@ -5825,10 +5818,6 @@ el.controlTabButtons?.forEach((button) => {
     activateControlTab(button.dataset.controlTab);
   });
   button.addEventListener("keydown", handleControlTabKeydown);
-});
-
-el.controlPanelNextBtn?.addEventListener("click", () => {
-  closeControlDrawer();
 });
 
 el.mobileLayerButtons?.forEach((button) => {
