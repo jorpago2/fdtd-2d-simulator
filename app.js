@@ -2013,14 +2013,18 @@ function updatePerformanceStats(force = false) {
   const renderOverlayText = formatPerformanceMs(performanceStats.renderOverlayMs, performanceStats.renderOverlaySamples);
   const measureText = formatPerformanceMs(performanceStats.measureMs, performanceStats.measureSamples);
   const throughputText = formatPerformanceRate(performanceStats.stepMs, performanceStats.stepSamples);
-  const compiledAvailable = Boolean(sim.wasmBackend?.canStep(state.fieldComponent));
-  const materialPath = sim.hasDynamicMaterialResponse?.()
+  const compiledActive = /^WASM/.test(engineText);
+  const materialPath = sim.canUseCompiledMaterialStep?.()
+    ? state.materialDispersionEnabled
+      ? "compiled Yee + JS ADE path"
+      : "compiled material path"
+    : sim.hasDynamicMaterialResponse?.()
     ? "dynamic material path"
     : state.materialConductivityEnabled
       ? "conductive static path"
       : "static-material path";
   const statusText = performanceStats.stepSamples > 0
-    ? `${compiledAvailable ? "Compiled kernel available" : "JavaScript fallback"}; ${materialPath}.`
+    ? `${compiledActive ? "Compiled kernel active" : "JavaScript fallback"}; ${materialPath}.`
     : "Run or step the simulation to collect timing samples.";
 
   if (el.performanceBackendOutput) el.performanceBackendOutput.textContent = engineText;

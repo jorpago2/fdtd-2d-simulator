@@ -3,9 +3,16 @@
 Object.assign(FDTDSim.prototype, {
   step() {
     this.applyPhaseChangeResponse();
-    this.applyDynamicMaterialResponse();
-    if (!this.hasDynamicMaterialResponse() && this.wasmBackend?.canStep(state.fieldComponent)) {
+    const compiledMaterialStep = this.canUseCompiledMaterialStep();
+    const compiledHandlesKerr = compiledMaterialStep && this.canUseCompiledKerrResponse();
+    if (!compiledHandlesKerr) {
+      this.applyDynamicMaterialResponse();
+    }
+    if (compiledMaterialStep) {
       this.wasmBackend.step(this);
+      if (state.materialDispersionEnabled && state.fieldComponent === "ez") {
+        this.applyDispersiveElectricResponse();
+      }
       this.zeroBoundaryFields();
       this.injectSource();
       this.time += 1;

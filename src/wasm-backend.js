@@ -1,5 +1,14 @@
 "use strict";
 
+const WASM_FEATURE_CONDUCTIVITY = 1 << 0;
+const WASM_FEATURE_KERR = 1 << 1;
+const WASM_FEATURE_SATURABLE_GAIN = 1 << 2;
+const WASM_FEATURE_TENSOR_GYRO = 1 << 3;
+
+const WASM_STEP_KERR = 1 << 0;
+const WASM_STEP_SATURABLE_GAIN = 1 << 1;
+const WASM_STEP_TENSOR_GYRO = 1 << 2;
+
 function wasmAlign4(value) {
   return (value + 3) & ~3;
 }
@@ -57,6 +66,13 @@ class WasmFdtdBackend {
     f32("dualHx", n);
     f32("dualHy", n);
     u8("material", n);
+    u8("nonlinearMaterial", n);
+    u8("electricTensorMaterial", n);
+    u8("gyrotropicMaterial", n);
+    f32("modulationBaseEps", n);
+    f32("modulationBaseEpsY", n);
+    f32("epsilonXY", n);
+    f32("gyrotropyG", n);
     f32("eCaX", nx);
     f32("eCbX", nx);
     f32("hCaX", nx);
@@ -112,6 +128,13 @@ class WasmFdtdBackend {
     sim.dualHx = new Float32Array(buffer, o.dualHx, n);
     sim.dualHy = new Float32Array(buffer, o.dualHy, n);
     sim.material = new Uint8Array(buffer, o.material, n);
+    sim.nonlinearMaterial = new Uint8Array(buffer, o.nonlinearMaterial, n);
+    sim.electricTensorMaterial = new Uint8Array(buffer, o.electricTensorMaterial, n);
+    sim.gyrotropicMaterial = new Uint8Array(buffer, o.gyrotropicMaterial, n);
+    sim.modulationBaseEps = new Float32Array(buffer, o.modulationBaseEps, n);
+    sim.modulationBaseEpsY = new Float32Array(buffer, o.modulationBaseEpsY, n);
+    sim.epsilonXY = new Float32Array(buffer, o.epsilonXY, n);
+    sim.gyrotropyG = new Float32Array(buffer, o.gyrotropyG, n);
     sim.eCaX = new Float32Array(buffer, o.eCaX, sim.nx);
     sim.eCbX = new Float32Array(buffer, o.eCbX, sim.nx);
     sim.hCaX = new Float32Array(buffer, o.hCaX, sim.nx);
@@ -125,6 +148,7 @@ class WasmFdtdBackend {
   stepWithOffsets(sim, component, offsets) {
     const o = offsets;
     const stepExport = component === "hz" ? this.exports.step_hz : this.exports.step;
+    const runtimeFlags = this.stepRuntimeFlags(component);
     stepExport(
       sim.nx,
       sim.ny,
@@ -145,6 +169,13 @@ class WasmFdtdBackend {
       o.muY,
       o.muLossY,
       o.material,
+      o.nonlinearMaterial,
+      o.electricTensorMaterial,
+      o.gyrotropicMaterial,
+      o.modulationBaseEps,
+      o.modulationBaseEpsY,
+      o.epsilonXY,
+      o.gyrotropyG,
       o.eCaX,
       o.eCbX,
       o.eCaY,
@@ -152,7 +183,11 @@ class WasmFdtdBackend {
       o.hCaX,
       o.hCbX,
       o.hCaY,
-      o.hCbY
+      o.hCbY,
+      runtimeFlags,
+      Number(state.kerrChi3) || 0,
+      Math.max(0.05, Number(state.kerrSaturation) || 5),
+      Math.max(0.05, Number(state.gainSaturation) || 4)
     );
   }
 
@@ -184,7 +219,31 @@ class WasmFdtdBackend {
     return typeof this.exports.kernel_features === "function" ? Number(this.exports.kernel_features()) || 0 : 0;
   }
 
+  supportsFeature(feature) {
+    return (this.kernelFeatures() & feature) !== 0;
+  }
+
   supportsConductivity() {
-    return (this.kernelFeatures() & 1) !== 0;
+    return this.supportsFeature(WASM_FEATURE_CONDUCTIVITY);
+  }
+
+  supportsKerr() {
+    return this.supportsFeature(WASM_FEATURE_KERR);
+  }
+
+  supportsSaturableGain() {
+    return this.supportsFeature(WASM_FEATURE_SATURABLE_GAIN);
+  }
+
+  supportsTensorGyro() {
+    return this.supportsFeature(WASM_FEATURE_TENSOR_GYRO);
+  }
+
+  stepRuntimeFlags(component) {
+    let flags = 0;
+    if (state.materialNonlinearEnabled && !state.materialModulationEnabled) flags |= WASM_STEP_KERR;
+    if (state.materialSaturableGainEnabled) flags |= WASM_STEP_SATURABLE_GAIN;
+    if (component === "hz" && state.materialGyrotropyEnabled) flags |= WASM_STEP_TENSOR_GYRO;
+    return flags;
   }
 }

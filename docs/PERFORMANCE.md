@@ -59,9 +59,9 @@ The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The acti
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
-- `kernel_features`: compiled-kernel capability bitmask. Bit 0 means finite electric conductivity is included.
+- `kernel_features`: compiled-kernel capability bitmask. Bit 0 is finite electric conductivity, bit 1 is Kerr, bit 2 is saturable gain, and bit 3 is TEz tensor/gyrotropy.
 
-The compiled kernel includes the static finite-conductivity update `J = sigma E`, so conductive scenes can run as `WASM sigma` when no unsupported dynamic physics is active. Advanced dynamic material paths can still fall back to JavaScript. The performance panel reports whether the compiled kernel is available for the current field component, but the engine label remains the source of truth exposed by the app.
+The compiled kernel includes finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, and TEz tensor/gyrotropic electric updates. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
 
 ## C++ Migration Path
 
@@ -92,5 +92,5 @@ For scientific confidence, also compare short JS and WASM trajectories on homoge
 
 1. Use the runtime panel to identify whether the current bottleneck is stepping, rendering, or diagnostics.
 2. Compile and validate the C++ kernel as a replacement for the WAT-maintained WASM.
-3. Port dynamic material kernels that currently force JavaScript fallback. Finite electric conductivity is already in the C++/WASM kernel; the next candidates are ADE dispersion, Kerr/saturable response, and tensor/gyrotropic TEz updates.
+3. Port dynamic material kernels that currently force JavaScript fallback. Finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy are in the C++/WASM kernel; electric ADE uses the compiled Yee + JS memory-response route. Remaining candidates are full ADE memory-current kernels, modulation, phase change, harmonic nonlinear polarization, and broader bianisotropy.
 4. Move long-running sweeps to a Web Worker so UI and canvas interactions remain responsive.

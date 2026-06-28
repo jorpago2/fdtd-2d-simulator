@@ -120,7 +120,17 @@ async function importPlaywright() {
       .split(path.delimiter)
       .map((item) => item.trim())
       .filter(Boolean);
+    const candidateRoots = [...roots];
     for (const root of roots) {
+      const pnpmRoot = path.join(root, ".pnpm");
+      if (!fs.existsSync(pnpmRoot)) continue;
+      for (const entry of fs.readdirSync(pnpmRoot, { withFileTypes: true })) {
+        if (entry.isDirectory() && /^playwright@/.test(entry.name)) {
+          candidateRoots.push(path.join(pnpmRoot, entry.name, "node_modules"));
+        }
+      }
+    }
+    for (const root of candidateRoots) {
       try {
         return require(path.join(root, "playwright"));
       } catch {

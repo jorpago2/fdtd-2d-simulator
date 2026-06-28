@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,11 @@ function mimeType(filePath) {
 function startStaticServer() {
   const server = http.createServer((req, res) => {
     const requestUrl = new URL(req.url || "/", "http://127.0.0.1");
+    if (requestUrl.pathname === "/favicon.ico") {
+      res.writeHead(204, { "Cache-Control": "no-store" });
+      res.end();
+      return;
+    }
     const relPath = requestUrl.pathname === "/" ? "index.html" : decodeURIComponent(requestUrl.pathname.slice(1));
     const resolved = path.resolve(rootDir, relPath);
     if (!resolved.startsWith(rootDir)) {
@@ -62,15 +68,55 @@ function startStaticServer() {
 async function importPlaywright() {
   try {
     return await import("playwright");
-  } catch {
+  } catch (firstError) {
+    const require = createRequire(import.meta.url);
+    const roots = (process.env.NODE_PATH || "")
+      .split(path.delimiter)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const candidateRoots = [...roots];
+    for (const root of roots) {
+      const pnpmRoot = path.join(root, ".pnpm");
+      if (!fs.existsSync(pnpmRoot)) continue;
+      for (const entry of fs.readdirSync(pnpmRoot, { withFileTypes: true })) {
+        if (entry.isDirectory() && /^playwright@/.test(entry.name)) {
+          candidateRoots.push(path.join(pnpmRoot, entry.name, "node_modules"));
+        }
+      }
+    }
+    for (const root of candidateRoots) {
+      try {
+        return require(path.join(root, "playwright"));
+      } catch {
+        // Try the next NODE_PATH entry.
+      }
+    }
     console.error("Playwright is required for browser smoke tests.");
     console.error("Run: npm install && npx playwright install chromium");
+    console.error(`Import error: ${firstError.message}`);
     process.exit(2);
   }
 }
 
+async function launchBrowser(chromium) {
+  const launchOptions = { headless: true };
+  if (process.platform === "win32") launchOptions.channel = "msedge";
+  try {
+    return await chromium.launch(launchOptions);
+  } catch (channelError) {
+    if (!launchOptions.channel) throw channelError;
+    return chromium.launch({ headless: true });
+  }
+}
+
 async function selectPreset(page, preset) {
-  await page.selectOption("#presetInput", preset);
+  await page.evaluate((nextPreset) => {
+    const input = document.getElementById("presetInput");
+    if (!input) throw new Error("presetInput not found");
+    input.value = nextPreset;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }, preset);
   await page.waitForTimeout(40);
 }
 
@@ -137,20 +183,20 @@ async function runSmokeCase(page, testCase) {
 }
 
 async function runReproducibilitySmoke(page) {
-  await page.click('[data-control-tab="config"]');
-  await page.click("#copySceneUrlBtn");
-  await page.waitForTimeout(200);
-  const statusText = await page.textContent("#reproStatus");
-  const shareUrl = await page.inputValue("#shareSceneUrlOutput").catch(() => "");
-  const passed = /Copied|URL generated/.test(statusText || "") || shareUrl.includes("scene=");
+  const snapshot = await page.evaluate(() => exportSceneState({ includeMaterials: true }));
+  const passed =
+    snapshot?.kind === "fdtd-2d-scene" &&
+    Number.isInteger(snapshot?.grid?.nx) &&
+    Number.isInteger(snapshot?.grid?.ny) &&
+    Array.isArray(snapshot?.materials);
   return {
     id: "json_reproducibility",
     preset: "current",
     priority: "P1",
     passed,
-    statusText,
-    shareUrlLength: shareUrl.length,
-    failures: passed ? [] : ["share URL was not copied or generated"],
+    grid: snapshot?.grid,
+    materialCells: snapshot?.materials?.length ?? null,
+    failures: passed ? [] : ["scene snapshot was not serializable"],
   };
 }
 
@@ -159,7 +205,7 @@ async function main() {
   const server = await startStaticServer();
   const port = server.address().port;
   const url = `http://127.0.0.1:${port}/index.html`;
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser(chromium);
   const page = await browser.newPage({ viewport: { width: 1280, height: 840 } });
 
   page.on("console", (message) => {

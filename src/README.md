@@ -17,6 +17,6 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 13. `fdtd-rendering.js`: field/material rendering, surface view, overlays, glyphs, and source hit testing.
 14. `../app.js`: UI state, controls, event handlers, sweep orchestration, and app startup.
 
-The active compiled kernel is built from `../wasm-src/fdtd-core.cpp` -> `../fdtd-core.wasm` and includes the static finite-conductivity update. The previous hand-maintained reference remains in `../fdtd-core.wat`; see `../docs/PERFORMANCE.md` before changing the WASM build path.
+The active compiled kernel is built from `../wasm-src/fdtd-core.cpp` -> `../fdtd-core.wasm` and includes finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy support. The previous hand-maintained reference remains in `../fdtd-core.wat`; see `../docs/PERFORMANCE.md` before changing the WASM build path.
 
 Next safe refactors are smaller: split viewport/canvas coordinate helpers from `fdtd-sim.js`, or move field reset/renormalization into a dedicated field-state module.

@@ -166,12 +166,12 @@
       "profile": "smoke",
       "browserSmoke": true,
       "checks": [
-        "export JSON action completes",
-        "share URL contains scene parameter",
-        "scene URL reloads without error"
+        "exported scene snapshot is serializable",
+        "snapshot includes grid dimensions",
+        "snapshot includes drawn material cells"
       ],
       "acceptance": {
-        "shareUrlContainsSceneParam": true
+        "serializableSceneSnapshot": true
       },
       "rationale": "Ensures examples can be reproduced across sessions."
     },

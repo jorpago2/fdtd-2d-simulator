@@ -37,6 +37,13 @@ class FDTDSim {
       this.muY = new Float32Array(this.n);
       this.muLossY = new Float32Array(this.n);
       this.material = new Uint8Array(this.n);
+      this.nonlinearMaterial = new Uint8Array(this.n);
+      this.electricTensorMaterial = new Uint8Array(this.n);
+      this.gyrotropicMaterial = new Uint8Array(this.n);
+      this.modulationBaseEps = new Float32Array(this.n);
+      this.modulationBaseEpsY = new Float32Array(this.n);
+      this.epsilonXY = new Float32Array(this.n);
+      this.gyrotropyG = new Float32Array(this.n);
       this.eCaX = new Float32Array(this.nx);
       this.eCbX = new Float32Array(this.nx);
       this.hCaX = new Float32Array(this.nx);
@@ -47,15 +54,10 @@ class FDTDSim {
       this.hCbY = new Float32Array(this.ny);
     }
     this.modulatedMaterial = new Uint8Array(this.n);
-    this.nonlinearMaterial = new Uint8Array(this.n);
     this.dispersiveMaterial = new Uint8Array(this.n);
     this.dispersionAxes = new Uint8Array(this.n);
     this.dispersionAxisX = new Float32Array(this.n);
     this.dispersionAxisY = new Float32Array(this.n);
-    this.electricTensorMaterial = new Uint8Array(this.n);
-    this.epsilonXY = new Float32Array(this.n);
-    this.gyrotropicMaterial = new Uint8Array(this.n);
-    this.gyrotropyG = new Float32Array(this.n);
     this.bianisotropicMaterial = new Uint8Array(this.n);
     this.bianisotropyKappa = new Float32Array(this.n);
     this.bianisotropyPrevScalar = new Float32Array(this.n);
@@ -83,8 +85,6 @@ class FDTDSim {
     this.phaseLossOn = new Float32Array(this.n);
     this.phaseEpsYOn = new Float32Array(this.n);
     this.phaseLossYOn = new Float32Array(this.n);
-    this.modulationBaseEps = new Float32Array(this.n);
-    this.modulationBaseEpsY = new Float32Array(this.n);
     this.dispersionOmegaP = new Float32Array(this.n);
     this.dispersionGamma = new Float32Array(this.n);
     this.dispersionOmega0 = new Float32Array(this.n);
@@ -337,15 +337,10 @@ class FDTDSim {
     this.wasmBackend = backend;
     this.wasmBackend.configure(this);
     this.modulatedMaterial = new Uint8Array(this.n);
-    this.nonlinearMaterial = new Uint8Array(this.n);
     this.dispersiveMaterial = new Uint8Array(this.n);
     this.dispersionAxes = new Uint8Array(this.n);
     this.dispersionAxisX = new Float32Array(this.n);
     this.dispersionAxisY = new Float32Array(this.n);
-    this.electricTensorMaterial = new Uint8Array(this.n);
-    this.epsilonXY = new Float32Array(this.n);
-    this.gyrotropicMaterial = new Uint8Array(this.n);
-    this.gyrotropyG = new Float32Array(this.n);
     this.bianisotropicMaterial = new Uint8Array(this.n);
     this.bianisotropyKappa = new Float32Array(this.n);
     this.bianisotropyPrevScalar = new Float32Array(this.n);
@@ -373,8 +368,6 @@ class FDTDSim {
     this.phaseLossOn = new Float32Array(this.n);
     this.phaseEpsYOn = new Float32Array(this.n);
     this.phaseLossYOn = new Float32Array(this.n);
-    this.modulationBaseEps = new Float32Array(this.n);
-    this.modulationBaseEpsY = new Float32Array(this.n);
     this.dispersionOmegaP = new Float32Array(this.n);
     this.dispersionGamma = new Float32Array(this.n);
     this.dispersionOmega0 = new Float32Array(this.n);
@@ -483,7 +476,60 @@ class FDTDSim {
     this.zeroBoundaryFields();
   }
 
+  hasActiveMagneticDispersion() {
+    if (!state.materialDispersionEnabled) return false;
+    for (let i = 0; i < this.n; i += 1) {
+      if (this.muDispersiveMaterial[i]) return true;
+    }
+    return false;
+  }
+
+  canUseCompiledKerrResponse() {
+    return Boolean(
+      state.materialNonlinearEnabled &&
+        !state.materialModulationEnabled &&
+        !state.materialPhaseChangeEnabled &&
+        this.wasmBackend?.supportsKerr()
+    );
+  }
+
+  canUseCompiledMaterialStep() {
+    if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
+    if (
+      state.materialModulationEnabled ||
+      state.materialHarmonicEnabled ||
+      state.materialPhaseChangeEnabled ||
+      state.materialBianisotropyEnabled
+    ) {
+      return false;
+    }
+    if (state.materialConductivityEnabled && !this.wasmBackend.supportsConductivity()) return false;
+    if (state.materialNonlinearEnabled && !this.canUseCompiledKerrResponse()) return false;
+    if (state.materialSaturableGainEnabled && !this.wasmBackend.supportsSaturableGain()) return false;
+    if (state.materialGyrotropyEnabled) {
+      if (state.fieldComponent !== "hz" || !this.wasmBackend.supportsTensorGyro()) return false;
+    }
+    if (state.materialDispersionEnabled) {
+      if (state.fieldComponent !== "ez") return false;
+      if (this.hasActiveMagneticDispersion()) return false;
+    }
+    return true;
+  }
+
+  compiledMaterialEngineLabel() {
+    if (!this.canUseCompiledMaterialStep()) return "";
+    const labels = [];
+    if (state.materialConductivityEnabled) labels.push("sigma");
+    if (state.materialNonlinearEnabled) labels.push("Kerr");
+    if (state.materialSaturableGainEnabled) labels.push("gain");
+    if (state.materialGyrotropyEnabled) labels.push("tensor");
+    if (state.materialDispersionEnabled) labels.push("JS ADE");
+    return labels.length > 0 ? `WASM ${labels.join("+")}` : "WASM";
+  }
+
   engineLabel() {
+    const compiledMaterialLabel = this.compiledMaterialEngineLabel();
+    if (compiledMaterialLabel) return compiledMaterialLabel;
     if (
       state.materialModulationEnabled ||
       state.materialNonlinearEnabled ||
