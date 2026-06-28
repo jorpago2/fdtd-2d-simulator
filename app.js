@@ -2535,13 +2535,11 @@ workerEngine = window.FdtdWorkerEngine
   ? new FdtdWorkerEngine(sim, {
       onStep(message) {
         recordPerformanceMetric("stepMs", message.elapsedMs, message.steps);
-        updateStats();
+        updatePerformanceStats();
         sim.render();
       },
       onSync() {
-        sim.measure();
-        updateStats();
-        sim.render();
+        finalizeDeferredResults();
       },
       onError() {
         updateStats();
@@ -2565,7 +2563,6 @@ const TOUCH_DOUBLE_TAP_MS = 320;
 const TOUCH_DOUBLE_TAP_DISTANCE_PX = 34;
 let pendingTouchInteraction = null;
 let lastCanvasTouchTap = null;
-let framesSinceMeasure = 0;
 let simStepAccumulator = 0;
 const PERF_EWMA_ALPHA = 0.14;
 const PERF_UI_INTERVAL_MS = 250;
@@ -3520,6 +3517,13 @@ function updateStats() {
   }
   updateAnalysisControls();
   updatePerformanceStats();
+}
+
+function finalizeDeferredResults({ render = true } = {}) {
+  sim.updateDiagnostics?.({ forceAnalysis: true });
+  sim.measure();
+  updateStats();
+  if (render) sim.render();
 }
 
 function formatDiagnosticRatio(value) {
@@ -5695,12 +5699,6 @@ function animate() {
           }
         });
         advancedSimulation = true;
-        framesSinceMeasure += 1;
-        if (framesSinceMeasure >= 4) {
-          sim.measure();
-          updateStats();
-          framesSinceMeasure = 0;
-        }
       }
     }
   }
@@ -5750,7 +5748,10 @@ function insertGeometryFromEvent(event) {
 el.playPauseBtn.addEventListener("click", () => {
   state.running = !state.running;
   if (!state.running) {
-    workerEngine?.requestFullSync();
+    const syncRequested = workerEngine?.requestFullSync();
+    if (!syncRequested) {
+      finalizeDeferredResults();
+    }
   }
   updateControlText();
 });

@@ -16,7 +16,7 @@ Object.assign(FDTDSim.prototype, {
       this.zeroBoundaryFields();
       this.injectSource();
       this.time += 1;
-      this.updateDiagnostics();
+      if (!state.running) this.updateDiagnostics();
       return;
     }
 
@@ -37,7 +37,7 @@ Object.assign(FDTDSim.prototype, {
     this.zeroBoundaryFields();
     this.injectSource();
     this.time += 1;
-    this.updateDiagnostics();
+    if (!state.running) this.updateDiagnostics();
   },
 
   stepEzMode() {

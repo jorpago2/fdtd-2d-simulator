@@ -146,7 +146,7 @@ class FdtdWorkerEngine {
     this.post({
       type: "step",
       steps,
-      measure: true,
+      measure: false,
       fullSync: false,
       state: this.plainStateSnapshot(),
     });

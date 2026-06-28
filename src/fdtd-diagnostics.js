@@ -279,8 +279,8 @@ incidentPlaneWaveReferenceAt(sample, source, k) {
   };
 },
 
-updateAnalysisDiagnostics() {
-  if (!state.analysisEnabled || this.time % Math.max(1, state.analysisSampleEvery) !== 0) return;
+updateAnalysisDiagnostics(force = false) {
+  if (!state.analysisEnabled || (!force && this.time % Math.max(1, state.analysisSampleEvery) !== 0)) return;
   this.ensureAnalysisContour();
   const frequency = Math.max(1e-6, this.diagnosticFrequency());
   const phase = 2 * Math.PI * frequency * this.time;
@@ -1979,12 +1979,12 @@ updateDiagnosticDftChannels(incident, transmitted, rightIncident = false) {
   };
 },
 
-updateDiagnostics() {
+updateDiagnostics({ forceAnalysis = false } = {}) {
   if (!state.diagnosticsEnabled) {
     this.resetDiagnostics();
     return;
   }
-  this.updateAnalysisDiagnostics();
+  this.updateAnalysisDiagnostics(forceAnalysis);
   const monitors = this.diagnosticMonitorPositions();
   const direction = this.diagnosticDirection();
   this.diagnosticAngleDeg = direction.angleDeg;
