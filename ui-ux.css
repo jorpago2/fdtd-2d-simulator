@@ -1516,9 +1516,9 @@ body {
   }
 
   .canvas-toolbar .tool-group.compact .icon-button {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
   }
 
   .canvas-reset-button {
@@ -1549,18 +1549,18 @@ body {
   .canvas-options-toggle {
     grid-area: options !important;
     display: inline-flex !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
     justify-self: end !important;
     font-size: 1.1rem !important;
   }
 
   .canvas-action-toggle {
     display: inline-flex !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
     font-size: 1.1rem !important;
   }
 
@@ -1803,13 +1803,13 @@ body {
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-reset-button,
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .canvas-action-toggle,
   .app-shell[data-ui-depth="teaching"] .canvas-options-toggle {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
   }
 
   .app-shell[data-ui-depth="teaching"] .canvas-toolbar .interaction-toggle {
-    max-width: 116px !important;
+    max-width: 108px !important;
   }
 }
 
@@ -2068,9 +2068,9 @@ body {
 }
 
 .selection-sheet-actions .icon-button {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
 }
 
 .stage.selection-sheet-open .mobile-canvas-stats {
@@ -2757,19 +2757,18 @@ body {
     display: none !important;
   }
 
-  .selection-sheet {
-    position: absolute !important;
-    right: 10px !important;
-    bottom: 42px !important;
-    left: 10px !important;
-    z-index: 34 !important;
+  .selection-sheet,
+  .app-shell.canvas-focus-mode .selection-sheet {
+    position: static !important;
+    z-index: auto !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
-    margin-top: 0 !important;
-    padding: 6px !important;
+    width: 100% !important;
+    margin: 6px 0 0 !important;
+    padding: 7px 8px !important;
     border-radius: 14px !important;
-    background: color-mix(in srgb, var(--surface) 82%, transparent) !important;
-    backdrop-filter: blur(14px) saturate(1.25) !important;
-    -webkit-backdrop-filter: blur(14px) saturate(1.25) !important;
+    background: var(--surface) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .selection-sheet-copy {
@@ -2802,9 +2801,9 @@ body {
   }
 
   .selection-sheet-actions .icon-button {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
+    width: 40px !important;
+    height: 38px !important;
+    min-width: 40px !important;
   }
 
   .canvas-state-badge {
@@ -2965,6 +2964,12 @@ body {
 }
 
 @media (max-width: 380px) {
+  .canvas-toolbar .icon-button {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+
   .mobile-canvas-stats {
     grid-template-columns: minmax(86px, 1.25fr) repeat(3, minmax(0, 1fr)) !important;
     gap: 4px !important;
@@ -2991,10 +2996,10 @@ body {
 }
 
 @media (max-width: 760px) {
-  .selection-sheet {
-    bottom: 50px !important;
+  .selection-sheet,
+  .app-shell.canvas-focus-mode .selection-sheet {
     align-items: center !important;
-    min-height: 38px !important;
+    min-height: 46px !important;
   }
 
   .selection-sheet-kind,
@@ -3011,9 +3016,14 @@ body {
 }
 
 @media (max-height: 520px) and (max-width: 1440px) {
-  .selection-sheet {
+  .selection-sheet,
+  .app-shell.canvas-focus-mode .selection-sheet {
+    position: static !important;
+    z-index: auto !important;
+    width: 100% !important;
+    margin: 6px 0 0 !important;
     align-items: center !important;
-    min-height: 38px !important;
+    min-height: 44px !important;
   }
 
   .selection-sheet-kind,
