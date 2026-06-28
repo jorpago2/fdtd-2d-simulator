@@ -121,6 +121,38 @@ html[data-theme="dark"] {
   content: none !important;
 }
 
+.app-shell .control-tabs {
+  align-content: start !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(38px, auto) !important;
+  gap: 6px !important;
+  height: auto !important;
+  min-height: 52px !important;
+  padding: 7px !important;
+  overflow: visible !important;
+}
+
+.app-shell .control-tab-button {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+  gap: 4px !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 6px 4px !important;
+  font-size: 0.66rem !important;
+}
+
+.app-shell .control-tab-button .nav-step {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 0.56rem !important;
+}
+
+.app-shell .mobile-layer-nav {
+  grid-auto-rows: minmax(42px, auto) !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
 .app-shell .mode-toggle-button,
 .app-shell .segment,
 .app-shell .control-tab-button,
@@ -338,5 +370,26 @@ html[data-theme="dark"] .app-shell #sourceApplyBtn.primary-button:focus-visible 
   .app-shell #tab-visual .field-display-toggle .mode-toggle-button {
     padding-inline: 1px !important;
     font-size: 0.66rem !important;
+  }
+}
+
+@media (min-width: 1441px) and (max-width: 1700px) {
+  .app-shell .control-tabs {
+    gap: 4px !important;
+    min-height: 48px !important;
+    padding: 5px !important;
+  }
+
+  .app-shell .control-tab-button {
+    gap: 2px !important;
+    min-height: 38px !important;
+    padding-inline: 2px !important;
+    font-size: 0.58rem !important;
+  }
+
+  .app-shell .control-tab-button .nav-step {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 0.52rem !important;
   }
 }
