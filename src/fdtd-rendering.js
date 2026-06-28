@@ -753,9 +753,9 @@ drawWaveVectorGlyphOverlay() {
   const { dpr, kOriginX, kOriginY, kLength } = this.referenceGlyphLayout();
   const direction = this.diagnosticDirection();
   const endX = kOriginX + kLength * direction.cos;
-  const endY = kOriginY - kLength * direction.sin;
+  const endY = kOriginY + kLength * direction.sin;
   const labelX = endX + 12 * dpr * Math.sign(direction.cos || 1);
-  const labelY = endY - 8 * dpr * Math.sign(direction.sin || 0);
+  const labelY = endY + 8 * dpr * Math.sign(direction.sin || 0);
 
   ctx.save();
   ctx.lineCap = "round";
