@@ -430,7 +430,7 @@ drawMaterialSelectionOverlay() {
   ctx.lineWidth = Math.max(1 * dpr, 1);
   ctx.strokeRect(rect.left + 3 * dpr, rect.top + 3 * dpr, Math.max(0, rect.width - 6 * dpr), Math.max(0, rect.height - 6 * dpr));
   ctx.fillStyle = isMoving ? "rgba(95, 52, 6, 0.9)" : "rgba(0, 52, 58, 0.86)";
-  ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.font = `${this.overlayTextFontPx()}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
   const label = isMoving ? `moving · ${selectedMaterialRegion.cells.length} cells` : `${selectedMaterialRegion.cells.length} cells`;
@@ -457,7 +457,7 @@ drawMaterialHoverOverlay() {
   ctx.lineWidth = Math.max(1.25 * dpr, 1);
   ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
   ctx.fillStyle = "rgba(11, 31, 36, 0.84)";
-  ctx.font = `${10.5 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.font = `${this.overlayTextFontPx(0.95)}px ui-sans-serif, system-ui, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
   ctx.fillText("material", rect.left + 6 * dpr, Math.max(13 * dpr, rect.top - 4 * dpr));
@@ -499,7 +499,7 @@ drawPmlOverlay() {
     ctx.stroke();
     if (rect.width > 36 * dpr && rect.height > 18 * dpr) {
       ctx.fillStyle = "rgba(0, 58, 64, 0.82)";
-      ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `${this.overlayTextFontPx()}px ui-sans-serif, system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("PML", rect.left + rect.width / 2, rect.top + rect.height / 2);
@@ -709,7 +709,7 @@ drawScaleBarOverlay() {
   const h = this.canvas.height;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const visibleLambdaWidth = Math.max(cellsToLambda(this.visibleGridWidth()), 1e-6);
-  const scaleLambda = niceScaleLength(visibleLambdaWidth);
+  const scaleLambda = niceScaleLength(visibleLambdaWidth) * 0.5;
   const colorbarReserve = 108 * dpr;
   const rightPad = state.viewMode === "field" || state.viewMode === "poynting" || state.viewProjection === "3d" ? colorbarReserve : 22 * dpr;
   const x1 = Math.max(96 * dpr, w - rightPad);
@@ -759,6 +759,14 @@ overlayReferenceColor() {
   return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
 },
 
+overlayTextFontPx(scale = 1) {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const cssWidth = this.canvas.width / dpr;
+  const cssHeight = this.canvas.height / dpr;
+  const cssSize = clamp(Math.min(cssWidth, cssHeight) * 0.017, 12.5, 18);
+  return cssSize * scale * dpr;
+},
+
 drawOverlayArrow(x0, y0, x1, y1, plain = false) {
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -795,12 +803,13 @@ strokeOverlayPath(shadowWidth, lineWidth, plain = false) {
 drawOverlayLabel(text, x, y, align, plain = false) {
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+  const fontPx = this.overlayTextFontPx();
+  ctx.font = `${fontPx}px ui-sans-serif, system-ui, sans-serif`;
   const metrics = ctx.measureText(text);
-  const padX = 5 * dpr;
-  const padY = 3 * dpr;
+  const padX = Math.max(5 * dpr, fontPx * 0.42);
+  const padY = Math.max(3 * dpr, fontPx * 0.24);
   const width = metrics.width + 2 * padX;
-  const height = 13 * dpr + 2 * padY;
+  const height = fontPx * 1.18 + 2 * padY;
   const left = align === "center" ? x - width / 2 : x - padX;
   const top = y - height / 2;
 
