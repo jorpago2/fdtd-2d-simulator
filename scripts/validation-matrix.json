@@ -126,6 +126,27 @@
       "rationale": "Core guided-optics workflow for integrated photonics examples."
     },
     {
+      "id": "mmi_50_50_split",
+      "priority": "P1",
+      "preset": "mmiWaveguide",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "finite fields after transient warmup",
+        "integrated Ez^2 is sampled in the two output-guide cores",
+        "upper/lower output field-energy split is close to 50/50"
+      ],
+      "acceptance": {
+        "script": "scripts/validate-mmi-split.mjs",
+        "metric": "time-averaged integrated Ez^2",
+        "monitorXLambda": 7.2,
+        "guideHalfWidthLambda": 0.11,
+        "upperFractionTarget": 0.5,
+        "upperFractionTolerance": 0.1
+      },
+      "rationale": "Checks that the MMI scene behaves as a balanced 1x2 splitter rather than only drawing a multimode waveguide."
+    },
+    {
       "id": "resonator_ringdown_q",
       "priority": "P0",
       "preset": "qRingdown",

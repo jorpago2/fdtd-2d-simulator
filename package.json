@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node scripts/validate-static.mjs",
     "validate": "node scripts/validate-static.mjs --json",
+    "validate:mmi": "node scripts/validate-mmi-split.mjs",
     "test:browser": "node scripts/browser-smoke.mjs",
     "benchmark:perf": "node scripts/performance-benchmark.mjs",
     "build:wasm:wat": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm.ps1",
