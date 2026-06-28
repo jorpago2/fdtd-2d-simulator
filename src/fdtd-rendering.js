@@ -669,7 +669,6 @@ drawDiagnosticsOverlay() {
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const monitors = this.diagnosticMonitorPositions();
-  const direction = this.diagnosticDirection();
   const drawLine = (xCell, label, color) => {
     const x = this.gridToCanvasX(xCell + 0.5);
     if (x < -2 * dpr || x > this.canvas.width + 2 * dpr) return;
@@ -687,11 +686,6 @@ drawDiagnosticsOverlay() {
   };
   drawLine(monitors.left, "L", "rgba(11, 98, 232, 0.74)");
   drawLine(monitors.right, "R", "rgba(16, 136, 82, 0.74)");
-  const arrowLength = 34 * dpr;
-  const x0 = 22 * dpr;
-  const y0 = 22 * dpr;
-  this.drawOverlayArrow(x0, y0, x0 + arrowLength * direction.cos, y0 - arrowLength * direction.sin, true);
-  this.drawOverlayLabel("k", x0 + arrowLength * direction.cos + 13 * dpr, y0 - arrowLength * direction.sin, "center", true);
 },
 
 drawReferenceOverlay() {
@@ -700,6 +694,9 @@ drawReferenceOverlay() {
   }
   if (visualLayerEnabled("axes")) {
     this.drawAxisGlyphOverlay();
+  }
+  if (visualLayerEnabled("diagnostics")) {
+    this.drawWaveVectorGlyphOverlay();
   }
 },
 
@@ -738,12 +735,7 @@ drawScaleBarOverlay() {
 
 drawAxisGlyphOverlay() {
   const ctx = this.ctx;
-  const w = this.canvas.width;
-  const h = this.canvas.height;
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const size = clamp(Math.min(w, h) * 0.085, 36 * dpr, 56 * dpr);
-  const originX = 34 * dpr;
-  const originY = h - 74 * dpr;
+  const { dpr, originX, originY, size } = this.referenceGlyphLayout();
 
   ctx.save();
   ctx.lineCap = "round";
@@ -753,6 +745,40 @@ drawAxisGlyphOverlay() {
   this.drawOverlayLabel("x", originX + size + 13 * dpr, originY, "center", true);
   this.drawOverlayLabel("y", originX, originY - size - 13 * dpr, "center", true);
   ctx.restore();
+},
+
+drawWaveVectorGlyphOverlay() {
+  if (!state.diagnosticsEnabled || state.viewProjection !== "2d") return;
+  const ctx = this.ctx;
+  const { dpr, originX, originY, size } = this.referenceGlyphLayout();
+  const direction = this.diagnosticDirection();
+  const length = clamp(size * 0.8, 30 * dpr, 48 * dpr);
+  const startX = originX + size + 68 * dpr;
+  const startY = originY;
+  const endX = startX + length * direction.cos;
+  const endY = startY - length * direction.sin;
+  const labelX = endX + 14 * dpr * Math.sign(direction.cos || 1);
+  const labelY = endY - 10 * dpr * Math.sign(direction.sin || 0);
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  this.drawOverlayArrow(startX, startY, endX, endY, true);
+  this.drawOverlayLabel("k", labelX, labelY, "center", true);
+  ctx.restore();
+},
+
+referenceGlyphLayout() {
+  const w = this.canvas.width;
+  const h = this.canvas.height;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const size = clamp(Math.min(w, h) * 0.085, 36 * dpr, 56 * dpr);
+  return {
+    dpr,
+    size,
+    originX: 34 * dpr,
+    originY: h - 74 * dpr,
+  };
 },
 
 overlayReferenceColor() {
