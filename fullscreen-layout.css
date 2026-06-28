@@ -198,6 +198,24 @@ body {
   min-width: 0 !important;
 }
 
+.canvas-toolbar .icon-button {
+  display: inline-grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.canvas-toolbar .icon-button > span[aria-hidden="true"] {
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  line-height: 1 !important;
+}
+
 .canvas-toolbar .canvas-focus-status,
 .canvas-toolbar .canvas-focus-exit {
   display: none !important;
