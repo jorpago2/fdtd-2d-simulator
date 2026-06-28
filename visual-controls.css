@@ -145,6 +145,12 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     0 10px 24px rgba(0, 0, 0, 0.26) !important;
 }
 
+/* Keep display controls inside the general panel only. */
+.app-shell .stage .canvas-options-toggle,
+.app-shell .stage .canvas-view-controls {
+  display: none !important;
+}
+
 /* Compact canvas status and selection indicators are intentionally hidden. */
 .app-shell .stage .canvas-state-badge,
 .app-shell .stage .mobile-canvas-stats,
@@ -156,6 +162,33 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
 .stage.selection-sheet-open .mobile-canvas-stats,
 .stage.selection-sheet-open .selection-sheet {
   display: none !important;
+}
+
+.control-panel-actions .theme-toggle {
+  flex: 0 1 150px !important;
+  min-width: 132px !important;
+  max-width: 166px !important;
+}
+
+.control-panel-actions .theme-toggle .mode-toggle-button {
+  min-width: 58px !important;
+  min-height: 30px !important;
+  padding-inline: 8px !important;
+  font-size: 0.66rem !important;
+}
+
+@media (max-width: 430px) {
+  .control-panel-actions .theme-toggle {
+    flex-basis: 120px !important;
+    min-width: 112px !important;
+    max-width: 124px !important;
+  }
+
+  .control-panel-actions .theme-toggle .mode-toggle-button {
+    min-width: 48px !important;
+    padding-inline: 5px !important;
+    font-size: 0.58rem !important;
+  }
 }
 
 @media (max-width: 520px) {

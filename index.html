@@ -18,7 +18,7 @@
     <meta name="theme-color" content="#101820" />
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
     <link rel="stylesheet" href="ui-ux.css?v=20260628-visual-architecture-1" />
-    <link rel="stylesheet" href="visual-controls.css?v=20260628-hide-selection-indicators-1" />
+    <link rel="stylesheet" href="visual-controls.css?v=20260628-single-menu-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -31,7 +31,7 @@
         </feComponentTransfer>
       </filter>
     </svg>
-    <main class="app-shell" data-ui-depth="teaching">
+    <main class="app-shell" data-ui-depth="advanced">
       <header class="topbar">
         <div class="brand-lockup">
           <p class="eyebrow">2D-FDTD electromagnetics</p>
@@ -46,10 +46,6 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="canvas-mode-toggle theme-toggle" role="group" aria-label="Color theme">
-          <button class="mode-toggle-button is-active" type="button" data-theme-choice="light" aria-pressed="true" title="Use light theme">Light</button>
-          <button class="mode-toggle-button" type="button" data-theme-choice="dark" aria-pressed="false" title="Use dark theme">Dark</button>
         </div>
         <button
           id="controlDrawerToggle"
@@ -161,10 +157,11 @@
               aria-expanded="false"
               aria-label="Canvas display options"
               title="Canvas display options"
+              hidden
             >
               ⋯
             </button>
-            <div id="canvasViewControls" class="canvas-view-controls" aria-label="Canvas display">
+            <div id="canvasViewControls" class="canvas-view-controls" aria-label="Canvas display" hidden>
               <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Projection">
                 <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
                 <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
@@ -675,9 +672,9 @@
               <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
             <div class="control-panel-actions">
-              <div class="canvas-mode-toggle ui-depth-toggle" role="group" aria-label="Interface depth">
-                <button class="mode-toggle-button is-active" type="button" data-ui-depth-choice="teaching" aria-pressed="true" title="Show essential teaching controls">Teach</button>
-                <button class="mode-toggle-button" type="button" data-ui-depth-choice="advanced" aria-pressed="false" title="Show advanced controls">Advanced</button>
+              <div class="canvas-mode-toggle theme-toggle" role="group" aria-label="Color theme">
+                <button class="mode-toggle-button is-active" type="button" data-theme-choice="light" aria-pressed="true" title="Use light theme">Light</button>
+                <button class="mode-toggle-button" type="button" data-theme-choice="dark" aria-pressed="false" title="Use dark theme">Dark</button>
               </div>
               <button id="controlPanelNextBtn" class="panel-chip panel-next-button" type="button" aria-label="Next step: Run" title="Next step: Run">Run</button>
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>

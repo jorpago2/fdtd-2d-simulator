@@ -162,11 +162,7 @@ function normalizeUiDepth(depth) {
 }
 
 function initialUiDepth() {
-  try {
-    return normalizeUiDepth(window.localStorage?.getItem(UI_DEPTH_STORAGE_KEY));
-  } catch {
-    return "teaching";
-  }
+  return "advanced";
 }
 
 const VISUAL_PROFILE_NAMES = Object.freeze(["auto", "clean", "teaching", "analysis", "custom"]);
