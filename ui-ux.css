@@ -4032,6 +4032,8 @@ html[data-theme="dark"] .topbar .maxwell-strip {
 
 @media (max-width: 760px) {
   .canvas-toolbar .interaction-toggle .mode-toggle-button,
+  .canvas-toolbar .canvas-view-controls .mode-toggle-button,
+  .control-panel .solver-toggle .mode-toggle-button,
   .control-panel .ui-depth-toggle .mode-toggle-button,
   .control-panel .panel-next-button,
   .control-panel .control-drawer-close {
@@ -4044,5 +4046,13 @@ html[data-theme="dark"] .topbar .maxwell-strip {
 
   .control-panel .mobile-layer-button {
     min-height: 40px !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .canvas-toolbar .canvas-action-menu .icon-button {
+    min-height: 40px !important;
+    height: 40px !important;
+    overflow: hidden !important;
   }
 }
