@@ -125,6 +125,8 @@ const sceneDescriptions = {
   kerker2d: "Atlas 65: high-index cylinder showing forward/backward scattering contrast with the 2D NTFF observable.",
   multipleScattering: "Atlas 66: deterministic random cluster of cylinders.",
   weakLocalization: "Atlas 67: many weak inclusions for multiple scattering.",
+  andersonLocalization: "Atlas 68: dense deterministic high-contrast disorder for Anderson-localization-like field trapping.",
+  diffusiveRandomMedium: "Atlas 69: extended weak random medium for diffusive transport and speckle-like field structure.",
   finiteConductivity: "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation.",
   drudeMetal: "Atlas 71: Drude ADE metal with plasma frequency and damping.",
   lorentzMedium: "Atlas 72: Lorentz ADE resonant dielectric slab.",

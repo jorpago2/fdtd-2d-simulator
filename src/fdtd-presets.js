@@ -565,6 +565,25 @@ Object.assign(FDTDSim.prototype, {
         ellipseL(x, y, r, r, params);
       }
     };
+    const randomScatterSlab = (count, paramsForScatterer, radiusL, options = {}) => {
+      let seed = options.seed || 6841;
+      const rand = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+      const x0 = options.x0 ?? 2.35;
+      const x1 = options.x1 ?? Math.max(x0 + 0.5, domainXLambda - 1.15);
+      const y0 = options.y0 ?? 0.72;
+      const y1 = options.y1 ?? Math.max(y0 + 0.5, domainYLambda - 0.72);
+      for (let i = 0; i < count; i += 1) {
+        const x = x0 + rand() * Math.max(0.2, x1 - x0);
+        const y = y0 + rand() * Math.max(0.2, y1 - y0);
+        const r = radiusL * (options.radiusJitter ? 1 - options.radiusJitter + 2 * options.radiusJitter * rand() : 1);
+        const params =
+          typeof paramsForScatterer === "function" ? paramsForScatterer({ index: i, rand, x, y, radius: r }) : paramsForScatterer;
+        ellipseL(x, y, Math.max(0.025, r), Math.max(0.025, r), params);
+      }
+    };
     const sshChain = (d1, d2, interfaceMode = false, options = {}) => {
       const count = options.count || 15;
       const center = (count - 1) * 0.5;
@@ -1031,6 +1050,32 @@ Object.assign(FDTDSim.prototype, {
       case "weakLocalization":
         scatterCluster(48, mat.weak, 0.07, true);
         setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.9 }]);
+        break;
+      case "andersonLocalization":
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 4;
+        randomScatterSlab(
+          92,
+          ({ index }) => (index % 6 === 0 ? mat.n34 : index % 3 === 0 ? mat.n25 : mat.n20),
+          0.082,
+          { seed: 6819, x0: 2.2, x1: domainXLambda - 1.15, y0: 0.8, y1: domainYLambda - 0.8, radiusJitter: 0.36 },
+        );
+        setSources([
+          { type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.42, amplitude: 0.7 },
+        ]);
+        break;
+      case "diffusiveRandomMedium":
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 4;
+        randomScatterSlab(
+          130,
+          ({ index }) => (index % 4 === 0 ? mat.n15 : mat.weak),
+          0.052,
+          { seed: 6923, x0: 2.0, x1: domainXLambda - 1.0, y0: 0.62, y1: domainYLambda - 0.62, radiusJitter: 0.45 },
+        );
+        setSources([
+          { type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.7, amplitude: 0.78 },
+        ]);
         break;
       case "finiteConductivity":
         state.materialConductivityEnabled = true;
