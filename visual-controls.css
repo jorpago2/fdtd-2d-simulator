@@ -145,10 +145,13 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     0 10px 24px rgba(0, 0, 0, 0.26) !important;
 }
 
-/* The compact canvas status strip is intentionally hidden on every display. */
+/* Compact canvas footer strips are intentionally hidden on every display. */
 .app-shell .stage .mobile-canvas-stats,
+.app-shell .stage .selection-sheet,
 .app-shell.canvas-focus-mode .stage .mobile-canvas-stats,
-.stage.selection-sheet-open .mobile-canvas-stats {
+.app-shell.canvas-focus-mode .stage .selection-sheet,
+.stage.selection-sheet-open .mobile-canvas-stats,
+.stage.selection-sheet-open .selection-sheet {
   display: none !important;
 }
 
