@@ -18,7 +18,7 @@
     <meta name="theme-color" content="#101820" />
     <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
     <link rel="stylesheet" href="ui-ux.css?v=20260628-visual-architecture-1" />
-    <link rel="stylesheet" href="visual-controls.css?v=20260628-wide-visual-layout-1" />
+    <link rel="stylesheet" href="visual-controls.css?v=20260628-results-monitors-1" />
     <link rel="stylesheet" href="button-system.css?v=20260628-neu-tabs-1" />
     <link rel="stylesheet" href="fullscreen-layout.css?v=20260628-scene-guide-2" />
   </head>
@@ -196,9 +196,13 @@
                 <input type="checkbox" data-visual-layer="boundaries" checked />
                 <span>PML/bounds</span>
               </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show monitor lines and incident direction">
+              <label class="toolbar-switch visual-layer-switch" title="Show incident wave-vector direction">
                 <input type="checkbox" data-visual-layer="diagnostics" checked />
-                <span>L/R/k</span>
+                <span>k vector</span>
+              </label>
+              <label class="toolbar-switch visual-layer-switch" title="Show left and right monitor lines">
+                <input type="checkbox" data-visual-layer="monitors" />
+                <span>L/R monitors</span>
               </label>
               <label class="toolbar-switch visual-layer-switch" title="Show x and y axis glyph">
                 <input type="checkbox" data-visual-layer="axes" checked />
@@ -1034,7 +1038,7 @@
                 </div>
                 <div class="visual-summary-card">
                   <span>Overlays</span>
-                  <output id="visualGuideOverlays">PML, monitors, axes</output>
+                  <output id="visualGuideOverlays">PML, k vector, scale</output>
                 </div>
               </div>
               <p id="visualGuideNote" class="simulation-guide-note">Use this panel to choose what physical quantity is shown on the canvas.</p>
@@ -1087,9 +1091,13 @@
                   <input type="checkbox" data-visual-layer="boundaries" checked />
                   <span>PML/bounds</span>
                 </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show monitor lines and incident direction">
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show incident wave-vector direction">
                   <input type="checkbox" data-visual-layer="diagnostics" checked />
-                  <span>L/R/k</span>
+                  <span>k vector</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show left and right monitor lines">
+                  <input type="checkbox" data-visual-layer="monitors" />
+                  <span>L/R monitors</span>
                 </label>
                 <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show x and y axis glyph">
                   <input type="checkbox" data-visual-layer="axes" checked />
@@ -1402,9 +1410,9 @@
     <script src="src/fdtd-sources.js?v=20260627-split-7"></script>
     <script src="src/fdtd-diagnostics.js?v=20260628-bianiso-quant-1"></script>
     <script src="src/fdtd-yee.js?v=20260628-dynamic-core-1"></script>
-    <script src="src/fdtd-rendering.js?v=20260628-pml-export-scale-1"></script>
+    <script src="src/fdtd-rendering.js?v=20260628-results-monitors-1"></script>
     <script src="src/fdtd-worker-protocol.js?v=20260628-worker-engine-1"></script>
     <script src="src/worker-engine.js?v=20260628-pml-continuation-1"></script>
-    <script src="app.js?v=20260628-export-colorbar-grid-2x-1"></script>
+    <script src="app.js?v=20260628-results-monitors-1"></script>
   </body>
 </html>

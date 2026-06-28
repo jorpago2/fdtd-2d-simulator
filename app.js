@@ -169,6 +169,7 @@ const VISUAL_PROFILE_NAMES = Object.freeze(["auto", "clean", "teaching", "analys
 const VISUAL_LAYER_STATE_KEYS = Object.freeze({
   boundaries: "visualLayerBoundaries",
   diagnostics: "visualLayerDiagnostics",
+  monitors: "visualLayerMonitors",
   axes: "visualLayerAxes",
   scale: "visualLayerScale",
   sources: "visualLayerSources",
@@ -176,7 +177,8 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
 });
 const VISUAL_LAYER_LABELS = Object.freeze({
   boundaries: "PML/bounds",
-  diagnostics: "L/R/k",
+  diagnostics: "k vector",
+  monitors: "L/R monitors",
   axes: "axes",
   scale: "scale",
   sources: "sources",
@@ -188,6 +190,7 @@ const VISUAL_PROFILE_LAYERS = Object.freeze({
   clean: Object.freeze({
     boundaries: false,
     diagnostics: false,
+    monitors: false,
     axes: false,
     scale: false,
     sources: true,
@@ -196,6 +199,7 @@ const VISUAL_PROFILE_LAYERS = Object.freeze({
   teaching: Object.freeze({
     boundaries: true,
     diagnostics: true,
+    monitors: false,
     axes: true,
     scale: true,
     sources: true,
@@ -204,6 +208,7 @@ const VISUAL_PROFILE_LAYERS = Object.freeze({
   analysis: Object.freeze({
     boundaries: true,
     diagnostics: true,
+    monitors: false,
     axes: false,
     scale: true,
     sources: true,
@@ -227,6 +232,7 @@ const state = {
   visualProfile: "auto",
   visualLayerBoundaries: true,
   visualLayerDiagnostics: true,
+  visualLayerMonitors: false,
   visualLayerAxes: true,
   visualLayerScale: true,
   visualLayerSources: true,
@@ -329,6 +335,7 @@ const SERIALIZABLE_STATE_KEYS = Object.freeze([
   "visualProfile",
   "visualLayerBoundaries",
   "visualLayerDiagnostics",
+  "visualLayerMonitors",
   "visualLayerAxes",
   "visualLayerScale",
   "visualLayerSources",

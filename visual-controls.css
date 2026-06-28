@@ -154,13 +154,6 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
 /* Status/readout strips are intentionally hidden on all displays. */
 .app-shell .scientific-status-strip,
 .app-shell .status-section,
-.app-shell .results-summary-grid,
-.app-shell .diagnostics-grid,
-.app-shell .performance-panel,
-.app-shell .config-summary-grid,
-.app-shell .config-status-grid,
-.app-shell .metric-pill,
-.app-shell .results-panel-head > output,
 .app-shell .stage .hud,
 .app-shell .stage .canvas-focus-status,
 .app-shell .stage .canvas-state-badge,

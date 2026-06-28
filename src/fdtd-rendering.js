@@ -390,7 +390,7 @@ render() {
   if (visualLayerEnabled("boundaries")) {
     this.drawPmlOverlay();
   }
-  if (visualLayerEnabled("diagnostics")) {
+  if (visualLayerEnabled("monitors")) {
     this.drawDiagnosticsOverlay();
   }
   this.drawMaterialHoverOverlay();
@@ -778,7 +778,7 @@ drawAxisGlyphOverlay() {
 },
 
 drawWaveVectorGlyphOverlay() {
-  if (!state.diagnosticsEnabled || state.viewProjection !== "2d") return;
+  if (state.viewProjection !== "2d") return;
   const ctx = this.ctx;
   const { dpr, kOriginX, kOriginY, kLength } = this.referenceGlyphLayout();
   const direction = this.diagnosticDirection();
