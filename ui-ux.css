@@ -3482,24 +3482,28 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
 
 @media (min-width: 1800px) {
   .app-shell {
-    width: min(94vw, 3200px) !important;
-    padding-top: 14px !important;
-    padding-bottom: 18px !important;
+    width: min(92vw, 3000px) !important;
+    padding-top: 10px !important;
+    padding-bottom: 14px !important;
   }
 
   .topbar {
-    min-height: 74px !important;
-    padding: 14px 18px !important;
+    min-height: 62px !important;
+    padding: 10px 14px !important;
   }
 
   .scientific-status-strip {
-    gap: 12px !important;
-    padding: 12px !important;
+    gap: 9px !important;
+    padding: 9px !important;
+  }
+
+  .maxwell-strip {
+    display: none !important;
   }
 
   .scientific-status-item {
-    min-height: 66px !important;
-    padding: 12px 14px !important;
+    min-height: 54px !important;
+    padding: 9px 11px !important;
   }
 
   .scientific-status-item span {
@@ -3511,47 +3515,47 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   }
 
   .workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(540px, 620px) !important;
-    gap: 24px !important;
+    grid-template-columns: minmax(0, 1fr) minmax(500px, 540px) !important;
+    gap: 18px !important;
   }
 
   .stage,
   .control-panel {
-    border-radius: 32px !important;
+    border-radius: 28px !important;
   }
 
   .stage {
-    padding: 18px !important;
+    padding: 14px !important;
   }
 
   .control-panel {
-    padding: 18px !important;
+    padding: 14px !important;
   }
 
   .canvas-toolbar {
-    gap: 10px !important;
-    padding: 8px 10px !important;
+    gap: 8px !important;
+    padding: 7px 8px !important;
   }
 
   .canvas-toolbar .icon-button {
-    width: 44px !important;
-    height: 42px !important;
-    min-width: 44px !important;
+    width: 40px !important;
+    height: 38px !important;
+    min-width: 40px !important;
   }
 
   .canvas-toolbar .mode-toggle-button,
   .canvas-toolbar .toolbar-switch {
-    min-height: 40px !important;
-    font-size: 0.78rem !important;
+    min-height: 36px !important;
+    font-size: 0.74rem !important;
   }
 
   .canvas-toolbar .interaction-toggle {
-    min-width: 188px !important;
+    min-width: 172px !important;
   }
 
   .canvas-frame {
-    padding: 14px !important;
-    border-radius: 28px !important;
+    padding: 12px !important;
+    border-radius: 24px !important;
   }
 
   .control-panel-title-block h2 {
@@ -3599,7 +3603,7 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   }
 
   .panel-section {
-    padding: 18px !important;
+    padding: 14px !important;
   }
 
   .scene-search-label input[type="search"] {
@@ -3618,19 +3622,19 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   }
 
   .scene-cards {
-    max-height: min(64vh, 1120px) !important;
-    gap: 12px !important;
+    max-height: min(64vh, 1020px) !important;
+    gap: 10px !important;
   }
 
   .scene-card {
-    grid-template-columns: 58px minmax(0, 1fr) !important;
-    min-height: 132px !important;
-    padding: 16px !important;
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    min-height: 116px !important;
+    padding: 13px !important;
   }
 
   .scene-card-thumb {
-    width: 58px !important;
-    height: 58px !important;
+    width: 52px !important;
+    height: 52px !important;
   }
 
   .scene-card-title {
@@ -3642,7 +3646,7 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   }
 
   .scene-card-description {
-    font-size: 0.86rem !important;
+    font-size: 0.82rem !important;
   }
 
   .scene-card-badge {
@@ -3651,9 +3655,9 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   }
 
   .source-menu {
-    width: min(540px, calc(100vw - 32px)) !important;
-    padding: 20px !important;
-    border-radius: 22px !important;
+    width: min(500px, calc(100vw - 32px)) !important;
+    padding: 18px !important;
+    border-radius: 20px !important;
   }
 
   .source-menu-body {
@@ -3693,4 +3697,43 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
     height: 38px !important;
     min-width: 38px !important;
   }
+}
+
+/* Final panel containment: avoid clipped horizontal tab/filter rails inside the drawer. */
+.control-panel .control-tabs,
+.control-panel .mobile-layer-nav {
+  grid-auto-flow: unset !important;
+  grid-auto-columns: unset !important;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)) !important;
+  overflow-x: hidden !important;
+}
+
+.control-panel .control-tab-button,
+.control-panel .mobile-layer-button {
+  min-width: 0 !important;
+  padding-inline: 7px !important;
+}
+
+.control-panel .control-tab-button .nav-label,
+.control-panel .mobile-layer-button .nav-label {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.control-panel .scene-filter-bar {
+  align-content: start !important;
+  flex-wrap: wrap !important;
+  max-height: 96px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.control-panel .scene-filter-button {
+  flex: 1 1 128px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
