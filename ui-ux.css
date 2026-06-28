@@ -4056,3 +4056,113 @@ html[data-theme="dark"] .topbar .maxwell-strip {
     overflow: hidden !important;
   }
 }
+
+/* Real mobile browser fixes: keep canvas popovers compact and readable. */
+@media (max-width: 1180px) {
+  .canvas-toolbar .canvas-action-menu {
+    width: min(220px, calc(100vw - 48px)) !important;
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+
+  .canvas-toolbar .canvas-action-menu .icon-button {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    text-align: left !important;
+    line-height: 1 !important;
+  }
+
+  .canvas-toolbar .canvas-action-menu .icon-button > span:first-child {
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 22px !important;
+    width: 22px !important;
+    min-width: 22px !important;
+    line-height: 1 !important;
+  }
+
+  .canvas-toolbar .canvas-action-menu .canvas-action-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .canvas-toolbar .canvas-view-controls {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    gap: 7px !important;
+    width: min(318px, calc(100vw - 48px)) !important;
+    max-height: min(44dvh, 330px) !important;
+    padding: 8px !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle,
+  .canvas-toolbar .canvas-view-controls .quiver-switch,
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle,
+  .canvas-toolbar .canvas-view-controls .visual-options-divider {
+    flex: 1 0 100% !important;
+    width: 100% !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .mode-toggle-button {
+    min-height: 36px !important;
+    height: 36px !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .toolbar-switch {
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-layer-switch {
+    flex: 1 1 calc(50% - 4px) !important;
+    width: auto !important;
+    min-height: 38px !important;
+    gap: 6px !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-layer-switch span {
+    min-width: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+    font-size: 0.66rem !important;
+  }
+
+  .mobile-canvas-stats {
+    grid-template-columns: minmax(118px, 1.35fr) repeat(3, minmax(48px, 0.8fr)) !important;
+    gap: 4px !important;
+  }
+
+  .mobile-canvas-stats [data-mobile-stat="mode"],
+  .mobile-canvas-stats [data-mobile-stat="grid"] {
+    display: none !important;
+  }
+
+  .mobile-canvas-stats span {
+    min-height: 32px !important;
+    padding: 4px 5px !important;
+  }
+
+  .mobile-canvas-stats small {
+    font-size: 0.52rem !important;
+  }
+
+  .mobile-canvas-stats output {
+    font-size: 0.64rem !important;
+  }
+}

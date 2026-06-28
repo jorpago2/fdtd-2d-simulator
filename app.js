@@ -2863,7 +2863,7 @@ function updateCanvasInteractionState() {
     el.canvasFocusStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
   }
   if (el.mobileCanvasStateValue) {
-    el.mobileCanvasStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
+    el.mobileCanvasStateValue.textContent = `${runStateLabel()} \u00b7 ${interactionStateLabel()}`;
   }
 }
 
