@@ -260,6 +260,137 @@ body {
   z-index: 70 !important;
 }
 
+.source-menu {
+  width: min(420px, calc(100vw - 20px)) !important;
+  max-height: 640px !important;
+  padding: 11px !important;
+  border-radius: 18px !important;
+  font-size: 0.78rem !important;
+}
+
+.brush-menu {
+  width: min(430px, calc(100vw - 20px)) !important;
+}
+
+.boundary-menu {
+  width: min(280px, calc(100vw - 20px)) !important;
+}
+
+.source-menu-header {
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.source-menu-header h2 {
+  font-size: 0.9rem !important;
+  line-height: 1.12 !important;
+}
+
+.source-menu-hint {
+  margin-bottom: 2px !important;
+  font-size: 0.66rem !important;
+  line-height: 1.15 !important;
+}
+
+#sourceCloseBtn,
+#brushMenuCloseBtn,
+#boundaryMenuCloseBtn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  font-size: 0.95rem !important;
+}
+
+.source-menu-body {
+  gap: 7px !important;
+}
+
+.source-menu label,
+.source-menu .control-row {
+  grid-template-columns: minmax(62px, 0.68fr) minmax(0, 1.55fr) minmax(54px, auto) !important;
+  gap: 7px !important;
+  min-height: 0 !important;
+}
+
+.source-menu label > span,
+.source-menu .control-row > span {
+  min-height: 18px !important;
+  font-size: 0.69rem !important;
+  font-weight: 760 !important;
+  line-height: 1.18 !important;
+}
+
+.source-menu select,
+.source-menu input[type="number"] {
+  min-height: 36px !important;
+  border-radius: 12px !important;
+  padding: 6px 10px !important;
+  font-size: 0.74rem !important;
+  font-weight: 780 !important;
+}
+
+.source-menu input[type="range"] {
+  height: 24px !important;
+}
+
+.source-menu label > output,
+.source-menu .control-row output {
+  min-width: 54px !important;
+  min-height: 27px !important;
+  border-radius: 10px !important;
+  padding: 0 6px !important;
+  font-size: 0.69rem !important;
+  font-weight: 820 !important;
+}
+
+.source-menu .segmented,
+.source-menu .canvas-mode-toggle {
+  min-height: 34px !important;
+  padding: 3px !important;
+  border-radius: 15px !important;
+}
+
+.source-menu .mode-toggle-button,
+.source-menu .segment {
+  min-height: 28px !important;
+  padding-inline: 8px !important;
+  font-size: 0.69rem !important;
+  font-weight: 760 !important;
+}
+
+.brush-menu .segmented {
+  margin-bottom: 7px !important;
+}
+
+.source-menu .two-col {
+  gap: 7px !important;
+}
+
+.source-menu .material-params {
+  margin: 7px 0 !important;
+}
+
+.source-menu-actions,
+.source-menu .button-row {
+  gap: 6px !important;
+  margin-top: 8px !important;
+  padding-top: 7px !important;
+}
+
+.source-menu-actions .text-button,
+.source-menu .button-row .text-button {
+  min-height: 36px !important;
+  padding: 7px 10px !important;
+  font-size: 0.74rem !important;
+}
+
+@media (max-height: 700px) {
+  .source-menu {
+    max-height: calc(100vh - 20px) !important;
+  }
+}
+
 .control-panel {
   position: fixed !important;
   inset: 0 !important;
