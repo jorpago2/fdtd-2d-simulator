@@ -3972,3 +3972,77 @@ html[data-theme="dark"] .topbar .maxwell-strip {
     grid-template-columns: repeat(3, minmax(88px, 1fr)) !important;
   }
 }
+
+/* Button audit fixes: preserve readable labels and practical tap targets. */
+.control-panel .control-tabs,
+.control-panel .mobile-layer-nav {
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)) !important;
+  gap: 7px !important;
+}
+
+.control-panel .control-tab-button,
+.control-panel .mobile-layer-button {
+  min-height: 38px !important;
+}
+
+.control-panel .control-tab-button .nav-label,
+.control-panel .mobile-layer-button .nav-label {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.ui-depth-toggle .mode-toggle-button,
+.panel-next-button,
+.control-drawer-close {
+  min-height: 36px !important;
+}
+
+.control-drawer-close {
+  width: 36px !important;
+  min-width: 36px !important;
+}
+
+.control-panel .scene-filter-button {
+  display: inline-grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 1 1 190px !important;
+  min-height: 40px !important;
+  padding-block: 6px !important;
+}
+
+.scene-filter-button .scene-filter-label {
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  line-height: 1.12 !important;
+}
+
+.scene-filter-button .scene-filter-count {
+  justify-self: end !important;
+}
+
+.visual-control-row .mode-toggle-button,
+.visual-panel-profile .mode-toggle-button {
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+@media (max-width: 760px) {
+  .canvas-toolbar .interaction-toggle .mode-toggle-button,
+  .control-panel .ui-depth-toggle .mode-toggle-button,
+  .control-panel .panel-next-button,
+  .control-panel .control-drawer-close {
+    min-height: 36px !important;
+  }
+
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .control-panel .mobile-layer-button {
+    min-height: 40px !important;
+  }
+}
