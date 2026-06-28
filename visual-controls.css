@@ -16,8 +16,8 @@
 }
 
 .theme-toggle,
-.control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle,
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile,
+.control-panel #tab-visual .canvas-mode-toggle,
+.control-panel #tab-visual .visual-panel-profile,
 .canvas-toolbar .canvas-view-controls .canvas-mode-toggle {
   display: grid !important;
   align-items: stretch !important;
@@ -34,10 +34,10 @@
 
 .theme-toggle::before,
 .theme-toggle::after,
-.control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle::before,
-.control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle::after,
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile::before,
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile::after,
+.control-panel #tab-visual .canvas-mode-toggle::before,
+.control-panel #tab-visual .canvas-mode-toggle::after,
+.control-panel #tab-visual .visual-panel-profile::before,
+.control-panel #tab-visual .visual-panel-profile::after,
 .canvas-toolbar .canvas-view-controls .canvas-mode-toggle::before,
 .canvas-toolbar .canvas-view-controls .canvas-mode-toggle::after {
   display: none !important;
@@ -45,7 +45,7 @@
 }
 
 .theme-toggle .mode-toggle-button,
-.control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button,
+.control-panel #tab-visual .mode-toggle-button,
 .canvas-toolbar .canvas-view-controls .mode-toggle-button {
   display: inline-flex !important;
   align-items: center !important;
@@ -65,7 +65,7 @@
 }
 
 .theme-toggle .mode-toggle-button.is-active,
-.control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button.is-active,
+.control-panel #tab-visual .mode-toggle-button.is-active,
 .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
   border-color: color-mix(in srgb, var(--neu-accent) 46%, rgba(255, 255, 255, 0.25)) !important;
   color: var(--neu-accent) !important;
@@ -84,7 +84,7 @@
 }
 
 html[data-theme="dark"] .theme-toggle .mode-toggle-button.is-active,
-html[data-theme="dark"] .control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button.is-active,
+html[data-theme="dark"] .control-panel #tab-visual .mode-toggle-button.is-active,
 html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
   color: color-mix(in srgb, var(--neu-accent) 58%, #ffffff) !important;
   background:
@@ -180,6 +180,105 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   display: none !important;
 }
 
+/* Visual panel geometry for desktop, 4K, and mobile drawers. */
+.control-panel #tab-visual .visual-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.control-panel #tab-visual .visual-summary-card {
+  min-width: 0 !important;
+  min-height: 64px !important;
+  align-content: start !important;
+}
+
+.control-panel #tab-visual .visual-summary-card output {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+}
+
+.control-panel #tab-visual .visual-control-stack,
+.control-panel #tab-visual .visual-control-row {
+  min-width: 0 !important;
+}
+
+.control-panel #tab-visual .canvas-mode-toggle,
+.control-panel #tab-visual .visual-panel-profile {
+  display: grid !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 44px !important;
+  border-radius: var(--visual-control-radius) !important;
+  padding: 5px !important;
+}
+
+.control-panel #tab-visual .projection-toggle,
+.control-panel #tab-visual .material-part-toggle {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.control-panel #tab-visual .view-toggle {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.control-panel #tab-visual .field-display-toggle {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.control-panel #tab-visual .visual-panel-profile {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.control-panel #tab-visual .mode-toggle-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px !important;
+  height: auto !important;
+  padding: 0 8px !important;
+  border-radius: var(--visual-control-button-radius) !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.control-panel #tab-visual .visual-layer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.control-panel #tab-visual .visual-panel-layer {
+  display: grid !important;
+  grid-template-columns: var(--visual-switch-track-width) minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  min-height: 52px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 82%, transparent) !important;
+  border-radius: var(--visual-control-button-radius) !important;
+  padding: 8px 10px !important;
+  background: color-mix(in srgb, var(--neu-surface) 84%, transparent) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+
+.control-panel #tab-visual .visual-panel-layer span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+}
+
 .control-panel-actions .theme-toggle {
   flex: 0 1 150px !important;
   min-width: 132px !important;
@@ -239,12 +338,12 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
 
 /* Visual panel */
 @media (max-width: 760px) {
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-summary-card {
+  .control-panel #tab-visual .visual-summary-card {
     align-content: start !important;
     min-height: 68px !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-summary-card output {
+  .control-panel #tab-visual .visual-summary-card output {
     display: block !important;
     width: 100% !important;
     min-height: 0 !important;
@@ -264,39 +363,39 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     text-align: left !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle,
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile {
+  .control-panel #tab-visual .canvas-mode-toggle,
+  .control-panel #tab-visual .visual-panel-profile {
     width: 100% !important;
     border-radius: var(--visual-control-radius) !important;
     padding: 5px !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .projection-toggle {
+  .control-panel #tab-visual .projection-toggle {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .view-toggle {
+  .control-panel #tab-visual .view-toggle {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .field-display-toggle {
+  .control-panel #tab-visual .field-display-toggle {
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile {
+  .control-panel #tab-visual .visual-panel-profile {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button {
+  .control-panel #tab-visual .mode-toggle-button {
     min-height: 40px !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-layer-grid {
+  .control-panel #tab-visual .visual-layer-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer {
+  .control-panel #tab-visual .visual-panel-layer {
     display: grid !important;
     grid-template-columns: 48px minmax(0, 1fr) !important;
     align-items: center !important;
@@ -311,7 +410,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     box-shadow: var(--neu-shadow-small) !important;
   }
 
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer span {
+  .control-panel #tab-visual .visual-panel-layer span {
     min-width: 0 !important;
     color: color-mix(in srgb, var(--neu-ink) 82%, #ffffff) !important;
     overflow: visible !important;
@@ -325,7 +424,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
 }
 
 @media (max-width: 380px) {
-  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-layer-grid {
+  .control-panel #tab-visual .visual-layer-grid {
     grid-template-columns: 1fr !important;
   }
 }
@@ -367,7 +466,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
 }
 
 /* Shared switch geometry for visual overlay toggles */
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"] {
+.control-panel #tab-visual .visual-panel-layer input[type="checkbox"] {
   appearance: none !important;
   -webkit-appearance: none !important;
   position: relative !important;
@@ -382,7 +481,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.34) !important;
 }
 
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]::before {
+.control-panel #tab-visual .visual-panel-layer input[type="checkbox"]::before {
   position: absolute !important;
   top: 2px !important;
   left: 2px !important;
@@ -396,7 +495,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   transition: transform 160ms ease, background 160ms ease !important;
 }
 
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]:checked {
+.control-panel #tab-visual .visual-panel-layer input[type="checkbox"]:checked {
   border-color: color-mix(in srgb, var(--neu-accent) 48%, transparent) !important;
   background: linear-gradient(145deg, #73b7ff, #61a8ff) !important;
   box-shadow:
@@ -404,7 +503,7 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     0 0 14px rgba(87, 161, 255, 0.32) !important;
 }
 
-.control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]:checked::before {
+.control-panel #tab-visual .visual-panel-layer input[type="checkbox"]:checked::before {
   background: linear-gradient(145deg, #273345, #111923) !important;
   transform: translateX(20px) !important;
 }
