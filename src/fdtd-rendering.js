@@ -735,35 +735,32 @@ drawScaleBarOverlay() {
 
 drawAxisGlyphOverlay() {
   const ctx = this.ctx;
-  const { dpr, originX, originY, size } = this.referenceGlyphLayout();
+  const { dpr, axesOriginX, axesOriginY, axesSize } = this.referenceGlyphLayout();
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  this.drawOverlayArrow(originX, originY, originX + size, originY, true);
-  this.drawOverlayArrow(originX, originY, originX, originY - size, true);
-  this.drawOverlayLabel("x", originX + size + 13 * dpr, originY, "center", true);
-  this.drawOverlayLabel("y", originX, originY - size - 13 * dpr, "center", true);
+  this.drawOverlayArrow(axesOriginX, axesOriginY, axesOriginX + axesSize, axesOriginY, true);
+  this.drawOverlayArrow(axesOriginX, axesOriginY, axesOriginX, axesOriginY - axesSize, true);
+  this.drawOverlayLabel("x", axesOriginX + axesSize + 13 * dpr, axesOriginY, "center", true);
+  this.drawOverlayLabel("y", axesOriginX, axesOriginY - axesSize - 13 * dpr, "center", true);
   ctx.restore();
 },
 
 drawWaveVectorGlyphOverlay() {
   if (!state.diagnosticsEnabled || state.viewProjection !== "2d") return;
   const ctx = this.ctx;
-  const { dpr, originX, originY, size } = this.referenceGlyphLayout();
+  const { dpr, kOriginX, kOriginY, kLength } = this.referenceGlyphLayout();
   const direction = this.diagnosticDirection();
-  const length = clamp(size * 0.8, 30 * dpr, 48 * dpr);
-  const startX = originX + size + 68 * dpr;
-  const startY = originY;
-  const endX = startX + length * direction.cos;
-  const endY = startY - length * direction.sin;
-  const labelX = endX + 14 * dpr * Math.sign(direction.cos || 1);
-  const labelY = endY - 10 * dpr * Math.sign(direction.sin || 0);
+  const endX = kOriginX + kLength * direction.cos;
+  const endY = kOriginY - kLength * direction.sin;
+  const labelX = endX + 12 * dpr * Math.sign(direction.cos || 1);
+  const labelY = endY - 8 * dpr * Math.sign(direction.sin || 0);
 
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  this.drawOverlayArrow(startX, startY, endX, endY, true);
+  this.drawOverlayArrow(kOriginX, kOriginY, endX, endY, true);
   this.drawOverlayLabel("k", labelX, labelY, "center", true);
   ctx.restore();
 },
@@ -772,12 +769,25 @@ referenceGlyphLayout() {
   const w = this.canvas.width;
   const h = this.canvas.height;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const size = clamp(Math.min(w, h) * 0.085, 36 * dpr, 56 * dpr);
+  const pmlLeft = boundarySideIsAbsorbing("left") && this.pmlLayer > 0 ? this.gridToCanvasX(this.pmlLayer) : 0;
+  const pmlBottom = boundarySideIsAbsorbing("bottom") && this.pmlLayer > 0 ? this.gridToCanvasY(this.ny - this.pmlLayer) : h;
+  const pmlWidth = pmlLeft > 10 * dpr ? pmlLeft : Math.min(w * 0.22, 126 * dpr);
+  const pmlHeight = h - pmlBottom > 10 * dpr ? h - pmlBottom : Math.min(h * 0.18, 96 * dpr);
+  const left = 0;
+  const top = h - pmlHeight;
+  const centerX = left + pmlWidth * 0.5;
+  const centerY = top + pmlHeight * 0.52;
+  const size = clamp(Math.min(pmlWidth, pmlHeight) * 0.34, 24 * dpr, 44 * dpr);
+  const gap = clamp(pmlHeight * 0.18, 15 * dpr, 24 * dpr);
+  const kLength = clamp(size * 0.76, 22 * dpr, 36 * dpr);
   return {
     dpr,
-    size,
-    originX: 34 * dpr,
-    originY: h - 74 * dpr,
+    axesSize: size,
+    axesOriginX: centerX - size * 0.52,
+    axesOriginY: centerY + gap * 0.55,
+    kLength,
+    kOriginX: centerX - kLength * 0.56,
+    kOriginY: centerY - size * 0.68,
   };
 },
 
