@@ -392,11 +392,11 @@ body.controls-drawer-open {
 
   .canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
-    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
-    right: auto !important;
+    left: auto !important;
+    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
     flex-wrap: nowrap !important;
     justify-content: flex-start !important;
-    width: max-content !important;
+    width: 364px !important;
     max-width: calc(
       100vw
       - max(var(--fullscreen-edge), env(safe-area-inset-left))
@@ -422,9 +422,10 @@ body.controls-drawer-open {
 
   .canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
-    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 50px) !important;
-    right: auto !important;
+    left: auto !important;
+    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
     gap: 6px !important;
+    width: auto !important;
     padding: 4px 6px !important;
     border-radius: 16px !important;
   }
