@@ -1712,7 +1712,7 @@ function canvasFocusModeActive() {
 }
 
 function controlDrawerOverlayActive() {
-  return compactControlDrawerActive() || canvasFocusModeActive();
+  return true;
 }
 
 function setControlDrawerOpen(open) {

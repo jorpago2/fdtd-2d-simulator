@@ -1,0 +1,471 @@
+/*
+  Fullscreen simulator shell
+  --------------------------
+  Canvas-first layout: the field map fills the viewport, essential controls float
+  over the PML region, and the full control menu opens as a responsive overlay.
+*/
+
+:root {
+  --fullscreen-edge: clamp(8px, 1.2vw, 18px);
+  --fullscreen-overlay-bg: color-mix(in srgb, var(--neu-bg) 88%, transparent);
+  --fullscreen-overlay-border: color-mix(in srgb, var(--neu-border) 80%, transparent);
+  --fullscreen-overlay-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 72%, transparent),
+    0 18px 52px rgba(20, 37, 45, 0.14);
+  --fullscreen-panel-bg:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-bg) 96%, #ffffff), color-mix(in srgb, var(--neu-surface-low) 92%, transparent));
+}
+
+html[data-theme="dark"] {
+  --fullscreen-overlay-bg: color-mix(in srgb, var(--neu-bg) 76%, rgba(255, 255, 255, 0.03));
+  --fullscreen-overlay-border: color-mix(in srgb, var(--neu-border) 88%, rgba(255, 255, 255, 0.06));
+  --fullscreen-overlay-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 18px 52px rgba(0, 0, 0, 0.34);
+  --fullscreen-panel-bg:
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-bg) 92%, #ffffff 2%), color-mix(in srgb, var(--neu-surface-low) 94%, transparent));
+}
+
+html,
+body {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+body {
+  min-height: 100dvh !important;
+}
+
+.app-shell {
+  position: fixed !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.scientific-status-strip {
+  display: none !important;
+}
+
+.workspace,
+.stage {
+  position: fixed !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.stage::before {
+  display: none !important;
+}
+
+.canvas-frame {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #071017 !important;
+  box-shadow: none !important;
+  aspect-ratio: auto !important;
+}
+
+.canvas-frame canvas {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+
+.topbar,
+.canvas-toolbar {
+  position: fixed !important;
+  z-index: 62 !important;
+  border: 1px solid var(--fullscreen-overlay-border) !important;
+  background: var(--fullscreen-overlay-bg) !important;
+  box-shadow: var(--fullscreen-overlay-shadow) !important;
+  backdrop-filter: blur(18px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
+}
+
+.topbar {
+  top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
+  left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
+  right: auto !important;
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: clamp(8px, 1vw, 14px) !important;
+  width: auto !important;
+  max-width: min(720px, calc(100vw - 2 * var(--fullscreen-edge))) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 8px 10px 8px 12px !important;
+  border-radius: 18px !important;
+}
+
+.topbar .brand-lockup,
+.topbar .brand-main,
+.topbar .brand-heading {
+  min-width: 0 !important;
+}
+
+.topbar .brand-lockup {
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+}
+
+.topbar .brand-main,
+.topbar .brand-heading {
+  display: block !important;
+  width: auto !important;
+}
+
+.topbar .eyebrow,
+.topbar .maxwell-strip {
+  display: none !important;
+}
+
+.topbar .brand-title {
+  display: block !important;
+  max-width: min(48vw, 430px) !important;
+  margin: 0 !important;
+  color: var(--neu-ink) !important;
+  font-size: clamp(1.05rem, 1.35vw, 1.42rem) !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.topbar .brand-emblem {
+  color: var(--neu-accent) !important;
+}
+
+.control-drawer-toggle {
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+}
+
+.canvas-toolbar {
+  top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
+  right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: min(760px, calc(100vw - 2 * var(--fullscreen-edge))) !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 8px !important;
+  border-radius: 18px !important;
+}
+
+.canvas-toolbar .tool-group.compact {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.canvas-toolbar .canvas-focus-status,
+.canvas-toolbar .canvas-focus-exit {
+  display: none !important;
+}
+
+.canvas-toolbar .interaction-toggle {
+  flex: 0 0 auto !important;
+}
+
+.canvas-toolbar .canvas-action-menu {
+  display: contents !important;
+}
+
+.canvas-toolbar .canvas-action-toggle {
+  display: none !important;
+}
+
+.canvas-toolbar .canvas-action-menu .focus-controls-toggle {
+  display: none !important;
+}
+
+.canvas-toolbar .canvas-action-menu .canvas-action-label {
+  display: none !important;
+}
+
+.app-shell .stage .canvas-options-toggle,
+.app-shell .stage .canvas-view-controls {
+  display: none !important;
+}
+
+.colorbar {
+  z-index: 28 !important;
+}
+
+.source-menu,
+.brush-menu,
+.boundary-menu {
+  z-index: 70 !important;
+}
+
+.control-panel {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 120 !important;
+  display: grid !important;
+  box-sizing: border-box !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  grid-auto-flow: row !important;
+  gap: clamp(10px, 1.2vw, 18px) !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left)) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--fullscreen-panel-bg) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(2%) scale(0.985) !important;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 180ms ease !important;
+}
+
+.app-shell.controls-open .control-panel {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+.control-panel::before {
+  display: none !important;
+}
+
+.control-panel-header {
+  display: flex !important;
+  grid-column: 1 / -1 !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.control-panel-title-block h2 {
+  font-size: clamp(1.05rem, 1.8vw, 1.6rem) !important;
+}
+
+.control-panel-actions {
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+}
+
+.control-panel .control-tabs {
+  display: none !important;
+}
+
+.control-panel .mobile-layer-nav {
+  display: grid !important;
+  grid-column: 1 / -1 !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: clamp(6px, 0.8vw, 10px) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px !important;
+  border-radius: 18px !important;
+  overflow: visible !important;
+}
+
+.control-panel .mobile-layer-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+}
+
+.control-tab-panels {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: auto !important;
+  scrollbar-width: thin !important;
+}
+
+.control-tab-panel.is-active {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)) !important;
+  align-items: start !important;
+  gap: clamp(12px, 1.1vw, 18px) !important;
+}
+
+.control-tab-panel > .panel-section,
+.control-tab-panel > .sweep-panel,
+.control-tab-panel > .analysis-panel,
+.control-tab-panel > .config-detail-panel,
+.control-tab-panel > details {
+  min-width: 0 !important;
+}
+
+.control-drawer-backdrop:not([hidden]) {
+  display: none !important;
+}
+
+body.controls-drawer-open {
+  overflow: hidden !important;
+}
+
+@media (max-width: 1180px) {
+  .topbar,
+  .canvas-toolbar {
+    max-width: calc(100vw - 2 * var(--fullscreen-edge)) !important;
+  }
+
+  .topbar {
+    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+  }
+
+  .canvas-toolbar {
+    top: calc(max(var(--fullscreen-edge), env(safe-area-inset-top)) + 58px) !important;
+    left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
+    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+    justify-content: space-between !important;
+  }
+
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar {
+    padding: 7px 8px 7px 10px !important;
+  }
+
+  .topbar .brand-title {
+    max-width: calc(100vw - 92px) !important;
+    font-size: 1rem !important;
+  }
+
+  .canvas-toolbar {
+    top: calc(max(var(--fullscreen-edge), env(safe-area-inset-top)) + 60px) !important;
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  .canvas-toolbar .tool-group.compact {
+    gap: 5px !important;
+  }
+
+  .canvas-toolbar .icon-button {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+
+  .canvas-toolbar .interaction-toggle {
+    flex: 1 1 128px !important;
+  }
+
+  .canvas-toolbar .interaction-toggle .mode-toggle-button {
+    min-height: 34px !important;
+    font-size: 0.68rem !important;
+  }
+
+  .control-panel {
+    gap: 10px !important;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(10px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left)) !important;
+  }
+
+  .control-panel-header {
+    align-items: start !important;
+  }
+
+  .control-panel-title-block {
+    max-width: none !important;
+  }
+
+  .control-panel-actions {
+    gap: 6px !important;
+  }
+
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .control-tab-panel.is-active {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .canvas-toolbar {
+    justify-content: center !important;
+  }
+
+  .canvas-toolbar .tool-group.compact {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+  }
+
+  .canvas-toolbar .interaction-toggle {
+    flex-basis: 100% !important;
+  }
+
+  .control-panel .mobile-layer-button {
+    grid-template-columns: auto minmax(0, max-content) !important;
+    gap: 4px !important;
+    padding-inline: 5px !important;
+    font-size: 0.58rem !important;
+  }
+}
