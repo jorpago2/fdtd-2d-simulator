@@ -30,6 +30,8 @@ class FDTDSim {
       this.loss = new Float32Array(this.n);
       this.epsY = new Float32Array(this.n);
       this.lossY = new Float32Array(this.n);
+      this.conductivity = new Float32Array(this.n);
+      this.conductivityY = new Float32Array(this.n);
       this.mu = new Float32Array(this.n);
       this.muLoss = new Float32Array(this.n);
       this.muY = new Float32Array(this.n);
@@ -81,8 +83,6 @@ class FDTDSim {
     this.phaseLossOn = new Float32Array(this.n);
     this.phaseEpsYOn = new Float32Array(this.n);
     this.phaseLossYOn = new Float32Array(this.n);
-    this.conductivity = new Float32Array(this.n);
-    this.conductivityY = new Float32Array(this.n);
     this.modulationBaseEps = new Float32Array(this.n);
     this.modulationBaseEpsY = new Float32Array(this.n);
     this.dispersionOmegaP = new Float32Array(this.n);
@@ -373,8 +373,6 @@ class FDTDSim {
     this.phaseLossOn = new Float32Array(this.n);
     this.phaseEpsYOn = new Float32Array(this.n);
     this.phaseLossYOn = new Float32Array(this.n);
-    this.conductivity = new Float32Array(this.n);
-    this.conductivityY = new Float32Array(this.n);
     this.modulationBaseEps = new Float32Array(this.n);
     this.modulationBaseEpsY = new Float32Array(this.n);
     this.dispersionOmegaP = new Float32Array(this.n);
@@ -503,7 +501,11 @@ class FDTDSim {
       if (state.materialPhaseChangeEnabled) return "JS memory";
       return state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic";
     }
-    if (state.materialConductivityEnabled) return "JS sigma";
+    if (state.materialConductivityEnabled) {
+      return this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsConductivity()
+        ? "WASM sigma"
+        : "JS sigma";
+    }
     return this.wasmBackend?.canStep(state.fieldComponent) ? "WASM" : "JS";
   }
 
@@ -513,7 +515,7 @@ class FDTDSim {
         state.materialNonlinearEnabled ||
         state.materialHarmonicEnabled ||
         state.materialDispersionEnabled ||
-        state.materialConductivityEnabled ||
+        (state.materialConductivityEnabled && !this.wasmBackend?.supportsConductivity()) ||
         state.materialSaturableGainEnabled ||
         state.materialPhaseChangeEnabled ||
         state.materialGyrotropyEnabled ||

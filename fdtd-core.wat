@@ -1,6 +1,9 @@
 (module
   (import "env" "memory" (memory 1 4096))
 
+  (func (export "kernel_features") (result i32)
+    (i32.const 0))
+
   (func (export "step")
     (param $nx i32)
     (param $ny i32)
@@ -14,6 +17,8 @@
     (param $loss i32)
     (param $epsY i32)
     (param $lossY i32)
+    (param $conductivity i32)
+    (param $conductivityY i32)
     (param $mu i32)
     (param $muLoss i32)
     (param $muY i32)
@@ -238,6 +243,8 @@
     (param $loss i32)
     (param $epsY i32)
     (param $lossY i32)
+    (param $conductivity i32)
+    (param $conductivityY i32)
     (param $mu i32)
     (param $muLoss i32)
     (param $muY i32)

@@ -200,7 +200,7 @@ function validateUiReproducibility(indexHtml, appJs) {
   );
 }
 
-function validatePerformanceRoute(indexHtml, appJs) {
+function validatePerformanceRoute(indexHtml, appJs, wasmBackendJs, wasmCpp) {
   const requiredIds = [
     "performanceBackendOutput",
     "performanceGridOutput",
@@ -220,8 +220,11 @@ function validatePerformanceRoute(indexHtml, appJs) {
     "timeStepBatch",
     "instrumentSimulationPerformance",
     "updatePerformanceStats",
+    "supportsConductivity",
+    "kernel_features",
   ];
-  const missingSymbols = requiredSymbols.filter((symbol) => !appJs.includes(symbol));
+  const performanceSources = `${appJs}\n${wasmBackendJs}\n${wasmCpp}`;
+  const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
     ["wasm-src", "fdtd-core.cpp"],
@@ -246,6 +249,8 @@ function validatePerformanceRoute(indexHtml, appJs) {
 function main() {
   const indexHtml = readText("index.html");
   const appJs = readText("app.js");
+  const wasmBackendJs = readText("src", "wasm-backend.js");
+  const wasmCpp = readText("wasm-src", "fdtd-core.cpp");
   const jsFiles = [
     "src/constants.js",
     "src/wasm-backend.js",
@@ -271,7 +276,7 @@ function main() {
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs);
-  validatePerformanceRoute(indexHtml, appJs);
+  validatePerformanceRoute(indexHtml, appJs, wasmBackendJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

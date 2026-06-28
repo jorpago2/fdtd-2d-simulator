@@ -35,6 +35,12 @@ Use custom grids when profiling a target device:
 npm run benchmark:perf -- --browser-channel=msedge --grids=180x120,360x240,720x480 --steps=240 --json
 ```
 
+Benchmark a specific scene, for example the finite-conductivity skin-depth case:
+
+```powershell
+npm run benchmark:perf -- --browser-channel=msedge --preset=finiteConductivity
+```
+
 The reported WASM/JS speedup is meaningful for the static Yee update only. Dynamic materials that force the JavaScript path must be benchmarked separately before moving them to C++/WASM.
 
 Reference run on this Windows/Edge workstation after limiting renormalization to active fields:
@@ -53,8 +59,9 @@ The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The acti
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
+- `kernel_features`: compiled-kernel capability bitmask. Bit 0 means finite electric conductivity is included.
 
-Advanced dynamic material paths can still fall back to JavaScript. The performance panel reports whether the compiled kernel is available for the current field component, but the engine label remains the source of truth exposed by the app.
+The compiled kernel includes the static finite-conductivity update `J = sigma E`, so conductive scenes can run as `WASM sigma` when no unsupported dynamic physics is active. Advanced dynamic material paths can still fall back to JavaScript. The performance panel reports whether the compiled kernel is available for the current field component, but the engine label remains the source of truth exposed by the app.
 
 ## C++ Migration Path
 
@@ -85,5 +92,5 @@ For scientific confidence, also compare short JS and WASM trajectories on homoge
 
 1. Use the runtime panel to identify whether the current bottleneck is stepping, rendering, or diagnostics.
 2. Compile and validate the C++ kernel as a replacement for the WAT-maintained WASM.
-3. Port dynamic material kernels that currently force JavaScript fallback.
+3. Port dynamic material kernels that currently force JavaScript fallback. Finite electric conductivity is already in the C++/WASM kernel; the next candidates are ADE dispersion, Kerr/saturable response, and tensor/gyrotropic TEz updates.
 4. Move long-running sweeps to a Web Worker so UI and canvas interactions remain responsive.

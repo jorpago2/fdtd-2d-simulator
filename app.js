@@ -2014,9 +2014,13 @@ function updatePerformanceStats(force = false) {
   const measureText = formatPerformanceMs(performanceStats.measureMs, performanceStats.measureSamples);
   const throughputText = formatPerformanceRate(performanceStats.stepMs, performanceStats.stepSamples);
   const compiledAvailable = Boolean(sim.wasmBackend?.canStep(state.fieldComponent));
-  const dynamicFallback = sim.hasDynamicMaterialResponse?.() ? "dynamic material path" : "static-material path";
+  const materialPath = sim.hasDynamicMaterialResponse?.()
+    ? "dynamic material path"
+    : state.materialConductivityEnabled
+      ? "conductive static path"
+      : "static-material path";
   const statusText = performanceStats.stepSamples > 0
-    ? `${compiledAvailable ? "Compiled kernel available" : "JavaScript fallback"}; ${dynamicFallback}.`
+    ? `${compiledAvailable ? "Compiled kernel available" : "JavaScript fallback"}; ${materialPath}.`
     : "Run or step the simulation to collect timing samples.";
 
   if (el.performanceBackendOutput) el.performanceBackendOutput.textContent = engineText;

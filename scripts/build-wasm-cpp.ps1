@@ -49,6 +49,7 @@ $args = @(
   "-Wl,--import-memory",
   "-Wl,--export=step",
   "-Wl,--export=step_hz",
+  "-Wl,--export=kernel_features",
   "-Wl,--allow-undefined",
   "-o",
   $wasm,

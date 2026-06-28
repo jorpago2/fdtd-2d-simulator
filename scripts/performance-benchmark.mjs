@@ -23,6 +23,7 @@ function parseArgs(argv) {
     warmupSteps: 30,
     renderSamples: 12,
     measureSamples: 24,
+    preset: "empty",
     browserChannel: process.platform === "win32" ? "msedge" : "",
     headless: true,
     json: false,
@@ -50,6 +51,8 @@ function parseArgs(argv) {
       options.renderSamples = positiveInt(arg, "--render-samples=");
     } else if (arg.startsWith("--measure-samples=")) {
       options.measureSamples = positiveInt(arg, "--measure-samples=");
+    } else if (arg.startsWith("--preset=")) {
+      options.preset = arg.slice("--preset=".length).trim() || "empty";
     } else if (arg.startsWith("--browser-channel=")) {
       options.browserChannel = arg.slice("--browser-channel=".length);
     } else {
@@ -144,7 +147,7 @@ async function launchBrowser(chromium, options) {
 
 async function runBenchmarkCase(page, grid, backend, options) {
   return page.evaluate(
-    async ({ grid, backend, steps, warmupSteps, renderSamples, measureSamples }) => {
+    async ({ grid, backend, steps, warmupSteps, renderSamples, measureSamples, preset }) => {
       const saved = {
         running: state.running,
         preset: state.preset,
@@ -158,7 +161,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
       const savedBackend = sim.wasmBackend;
 
       state.running = false;
-      state.preset = "empty";
+      state.preset = preset;
       state.fieldComponent = "ez";
       state.viewMode = "field";
       state.viewProjection = "2d";
@@ -207,6 +210,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
       return {
         backend,
         engine,
+        preset,
         nx: sim.nx,
         ny: sim.ny,
         cells: sim.n,
@@ -228,6 +232,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
       warmupSteps: options.warmupSteps,
       renderSamples: options.renderSamples,
       measureSamples: options.measureSamples,
+      preset: options.preset,
     },
   );
 }

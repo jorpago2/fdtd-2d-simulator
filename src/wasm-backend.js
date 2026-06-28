@@ -45,6 +45,8 @@ class WasmFdtdBackend {
     f32("loss", n);
     f32("epsY", n);
     f32("lossY", n);
+    f32("conductivity", n);
+    f32("conductivityY", n);
     f32("mu", n);
     f32("muLoss", n);
     f32("muY", n);
@@ -98,6 +100,8 @@ class WasmFdtdBackend {
     sim.loss = new Float32Array(buffer, o.loss, n);
     sim.epsY = new Float32Array(buffer, o.epsY, n);
     sim.lossY = new Float32Array(buffer, o.lossY, n);
+    sim.conductivity = new Float32Array(buffer, o.conductivity, n);
+    sim.conductivityY = new Float32Array(buffer, o.conductivityY, n);
     sim.mu = new Float32Array(buffer, o.mu, n);
     sim.muLoss = new Float32Array(buffer, o.muLoss, n);
     sim.muY = new Float32Array(buffer, o.muY, n);
@@ -134,6 +138,8 @@ class WasmFdtdBackend {
       o.loss,
       o.epsY,
       o.lossY,
+      o.conductivity,
+      o.conductivityY,
       o.mu,
       o.muLoss,
       o.muY,
@@ -172,5 +178,13 @@ class WasmFdtdBackend {
 
   canStep(component) {
     return component === "hz" ? typeof this.exports.step_hz === "function" : typeof this.exports.step === "function";
+  }
+
+  kernelFeatures() {
+    return typeof this.exports.kernel_features === "function" ? Number(this.exports.kernel_features()) || 0 : 0;
+  }
+
+  supportsConductivity() {
+    return (this.kernelFeatures() & 1) !== 0;
   }
 }

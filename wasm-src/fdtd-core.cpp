@@ -8,12 +8,36 @@ using i32 = int;
 using u32 = unsigned int;
 using u8 = unsigned char;
 
+static constexpr i32 FEATURE_CONDUCTIVITY = 1 << 0;
+
 static inline float* f32(u32 offset) {
   return reinterpret_cast<float*>(offset);
 }
 
 static inline u8* u8_array(u32 offset) {
   return reinterpret_cast<u8*>(offset);
+}
+
+static inline float absf(float value) {
+  return value < 0.0f ? -value : value;
+}
+
+static inline float minf(float a, float b) {
+  return a < b ? a : b;
+}
+
+static inline float maxf(float a, float b) {
+  return a > b ? a : b;
+}
+
+static inline float conductivity_damp(float sigma, float materialValue, float courant) {
+  if (sigma <= 0.0f) return 0.0f;
+  const float denominator = maxf(1.0e-6f, absf(materialValue));
+  return minf(1.0e6f, (sigma * courant) / (2.0f * denominator));
+}
+
+extern "C" __attribute__((export_name("kernel_features"))) i32 kernel_features() {
+  return FEATURE_CONDUCTIVITY;
 }
 
 static inline void zero_tm_cell(float* ez, float* ezx, float* ezy, i32 i) {
@@ -43,6 +67,8 @@ extern "C" __attribute__((export_name("step"))) void step(
   u32 lossOffset,
   u32 epsYOffset,
   u32 lossYOffset,
+  u32 conductivityOffset,
+  u32 conductivityYOffset,
   u32 muOffset,
   u32 muLossOffset,
   u32 muYOffset,
@@ -66,6 +92,8 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* loss = f32(lossOffset);
   float* epsY = f32(epsYOffset);
   float* lossY = f32(lossYOffset);
+  float* conductivity = f32(conductivityOffset);
+  float* conductivityY = f32(conductivityYOffset);
   float* mu = f32(muOffset);
   float* muLoss = f32(muLossOffset);
   float* muY = f32(muYOffset);
@@ -112,8 +140,14 @@ extern "C" __attribute__((export_name("step"))) void step(
       }
       const float dHyDx = hy[i] - hy[i - 1];
       const float dHxDy = hx[i] - hx[i - nx];
-      const float ezxNew = (eCaX[x] * ezx[i] + eCbX[x] * (s / eps[i]) * dHyDx) / (1.0f + loss[i]);
-      const float ezyNew = (eCaY[y] * ezy[i] - eCbY[y] * (s / epsY[i]) * dHxDy) / (1.0f + lossY[i]);
+      const float sigmaDampX = conductivity_damp(conductivity[i], eps[i], s);
+      const float sigmaDampY = conductivity_damp(conductivityY[i], epsY[i], s);
+      const float sigmaCaX = (1.0f - sigmaDampX) / (1.0f + sigmaDampX);
+      const float sigmaCaY = (1.0f - sigmaDampY) / (1.0f + sigmaDampY);
+      const float sigmaCbX = 1.0f / (1.0f + sigmaDampX);
+      const float sigmaCbY = 1.0f / (1.0f + sigmaDampY);
+      const float ezxNew = (sigmaCaX * eCaX[x] * ezx[i] + sigmaCbX * eCbX[x] * (s / eps[i]) * dHyDx) / (1.0f + loss[i]);
+      const float ezyNew = (sigmaCaY * eCaY[y] * ezy[i] - sigmaCbY * eCbY[y] * (s / epsY[i]) * dHxDy) / (1.0f + lossY[i]);
       ezx[i] = ezxNew;
       ezy[i] = ezyNew;
       ez[i] = ezxNew + ezyNew;
@@ -134,6 +168,8 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   u32 lossOffset,
   u32 epsYOffset,
   u32 lossYOffset,
+  u32 conductivityOffset,
+  u32 conductivityYOffset,
   u32 muOffset,
   u32 muLossOffset,
   u32 muYOffset,
@@ -157,6 +193,8 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* loss = f32(lossOffset);
   float* epsY = f32(epsYOffset);
   float* lossY = f32(lossYOffset);
+  float* conductivity = f32(conductivityOffset);
+  float* conductivityY = f32(conductivityYOffset);
   float* mu = f32(muOffset);
   float* muLoss = f32(muLossOffset);
   float* muY = f32(muYOffset);
@@ -181,7 +219,10 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         ex[i] = 0.0f;
         continue;
       }
-      ex[i] = (ca * ex[i] + cb * (s / eps[i]) * (hz[i + nx] - hz[i])) / (1.0f + loss[i]);
+      const float sigmaDamp = conductivity_damp(conductivity[i], eps[i], s);
+      const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
+      const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
+      ex[i] = (sigmaCa * ca * ex[i] + sigmaCb * cb * (s / eps[i]) * (hz[i + nx] - hz[i])) / (1.0f + loss[i]);
     }
   }
 
@@ -193,7 +234,10 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         ey[i] = 0.0f;
         continue;
       }
-      ey[i] = (eCaX[x] * ey[i] - eCbX[x] * (s / epsY[i]) * (hz[i + 1] - hz[i])) / (1.0f + lossY[i]);
+      const float sigmaDamp = conductivity_damp(conductivityY[i], epsY[i], s);
+      const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
+      const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
+      ey[i] = (sigmaCa * eCaX[x] * ey[i] - sigmaCb * eCbX[x] * (s / epsY[i]) * (hz[i + 1] - hz[i])) / (1.0f + lossY[i]);
     }
   }
 
