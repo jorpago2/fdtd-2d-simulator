@@ -215,6 +215,10 @@ body {
   display: none !important;
 }
 
+.canvas-toolbar .canvas-focus-toggle {
+  display: none !important;
+}
+
 .canvas-toolbar .canvas-action-menu .focus-controls-toggle {
   display: none !important;
 }
