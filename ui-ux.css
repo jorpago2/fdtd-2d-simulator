@@ -4225,3 +4225,195 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     white-space: nowrap !important;
   }
 }
+
+/* Rebuilt mobile Visual controls: one glass system, no inherited sliding indicators. */
+@media (max-width: 760px) {
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-summary-card output {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    color: var(--neu-ink) !important;
+    font-size: 0.76rem !important;
+    font-weight: 900 !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-summary-card {
+    align-content: start !important;
+    min-height: 68px !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle,
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile {
+    display: grid !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+    border-radius: 16px !important;
+    padding: 5px !important;
+    background: color-mix(in srgb, var(--neu-surface-low) 74%, transparent) !important;
+    box-shadow: var(--neu-shadow-inset-tight) !important;
+    overflow: hidden !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle::before,
+  .control-panel[data-mobile-layer="visual"] #tab-visual .canvas-mode-toggle::after,
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile::before,
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .projection-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .view-toggle {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .field-display-toggle {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-profile {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px !important;
+    padding: 0 6px !important;
+    color: color-mix(in srgb, var(--neu-ink) 70%, var(--neu-muted)) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button.is-active {
+    border-color: color-mix(in srgb, var(--neu-accent) 46%, rgba(255, 255, 255, 0.25)) !important;
+    color: var(--neu-accent) !important;
+    background:
+      radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.72), transparent 34%),
+      linear-gradient(145deg, color-mix(in srgb, var(--neu-accent-soft) 58%, #ffffff), color-mix(in srgb, var(--neu-surface-raised) 88%, var(--neu-accent) 12%)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.76),
+      inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 14%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+      var(--neu-shadow-small) !important;
+  }
+
+  html[data-theme="dark"] .control-panel[data-mobile-layer="visual"] #tab-visual .mode-toggle-button.is-active {
+    color: color-mix(in srgb, var(--neu-accent) 58%, #ffffff) !important;
+    background:
+      radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.18), transparent 34%),
+      linear-gradient(145deg, rgba(39, 51, 64, 0.98), rgba(21, 28, 37, 0.96)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+      0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+      0 10px 22px rgba(0, 0, 0, 0.24) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-layer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    min-height: 52px !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 82%, transparent) !important;
+    border-radius: 12px !important;
+    padding: 8px 10px !important;
+    background: color-mix(in srgb, var(--neu-surface) 84%, transparent) !important;
+    box-shadow: var(--neu-shadow-small) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    position: relative !important;
+    display: inline-block !important;
+    width: 44px !important;
+    height: 24px !important;
+    min-width: 44px !important;
+    margin: 0 !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, #0b1118 82%, var(--neu-surface)) !important;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.34) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]::before {
+    position: absolute !important;
+    top: 2px !important;
+    left: 2px !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(145deg, rgba(33, 42, 54, 0.96), rgba(11, 16, 23, 0.96)) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+    content: "" !important;
+    transform: translateX(0) !important;
+    transition: transform 160ms ease, background 160ms ease !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]:checked {
+    border-color: color-mix(in srgb, var(--neu-accent) 48%, transparent) !important;
+    background: linear-gradient(145deg, #73b7ff, #61a8ff) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      0 0 14px rgba(87, 161, 255, 0.32) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]:checked::before {
+    background: linear-gradient(145deg, #273345, #111923) !important;
+    transform: translateX(20px) !important;
+  }
+
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer span {
+    min-width: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    color: color-mix(in srgb, var(--neu-ink) 82%, #ffffff) !important;
+    font-size: 0.7rem !important;
+    font-weight: 850 !important;
+    line-height: 1.12 !important;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .control-panel[data-mobile-layer="visual"] #tab-visual .visual-layer-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
