@@ -5954,10 +5954,27 @@ function formatSignedMaterialMapValue(value) {
   return value > 0 && formatted !== "0" && formatted !== "overflow" ? `+${formatted}` : formatted;
 }
 
+let colorbarRenderSignature = "";
+
+function applyColorbarState(titleHtml, maxText, midText, minText, gradient, epsilonMap) {
+  const signature = [titleHtml, maxText, midText, minText, gradient, epsilonMap ? "epsilon" : "field"].join("|");
+  if (signature === colorbarRenderSignature) return;
+  colorbarRenderSignature = signature;
+  el.colorbarTitle.innerHTML = titleHtml;
+  el.colorbarMax.textContent = maxText;
+  el.colorbarMid.textContent = midText;
+  el.colorbarMin.textContent = minText;
+  el.colorbarGradient.style.background = gradient;
+  el.colorbarGradient.classList.toggle("is-epsilon-map", epsilonMap);
+}
+
 function updateColorbar() {
   if (!el.colorbar) return;
   el.colorbar.hidden = !visualLayerEnabled("colorbar");
-  if (el.colorbar.hidden) return;
+  if (el.colorbar.hidden) {
+    colorbarRenderSignature = "hidden";
+    return;
+  }
 
   if (state.viewMode === "epsilon" || state.viewMode === "mu") {
     const center = Number.isFinite(sim.lastMaterialViewCenter)
@@ -5974,46 +5991,47 @@ function updateColorbar() {
     const materialContext = { center, min, max };
     const materialMapName = currentMaterialColormapName(materialContext);
     const materialMapSigned = state.materialPart === "imag" || (min < center && max > center);
-    el.colorbarTitle.innerHTML = `${state.materialPart === "imag" ? "Im" : "Re"}(${symbol})`;
+    const titleHtml = `${state.materialPart === "imag" ? "Im" : "Re"}(${symbol})`;
+    let maxText;
+    let midText;
+    let minText;
     if (!materialMapSigned) {
-      el.colorbarMax.textContent = formatBound(max);
-      el.colorbarMid.textContent = formatBound((min + max) * 0.5);
-      el.colorbarMin.textContent = formatBound(min);
-      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
+      maxText = formatBound(max);
+      midText = formatBound((min + max) * 0.5);
+      minText = formatBound(min);
     } else if (centerStop >= 99.9) {
-      el.colorbarMax.textContent = formatBound(max);
-      el.colorbarMid.textContent = formatBound((max + center) * 0.5);
-      el.colorbarMin.textContent = formatMaterialMapValue(center);
-      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
+      maxText = formatBound(max);
+      midText = formatBound((max + center) * 0.5);
+      minText = formatMaterialMapValue(center);
     } else if (centerStop <= 0.1) {
-      el.colorbarMax.textContent = formatMaterialMapValue(center);
-      el.colorbarMid.textContent = formatBound((min + center) * 0.5);
-      el.colorbarMin.textContent = formatBound(min);
-      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
+      maxText = formatMaterialMapValue(center);
+      midText = formatBound((min + center) * 0.5);
+      minText = formatBound(min);
     } else {
-      el.colorbarMax.textContent = formatBound(max);
-      el.colorbarMid.textContent = formatMaterialMapValue(center);
-      el.colorbarMin.textContent = formatBound(min);
-      el.colorbarGradient.style.background = cmasherGradient(materialMapName);
+      maxText = formatBound(max);
+      midText = formatMaterialMapValue(center);
+      minText = formatBound(min);
     }
-    el.colorbarGradient.classList.add("is-epsilon-map");
+    applyColorbarState(titleHtml, maxText, midText, minText, cmasherGradient(materialMapName), true);
     return;
   }
 
   const range = sim.lastViewRange || 1;
   const displayConfig = fieldDisplayConfig();
-  el.colorbarTitle.innerHTML = `${displayConfig.labelHtml} / ${displayConfig.unitHtml}`;
+  const titleHtml = `${displayConfig.labelHtml} / ${displayConfig.unitHtml}`;
+  let maxText;
+  let midText;
+  let minText;
   if (displayConfig.magnitude) {
-    el.colorbarMax.textContent = formatFieldMetric(range, sim.lastViewRangeLog10);
-    el.colorbarMid.textContent = formatFieldMetric(range * 0.5, sim.lastViewRangeLog10 + Math.log10(0.5));
-    el.colorbarMin.textContent = "0";
+    maxText = formatFieldMetric(range, sim.lastViewRangeLog10);
+    midText = formatFieldMetric(range * 0.5, sim.lastViewRangeLog10 + Math.log10(0.5));
+    minText = "0";
   } else {
-    el.colorbarMax.textContent = `+${formatFieldMetric(range, sim.lastViewRangeLog10)}`;
-    el.colorbarMid.textContent = "0";
-    el.colorbarMin.textContent = `-${formatFieldMetric(range, sim.lastViewRangeLog10)}`;
+    maxText = `+${formatFieldMetric(range, sim.lastViewRangeLog10)}`;
+    midText = "0";
+    minText = `-${formatFieldMetric(range, sim.lastViewRangeLog10)}`;
   }
-  el.colorbarGradient.style.background = cmasherGradient(currentFieldColormapName(displayConfig.magnitude));
-  el.colorbarGradient.classList.remove("is-epsilon-map");
+  applyColorbarState(titleHtml, maxText, midText, minText, cmasherGradient(currentFieldColormapName(displayConfig.magnitude)), false);
 }
 
 function animate() {

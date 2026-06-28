@@ -348,8 +348,8 @@ render() {
     if (canRecordRenderBreakdown) {
       perf.record("renderMapMs", perf.now() - renderPhaseStart);
     }
+    updateColorbar();
     if (!state.running) {
-      updateColorbar();
       updateMaterialWarning();
     }
     return;
@@ -400,8 +400,8 @@ render() {
   if (canRecordRenderBreakdown) {
     perf.record("renderOverlayMs", perf.now() - renderPhaseStart);
   }
+  updateColorbar();
   if (!state.running) {
-    updateColorbar();
     updateMaterialWarning();
   }
 },
