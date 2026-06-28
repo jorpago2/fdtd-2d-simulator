@@ -211,6 +211,8 @@ const VISUAL_PROFILE_LAYERS = Object.freeze({
   }),
 });
 
+let visualLayerRenderOverrides = null;
+
 const state = {
   running: false,
   theme: initialTheme(),
@@ -923,6 +925,9 @@ function visualLayerSnapshot(profile = effectiveVisualProfile()) {
 function visualLayerEnabled(layer) {
   const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
   if (!stateKey) return true;
+  if (visualLayerRenderOverrides && Object.prototype.hasOwnProperty.call(visualLayerRenderOverrides, layer)) {
+    return Boolean(visualLayerRenderOverrides[layer]);
+  }
   return Boolean(visualLayerSnapshot()[layer]);
 }
 
@@ -6125,17 +6130,27 @@ function resetSimulationFields() {
   sim.render();
 }
 
+function downloadCanvasPng() {
+  const previousOverrides = visualLayerRenderOverrides;
+  const link = document.createElement("a");
+  link.download = `fdtd-2d-step-${sim.time}.png`;
+  try {
+    visualLayerRenderOverrides = { ...(previousOverrides || {}), scale: true };
+    sim.render();
+    link.href = el.canvas.toDataURL("image/png");
+  } finally {
+    visualLayerRenderOverrides = previousOverrides;
+    sim.render();
+  }
+  link.click();
+}
+
 el.stepBtn.addEventListener("click", advanceOneStep);
 el.runStepBtn?.addEventListener("click", advanceOneStep);
 el.resetBtn.addEventListener("click", resetSimulationFields);
 el.runResetBtn?.addEventListener("click", resetSimulationFields);
 
-el.saveBtn.addEventListener("click", () => {
-  const link = document.createElement("a");
-  link.download = `fdtd-2d-step-${sim.time}.png`;
-  link.href = el.canvas.toDataURL("image/png");
-  link.click();
-});
+el.saveBtn.addEventListener("click", downloadCanvasPng);
 
 el.selectModeBtn.addEventListener("click", () => {
   setCanvasMode("select");

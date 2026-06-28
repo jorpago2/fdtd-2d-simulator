@@ -348,6 +348,9 @@ render() {
     if (canRecordRenderBreakdown) {
       perf.record("renderMapMs", perf.now() - renderPhaseStart);
     }
+    if (visualLayerEnabled("scale")) {
+      this.drawScaleBarOverlay();
+    }
     updateColorbar();
     if (!state.running) {
       updateMaterialWarning();
@@ -471,18 +474,49 @@ drawPmlOverlay() {
   const w = this.canvas.width;
   const h = this.canvas.height;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const spacing = Math.max(8 * dpr, Math.min(w, h) / 40);
+  const dark = state.theme === "dark";
+  const palette = {
+    fill: dark ? "rgba(46, 232, 224, 0.04)" : "rgba(0, 116, 122, 0.055)",
+    grid: dark ? "rgba(96, 244, 236, 0.16)" : "rgba(0, 111, 118, 0.20)",
+    labelBackground: dark ? "rgba(2, 10, 14, 0.58)" : "rgba(255, 255, 255, 0.66)",
+    labelBorder: dark ? "rgba(116, 255, 248, 0.18)" : "rgba(0, 110, 118, 0.16)",
+    labelText: dark ? "rgba(220, 255, 252, 0.82)" : "rgba(4, 72, 80, 0.82)",
+    interfaceStroke: dark ? "rgba(90, 236, 230, 0.54)" : "rgba(0, 97, 107, 0.58)",
+  };
+  const spacing = clamp(Math.min(w, h) / 26, 13 * dpr, 26 * dpr);
+  const drawPmlLabel = (rect) => {
+    const fontPx = this.overlayTextFontPx(0.92);
+    const label = "PML";
+    ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`;
+    const metrics = ctx.measureText(label);
+    const padX = Math.max(6 * dpr, fontPx * 0.45);
+    const padY = Math.max(3 * dpr, fontPx * 0.24);
+    const labelWidth = metrics.width + 2 * padX;
+    const labelHeight = fontPx * 1.12 + 2 * padY;
+    if (rect.width < labelWidth + 8 * dpr || rect.height < labelHeight + 6 * dpr) return;
+    const left = rect.left + (rect.width - labelWidth) / 2;
+    const top = rect.top + (rect.height - labelHeight) / 2;
+    ctx.fillStyle = palette.labelBackground;
+    ctx.fillRect(left, top, labelWidth, labelHeight);
+    ctx.strokeStyle = palette.labelBorder;
+    ctx.lineWidth = Math.max(1, 0.8 * dpr);
+    ctx.strokeRect(left, top, labelWidth, labelHeight);
+    ctx.fillStyle = palette.labelText;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, rect.left + rect.width / 2, rect.top + rect.height / 2 + 0.5 * dpr);
+  };
   const drawPmlRegion = (side, x0, y0, x1, y1) => {
     const rect = this.gridRectToCanvas(x0, y0, x1, y1);
     if (!rect) return;
     ctx.save();
-    ctx.fillStyle = "rgba(0, 92, 102, 0.08)";
+    ctx.fillStyle = palette.fill;
     ctx.fillRect(rect.left, rect.top, rect.width, rect.height);
     ctx.beginPath();
     ctx.rect(rect.left, rect.top, rect.width, rect.height);
     ctx.clip();
-    ctx.strokeStyle = "rgba(0, 92, 102, 0.36)";
-    ctx.lineWidth = Math.max(1, dpr);
+    ctx.strokeStyle = palette.grid;
+    ctx.lineWidth = Math.max(1, 0.75 * dpr);
     ctx.beginPath();
     const startX = Math.floor(rect.left / spacing) * spacing;
     const endX = rect.left + rect.width;
@@ -498,11 +532,7 @@ drawPmlOverlay() {
     }
     ctx.stroke();
     if (rect.width > 36 * dpr && rect.height > 18 * dpr) {
-      ctx.fillStyle = "rgba(0, 58, 64, 0.82)";
-      ctx.font = `${this.overlayTextFontPx()}px ui-sans-serif, system-ui, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("PML", rect.left + rect.width / 2, rect.top + rect.height / 2);
+      drawPmlLabel(rect);
     }
     ctx.restore();
   };
@@ -566,7 +596,7 @@ drawPmlOverlay() {
     if (layer <= 0) return;
     const absorbing = boundarySideIsAbsorbing(side);
     ctx.save();
-    ctx.strokeStyle = absorbing ? "rgba(0, 92, 102, 0.75)" : "rgba(3, 7, 10, 0.88)";
+    ctx.strokeStyle = absorbing ? palette.interfaceStroke : "rgba(3, 7, 10, 0.88)";
     ctx.lineWidth = Math.max(absorbing ? 1 : 1.35, dpr);
     ctx.setLineDash(absorbing ? [6 * dpr, 4 * dpr] : []);
     ctx.beginPath();
