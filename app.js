@@ -3084,10 +3084,20 @@ function positionFloatingMenu(menu, clientX, clientY) {
   const frame = menu?.parentElement;
   if (!frame || !menu) return;
   const frameRect = frame.getBoundingClientRect();
-  const menuRect = menu.getBoundingClientRect();
   const pad = 10;
+  const availableHeight = Math.max(
+    220,
+    Math.min(frameRect.height - pad * 2, window.innerHeight - frameRect.top - pad)
+  );
+  menu.style.setProperty("max-height", `${availableHeight}px`, "important");
+  menu.style.setProperty("overflow-y", "auto", "important");
+  const menuRect = menu.getBoundingClientRect();
   const left = clamp(clientX - frameRect.left + pad, pad, Math.max(pad, frameRect.width - menuRect.width - pad));
-  const top = clamp(clientY - frameRect.top + pad, pad, Math.max(pad, frameRect.height - menuRect.height - pad));
+  const maxTop = Math.max(
+    pad,
+    Math.min(frameRect.height - menuRect.height - pad, window.innerHeight - frameRect.top - menuRect.height - pad)
+  );
+  const top = clamp(clientY - frameRect.top + pad, pad, maxTop);
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
 }
