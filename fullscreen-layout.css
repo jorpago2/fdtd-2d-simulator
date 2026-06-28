@@ -328,8 +328,40 @@ body {
 }
 
 .control-panel-actions {
-  flex-wrap: wrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
   justify-content: flex-end !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.control-panel-actions .theme-toggle {
+  flex: 0 1 clamp(132px, 12vw, 174px) !important;
+  width: clamp(132px, 12vw, 174px) !important;
+  min-width: 132px !important;
+  max-width: 174px !important;
+  margin: 0 !important;
+}
+
+.control-panel .control-drawer-close {
+  display: inline-grid !important;
+  flex: 0 0 clamp(36px, 3vw, 44px) !important;
+  width: clamp(36px, 3vw, 44px) !important;
+  min-width: clamp(36px, 3vw, 44px) !important;
+  height: clamp(36px, 3vw, 44px) !important;
+  min-height: clamp(36px, 3vw, 44px) !important;
+  place-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem) !important;
+  line-height: 1 !important;
+}
+
+.control-panel .control-drawer-close,
+.control-panel .control-drawer-close:hover,
+.control-panel .control-drawer-close:active {
+  text-align: center !important;
 }
 
 .control-panel .control-tabs {
