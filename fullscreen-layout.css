@@ -542,6 +542,93 @@ body.controls-drawer-open {
   .control-tab-panel.is-active {
     grid-template-columns: 1fr !important;
   }
+
+  .canvas-toolbar {
+    overflow: visible !important;
+    transition:
+      left 160ms ease,
+      right 160ms ease,
+      width 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease !important;
+  }
+
+  .stage:not(.canvas-actions-open) .canvas-toolbar {
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar {
+    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 56px) !important;
+    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+    width: auto !important;
+    max-width: none !important;
+    justify-content: flex-end !important;
+  }
+
+  .canvas-toolbar .canvas-action-toggle {
+    display: inline-grid !important;
+    place-items: center !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    order: 2 !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-action-toggle {
+    color: var(--button-active-ink) !important;
+    border-color: var(--button-active-border) !important;
+    background: var(--button-active-bg) !important;
+    box-shadow: var(--button-active-shadow) !important;
+  }
+
+  .canvas-toolbar .tool-group.compact {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .canvas-toolbar .tool-group.compact #playPauseBtn {
+    order: 1 !important;
+  }
+
+  .stage:not(.canvas-actions-open) .canvas-toolbar .canvas-reset-button,
+  .stage:not(.canvas-actions-open) .canvas-toolbar .canvas-action-menu,
+  .stage:not(.canvas-actions-open) .canvas-toolbar .interaction-toggle {
+    display: none !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-reset-button {
+    display: inline-grid !important;
+    order: 3 !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu {
+    display: contents !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #stepBtn {
+    order: 4 !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #saveBtn {
+    order: 5 !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
+    display: inline-flex !important;
+    flex: 1 1 112px !important;
+    max-width: 132px !important;
+    min-width: 108px !important;
+    order: 6 !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
+    min-height: 34px !important;
+    padding-inline: 5px !important;
+    font-size: 0.64rem !important;
+  }
 }
 
 @media (max-width: 390px) {
@@ -557,6 +644,16 @@ body.controls-drawer-open {
   .canvas-toolbar .interaction-toggle {
     flex: 1 1 108px !important;
     max-width: 126px !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar {
+    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
+    flex-basis: 104px !important;
+    min-width: 98px !important;
+    max-width: 116px !important;
   }
 
   .control-panel .mobile-layer-button {
