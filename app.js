@@ -5818,9 +5818,9 @@ el.canvasOptionsToggle?.addEventListener("click", (event) => {
 });
 el.canvasViewControls?.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
-  if (event.target.closest(".visual-layer-switch")) return;
-  if (event.target.closest("button, input")) {
-    window.setTimeout(closeCanvasOptionsMenu, 0);
+  if (event.target.closest("button, input, label")) {
+    // Keep the display popover open while users compare visual states.
+    event.stopPropagation();
   }
 });
 
