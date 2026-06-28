@@ -151,13 +151,29 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   display: none !important;
 }
 
-/* Compact canvas status and selection indicators are intentionally hidden. */
+/* Status/readout strips are intentionally hidden on all displays. */
+.app-shell .scientific-status-strip,
+.app-shell .status-section,
+.app-shell .results-summary-grid,
+.app-shell .diagnostics-grid,
+.app-shell .performance-panel,
+.app-shell .config-summary-grid,
+.app-shell .config-status-grid,
+.app-shell .metric-pill,
+.app-shell .results-panel-head > output,
+.app-shell .stage .hud,
+.app-shell .stage .canvas-focus-status,
 .app-shell .stage .canvas-state-badge,
 .app-shell .stage .mobile-canvas-stats,
 .app-shell .stage .selection-sheet,
+.app-shell.canvas-focus-mode .scientific-status-strip,
+.app-shell.canvas-focus-mode .stage .hud,
+.app-shell.canvas-focus-mode .stage .canvas-focus-status,
 .app-shell.canvas-focus-mode .stage .canvas-state-badge,
 .app-shell.canvas-focus-mode .stage .mobile-canvas-stats,
 .app-shell.canvas-focus-mode .stage .selection-sheet,
+.stage.selection-sheet-open .hud,
+.stage.selection-sheet-open .canvas-focus-status,
 .stage.selection-sheet-open .canvas-state-badge,
 .stage.selection-sheet-open .mobile-canvas-stats,
 .stage.selection-sheet-open .selection-sheet {
