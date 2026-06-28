@@ -1103,12 +1103,16 @@ body.controls-drawer-open {
   line-height: 1.25 !important;
 }
 
-#tab-scenes #slabThicknessControl {
+#tab-scenes .scene-guide-panel {
   order: 3 !important;
 }
 
-#tab-scenes .scene-select-fallback {
+#tab-scenes #slabThicknessControl {
   order: 4 !important;
+}
+
+#tab-scenes .scene-select-fallback {
+  order: 5 !important;
 }
 
 #tab-scenes .scene-browser,
@@ -1310,6 +1314,133 @@ body.controls-drawer-open {
 #tab-config .share-url-output {
   min-height: 56px !important;
   font-size: 0.72rem !important;
+}
+
+.scene-guide-panel {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  padding: 10px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 80%, transparent) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--neu-surface) 86%, transparent) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.scene-guide-header {
+  display: grid !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+
+.scene-guide-header span {
+  color: var(--neu-accent) !important;
+  font-size: 0.62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+}
+
+.scene-guide-header strong {
+  min-width: 0 !important;
+  color: var(--neu-ink) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.14 !important;
+}
+
+.scene-guide-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)) !important;
+  gap: 7px !important;
+  min-width: 0 !important;
+}
+
+.scene-guide-item {
+  display: grid !important;
+  align-content: start !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  padding: 8px !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--neu-surface-low) 78%, transparent) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+
+.scene-guide-item h3 {
+  margin: 0 !important;
+  color: color-mix(in srgb, var(--neu-ink) 76%, var(--neu-muted)) !important;
+  font-size: 0.64rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase !important;
+}
+
+.scene-guide-item p,
+.scene-guide-item li {
+  margin: 0 !important;
+  color: color-mix(in srgb, var(--neu-ink) 88%, var(--neu-muted)) !important;
+  font-size: 0.72rem !important;
+  font-weight: 650 !important;
+  line-height: 1.32 !important;
+}
+
+.scene-guide-item ul {
+  display: grid !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding-left: 15px !important;
+}
+
+.scene-guide-details {
+  min-width: 0 !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--neu-surface-low) 58%, transparent) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+
+.scene-guide-details > summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 32px !important;
+  padding: 7px 9px !important;
+  color: var(--neu-ink) !important;
+  cursor: pointer !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  list-style: none !important;
+}
+
+.scene-guide-details > summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.scene-guide-details > summary::after {
+  content: "+" !important;
+  display: inline-grid !important;
+  width: 18px !important;
+  height: 18px !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  background: color-mix(in srgb, var(--neu-surface-raised) 82%, transparent) !important;
+  color: var(--neu-accent) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+
+.scene-guide-details[open] > summary::after {
+  content: "-" !important;
+}
+
+.scene-guide-details > .scene-guide-grid,
+.scene-guide-reference-grid {
+  padding: 0 8px 8px !important;
+}
+
+.scene-guide-reference-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)) !important;
+  gap: 7px !important;
 }
 
 @media (max-width: 760px) {

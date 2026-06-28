@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="ui-ux.css?v=20260628-visual-architecture-1" />
     <link rel="stylesheet" href="visual-controls.css?v=20260628-wide-visual-layout-1" />
     <link rel="stylesheet" href="button-system.css?v=20260628-neu-tabs-1" />
-    <link rel="stylesheet" href="fullscreen-layout.css?v=20260628-general-menu-compact-2" />
+    <link rel="stylesheet" href="fullscreen-layout.css?v=20260628-scene-guide-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -893,6 +893,7 @@
                 <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
               </div>
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
+              <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
               <label class="control-row is-disabled" id="slabThicknessControl" hidden>
                 <span>Thickness</span>
                 <input id="slabThicknessInput" type="range" min="0.1" max="2" step="0.05" value="0.5" disabled />
@@ -1404,6 +1405,6 @@
     <script src="src/fdtd-rendering.js?v=20260628-canvas-text-scale-1"></script>
     <script src="src/fdtd-worker-protocol.js?v=20260628-worker-engine-1"></script>
     <script src="src/worker-engine.js?v=20260628-worker-engine-1"></script>
-    <script src="app.js?v=20260628-general-menu-compact-1"></script>
+    <script src="app.js?v=20260628-scene-guide-1"></script>
   </body>
 </html>

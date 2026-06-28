@@ -734,6 +734,7 @@ const el = {
   sceneBrowserActive: document.getElementById("sceneBrowserActive"),
   sceneCards: document.getElementById("sceneCards"),
   sceneNote: document.getElementById("sceneNote"),
+  sceneGuidePanel: document.getElementById("sceneGuidePanel"),
   slabThicknessControl: document.getElementById("slabThicknessControl"),
   slabThicknessInput: document.getElementById("slabThicknessInput"),
   slabThicknessOutput: document.getElementById("slabThicknessOutput"),
@@ -1245,6 +1246,336 @@ function renderSceneFilterBar() {
 
 function sceneRecordByValue(value) {
   return sceneBrowserState.records.find((record) => record.value === value) || null;
+}
+
+function currentSceneRecordFallback(value = state.preset) {
+  const option = Array.from(el.presetInput?.options || []).find((candidate) => candidate.value === value);
+  if (!option) {
+    return {
+      badges: ["FDTD"],
+      description: sceneDescriptions.empty,
+      group: "General",
+      groupLabel: "General",
+      index: null,
+      title: "Escena personalizada",
+      value,
+    };
+  }
+  const parsed = parseSceneOptionLabel(option.textContent || option.value);
+  const groupLabel = option.parentElement?.tagName === "OPTGROUP" ? option.parentElement.label : "General";
+  return {
+    badges: ["FDTD"],
+    description: sceneDescriptions[value] || sceneDescriptions.empty,
+    group: cleanSceneGroupLabel(groupLabel),
+    groupLabel,
+    index: parsed.index,
+    title: parsed.title,
+    value,
+  };
+}
+
+function sceneGuideFamily(record) {
+  const haystack = normalizeSceneText(`${record.value} ${record.title} ${record.group} ${record.description}`);
+  if (record.value === "empty") return "empty";
+  if (/(pec cylinder|cylinder scattering|mie|rcs|kerker|dimer|multiple scattering|localization|random medium)/.test(haystack)) return "scattering";
+  if (/(interface|refraction|brewster|tir|coating|bragg mirror|lossy interface|anisotropic interface)/.test(haystack)) return "interface";
+  if (/(dipole|huygens|array|aperture|radiator|ntff|far-field)/.test(haystack)) return "radiation";
+  if (/(waveguide|guide|coupler|mmi|mach|microstrip|stub)/.test(haystack)) return "guided";
+  if (/(resonator|cavity|ring|fabry|purcell|beta-factor|ringdown|fano)/.test(haystack)) return "resonator";
+  if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|bloch|bic)/.test(haystack)) return "periodic";
+  if (/(drude|lorentz|debye|plasma|enz|metal|spp|plasmon|negative-index|superlens|hyperlens|metasurface)/.test(haystack)) return "dispersive";
+  if (/(kerr|chi2|chi3|nonlinear|vo2|pcm|saturable|switch|limiter)/.test(haystack)) return "nonlinear";
+  if (/(temporal|modulat|floquet|space-time|traveling|synthetic frequency)/.test(haystack)) return "temporal";
+  if (/(pt-symmetric|exceptional|non-hermitian|skin)/.test(haystack)) return "nonhermitian";
+  return "propagation";
+}
+
+const sceneGuideReferenceSets = {
+  propagation: {
+    books: ["A. Taflove and S. Hagness, Computational Electrodynamics, 3rd ed.", "J. D. Jackson, Classical Electrodynamics."],
+    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 1966.", "J.-P. Berenger, J. Comput. Phys. 1994."],
+    reviews: ["A. Oskooi et al., Comput. Phys. Commun. 2010."],
+    recent: ["Trabajos recientes de FDTD, diseño adjunto y herramientas abiertas de nanofotónica computacional."],
+  },
+  interface: {
+    books: ["M. Born and E. Wolf, Principles of Optics.", "A. Yariv and P. Yeh, Photonics."],
+    classics: ["A. Fresnel, memorias sobre reflexión y refracción.", "H. A. Macleod, Thin-Film Optical Filters."],
+    reviews: ["Revisiones sobre óptica de multicapas y recubrimientos antirreflectantes."],
+    recent: ["Trabajos recientes sobre metasuperficies e interfaces diseñadas por optimización inversa."],
+  },
+  radiation: {
+    books: ["C. A. Balanis, Antenna Theory.", "L. Novotny and B. Hecht, Principles of Nano-Optics."],
+    classics: ["A. Sommerfeld, radiación de dipolos cerca de interfaces.", "J. A. Stratton, Electromagnetic Theory."],
+    reviews: ["Revisiones sobre nanoantenas, fuentes de Huygens y transformaciones near-to-far."],
+    recent: ["Trabajos recientes sobre nanoantenas dieléctricas y topológicas con emisión direccional."],
+  },
+  guided: {
+    books: ["A. W. Snyder and J. Love, Optical Waveguide Theory.", "D. Marcuse, Theory of Dielectric Optical Waveguides."],
+    classics: ["E. A. J. Marcatili, Bell Syst. Tech. J. 1969.", "H. Kogelnik, teoría de modos acoplados en guías."],
+    reviews: ["Revisiones sobre fotónica de silicio y guías ópticas integradas."],
+    recent: ["Trabajos recientes de fotónica integrada sobre curvas compactas, divisores MMI y acopladores."],
+  },
+  resonator: {
+    books: ["A. Yariv and P. Yeh, Photonics.", "H. A. Haus, Waves and Fields in Optoelectronics."],
+    classics: ["H. Kogelnik and T. Li, Appl. Opt. 1966.", "A. Yariv, Electron. Lett. 2000."],
+    reviews: ["Revisiones sobre microcavidades, resonadores de anillo, efecto Purcell y factor Q."],
+    recent: ["Trabajos recientes sobre cavidades nanofotónicas de alto Q/V y sensores resonantes."],
+  },
+  scattering: {
+    books: ["C. F. Bohren and D. R. Huffman, Absorption and Scattering of Light by Small Particles.", "H. C. van de Hulst, Light Scattering by Small Particles."],
+    classics: ["G. Mie, Ann. Phys. 1908.", "M. Kerker et al., J. Opt. Soc. Am. 1983."],
+    reviews: ["Revisiones sobre resonancias de Mie, dispersión Kerker y nanoantenas ópticas."],
+    recent: ["Trabajos recientes sobre metasuperficies dieléctricas que explotan dispersión direccional."],
+  },
+  dispersive: {
+    books: ["S. A. Maier, Plasmonics.", "N. Engheta and R. W. Ziolkowski, Metamaterials."],
+    classics: ["J. B. Pendry, Phys. Rev. Lett. 2000.", "R. A. Shelby, D. R. Smith, and S. Schultz, Science 2001."],
+    reviews: ["Revisiones sobre plasmónica, medios ENZ y metamateriales."],
+    recent: ["Trabajos recientes sobre ENZ, metasuperficies y materiales plasmónicos de baja pérdida."],
+  },
+  nonlinear: {
+    books: ["R. W. Boyd, Nonlinear Optics.", "Y. R. Shen, The Principles of Nonlinear Optics."],
+    classics: ["P. A. Franken et al., Phys. Rev. Lett. 1961.", "N. Bloembergen, fundamentos de óptica no lineal."],
+    reviews: ["Revisiones sobre nanofotónica no lineal y fotónica de cambio de fase."],
+    recent: ["Trabajos recientes sobre conmutación óptica, microcavidades Kerr, VO2 y materiales PCM."],
+  },
+  temporal: {
+    books: ["R. W. Boyd, Nonlinear Optics.", "C. Caloz et al., Electromagnetic Nonreciprocity."],
+    classics: ["F. R. Morgenthaler, IRE Trans. Microwave Theory Tech. 1958.", "Trabajos fundacionales de teoría de Floquet."],
+    reviews: ["Revisiones sobre medios temporales, metamateriales espacio-temporales y dimensiones sintéticas."],
+    recent: ["Trabajos recientes sobre fotónica espacio-temporal e interfaces temporales."],
+  },
+  periodic: {
+    books: ["J. D. Joannopoulos et al., Photonic Crystals.", "S. G. Johnson and J. D. Joannopoulos, block-iterative frequency-domain methods."],
+    classics: ["E. Yablonovitch, Phys. Rev. Lett. 1987.", "S. John, Phys. Rev. Lett. 1987."],
+    reviews: ["L. Lu, J. D. Joannopoulos, and M. Soljacic, Nat. Photonics 2014.", "T. Ozawa et al., Rev. Mod. Phys. 2019."],
+    recent: ["Trabajos recientes sobre fotónica integrada topológica, valley-Hall y BICs."],
+  },
+  nonhermitian: {
+    books: ["N. Moiseyev, Non-Hermitian Quantum Mechanics.", "Literatura tutorial sobre simetría PT fotónica."],
+    classics: ["C. M. Bender and S. Boettcher, Phys. Rev. Lett. 1998.", "Ruter et al., Nat. Phys. 2010."],
+    reviews: ["M.-A. Miri and A. Alu, Science 2019.", "S. K. Ozdemir et al., Nat. Mater. 2019."],
+    recent: ["Trabajos recientes sobre sensores de puntos excepcionales y efecto skin no hermítico en fotónica."],
+  },
+  empty: {
+    books: ["A. Taflove and S. Hagness, Computational Electrodynamics."],
+    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 1966."],
+    reviews: ["A. Oskooi et al., Comput. Phys. Commun. 2010."],
+    recent: ["Flujos recientes de fotónica computacional abierta y reproducible."],
+  },
+};
+
+function sceneGuideTemplate(record) {
+  const family = sceneGuideFamily(record);
+  const title = record.title || "Escena personalizada";
+  const description = record.description || sceneDescriptions.empty;
+  const sourceHint = sourceShapeLabels[state.sourceDefaults?.shape] || sourceShapeLabels[state.sources?.[0]?.shape] || "fuente configurada";
+  const solver = state.fieldComponent === "hz" ? "TEz / Hz" : "TMz / Ez";
+  const commonErrors = [
+    "Usar pocas celdas por longitud de onda, lo que cambia la velocidad de fase y desplaza resonancias.",
+    "Colocar la PML demasiado cerca de la fuente u objeto, generando reflexiones artificiales.",
+    "Interpretar transitorios iniciales como resultados estacionarios antes de que el campo se estabilice.",
+  ];
+  const base = {
+    phenomenon: title,
+    description: `Resumen del ejemplo: ${description}`,
+    fdtd: `La escena integra las ecuaciones rotacionales de Maxwell en una malla Yee 2D con formulación ${solver}. Es un modelo pedagógico: antes de extraer conclusiones cuantitativas conviene revisar el escalonado geométrico, el tamaño del dominio y la PML.`,
+    geometry: "Ventana computacional 2D finita con fronteras PML y la geometría del ejemplo dibujada sobre la malla.",
+    source: `Fuente tipo "${sourceHint}"; la fase, amplitud y posición proceden del ejemplo y pueden editarse desde el menú de fuentes.`,
+    materials: "Aire más los materiales del ejemplo; puede incluir regiones dispersivas, con pérdidas, anisótropas, no lineales o PEC cuando el caso lo requiere.",
+    expected: "El mapa de campo debe mostrar el patrón cualitativo asociado al ejemplo: propagación, dispersión, confinamiento, acoplo, resonancia, absorción o generación de bandas laterales.",
+    explanation: "Usa el mapa de color para seguir fase y amplitud. Compara longitud de onda, nodos, dirección del flujo y monitores con el mecanismo físico de la escena.",
+    errors: commonErrors,
+    enabled: "Demostraciones docentes, intuición rápida de diseño y comprobaciones preliminares antes de pasar a un solver de mayor fidelidad o a un experimento.",
+    experiments: "Comparar con bancos de microondas, estructuras de fotónica integrada, mapas de campo cercano, medidas de campo lejano o espectros de transmisión/reflexión según el caso.",
+    references: sceneGuideReferenceSets[family] || sceneGuideReferenceSets.propagation,
+  };
+
+  const familyText = {
+    propagation: {
+      phenomenon: "Propagación en espacio libre o en medio homogéneo",
+      geometry: "Dominio uniforme o casi uniforme para aislar longitud de onda, velocidad de fase, retardo de grupo, interferencia, difracción o comportamiento de la PML.",
+      expected: "Ondas planas, gaussianas, evanescentes o difractadas con longitud de onda y frentes de fase previsibles.",
+      explanation: "La simulación hace visible cómo el esquema de Yee transporta energía y cómo las condiciones de contorno afectan a un dominio finito.",
+    },
+    interface: {
+      phenomenon: "Reflexión, transmisión, refracción y adaptación de impedancia en interfaces",
+      geometry: "Una o varias capas planas dentro del dominio, normalmente con PML en los bordes exteriores.",
+      expected: "Haces reflejados y transmitidos, comportamiento angular de Fresnel, ángulo crítico u ondas estacionarias en multicapas.",
+      explanation: "Las condiciones de contorno imponen continuidad de campos tangenciales y producen coeficientes de Fresnel y cambios de fase.",
+    },
+    radiation: {
+      phenomenon: "Radiación de fuentes localizadas y emisión direccional",
+      geometry: "Fuente puntual, dipolar, apertura, array o fuente de Huygens embebida en un dominio 2D finito.",
+      expected: "Estructura de campo cercano alrededor del emisor y tendencias de directividad o campo lejano si hay monitores activos.",
+      explanation: "La distribución local de corriente lanza campos cuya simetría, fase y entorno determinan el patrón de radiación.",
+    },
+    guided: {
+      phenomenon: "Confinamiento y acoplo en guías de onda",
+      geometry: "Núcleos de alto índice, curvas, tapers, acopladores, secciones MMI o regiones tipo microstrip en un fondo de menor índice.",
+      expected: "Potencia confinada en la guía, con pérdidas de curvatura, batido modal, acoplo o dispersión según la geometría.",
+      explanation: "El contraste de índice produce confinamiento transversal; las discontinuidades mezclan modos y pueden radiar energía.",
+    },
+    resonator: {
+      phenomenon: "Resonancia, ondas estacionarias y realce de campo en cavidades",
+      geometry: "Cavidad Fabry-Perot, anillo, disco, defecto o stub acoplado a una fuente o guía.",
+      expected: "Acumulación de campo en frecuencias resonantes, nodos de onda estacionaria, ringdown o aumento de densidad local de estados.",
+      explanation: "Las vueltas múltiples interfieren constructivamente cuando se cumple la condición de fase; pérdidas y radiación fijan el factor Q.",
+    },
+    scattering: {
+      phenomenon: "Dispersión electromagnética por objetos finitos",
+      geometry: "Uno o varios cilindros, aperturas o inclusiones iluminados por una onda plana o fuente localizada.",
+      expected: "Campos incidentes, reflejados, de sombra y dispersados; posible asimetría adelante/atrás o puntos calientes resonantes.",
+      explanation: "El objeto se polariza o impone condiciones de contorno y re-radia campos que interfieren con la onda incidente.",
+    },
+    dispersive: {
+      phenomenon: "Respuesta dispersiva, metálica, ENZ, plasmónica o metamaterial",
+      geometry: "Regiones Drude, Lorentz, Debye o tensoriales embebidas en la malla FDTD.",
+      expected: "Profundidad de piel, confinamiento plasmónico, fase ENZ, refracción de índice negativo, absorción o puntos calientes.",
+      explanation: "Variables materiales auxiliares aproximan en el dominio temporal la polarización y las pérdidas dependientes de frecuencia.",
+    },
+    nonlinear: {
+      phenomenon: "Respuesta óptica dependiente de intensidad o de estado",
+      geometry: "Lámina, guía, resonador, región de cambio de fase o celda de conmutación no lineal.",
+      expected: "Cambio de fase dependiente del campo, armónicos, biestabilidad, saturación o cambios persistentes del estado material.",
+      explanation: "La actualización material depende de la intensidad local o de variables de estado, por lo que la respuesta cambia durante la simulación.",
+    },
+    temporal: {
+      phenomenon: "Medios temporales, bandas laterales de Floquet y modulación espacio-temporal",
+      geometry: "Región finita cuyos parámetros materiales varían en el tiempo, a veces con fase de modulación viajera.",
+      expected: "Conversión de frecuencia, bandas laterales, transmisión asimétrica o acoplo en frecuencia sintética.",
+      explanation: "La modulación temporal intercambia energía con la onda y rompe las hipótesis de un medio estático.",
+    },
+    periodic: {
+      phenomenon: "Fotónica periódica, defectos, BICs o comportamiento topológico",
+      geometry: "Red periódica, cavidad de defecto, cadena SSH, interfaz valley-Hall o guía en cristal fotónico.",
+      expected: "Atenuación por banda prohibida, localización de defecto, transporte de interfaz, robustez a desorden o supresión de fuga.",
+      explanation: "La periodicidad espacial determina los modos de Bloch; la simetría y la topología pueden proteger o suprimir canales de acoplo.",
+    },
+    nonhermitian: {
+      phenomenon: "Ganancia/pérdida, simetría PT, puntos excepcionales o transporte no hermítico",
+      geometry: "Guías o resonadores acoplados con regiones de ganancia y pérdida balanceadas o desbalanceadas.",
+      expected: "Indicadores de coalescencia modal, amplificación/atenuación asimétrica o acumulación de campo tipo skin effect.",
+      explanation: "Las actualizaciones materiales no conservativas hacen crecer o decaer amplitudes modales, modificando el espectro efectivo.",
+    },
+    empty: {
+      phenomenon: "Lienzo FDTD vacío",
+      geometry: "Dominio vacío con fronteras PML.",
+      expected: "No aparece campo hasta añadir una fuente o un material.",
+      explanation: "Sirve como punto de partida controlado para construir escenas propias.",
+    },
+  }[family] || {};
+
+  return { ...base, ...familyText };
+}
+
+function pecCylinderSceneGuide(record) {
+  return {
+    ...sceneGuideTemplate(record),
+    phenomenon: "Dispersión de una onda plana por un cilindro perfectamente conductor",
+    description: "Problema canónico de dispersión 2D: un cilindro metálico bloquea el campo eléctrico tangencial y re-radia una onda dispersada.",
+    fdtd: "La malla FDTD lanza una excitación tipo onda plana hacia una inclusión PEC. La condición PEC fuerza a cero el componente tangencial apropiado del campo en la frontera del objeto, mientras la PML absorbe las ondas salientes.",
+    geometry: "Cilindro PEC circular en aire homogéneo, rodeado por PML. La frontera circular se representa en una malla cartesiana, por lo que el error de escalonado depende de la resolución.",
+    source: "Fuente de línea tipo onda plana incidente sobre el cilindro; los monitores o el mapa de color permiten separar cualitativamente regiones incidente, reflejada y de sombra.",
+    materials: "Aire más un obstáculo PEC ideal. El modelo PEC es sin pérdidas y perfectamente reflectante, por lo que no representa profundidad de piel ni conductividad finita.",
+    expected: "Una sombra intensa detrás del cilindro, franjas de interferencia delante de él y ondas cilíndricas dispersadas que se propagan hacia fuera.",
+    explanation: "La onda incidente induce corrientes superficiales en la frontera PEC. Esas corrientes re-radian el campo dispersado, que interfiere con la onda incidente y produce el patrón observado.",
+    errors: [
+      "Usar una malla demasiado gruesa, haciendo que el cilindro parezca poligonal y desplazando el patrón de dispersión.",
+      "Colocar el cilindro o los monitores demasiado cerca de la PML, produciendo absorción artificial o reflexiones espurias.",
+      "Comparar directamente con dispersión de Mie 3D; esta escena es un análogo 2D de cilindro, no una esfera.",
+    ],
+    enabled: "Intuición sobre sección radar, demostraciones de dispersión en microondas, estudios de bloqueo de antenas, análogos ópticos/nanofotónicos y validación de contornos en códigos FDTD.",
+    experiments: "Dispersión de microondas en varillas metálicas, dispersión óptica en nanohilos, mapas de campo cercano alrededor de obstáculos conductores y medidas angulares de campo lejano.",
+  };
+}
+
+function buildSceneGuide(record = currentSceneRecordFallback()) {
+  if (record.value === "pecCylinder") return pecCylinderSceneGuide(record);
+  return sceneGuideTemplate(record);
+}
+
+function appendSceneGuideField(parent, label, value) {
+  const item = document.createElement("div");
+  item.className = "scene-guide-item";
+  const title = document.createElement("h3");
+  title.textContent = label;
+  const body = document.createElement("p");
+  body.textContent = value;
+  item.append(title, body);
+  parent.appendChild(item);
+}
+
+function appendSceneGuideList(parent, label, items) {
+  const item = document.createElement("div");
+  item.className = "scene-guide-item";
+  const title = document.createElement("h3");
+  title.textContent = label;
+  const list = document.createElement("ul");
+  (items || []).forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    list.appendChild(li);
+  });
+  item.append(title, list);
+  parent.appendChild(item);
+}
+
+function appendSceneGuideReferences(parent, references) {
+  const details = document.createElement("details");
+  details.className = "scene-guide-details";
+  const summary = document.createElement("summary");
+  summary.textContent = "Referencias";
+  const body = document.createElement("div");
+  body.className = "scene-guide-reference-grid";
+  [
+    ["Libros", references.books],
+    ["Papers clásicos", references.classics],
+    ["Reviews", references.reviews],
+    ["Papers recientes", references.recent],
+  ].forEach(([label, items]) => appendSceneGuideList(body, label, items));
+  details.append(summary, body);
+  parent.appendChild(details);
+}
+
+function updateSceneGuidePanel() {
+  if (!el.sceneGuidePanel) return;
+  const record = sceneRecordByValue(state.preset) || currentSceneRecordFallback(state.preset);
+  const guide = buildSceneGuide(record);
+  el.sceneGuidePanel.replaceChildren();
+
+  const header = document.createElement("div");
+  header.className = "scene-guide-header";
+  const eyebrow = document.createElement("span");
+  eyebrow.textContent = record.index == null ? "Escena personalizada" : `Atlas ${record.index}`;
+  const title = document.createElement("strong");
+  title.textContent = record.title || guide.phenomenon;
+  header.append(eyebrow, title);
+
+  const grid = document.createElement("div");
+  grid.className = "scene-guide-grid";
+  appendSceneGuideField(grid, "Fenómeno", guide.phenomenon);
+  appendSceneGuideField(grid, "Descripción", guide.description);
+  appendSceneGuideField(grid, "Simulación FDTD", guide.fdtd);
+  appendSceneGuideField(grid, "Geometría", guide.geometry);
+  appendSceneGuideField(grid, "Fuente", guide.source);
+  appendSceneGuideField(grid, "Materiales", guide.materials);
+  appendSceneGuideField(grid, "Resultados esperados", guide.expected);
+  appendSceneGuideField(grid, "Explicación", guide.explanation);
+
+  const details = document.createElement("details");
+  details.className = "scene-guide-details";
+  const detailsSummary = document.createElement("summary");
+  detailsSummary.textContent = "Más contexto";
+  const detailsBody = document.createElement("div");
+  detailsBody.className = "scene-guide-grid";
+  appendSceneGuideList(detailsBody, "Errores habituales", guide.errors);
+  appendSceneGuideField(detailsBody, "Para qué sirve o qué habilita", guide.enabled);
+  appendSceneGuideField(detailsBody, "Experimentos relacionados", guide.experiments);
+  details.append(detailsSummary, detailsBody);
+
+  el.sceneGuidePanel.append(header, grid, details);
+  appendSceneGuideReferences(el.sceneGuidePanel, guide.references);
 }
 
 function updateSceneBrowserMeta(records) {
@@ -3353,6 +3684,7 @@ function updateControlText() {
   if (el.sceneNote) {
     el.sceneNote.textContent = sceneDescriptions[state.preset] || sceneDescriptions.empty;
   }
+  updateSceneGuidePanel();
   syncSceneBrowserSelection();
   el.slabThicknessOutput.value = formatLambdaOutput(state.slabThicknessLambda);
   el.slabThicknessInput.value = String(state.slabThicknessLambda);
