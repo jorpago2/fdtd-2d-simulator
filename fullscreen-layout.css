@@ -302,6 +302,13 @@ body {
   transform: none !important;
 }
 
+.app-shell.controls-open .topbar,
+.app-shell.controls-open .canvas-toolbar {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .control-panel::before {
   display: none !important;
 }

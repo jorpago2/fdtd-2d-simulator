@@ -1627,10 +1627,10 @@ function updateControlPanelContext(layerName = activeMobileLayerName() || contro
     el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
   }
   if (el.controlPanelNextBtn) {
-    el.controlPanelNextBtn.textContent = context.nextLabel;
-    el.controlPanelNextBtn.dataset.nextLayer = context.nextLayer;
-    el.controlPanelNextBtn.setAttribute("aria-label", `Next step: ${context.nextLabel}`);
-    el.controlPanelNextBtn.title = `Next step: ${context.nextLabel}`;
+    el.controlPanelNextBtn.textContent = "Close";
+    delete el.controlPanelNextBtn.dataset.nextLayer;
+    el.controlPanelNextBtn.setAttribute("aria-label", "Close controls");
+    el.controlPanelNextBtn.title = "Close controls";
   }
 }
 
@@ -5828,7 +5828,7 @@ el.controlTabButtons?.forEach((button) => {
 });
 
 el.controlPanelNextBtn?.addEventListener("click", () => {
-  activateMobileLayer(el.controlPanelNextBtn.dataset.nextLayer || "simulation");
+  closeControlDrawer();
 });
 
 el.mobileLayerButtons?.forEach((button) => {
