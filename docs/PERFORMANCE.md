@@ -17,7 +17,7 @@ Interpret these as profiling guides, not publication metrics. Browser scheduling
 
 ## Current Backend
 
-The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The checked-in source of that active kernel is still `fdtd-core.wat`, which exports:
+The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The active kernel is now built from `wasm-src/fdtd-core.cpp`, which exports:
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
@@ -26,7 +26,7 @@ Advanced dynamic material paths can still fall back to JavaScript. The performan
 
 ## C++ Migration Path
 
-`wasm-src/fdtd-core.cpp` mirrors the current WAT kernel with the same exported signatures and byte-offset memory layout. This is intended as the maintainable source for the next compiled backend.
+`wasm-src/fdtd-core.cpp` mirrors the previous WAT kernel with the same exported signatures and byte-offset memory layout. It is the maintainable source for the compiled backend.
 
 Build it with a clang toolchain that supports `wasm32`:
 
@@ -34,7 +34,7 @@ Build it with a clang toolchain that supports `wasm32`:
 .\scripts\build-wasm-cpp.ps1
 ```
 
-If clang is not on `PATH`, pass an absolute compiler path:
+The script can auto-detect a WASI SDK installed under `%USERPROFILE%\.cache\fdtd-tools\wasi-sdk-*-windows` or a `WASI_SDK_PATH` environment variable. If clang is elsewhere, pass an absolute compiler path:
 
 ```powershell
 .\scripts\build-wasm-cpp.ps1 -Compiler "C:\path\to\clang++.exe"
