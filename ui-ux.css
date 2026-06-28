@@ -4417,3 +4417,163 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Rebuilt header and canvas popover toggles: active glass belongs to each button. */
+.theme-toggle {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-width: 132px !important;
+  padding: 5px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--neu-surface-low) 76%, transparent) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+  overflow: hidden !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-toggle::before,
+.theme-toggle::after {
+  display: none !important;
+  content: none !important;
+}
+
+.theme-toggle .mode-toggle-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 34px !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  color: color-mix(in srgb, var(--neu-ink) 70%, var(--neu-muted)) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+.theme-toggle .mode-toggle-button.is-active {
+  border-color: color-mix(in srgb, var(--neu-accent) 40%, rgba(255, 255, 255, 0.35)) !important;
+  color: var(--neu-accent) !important;
+  background:
+    radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.72), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-accent-soft) 60%, #ffffff), color-mix(in srgb, var(--neu-surface-raised) 88%, var(--neu-accent) 12%)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 14%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+    var(--neu-shadow-small) !important;
+}
+
+html[data-theme="dark"] .theme-toggle .mode-toggle-button.is-active {
+  color: color-mix(in srgb, var(--neu-accent) 58%, #ffffff) !important;
+  background:
+    radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.18), transparent 34%),
+    linear-gradient(145deg, rgba(39, 51, 64, 0.98), rgba(21, 28, 37, 0.96)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+    0 10px 22px rgba(0, 0, 0, 0.24) !important;
+}
+
+@media (max-width: 1180px) {
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle {
+    display: grid !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 78%, transparent) !important;
+    border-radius: 16px !important;
+    padding: 5px !important;
+    background: color-mix(in srgb, var(--neu-surface-low) 74%, transparent) !important;
+    box-shadow: var(--neu-shadow-inset-tight) !important;
+    overflow: hidden !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle::before,
+  .canvas-toolbar .canvas-view-controls .canvas-mode-toggle::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .projection-toggle,
+  .canvas-toolbar .canvas-view-controls .material-part-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .view-toggle {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .field-display-toggle {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .mode-toggle-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 36px !important;
+    height: auto !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px !important;
+    padding: 0 6px !important;
+    color: color-mix(in srgb, var(--neu-ink) 70%, var(--neu-muted)) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
+    border-color: color-mix(in srgb, var(--neu-accent) 46%, rgba(255, 255, 255, 0.25)) !important;
+    color: var(--neu-accent) !important;
+    background:
+      radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.72), transparent 34%),
+      linear-gradient(145deg, color-mix(in srgb, var(--neu-accent-soft) 58%, #ffffff), color-mix(in srgb, var(--neu-surface-raised) 88%, var(--neu-accent) 12%)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.76),
+      inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 14%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+      var(--neu-shadow-small) !important;
+  }
+
+  html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
+    color: color-mix(in srgb, var(--neu-accent) 58%, #ffffff) !important;
+    background:
+      radial-gradient(circle at 30% 14%, rgba(255, 255, 255, 0.18), transparent 34%),
+      linear-gradient(145deg, rgba(39, 51, 64, 0.98), rgba(21, 28, 37, 0.96)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+      0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
+      0 10px 22px rgba(0, 0, 0, 0.24) !important;
+  }
+
+  .canvas-toolbar .canvas-view-controls [hidden] {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .canvas-toolbar .canvas-view-controls .visual-profile-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
