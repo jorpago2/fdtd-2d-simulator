@@ -2002,6 +2002,31 @@ function formatPerformanceRate(stepMs, samples) {
 
 let workerEngine = null;
 
+function requestedWorkerMode() {
+  const rawMode = new URLSearchParams(window.location.search).get("worker");
+  const mode = String(rawMode || "").trim().toLowerCase();
+  if (["1", "true", "yes", "on", "force"].includes(mode)) return "force";
+  if (["0", "false", "no", "off", "none"].includes(mode)) return "off";
+  return "auto";
+}
+
+function mainThreadUsesCompiledKernel() {
+  return /^WASM/.test(sim.engineLabel());
+}
+
+function workerShouldStartForFrame() {
+  const workerMode = requestedWorkerMode();
+  if (workerMode === "off") return false;
+  if (workerMode === "force") return true;
+  return !mainThreadUsesCompiledKernel();
+}
+
+function queueWorkerStepsIfUseful(stepCount) {
+  if (!workerEngine?.supported?.()) return false;
+  if (workerEngine.isActive()) return workerEngine.queueSteps(stepCount);
+  return workerShouldStartForFrame() ? workerEngine.queueSteps(stepCount) : false;
+}
+
 function runtimeEngineLabel() {
   const baseLabel = sim.engineLabel();
   return workerEngine?.label ? workerEngine.label(baseLabel) : baseLabel;
@@ -5661,7 +5686,7 @@ function animate() {
     const stepsThisFrame = Math.floor(simStepAccumulator);
     simStepAccumulator -= stepsThisFrame;
     if (stepsThisFrame > 0) {
-      if (workerEngine?.queueSteps(stepsThisFrame)) {
+      if (queueWorkerStepsIfUseful(stepsThisFrame)) {
         updatePerformanceStats();
       } else {
         timeStepBatch(stepsThisFrame, () => {
