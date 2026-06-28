@@ -36,16 +36,11 @@ injectSource() {
 },
 
 injectSingleSource(source) {
+  if (this.isTfsfIncidentSource(source)) {
+    return;
+  }
   const sx = this.sourceXCell(source);
   const sy = this.sourceYCell(source);
-  if (source.shape === "line") {
-    this.injectPlaneWaveIncidentField(source, sx, sy);
-    return;
-  }
-  if (source.shape === "gaussianProfile") {
-    this.injectGaussianLineIncidentField(source, sx, sy);
-    return;
-  }
   if (source.shape === "evanescentLine") {
     this.injectEvanescentLineIncidentField(source, sx, sy);
     return;
@@ -62,35 +57,264 @@ injectSingleSource(source) {
   this.injectPointCurrent(value, sx, sy);
 },
 
-incidentLinePhase(source, y, sy) {
-  const theta = (source.angleDeg * Math.PI) / 180;
-  const kCells = (2 * Math.PI * source.frequency) / Math.max(COURANT, 1e-9);
-  return -kCells * (y - sy) * Math.sin(theta);
+isTfsfIncidentSource(source) {
+  return source?.shape === "line" || source?.shape === "gaussianProfile";
 },
 
-addDirectionalIncidentField(idx, value, x, y, source) {
-  this.addIncidentScalarField(idx, value);
+hasTfsfIncidentSource() {
+  return state.sources.some((source) => this.isTfsfIncidentSource(source));
+},
 
-  const scaledValue = Number.isFinite(this.fieldScale) ? value / this.fieldScale : 0;
-  if (Math.abs(scaledValue) < 1e-9) return;
+sourceIncidentMedium(source, sx, sy) {
+  const idx = this.id(sx, sy);
+  const eps = Math.max(1e-6, Math.abs(0.5 * ((Number(this.eps[idx]) || 1) + (Number(this.epsY[idx]) || 1))));
+  const mu = Math.max(1e-6, Math.abs(0.5 * ((Number(this.mu[idx]) || 1) + (Number(this.muY[idx]) || 1))));
+  return {
+    n: Math.sqrt(eps * mu),
+    z: Math.sqrt(mu / eps),
+  };
+},
 
+tfsfSourceParams(source) {
+  const sx = this.sourceXCell(source);
+  const sy = this.sourceYCell(source);
   const theta = (source.angleDeg * Math.PI) / 180;
   const cosTheta = Math.cos(theta);
   const sinTheta = Math.sin(theta);
-  // Huygens-style pairing: the transverse companion selects the forward impedance branch.
-  const transverseGain = 1;
+  const medium = this.sourceIncidentMedium(source, sx, sy);
   const directionX = cosTheta >= 0 ? 1 : -1;
-  const transverseX = directionX > 0 ? x - 1 : x;
-  if (transverseX < 0 || transverseX >= this.nx - 1) return;
-  const transverseIdx = this.id(transverseX, y);
-  if (this.material[transverseIdx] === 2) return;
+  const minX = 1;
+  const maxX = this.nx - 2;
+  const minY = 1;
+  const maxY = this.ny - 2;
+  const x0 = directionX > 0 ? clampInt(sx, minX + 1, maxX - 1) : minX;
+  const x1 = directionX > 0 ? maxX : clampInt(sx, minX + 1, maxX - 1);
+  if (x1 <= x0 || minY + 1 >= maxY) return null;
+  return {
+    source,
+    sx,
+    sy,
+    cosTheta,
+    sinTheta,
+    kCells: (2 * Math.PI * source.frequency * medium.n) / Math.max(COURANT, 1e-9),
+    z: medium.z,
+    x0,
+    x1,
+    y0: minY,
+    y1: maxY,
+  };
+},
 
-  if (state.fieldComponent === "hz") {
-    this.hx[idx] += -sinTheta * scaledValue * transverseGain;
-    this.hy[transverseIdx] += cosTheta * scaledValue * transverseGain;
-  } else {
-    this.hx[idx] += sinTheta * scaledValue * transverseGain;
-    this.hy[transverseIdx] -= cosTheta * scaledValue * transverseGain;
+tfsfIncidentEnvelope(params, x, y) {
+  if (params.source.shape !== "gaussianProfile") return 1;
+  const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
+  const transverse = -(x - params.sx) * params.sinTheta + (y - params.sy) * params.cosTheta;
+  return Math.exp(-4 * Math.LN2 * (transverse / fwhm) * (transverse / fwhm));
+},
+
+tfsfIncidentScalar(params, x, y, t) {
+  const phase = -params.kCells * ((x - params.sx) * params.cosTheta + (y - params.sy) * params.sinTheta);
+  const envelope = this.tfsfIncidentEnvelope(params, x, y);
+  const value = this.sourceSampleAtPhaseTime(params.source, t, phase) * envelope;
+  return Number.isFinite(this.fieldScale) ? value / this.fieldScale : 0;
+},
+
+tfsfTmIncidentH(params, x, y, t) {
+  const scalar = this.tfsfIncidentScalar(params, x, y, t);
+  const invZ = 1 / Math.max(1e-9, params.z);
+  return {
+    hx: params.sinTheta * scalar * invZ,
+    hy: -params.cosTheta * scalar * invZ,
+  };
+},
+
+tfsfTeIncidentE(params, x, y, t) {
+  const scalar = this.tfsfIncidentScalar(params, x, y, t);
+  return {
+    ex: -params.sinTheta * scalar * params.z,
+    ey: params.cosTheta * scalar * params.z,
+  };
+},
+
+electricUpdateCoeffX(idx, x) {
+  const eps = this.safeMaterialDenominator(this.eps[idx]);
+  const sigmaDamp = this.conductivityDamp(this.conductivity[idx], eps);
+  const sigmaCb = 1 / (1 + sigmaDamp);
+  return sigmaCb * this.eCbX[x] * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
+},
+
+electricUpdateCoeffY(idx, y) {
+  const epsY = this.safeMaterialDenominator(this.epsY[idx]);
+  const sigmaDamp = this.conductivityDamp(this.conductivityY[idx], epsY);
+  const sigmaCb = 1 / (1 + sigmaDamp);
+  return sigmaCb * this.eCbY[y] * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
+},
+
+transverseElectricUpdateCoeffX(idx, y) {
+  const eps = this.safeMaterialDenominator(this.eps[idx]);
+  const sigmaDamp = this.conductivityDamp(this.conductivity[idx], eps);
+  const sigmaCb = 1 / (1 + sigmaDamp);
+  return sigmaCb * this.eCbY[y] * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
+},
+
+transverseElectricUpdateCoeffY(idx, x) {
+  const epsY = this.safeMaterialDenominator(this.epsY[idx]);
+  const sigmaDamp = this.conductivityDamp(this.conductivityY[idx], epsY);
+  const sigmaCb = 1 / (1 + sigmaDamp);
+  return sigmaCb * this.eCbX[x] * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
+},
+
+magneticUpdateCoeffX(idx, x) {
+  const mu = this.safeMaterialDenominator(this.mu[idx]);
+  return this.hCbX[x] * (this.courant / mu) / (1 + this.muLoss[idx]);
+},
+
+magneticUpdateCoeffY(idx, y) {
+  const muY = this.safeMaterialDenominator(this.muY[idx]);
+  return this.hCbY[y] * (this.courant / muY) / (1 + this.muLossY[idx]);
+},
+
+applyTfsfTransverseCorrections() {
+  for (const source of state.sources) {
+    if (!this.isTfsfIncidentSource(source)) continue;
+    const params = this.tfsfSourceParams(source);
+    if (!params) continue;
+    if (state.fieldComponent === "hz") this.applyTfsfTeElectricCorrections(params);
+    else this.applyTfsfTmMagneticCorrections(params);
+  }
+},
+
+applyTfsfScalarCorrections() {
+  for (const source of state.sources) {
+    if (!this.isTfsfIncidentSource(source)) continue;
+    const params = this.tfsfSourceParams(source);
+    if (!params) continue;
+    if (state.fieldComponent === "hz") this.applyTfsfTeMagneticCorrections(params);
+    else this.applyTfsfTmElectricCorrections(params);
+  }
+},
+
+applyTfsfTmMagneticCorrections(params) {
+  const { x0, x1, y0, y1 } = params;
+  const t = this.time;
+  for (let y = y0; y <= y1; y += 1) {
+    const leftIdx = this.id(x0 - 1, y);
+    if (this.material[leftIdx] !== 2) {
+      const eLeft = this.tfsfIncidentScalar(params, x0, y, t);
+      this.hy[leftIdx] -= this.magneticUpdateCoeffX(leftIdx, x0 - 1) * eLeft;
+    }
+    const rightIdx = this.id(x1, y);
+    if (this.material[rightIdx] !== 2) {
+      const eRight = this.tfsfIncidentScalar(params, x1, y, t);
+      this.hy[rightIdx] += this.magneticUpdateCoeffX(rightIdx, x1) * eRight;
+    }
+  }
+  for (let x = x0; x <= x1; x += 1) {
+    const topIdx = this.id(x, y0 - 1);
+    if (this.material[topIdx] !== 2) {
+      const eTop = this.tfsfIncidentScalar(params, x, y0, t);
+      this.hx[topIdx] += this.magneticUpdateCoeffY(topIdx, y0 - 1) * eTop;
+    }
+    const bottomIdx = this.id(x, y1);
+    if (this.material[bottomIdx] !== 2) {
+      const eBottom = this.tfsfIncidentScalar(params, x, y1, t);
+      this.hx[bottomIdx] -= this.magneticUpdateCoeffY(bottomIdx, y1) * eBottom;
+    }
+  }
+},
+
+applyTfsfTmElectricCorrections(params) {
+  const { x0, x1, y0, y1 } = params;
+  const t = this.time + 0.5;
+  for (let y = y0; y <= y1; y += 1) {
+    const leftIdx = this.id(x0, y);
+    if (this.material[leftIdx] !== 2) {
+      const hLeft = this.tfsfTmIncidentH(params, x0 - 0.5, y, t).hy;
+      this.ezx[leftIdx] -= this.electricUpdateCoeffX(leftIdx, x0) * hLeft;
+      this.ez[leftIdx] = this.ezx[leftIdx] + this.ezy[leftIdx];
+    }
+    const rightIdx = this.id(x1, y);
+    if (this.material[rightIdx] !== 2) {
+      const hRight = this.tfsfTmIncidentH(params, x1 + 0.5, y, t).hy;
+      this.ezx[rightIdx] += this.electricUpdateCoeffX(rightIdx, x1) * hRight;
+      this.ez[rightIdx] = this.ezx[rightIdx] + this.ezy[rightIdx];
+    }
+  }
+  for (let x = x0; x <= x1; x += 1) {
+    const topIdx = this.id(x, y0);
+    if (this.material[topIdx] !== 2) {
+      const hTop = this.tfsfTmIncidentH(params, x, y0 - 0.5, t).hx;
+      this.ezy[topIdx] += this.electricUpdateCoeffY(topIdx, y0) * hTop;
+      this.ez[topIdx] = this.ezx[topIdx] + this.ezy[topIdx];
+    }
+    const bottomIdx = this.id(x, y1);
+    if (this.material[bottomIdx] !== 2) {
+      const hBottom = this.tfsfTmIncidentH(params, x, y1 + 0.5, t).hx;
+      this.ezy[bottomIdx] -= this.electricUpdateCoeffY(bottomIdx, y1) * hBottom;
+      this.ez[bottomIdx] = this.ezx[bottomIdx] + this.ezy[bottomIdx];
+    }
+  }
+},
+
+applyTfsfTeElectricCorrections(params) {
+  const { x0, x1, y0, y1 } = params;
+  const t = this.time;
+  for (let y = y0; y <= y1; y += 1) {
+    const leftIdx = this.id(x0 - 1, y);
+    if (this.material[leftIdx] !== 2) {
+      const hLeft = this.tfsfIncidentScalar(params, x0, y, t);
+      this.hy[leftIdx] += this.transverseElectricUpdateCoeffY(leftIdx, x0 - 1) * hLeft;
+    }
+    const rightIdx = this.id(x1, y);
+    if (this.material[rightIdx] !== 2) {
+      const hRight = this.tfsfIncidentScalar(params, x1, y, t);
+      this.hy[rightIdx] -= this.transverseElectricUpdateCoeffY(rightIdx, x1) * hRight;
+    }
+  }
+  for (let x = x0; x <= x1; x += 1) {
+    const topIdx = this.id(x, y0 - 1);
+    if (this.material[topIdx] !== 2) {
+      const hTop = this.tfsfIncidentScalar(params, x, y0, t);
+      this.hx[topIdx] -= this.transverseElectricUpdateCoeffX(topIdx, y0 - 1) * hTop;
+    }
+    const bottomIdx = this.id(x, y1);
+    if (this.material[bottomIdx] !== 2) {
+      const hBottom = this.tfsfIncidentScalar(params, x, y1, t);
+      this.hx[bottomIdx] += this.transverseElectricUpdateCoeffX(bottomIdx, y1) * hBottom;
+    }
+  }
+},
+
+applyTfsfTeMagneticCorrections(params) {
+  const { x0, x1, y0, y1 } = params;
+  const t = this.time + 0.5;
+  for (let y = y0; y <= y1; y += 1) {
+    const leftIdx = this.id(x0, y);
+    if (this.material[leftIdx] !== 2) {
+      const eLeft = this.tfsfTeIncidentE(params, x0 - 0.5, y, t).ey;
+      this.ezx[leftIdx] += this.magneticUpdateCoeffX(leftIdx, x0) * eLeft;
+      this.ez[leftIdx] = this.ezx[leftIdx] + this.ezy[leftIdx];
+    }
+    const rightIdx = this.id(x1, y);
+    if (this.material[rightIdx] !== 2) {
+      const eRight = this.tfsfTeIncidentE(params, x1 + 0.5, y, t).ey;
+      this.ezx[rightIdx] -= this.magneticUpdateCoeffX(rightIdx, x1) * eRight;
+      this.ez[rightIdx] = this.ezx[rightIdx] + this.ezy[rightIdx];
+    }
+  }
+  for (let x = x0; x <= x1; x += 1) {
+    const topIdx = this.id(x, y0);
+    if (this.material[topIdx] !== 2) {
+      const eTop = this.tfsfTeIncidentE(params, x, y0 - 0.5, t).ex;
+      this.ezy[topIdx] -= this.magneticUpdateCoeffY(topIdx, y0) * eTop;
+      this.ez[topIdx] = this.ezx[topIdx] + this.ezy[topIdx];
+    }
+    const bottomIdx = this.id(x, y1);
+    if (this.material[bottomIdx] !== 2) {
+      const eBottom = this.tfsfTeIncidentE(params, x, y1 + 0.5, t).ex;
+      this.ezy[bottomIdx] += this.magneticUpdateCoeffY(bottomIdx, y1) * eBottom;
+      this.ez[bottomIdx] = this.ezx[bottomIdx] + this.ezy[bottomIdx];
+    }
   }
 },
 
@@ -100,36 +324,6 @@ evanescentWaveNumbers(source) {
   const kParallel = k0 * kParallelRatio;
   const alpha = k0 * Math.sqrt(Math.max(0, kParallelRatio * kParallelRatio - 1));
   return { k0, kParallel, alpha };
-},
-
-injectPlaneWaveIncidentField(source, sx, sy) {
-  const halfWindow = Math.max(12, Math.round(this.ny * 0.42));
-  const y0 = Math.max(this.activeInteriorMinY(), sy - halfWindow);
-  const y1 = Math.min(this.activeInteriorMaxY(), sy + halfWindow);
-  for (let y = y0; y <= y1; y += 1) {
-    const taper = 0.54 + 0.46 * Math.sin(Math.PI * (y - y0) / Math.max(1, y1 - y0));
-    const idx = this.id(sx, y);
-    if (this.material[idx] !== 2) {
-      const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-      this.addDirectionalIncidentField(idx, value * taper, sx, y, source);
-    }
-  }
-},
-
-injectGaussianLineIncidentField(source, sx, sy) {
-  const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-  const halfWindow = Math.max(3, Math.ceil(fwhm * 2.5));
-  const y0 = Math.max(this.activeInteriorMinY(), sy - halfWindow);
-  const y1 = Math.min(this.activeInteriorMaxY(), sy + halfWindow);
-  for (let y = y0; y <= y1; y += 1) {
-    const normalized = (y - sy) / fwhm;
-    const profile = Math.exp(-4 * Math.LN2 * normalized * normalized);
-    const idx = this.id(sx, y);
-    if (this.material[idx] !== 2) {
-      const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-      this.addDirectionalIncidentField(idx, value * profile, sx, y, source);
-    }
-  }
 },
 
 injectEvanescentLineIncidentField(source, sx, sy) {

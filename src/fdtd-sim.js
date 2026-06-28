@@ -495,6 +495,7 @@ class FDTDSim {
 
   canUseCompiledMaterialStep() {
     if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
+    if (this.hasTfsfIncidentSource?.()) return false;
     if (
       state.materialModulationEnabled ||
       state.materialHarmonicEnabled ||
@@ -552,6 +553,7 @@ class FDTDSim {
         ? "WASM sigma"
         : "JS sigma";
     }
+    if (this.hasTfsfIncidentSource?.()) return "JS TFSF";
     return this.wasmBackend?.canStep(state.fieldComponent) ? "WASM" : "JS";
   }
 

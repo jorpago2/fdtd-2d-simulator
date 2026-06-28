@@ -1114,6 +1114,7 @@ canUseCompiledFullVectorBianisotropy() {
     this.fullVectorBianisotropyActive() &&
       this.wasmBackend?.canStep("hz") &&
       this.wasmBackend?.canStep("ez") &&
+      !this.hasTfsfIncidentSource?.() &&
       !state.materialModulationEnabled &&
       !state.materialNonlinearEnabled &&
       !state.materialHarmonicEnabled &&

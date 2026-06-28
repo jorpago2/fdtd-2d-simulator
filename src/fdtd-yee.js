@@ -30,6 +30,7 @@ Object.assign(FDTDSim.prototype, {
     } else {
       this.stepEzMode();
       this.applyDispersiveElectricResponse();
+      this.applyTfsfScalarCorrections();
     }
     this.applyHarmonicNonlinearResponse();
     this.applyBianisotropicResponse();
@@ -91,6 +92,7 @@ Object.assign(FDTDSim.prototype, {
     }
 
     this.applyDispersiveMagneticResponse("ez");
+    this.applyTfsfTransverseCorrections();
 
     for (let y = 1; y < ny - 1; y += 1) {
       const row = y * nx;
@@ -227,6 +229,7 @@ Object.assign(FDTDSim.prototype, {
     }
 
     this.applyDispersiveElectricResponse();
+    this.applyTfsfTransverseCorrections();
 
     for (let y = 1; y < ny - 1; y += 1) {
       const row = y * nx;
@@ -251,5 +254,6 @@ Object.assign(FDTDSim.prototype, {
     }
 
     this.applyDispersiveMagneticResponse("hz");
+    this.applyTfsfScalarCorrections();
   }
 });
