@@ -3737,3 +3737,167 @@ html[data-theme="dark"] input[type="range"]::-moz-range-thumb {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+/* Final brand polish: compact academic title plus readable Maxwell equations. */
+.brand-heading {
+  display: grid !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+}
+
+.brand-title {
+  display: flex !important;
+  align-items: baseline !important;
+  flex-wrap: wrap !important;
+  gap: 0.34em !important;
+  color: var(--neu-ink, var(--ink)) !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.brand-title .brand-emblem {
+  color: var(--neu-accent-strong, var(--accent-strong)) !important;
+  font-family: ui-serif, "New York", "Times New Roman", serif !important;
+  font-style: italic !important;
+  font-weight: 950 !important;
+}
+
+.brand-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-self: start !important;
+  min-height: 23px !important;
+  border: 1px solid color-mix(in srgb, var(--neu-accent, var(--accent)) 34%, var(--neu-border, var(--line))) !important;
+  border-radius: 999px !important;
+  padding: 0 10px !important;
+  color: var(--neu-accent-strong, var(--accent-strong)) !important;
+  background: color-mix(in srgb, var(--neu-accent-soft, var(--accent-soft)) 62%, var(--neu-surface-low, var(--surface))) !important;
+  box-shadow: var(--neu-shadow-inset-tight, var(--liquid-highlight)) !important;
+  font-size: 0.64rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.maxwell-strip {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(210px, 1fr)) !important;
+  gap: 5px 13px !important;
+  width: min(820px, 100%) !important;
+  max-width: 100% !important;
+  border: 1px solid color-mix(in srgb, var(--neu-border, var(--line)) 78%, transparent) !important;
+  border-radius: 18px !important;
+  padding: 9px 12px !important;
+  background: var(--neu-surface-low, var(--surface-soft)) !important;
+  box-shadow: var(--neu-shadow-inset-tight, inset 3px 3px 8px rgba(148, 167, 176, 0.16)) !important;
+  color: color-mix(in srgb, var(--neu-ink, var(--ink)) 78%, transparent) !important;
+  font-size: 0.82rem !important;
+  opacity: 1 !important;
+}
+
+.maxwell-eq {
+  display: grid !important;
+  grid-template-columns: 74px minmax(0, 1fr) !important;
+  align-items: baseline !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  min-height: 21px !important;
+  white-space: nowrap !important;
+}
+
+.law-label {
+  min-width: 0 !important;
+  color: var(--neu-muted, var(--muted)) !important;
+  font-family: ui-sans-serif, system-ui, sans-serif !important;
+  font-size: 0.56rem !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.1 !important;
+  overflow: hidden !important;
+  text-align: right !important;
+  text-overflow: ellipsis !important;
+  text-transform: uppercase !important;
+}
+
+.maxwell-strip .equation {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+html[data-theme="dark"] .maxwell-strip {
+  color: color-mix(in srgb, var(--neu-ink, var(--ink)) 82%, transparent) !important;
+  background: var(--neu-surface-low, rgba(18, 22, 29, 0.82)) !important;
+}
+
+@media (max-width: 1440px) {
+  .brand-heading {
+    gap: 3px !important;
+  }
+
+  .topbar h1.brand-title {
+    font-size: clamp(1.08rem, 3.6vw, 1.55rem) !important;
+  }
+
+  .brand-badge {
+    min-height: 20px !important;
+    padding-inline: 8px !important;
+    font-size: 0.56rem !important;
+  }
+
+  .maxwell-strip {
+    display: flex !important;
+    gap: 7px !important;
+    width: 100% !important;
+    max-width: min(100%, 720px) !important;
+    padding: 6px 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    font-size: 0.68rem !important;
+    scrollbar-width: none !important;
+  }
+
+  .maxwell-strip::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .maxwell-eq {
+    flex: 0 0 auto !important;
+    grid-template-columns: 64px auto !important;
+    min-height: 18px !important;
+  }
+
+  .law-label {
+    font-size: 0.5rem !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .brand-badge {
+    display: none !important;
+  }
+
+  .maxwell-strip {
+    max-width: calc(100vw - 160px) !important;
+    min-height: 28px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .brand-title {
+    white-space: normal !important;
+  }
+
+  .topbar h1.brand-title {
+    font-size: 1rem !important;
+  }
+
+  .maxwell-strip {
+    max-width: calc(100vw - 132px) !important;
+    padding: 5px 7px !important;
+    font-size: 0.64rem !important;
+  }
+}

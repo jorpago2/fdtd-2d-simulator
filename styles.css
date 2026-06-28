@@ -148,49 +148,88 @@ h1 {
   min-width: 0;
 }
 
+.brand-heading {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
 .brand-title {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.38em;
+  gap: 0.34em;
   flex: 0 0 auto;
 }
 
-.brand-title span {
+.brand-title .brand-emblem {
   color: var(--accent-strong);
   font-family: ui-serif, "New York", "Times New Roman", serif;
   font-style: italic;
   font-weight: 900;
 }
 
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+  border-radius: 999px;
+  padding: 0 10px;
+  color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent-soft) 58%, var(--surface));
+  box-shadow: var(--liquid-highlight), 0 8px 18px rgba(8, 124, 137, 0.08);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .maxwell-strip {
   display: grid;
-  gap: 3px;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 5px 14px;
   width: fit-content;
-  max-width: min(720px, 100%);
+  max-width: min(820px, 100%);
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-radius: 18px;
+  padding: 9px 12px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-soft) 80%, white), color-mix(in srgb, var(--surface-strong) 66%, transparent));
+  box-shadow: inset 3px 3px 8px rgba(148, 167, 176, 0.16), inset -3px -3px 8px rgba(255, 255, 255, 0.7);
   color: rgba(17, 27, 36, 0.78);
   font-family: "Cambria Math", "STIX Two Math", "Times New Roman", ui-serif, serif;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   line-height: 1.1;
 }
 
 .maxwell-eq {
   display: grid;
-  grid-template-columns: 118px auto;
+  grid-template-columns: 78px minmax(0, 1fr);
   align-items: baseline;
-  gap: 10px;
-  min-height: 20px;
+  gap: 8px;
+  min-height: 22px;
   white-space: nowrap;
 }
 
 .law-label {
   color: rgba(79, 96, 110, 0.64);
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 800;
   line-height: 1.2;
   text-align: right;
   text-transform: uppercase;
+}
+
+.maxwell-strip .equation {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .maxwell-strip i {
@@ -2554,14 +2593,22 @@ select option:checked {
   }
 
   .maxwell-strip {
+    display: flex;
+    overflow-x: auto;
     width: 100%;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
+    scrollbar-width: none;
+  }
+
+  .maxwell-strip::-webkit-scrollbar {
+    display: none;
   }
 
   .maxwell-eq {
-    grid-template-columns: 104px minmax(0, 1fr);
-    gap: 8px;
-    white-space: normal;
+    flex: 0 0 auto;
+    grid-template-columns: 70px auto;
+    gap: 7px;
+    white-space: nowrap;
   }
 }
 
@@ -3002,13 +3049,18 @@ html[data-theme="dark"] h2 {
 }
 
 html[data-theme="dark"] .eyebrow,
-html[data-theme="dark"] .brand-title span,
+html[data-theme="dark"] .brand-title .brand-emblem,
+html[data-theme="dark"] .brand-badge,
 html[data-theme="dark"] .mode-toggle-button.is-active,
 html[data-theme="dark"] .segment.is-active {
   color: var(--accent-strong);
 }
 
 html[data-theme="dark"] .maxwell-strip {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(145deg, rgba(33, 39, 47, 0.68), rgba(15, 18, 23, 0.36));
+  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.26), inset -3px -3px 8px rgba(255, 255, 255, 0.04);
   color: rgba(238, 243, 248, 0.8);
 }
 
@@ -3404,7 +3456,8 @@ body {
 }
 
 .eyebrow,
-.brand-title span {
+.brand-title .brand-emblem,
+.brand-badge {
   color: var(--accent-strong);
 }
 
@@ -4160,7 +4213,7 @@ html[data-theme="dark"] .panel-section {
 }
 
 html[data-theme="dark"] .maxwell-strip {
-  border-left-color: color-mix(in srgb, var(--muted) 30%, transparent) !important;
+  border-color: color-mix(in srgb, var(--muted) 30%, transparent) !important;
 }
 
 @media (max-width: 1260px) {
