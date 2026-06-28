@@ -183,14 +183,15 @@
       "browserSmoke": false,
       "checks": [
         "finite fields",
-        "measure phase-front slope or refracted angle",
-        "power-balance residual",
+        "measure in-slab beam-centroid angle",
+        "measure superlens image transfer and image width",
+        "beam-case power-balance residual",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "pending-calibrated-reference"
+        "status": "first-fdtd-observables-added; calibrated-reference-and-convergence-pending"
       },
-      "rationale": "Documents the next quantitative gap for double-negative and superlens scenes."
+      "rationale": "Tracks the quantitative validation gap for double-negative and superlens scenes after first-pass field observables."
     },
     {
       "id": "bianisotropy_quantitative_gap",

@@ -3652,6 +3652,11 @@ function sweepReadyStatusText() {
   if (state.preset === "hyperlens" && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
     return "Hyperlens sweep plots outer/inner ring transfer from FDTD field samples.";
   }
+  if (negativeIndexAnalysisPresets.has(state.preset) && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return state.preset === "superlensSlab"
+      ? "Superlens sweep plots image-transfer and width metrics from FDTD field samples."
+      : "Negative-index sweep plots the in-slab beam-angle sign and power-balance residual.";
+  }
   return "Sweep uses the current scene and the active incident source.";
 }
 
@@ -3822,6 +3827,11 @@ function sweepAuxMetric() {
   if (state.preset === "hyperlens" && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
     return { key: "hyperlensTransfer", label: "Hout/Hin", only: true };
   }
+  if (negativeIndexAnalysisPresets.has(state.preset) && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return state.preset === "superlensSlab"
+      ? { key: "superlensImageTransfer", label: "img", only: true }
+      : { key: "negativeRefractionScore", label: "neg", only: true };
+  }
   if (
     (state.sweepMode === "amplitude" || state.sweepMode === "frequency") &&
     temporalFloquetAnalysisPresets.has(state.preset)
@@ -3849,6 +3859,8 @@ function sweepMetricValue(metrics, key) {
   if (key === "floquetPowerSideband") return metrics?.floquet?.sidebandPower || 0;
   if (key === "hyperlensTransfer") return metrics?.hyperlens?.transfer || 0;
   if (key === "hyperlensDetailTransfer") return metrics?.hyperlens?.detailTransfer || 0;
+  if (key === "negativeRefractionScore") return metrics?.negativeIndex?.negativeRefractionScore || 0;
+  if (key === "superlensImageTransfer") return metrics?.negativeIndex?.imageTransfer || 0;
   return 0;
 }
 
@@ -4592,13 +4604,23 @@ function updateAnalysisControls() {
             metrics.hyperlens.detailTransfer,
           )}`
         : "";
+    const negativeIndexText =
+      metrics?.negativeIndex && negativeIndexAnalysisPresets.has(state.preset)
+        ? state.preset === "superlensSlab"
+          ? ` | img=${formatDiagnosticRatio(metrics.negativeIndex.imageTransfer)} | w=${formatFieldValue(
+              metrics.negativeIndex.imageWidthLambda,
+            )}lambda`
+          : ` | theta_slab=${formatFieldValue(metrics.negativeIndex.slabAngleDeg)}deg | neg=${formatDiagnosticRatio(
+              metrics.negativeIndex.negativeRefractionScore,
+            )} | resid=${formatDiagnosticRatio(metrics.negativeIndex.powerResidual)}`
+        : "";
     el.analysisStatus.textContent = state.analysisEnabled
       ? `${sampleText} · ${contourText} · f=${formatFieldValue(sim.diagnosticFrequency())}`
       : "Analysis paused.";
     if (state.analysisEnabled) {
       el.analysisStatus.textContent = `${sampleText} | ${contourText} | f=${formatFieldValue(
         sim.diagnosticFrequency(),
-      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}`;
+      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}`;
     }
   }
 }
@@ -4860,6 +4882,20 @@ async function runSweep() {
         hyperlensDetailTransfer: metrics?.hyperlens?.detailTransfer || 0,
         hyperlensInnerEnergy: metrics?.hyperlens?.innerEnergy || 0,
         hyperlensOuterEnergy: metrics?.hyperlens?.outerEnergy || 0,
+        negativeSourceAngleDeg: metrics?.negativeIndex?.sourceAngleDeg || 0,
+        negativeIncidentAngleDeg: metrics?.negativeIndex?.incidentAngleDeg || 0,
+        negativeSlabAngleDeg: metrics?.negativeIndex?.slabAngleDeg || 0,
+        negativeTransmittedAngleDeg: metrics?.negativeIndex?.transmittedAngleDeg || 0,
+        negativeRefractionScore: metrics?.negativeIndex?.negativeRefractionScore || 0,
+        negativePowerResidual: metrics?.negativeIndex?.powerResidual || 0,
+        negativeNEff: metrics?.negativeIndex?.material?.nEff || 0,
+        negativeEpsEff: metrics?.negativeIndex?.material?.epsEff || 0,
+        negativeMuEff: metrics?.negativeIndex?.material?.muEff || 0,
+        superlensImageTransfer: metrics?.negativeIndex?.imageTransfer || 0,
+        superlensImageEnergyTransfer: metrics?.negativeIndex?.imageEnergyTransfer || 0,
+        superlensObjectWidthLambda: metrics?.negativeIndex?.objectWidthLambda || 0,
+        superlensImageWidthLambda: metrics?.negativeIndex?.imageWidthLambda || 0,
+        superlensResolutionRatio: metrics?.negativeIndex?.resolutionRatio || 0,
         phaseState: metrics?.phaseAverage || 0,
         split: metrics?.split || 0,
         spectralSplit: metrics?.spectralSplit || 0,
@@ -5375,6 +5411,20 @@ function exportSweepCsv() {
     "hyperlensDetailTransfer",
     "hyperlensInnerEnergy",
     "hyperlensOuterEnergy",
+    "negativeSourceAngleDeg",
+    "negativeIncidentAngleDeg",
+    "negativeSlabAngleDeg",
+    "negativeTransmittedAngleDeg",
+    "negativeRefractionScore",
+    "negativePowerResidual",
+    "negativeNEff",
+    "negativeEpsEff",
+    "negativeMuEff",
+    "superlensImageTransfer",
+    "superlensImageEnergyTransfer",
+    "superlensObjectWidthLambda",
+    "superlensImageWidthLambda",
+    "superlensResolutionRatio",
     "phaseState",
     "split",
     "spectralSplit",

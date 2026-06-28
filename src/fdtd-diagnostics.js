@@ -868,6 +868,7 @@ analysisMetricEstimate() {
   const phaseAverage = this.phaseChangeStateEstimate();
   const floquet = this.analysisFloquetEstimate();
   const hyperlens = this.analysisHyperlensEstimate();
+  const negativeIndex = this.negativeIndexQuantitativeEstimate();
   if (this.analysisSamples < 8) {
     this.analysisMetrics = {
       spectrum: null,
@@ -887,6 +888,7 @@ analysisMetricEstimate() {
       phaseAverage,
       floquet,
       hyperlens,
+      negativeIndex,
     };
     return this.analysisMetrics;
   }
@@ -934,6 +936,7 @@ analysisMetricEstimate() {
     phaseAverage,
     floquet,
     hyperlens,
+    negativeIndex,
   };
   return this.analysisMetrics;
 },
@@ -1241,6 +1244,199 @@ negativeIndexDiagnostics() {
   const nAbs = Math.sqrt(Math.max(0, Math.abs(epsEff * muEff)));
   const nEff = epsEff < 0 && muEff < 0 ? -nAbs : nAbs;
   return { cells, epsEff, muEff, nEff, doubleNegativeCells, nearSingularCells };
+},
+
+negativeIndexMaterialBounds() {
+  if (!negativeIndexAnalysisPresets.has(state.preset)) return null;
+  let minX = this.nx;
+  let maxX = -1;
+  let minY = this.ny;
+  let maxY = -1;
+  let cells = 0;
+  for (let y = this.activeInteriorMinY(); y <= this.activeInteriorMaxY(); y += 1) {
+    const row = y * this.nx;
+    for (let x = this.activeInteriorMinX(); x <= this.activeInteriorMaxX(); x += 1) {
+      const idx = row + x;
+      if (this.material[idx] === 0 || this.material[idx] === 2) continue;
+      if (!this.dispersiveMaterial[idx] && !this.muDispersiveMaterial[idx]) continue;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      cells += 1;
+    }
+  }
+  if (cells <= 0 || maxX < minX || maxY < minY) return null;
+  return { minX, maxX, minY, maxY, cells };
+},
+
+negativeIndexBeamCentroidFit(xMin, xMax, yMin, yMax) {
+  xMin = clampInt(Math.round(xMin), this.activeInteriorMinX(), this.activeInteriorMaxX());
+  xMax = clampInt(Math.round(xMax), xMin, this.activeInteriorMaxX());
+  yMin = clampInt(Math.round(yMin), this.activeInteriorMinY(), this.activeInteriorMaxY());
+  yMax = clampInt(Math.round(yMax), yMin, this.activeInteriorMaxY());
+  const columns = [];
+  let maxColumnEnergy = 0;
+  for (let x = xMin; x <= xMax; x += 1) {
+    let energy = 0;
+    let yWeighted = 0;
+    let peak = 0;
+    for (let y = yMin; y <= yMax; y += 1) {
+      const idx = this.id(x, y);
+      if (this.material[idx] === 2) continue;
+      const value = this.scalarAnalysisValueAt(idx);
+      const intensity = value * value;
+      if (!Number.isFinite(intensity) || intensity <= 0) continue;
+      energy += intensity;
+      yWeighted += intensity * y;
+      peak = Math.max(peak, intensity);
+    }
+    if (energy > 0) {
+      maxColumnEnergy = Math.max(maxColumnEnergy, energy);
+      columns.push({ x, y: yWeighted / energy, energy, peak });
+    }
+  }
+  if (columns.length < 3 || maxColumnEnergy <= 1e-24) return null;
+  const threshold = maxColumnEnergy * 0.06;
+  let weightSum = 0;
+  let xSum = 0;
+  let ySum = 0;
+  let xxSum = 0;
+  let xySum = 0;
+  let peak = 0;
+  for (const column of columns) {
+    if (column.energy < threshold) continue;
+    const weight = column.energy;
+    weightSum += weight;
+    xSum += weight * column.x;
+    ySum += weight * column.y;
+    xxSum += weight * column.x * column.x;
+    xySum += weight * column.x * column.y;
+    peak = Math.max(peak, column.peak);
+  }
+  const denom = weightSum * xxSum - xSum * xSum;
+  if (weightSum <= 1e-24 || Math.abs(denom) < 1e-9) return null;
+  const slope = (weightSum * xySum - xSum * ySum) / denom;
+  const xMean = xSum / weightSum;
+  const yMean = ySum / weightSum;
+  let widthNumerator = 0;
+  for (const column of columns) {
+    if (column.energy < threshold) continue;
+    const residual = column.y - (yMean + slope * (column.x - xMean));
+    widthNumerator += column.energy * residual * residual;
+  }
+  return {
+    slope,
+    angleDeg: (Math.atan(slope) * 180) / Math.PI,
+    xMean,
+    yMean,
+    rmsWidthCells: Math.sqrt(Math.max(0, widthNumerator / weightSum)),
+    peak,
+    energy: weightSum,
+    columns: columns.filter((column) => column.energy >= threshold).length,
+  };
+},
+
+negativeIndexLineImageStats(xCenter, yMin, yMax, halfWidth = 1) {
+  const xMin = clampInt(Math.round(xCenter - halfWidth), this.activeInteriorMinX(), this.activeInteriorMaxX());
+  const xMax = clampInt(Math.round(xCenter + halfWidth), xMin, this.activeInteriorMaxX());
+  yMin = clampInt(Math.round(yMin), this.activeInteriorMinY(), this.activeInteriorMaxY());
+  yMax = clampInt(Math.round(yMax), yMin, this.activeInteriorMaxY());
+  let energy = 0;
+  let yWeighted = 0;
+  let peak = 0;
+  for (let x = xMin; x <= xMax; x += 1) {
+    for (let y = yMin; y <= yMax; y += 1) {
+      const idx = this.id(x, y);
+      if (this.material[idx] === 2) continue;
+      const value = this.scalarAnalysisValueAt(idx);
+      const intensity = value * value;
+      if (!Number.isFinite(intensity) || intensity <= 0) continue;
+      energy += intensity;
+      yWeighted += intensity * y;
+      peak = Math.max(peak, intensity);
+    }
+  }
+  if (energy <= 1e-24) return null;
+  const yMean = yWeighted / energy;
+  let variance = 0;
+  for (let x = xMin; x <= xMax; x += 1) {
+    for (let y = yMin; y <= yMax; y += 1) {
+      const idx = this.id(x, y);
+      if (this.material[idx] === 2) continue;
+      const value = this.scalarAnalysisValueAt(idx);
+      const intensity = value * value;
+      if (!Number.isFinite(intensity) || intensity <= 0) continue;
+      const dy = y - yMean;
+      variance += intensity * dy * dy;
+    }
+  }
+  return {
+    x: 0.5 * (xMin + xMax),
+    yMean,
+    rmsWidthCells: Math.sqrt(Math.max(0, variance / energy)),
+    peak,
+    energy,
+  };
+},
+
+negativeIndexQuantitativeEstimate() {
+  if (!negativeIndexAnalysisPresets.has(state.preset)) return null;
+  const bounds = this.negativeIndexMaterialBounds();
+  const material = this.negativeIndexDiagnostics();
+  if (!bounds || !material) return null;
+  const pad = Math.max(2, Math.round(state.cellsPerWavelength * 0.18));
+  const span = Math.max(6, lambdaToCells(1.05));
+  const yMargin = Math.max(2, Math.round(state.cellsPerWavelength * 0.18));
+  const yMin = Math.max(this.activeInteriorMinY(), bounds.minY - yMargin);
+  const yMax = Math.min(this.activeInteriorMaxY(), bounds.maxY + yMargin);
+  const incident = this.negativeIndexBeamCentroidFit(bounds.minX - span, bounds.minX - pad, yMin, yMax);
+  const slab = this.negativeIndexBeamCentroidFit(bounds.minX + 1, bounds.maxX - 1, yMin, yMax);
+  const transmitted = this.negativeIndexBeamCentroidFit(bounds.maxX + pad, bounds.maxX + span, yMin, yMax);
+  const source = state.sources[0] || defaultSourceConfig;
+  const sourceAngleDeg = Number(source.angleDeg) || 0;
+  const sourceSlope = Math.tan((sourceAngleDeg * Math.PI) / 180);
+  const slabSlope = slab?.slope ?? 0;
+  const slopeRatio = Math.abs(sourceSlope) > 1e-6 ? Math.abs(slabSlope) / Math.abs(sourceSlope) : Math.abs(slabSlope);
+  const negativeRefractionScore =
+    slab && Math.abs(slabSlope) > 1e-6 && Math.abs(sourceSlope) > 1e-6
+      ? (sourceSlope * slabSlope < 0 ? 1 : -1) * clamp(slopeRatio, 0, 1)
+      : 0;
+  const sourceX = this.sourceXCell(source);
+  const objectDistance = Math.max(1, bounds.minX - sourceX);
+  const imageX = clampInt(bounds.maxX + objectDistance, this.activeInteriorMinX(), this.activeInteriorMaxX());
+  const objectStats = this.negativeIndexLineImageStats(sourceX, yMin, yMax, Math.max(1, Math.round(pad * 0.5)));
+  const imageStats = this.negativeIndexLineImageStats(imageX, yMin, yMax, Math.max(1, Math.round(pad * 0.5)));
+  const imageTransfer = objectStats && imageStats ? imageStats.peak / Math.max(1e-24, objectStats.peak) : 0;
+  const imageEnergyTransfer = objectStats && imageStats ? imageStats.energy / Math.max(1e-24, objectStats.energy) : 0;
+  const resolutionRatio =
+    objectStats && imageStats && objectStats.rmsWidthCells > 1e-9 ? imageStats.rmsWidthCells / objectStats.rmsWidthCells : 0;
+  const powerResidual =
+    state.preset === "negativeIndexSlab" && this.diagnosticSamples > 0
+      ? 1 - (this.diagnosticReflectance || 0) - (this.diagnosticTransmittance || 0)
+      : null;
+
+  return {
+    material,
+    bounds,
+    sourceAngleDeg,
+    incidentAngleDeg: incident?.angleDeg ?? 0,
+    slabAngleDeg: slab?.angleDeg ?? 0,
+    transmittedAngleDeg: transmitted?.angleDeg ?? 0,
+    incident,
+    slab,
+    transmitted,
+    negativeRefractionScore,
+    negativeRefractionObserved: negativeRefractionScore > 0,
+    powerResidual,
+    objectPlaneLambda: cellsToLambda(sourceX),
+    imagePlaneLambda: cellsToLambda(imageX),
+    objectWidthLambda: objectStats ? objectStats.rmsWidthCells / Math.max(1, state.cellsPerWavelength) : 0,
+    imageWidthLambda: imageStats ? imageStats.rmsWidthCells / Math.max(1, state.cellsPerWavelength) : 0,
+    imageTransfer,
+    imageEnergyTransfer,
+    resolutionRatio,
+  };
 },
 
 fullVectorBianisotropyDiagnostics() {

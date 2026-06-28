@@ -251,6 +251,7 @@ const phcBlochAnalysisPresets = new Set([
 const ptModalAnalysisPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCoupler"]);
 const sshBlochAnalysisPresets = new Set(["sshTrivial", "sshTopological", "sshInterface", "sshDisorder", "nonHermitianSsh"]);
 const absorptionAnalysisPresets = new Set(["perfectAbsorber"]);
+const negativeIndexAnalysisPresets = new Set(["negativeIndexSlab", "superlensSlab"]);
 const harmonicAnalysisPresets = new Set(["shgSlab", "thgSlab"]);
 const nonlinearAnalysisPresets = new Set([
   "shgSlab",
