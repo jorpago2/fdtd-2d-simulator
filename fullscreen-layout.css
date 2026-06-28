@@ -663,6 +663,15 @@ body.controls-drawer-open {
     display: contents !important;
   }
 
+  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .focus-controls-toggle {
+    display: none !important;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .canvas-options-toggle,
+  .stage.canvas-actions-open .canvas-toolbar .canvas-focus-exit {
+    display: none !important;
+  }
+
   .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #stepBtn {
     order: 3 !important;
   }
@@ -673,18 +682,34 @@ body.controls-drawer-open {
 
   .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
     display: inline-flex !important;
-    flex: 1 1 106px !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    flex: 0 1 clamp(104px, 29vw, 126px) !important;
+    width: clamp(104px, 29vw, 126px) !important;
     max-width: 126px !important;
-    min-width: 100px !important;
+    min-width: 104px !important;
     height: 34px !important;
     min-height: 34px !important;
+    padding: 2px !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
     order: 5 !important;
   }
 
   .stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
-    min-height: 34px !important;
-    padding-inline: 5px !important;
-    font-size: 0.64rem !important;
+    display: grid !important;
+    place-items: center !important;
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 5px !important;
+    border-radius: 13px !important;
+    font-size: 0.61rem !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
   }
 }
 
@@ -705,7 +730,7 @@ body.controls-drawer-open {
 
   .stage.canvas-actions-open .canvas-toolbar {
     left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
 
   .stage.canvas-actions-open .canvas-toolbar .icon-button,
@@ -737,14 +762,15 @@ body.controls-drawer-open {
   }
 
   .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
-    flex-basis: 96px !important;
-    min-width: 92px !important;
-    max-width: 108px !important;
+    flex-basis: 110px !important;
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
   }
 
   .stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
     padding-inline: 4px !important;
-    font-size: 0.6rem !important;
+    font-size: 0.58rem !important;
   }
 
   .control-panel .mobile-layer-button {
