@@ -119,7 +119,7 @@ importScripts(
   "catalog.js",
   "fdtd-sim.js",
   "fdtd-materials.js",
-  "fdtd-boundaries.js",
+  "fdtd-boundaries.js?v=20260628-pml-continuation-1",
   "fdtd-presets.js",
   "fdtd-sources.js",
   "fdtd-diagnostics.js",

@@ -50,7 +50,7 @@ class FdtdWorkerEngine {
   ensureWorker() {
     if (!this.supported()) return false;
     if (this.worker) return true;
-    this.worker = new Worker("src/fdtd-worker.js?v=20260628-worker-engine-1");
+    this.worker = new Worker("src/fdtd-worker.js?v=20260628-pml-continuation-1");
     this.worker.onmessage = (event) => this.handleMessage(event.data || {});
     this.worker.onerror = (event) => {
       this.handleError(event.message || "Worker error");

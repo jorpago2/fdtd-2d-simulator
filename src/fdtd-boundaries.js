@@ -128,10 +128,10 @@ Object.assign(FDTDSim.prototype, {
 
   refreshPmlMaterialContinuation(resetPmlFields = false) {
     if (!anyAbsorbingBoundarySide() || this.pmlLayer <= 0) return;
-    const minX = boundarySideIsAbsorbing("left") ? this.pmlLayer : 0;
-    const minY = boundarySideIsAbsorbing("top") ? this.pmlLayer : 0;
-    const maxX = boundarySideIsAbsorbing("right") ? this.nx - this.pmlLayer - 1 : this.nx - 1;
-    const maxY = boundarySideIsAbsorbing("bottom") ? this.ny - this.pmlLayer - 1 : this.ny - 1;
+    const minX = this.activeInteriorMinX();
+    const minY = this.activeInteriorMinY();
+    const maxX = this.activeInteriorMaxX();
+    const maxY = this.activeInteriorMaxY();
     if (maxX < minX || maxY < minY) return;
 
     for (let y = 0; y < this.ny; y += 1) {
