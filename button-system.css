@@ -1,0 +1,342 @@
+/*
+  Neumorphic button system
+  ------------------------
+  Final button layer shared by light and dark themes. It keeps segmented
+  controls, panel navigation, icon buttons, and action buttons visually related.
+*/
+
+:root {
+  --button-radius: 18px;
+  --button-radius-tight: 14px;
+  --button-radius-pill: 999px;
+  --button-track-bg: color-mix(in srgb, var(--neu-surface-low) 82%, #ffffff 18%);
+  --button-track-border: color-mix(in srgb, var(--neu-border) 80%, transparent);
+  --button-track-shadow:
+    inset 7px 7px 16px rgba(150, 166, 176, 0.26),
+    inset -8px -8px 18px rgba(255, 255, 255, 0.86),
+    0 1px 0 rgba(255, 255, 255, 0.72);
+  --button-rest-bg:
+    radial-gradient(circle at 30% 12%, rgba(255, 255, 255, 0.8), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 92%, #ffffff), var(--neu-surface));
+  --button-rest-border: color-mix(in srgb, #ffffff 72%, var(--neu-border));
+  --button-rest-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(85, 113, 124, 0.08),
+    -6px -6px 16px rgba(255, 255, 255, 0.72),
+    7px 7px 18px rgba(145, 162, 173, 0.22);
+  --button-hover-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 10%, transparent),
+    -5px -5px 14px rgba(255, 255, 255, 0.74),
+    8px 8px 20px color-mix(in srgb, var(--neu-accent) 15%, rgba(145, 162, 173, 0.2));
+  --button-active-bg:
+    radial-gradient(circle at 30% 12%, rgba(255, 255, 255, 0.84), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 92%, #ffffff), color-mix(in srgb, var(--neu-accent) 9%, var(--neu-surface)));
+  --button-active-border: color-mix(in srgb, var(--neu-accent) 58%, #ffffff);
+  --button-active-ink: var(--neu-accent);
+  --button-active-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--neu-accent) 18%, transparent),
+    inset 4px 4px 10px rgba(150, 166, 176, 0.2),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.82),
+    0 0 0 1px color-mix(in srgb, var(--neu-accent) 16%, transparent),
+    -4px -4px 12px rgba(255, 255, 255, 0.68),
+    6px 6px 16px rgba(8, 124, 137, 0.16);
+  --button-primary-bg:
+    radial-gradient(circle at 28% 12%, rgba(255, 255, 255, 0.32), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-accent) 94%, #ffffff), #05606a);
+  --button-primary-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -10px 18px rgba(0, 60, 68, 0.18),
+    -5px -5px 13px rgba(255, 255, 255, 0.5),
+    7px 7px 18px rgba(5, 84, 92, 0.26);
+}
+
+html[data-theme="dark"] {
+  --button-track-bg: color-mix(in srgb, var(--neu-surface-low) 86%, #ffffff 3%);
+  --button-track-border: color-mix(in srgb, var(--neu-border) 82%, transparent);
+  --button-track-shadow:
+    inset 7px 7px 16px rgba(0, 0, 0, 0.42),
+    inset -7px -7px 16px rgba(55, 68, 78, 0.24),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+  --button-rest-bg:
+    radial-gradient(circle at 30% 12%, rgba(255, 255, 255, 0.12), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 92%, #ffffff 2%), var(--neu-surface));
+  --button-rest-border: color-mix(in srgb, var(--neu-border) 88%, rgba(255, 255, 255, 0.08));
+  --button-rest-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    -5px -5px 14px rgba(50, 64, 74, 0.26),
+    7px 7px 18px rgba(0, 0, 0, 0.34);
+  --button-hover-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    -4px -4px 12px rgba(55, 70, 80, 0.25),
+    8px 8px 20px rgba(0, 0, 0, 0.38);
+  --button-active-bg:
+    radial-gradient(circle at 30% 12%, rgba(255, 255, 255, 0.14), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-surface-raised) 88%, #ffffff 4%), color-mix(in srgb, var(--neu-accent) 12%, var(--neu-surface)));
+  --button-active-border: color-mix(in srgb, var(--neu-accent) 68%, rgba(255, 255, 255, 0.22));
+  --button-active-ink: color-mix(in srgb, var(--neu-accent) 72%, #ffffff);
+  --button-active-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--neu-accent) 20%, transparent),
+    inset 4px 4px 10px rgba(0, 0, 0, 0.24),
+    inset -5px -5px 12px rgba(65, 79, 90, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--neu-accent) 18%, transparent),
+    -4px -4px 12px rgba(55, 70, 80, 0.22),
+    7px 7px 18px rgba(0, 0, 0, 0.36);
+  --button-primary-bg:
+    radial-gradient(circle at 28% 12%, rgba(255, 255, 255, 0.2), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-accent) 82%, #ffffff 5%), #087986);
+  --button-primary-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.18),
+    -5px -5px 13px rgba(50, 64, 74, 0.22),
+    7px 7px 18px rgba(0, 0, 0, 0.34);
+}
+
+.app-shell .canvas-mode-toggle,
+.app-shell .segmented,
+.app-shell .theme-toggle,
+.app-shell .control-tabs,
+.app-shell .mobile-layer-nav,
+.app-shell .ui-depth-toggle,
+.app-shell .brush-tool-toggle {
+  border: 1px solid var(--button-track-border) !important;
+  background: var(--button-track-bg) !important;
+  box-shadow: var(--button-track-shadow) !important;
+  overflow: hidden !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.app-shell .canvas-mode-toggle::before,
+.app-shell .canvas-mode-toggle::after,
+.app-shell .segmented::before,
+.app-shell .segmented::after,
+.app-shell .control-tabs::before,
+.app-shell .control-tabs::after,
+.app-shell .mobile-layer-nav::before,
+.app-shell .mobile-layer-nav::after {
+  display: none !important;
+  content: none !important;
+}
+
+.app-shell .mode-toggle-button,
+.app-shell .segment,
+.app-shell .control-tab-button,
+.app-shell .mobile-layer-button {
+  border: 1px solid transparent !important;
+  color: color-mix(in srgb, var(--neu-ink) 78%, var(--neu-muted)) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease !important;
+}
+
+.app-shell .mode-toggle-button:hover,
+.app-shell .segment:hover,
+.app-shell .control-tab-button:hover,
+.app-shell .mobile-layer-button:hover {
+  color: var(--neu-ink) !important;
+  background: color-mix(in srgb, var(--neu-surface-raised) 44%, transparent) !important;
+  transform: none !important;
+}
+
+.app-shell .mode-toggle-button.is-active,
+.app-shell .segment.is-active,
+.app-shell .control-tab-button.is-active,
+.app-shell .mobile-layer-button.is-active,
+.app-shell .scene-filter-button.is-active {
+  border-color: var(--button-active-border) !important;
+  color: var(--button-active-ink) !important;
+  background: var(--button-active-bg) !important;
+  box-shadow: var(--button-active-shadow) !important;
+}
+
+.app-shell .control-tab-button.is-active .nav-label,
+.app-shell .mobile-layer-button.is-active .nav-label {
+  color: var(--button-active-ink) !important;
+}
+
+.app-shell .control-tab-button .nav-step,
+.app-shell .mobile-layer-button .nav-step {
+  color: var(--neu-muted) !important;
+  background: color-mix(in srgb, var(--neu-surface-low) 86%, transparent) !important;
+  box-shadow:
+    inset 2px 2px 5px color-mix(in srgb, var(--neu-muted) 22%, transparent),
+    inset -2px -2px 5px color-mix(in srgb, #ffffff 58%, transparent) !important;
+}
+
+html[data-theme="dark"] .app-shell .control-tab-button .nav-step,
+html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.34),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.08) !important;
+}
+
+.app-shell .control-tab-button.is-active .nav-step,
+.app-shell .mobile-layer-button.is-active .nav-step {
+  color: #ffffff !important;
+  background: color-mix(in srgb, var(--neu-accent) 88%, #ffffff 8%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 14px color-mix(in srgb, var(--neu-accent) 22%, transparent) !important;
+}
+
+.app-shell .icon-button,
+.app-shell .text-button,
+.app-shell .panel-chip,
+.app-shell .scene-filter-button,
+.app-shell .visual-panel-layer,
+.app-shell .toolbar-switch {
+  border: 1px solid var(--button-rest-border) !important;
+  border-radius: var(--button-radius) !important;
+  color: color-mix(in srgb, var(--neu-ink) 82%, var(--neu-muted)) !important;
+  background: var(--button-rest-bg) !important;
+  box-shadow: var(--button-rest-shadow) !important;
+  text-shadow: none !important;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    filter 160ms ease !important;
+}
+
+.app-shell .icon-button {
+  border-radius: var(--button-radius-tight) !important;
+}
+
+.app-shell .compact-button {
+  border-radius: var(--button-radius-tight) !important;
+}
+
+.app-shell .text-button,
+.app-shell .panel-chip,
+.app-shell .scene-filter-button {
+  min-height: 38px !important;
+}
+
+.app-shell .icon-button:hover,
+.app-shell .text-button:hover,
+.app-shell .panel-chip:hover,
+.app-shell .scene-filter-button:hover,
+.app-shell .visual-panel-layer:hover,
+.app-shell .toolbar-switch:hover {
+  border-color: var(--button-active-border) !important;
+  color: var(--neu-ink) !important;
+  box-shadow: var(--button-hover-shadow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.app-shell .icon-button:active,
+.app-shell .text-button:active,
+.app-shell .panel-chip:active,
+.app-shell .scene-filter-button:active,
+.app-shell .visual-panel-layer:active,
+.app-shell .toolbar-switch:active,
+.app-shell .mode-toggle-button:active,
+.app-shell .segment:active,
+.app-shell .control-tab-button:active,
+.app-shell .mobile-layer-button:active {
+  box-shadow:
+    inset 4px 4px 10px color-mix(in srgb, var(--neu-muted) 20%, transparent),
+    inset -4px -4px 10px color-mix(in srgb, #ffffff 58%, transparent) !important;
+  transform: translateY(1px) !important;
+}
+
+html[data-theme="dark"] .app-shell .icon-button:active,
+html[data-theme="dark"] .app-shell .text-button:active,
+html[data-theme="dark"] .app-shell .panel-chip:active,
+html[data-theme="dark"] .app-shell .scene-filter-button:active,
+html[data-theme="dark"] .app-shell .visual-panel-layer:active,
+html[data-theme="dark"] .app-shell .toolbar-switch:active,
+html[data-theme="dark"] .app-shell .mode-toggle-button:active,
+html[data-theme="dark"] .app-shell .segment:active,
+html[data-theme="dark"] .app-shell .control-tab-button:active,
+html[data-theme="dark"] .app-shell .mobile-layer-button:active {
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.34),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.08) !important;
+}
+
+.app-shell .icon-button.primary,
+.app-shell .primary-button,
+.app-shell .panel-next-button,
+.app-shell #sourceApplyBtn.primary-button {
+  border-color: color-mix(in srgb, var(--neu-accent) 46%, #ffffff 22%) !important;
+  color: #ffffff !important;
+  background: var(--button-primary-bg) !important;
+  box-shadow: var(--button-primary-shadow) !important;
+}
+
+.app-shell .icon-button.primary:hover,
+.app-shell .primary-button:hover,
+.app-shell .panel-next-button:hover,
+.app-shell #sourceApplyBtn.primary-button:hover,
+.app-shell #sourceApplyBtn.primary-button:focus-visible {
+  border-color: color-mix(in srgb, var(--neu-accent) 66%, #ffffff 20%) !important;
+  color: #ffffff !important;
+  filter: brightness(1.04) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -10px 18px rgba(0, 60, 68, 0.16),
+    -4px -4px 12px color-mix(in srgb, #ffffff 46%, transparent),
+    8px 8px 20px color-mix(in srgb, var(--neu-accent) 32%, transparent) !important;
+}
+
+html[data-theme="dark"] .app-shell .icon-button.primary:hover,
+html[data-theme="dark"] .app-shell .primary-button:hover,
+html[data-theme="dark"] .app-shell .panel-next-button:hover,
+html[data-theme="dark"] .app-shell #sourceApplyBtn.primary-button:hover,
+html[data-theme="dark"] .app-shell #sourceApplyBtn.primary-button:focus-visible {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.18),
+    -4px -4px 12px rgba(50, 64, 74, 0.2),
+    8px 8px 20px color-mix(in srgb, var(--neu-accent) 26%, rgba(0, 0, 0, 0.26)) !important;
+}
+
+.app-shell .danger-button {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--button-rest-border)) !important;
+  color: var(--danger) !important;
+}
+
+.app-shell .danger-button:hover {
+  border-color: color-mix(in srgb, var(--danger) 54%, var(--button-rest-border)) !important;
+  color: var(--danger) !important;
+}
+
+.app-shell button:focus-visible,
+.app-shell .toolbar-switch:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--neu-accent) 26%, transparent) !important;
+  outline-offset: 3px !important;
+}
+
+@media (max-width: 520px) {
+  .app-shell .icon-button {
+    border-radius: 13px !important;
+  }
+
+  .app-shell .text-button,
+  .app-shell .panel-chip,
+  .app-shell .scene-filter-button {
+    border-radius: 15px !important;
+  }
+
+  .app-shell #tab-visual .field-display-toggle {
+    gap: 4px !important;
+    padding: 4px !important;
+  }
+
+  .app-shell #tab-visual .field-display-toggle .mode-toggle-button {
+    padding-inline: 1px !important;
+    font-size: 0.66rem !important;
+  }
+}
