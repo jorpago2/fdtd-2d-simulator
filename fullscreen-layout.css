@@ -393,9 +393,16 @@ body.controls-drawer-open {
   .canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
     left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
-    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+    right: auto !important;
     flex-wrap: nowrap !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
+    width: max-content !important;
+    max-width: calc(
+      100vw
+      - max(var(--fullscreen-edge), env(safe-area-inset-left))
+      - max(var(--fullscreen-edge), env(safe-area-inset-right))
+      - 54px
+    ) !important;
   }
 
   .control-panel .mobile-layer-nav {
@@ -416,6 +423,7 @@ body.controls-drawer-open {
   .canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
     left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 50px) !important;
+    right: auto !important;
     gap: 6px !important;
     padding: 4px 6px !important;
     border-radius: 16px !important;
@@ -480,7 +488,7 @@ body.controls-drawer-open {
 
 @media (max-width: 390px) {
   .canvas-toolbar {
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
   }
 
   .canvas-toolbar .tool-group.compact {
