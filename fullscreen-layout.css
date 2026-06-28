@@ -1092,26 +1092,26 @@ body.controls-drawer-open {
   gap: 8px !important;
 }
 
-#tab-scenes .scene-browser {
+#tab-scenes .scene-select-fallback {
   order: 1 !important;
 }
 
-#tab-scenes .scene-note {
+#tab-scenes .scene-browser {
   order: 2 !important;
+}
+
+#tab-scenes .scene-note {
+  order: 3 !important;
   margin: 0 !important;
   font-size: 0.72rem !important;
   line-height: 1.25 !important;
 }
 
 #tab-scenes .scene-guide-panel {
-  order: 3 !important;
-}
-
-#tab-scenes #slabThicknessControl {
   order: 4 !important;
 }
 
-#tab-scenes .scene-select-fallback {
+#tab-scenes #slabThicknessControl {
   order: 5 !important;
 }
 
