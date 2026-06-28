@@ -1,10 +1,34 @@
 "use strict";
 
+const LIVE_RENDER_SCALE_INTERVAL_FRAMES = 6;
+
 Object.assign(FDTDSim.prototype, {
 fieldRenderScale() {
   this.renormalizeFields();
-  let maxAbs = this.lastMax;
-  if (state.autoScale || maxAbs === 0) {
+  const physicalScale = this.fieldPhysicalScale();
+  const physicalLogScale = this.fieldPhysicalLogScale();
+  const cacheKey = [
+    state.viewMode,
+    state.fieldDisplay,
+    state.fieldComponent,
+    this.fieldLog10Scale,
+    this.renormalizedCount,
+  ].join("|");
+
+  if (
+    state.running &&
+    state.autoScale &&
+    this.liveRenderScaleCache?.key === cacheKey &&
+    this.liveRenderScaleCache.framesUntilRefresh > 0
+  ) {
+    this.liveRenderScaleCache.framesUntilRefresh -= 1;
+    this.lastViewRange = this.liveRenderScaleCache.lastViewRange;
+    this.lastViewRangeLog10 = this.liveRenderScaleCache.lastViewRangeLog10;
+    return this.liveRenderScaleCache.scale;
+  }
+
+  let maxAbs = state.autoScale ? 0 : this.lastMax / Math.max(physicalScale, 1e-300);
+  if (state.autoScale) {
     maxAbs = 0;
     if (state.viewMode !== "poynting" && state.fieldDisplay === "scalar") {
       const scalarField = this.ez;
@@ -18,14 +42,22 @@ fieldRenderScale() {
         if (value > maxAbs) maxAbs = value;
       }
     }
-  } else {
-    maxAbs = maxAbs / this.fieldPhysicalScale();
   }
-  const scale = state.autoScale ? 0.94 / Math.max(0.02, maxAbs) : state.gain * this.fieldPhysicalScale();
+  const scale = state.autoScale ? 0.94 / Math.max(0.02, maxAbs) : state.gain * physicalScale;
   this.lastViewRangeLog10 = state.autoScale
-    ? Math.log10(1 / Math.max(scale, 1e-300)) + this.fieldPhysicalLogScale()
+    ? Math.log10(1 / Math.max(scale, 1e-300)) + physicalLogScale
     : Math.log10(1 / Math.max(state.gain, 1e-300));
   this.lastViewRange = this.lastViewRangeLog10 < 300 ? Math.pow(10, this.lastViewRangeLog10) : Infinity;
+  this.liveRenderScaleCache =
+    state.running && state.autoScale
+      ? {
+          key: cacheKey,
+          scale,
+          lastViewRange: this.lastViewRange,
+          lastViewRangeLog10: this.lastViewRangeLog10,
+          framesUntilRefresh: LIVE_RENDER_SCALE_INTERVAL_FRAMES - 1,
+        }
+      : null;
   return scale;
 },
 
@@ -316,8 +348,10 @@ render() {
     if (canRecordRenderBreakdown) {
       perf.record("renderMapMs", perf.now() - renderPhaseStart);
     }
-    updateColorbar();
-    updateMaterialWarning();
+    if (!state.running) {
+      updateColorbar();
+      updateMaterialWarning();
+    }
     return;
   }
 
@@ -366,8 +400,10 @@ render() {
   if (canRecordRenderBreakdown) {
     perf.record("renderOverlayMs", perf.now() - renderPhaseStart);
   }
-  updateColorbar();
-  updateMaterialWarning();
+  if (!state.running) {
+    updateColorbar();
+    updateMaterialWarning();
+  }
 },
 
 drawMaterialSelectionOverlay() {
