@@ -4201,6 +4201,8 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-auto-flow: row !important;
     grid-auto-rows: minmax(42px, auto) !important;
+    height: auto !important;
+    min-height: 104px !important;
     overflow-x: hidden !important;
     overflow-y: visible !important;
     max-height: none !important;
