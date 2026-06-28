@@ -4166,3 +4166,60 @@ html[data-theme="dark"] .topbar .maxwell-strip {
     font-size: 0.64rem !important;
   }
 }
+
+/* Mobile drawer: make selected segmented controls draw their own glass instead of a drifting shared indicator. */
+.control-panel .canvas-mode-toggle::before {
+  display: none !important;
+}
+
+.control-panel .mode-toggle-button.is-active {
+  border: 1px solid color-mix(in srgb, #ffffff 26%, var(--neu-border)) !important;
+  color: var(--neu-accent) !important;
+  background:
+    radial-gradient(circle at 32% 12%, color-mix(in srgb, #ffffff 38%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--neu-accent-soft) 48%, var(--neu-surface-raised)), color-mix(in srgb, var(--neu-surface) 88%, var(--neu-accent) 12%)) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 42%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 16%, transparent),
+    var(--neu-shadow-small) !important;
+}
+
+html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
+  border-color: color-mix(in srgb, var(--neu-accent) 34%, rgba(255, 255, 255, 0.2)) !important;
+  color: color-mix(in srgb, #9edfff 82%, #ffffff) !important;
+  background:
+    radial-gradient(circle at 32% 12%, rgba(255, 255, 255, 0.16), transparent 34%),
+    linear-gradient(145deg, rgba(41, 51, 64, 0.96), rgba(24, 30, 39, 0.94)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 10px 24px rgba(0, 0, 0, 0.26) !important;
+}
+
+@media (max-width: 520px) {
+  .control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    grid-auto-rows: minmax(42px, auto) !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    max-height: none !important;
+  }
+
+  .control-panel .mobile-layer-button {
+    grid-template-columns: auto minmax(0, max-content) !important;
+    min-height: 42px !important;
+    padding: 7px 6px !important;
+    gap: 5px !important;
+  }
+
+  .control-panel .mobile-layer-button .nav-step {
+    display: inline-grid !important;
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .control-panel .mobile-layer-button .nav-label {
+    white-space: nowrap !important;
+  }
+}
