@@ -1727,8 +1727,15 @@ function setControlDrawerOpen(open) {
     if (activeMobileLayerName() === "visual") {
       setMobileLayerActive(controlTabLayerName(activeControlTabName()));
     }
+    refreshControlPanelData();
     el.controlPanel?.focus?.({ preventScroll: true });
   }
+}
+
+function refreshControlPanelData() {
+  updateControlText();
+  updateInspector();
+  updateStats();
 }
 
 function closeControlDrawer() {
@@ -2543,6 +2550,7 @@ let pinchState = null;
 let dragSourcePointerId = null;
 let dragSourceId = null;
 let dragSourceOffset = null;
+let dragSourceRenderFrame = null;
 let dragMaterialPointerId = null;
 let materialDragState = null;
 const activePointers = new Map();
@@ -6804,6 +6812,22 @@ function promotePendingTouchDrag(event) {
   return true;
 }
 
+function requestSourceDragRender() {
+  if (dragSourceRenderFrame !== null) return;
+  dragSourceRenderFrame = requestAnimationFrame(() => {
+    dragSourceRenderFrame = null;
+    sim.render();
+  });
+}
+
+function flushSourceDragRender() {
+  if (dragSourceRenderFrame !== null) {
+    cancelAnimationFrame(dragSourceRenderFrame);
+    dragSourceRenderFrame = null;
+  }
+  sim.render();
+}
+
 function beginSourceDrag(event, source, originClientX = event.clientX, originClientY = event.clientY) {
   disableResponsiveGridOrientation();
   closeContextMenus();
@@ -6832,23 +6856,27 @@ function updateSourceDrag(event) {
   const point = sim.clientToGridFloat(event.clientX, event.clientY);
   const x = clampInt(point.x + dragSourceOffset.x, sim.sourcePlacementMinX(), sim.sourcePlacementMaxX());
   const y = clampInt(point.y + dragSourceOffset.y, sim.sourcePlacementMinY(), sim.sourcePlacementMaxY());
+  if (x === sim.sourceXCell(source) && y === sim.sourceYCell(source)) {
+    return true;
+  }
   source.xLambda = cellsToLambda(x);
   source.yLambda = cellsToLambda(y);
-  state.sourceDefaults = { ...source };
-  delete state.sourceDefaults.id;
-  updateControlText();
-  updateInspector();
-  updateCanvasInteractionState();
-  sim.render();
+  requestSourceDragRender();
   return true;
 }
 
 function endSourceDrag(event) {
   if (dragSourcePointerId !== event.pointerId) return;
+  const source = state.sources.find((candidate) => candidate.id === dragSourceId);
+  if (source) {
+    state.sourceDefaults = { ...source };
+    delete state.sourceDefaults.id;
+  }
   dragSourcePointerId = null;
   dragSourceId = null;
   dragSourceOffset = null;
   updateCanvasInteractionState();
+  flushSourceDragRender();
 }
 
 function beginMaterialDrag(event, region, originClientX = event.clientX, originClientY = event.clientY) {
