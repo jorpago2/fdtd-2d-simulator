@@ -3380,7 +3380,7 @@ function updateControlText() {
     cellsToLambda(sim.ny)
   )} \u03bb\u2080`;
   const fullGridSummary = `${gridSummary} \u00b7 ${domainSummary}`;
-  const topGridSummary = window.matchMedia?.("(max-width: 620px)")?.matches ? compactGridSummary : fullGridSummary;
+  const topGridSummary = compactGridSummary;
   const zoomSummary = `${sim.viewZoom.toFixed(2)}x`;
   const solverSummary = solverModeLabel();
   const boundary = boundarySummaryLabel();
