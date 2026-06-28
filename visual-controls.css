@@ -145,41 +145,11 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     0 10px 24px rgba(0, 0, 0, 0.26) !important;
 }
 
-/* Readout displays: values should not render as separate bottom bars. */
-output {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-}
-
-output::before,
-output::after {
+/* The compact canvas status strip is intentionally hidden on every display. */
+.app-shell .stage .mobile-canvas-stats,
+.app-shell.canvas-focus-mode .stage .mobile-canvas-stats,
+.stage.selection-sheet-open .mobile-canvas-stats {
   display: none !important;
-  content: none !important;
-}
-
-.source-menu label > output,
-.control-row output,
-.toggle-row output,
-.mobile-canvas-stats output,
-.scientific-status-item output,
-.results-summary-card output,
-.diagnostic-metric output,
-.simulation-guide-card output,
-.config-status-grid output,
-.config-summary-card output,
-.selection-sheet-details output,
-.scene-browser-meta output,
-.inspector-details output,
-.visual-summary-card output,
-.status-grid output,
-.chart-readout,
-.results-state-pill,
-.visual-profile-pill {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 @media (max-width: 520px) {
@@ -382,30 +352,4 @@ output::after {
 .control-panel[data-mobile-layer="visual"] #tab-visual .visual-panel-layer input[type="checkbox"]:checked::before {
   background: linear-gradient(145deg, #273345, #111923) !important;
   transform: translateX(20px) !important;
-}
-
-html[data-theme="dark"] output,
-html[data-theme="dark"] .app-shell output,
-html[data-theme="dark"] .app-shell .source-menu label > output,
-html[data-theme="dark"] .app-shell .control-row output,
-html[data-theme="dark"] .app-shell .toggle-row output,
-html[data-theme="dark"] .app-shell .mobile-canvas-stats output,
-html[data-theme="dark"] .app-shell .scientific-status-item output,
-html[data-theme="dark"] .app-shell .results-summary-card output,
-html[data-theme="dark"] .app-shell .diagnostic-metric output,
-html[data-theme="dark"] .app-shell .simulation-guide-card output,
-html[data-theme="dark"] .app-shell .config-status-grid output,
-html[data-theme="dark"] .app-shell .config-summary-card output,
-html[data-theme="dark"] .app-shell .selection-sheet-details output,
-html[data-theme="dark"] .app-shell .scene-browser-meta output,
-html[data-theme="dark"] .app-shell .inspector-details output,
-html[data-theme="dark"] .app-shell .visual-summary-card output,
-html[data-theme="dark"] .app-shell .status-grid output,
-html[data-theme="dark"] .app-shell .chart-readout,
-html[data-theme="dark"] .app-shell .results-state-pill,
-html[data-theme="dark"] .app-shell .visual-profile-pill {
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
 }
