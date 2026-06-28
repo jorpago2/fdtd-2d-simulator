@@ -380,10 +380,6 @@ body.controls-drawer-open {
     border-radius: 17px !important;
   }
 
-  .topbar .brand-lockup {
-    display: none !important;
-  }
-
   .topbar .control-drawer-toggle {
     width: 38px !important;
     height: 38px !important;
@@ -413,6 +409,10 @@ body.controls-drawer-open {
 @media (max-width: 680px) {
   .topbar {
     padding: 4px !important;
+  }
+
+  .topbar .brand-lockup {
+    display: none !important;
   }
 
   .topbar .brand-title {
