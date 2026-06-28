@@ -2,10 +2,14 @@
 
 Object.assign(FDTDSim.prototype, {
 sourceSample(source, phaseRad = 0) {
+  return this.sourceSampleAtPhaseTime(source, this.time, phaseRad);
+},
+
+sourceSampleAtPhaseTime(source, t, phaseRad = 0) {
   const f = source.frequency;
   const absolutePhase = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
   const phaseTimeOffset = f > 0 ? (phaseRad + absolutePhase) / (2 * Math.PI * f) : 0;
-  return this.sourceSampleAtTime(source, this.time + phaseTimeOffset);
+  return this.sourceSampleAtTime(source, t + phaseTimeOffset);
 },
 
 sourceSampleAtTime(source, t) {
@@ -64,6 +68,32 @@ incidentLinePhase(source, y, sy) {
   return -kCells * (y - sy) * Math.sin(theta);
 },
 
+addDirectionalIncidentField(idx, value, x, y, source) {
+  this.addIncidentScalarField(idx, value);
+
+  const scaledValue = Number.isFinite(this.fieldScale) ? value / this.fieldScale : 0;
+  if (Math.abs(scaledValue) < 1e-9) return;
+
+  const theta = (source.angleDeg * Math.PI) / 180;
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+  // Huygens-style pairing: the transverse companion selects the forward impedance branch.
+  const transverseGain = 1;
+  const directionX = cosTheta >= 0 ? 1 : -1;
+  const transverseX = directionX > 0 ? x - 1 : x;
+  if (transverseX < 0 || transverseX >= this.nx - 1) return;
+  const transverseIdx = this.id(transverseX, y);
+  if (this.material[transverseIdx] === 2) return;
+
+  if (state.fieldComponent === "hz") {
+    this.hx[idx] += -sinTheta * scaledValue * transverseGain;
+    this.hy[transverseIdx] += cosTheta * scaledValue * transverseGain;
+  } else {
+    this.hx[idx] += sinTheta * scaledValue * transverseGain;
+    this.hy[transverseIdx] -= cosTheta * scaledValue * transverseGain;
+  }
+},
+
 evanescentWaveNumbers(source) {
   const k0 = (2 * Math.PI * Math.max(1e-9, source.frequency)) / Math.max(COURANT, 1e-9);
   const kParallelRatio = clamp(Number(source.widthLambda) || 1.25, 1.01, 2.5);
@@ -81,7 +111,7 @@ injectPlaneWaveIncidentField(source, sx, sy) {
     const idx = this.id(sx, y);
     if (this.material[idx] !== 2) {
       const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-      this.addIncidentScalarField(idx, value * taper);
+      this.addDirectionalIncidentField(idx, value * taper, sx, y, source);
     }
   }
 },
@@ -97,7 +127,7 @@ injectGaussianLineIncidentField(source, sx, sy) {
     const idx = this.id(sx, y);
     if (this.material[idx] !== 2) {
       const value = this.sourceSample(source, this.incidentLinePhase(source, y, sy));
-      this.addIncidentScalarField(idx, value * profile);
+      this.addDirectionalIncidentField(idx, value * profile, sx, y, source);
     }
   }
 },
