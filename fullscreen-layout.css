@@ -372,13 +372,29 @@ body.controls-drawer-open {
   }
 
   .topbar {
-    right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+    left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
+    right: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 5px !important;
+    border-radius: 17px !important;
+  }
+
+  .topbar .brand-lockup {
+    display: none !important;
+  }
+
+  .topbar .control-drawer-toggle {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
   }
 
   .canvas-toolbar {
-    top: calc(max(var(--fullscreen-edge), env(safe-area-inset-top)) + 58px) !important;
-    left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
+    top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
+    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
     right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
+    flex-wrap: nowrap !important;
     justify-content: space-between !important;
   }
 
@@ -389,7 +405,7 @@ body.controls-drawer-open {
 
 @media (max-width: 680px) {
   .topbar {
-    padding: 7px 8px 7px 10px !important;
+    padding: 4px !important;
   }
 
   .topbar .brand-title {
@@ -398,9 +414,11 @@ body.controls-drawer-open {
   }
 
   .canvas-toolbar {
-    top: calc(max(var(--fullscreen-edge), env(safe-area-inset-top)) + 60px) !important;
+    top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
+    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 50px) !important;
     gap: 6px !important;
-    padding: 7px !important;
+    padding: 4px 6px !important;
+    border-radius: 16px !important;
   }
 
   .canvas-toolbar .tool-group.compact {
@@ -408,9 +426,17 @@ body.controls-drawer-open {
   }
 
   .canvas-toolbar .icon-button {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .canvas-toolbar .icon-button.primary {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
   }
 
   .canvas-toolbar .interaction-toggle {
@@ -454,16 +480,17 @@ body.controls-drawer-open {
 
 @media (max-width: 390px) {
   .canvas-toolbar {
-    justify-content: center !important;
+    justify-content: space-between !important;
   }
 
   .canvas-toolbar .tool-group.compact {
-    flex: 1 1 auto !important;
+    flex: 0 0 auto !important;
     justify-content: center !important;
   }
 
   .canvas-toolbar .interaction-toggle {
-    flex-basis: 100% !important;
+    flex: 1 1 108px !important;
+    max-width: 126px !important;
   }
 
   .control-panel .mobile-layer-button {
