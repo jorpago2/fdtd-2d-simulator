@@ -202,13 +202,15 @@
       "checks": [
         "six-field path finite",
         "cross-polarized energy finite",
+        "output-line cross-polarized conversion finite",
+        "passivity margin positive",
         "compare against calibrated omega/chiral reference",
-        "passivity/energy balance"
+        "grid convergence"
       ],
       "acceptance": {
-        "status": "pending-calibrated-reference"
+        "status": "first-fdtd-observables-added; calibrated-reference-and-convergence-pending"
       },
-      "rationale": "Documents the publication-grade validation still needed for 6-field coupling."
+      "rationale": "Tracks the quantitative validation gap for six-field bianisotropy after adding direct conversion and passivity-margin observables."
     }
   ]
 }

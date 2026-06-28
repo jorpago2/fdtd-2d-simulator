@@ -3657,6 +3657,9 @@ function sweepReadyStatusText() {
       ? "Superlens sweep plots image-transfer and width metrics from FDTD field samples."
       : "Negative-index sweep plots the in-slab beam-angle sign and power-balance residual.";
   }
+  if (bianisotropyAnalysisPresets.has(state.preset) && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return "Bianisotropy sweep plots cross-polarized output conversion from the six-field FDTD path.";
+  }
   return "Sweep uses the current scene and the active incident source.";
 }
 
@@ -3832,6 +3835,9 @@ function sweepAuxMetric() {
       ? { key: "superlensImageTransfer", label: "img", only: true }
       : { key: "negativeRefractionScore", label: "neg", only: true };
   }
+  if (bianisotropyAnalysisPresets.has(state.preset) && (state.sweepMode === "frequency" || state.sweepMode === "amplitude")) {
+    return { key: "bianisotropyOutputCrossFraction", label: "xpol", only: true };
+  }
   if (
     (state.sweepMode === "amplitude" || state.sweepMode === "frequency") &&
     temporalFloquetAnalysisPresets.has(state.preset)
@@ -3861,6 +3867,8 @@ function sweepMetricValue(metrics, key) {
   if (key === "hyperlensDetailTransfer") return metrics?.hyperlens?.detailTransfer || 0;
   if (key === "negativeRefractionScore") return metrics?.negativeIndex?.negativeRefractionScore || 0;
   if (key === "superlensImageTransfer") return metrics?.negativeIndex?.imageTransfer || 0;
+  if (key === "bianisotropyOutputCrossFraction") return metrics?.bianisotropy?.outputCrossFraction || 0;
+  if (key === "bianisotropyMaterialCrossFraction") return metrics?.bianisotropy?.materialCrossFraction || 0;
   return 0;
 }
 
@@ -4614,13 +4622,19 @@ function updateAnalysisControls() {
               metrics.negativeIndex.negativeRefractionScore,
             )} | resid=${formatDiagnosticRatio(metrics.negativeIndex.powerResidual)}`
         : "";
+    const bianisotropyText =
+      metrics?.bianisotropy && bianisotropyAnalysisPresets.has(state.preset)
+        ? ` | xpol=${formatDiagnosticRatio(metrics.bianisotropy.materialCrossFraction)} | out=${formatDiagnosticRatio(
+            metrics.bianisotropy.outputCrossFraction,
+          )} | pass=${formatDiagnosticRatio(metrics.bianisotropy.passivityMargin)}`
+        : "";
     el.analysisStatus.textContent = state.analysisEnabled
       ? `${sampleText} · ${contourText} · f=${formatFieldValue(sim.diagnosticFrequency())}`
       : "Analysis paused.";
     if (state.analysisEnabled) {
       el.analysisStatus.textContent = `${sampleText} | ${contourText} | f=${formatFieldValue(
         sim.diagnosticFrequency(),
-      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}`;
+      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}${bianisotropyText}`;
     }
   }
 }
@@ -4896,6 +4910,19 @@ async function runSweep() {
         superlensObjectWidthLambda: metrics?.negativeIndex?.objectWidthLambda || 0,
         superlensImageWidthLambda: metrics?.negativeIndex?.imageWidthLambda || 0,
         superlensResolutionRatio: metrics?.negativeIndex?.resolutionRatio || 0,
+        bianisotropyKappaMean: metrics?.bianisotropy?.meanKappa || 0,
+        bianisotropyKappaMax: metrics?.bianisotropy?.maxKappa || 0,
+        bianisotropyPassivityMargin: metrics?.bianisotropy?.passivityMargin || 0,
+        bianisotropyPrimaryEnergy: metrics?.bianisotropy?.material?.primaryEnergy || 0,
+        bianisotropyCrossEnergy: metrics?.bianisotropy?.material?.crossEnergy || 0,
+        bianisotropyCrossEnergyRatio: metrics?.bianisotropy?.materialConversionRatio || 0,
+        bianisotropyMaterialCrossFraction: metrics?.bianisotropy?.materialCrossFraction || 0,
+        bianisotropyInputCrossFraction: metrics?.bianisotropy?.inputCrossFraction || 0,
+        bianisotropyOutputCrossFraction: metrics?.bianisotropy?.outputCrossFraction || 0,
+        bianisotropyGeneratedCrossFraction: metrics?.bianisotropy?.generatedCrossFraction || 0,
+        bianisotropyOutputConversionRatio: metrics?.bianisotropy?.outputConversionRatio || 0,
+        bianisotropyPowerResidual: metrics?.bianisotropy?.powerResidual || 0,
+        bianisotropyPassiveFlag: metrics?.bianisotropy?.passiveDefinite ? 1 : 0,
         phaseState: metrics?.phaseAverage || 0,
         split: metrics?.split || 0,
         spectralSplit: metrics?.spectralSplit || 0,
@@ -5425,6 +5452,19 @@ function exportSweepCsv() {
     "superlensObjectWidthLambda",
     "superlensImageWidthLambda",
     "superlensResolutionRatio",
+    "bianisotropyKappaMean",
+    "bianisotropyKappaMax",
+    "bianisotropyPassivityMargin",
+    "bianisotropyPrimaryEnergy",
+    "bianisotropyCrossEnergy",
+    "bianisotropyCrossEnergyRatio",
+    "bianisotropyMaterialCrossFraction",
+    "bianisotropyInputCrossFraction",
+    "bianisotropyOutputCrossFraction",
+    "bianisotropyGeneratedCrossFraction",
+    "bianisotropyOutputConversionRatio",
+    "bianisotropyPowerResidual",
+    "bianisotropyPassiveFlag",
     "phaseState",
     "split",
     "spectralSplit",

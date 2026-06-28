@@ -869,6 +869,7 @@ analysisMetricEstimate() {
   const floquet = this.analysisFloquetEstimate();
   const hyperlens = this.analysisHyperlensEstimate();
   const negativeIndex = this.negativeIndexQuantitativeEstimate();
+  const bianisotropy = this.bianisotropyQuantitativeEstimate();
   if (this.analysisSamples < 8) {
     this.analysisMetrics = {
       spectrum: null,
@@ -889,6 +890,7 @@ analysisMetricEstimate() {
       floquet,
       hyperlens,
       negativeIndex,
+      bianisotropy,
     };
     return this.analysisMetrics;
   }
@@ -937,6 +939,7 @@ analysisMetricEstimate() {
     floquet,
     hyperlens,
     negativeIndex,
+    bianisotropy,
   };
   return this.analysisMetrics;
 },
@@ -1442,27 +1445,199 @@ negativeIndexQuantitativeEstimate() {
 fullVectorBianisotropyDiagnostics() {
   if (!this.fullVectorBianisotropyActive()) return null;
   let cells = 0;
+  let primaryElectricEnergy = 0;
+  let primaryMagneticEnergy = 0;
+  let crossElectricEnergy = 0;
+  let crossMagneticEnergy = 0;
   let primaryEnergy = 0;
   let crossEnergy = 0;
+  let coupledEnergy = 0;
+  let minCoupledEnergyDensity = Infinity;
+  let negativeCoupledEnergyCells = 0;
   let maxCrossField = 0;
+  let signedKappaSum = 0;
+  let absKappaSum = 0;
+  let maxKappa = 0;
+  let minPassivityMargin = Infinity;
   for (let i = 0; i < this.n; i += 1) {
     if (!this.bianisotropicMaterial[i] || this.material[i] === 2) continue;
+    const kappaNorm = normalizeBianisotropyKappa(this.bianisotropyKappa[i]);
+    const absKappa = Math.abs(kappaNorm);
+    const margin = 1 - absKappa * absKappa;
+    const epsX = Math.max(1e-6, Math.abs(this.eps[i]));
+    const epsY = Math.max(1e-6, Math.abs(this.epsY[i]));
+    const muX = Math.max(1e-6, Math.abs(this.mu[i]));
+    const muY = Math.max(1e-6, Math.abs(this.muY[i]));
+    const epsZ = 0.5 * (epsX + epsY);
+    const muZ = 0.5 * (muX + muY);
+    const couplingX = kappaNorm * Math.sqrt(epsX * muX);
+    const couplingY = kappaNorm * Math.sqrt(epsY * muY);
+    const couplingZ = kappaNorm * Math.sqrt(epsZ * muZ);
+    const primaryElectric = this.hx[i] * this.hx[i] + this.hy[i] * this.hy[i];
+    const primaryMagnetic = this.ez[i] * this.ez[i];
+    const crossElectric = this.dualEz[i] * this.dualEz[i];
+    const crossMagnetic = this.dualHx[i] * this.dualHx[i] + this.dualHy[i] * this.dualHy[i];
+    const coupledDensity =
+      0.5 *
+      (epsX * this.hx[i] * this.hx[i] +
+        muX * this.dualHx[i] * this.dualHx[i] +
+        2 * couplingX * this.hx[i] * this.dualHx[i] +
+        epsY * this.hy[i] * this.hy[i] +
+        muY * this.dualHy[i] * this.dualHy[i] +
+        2 * couplingY * this.hy[i] * this.dualHy[i] +
+        epsZ * this.dualEz[i] * this.dualEz[i] +
+        muZ * this.ez[i] * this.ez[i] +
+        2 * couplingZ * this.dualEz[i] * this.ez[i]);
     cells += 1;
-    primaryEnergy += this.ez[i] * this.ez[i] + this.hx[i] * this.hx[i] + this.hy[i] * this.hy[i];
-    const cross =
-      this.dualEz[i] * this.dualEz[i] +
-      this.dualHx[i] * this.dualHx[i] +
-      this.dualHy[i] * this.dualHy[i];
-    crossEnergy += cross;
+    primaryElectricEnergy += primaryElectric;
+    primaryMagneticEnergy += primaryMagnetic;
+    crossElectricEnergy += crossElectric;
+    crossMagneticEnergy += crossMagnetic;
+    primaryEnergy += primaryElectric + primaryMagnetic;
+    crossEnergy += crossElectric + crossMagnetic;
+    if (Number.isFinite(coupledDensity)) {
+      coupledEnergy += coupledDensity;
+      minCoupledEnergyDensity = Math.min(minCoupledEnergyDensity, coupledDensity);
+      if (coupledDensity < -1e-12) negativeCoupledEnergyCells += 1;
+    }
     maxCrossField = Math.max(maxCrossField, Math.abs(this.dualEz[i]), Math.abs(this.dualHx[i]), Math.abs(this.dualHy[i]));
+    signedKappaSum += kappaNorm;
+    absKappaSum += absKappa;
+    maxKappa = Math.max(maxKappa, absKappa);
+    minPassivityMargin = Math.min(minPassivityMargin, margin);
   }
   if (cells <= 0) return null;
+  if (!Number.isFinite(minCoupledEnergyDensity)) minCoupledEnergyDensity = 0;
+  if (!Number.isFinite(minPassivityMargin)) minPassivityMargin = 0;
+  const totalEnergy = primaryEnergy + crossEnergy;
   return {
     cells,
+    primaryElectricEnergy,
+    primaryMagneticEnergy,
+    crossElectricEnergy,
+    crossMagneticEnergy,
     primaryEnergy,
     crossEnergy,
     crossEnergyRatio: crossEnergy / Math.max(1e-18, primaryEnergy),
+    crossEnergyFraction: crossEnergy / Math.max(1e-18, totalEnergy),
+    electricConversionRatio: crossElectricEnergy / Math.max(1e-18, primaryElectricEnergy),
+    magneticConversionRatio: crossMagneticEnergy / Math.max(1e-18, primaryMagneticEnergy),
+    coupledEnergy,
+    minCoupledEnergyDensity,
+    negativeCoupledEnergyCells,
+    meanKappa: signedKappaSum / cells,
+    meanAbsKappa: absKappaSum / cells,
+    maxKappa,
+    minPassivityMargin,
+    passiveDefinite: minPassivityMargin > 0 && negativeCoupledEnergyCells === 0,
     maxCrossField,
+  };
+},
+
+bianisotropicMaterialBounds() {
+  if (!this.fullVectorBianisotropyActive()) return null;
+  let minX = this.nx;
+  let maxX = -1;
+  let minY = this.ny;
+  let maxY = -1;
+  let cells = 0;
+  for (let y = this.activeInteriorMinY(); y <= this.activeInteriorMaxY(); y += 1) {
+    const row = y * this.nx;
+    for (let x = this.activeInteriorMinX(); x <= this.activeInteriorMaxX(); x += 1) {
+      const idx = row + x;
+      if (!this.bianisotropicMaterial[idx] || this.material[idx] === 2) continue;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+      cells += 1;
+    }
+  }
+  if (cells <= 0 || maxX < minX || maxY < minY) return null;
+  return { minX, maxX, minY, maxY, cells };
+},
+
+bianisotropyLineEnergyStats(xCenter, yMin, yMax, halfWidth = 1) {
+  const xMin = clampInt(Math.round(xCenter - halfWidth), this.activeInteriorMinX(), this.activeInteriorMaxX());
+  const xMax = clampInt(Math.round(xCenter + halfWidth), xMin, this.activeInteriorMaxX());
+  yMin = clampInt(Math.round(yMin), this.activeInteriorMinY(), this.activeInteriorMaxY());
+  yMax = clampInt(Math.round(yMax), yMin, this.activeInteriorMaxY());
+  let primaryElectricEnergy = 0;
+  let primaryMagneticEnergy = 0;
+  let crossElectricEnergy = 0;
+  let crossMagneticEnergy = 0;
+  let samples = 0;
+  let primaryPeak = 0;
+  let crossPeak = 0;
+  for (let x = xMin; x <= xMax; x += 1) {
+    for (let y = yMin; y <= yMax; y += 1) {
+      const idx = this.id(x, y);
+      if (this.material[idx] === 2) continue;
+      const primaryElectric = this.hx[idx] * this.hx[idx] + this.hy[idx] * this.hy[idx];
+      const primaryMagnetic = this.ez[idx] * this.ez[idx];
+      const crossElectric = this.dualEz[idx] * this.dualEz[idx];
+      const crossMagnetic = this.dualHx[idx] * this.dualHx[idx] + this.dualHy[idx] * this.dualHy[idx];
+      if (![primaryElectric, primaryMagnetic, crossElectric, crossMagnetic].every(Number.isFinite)) continue;
+      primaryElectricEnergy += primaryElectric;
+      primaryMagneticEnergy += primaryMagnetic;
+      crossElectricEnergy += crossElectric;
+      crossMagneticEnergy += crossMagnetic;
+      primaryPeak = Math.max(primaryPeak, primaryElectric + primaryMagnetic);
+      crossPeak = Math.max(crossPeak, crossElectric + crossMagnetic);
+      samples += 1;
+    }
+  }
+  const primaryEnergy = primaryElectricEnergy + primaryMagneticEnergy;
+  const crossEnergy = crossElectricEnergy + crossMagneticEnergy;
+  const totalEnergy = primaryEnergy + crossEnergy;
+  return {
+    x: 0.5 * (xMin + xMax),
+    samples,
+    primaryElectricEnergy,
+    primaryMagneticEnergy,
+    crossElectricEnergy,
+    crossMagneticEnergy,
+    primaryEnergy,
+    crossEnergy,
+    primaryPeak,
+    crossPeak,
+    conversionRatio: crossEnergy / Math.max(1e-18, primaryEnergy),
+    crossFraction: crossEnergy / Math.max(1e-18, totalEnergy),
+  };
+},
+
+bianisotropyQuantitativeEstimate() {
+  if (!this.fullVectorBianisotropyActive()) return null;
+  const material = this.fullVectorBianisotropyDiagnostics();
+  const bounds = this.bianisotropicMaterialBounds();
+  if (!material || !bounds) return null;
+  const pad = Math.max(2, Math.round(state.cellsPerWavelength * 0.2));
+  const yMargin = Math.max(2, Math.round(state.cellsPerWavelength * 0.18));
+  const yMin = Math.max(this.activeInteriorMinY(), bounds.minY - yMargin);
+  const yMax = Math.min(this.activeInteriorMaxY(), bounds.maxY + yMargin);
+  const interfaceHalfWidth = Math.max(1, Math.round(pad * 0.5));
+  const inputLine = this.bianisotropyLineEnergyStats(bounds.minX, yMin, yMax, interfaceHalfWidth);
+  const outputLine = this.bianisotropyLineEnergyStats(bounds.maxX, yMin, yMax, interfaceHalfWidth);
+  const generatedCrossFraction = Math.max(0, outputLine.crossFraction - inputLine.crossFraction);
+  const powerResidual =
+    this.diagnosticSamples > 0 ? 1 - (this.diagnosticReflectance || 0) - (this.diagnosticTransmittance || 0) : null;
+  return {
+    material,
+    bounds,
+    inputLine,
+    outputLine,
+    materialCrossFraction: material.crossEnergyFraction,
+    materialConversionRatio: material.crossEnergyRatio,
+    outputCrossFraction: outputLine.crossFraction,
+    outputConversionRatio: outputLine.conversionRatio,
+    generatedCrossFraction,
+    inputCrossFraction: inputLine.crossFraction,
+    passivityMargin: material.minPassivityMargin,
+    passiveDefinite: material.passiveDefinite,
+    meanKappa: material.meanKappa,
+    meanAbsKappa: material.meanAbsKappa,
+    maxKappa: material.maxKappa,
+    powerResidual,
   };
 },
 
