@@ -73,7 +73,7 @@
         </div>
         <div class="scientific-status-item">
           <span>Grid</span>
-          <output id="topGridValue">180 x 120</output>
+          <output id="topGridValue">360 x 240</output>
         </div>
         <div class="scientific-status-item">
           <span>Boundary</span>
@@ -233,7 +233,7 @@
               </div>
             </div>
             <div class="hud">
-              <span id="gridLabel">180 x 120</span>
+              <span id="gridLabel">360 x 240</span>
               <span id="hudModeLabel">TMz / Ez</span>
               <span id="hudStepLabel">step 0</span>
               <span id="hudFieldLabel">max 0</span>
@@ -656,7 +656,7 @@
           <div class="mobile-canvas-stats" aria-label="Compact simulation status">
             <span data-mobile-stat="state"><small>state</small><output id="mobileCanvasStateValue">Select 1.00x</output></span>
             <span data-mobile-stat="mode"><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
-            <span data-mobile-stat="grid"><small>grid</small><output id="mobileGridValue">180x120</output></span>
+            <span data-mobile-stat="grid"><small>grid</small><output id="mobileGridValue">360x240</output></span>
             <span data-mobile-stat="health"><small>health</small><output id="mobileHealthValue" data-health-level="stable" aria-live="polite">stable</output></span>
             <span data-mobile-stat="step"><small>step</small><output id="mobileStepValue">0</output></span>
             <span data-mobile-stat="max"><small>max</small><output id="mobileMaxFieldValue">0</output></span>
@@ -1184,7 +1184,7 @@
                     </div>
                     <div class="diagnostic-metric">
                       <span>Grid cells</span>
-                      <output id="performanceGridOutput">180 x 120</output>
+                      <output id="performanceGridOutput">360 x 240</output>
                     </div>
                     <div class="diagnostic-metric">
                       <span>FDTD step</span>
@@ -1318,7 +1318,7 @@
                 </div>
                 <div class="config-summary-card">
                   <span>Grid</span>
-                  <output id="configGridOutput">180 x 120</output>
+                  <output id="configGridOutput">360 x 240</output>
                 </div>
                 <div class="config-summary-card">
                   <span>Boundary</span>
@@ -1349,11 +1349,11 @@
                 <div class="two-col">
                   <label>
                     <span><i>N</i><sub>x</sub> cells</span>
-                    <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="180" />
+                    <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="360" />
                   </label>
                   <label>
                     <span><i>N</i><sub>y</sub> cells</span>
-                    <input id="gridNyInput" type="number" min="60" max="800" step="10" value="120" />
+                    <input id="gridNyInput" type="number" min="60" max="800" step="10" value="240" />
                   </label>
                 </div>
               </div>
@@ -1390,7 +1390,7 @@
       </section>
     </main>
 
-    <script src="src/constants.js?v=20260628-ui-scale-1"></script>
+    <script src="src/constants.js?v=20260628-default-grid-2x-1"></script>
     <script src="src/wasm-backend.js?v=20260628-dynamic-core-1"></script>
     <script src="src/numerics.js?v=20260627-split-2"></script>
     <script src="src/colormaps.js?v=20260628-render-lut-1"></script>
@@ -1405,6 +1405,6 @@
     <script src="src/fdtd-rendering.js?v=20260628-pml-export-scale-1"></script>
     <script src="src/fdtd-worker-protocol.js?v=20260628-worker-engine-1"></script>
     <script src="src/worker-engine.js?v=20260628-pml-continuation-1"></script>
-    <script src="app.js?v=20260628-pml-export-scale-1"></script>
+    <script src="app.js?v=20260628-export-colorbar-grid-2x-1"></script>
   </body>
 </html>

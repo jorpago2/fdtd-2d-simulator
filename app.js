@@ -6130,14 +6130,101 @@ function resetSimulationFields() {
   sim.render();
 }
 
+function exportColorbarMapName() {
+  if (state.viewMode === "epsilon" || state.viewMode === "mu") {
+    const center = Number.isFinite(sim.lastMaterialViewCenter)
+      ? sim.lastMaterialViewCenter
+      : state.viewMode === "mu"
+        ? 1
+        : 0;
+    const min = Number.isFinite(sim.lastMaterialViewMin) ? sim.lastMaterialViewMin : center;
+    const max = Number.isFinite(sim.lastMaterialViewMax) ? sim.lastMaterialViewMax : center + 1;
+    return currentMaterialColormapName({ center, min, max });
+  }
+  return currentFieldColormapName(fieldDisplayConfig().magnitude);
+}
+
+function drawExportColorbar(ctx, width, height) {
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const barWidth = clamp(width * 0.058, 60 * dpr, 88 * dpr);
+  const barHeight = clamp(height * 0.25, 136 * dpr, 220 * dpr);
+  const margin = clamp(Math.min(width, height) * 0.025, 14 * dpr, 28 * dpr);
+  const x = width - barWidth - margin;
+  const y = Math.max(margin, (height - barHeight) / 2);
+  const dark = state.theme === "dark";
+  const panelColor = dark ? "rgba(12, 15, 20, 0.90)" : "rgba(255, 255, 255, 0.92)";
+  const borderColor = dark ? "rgba(255, 255, 255, 0.20)" : "rgba(17, 26, 31, 0.18)";
+  const textColor = dark ? "rgba(247, 251, 255, 0.96)" : "rgba(17, 26, 31, 0.96)";
+  const titleFont = Math.max(10 * dpr, Math.min(15 * dpr, width * 0.014));
+  const labelFont = Math.max(9 * dpr, Math.min(13 * dpr, width * 0.012));
+  const pad = Math.max(9 * dpr, barWidth * 0.13);
+  const titleHeight = titleFont * 1.25;
+  const gradientTop = y + pad + titleHeight;
+  const gradientHeight = barHeight - 2 * pad - titleHeight;
+  const gradientWidth = Math.max(10 * dpr, barWidth * 0.24);
+  const gradientX = x + pad;
+  const radius = Math.max(8 * dpr, barWidth * 0.12);
+
+  ctx.save();
+  ctx.fillStyle = panelColor;
+  if (typeof ctx.roundRect === "function") {
+    ctx.beginPath();
+    ctx.roundRect(x, y, barWidth, barHeight, radius);
+    ctx.fill();
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = Math.max(1, dpr);
+    ctx.stroke();
+  } else {
+    ctx.fillRect(x, y, barWidth, barHeight);
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = Math.max(1, dpr);
+    ctx.strokeRect(x, y, barWidth, barHeight);
+  }
+
+  const gradient = ctx.createLinearGradient(0, gradientTop, 0, gradientTop + gradientHeight);
+  for (const stop of [...cmasherMap(exportColorbarMapName()).stops].reverse()) {
+    gradient.addColorStop(clamp(1 - stop.t, 0, 1), `rgb(${stop.c[0]}, ${stop.c[1]}, ${stop.c[2]})`);
+  }
+  ctx.fillStyle = gradient;
+  ctx.fillRect(gradientX, gradientTop, gradientWidth, gradientHeight);
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = Math.max(1, 0.8 * dpr);
+  ctx.strokeRect(gradientX, gradientTop, gradientWidth, gradientHeight);
+
+  ctx.fillStyle = textColor;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  ctx.font = `700 ${titleFont}px ui-sans-serif, system-ui, sans-serif`;
+  ctx.fillText(el.colorbarTitle?.textContent?.trim() || "", x + barWidth / 2, y + pad + titleFont * 0.55);
+
+  ctx.textAlign = "left";
+  ctx.font = `${labelFont}px ui-sans-serif, system-ui, sans-serif`;
+  const labelX = gradientX + gradientWidth + Math.max(7 * dpr, barWidth * 0.08);
+  ctx.fillText(el.colorbarMax?.textContent?.trim() || "", labelX, gradientTop + labelFont * 0.2);
+  ctx.fillText(el.colorbarMid?.textContent?.trim() || "", labelX, gradientTop + gradientHeight * 0.5);
+  ctx.fillText(el.colorbarMin?.textContent?.trim() || "", labelX, gradientTop + gradientHeight - labelFont * 0.2);
+  ctx.restore();
+}
+
+function canvasPngDataUrlWithExportOverlays() {
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = el.canvas.width;
+  exportCanvas.height = el.canvas.height;
+  const ctx = exportCanvas.getContext("2d", { alpha: false });
+  if (!ctx) return el.canvas.toDataURL("image/png");
+  ctx.drawImage(el.canvas, 0, 0);
+  drawExportColorbar(ctx, exportCanvas.width, exportCanvas.height);
+  return exportCanvas.toDataURL("image/png");
+}
+
 function downloadCanvasPng() {
   const previousOverrides = visualLayerRenderOverrides;
   const link = document.createElement("a");
   link.download = `fdtd-2d-step-${sim.time}.png`;
   try {
-    visualLayerRenderOverrides = { ...(previousOverrides || {}), scale: true };
+    visualLayerRenderOverrides = { ...(previousOverrides || {}), scale: true, colorbar: true };
     sim.render();
-    link.href = el.canvas.toDataURL("image/png");
+    link.href = canvasPngDataUrlWithExportOverlays();
   } finally {
     visualLayerRenderOverrides = previousOverrides;
     sim.render();
