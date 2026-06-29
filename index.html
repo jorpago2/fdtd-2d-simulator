@@ -16,7 +16,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="styles.css?v=20260627-uiux-1" />
+    <link rel="stylesheet" href="styles.css?v=20260629-custom-monitors-1" />
     <link rel="stylesheet" href="ui-ux.css?v=20260628-visual-architecture-1" />
     <link rel="stylesheet" href="visual-controls.css?v=20260628-results-monitors-1" />
     <link rel="stylesheet" href="button-system.css?v=20260628-neu-tabs-1" />
@@ -200,9 +200,9 @@
                 <input type="checkbox" data-visual-layer="diagnostics" checked />
                 <span>k vector</span>
               </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show left and right monitor lines">
+              <label class="toolbar-switch visual-layer-switch" title="Show monitor lines">
                 <input type="checkbox" data-visual-layer="monitors" />
-                <span>L/R monitors</span>
+                <span>monitors</span>
               </label>
               <label class="toolbar-switch visual-layer-switch" title="Show x and y axis glyph">
                 <input type="checkbox" data-visual-layer="axes" checked />
@@ -243,6 +243,19 @@
               <span id="hudFieldLabel">max 0</span>
             </div>
             <div id="canvasStateBadge" class="canvas-state-badge" aria-live="polite" hidden>Select · 1.00x</div>
+            <div id="canvasContextMenu" class="source-menu context-choice-menu" role="dialog" aria-label="Add canvas element" hidden>
+              <div class="source-menu-header">
+                <div>
+                  <p id="canvasContextMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
+                  <h2>Add element</h2>
+                </div>
+                <button id="canvasContextCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close canvas menu">×</button>
+              </div>
+              <div class="context-choice-grid" role="group" aria-label="Canvas element type">
+                <button class="text-button" type="button" data-canvas-add="source">Source</button>
+                <button class="text-button" type="button" data-canvas-add="monitor">Monitor</button>
+              </div>
+            </div>
             <div id="sourceMenu" class="source-menu" role="dialog" aria-label="Source editor" hidden>
               <div class="source-menu-header">
                 <div>
@@ -337,6 +350,50 @@
               <div class="source-menu-actions">
                 <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
                 <button id="sourceApplyBtn" class="text-button primary-button" type="button">Add source</button>
+              </div>
+            </div>
+            <div id="monitorMenu" class="source-menu monitor-menu" role="dialog" aria-label="Monitor editor" hidden>
+              <div class="source-menu-header">
+                <div>
+                  <p id="monitorMenuHint" class="source-menu-hint">Line monitor</p>
+                  <h2 id="monitorMenuTitle">Add monitor</h2>
+                </div>
+                <button id="monitorCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close monitor editor">×</button>
+              </div>
+              <div class="source-menu-body">
+                <label>
+                  <span>Quantity</span>
+                  <select id="monitorQuantityInput">
+                    <option value="scalar">Scalar field</option>
+                    <option value="magnitude">Field magnitude</option>
+                    <option value="normalFlux">Normal flux</option>
+                    <option value="tangentFlux">Tangential flux</option>
+                  </select>
+                </label>
+                <div class="two-col">
+                  <label>
+                    <span><i>x</i> / λ<sub>0</sub></span>
+                    <input id="monitorXInput" type="number" min="0.2" max="8.8" step="0.05" value="4.5" />
+                  </label>
+                  <label>
+                    <span><i>y</i> / λ<sub>0</sub></span>
+                    <input id="monitorYInput" type="number" min="0.2" max="5.8" step="0.05" value="3.0" />
+                  </label>
+                </div>
+                <label class="control-row">
+                  <span>Length / λ<sub>0</sub></span>
+                  <input id="monitorLengthInput" type="range" min="0.1" max="8" step="0.05" value="2.0" />
+                  <output id="monitorLengthOutput">2.00</output>
+                </label>
+                <label class="control-row">
+                  <span>Angle θ</span>
+                  <input id="monitorAngleInput" type="range" min="0" max="180" step="1" value="90" />
+                  <output id="monitorAngleOutput">90°</output>
+                </label>
+              </div>
+              <div class="source-menu-actions">
+                <button id="monitorDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
+                <button id="monitorApplyBtn" class="text-button primary-button" type="button">Add monitor</button>
               </div>
             </div>
             <div id="brushMenu" class="source-menu brush-menu" role="dialog" aria-label="Draw editor" hidden>
@@ -1095,9 +1152,9 @@
                   <input type="checkbox" data-visual-layer="diagnostics" checked />
                   <span>k vector</span>
                 </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show left and right monitor lines">
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show monitor lines">
                   <input type="checkbox" data-visual-layer="monitors" />
-                  <span>L/R monitors</span>
+                  <span>monitors</span>
                 </label>
                 <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show x and y axis glyph">
                   <input type="checkbox" data-visual-layer="axes" checked />
@@ -1180,6 +1237,14 @@
                     </div>
                   </div>
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
+                </div>
+              </details>
+              <details class="custom-monitor-panel results-detail-panel" open>
+                <summary>Custom monitors</summary>
+                <div class="results-detail-body">
+                  <div id="customMonitorResults" class="custom-monitor-results" aria-live="polite">
+                    <p class="results-insight-note">Right-click the canvas to add a monitor.</p>
+                  </div>
                 </div>
               </details>
               <details class="performance-panel results-detail-panel" data-ui-scope="advanced">
@@ -1408,11 +1473,11 @@
     <script src="src/fdtd-boundaries.js?v=20260628-pml-continuation-1"></script>
     <script src="src/fdtd-presets.js?v=20260628-random-transport-1"></script>
     <script src="src/fdtd-sources.js?v=20260628-tfsf-wasm-1"></script>
-    <script src="src/fdtd-diagnostics.js?v=20260628-bianiso-quant-1"></script>
+    <script src="src/fdtd-diagnostics.js?v=20260629-custom-monitors-1"></script>
     <script src="src/fdtd-yee.js?v=20260628-exact-tfsf-1"></script>
-    <script src="src/fdtd-rendering.js?v=20260628-results-monitors-1"></script>
+    <script src="src/fdtd-rendering.js?v=20260629-custom-monitors-1"></script>
     <script src="src/fdtd-worker-protocol.js?v=20260628-worker-engine-1"></script>
     <script src="src/worker-engine.js?v=20260628-pml-continuation-1"></script>
-    <script src="app.js?v=20260628-results-monitors-1"></script>
+    <script src="app.js?v=20260629-custom-monitors-1"></script>
   </body>
 </html>

@@ -5254,6 +5254,24 @@ html[data-theme="dark"] .scene-empty-state {
 }
 
 /* Results dashboard */
+.context-choice-menu {
+  width: min(310px, calc(100vw - 36px)) !important;
+}
+
+.context-choice-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: var(--neu-control-gap) !important;
+  padding: 4px !important;
+}
+
+.context-choice-grid .text-button {
+  min-height: 54px !important;
+  justify-content: center !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+}
+
 .diagnostics-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -5302,6 +5320,52 @@ html[data-theme="dark"] .scene-empty-state {
 .diagnostic-metric:nth-child(6) {
   background:
     linear-gradient(145deg, color-mix(in srgb, var(--neu-accent) 10%, var(--neu-surface)), var(--neu-surface)) !important;
+}
+
+.custom-monitor-results {
+  display: grid !important;
+  gap: var(--neu-control-gap) !important;
+}
+
+.custom-monitor-card {
+  display: grid !important;
+  gap: 9px !important;
+  border: 1px solid var(--neu-border) !important;
+  border-radius: var(--neu-radius-card-tight) !important;
+  padding: 12px !important;
+  background: var(--neu-surface) !important;
+  box-shadow: var(--neu-shadow-soft) !important;
+}
+
+.custom-monitor-card header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+}
+
+.custom-monitor-card h3 {
+  margin: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: var(--neu-ink) !important;
+  font-size: 0.95rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.custom-monitor-card .monitor-kind {
+  flex: 0 0 auto !important;
+  color: var(--neu-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 850 !important;
+}
+
+.custom-monitor-card .diagnostics-grid {
+  padding: 0 !important;
 }
 
 .sweep-panel,

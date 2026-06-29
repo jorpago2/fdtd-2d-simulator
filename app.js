@@ -145,6 +145,14 @@ function sourceCouplingLabel(shape) {
   return incidentFieldSourceShapes.has(shape) ? "incident field" : `out-of-plane ${currentSourceLetter()}z`;
 }
 
+const defaultMonitorConfig = {
+  quantity: "scalar",
+  xLambda: 4.5,
+  yLambda: 3,
+  lengthLambda: 2,
+  angleDeg: 90,
+};
+
 function normalizeTheme(theme) {
   return theme === "dark" ? "dark" : "light";
 }
@@ -178,7 +186,7 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
 const VISUAL_LAYER_LABELS = Object.freeze({
   boundaries: "PML/bounds",
   diagnostics: "k vector",
-  monitors: "L/R monitors",
+  monitors: "monitors",
   axes: "axes",
   scale: "scale",
   sources: "sources",
@@ -253,10 +261,15 @@ const state = {
   materialPart: "real",
   canvasMode: "select",
   hoveredSourceId: null,
+  hoveredMonitorId: null,
   sources: [{ id: 1, ...defaultSourceConfig }],
   selectedSourceId: 1,
   nextSourceId: 2,
   sourceDefaults: { ...defaultSourceConfig },
+  monitors: [],
+  selectedMonitorId: null,
+  nextMonitorId: 1,
+  monitorDefaults: { ...defaultMonitorConfig },
   wavelengthUm: 1,
   cellsPerWavelength: 20,
   boundary: "absorbing",
@@ -356,6 +369,10 @@ const SERIALIZABLE_STATE_KEYS = Object.freeze([
   "selectedSourceId",
   "nextSourceId",
   "sourceDefaults",
+  "monitors",
+  "selectedMonitorId",
+  "nextMonitorId",
+  "monitorDefaults",
   "wavelengthUm",
   "cellsPerWavelength",
   "boundary",
@@ -858,12 +875,29 @@ const el = {
   colorbarMin: document.getElementById("colorbarMin"),
   modePill: document.getElementById("modePill"),
   engineValue: document.getElementById("engineValue"),
+  canvasContextMenu: document.getElementById("canvasContextMenu"),
+  canvasContextMenuHint: document.getElementById("canvasContextMenuHint"),
+  canvasContextCloseBtn: document.getElementById("canvasContextCloseBtn"),
   sourceMenu: document.getElementById("sourceMenu"),
   sourceMenuTitle: document.getElementById("sourceMenuTitle"),
   sourceMenuHint: document.getElementById("sourceMenuHint"),
   sourceApplyBtn: document.getElementById("sourceApplyBtn"),
   sourceDeleteBtn: document.getElementById("sourceDeleteBtn"),
   sourceCloseBtn: document.getElementById("sourceCloseBtn"),
+  monitorMenu: document.getElementById("monitorMenu"),
+  monitorMenuTitle: document.getElementById("monitorMenuTitle"),
+  monitorMenuHint: document.getElementById("monitorMenuHint"),
+  monitorQuantityInput: document.getElementById("monitorQuantityInput"),
+  monitorXInput: document.getElementById("monitorXInput"),
+  monitorYInput: document.getElementById("monitorYInput"),
+  monitorLengthInput: document.getElementById("monitorLengthInput"),
+  monitorLengthOutput: document.getElementById("monitorLengthOutput"),
+  monitorAngleInput: document.getElementById("monitorAngleInput"),
+  monitorAngleOutput: document.getElementById("monitorAngleOutput"),
+  monitorApplyBtn: document.getElementById("monitorApplyBtn"),
+  monitorDeleteBtn: document.getElementById("monitorDeleteBtn"),
+  monitorCloseBtn: document.getElementById("monitorCloseBtn"),
+  customMonitorResults: document.getElementById("customMonitorResults"),
 };
 
 const sceneBrowserState = {
@@ -1806,43 +1840,69 @@ function materialRegionClientPoint(region) {
   };
 }
 
+function monitorClientPoint(monitor) {
+  const rect = el.canvas.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const x = sim.gridToCanvasX(sim.monitorXCell(monitor) + 0.5) / dpr + rect.left;
+  const y = sim.gridToCanvasY(sim.monitorYCell(monitor) + 0.5) / dpr + rect.top;
+  return { x, y };
+}
+
 function clearCanvasHover(render = true) {
-  if (state.hoveredSourceId == null && !hoveredMaterialRegion) return;
+  if (state.hoveredSourceId == null && state.hoveredMonitorId == null && !hoveredMaterialRegion) return;
   state.hoveredSourceId = null;
+  state.hoveredMonitorId = null;
   hoveredMaterialRegion = null;
   if (render) sim.render();
 }
 
 function updateCanvasHover(event) {
-  if (state.canvasMode !== "select" || pointerDown || dragSourcePointerId != null || dragMaterialPointerId != null || panPointerId != null) {
+  if (
+    state.canvasMode !== "select" ||
+    pointerDown ||
+    dragSourcePointerId != null ||
+    dragMonitorPointerId != null ||
+    dragMaterialPointerId != null ||
+    panPointerId != null
+  ) {
     clearCanvasHover();
     return;
   }
   const source = sim.sourceAtClientPoint(event.clientX, event.clientY);
+  const monitor = source ? null : sim.monitorAtClientPoint(event.clientX, event.clientY);
   const previousSourceId = state.hoveredSourceId;
+  const previousMonitorId = state.hoveredMonitorId;
   const previousRegionKey = materialRegionSignature(hoveredMaterialRegion);
   if (source) {
     state.hoveredSourceId = source.id;
+    state.hoveredMonitorId = null;
+    hoveredMaterialRegion = null;
+  } else if (monitor) {
+    state.hoveredSourceId = null;
+    state.hoveredMonitorId = monitor.id;
     hoveredMaterialRegion = null;
   } else {
     state.hoveredSourceId = null;
+    state.hoveredMonitorId = null;
     hoveredMaterialRegion = sim.findMaterialRegionAtClientPoint(event.clientX, event.clientY);
   }
   const nextRegionKey = materialRegionSignature(hoveredMaterialRegion);
-  if (previousSourceId !== state.hoveredSourceId || previousRegionKey !== nextRegionKey) {
+  if (previousSourceId !== state.hoveredSourceId || previousMonitorId !== state.hoveredMonitorId || previousRegionKey !== nextRegionKey) {
     sim.render();
   }
 }
 
 function updateInspector() {
   if (!el.inspectorKind || !el.inspectorTitle || !el.inspectorDetails) return;
+  const monitor = explicitlySelectedMonitor();
   const source = explicitlySelectedSource();
   const region = selectedMaterialRegion;
   const hasRegion = Boolean(region?.cells?.length);
-  const hasSource = Boolean(source) && !hasRegion;
+  const hasMonitor = Boolean(monitor) && !hasRegion;
+  const hasSource = Boolean(source) && !hasRegion && !hasMonitor;
 
-  el.inspectorEditBtn.disabled = !(hasSource || hasRegion);
-  el.inspectorClearBtn.disabled = !(hasSource || hasRegion);
+  el.inspectorEditBtn.disabled = !(hasSource || hasMonitor || hasRegion);
+  el.inspectorClearBtn.disabled = !(hasSource || hasMonitor || hasRegion);
 
   if (hasRegion) {
     const stats = materialRegionStats(region);
@@ -1900,12 +1960,40 @@ function updateInspector() {
     return;
   }
 
+  if (hasMonitor) {
+    const measurement = sim.measureCustomMonitor(monitor);
+    el.inspectorKind.textContent = "Monitor";
+    el.inspectorTitle.textContent = `Monitor M${monitor.id}: ${monitorQuantityLabel(monitor.quantity)}`;
+    setInspectorDetails([
+      ["x / λ0", formatLambda(monitor.xLambda)],
+      ["y / λ0", formatLambda(monitor.yLambda)],
+      ["Length", `${formatLambda(monitor.lengthLambda)} λ0`],
+      ["Angle", `${formatMonitorAngle(monitor.angleDeg)} deg`],
+      ["Samples", String(measurement.samples || 0)],
+      ["Mean", formatFieldValue(measurement.mean || 0)],
+      ["RMS", formatFieldValue(measurement.rms || 0)],
+      ["Flux n", formatFieldValue(measurement.normalFlux || 0)],
+    ]);
+    setSelectionSheet("Monitor", el.inspectorTitle.textContent, [
+      ["Quantity", monitorQuantityLabel(monitor.quantity)],
+      ["Length", `${formatLambda(monitor.lengthLambda)} λ0`],
+      ["Angle", `${formatMonitorAngle(monitor.angleDeg)} deg`],
+      ["Value", formatFieldValue(measurement.value || 0)],
+      ["Samples", String(measurement.samples || 0)],
+    ]);
+    if (el.inspectorNote) {
+      el.inspectorNote.textContent = "Custom monitor values are sampled along the selected line segment.";
+    }
+    return;
+  }
+
   const presetLabel = el.presetInput?.selectedOptions?.[0]?.textContent?.trim() || state.preset;
   el.inspectorKind.textContent = "Scene";
   el.inspectorTitle.textContent = "No explicit selection";
   setInspectorDetails([
     ["Preset", presetLabel],
     ["Sources", String(state.sources.length)],
+    ["Monitors", String(state.monitors.length)],
     ["Grid", `${sim.nx} x ${sim.ny}`],
     ["Mode", solverModeLabel()],
     ["Boundary", boundarySummaryLabel()],
@@ -1913,7 +2001,7 @@ function updateInspector() {
   ]);
   hideSelectionSheet();
   if (el.inspectorNote) {
-    el.inspectorNote.textContent = "Select a source or material region on the canvas.";
+    el.inspectorNote.textContent = "Select a source, monitor, or material region on the canvas.";
   }
 }
 
@@ -1995,6 +2083,9 @@ function activateControlTab(tabName, options = {}) {
   setMobileLayerActive(options.layer || controlTabLayerName(selected));
   if (options.focusSelector) {
     focusControlPanelSection(options.focusSelector);
+  }
+  if (selected === "results") {
+    renderCustomMonitorResults({ force: true });
   }
 }
 
@@ -2456,6 +2547,7 @@ function replacePrimarySource(overrides = {}) {
   Object.assign(source, overrides);
   normalizeSource(source);
   state.selectedSourceId = source.id;
+  state.selectedMonitorId = null;
   return source;
 }
 
@@ -2463,6 +2555,7 @@ function addSource(overrides = {}) {
   const source = makeSource(overrides);
   state.sources.push(source);
   state.selectedSourceId = source.id;
+  state.selectedMonitorId = null;
   clearMaterialSelection(false);
   state.sourceDefaults = { ...source };
   delete state.sourceDefaults.id;
@@ -2482,6 +2575,87 @@ function explicitlySelectedSource() {
 
 function clampAllSourcesToInterior() {
   state.sources.forEach((source) => normalizeSource(source));
+}
+
+function monitorQuantityLabel(quantity) {
+  return {
+    scalar: `${scalarFieldComponentKey()} mean`,
+    magnitude: "field RMS",
+    normalFlux: "normal flux",
+    tangentFlux: "tangential flux",
+  }[quantity] || `${scalarFieldComponentKey()} mean`;
+}
+
+function maxMonitorXLambda() {
+  return cellsToLambda(sim.activeInteriorMaxX());
+}
+
+function maxMonitorYLambda() {
+  return cellsToLambda(sim.activeInteriorMaxY());
+}
+
+function minMonitorXLambda() {
+  return cellsToLambda(sim.activeInteriorMinX());
+}
+
+function minMonitorYLambda() {
+  return cellsToLambda(sim.activeInteriorMinY());
+}
+
+function normalizeMonitor(monitor) {
+  monitor.quantity = ["scalar", "magnitude", "normalFlux", "tangentFlux"].includes(monitor.quantity)
+    ? monitor.quantity
+    : "scalar";
+  monitor.xLambda = clamp(Number(monitor.xLambda) || defaultMonitorConfig.xLambda, minMonitorXLambda(), maxMonitorXLambda());
+  monitor.yLambda = clamp(Number(monitor.yLambda) || defaultMonitorConfig.yLambda, minMonitorYLambda(), maxMonitorYLambda());
+  const maxLengthLambda = Math.max(0.1, Math.hypot(maxMonitorXLambda() - minMonitorXLambda(), maxMonitorYLambda() - minMonitorYLambda()));
+  monitor.lengthLambda = clamp(Number(monitor.lengthLambda) || defaultMonitorConfig.lengthLambda, 0.05, maxLengthLambda);
+  monitor.angleDeg = clamp(Number(monitor.angleDeg) || 0, 0, 180);
+  return monitor;
+}
+
+function makeMonitor(overrides = {}, assignId = true) {
+  const monitor = normalizeMonitor({
+    ...state.monitorDefaults,
+    ...overrides,
+  });
+  if (assignId) {
+    monitor.id = state.nextMonitorId;
+    state.nextMonitorId += 1;
+  }
+  return monitor;
+}
+
+function selectedMonitor() {
+  return state.monitors.find((monitor) => monitor.id === state.selectedMonitorId) || state.monitors[0] || null;
+}
+
+function explicitlySelectedMonitor() {
+  return state.monitors.find((monitor) => monitor.id === state.selectedMonitorId) || null;
+}
+
+function addMonitor(overrides = {}) {
+  const monitor = makeMonitor(overrides);
+  state.monitors.push(monitor);
+  state.selectedMonitorId = monitor.id;
+  state.selectedSourceId = null;
+  state.visualProfile = "custom";
+  state.visualLayerMonitors = true;
+  clearMaterialSelection(false);
+  state.monitorDefaults = { ...monitor };
+  delete state.monitorDefaults.id;
+  return monitor;
+}
+
+function deleteMonitor(monitorId) {
+  const index = state.monitors.findIndex((monitor) => monitor.id === monitorId);
+  if (index < 0) return;
+  state.monitors.splice(index, 1);
+  state.selectedMonitorId = state.monitors[Math.min(index, state.monitors.length - 1)]?.id ?? null;
+}
+
+function clampAllMonitorsToInterior() {
+  state.monitors.forEach((monitor) => normalizeMonitor(monitor));
 }
 
 function sourceUsesWidth(shape) {
@@ -2548,6 +2722,16 @@ function clearMaterialSelection(render = true) {
 }
 
 function deleteSelectedElement() {
+  const monitor = explicitlySelectedMonitor();
+  if (monitor) {
+    disableResponsiveGridOrientation();
+    deleteMonitor(monitor.id);
+    closeMonitorMenu();
+    updateControlText();
+    updateStats();
+    sim.render();
+    return true;
+  }
   const source = explicitlySelectedSource();
   if (source) {
     disableResponsiveGridOrientation();
@@ -2580,6 +2764,7 @@ function selectMaterialRegion(region, render = true) {
   selectedMaterialRegion = region;
   if (region) {
     state.selectedSourceId = null;
+    state.selectedMonitorId = null;
     state.brush = dominantMaterialKind(region);
   }
   updateInspector();
@@ -2894,6 +3079,10 @@ let dragSourcePointerId = null;
 let dragSourceId = null;
 let dragSourceOffset = null;
 let dragSourceRenderFrame = null;
+let dragMonitorPointerId = null;
+let dragMonitorId = null;
+let dragMonitorOffset = null;
+let dragMonitorRenderFrame = null;
 let dragMaterialPointerId = null;
 let materialDragState = null;
 const activePointers = new Map();
@@ -2923,6 +3112,9 @@ const performanceStats = {
 };
 let sourceMenuMode = "add";
 let sourceMenuDraft = null;
+let canvasContextPoint = null;
+let monitorMenuMode = "add";
+let monitorMenuDraft = null;
 let brushMenuMode = "brush";
 let boundaryMenuSide = "top";
 
@@ -2930,6 +3122,12 @@ function activeSourceEditorTarget() {
   if (sourceMenuDraft) return sourceMenuDraft;
   if (!el.sourceMenu?.hidden) return selectedSource();
   return selectedSource();
+}
+
+function activeMonitorEditorTarget() {
+  if (monitorMenuDraft) return monitorMenuDraft;
+  if (!el.monitorMenu?.hidden) return explicitlySelectedMonitor();
+  return explicitlySelectedMonitor();
 }
 
 function sourceTypeLabel(type) {
@@ -3075,16 +3273,79 @@ function syncSourceEditorTarget() {
   updateControlText();
 }
 
+function populateMonitorEditor(monitor) {
+  const normalized = normalizeMonitor(monitor);
+  if (el.monitorQuantityInput) el.monitorQuantityInput.value = normalized.quantity;
+  if (el.monitorXInput) {
+    el.monitorXInput.min = formatLambda(minMonitorXLambda());
+    el.monitorXInput.max = formatLambda(maxMonitorXLambda());
+    el.monitorXInput.value = formatLambda(normalized.xLambda);
+  }
+  if (el.monitorYInput) {
+    el.monitorYInput.min = formatLambda(minMonitorYLambda());
+    el.monitorYInput.max = formatLambda(maxMonitorYLambda());
+    el.monitorYInput.value = formatLambda(normalized.yLambda);
+  }
+  if (el.monitorLengthInput) {
+    const maxLengthLambda = Math.max(0.1, Math.hypot(maxMonitorXLambda() - minMonitorXLambda(), maxMonitorYLambda() - minMonitorYLambda()));
+    el.monitorLengthInput.max = formatLambda(maxLengthLambda);
+    el.monitorLengthInput.value = formatLambda(normalized.lengthLambda);
+  }
+  if (el.monitorLengthOutput) el.monitorLengthOutput.value = formatLambda(normalized.lengthLambda);
+  if (el.monitorAngleInput) el.monitorAngleInput.value = String(Math.round(normalized.angleDeg));
+  if (el.monitorAngleOutput) el.monitorAngleOutput.value = `${formatMonitorAngle(normalized.angleDeg)}°`;
+  if (el.monitorMenuTitle) {
+    el.monitorMenuTitle.textContent = monitorMenuMode === "edit" ? `Edit monitor M${normalized.id ?? ""}` : "Add monitor";
+  }
+  if (el.monitorMenuHint) {
+    el.monitorMenuHint.textContent =
+      monitorMenuMode === "edit"
+        ? `${monitorQuantityLabel(normalized.quantity)} · ${formatLambdaOutput(normalized.lengthLambda)}`
+        : `x / λ0 ${formatLambda(normalized.xLambda)}, y / λ0 ${formatLambda(normalized.yLambda)}`;
+  }
+  if (el.monitorApplyBtn) {
+    el.monitorApplyBtn.textContent = monitorMenuMode === "edit" ? "Update monitor" : "Add monitor";
+  }
+  if (el.monitorDeleteBtn) {
+    el.monitorDeleteBtn.hidden = monitorMenuMode !== "edit";
+  }
+}
+
+function readMonitorEditorValues() {
+  return {
+    quantity: el.monitorQuantityInput?.value || "scalar",
+    xLambda: Number(el.monitorXInput?.value),
+    yLambda: Number(el.monitorYInput?.value),
+    lengthLambda: Number(el.monitorLengthInput?.value),
+    angleDeg: Number(el.monitorAngleInput?.value),
+  };
+}
+
+function syncMonitorEditorTarget() {
+  const target = activeMonitorEditorTarget();
+  if (!target) return;
+  workerEngine?.markDirty();
+  disableResponsiveGridOrientation();
+  Object.assign(target, readMonitorEditorValues());
+  normalizeMonitor(target);
+  if (monitorMenuMode === "edit") {
+    state.monitorDefaults = { ...target };
+    delete state.monitorDefaults.id;
+  }
+  updateStats();
+  updateControlText();
+  sim.render();
+}
+
 function setCanvasMode(mode) {
   state.canvasMode = mode === "brush" ? "brush" : "select";
   if (state.canvasMode === "brush") {
     state.selectedSourceId = null;
+    state.selectedMonitorId = null;
     clearMaterialSelection(false);
     hideSelectionSheet();
   }
-  closeSourceMenu();
-  closeBrushMenu();
-  closeBoundaryMenu();
+  closeContextMenus();
   updateControlText();
   sim.render();
 }
@@ -3418,8 +3679,36 @@ function gridPointToSourcePosition(point) {
   };
 }
 
+function gridPointToMonitorPosition(point) {
+  const x = clampInt(point.x, sim.activeInteriorMinX(), sim.activeInteriorMaxX());
+  const y = clampInt(point.y, sim.activeInteriorMinY(), sim.activeInteriorMaxY());
+  return {
+    xLambda: cellsToLambda(x),
+    yLambda: cellsToLambda(y),
+  };
+}
+
+function openCanvasContextMenuAt(clientX, clientY) {
+  if (!el.canvasContextMenu) return;
+  closeSourceMenu();
+  closeMonitorMenu();
+  closeBrushMenu();
+  closeBoundaryMenu();
+  clearMaterialSelection(false);
+  const point = sim.clientToGridCell(clientX, clientY);
+  canvasContextPoint = point;
+  if (el.canvasContextMenuHint) {
+    el.canvasContextMenuHint.textContent = `x / λ0 ${formatLambda(cellsToLambda(point.x))}, y / λ0 ${formatLambda(cellsToLambda(point.y))}`;
+  }
+  el.canvasContextMenu.hidden = false;
+  positionFloatingMenu(el.canvasContextMenu, clientX, clientY);
+  sim.render();
+}
+
 function openSourceMenuAt(clientX, clientY, source = null) {
   if (!el.sourceMenu) return;
+  closeCanvasContextMenu();
+  closeMonitorMenu();
   closeBrushMenu();
   closeBoundaryMenu();
   clearMaterialSelection(false);
@@ -3427,6 +3716,7 @@ function openSourceMenuAt(clientX, clientY, source = null) {
     sourceMenuMode = "edit";
     sourceMenuDraft = null;
     state.selectedSourceId = source.id;
+    state.selectedMonitorId = null;
   } else {
     sourceMenuMode = "add";
     const point = sim.clientToGridCell(clientX, clientY);
@@ -3474,9 +3764,46 @@ function closeSourceMenu() {
   sourceMenuDraft = null;
 }
 
+function openMonitorMenuAt(clientX, clientY, monitor = null) {
+  if (!el.monitorMenu) return;
+  closeCanvasContextMenu();
+  closeSourceMenu();
+  closeBrushMenu();
+  closeBoundaryMenu();
+  clearMaterialSelection(false);
+  if (monitor) {
+    monitorMenuMode = "edit";
+    monitorMenuDraft = null;
+    state.selectedMonitorId = monitor.id;
+    state.selectedSourceId = null;
+  } else {
+    monitorMenuMode = "add";
+    const point = sim.clientToGridCell(clientX, clientY);
+    monitorMenuDraft = makeMonitor(gridPointToMonitorPosition(point), false);
+  }
+  updateControlText();
+  el.monitorMenu.hidden = false;
+  positionFloatingMenu(el.monitorMenu, clientX, clientY);
+  sim.render();
+}
+
+function closeMonitorMenu() {
+  if (!el.monitorMenu) return;
+  el.monitorMenu.hidden = true;
+  monitorMenuDraft = null;
+}
+
+function closeCanvasContextMenu() {
+  if (!el.canvasContextMenu) return;
+  el.canvasContextMenu.hidden = true;
+  canvasContextPoint = null;
+}
+
 function openBrushMenuAt(clientX, clientY, options = {}) {
   if (!el.brushMenu) return;
+  closeCanvasContextMenu();
   closeSourceMenu();
+  closeMonitorMenu();
   closeBoundaryMenu();
   brushMenuMode = options.mode === "region" ? "region" : "brush";
   if (brushMenuMode === "brush") {
@@ -3508,7 +3835,9 @@ function updateBoundaryMenuControls() {
 
 function openBoundaryMenuAt(clientX, clientY) {
   if (!el.boundaryMenu) return;
+  closeCanvasContextMenu();
   closeSourceMenu();
+  closeMonitorMenu();
   closeBrushMenu();
   boundaryMenuSide = sim.boundarySideAtClientPoint(clientX, clientY) || boundaryMenuSide || "top";
   updateBoundaryMenuControls();
@@ -3523,7 +3852,9 @@ function closeBoundaryMenu() {
 }
 
 function closeContextMenus() {
+  closeCanvasContextMenu();
   closeSourceMenu();
+  closeMonitorMenu();
   closeBrushMenu();
   closeBoundaryMenu();
 }
@@ -3555,11 +3886,34 @@ function applySourceMenu() {
   sim.render();
 }
 
+function applyMonitorMenu() {
+  disableResponsiveGridOrientation();
+  const values = readMonitorEditorValues();
+  if (monitorMenuMode === "add") {
+    addMonitor(values);
+  } else {
+    const monitor = explicitlySelectedMonitor();
+    if (monitor) {
+      Object.assign(monitor, values);
+      normalizeMonitor(monitor);
+      state.monitorDefaults = { ...monitor };
+      delete state.monitorDefaults.id;
+    }
+  }
+  monitorMenuDraft = null;
+  closeMonitorMenu();
+  updateStats();
+  updateControlText();
+  sim.render();
+}
+
 function updateControlText() {
   clampAllSourcesToInterior();
+  clampAllMonitorsToInterior();
   updateCanvasAspectRatio(sim.nx, sim.ny);
   updateThemeControls();
   const editorSource = activeSourceEditorTarget() || selectedSource();
+  const editorMonitor = activeMonitorEditorTarget();
   el.speedInput.value = String(state.stepsPerFrame);
   el.speedOutput.value = formatSpeed(state.stepsPerFrame);
   el.gainOutput.value = state.gain.toFixed(2);
@@ -3719,6 +4073,9 @@ function updateControlText() {
   if (editorSource) {
     populateSourceEditor(editorSource);
   }
+  if (editorMonitor) {
+    populateMonitorEditor(editorMonitor);
+  }
   const gridSummary = `${sim.nx} x ${sim.ny}`;
   const domainSummary = `${formatLambda(cellsToLambda(sim.nx))} \u03bb\u2080 x ${formatLambda(cellsToLambda(sim.ny))} \u03bb\u2080`;
   const compactGridSummary = `${sim.nx}x${sim.ny} \u00b7 ${formatCompactLambda(cellsToLambda(sim.nx))}x${formatCompactLambda(
@@ -3820,6 +4177,60 @@ function updateResultsInsight(diagnosticReflectance, diagnosticTransmittance, di
   el.resultsInsightNote.classList.toggle("is-warning", warning);
 }
 
+function customMonitorResultsVisible() {
+  if (!el.customMonitorResults) return false;
+  if (el.customMonitorResults.closest("[hidden]")) return false;
+  return el.customMonitorResults.getClientRects().length > 0;
+}
+
+function renderCustomMonitorResults({ force = false } = {}) {
+  if (!el.customMonitorResults) return;
+  if (!force && !customMonitorResultsVisible()) return;
+  el.customMonitorResults.replaceChildren();
+  if (!state.monitors.length) {
+    const note = document.createElement("p");
+    note.className = "results-insight-note";
+    note.textContent = "Right-click the canvas to add a monitor.";
+    el.customMonitorResults.appendChild(note);
+    return;
+  }
+  const measurements = sim.measureCustomMonitors();
+  measurements.forEach((measurement) => {
+    const monitor = measurement.monitor;
+    const card = document.createElement("article");
+    card.className = "custom-monitor-card";
+    const header = document.createElement("header");
+    const title = document.createElement("h3");
+    title.textContent = `M${monitor.id}`;
+    const kind = document.createElement("span");
+    kind.className = "monitor-kind";
+    kind.textContent = monitorQuantityLabel(monitor.quantity);
+    header.append(title, kind);
+
+    const grid = document.createElement("div");
+    grid.className = "diagnostics-grid";
+    [
+      ["Value", formatFieldValue(measurement.value)],
+      ["Mean", formatFieldValue(measurement.mean)],
+      ["RMS", formatFieldValue(measurement.rms)],
+      ["Flux n", formatFieldValue(measurement.normalFlux)],
+      ["Flux t", formatFieldValue(measurement.tangentFlux)],
+      ["Samples", String(measurement.samples)],
+    ].forEach(([label, value]) => {
+      const metric = document.createElement("div");
+      metric.className = "diagnostic-metric";
+      const labelNode = document.createElement("span");
+      const output = document.createElement("output");
+      labelNode.textContent = label;
+      output.textContent = value;
+      metric.append(labelNode, output);
+      grid.appendChild(metric);
+    });
+    card.append(header, grid);
+    el.customMonitorResults.appendChild(card);
+  });
+}
+
 function updateStats() {
   const stepText = String(sim.time);
   const maxFieldText = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
@@ -3855,6 +4266,7 @@ function updateStats() {
   if (el.fluxRightOutput) el.fluxRightOutput.textContent = formatFieldValue(sim.diagnosticTransmittedPower || 0);
   if (el.reflectanceOutput) el.reflectanceOutput.textContent = formatDiagnosticRatio(diagnosticReflectance);
   if (el.transmittanceOutput) el.transmittanceOutput.textContent = formatDiagnosticRatio(diagnosticTransmittance);
+  renderCustomMonitorResults();
   if (el.engineValue) el.engineValue.textContent = engineText;
   updateMaterialWarning();
   if (sim.lastDiverged || sim.time % 20 === 0) {
@@ -5553,6 +5965,13 @@ function normalizeImportedStateValues() {
   state.brush = Object.prototype.hasOwnProperty.call(materialNames, state.brush) ? state.brush : "custom";
   state.brushTool = state.brushTool === "geometry" ? "geometry" : "paint";
   normalizeBrushGeometryState();
+  state.monitors = Array.isArray(state.monitors) ? state.monitors : [];
+  state.selectedMonitorId = state.monitors.some((monitor) => monitor.id === state.selectedMonitorId) ? state.selectedMonitorId : null;
+  state.nextMonitorId = Math.max(1, Number(state.nextMonitorId) || 1);
+  state.monitorDefaults = normalizeMonitor({
+    ...defaultMonitorConfig,
+    ...(state.monitorDefaults && typeof state.monitorDefaults === "object" ? state.monitorDefaults : {}),
+  });
 }
 
 function sanitizeImportedSources(importedState) {
@@ -5586,6 +6005,34 @@ function sanitizeImportedSources(importedState) {
   state.nextSourceId = Math.max(Number.isFinite(importedNextId) ? Math.round(importedNextId) : 1, ...sources.map((source) => source.id + 1));
 }
 
+function sanitizeImportedMonitors(importedState) {
+  const rawMonitors = Array.isArray(importedState.monitors) ? importedState.monitors.slice(0, 32) : [];
+  const usedIds = new Set();
+  const monitors = rawMonitors.map((rawMonitor, index) => {
+    const monitor = normalizeMonitor({
+      ...defaultMonitorConfig,
+      ...(rawMonitor && typeof rawMonitor === "object" ? rawMonitor : {}),
+    });
+    const rawId = Number(rawMonitor?.id);
+    let id = Number.isFinite(rawId) && rawId > 0 ? Math.round(rawId) : index + 1;
+    while (usedIds.has(id)) id += 1;
+    usedIds.add(id);
+    monitor.id = id;
+    return monitor;
+  });
+  state.monitors = monitors;
+  const selectedId = Number(importedState.selectedMonitorId);
+  state.selectedMonitorId = monitors.some((monitor) => monitor.id === selectedId) ? selectedId : null;
+  const defaultMonitor = normalizeMonitor({
+    ...defaultMonitorConfig,
+    ...(importedState.monitorDefaults && typeof importedState.monitorDefaults === "object" ? importedState.monitorDefaults : monitors[0]),
+  });
+  delete defaultMonitor.id;
+  state.monitorDefaults = defaultMonitor;
+  const importedNextId = Number(importedState.nextMonitorId);
+  state.nextMonitorId = Math.max(Number.isFinite(importedNextId) ? Math.round(importedNextId) : 1, 1, ...monitors.map((monitor) => monitor.id + 1));
+}
+
 function applySceneState(snapshot) {
   if (!snapshot || typeof snapshot !== "object") {
     throw new Error("Invalid scene JSON.");
@@ -5595,7 +6042,18 @@ function applySceneState(snapshot) {
   const importedState = snapshot.state && typeof snapshot.state === "object" ? snapshot.state : {};
   const grid = snapshot.grid && typeof snapshot.grid === "object" ? snapshot.grid : {};
   for (const key of SERIALIZABLE_STATE_KEYS) {
-    if (key === "sources" || key === "sourceDefaults" || key === "selectedSourceId" || key === "nextSourceId") continue;
+    if (
+      key === "sources" ||
+      key === "sourceDefaults" ||
+      key === "selectedSourceId" ||
+      key === "nextSourceId" ||
+      key === "monitors" ||
+      key === "monitorDefaults" ||
+      key === "selectedMonitorId" ||
+      key === "nextMonitorId"
+    ) {
+      continue;
+    }
     if (Object.prototype.hasOwnProperty.call(importedState, key)) {
       state[key] = clonePlainData(importedState[key]);
     }
@@ -5613,6 +6071,7 @@ function applySceneState(snapshot) {
   state.sweepCancelRequested = false;
   sim.resize(state.gridNx, state.gridNy);
   sanitizeImportedSources(importedState);
+  sanitizeImportedMonitors(importedState);
   if (Array.isArray(snapshot.materials)) {
     sim.clearMaterials(false);
     snapshot.materials.forEach((cell) => {
@@ -6303,6 +6762,12 @@ el.sceneSearchInput?.addEventListener("input", () => {
 });
 
 el.inspectorEditBtn?.addEventListener("click", () => {
+  const monitor = explicitlySelectedMonitor();
+  if (monitor) {
+    const point = monitorClientPoint(monitor);
+    openMonitorMenuAt(point.x, point.y, monitor);
+    return;
+  }
   const source = explicitlySelectedSource();
   if (selectedMaterialRegion) {
     const point = materialRegionClientPoint(selectedMaterialRegion);
@@ -6317,6 +6782,7 @@ el.inspectorEditBtn?.addEventListener("click", () => {
 
 el.inspectorClearBtn?.addEventListener("click", () => {
   state.selectedSourceId = null;
+  state.selectedMonitorId = null;
   clearMaterialSelection(false);
   updateControlText();
   sim.render();
@@ -6360,6 +6826,53 @@ el.sourceDeleteBtn.addEventListener("click", () => {
 el.sourceCloseBtn.addEventListener("click", () => {
   closeSourceMenu();
   sim.render();
+});
+
+el.canvasContextCloseBtn?.addEventListener("click", () => {
+  closeCanvasContextMenu();
+  sim.render();
+});
+
+el.canvasContextMenu?.addEventListener("click", (event) => {
+  const button = event.target instanceof Element ? event.target.closest("[data-canvas-add]") : null;
+  if (!button) return;
+  const rect = el.canvas.getBoundingClientRect();
+  const point = canvasContextPoint || sim.clientToGridCell(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5);
+  const clientX = sim.gridToCanvasX(point.x + 0.5) / Math.max(1, window.devicePixelRatio || 1) + rect.left;
+  const clientY = sim.gridToCanvasY(point.y + 0.5) / Math.max(1, window.devicePixelRatio || 1) + rect.top;
+  if (button.dataset.canvasAdd === "monitor") {
+    closeCanvasContextMenu();
+    openMonitorMenuAt(clientX, clientY, null);
+  } else {
+    closeCanvasContextMenu();
+    openSourceMenuAt(clientX, clientY, null);
+  }
+});
+
+el.monitorApplyBtn?.addEventListener("click", () => {
+  applyMonitorMenu();
+});
+
+el.monitorDeleteBtn?.addEventListener("click", () => {
+  const monitor = explicitlySelectedMonitor();
+  if (monitor) {
+    disableResponsiveGridOrientation();
+    deleteMonitor(monitor.id);
+    closeMonitorMenu();
+    updateControlText();
+    updateStats();
+    sim.render();
+  }
+});
+
+el.monitorCloseBtn?.addEventListener("click", () => {
+  closeMonitorMenu();
+  sim.render();
+});
+
+[el.monitorQuantityInput, el.monitorXInput, el.monitorYInput, el.monitorLengthInput, el.monitorAngleInput].forEach((input) => {
+  input?.addEventListener("input", syncMonitorEditorTarget);
+  input?.addEventListener("change", syncMonitorEditorTarget);
 });
 
 el.speedInput.addEventListener("input", () => {
@@ -7267,6 +7780,13 @@ function promotePendingTouchDrag(event) {
     updateSourceDrag(event);
     return true;
   }
+  if (interaction.kind === "monitor") {
+    const monitor = state.monitors.find((candidate) => candidate.id === interaction.monitorId);
+    if (!monitor) return true;
+    beginMonitorDrag(event, monitor, interaction.startX, interaction.startY);
+    updateMonitorDrag(event);
+    return true;
+  }
   if (interaction.kind === "material" && interaction.region) {
     beginMaterialDrag(event, interaction.region, interaction.startX, interaction.startY);
     updateMaterialDrag(event);
@@ -7291,11 +7811,30 @@ function flushSourceDragRender() {
   sim.render();
 }
 
+function requestMonitorDragRender() {
+  if (dragMonitorRenderFrame !== null) return;
+  dragMonitorRenderFrame = requestAnimationFrame(() => {
+    dragMonitorRenderFrame = null;
+    updateStats();
+    sim.render();
+  });
+}
+
+function flushMonitorDragRender() {
+  if (dragMonitorRenderFrame !== null) {
+    cancelAnimationFrame(dragMonitorRenderFrame);
+    dragMonitorRenderFrame = null;
+  }
+  updateStats();
+  sim.render();
+}
+
 function beginSourceDrag(event, source, originClientX = event.clientX, originClientY = event.clientY) {
   disableResponsiveGridOrientation();
   closeContextMenus();
   clearMaterialSelection(false);
   state.selectedSourceId = source.id;
+  state.selectedMonitorId = null;
   updateInspector();
   dragSourcePointerId = event.pointerId;
   dragSourceId = source.id;
@@ -7303,6 +7842,28 @@ function beginSourceDrag(event, source, originClientX = event.clientX, originCli
   dragSourceOffset = {
     x: sim.sourceXCell(source) - point.x,
     y: sim.sourceYCell(source) - point.y,
+  };
+  pointerDown = false;
+  paintPointerId = null;
+  panPointerId = null;
+  lastPanPoint = null;
+  updateCanvasInteractionState();
+  sim.render();
+}
+
+function beginMonitorDrag(event, monitor, originClientX = event.clientX, originClientY = event.clientY) {
+  disableResponsiveGridOrientation();
+  closeContextMenus();
+  clearMaterialSelection(false);
+  state.selectedMonitorId = monitor.id;
+  state.selectedSourceId = null;
+  updateInspector();
+  dragMonitorPointerId = event.pointerId;
+  dragMonitorId = monitor.id;
+  const point = sim.clientToGridFloat(originClientX, originClientY);
+  dragMonitorOffset = {
+    x: sim.monitorXCell(monitor) - point.x,
+    y: sim.monitorYCell(monitor) - point.y,
   };
   pointerDown = false;
   paintPointerId = null;
@@ -7340,6 +7901,36 @@ function endSourceDrag(event) {
   dragSourceOffset = null;
   updateCanvasInteractionState();
   flushSourceDragRender();
+}
+
+function updateMonitorDrag(event) {
+  if (dragMonitorPointerId !== event.pointerId || dragMonitorId === null || !dragMonitorOffset) return false;
+  const monitor = state.monitors.find((candidate) => candidate.id === dragMonitorId);
+  if (!monitor) return false;
+  const point = sim.clientToGridFloat(event.clientX, event.clientY);
+  const x = clampInt(point.x + dragMonitorOffset.x, sim.activeInteriorMinX(), sim.activeInteriorMaxX());
+  const y = clampInt(point.y + dragMonitorOffset.y, sim.activeInteriorMinY(), sim.activeInteriorMaxY());
+  if (x === sim.monitorXCell(monitor) && y === sim.monitorYCell(monitor)) {
+    return true;
+  }
+  monitor.xLambda = cellsToLambda(x);
+  monitor.yLambda = cellsToLambda(y);
+  requestMonitorDragRender();
+  return true;
+}
+
+function endMonitorDrag(event) {
+  if (dragMonitorPointerId !== event.pointerId) return;
+  const monitor = state.monitors.find((candidate) => candidate.id === dragMonitorId);
+  if (monitor) {
+    state.monitorDefaults = { ...monitor };
+    delete state.monitorDefaults.id;
+  }
+  dragMonitorPointerId = null;
+  dragMonitorId = null;
+  dragMonitorOffset = null;
+  updateCanvasInteractionState();
+  flushMonitorDragRender();
 }
 
 function beginMaterialDrag(event, region, originClientX = event.clientX, originClientY = event.clientY) {
@@ -7430,12 +8021,18 @@ el.canvas.addEventListener("contextmenu", (event) => {
     openSourceMenuAt(event.clientX, event.clientY, source);
     return;
   }
+  const monitor = sim.monitorAtClientPoint(event.clientX, event.clientY);
+  if (monitor) {
+    clearMaterialSelection(false);
+    openMonitorMenuAt(event.clientX, event.clientY, monitor);
+    return;
+  }
   const region = selectMaterialRegionAt(event.clientX, event.clientY, false);
   if (region) {
     openBrushMenuAt(event.clientX, event.clientY, { mode: "region" });
     return;
   }
-  openSourceMenuAt(event.clientX, event.clientY, source);
+  openCanvasContextMenuAt(event.clientX, event.clientY);
 });
 
 el.canvas.addEventListener("pointerdown", (event) => {
@@ -7454,6 +8051,9 @@ el.canvas.addEventListener("pointerdown", (event) => {
     dragSourcePointerId = null;
     dragSourceId = null;
     dragSourceOffset = null;
+    dragMonitorPointerId = null;
+    dragMonitorId = null;
+    dragMonitorOffset = null;
     dragMaterialPointerId = null;
     materialDragState = null;
     pinchState = null;
@@ -7472,6 +8072,9 @@ el.canvas.addEventListener("pointerdown", (event) => {
   if (event.button === 1 || event.shiftKey || event.altKey) {
     closeContextMenus();
     beginPan(event);
+    dragMonitorPointerId = null;
+    dragMonitorId = null;
+    dragMonitorOffset = null;
     dragMaterialPointerId = null;
     materialDragState = null;
     event.preventDefault();
@@ -7482,20 +8085,34 @@ el.canvas.addEventListener("pointerdown", (event) => {
     if (state.canvasMode === "select") {
       const isTouchPointer = event.pointerType === "touch";
       const source = sim.sourceAtClientPoint(event.clientX, event.clientY);
+      const monitor = source ? null : sim.monitorAtClientPoint(event.clientX, event.clientY);
       closeContextMenus();
       if (source && !event.shiftKey && !event.altKey) {
         if (isTouchPointer) {
           clearMaterialSelection(false);
           state.selectedSourceId = source.id;
+          state.selectedMonitorId = null;
           updateInspector();
           beginPendingTouchInteraction(event, "source", { sourceId: source.id });
           sim.render();
         } else {
           beginSourceDrag(event, source);
         }
+      } else if (monitor && !event.shiftKey && !event.altKey) {
+        if (isTouchPointer) {
+          clearMaterialSelection(false);
+          state.selectedMonitorId = monitor.id;
+          state.selectedSourceId = null;
+          updateInspector();
+          beginPendingTouchInteraction(event, "monitor", { monitorId: monitor.id });
+          sim.render();
+        } else {
+          beginMonitorDrag(event, monitor);
+        }
       } else {
-        const region = selectMaterialRegionAt(event.clientX, event.clientY, false);
         state.selectedSourceId = null;
+        state.selectedMonitorId = null;
+        const region = selectMaterialRegionAt(event.clientX, event.clientY, false);
         if (region && !event.shiftKey && !event.altKey) {
           if (isTouchPointer) {
             beginPendingTouchInteraction(event, "material", { region });
@@ -7543,6 +8160,9 @@ el.canvas.addEventListener("pointermove", (event) => {
     dragSourcePointerId = null;
     dragSourceId = null;
     dragSourceOffset = null;
+    dragMonitorPointerId = null;
+    dragMonitorId = null;
+    dragMonitorOffset = null;
     dragMaterialPointerId = null;
     materialDragState = null;
     clearPendingTouchInteraction();
@@ -7564,6 +8184,11 @@ el.canvas.addEventListener("pointermove", (event) => {
   }
 
   if (updateSourceDrag(event)) {
+    event.preventDefault();
+    return;
+  }
+
+  if (updateMonitorDrag(event)) {
     event.preventDefault();
     return;
   }
@@ -7604,6 +8229,7 @@ function endPointer(event) {
     clearPendingTouchInteraction();
   }
   endSourceDrag(event);
+  endMonitorDrag(event);
   endMaterialDrag(event);
   if (paintPointerId === event.pointerId) {
     pointerDown = false;
@@ -7632,11 +8258,21 @@ document.addEventListener("pointerdown", (event) => {
   if (el.stage?.classList.contains("canvas-options-open") && !el.canvasToolbar?.contains(event.target)) {
     closeCanvasOptionsMenu();
   }
+  const contextHidden = el.canvasContextMenu?.hidden ?? true;
   const sourceHidden = el.sourceMenu?.hidden ?? true;
+  const monitorHidden = el.monitorMenu?.hidden ?? true;
   const brushHidden = el.brushMenu?.hidden ?? true;
   const boundaryHidden = el.boundaryMenu?.hidden ?? true;
-  if (sourceHidden && brushHidden && boundaryHidden) return;
-  if (el.sourceMenu?.contains(event.target) || el.brushMenu?.contains(event.target) || el.boundaryMenu?.contains(event.target)) return;
+  if (contextHidden && sourceHidden && monitorHidden && brushHidden && boundaryHidden) return;
+  if (
+    el.canvasContextMenu?.contains(event.target) ||
+    el.sourceMenu?.contains(event.target) ||
+    el.monitorMenu?.contains(event.target) ||
+    el.brushMenu?.contains(event.target) ||
+    el.boundaryMenu?.contains(event.target)
+  ) {
+    return;
+  }
   if (event.target === el.canvas) return;
   closeContextMenus();
   sim.render();
@@ -7658,7 +8294,10 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     return;
   }
-  if (event.key === "Escape" && (!el.sourceMenu?.hidden || !el.brushMenu?.hidden || !el.boundaryMenu?.hidden)) {
+  if (
+    event.key === "Escape" &&
+    (!el.canvasContextMenu?.hidden || !el.sourceMenu?.hidden || !el.monitorMenu?.hidden || !el.brushMenu?.hidden || !el.boundaryMenu?.hidden)
+  ) {
     closeContextMenus();
     sim.render();
     return;
