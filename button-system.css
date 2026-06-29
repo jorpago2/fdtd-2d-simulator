@@ -2,7 +2,10 @@
   Neumorphic button system
   ------------------------
   Final button layer shared by light and dark themes. It keeps segmented
-  controls, panel navigation, icon buttons, and action buttons visually related.
+  controls,
+panel navigation,
+icon buttons,
+and action buttons visually related.
 */
 
 :root {
@@ -50,7 +53,6 @@
     -5px -5px 13px rgba(255, 255, 255, 0.5),
     7px 7px 18px rgba(5, 84, 92, 0.26);
 }
-
 html[data-theme="dark"] {
   --button-track-bg: color-mix(in srgb, var(--neu-surface-low) 86%, #ffffff 3%);
   --button-track-border: color-mix(in srgb, var(--neu-border) 82%, transparent);
@@ -93,7 +95,6 @@ html[data-theme="dark"] {
     -5px -5px 13px rgba(50, 64, 74, 0.22),
     7px 7px 18px rgba(0, 0, 0, 0.34);
 }
-
 .app-shell .canvas-mode-toggle,
 .app-shell .segmented,
 .app-shell .theme-toggle,
@@ -108,7 +109,6 @@ html[data-theme="dark"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-
 .app-shell .canvas-mode-toggle::before,
 .app-shell .canvas-mode-toggle::after,
 .app-shell .segmented::before,
@@ -120,7 +120,6 @@ html[data-theme="dark"] {
   display: none !important;
   content: none !important;
 }
-
 .app-shell .control-tabs {
   align-content: start !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
@@ -131,7 +130,6 @@ html[data-theme="dark"] {
   padding: 7px !important;
   overflow: visible !important;
 }
-
 .app-shell .control-tab-button {
   grid-template-columns: auto minmax(0, 1fr) !important;
   gap: 4px !important;
@@ -140,19 +138,16 @@ html[data-theme="dark"] {
   padding: 6px 4px !important;
   font-size: 0.66rem !important;
 }
-
 .app-shell .control-tab-button .nav-step {
   width: 18px !important;
   height: 18px !important;
   font-size: 0.56rem !important;
 }
-
 .app-shell .mobile-layer-nav {
   grid-auto-rows: minmax(42px, auto) !important;
   height: auto !important;
   overflow: visible !important;
 }
-
 .app-shell .mode-toggle-button,
 .app-shell .segment,
 .app-shell .control-tab-button,
@@ -169,7 +164,6 @@ html[data-theme="dark"] {
     color 160ms ease,
     transform 160ms ease !important;
 }
-
 .app-shell .mode-toggle-button:hover,
 .app-shell .segment:hover,
 .app-shell .control-tab-button:hover,
@@ -178,7 +172,6 @@ html[data-theme="dark"] {
   background: color-mix(in srgb, var(--neu-surface-raised) 44%, transparent) !important;
   transform: none !important;
 }
-
 .app-shell .mode-toggle-button.is-active,
 .app-shell .segment.is-active,
 .app-shell .control-tab-button.is-active,
@@ -189,12 +182,10 @@ html[data-theme="dark"] {
   background: var(--button-active-bg) !important;
   box-shadow: var(--button-active-shadow) !important;
 }
-
 .app-shell .control-tab-button.is-active .nav-label,
 .app-shell .mobile-layer-button.is-active .nav-label {
   color: var(--button-active-ink) !important;
 }
-
 .app-shell .control-tab-button .nav-step,
 .app-shell .mobile-layer-button .nav-step {
   color: var(--neu-muted) !important;
@@ -203,14 +194,12 @@ html[data-theme="dark"] {
     inset 2px 2px 5px color-mix(in srgb, var(--neu-muted) 22%, transparent),
     inset -2px -2px 5px color-mix(in srgb, #ffffff 58%, transparent) !important;
 }
-
 html[data-theme="dark"] .app-shell .control-tab-button .nav-step,
 html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
   box-shadow:
     inset 2px 2px 5px rgba(0, 0, 0, 0.34),
     inset -2px -2px 5px rgba(255, 255, 255, 0.08) !important;
 }
-
 .app-shell .control-tab-button.is-active .nav-step,
 .app-shell .mobile-layer-button.is-active .nav-step {
   color: #ffffff !important;
@@ -219,7 +208,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     0 6px 14px color-mix(in srgb, var(--neu-accent) 22%, transparent) !important;
 }
-
 .app-shell .icon-button,
 .app-shell .text-button,
 .app-shell .panel-chip,
@@ -240,21 +228,17 @@ html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
     transform 160ms ease,
     filter 160ms ease !important;
 }
-
 .app-shell .icon-button {
   border-radius: var(--button-radius-tight) !important;
 }
-
 .app-shell .compact-button {
   border-radius: var(--button-radius-tight) !important;
 }
-
 .app-shell .text-button,
 .app-shell .panel-chip,
 .app-shell .scene-filter-button {
   min-height: 38px !important;
 }
-
 .app-shell .icon-button:hover,
 .app-shell .text-button:hover,
 .app-shell .panel-chip:hover,
@@ -266,7 +250,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
   box-shadow: var(--button-hover-shadow) !important;
   transform: translateY(-1px) !important;
 }
-
 .app-shell .icon-button:active,
 .app-shell .text-button:active,
 .app-shell .panel-chip:active,
@@ -282,7 +265,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button .nav-step {
     inset -4px -4px 10px color-mix(in srgb, #ffffff 58%, transparent) !important;
   transform: translateY(1px) !important;
 }
-
 html[data-theme="dark"] .app-shell .icon-button:active,
 html[data-theme="dark"] .app-shell .text-button:active,
 html[data-theme="dark"] .app-shell .panel-chip:active,
@@ -297,7 +279,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button:active {
     inset 4px 4px 10px rgba(0, 0, 0, 0.34),
     inset -4px -4px 10px rgba(255, 255, 255, 0.08) !important;
 }
-
 .app-shell .icon-button.primary,
 .app-shell .primary-button,
 .app-shell .panel-next-button,
@@ -307,7 +288,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button:active {
   background: var(--button-primary-bg) !important;
   box-shadow: var(--button-primary-shadow) !important;
 }
-
 .app-shell .icon-button.primary:hover,
 .app-shell .primary-button:hover,
 .app-shell .panel-next-button:hover,
@@ -322,7 +302,6 @@ html[data-theme="dark"] .app-shell .mobile-layer-button:active {
     -4px -4px 12px color-mix(in srgb, #ffffff 46%, transparent),
     8px 8px 20px color-mix(in srgb, var(--neu-accent) 32%, transparent) !important;
 }
-
 html[data-theme="dark"] .app-shell .icon-button.primary:hover,
 html[data-theme="dark"] .app-shell .primary-button:hover,
 html[data-theme="dark"] .app-shell .panel-next-button:hover,
@@ -334,60 +313,50 @@ html[data-theme="dark"] .app-shell #sourceApplyBtn.primary-button:focus-visible 
     -4px -4px 12px rgba(50, 64, 74, 0.2),
     8px 8px 20px color-mix(in srgb, var(--neu-accent) 26%, rgba(0, 0, 0, 0.26)) !important;
 }
-
 .app-shell .danger-button {
   border-color: color-mix(in srgb, var(--danger) 28%, var(--button-rest-border)) !important;
   color: var(--danger) !important;
 }
-
 .app-shell .danger-button:hover {
   border-color: color-mix(in srgb, var(--danger) 54%, var(--button-rest-border)) !important;
   color: var(--danger) !important;
 }
-
 .app-shell button:focus-visible,
 .app-shell .toolbar-switch:focus-within {
   outline: 3px solid color-mix(in srgb, var(--neu-accent) 26%, transparent) !important;
   outline-offset: 3px !important;
 }
-
 @media (max-width: 520px) {
-  .app-shell .icon-button {
+.app-shell .icon-button {
     border-radius: 13px !important;
   }
-
-  .app-shell .text-button,
-  .app-shell .panel-chip,
-  .app-shell .scene-filter-button {
+.app-shell .text-button,
+.app-shell .panel-chip,
+.app-shell .scene-filter-button {
     border-radius: 15px !important;
   }
-
-  .app-shell #tab-visual .field-display-toggle {
+.app-shell #tab-visual .field-display-toggle {
     gap: 4px !important;
     padding: 4px !important;
   }
-
-  .app-shell #tab-visual .field-display-toggle .mode-toggle-button {
+.app-shell #tab-visual .field-display-toggle .mode-toggle-button {
     padding-inline: 1px !important;
     font-size: 0.66rem !important;
   }
 }
-
 @media (min-width: 1441px) and (max-width: 1700px) {
-  .app-shell .control-tabs {
+.app-shell .control-tabs {
     gap: 4px !important;
     min-height: 48px !important;
     padding: 5px !important;
   }
-
-  .app-shell .control-tab-button {
+.app-shell .control-tab-button {
     gap: 2px !important;
     min-height: 38px !important;
     padding-inline: 2px !important;
     font-size: 0.58rem !important;
   }
-
-  .app-shell .control-tab-button .nav-step {
+.app-shell .control-tab-button .nav-step {
     width: 16px !important;
     height: 16px !important;
     font-size: 0.52rem !important;

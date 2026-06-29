@@ -631,7 +631,6 @@ const el = {
   resetBtn: document.getElementById("resetBtn"),
   runStepBtn: document.getElementById("runStepBtn"),
   runResetBtn: document.getElementById("runResetBtn"),
-  canvasFocusBtn: document.getElementById("canvasFocusBtn"),
   focusControlsBtn: document.getElementById("focusControlsBtn"),
   saveBtn: document.getElementById("saveBtn"),
   selectModeBtn: document.getElementById("selectModeBtn"),
@@ -782,8 +781,6 @@ const el = {
   copySceneUrlBtn: document.getElementById("copySceneUrlBtn"),
   shareSceneUrlOutput: document.getElementById("shareSceneUrlOutput"),
   reproStatus: document.getElementById("reproStatus"),
-  brushSizeInput: document.getElementById("brushSizeInput"),
-  brushSizeOutput: document.getElementById("brushSizeOutput"),
   brushSizeControl: document.getElementById("brushSizeControl"),
   brushToolControl: document.getElementById("brushToolControl"),
   brushToolButtons: document.querySelectorAll("[data-brush-tool]"),
@@ -808,23 +805,6 @@ const el = {
   boundaryMenuHint: document.getElementById("boundaryMenuHint"),
   boundaryMenuCloseBtn: document.getElementById("boundaryMenuCloseBtn"),
   boundaryMenuInput: document.getElementById("boundaryMenuInput"),
-  clearMaterialsBtn: document.getElementById("clearMaterialsBtn"),
-  clearFieldsBtn: document.getElementById("clearFieldsBtn"),
-  stepCounter: document.getElementById("stepCounter"),
-  maxField: document.getElementById("maxField"),
-  topModeValue: document.getElementById("topModeValue"),
-  topEngineValue: document.getElementById("topEngineValue"),
-  topGridValue: document.getElementById("topGridValue"),
-  topBoundaryValue: document.getElementById("topBoundaryValue"),
-  topHealthValue: document.getElementById("topHealthValue"),
-  topStepValue: document.getElementById("topStepValue"),
-  topMaxFieldValue: document.getElementById("topMaxFieldValue"),
-  mobileModeValue: document.getElementById("mobileModeValue"),
-  mobileCanvasStateValue: document.getElementById("mobileCanvasStateValue"),
-  mobileGridValue: document.getElementById("mobileGridValue"),
-  mobileHealthValue: document.getElementById("mobileHealthValue"),
-  mobileStepValue: document.getElementById("mobileStepValue"),
-  mobileMaxFieldValue: document.getElementById("mobileMaxFieldValue"),
   simGuideSolver: document.getElementById("simGuideSolver"),
   simGuideSource: document.getElementById("simGuideSource"),
   simGuideBoundary: document.getElementById("simGuideBoundary"),
@@ -837,15 +817,6 @@ const el = {
   inspectorNote: document.getElementById("inspectorNote"),
   inspectorEditBtn: document.getElementById("inspectorEditBtn"),
   inspectorClearBtn: document.getElementById("inspectorClearBtn"),
-  selectionSheet: document.getElementById("selectionSheet"),
-  selectionSheetKind: document.getElementById("selectionSheetKind"),
-  selectionSheetTitle: document.getElementById("selectionSheetTitle"),
-  selectionSheetDetails: document.getElementById("selectionSheetDetails"),
-  selectionSheetEditBtn: document.getElementById("selectionSheetEditBtn"),
-  selectionSheetClearBtn: document.getElementById("selectionSheetClearBtn"),
-  fieldMetricSymbol: document.getElementById("fieldMetricSymbol"),
-  fieldMetricUnit: document.getElementById("fieldMetricUnit"),
-  energyValue: document.getElementById("energyValue"),
   summaryReflectanceOutput: document.getElementById("summaryReflectanceOutput"),
   summaryTransmittanceOutput: document.getElementById("summaryTransmittanceOutput"),
   summaryBalanceOutput: document.getElementById("summaryBalanceOutput"),
@@ -856,24 +827,12 @@ const el = {
   fluxRightOutput: document.getElementById("fluxRightOutput"),
   reflectanceOutput: document.getElementById("reflectanceOutput"),
   transmittanceOutput: document.getElementById("transmittanceOutput"),
-  gridLabel: document.getElementById("gridLabel"),
-  hudModeLabel: document.getElementById("hudModeLabel"),
-  hudStepLabel: document.getElementById("hudStepLabel"),
-  hudFieldLabel: document.getElementById("hudFieldLabel"),
-  canvasStateBadge: document.getElementById("canvasStateBadge"),
-  canvasFocusStatus: document.getElementById("canvasFocusStatus"),
-  canvasFocusStateValue: document.getElementById("canvasFocusStateValue"),
-  canvasFocusStepValue: document.getElementById("canvasFocusStepValue"),
-  canvasFocusMaxValue: document.getElementById("canvasFocusMaxValue"),
-  canvasFocusExitBtn: document.getElementById("canvasFocusExitBtn"),
-  materialLabel: document.getElementById("materialLabel"),
   colorbar: document.querySelector(".colorbar"),
   colorbarTitle: document.getElementById("colorbarTitle"),
   colorbarGradient: document.getElementById("colorbarGradient"),
   colorbarMax: document.getElementById("colorbarMax"),
   colorbarMid: document.getElementById("colorbarMid"),
   colorbarMin: document.getElementById("colorbarMin"),
-  modePill: document.getElementById("modePill"),
   engineValue: document.getElementById("engineValue"),
   canvasContextMenu: document.getElementById("canvasContextMenu"),
   canvasContextMenuHint: document.getElementById("canvasContextMenuHint"),
@@ -1745,33 +1704,6 @@ function setInspectorDetails(rows) {
   });
 }
 
-function setSelectionSheet(kind, title, rows) {
-  if (!el.selectionSheet || !el.selectionSheetKind || !el.selectionSheetTitle || !el.selectionSheetDetails) return;
-  el.selectionSheet.hidden = false;
-  el.stage?.classList.toggle("selection-sheet-open", true);
-  el.selectionSheetKind.textContent = kind;
-  el.selectionSheetTitle.textContent = title;
-  el.selectionSheetDetails.replaceChildren();
-  rows.slice(0, 5).forEach(([label, value]) => {
-    const chip = document.createElement("span");
-    const labelNode = document.createElement("small");
-    const valueNode = document.createElement("output");
-    labelNode.textContent = label;
-    valueNode.textContent = value;
-    chip.append(labelNode, valueNode);
-    el.selectionSheetDetails.appendChild(chip);
-  });
-  updateCanvasInteractionState();
-}
-
-function hideSelectionSheet() {
-  if (!el.selectionSheet) return;
-  el.selectionSheet.hidden = true;
-  el.stage?.classList.toggle("selection-sheet-open", false);
-  el.selectionSheetDetails?.replaceChildren();
-  updateCanvasInteractionState();
-}
-
 function materialRegionSignature(region) {
   if (!region?.bounds) return "";
   const b = region.bounds;
@@ -1919,13 +1851,6 @@ function updateInspector() {
       ["Loss", stats ? formatFieldValue(stats.loss) : "-"],
       ["Flags", stats?.features.length ? stats.features.join(", ") : "static"],
     ]);
-    setSelectionSheet("Material", el.inspectorTitle.textContent, [
-      ["Cells", String(region.cells.length)],
-      ["Width", `${formatLambda(cellsToLambda(b.maxX - b.minX + 1))} λ0`],
-      ["Height", `${formatLambda(cellsToLambda(b.maxY - b.minY + 1))} λ0`],
-      ["eps avg", stats ? formatFieldValue(stats.eps) : "-"],
-      ["loss", stats ? formatFieldValue(stats.loss) : "-"],
-    ]);
     if (el.inspectorNote) {
       el.inspectorNote.textContent = "Region values are averaged over selected grid cells.";
     }
@@ -1944,13 +1869,6 @@ function updateInspector() {
       ["Amplitude", source.amplitude.toFixed(2)],
       ["Phase", `${Math.round(source.phaseDeg || 0)} deg`],
       ["Angle", `${Math.round(source.angleDeg || 0)} deg`],
-    ]);
-    setSelectionSheet("Source", el.inspectorTitle.textContent, [
-      ["Time", sourceTypeLabel(source.type)],
-      ["Coupling", sourceCouplingLabel(source.shape)],
-      ["x", `${formatLambda(source.xLambda)} λ0`],
-      ["y", `${formatLambda(source.yLambda)} λ0`],
-      ["f dt", source.frequency.toFixed(3)],
     ]);
     if (el.inspectorNote) {
       el.inspectorNote.textContent = sourceUsesWidth(source.shape)
@@ -1974,13 +1892,6 @@ function updateInspector() {
       ["RMS", formatFieldValue(measurement.rms || 0)],
       ["Flux n", formatFieldValue(measurement.normalFlux || 0)],
     ]);
-    setSelectionSheet("Monitor", el.inspectorTitle.textContent, [
-      ["Quantity", monitorQuantityLabel(monitor.quantity)],
-      ["Length", `${formatLambda(monitor.lengthLambda)} λ0`],
-      ["Angle", `${formatMonitorAngle(monitor.angleDeg)} deg`],
-      ["Value", formatFieldValue(measurement.value || 0)],
-      ["Samples", String(measurement.samples || 0)],
-    ]);
     if (el.inspectorNote) {
       el.inspectorNote.textContent = "Custom monitor values are sampled along the selected line segment.";
     }
@@ -1999,7 +1910,6 @@ function updateInspector() {
     ["Boundary", boundarySummaryLabel()],
     ["Engine", runtimeEngineLabel()],
   ]);
-  hideSelectionSheet();
   if (el.inspectorNote) {
     el.inspectorNote.textContent = "Select a source, monitor, or material region on the canvas.";
   }
@@ -2134,10 +2044,6 @@ function syncResultsDetailPanels(force = false) {
   });
 }
 
-function canvasFocusModeActive() {
-  return el.appShell?.classList.contains("canvas-focus-mode") ?? false;
-}
-
 function controlDrawerOverlayActive() {
   return true;
 }
@@ -2181,7 +2087,7 @@ function toggleControlDrawer() {
 }
 
 function canvasActionsMenuActive() {
-  return canvasFocusModeActive() || (window.matchMedia?.("(max-width: 1180px)")?.matches ?? false);
+  return window.matchMedia?.("(max-width: 1180px)")?.matches ?? false;
 }
 
 function setCanvasActionsOpen(open) {
@@ -2204,7 +2110,7 @@ function toggleCanvasActionsMenu() {
 }
 
 function canvasOptionsMenuActive() {
-  return canvasFocusModeActive() || (window.matchMedia?.("(max-width: 1180px)")?.matches ?? false);
+  return window.matchMedia?.("(max-width: 1180px)")?.matches ?? false;
 }
 
 function setCanvasOptionsOpen(open) {
@@ -2229,36 +2135,6 @@ function closeCanvasOptionsMenu() {
 
 function toggleCanvasOptionsMenu() {
   setCanvasOptionsOpen(!el.stage?.classList.contains("canvas-options-open"));
-}
-
-function refreshCanvasSizeAfterLayoutChange() {
-  requestAnimationFrame(() => {
-    sim.fitCanvas();
-    sim.render();
-  });
-}
-
-function setCanvasFocusMode(enabled) {
-  const isEnabled = Boolean(enabled);
-  closeContextMenus();
-  closeCanvasActionsMenu();
-  closeCanvasOptionsMenu();
-  setControlDrawerOpen(false);
-  el.appShell?.classList.toggle("canvas-focus-mode", isEnabled);
-  document.body.classList.toggle("canvas-focus-mode", isEnabled);
-  if (el.canvasFocusBtn) {
-    el.canvasFocusBtn.setAttribute("aria-pressed", String(isEnabled));
-    el.canvasFocusBtn.setAttribute("aria-label", isEnabled ? "Exit canvas focus" : "Focus canvas");
-    el.canvasFocusBtn.title = isEnabled ? "Exit canvas focus" : "Focus canvas";
-    el.canvasFocusBtn.textContent = isEnabled ? "×" : "⛶";
-  }
-  updateCanvasInteractionState();
-  updateStats();
-  refreshCanvasSizeAfterLayoutChange();
-}
-
-function toggleCanvasFocusMode() {
-  setCanvasFocusMode(!canvasFocusModeActive());
 }
 
 function handleControlTabKeydown(event) {
@@ -3024,8 +2900,6 @@ function applyHealthState(output, level, reason) {
 }
 
 function updateHealthStatusOutputs(level, reason) {
-  applyHealthState(el.topHealthValue, level, reason);
-  applyHealthState(el.mobileHealthValue, level, reason);
   applyHealthState(el.configStabilityOutput, level, reason);
   applyHealthState(el.stabilityEstimateValue, level, reason);
 }
@@ -3342,7 +3216,6 @@ function setCanvasMode(mode) {
     state.selectedSourceId = null;
     state.selectedMonitorId = null;
     clearMaterialSelection(false);
-    hideSelectionSheet();
   }
   closeContextMenus();
   updateControlText();
@@ -3455,16 +3328,6 @@ function updateCanvasInteractionState() {
   el.canvasFrame?.classList.toggle("is-dragging-source", draggingSource);
   el.canvasFrame?.classList.toggle("is-dragging-material", draggingMaterial);
   el.canvasFrame?.classList.toggle("has-selection", hasSelection);
-  const interactionText = `${interactionStateLabel()} · ${sim.viewZoom.toFixed(2)}x`;
-  if (el.canvasStateBadge) {
-    el.canvasStateBadge.textContent = interactionText;
-  }
-  if (el.canvasFocusStateValue) {
-    el.canvasFocusStateValue.textContent = `${runStateLabel()} · ${interactionText}`;
-  }
-  if (el.mobileCanvasStateValue) {
-    el.mobileCanvasStateValue.textContent = `${runStateLabel()} \u00b7 ${interactionStateLabel()}`;
-  }
 }
 
 function updateVisualControls() {
@@ -3531,12 +3394,6 @@ function updateFieldDisplayControls() {
   el.fieldQuiverLabels?.forEach((label) => {
     label.innerHTML = `${fieldComponentHtml(quiverLetter)} quiver`;
   });
-  if (el.fieldMetricSymbol) {
-    el.fieldMetricSymbol.innerHTML = selectedConfig.metricHtml;
-  }
-  if (el.fieldMetricUnit) {
-    el.fieldMetricUnit.innerHTML = selectedConfig.unitHtml;
-  }
   el.canvas.setAttribute("aria-label", `Normalized ${selectedConfig.key} field of the FDTD simulation`);
 }
 
@@ -4057,12 +3914,6 @@ function updateControlText() {
   el.slabThicknessControl.hidden = !showSlabThickness;
   el.slabThicknessInput.disabled = !showSlabThickness;
   el.slabThicknessControl.classList.toggle("is-disabled", !showSlabThickness);
-  if (el.brushSizeOutput) {
-    el.brushSizeOutput.value = formatLambdaOutput(state.brushSizeLambda);
-  }
-  if (el.brushSizeInput) {
-    el.brushSizeInput.value = String(state.brushSizeLambda);
-  }
   updateRunControls();
   updateCanvasModeControls();
   updateCanvasInteractionState();
@@ -4081,31 +3932,8 @@ function updateControlText() {
     cellsToLambda(sim.ny)
   )} \u03bb\u2080`;
   const fullGridSummary = `${gridSummary} \u00b7 ${domainSummary}`;
-  const topGridSummary = compactGridSummary;
-  const zoomSummary = `${sim.viewZoom.toFixed(2)}x`;
   const solverSummary = solverModeLabel();
   const boundary = boundarySummaryLabel();
-  el.gridLabel.textContent = `${gridSummary} \u00b7 ${domainSummary} \u00b7 ${zoomSummary}`;
-  if (el.hudModeLabel) {
-    el.hudModeLabel.textContent = solverSummary;
-  }
-  if (el.mobileModeValue) {
-    el.mobileModeValue.textContent = solverSummary;
-  }
-  if (el.topModeValue) {
-    el.topModeValue.textContent = solverSummary;
-  }
-  if (el.topGridValue) {
-    el.topGridValue.textContent = topGridSummary;
-    el.topGridValue.title = fullGridSummary;
-  }
-  if (el.mobileGridValue) {
-    el.mobileGridValue.textContent = `${sim.nx}x${sim.ny}`;
-    el.mobileGridValue.title = fullGridSummary;
-  }
-  if (el.topBoundaryValue) {
-    el.topBoundaryValue.textContent = boundary;
-  }
   if (el.configScaleOutput) {
     el.configScaleOutput.textContent = `${state.wavelengthUm.toFixed(2)} µm · ${state.cellsPerWavelength}/λ₀`;
   }
@@ -4135,12 +3963,6 @@ function updateControlText() {
   }
   if (el.simGuideCfl) {
     el.simGuideCfl.textContent = `S = ${COURANT.toFixed(2)}`;
-  }
-  if (el.materialLabel) {
-    el.materialLabel.textContent = `Material: ${materialLabel}`;
-  }
-  if (el.modePill) {
-    el.modePill.textContent = `Sources: ${sourceLabel} - ${boundary} boundary`;
   }
   updateMaterialWarning();
   updateStabilitySummary();
@@ -4232,22 +4054,7 @@ function renderCustomMonitorResults({ force = false } = {}) {
 }
 
 function updateStats() {
-  const stepText = String(sim.time);
-  const maxFieldText = formatFieldMetric(sim.lastMax, sim.lastMaxLog10);
-  const energyText = formatFieldMetric(sim.lastEnergy, sim.lastEnergyLog10);
   const engineText = runtimeEngineLabel();
-  if (el.stepCounter) el.stepCounter.textContent = stepText;
-  if (el.maxField) el.maxField.textContent = maxFieldText;
-  if (el.energyValue) el.energyValue.textContent = energyText;
-  if (el.topStepValue) el.topStepValue.textContent = stepText;
-  if (el.topMaxFieldValue) el.topMaxFieldValue.textContent = maxFieldText;
-  if (el.topEngineValue) el.topEngineValue.textContent = engineText;
-  if (el.canvasFocusStepValue) el.canvasFocusStepValue.textContent = `step ${stepText}`;
-  if (el.canvasFocusMaxValue) el.canvasFocusMaxValue.textContent = `max ${maxFieldText}`;
-  if (el.mobileStepValue) el.mobileStepValue.textContent = stepText;
-  if (el.mobileMaxFieldValue) el.mobileMaxFieldValue.textContent = maxFieldText;
-  if (el.hudStepLabel) el.hudStepLabel.textContent = `step ${stepText}`;
-  if (el.hudFieldLabel) el.hudFieldLabel.textContent = `max ${maxFieldText}`;
   const diagnosticAngle = sim.diagnosticSamples > 0 ? sim.diagnosticAngleDeg : sim.diagnosticDirection().angleDeg;
   const diagnosticAngleText = `${formatMonitorAngle(diagnosticAngle)}°`;
   const diagnosticReflectance = sim.diagnosticReflectance || 0;
@@ -6713,8 +6520,6 @@ el.brushModeBtn.addEventListener("click", () => {
   setCanvasMode("brush");
 });
 
-el.canvasFocusBtn?.addEventListener("click", toggleCanvasFocusMode);
-el.canvasFocusExitBtn?.addEventListener("click", () => setCanvasFocusMode(false));
 el.focusControlsBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
   toggleControlDrawer();
@@ -6786,14 +6591,6 @@ el.inspectorClearBtn?.addEventListener("click", () => {
   clearMaterialSelection(false);
   updateControlText();
   sim.render();
-});
-
-el.selectionSheetEditBtn?.addEventListener("click", () => {
-  el.inspectorEditBtn?.click();
-});
-
-el.selectionSheetClearBtn?.addEventListener("click", () => {
-  el.inspectorClearBtn?.click();
 });
 
 el.themeButtons?.forEach((button) => {
@@ -7502,9 +7299,6 @@ function handleBrushSizeInput(input) {
   updateControlText();
 }
 
-if (el.brushSizeInput) {
-  el.brushSizeInput.addEventListener("input", () => handleBrushSizeInput(el.brushSizeInput));
-}
 el.brushMenuSizeInput.addEventListener("input", () => handleBrushSizeInput(el.brushMenuSizeInput));
 
 el.brushToolButtons?.forEach((button) => {
@@ -7593,13 +7387,7 @@ function clearField() {
   sim.render();
 }
 
-if (el.clearMaterialsBtn) {
-  el.clearMaterialsBtn.addEventListener("click", clearMedium);
-}
 el.brushMenuClearMaterialsBtn.addEventListener("click", clearMedium);
-if (el.clearFieldsBtn) {
-  el.clearFieldsBtn.addEventListener("click", clearField);
-}
 el.brushMenuClearFieldsBtn.addEventListener("click", clearField);
 el.brushMenuCloseBtn.addEventListener("click", () => {
   closeBrushMenu();
@@ -8300,11 +8088,6 @@ document.addEventListener("keydown", (event) => {
   ) {
     closeContextMenus();
     sim.render();
-    return;
-  }
-  if (event.key === "Escape" && canvasFocusModeActive()) {
-    setCanvasFocusMode(false);
-    event.preventDefault();
     return;
   }
   if ((event.key === "Delete" || event.key === "Backspace") && !isEditableKeyTarget(event.target)) {

@@ -14,7 +14,6 @@
   --visual-switch-track-height: 24px;
   --visual-switch-thumb-size: 18px;
 }
-
 .theme-toggle,
 .control-panel #tab-visual .canvas-mode-toggle,
 .control-panel #tab-visual .visual-panel-profile,
@@ -31,7 +30,6 @@
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-
 .theme-toggle::before,
 .theme-toggle::after,
 .control-panel #tab-visual .canvas-mode-toggle::before,
@@ -43,7 +41,6 @@
   display: none !important;
   content: none !important;
 }
-
 .theme-toggle .mode-toggle-button,
 .control-panel #tab-visual .mode-toggle-button,
 .canvas-toolbar .canvas-view-controls .mode-toggle-button {
@@ -63,7 +60,6 @@
   line-height: 1 !important;
   text-align: center !important;
 }
-
 .theme-toggle .mode-toggle-button.is-active,
 .control-panel #tab-visual .mode-toggle-button.is-active,
 .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
@@ -82,7 +78,6 @@
     0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
     var(--neu-shadow-small) !important;
 }
-
 html[data-theme="dark"] .theme-toggle .mode-toggle-button.is-active,
 html[data-theme="dark"] .control-panel #tab-visual .mode-toggle-button.is-active,
 html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-button.is-active {
@@ -96,7 +91,6 @@ html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-butto
     0 0 0 1px color-mix(in srgb, var(--neu-accent) 12%, transparent),
     0 10px 22px rgba(0, 0, 0, 0.24) !important;
 }
-
 /* Header theme selector */
 .theme-toggle {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -105,18 +99,15 @@ html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-butto
   border-radius: 999px !important;
   background: color-mix(in srgb, var(--neu-surface-low) 76%, transparent) !important;
 }
-
 .theme-toggle .mode-toggle-button {
   min-height: 34px !important;
   border-radius: 999px !important;
   padding-inline: 10px !important;
 }
-
 /* Mobile drawer navigation and panel segments */
 .control-panel .canvas-mode-toggle::before {
   display: none !important;
 }
-
 .control-panel .mode-toggle-button.is-active {
   border: 1px solid color-mix(in srgb, #ffffff 26%, var(--neu-border)) !important;
   color: var(--neu-accent) !important;
@@ -132,7 +123,6 @@ html[data-theme="dark"] .canvas-toolbar .canvas-view-controls .mode-toggle-butto
     inset 0 -1px 0 color-mix(in srgb, var(--neu-accent) 16%, transparent),
     var(--neu-shadow-small) !important;
 }
-
 html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   border-color: color-mix(in srgb, var(--neu-accent) 34%, rgba(255, 255, 255, 0.2)) !important;
   color: color-mix(in srgb, #9edfff 82%, #ffffff) !important;
@@ -144,49 +134,25 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     inset 0 -1px 0 rgba(0, 0, 0, 0.24),
     0 10px 24px rgba(0, 0, 0, 0.26) !important;
 }
-
 /* Keep display controls inside the general panel only. */
 .app-shell .stage .canvas-options-toggle,
 .app-shell .stage .canvas-view-controls {
   display: none !important;
 }
-
-/* Status/readout strips are intentionally hidden on all displays. */
-.app-shell .scientific-status-strip,
-.app-shell .status-section,
-.app-shell .stage .hud,
-.app-shell .stage .canvas-focus-status,
-.app-shell .stage .canvas-state-badge,
-.app-shell .stage .mobile-canvas-stats,
-.app-shell .stage .selection-sheet,
-.app-shell.canvas-focus-mode .scientific-status-strip,
-.app-shell.canvas-focus-mode .stage .hud,
-.app-shell.canvas-focus-mode .stage .canvas-focus-status,
-.app-shell.canvas-focus-mode .stage .canvas-state-badge,
-.app-shell.canvas-focus-mode .stage .mobile-canvas-stats,
-.app-shell.canvas-focus-mode .stage .selection-sheet,
-.stage.selection-sheet-open .hud,
-.stage.selection-sheet-open .canvas-focus-status,
-.stage.selection-sheet-open .canvas-state-badge,
-.stage.selection-sheet-open .mobile-canvas-stats,
-.stage.selection-sheet-open .selection-sheet {
-  display: none !important;
-}
-
-/* Visual panel geometry for desktop, 4K, and mobile drawers. */
+/* Visual panel geometry for desktop,
+4K,
+and mobile drawers. */
 .control-panel #tab-visual .visual-summary-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
   min-width: 0 !important;
 }
-
 .control-panel #tab-visual .visual-summary-card {
   min-width: 0 !important;
   min-height: 64px !important;
   align-content: start !important;
 }
-
 .control-panel #tab-visual .visual-summary-card output {
   display: block !important;
   width: 100% !important;
@@ -195,12 +161,10 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   overflow-wrap: anywhere !important;
   text-overflow: clip !important;
 }
-
 .control-panel #tab-visual .visual-control-stack,
 .control-panel #tab-visual .visual-control-row {
   min-width: 0 !important;
 }
-
 .control-panel #tab-visual .canvas-mode-toggle,
 .control-panel #tab-visual .visual-panel-profile {
   display: grid !important;
@@ -212,24 +176,19 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   border-radius: var(--visual-control-radius) !important;
   padding: 5px !important;
 }
-
 .control-panel #tab-visual .projection-toggle,
 .control-panel #tab-visual .material-part-toggle {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
-
 .control-panel #tab-visual .view-toggle {
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
-
 .control-panel #tab-visual .field-display-toggle {
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
 }
-
 .control-panel #tab-visual .visual-panel-profile {
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
-
 .control-panel #tab-visual .mode-toggle-button {
   width: 100% !important;
   min-width: 0 !important;
@@ -242,13 +201,11 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
-
 .control-panel #tab-visual .visual-layer-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer {
   display: grid !important;
   grid-template-columns: var(--visual-switch-track-width) minmax(0, 1fr) !important;
@@ -263,7 +220,6 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   background: color-mix(in srgb, var(--neu-surface) 84%, transparent) !important;
   box-shadow: var(--neu-shadow-small) !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer span {
   min-width: 0 !important;
   overflow: hidden !important;
@@ -271,36 +227,31 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   white-space: nowrap !important;
   text-align: left !important;
 }
-
 .control-panel-actions .theme-toggle {
   flex: 0 1 150px !important;
   min-width: 132px !important;
   max-width: 166px !important;
 }
-
 .control-panel-actions .theme-toggle .mode-toggle-button {
   min-width: 58px !important;
   min-height: 30px !important;
   padding-inline: 8px !important;
   font-size: 0.66rem !important;
 }
-
 @media (max-width: 430px) {
-  .control-panel-actions .theme-toggle {
+.control-panel-actions .theme-toggle {
     flex-basis: 120px !important;
     min-width: 112px !important;
     max-width: 124px !important;
   }
-
-  .control-panel-actions .theme-toggle .mode-toggle-button {
+.control-panel-actions .theme-toggle .mode-toggle-button {
     min-width: 48px !important;
     padding-inline: 5px !important;
     font-size: 0.58rem !important;
   }
 }
-
 @media (max-width: 520px) {
-  .control-panel .mobile-layer-nav {
+.control-panel .mobile-layer-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-auto-flow: row !important;
     grid-auto-rows: minmax(42px, auto) !important;
@@ -310,25 +261,21 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     overflow-y: visible !important;
     max-height: none !important;
   }
-
-  .control-panel .mobile-layer-button {
+.control-panel .mobile-layer-button {
     grid-template-columns: auto minmax(0, max-content) !important;
     min-height: 42px !important;
     padding: 7px 6px !important;
     gap: 5px !important;
   }
-
-  .control-panel .mobile-layer-button .nav-step {
+.control-panel .mobile-layer-button .nav-step {
     display: inline-grid !important;
     width: 19px !important;
     height: 19px !important;
   }
-
-  .control-panel .mobile-layer-button .nav-label {
+.control-panel .mobile-layer-button .nav-label {
     white-space: nowrap !important;
   }
 }
-
 /* Visual panel */
 @media (max-width: 760px) {
   .control-panel #tab-visual .visual-summary-card {
@@ -415,13 +362,11 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     text-align: left !important;
   }
 }
-
 @media (max-width: 380px) {
-  .control-panel #tab-visual .visual-layer-grid {
+.control-panel #tab-visual .visual-layer-grid {
     grid-template-columns: 1fr !important;
   }
 }
-
 /* Canvas display popover */
 @media (max-width: 1180px) {
   .canvas-toolbar .canvas-view-controls .canvas-mode-toggle {
@@ -451,13 +396,11 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     display: none !important;
   }
 }
-
 @media (max-width: 380px) {
-  .canvas-toolbar .canvas-view-controls .visual-profile-toggle {
+.canvas-toolbar .canvas-view-controls .visual-profile-toggle {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
-
 /* Shared switch geometry for visual overlay toggles */
 .control-panel #tab-visual .visual-panel-layer input[type="checkbox"] {
   appearance: none !important;
@@ -473,7 +416,6 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   background: color-mix(in srgb, #0b1118 82%, var(--neu-surface)) !important;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.34) !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer input[type="checkbox"]::before {
   position: absolute !important;
   top: 2px !important;
@@ -487,7 +429,6 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
   transform: translateX(0) !important;
   transition: transform 160ms ease, background 160ms ease !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer input[type="checkbox"]:checked {
   border-color: color-mix(in srgb, var(--neu-accent) 48%, transparent) !important;
   background: linear-gradient(145deg, #73b7ff, #61a8ff) !important;
@@ -495,7 +436,6 @@ html[data-theme="dark"] .control-panel .mode-toggle-button.is-active {
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     0 0 14px rgba(87, 161, 255, 0.32) !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer input[type="checkbox"]:checked::before {
   background: linear-gradient(145deg, #273345, #111923) !important;
   transform: translateX(20px) !important;

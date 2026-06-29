@@ -62,37 +62,6 @@
         </button>
       </header>
 
-      <section class="scientific-status-strip" aria-label="Simulation summary">
-        <div class="scientific-status-item">
-          <span>Mode</span>
-          <output id="topModeValue">TMz / Ez</output>
-        </div>
-        <div class="scientific-status-item">
-          <span>Engine</span>
-          <output id="topEngineValue">JS</output>
-        </div>
-        <div class="scientific-status-item">
-          <span>Grid</span>
-          <output id="topGridValue">360 x 240</output>
-        </div>
-        <div class="scientific-status-item">
-          <span>Boundary</span>
-          <output id="topBoundaryValue">PML absorbing</output>
-        </div>
-        <div class="scientific-status-item health-status-item">
-          <span>Health</span>
-          <output id="topHealthValue" data-health-level="stable" aria-live="polite">stable</output>
-        </div>
-        <div class="scientific-status-item">
-          <span>Step</span>
-          <output id="topStepValue">0</output>
-        </div>
-        <div class="scientific-status-item">
-          <span>Max field</span>
-          <output id="topMaxFieldValue">0</output>
-        </div>
-      </section>
-
       <section class="workspace" aria-label="Simulator">
         <div class="stage">
           <div class="canvas-toolbar">
@@ -137,16 +106,10 @@
                 </button>
               </div>
             </div>
-            <div id="canvasFocusStatus" class="canvas-focus-status" aria-live="polite">
-              <span id="canvasFocusStateValue">Paused · Select · 1.00x</span>
-              <span id="canvasFocusStepValue">step 0</span>
-              <span id="canvasFocusMaxValue">max 0</span>
-            </div>
             <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
               <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
               <button id="brushModeBtn" class="mode-toggle-button" type="button" aria-pressed="false" title="Draw materials and geometries">Draw</button>
             </div>
-            <button id="canvasFocusExitBtn" class="icon-button canvas-focus-exit" type="button" title="Exit canvas focus" aria-label="Exit canvas focus">&times;</button>
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
@@ -236,13 +199,6 @@
                 </div>
               </div>
             </div>
-            <div class="hud">
-              <span id="gridLabel">360 x 240</span>
-              <span id="hudModeLabel">TMz / Ez</span>
-              <span id="hudStepLabel">step 0</span>
-              <span id="hudFieldLabel">max 0</span>
-            </div>
-            <div id="canvasStateBadge" class="canvas-state-badge" aria-live="polite" hidden>Select · 1.00x</div>
             <div id="canvasContextMenu" class="source-menu context-choice-menu" role="dialog" aria-label="Add canvas element" hidden>
               <div class="source-menu-header">
                 <div>
@@ -703,25 +659,6 @@
               </div>
             </div>
           </div>
-          <div id="selectionSheet" class="selection-sheet" aria-live="polite" hidden>
-            <div class="selection-sheet-copy">
-              <span id="selectionSheetKind" class="selection-sheet-kind">Source</span>
-              <strong id="selectionSheetTitle">No selection</strong>
-              <div id="selectionSheetDetails" class="selection-sheet-details"></div>
-            </div>
-            <div class="selection-sheet-actions">
-              <button id="selectionSheetEditBtn" class="icon-button compact-button" type="button" title="Edit selected" aria-label="Edit selected">✎</button>
-              <button id="selectionSheetClearBtn" class="icon-button compact-button" type="button" title="Clear selection" aria-label="Clear selection">×</button>
-            </div>
-          </div>
-          <div class="mobile-canvas-stats" aria-label="Compact simulation status">
-            <span data-mobile-stat="state"><small>state</small><output id="mobileCanvasStateValue">Select 1.00x</output></span>
-            <span data-mobile-stat="mode"><small>mode</small><output id="mobileModeValue">TMz / Ez</output></span>
-            <span data-mobile-stat="grid"><small>grid</small><output id="mobileGridValue">360x240</output></span>
-            <span data-mobile-stat="health"><small>health</small><output id="mobileHealthValue" data-health-level="stable" aria-live="polite">stable</output></span>
-            <span data-mobile-stat="step"><small>step</small><output id="mobileStepValue">0</output></span>
-            <span data-mobile-stat="max"><small>max</small><output id="mobileMaxFieldValue">0</output></span>
-          </div>
         </div>
 
         <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" tabindex="-1" data-mobile-layer="scenes">
@@ -1044,32 +981,6 @@
                 <span>Autoscale</span>
               </label>
             </section>
-          <section class="panel-section status-section">
-            <h2>Status</h2>
-            <div class="status-grid">
-              <span>Step</span>
-              <output id="stepCounter">0</output>
-              <span>Max field</span>
-              <output id="maxField">0</output>
-              <span>Energy</span>
-              <output id="energyValue">0</output>
-            </div>
-            <p id="modePill" class="status-pill">Sources: plane wave - PML absorbing boundary</p>
-            <p id="materialLabel" class="status-pill">Material: custom epsilon, mu</p>
-            <p class="field-metric-note"><span id="fieldMetricSymbol"><i>E</i><sub>z</sub></span> / <span id="fieldMetricUnit"><i>E</i><sub>0</sub></span></p>
-          </section>
-          <section class="panel-section edit-section">
-            <h2>Edit</h2>
-            <label id="brushSizeControl" class="control-row">
-              <span>Brush size</span>
-              <input id="brushSizeInput" type="range" min="0.05" max="0.8" step="0.05" value="0.2" />
-              <output id="brushSizeOutput">0.20 &lambda;<sub>0</sub></output>
-            </label>
-            <div class="button-row">
-              <button id="clearMaterialsBtn" class="text-button" type="button">Clear medium</button>
-              <button id="clearFieldsBtn" class="text-button" type="button">Clear field</button>
-            </div>
-          </section>
             </div>
             <div id="tab-visual" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-visual-button" data-control-panel="visual" hidden>
 <section class="panel-section visual-summary-section">
@@ -1478,6 +1389,6 @@
     <script src="src/fdtd-rendering.js?v=20260629-monitor-metrics-1"></script>
     <script src="src/fdtd-worker-protocol.js?v=20260628-worker-engine-1"></script>
     <script src="src/worker-engine.js?v=20260628-pml-continuation-1"></script>
-    <script src="app.js?v=20260629-monitor-metrics-1"></script>
+    <script src="app.js?v=20260629-cleanup-pass-3"></script>
   </body>
 </html>

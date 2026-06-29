@@ -1,8 +1,10 @@
 /*
   Fullscreen simulator shell
   --------------------------
-  Canvas-first layout: the field map fills the viewport, essential controls float
-  over the PML region, and the full control menu opens as a responsive overlay.
+  Canvas-first layout: the field map fills the viewport,
+essential controls float
+  over the PML region,
+and the full control menu opens as a responsive overlay.
 */
 
 :root {
@@ -15,7 +17,6 @@
   --fullscreen-panel-bg:
     linear-gradient(145deg, color-mix(in srgb, var(--neu-bg) 96%, #ffffff), color-mix(in srgb, var(--neu-surface-low) 92%, transparent));
 }
-
 html[data-theme="dark"] {
   --fullscreen-overlay-bg: color-mix(in srgb, var(--neu-bg) 76%, rgba(255, 255, 255, 0.03));
   --fullscreen-overlay-border: color-mix(in srgb, var(--neu-border) 88%, rgba(255, 255, 255, 0.06));
@@ -25,18 +26,15 @@ html[data-theme="dark"] {
   --fullscreen-panel-bg:
     linear-gradient(145deg, color-mix(in srgb, var(--neu-bg) 92%, #ffffff 2%), color-mix(in srgb, var(--neu-surface-low) 94%, transparent));
 }
-
 html,
 body {
   width: 100% !important;
   height: 100% !important;
   overflow: hidden !important;
 }
-
 body {
   min-height: 100dvh !important;
 }
-
 .app-shell {
   position: fixed !important;
   inset: 0 !important;
@@ -47,11 +45,6 @@ body {
   padding: 0 !important;
   overflow: hidden !important;
 }
-
-.scientific-status-strip {
-  display: none !important;
-}
-
 .workspace,
 .stage {
   position: fixed !important;
@@ -69,11 +62,9 @@ body {
   box-shadow: none !important;
   overflow: hidden !important;
 }
-
 .stage::before {
   display: none !important;
 }
-
 .canvas-frame {
   position: fixed !important;
   inset: 0 !important;
@@ -90,13 +81,11 @@ body {
   box-shadow: none !important;
   aspect-ratio: auto !important;
 }
-
 .canvas-frame canvas {
   width: 100% !important;
   height: 100% !important;
   border-radius: 0 !important;
 }
-
 .topbar,
 .canvas-toolbar {
   position: fixed !important;
@@ -107,7 +96,6 @@ body {
   backdrop-filter: blur(18px) saturate(1.2) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
 }
-
 .topbar {
   top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
   left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
@@ -126,30 +114,25 @@ body {
   padding: 8px 10px 8px 12px !important;
   border-radius: 18px !important;
 }
-
 .topbar .brand-lockup,
 .topbar .brand-main,
 .topbar .brand-heading {
   min-width: 0 !important;
 }
-
 .topbar .brand-lockup {
   display: block !important;
   flex: 1 1 auto !important;
   width: auto !important;
 }
-
 .topbar .brand-main,
 .topbar .brand-heading {
   display: block !important;
   width: auto !important;
 }
-
 .topbar .eyebrow,
 .topbar .maxwell-strip {
   display: none !important;
 }
-
 .topbar .brand-title {
   display: block !important;
   max-width: min(48vw, 430px) !important;
@@ -161,11 +144,9 @@ body {
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
-
 .topbar .brand-emblem {
   color: var(--neu-accent) !important;
 }
-
 .control-drawer-toggle {
   display: inline-grid !important;
   place-items: center !important;
@@ -174,7 +155,6 @@ body {
   height: 38px !important;
   min-width: 38px !important;
 }
-
 .canvas-toolbar {
   top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
   right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
@@ -190,14 +170,12 @@ body {
   padding: 8px !important;
   border-radius: 18px !important;
 }
-
 .canvas-toolbar .tool-group.compact {
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
   min-width: 0 !important;
 }
-
 .canvas-toolbar .icon-button {
   display: inline-grid !important;
   place-items: center !important;
@@ -207,7 +185,6 @@ body {
   line-height: 1 !important;
   text-align: center !important;
 }
-
 .canvas-toolbar .icon-button > span[aria-hidden="true"] {
   display: grid !important;
   place-items: center !important;
@@ -215,51 +192,33 @@ body {
   height: 100% !important;
   line-height: 1 !important;
 }
-
-.canvas-toolbar .canvas-focus-status,
-.canvas-toolbar .canvas-focus-exit {
-  display: none !important;
-}
-
 .canvas-toolbar .interaction-toggle {
   flex: 0 0 auto !important;
 }
-
 .canvas-toolbar .canvas-action-menu {
   display: contents !important;
 }
-
 .canvas-toolbar .canvas-action-toggle {
   display: none !important;
 }
-
-.canvas-toolbar .canvas-focus-toggle {
-  display: none !important;
-}
-
 .canvas-toolbar .canvas-action-menu .focus-controls-toggle {
   display: none !important;
 }
-
 .canvas-toolbar .canvas-action-menu .canvas-action-label {
   display: none !important;
 }
-
 .app-shell .stage .canvas-options-toggle,
 .app-shell .stage .canvas-view-controls {
   display: none !important;
 }
-
 .colorbar {
   z-index: 28 !important;
 }
-
 .source-menu,
 .brush-menu,
 .boundary-menu {
   z-index: 70 !important;
 }
-
 .source-menu {
   width: min(420px, calc(100vw - 20px)) !important;
   max-height: 640px !important;
@@ -267,31 +226,25 @@ body {
   border-radius: 18px !important;
   font-size: 0.78rem !important;
 }
-
 .brush-menu {
   width: min(430px, calc(100vw - 20px)) !important;
 }
-
 .boundary-menu {
   width: min(280px, calc(100vw - 20px)) !important;
 }
-
 .source-menu-header {
   gap: 8px !important;
   margin-bottom: 8px !important;
 }
-
 .source-menu-header h2 {
   font-size: 0.9rem !important;
   line-height: 1.12 !important;
 }
-
 .source-menu-hint {
   margin-bottom: 2px !important;
   font-size: 0.66rem !important;
   line-height: 1.15 !important;
 }
-
 #sourceCloseBtn,
 #brushMenuCloseBtn,
 #boundaryMenuCloseBtn {
@@ -301,18 +254,15 @@ body {
   min-height: 30px !important;
   font-size: 0.95rem !important;
 }
-
 .source-menu-body {
   gap: 7px !important;
 }
-
 .source-menu label,
 .source-menu .control-row {
   grid-template-columns: minmax(62px, 0.68fr) minmax(0, 1.55fr) minmax(54px, auto) !important;
   gap: 7px !important;
   min-height: 0 !important;
 }
-
 .source-menu label > span,
 .source-menu .control-row > span {
   min-height: 18px !important;
@@ -320,7 +270,6 @@ body {
   font-weight: 760 !important;
   line-height: 1.18 !important;
 }
-
 .source-menu select,
 .source-menu input[type="number"] {
   min-height: 36px !important;
@@ -329,11 +278,9 @@ body {
   font-size: 0.74rem !important;
   font-weight: 780 !important;
 }
-
 .source-menu input[type="range"] {
   height: 24px !important;
 }
-
 .source-menu label > output,
 .source-menu .control-row output {
   min-width: 54px !important;
@@ -343,14 +290,12 @@ body {
   font-size: 0.69rem !important;
   font-weight: 820 !important;
 }
-
 .source-menu .segmented,
 .source-menu .canvas-mode-toggle {
   min-height: 34px !important;
   padding: 3px !important;
   border-radius: 15px !important;
 }
-
 .source-menu .mode-toggle-button,
 .source-menu .segment {
   min-height: 28px !important;
@@ -358,39 +303,32 @@ body {
   font-size: 0.69rem !important;
   font-weight: 760 !important;
 }
-
 .brush-menu .segmented {
   margin-bottom: 7px !important;
 }
-
 .source-menu .two-col {
   gap: 7px !important;
 }
-
 .source-menu .material-params {
   margin: 7px 0 !important;
 }
-
 .source-menu-actions,
 .source-menu .button-row {
   gap: 6px !important;
   margin-top: 8px !important;
   padding-top: 7px !important;
 }
-
 .source-menu-actions .text-button,
 .source-menu .button-row .text-button {
   min-height: 36px !important;
   padding: 7px 10px !important;
   font-size: 0.74rem !important;
 }
-
 @media (max-height: 700px) {
-  .source-menu {
+.source-menu {
     max-height: calc(100vh - 20px) !important;
   }
 }
-
 .control-panel {
   position: fixed !important;
   inset: 0 !important;
@@ -425,25 +363,21 @@ body {
     transform 180ms ease,
     visibility 180ms ease !important;
 }
-
 .app-shell.controls-open .control-panel {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
   transform: none !important;
 }
-
 .app-shell.controls-open .topbar,
 .app-shell.controls-open .canvas-toolbar {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
-
 .control-panel::before {
   display: none !important;
 }
-
 .control-panel-header {
   display: flex !important;
   grid-column: 1 / -1 !important;
@@ -453,11 +387,9 @@ body {
   min-width: 0 !important;
   width: 100% !important;
 }
-
 .control-panel-title-block h2 {
   font-size: clamp(1.05rem, 1.8vw, 1.6rem) !important;
 }
-
 .control-panel-actions {
   display: inline-flex !important;
   align-items: center !important;
@@ -466,7 +398,6 @@ body {
   gap: 8px !important;
   min-width: 0 !important;
 }
-
 .control-panel-actions .theme-toggle {
   flex: 0 1 clamp(132px, 12vw, 174px) !important;
   width: clamp(132px, 12vw, 174px) !important;
@@ -474,7 +405,6 @@ body {
   max-width: 174px !important;
   margin: 0 !important;
 }
-
 .control-panel .control-drawer-close {
   display: inline-grid !important;
   flex: 0 0 clamp(36px, 3vw, 44px) !important;
@@ -488,17 +418,14 @@ body {
   font-size: clamp(1.05rem, 1.7vw, 1.35rem) !important;
   line-height: 1 !important;
 }
-
 .control-panel .control-drawer-close,
 .control-panel .control-drawer-close:hover,
 .control-panel .control-drawer-close:active {
   text-align: center !important;
 }
-
 .control-panel .control-tabs {
   display: none !important;
 }
-
 .control-panel .mobile-layer-nav {
   display: grid !important;
   grid-column: 1 / -1 !important;
@@ -513,13 +440,11 @@ body {
   border-radius: 18px !important;
   overflow: visible !important;
 }
-
 .control-panel .mobile-layer-button {
   width: 100% !important;
   min-width: 0 !important;
   min-height: 42px !important;
 }
-
 .control-tab-panels {
   grid-column: 1 / -1 !important;
   width: 100% !important;
@@ -529,14 +454,12 @@ body {
   overflow: auto !important;
   scrollbar-width: thin !important;
 }
-
 .control-tab-panel.is-active {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)) !important;
   align-items: start !important;
   gap: clamp(12px, 1.1vw, 18px) !important;
 }
-
 .control-tab-panel > .panel-section,
 .control-tab-panel > .sweep-panel,
 .control-tab-panel > .analysis-panel,
@@ -544,22 +467,18 @@ body {
 .control-tab-panel > details {
   min-width: 0 !important;
 }
-
 .control-drawer-backdrop:not([hidden]) {
   display: none !important;
 }
-
 body.controls-drawer-open {
   overflow: hidden !important;
 }
-
 @media (max-width: 1180px) {
-  .topbar,
-  .canvas-toolbar {
+.topbar,
+.canvas-toolbar {
     max-width: calc(100vw - 2 * var(--fullscreen-edge)) !important;
   }
-
-  .topbar {
+.topbar {
     left: max(var(--fullscreen-edge), env(safe-area-inset-left)) !important;
     right: auto !important;
     width: auto !important;
@@ -567,14 +486,12 @@ body.controls-drawer-open {
     padding: 5px !important;
     border-radius: 17px !important;
   }
-
-  .topbar .control-drawer-toggle {
+.topbar .control-drawer-toggle {
     width: 38px !important;
     height: 38px !important;
     min-width: 38px !important;
   }
-
-  .canvas-toolbar {
+.canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
     left: auto !important;
     right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
@@ -588,27 +505,22 @@ body.controls-drawer-open {
       - 54px
     ) !important;
   }
-
-  .control-panel .mobile-layer-nav {
+.control-panel .mobile-layer-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
-
 @media (max-width: 680px) {
-  .topbar {
+.topbar {
     padding: 4px !important;
   }
-
-  .topbar .brand-lockup {
+.topbar .brand-lockup {
     display: none !important;
   }
-
-  .topbar .brand-title {
+.topbar .brand-title {
     max-width: calc(100vw - 92px) !important;
     font-size: 1rem !important;
   }
-
-  .canvas-toolbar {
+.canvas-toolbar {
     top: max(var(--fullscreen-edge), env(safe-area-inset-top)) !important;
     left: auto !important;
     right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
@@ -617,35 +529,29 @@ body.controls-drawer-open {
     padding: 4px 6px !important;
     border-radius: 16px !important;
   }
-
-  .canvas-toolbar .tool-group.compact {
+.canvas-toolbar .tool-group.compact {
     gap: 5px !important;
   }
-
-  .canvas-toolbar .icon-button {
+.canvas-toolbar .icon-button {
     flex: 0 0 34px !important;
     width: 34px !important;
     height: 34px !important;
     min-width: 34px !important;
   }
-
-  .canvas-toolbar .icon-button.primary {
+.canvas-toolbar .icon-button.primary {
     flex-basis: 38px !important;
     width: 38px !important;
     height: 38px !important;
     min-width: 38px !important;
   }
-
-  .canvas-toolbar .interaction-toggle {
+.canvas-toolbar .interaction-toggle {
     flex: 1 1 128px !important;
   }
-
-  .canvas-toolbar .interaction-toggle .mode-toggle-button {
+.canvas-toolbar .interaction-toggle .mode-toggle-button {
     min-height: 34px !important;
     font-size: 0.68rem !important;
   }
-
-  .control-panel {
+.control-panel {
     gap: 10px !important;
     padding:
       max(10px, env(safe-area-inset-top))
@@ -653,28 +559,22 @@ body.controls-drawer-open {
       max(10px, env(safe-area-inset-bottom))
       max(10px, env(safe-area-inset-left)) !important;
   }
-
-  .control-panel-header {
+.control-panel-header {
     align-items: start !important;
   }
-
-  .control-panel-title-block {
+.control-panel-title-block {
     max-width: none !important;
   }
-
-  .control-panel-actions {
+.control-panel-actions {
     gap: 6px !important;
   }
-
-  .control-panel .mobile-layer-nav {
+.control-panel .mobile-layer-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
-
-  .control-tab-panel.is-active {
+.control-tab-panel.is-active {
     grid-template-columns: 1fr !important;
   }
-
-  .canvas-toolbar {
+.canvas-toolbar {
     overflow: visible !important;
     transition:
       left 160ms ease,
@@ -683,13 +583,11 @@ body.controls-drawer-open {
       background 160ms ease,
       box-shadow 160ms ease !important;
   }
-
-  .stage:not(.canvas-actions-open) .canvas-toolbar {
+.stage:not(.canvas-actions-open) .canvas-toolbar {
     width: auto !important;
     max-width: none !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar {
+.stage.canvas-actions-open .canvas-toolbar {
     left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 56px) !important;
     right: max(var(--fullscreen-edge), env(safe-area-inset-right)) !important;
     width: auto !important;
@@ -697,42 +595,39 @@ body.controls-drawer-open {
     justify-content: flex-end !important;
     gap: 5px !important;
   }
-
-  .canvas-toolbar .canvas-action-toggle {
+.canvas-toolbar .canvas-action-toggle {
     display: inline-grid !important;
     place-items: center !important;
-    flex: 0 0 34px !important;
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
     order: 2 !important;
     font-size: 1rem !important;
     line-height: 1 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-toggle {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-toggle {
     order: 7 !important;
     color: var(--button-active-ink) !important;
     border-color: var(--button-active-border) !important;
     background: var(--button-active-bg) !important;
     box-shadow: var(--button-active-shadow) !important;
   }
-
-  .canvas-toolbar .tool-group.compact {
+.canvas-toolbar .tool-group.compact {
     display: inline-flex !important;
     align-items: center !important;
     flex: 0 0 auto !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
+.stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
     display: contents !important;
   }
-
-  .canvas-toolbar .tool-group.compact #playPauseBtn {
+.canvas-toolbar .tool-group.compact #playPauseBtn {
     order: 1 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .icon-button {
+.stage.canvas-actions-open .canvas-toolbar .icon-button {
     display: inline-grid !important;
     box-sizing: border-box !important;
     place-items: center !important;
@@ -748,27 +643,23 @@ body.controls-drawer-open {
     line-height: 1 !important;
     text-align: center !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .icon-button {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .icon-button {
     height: 34px !important;
     min-height: 34px !important;
     max-height: 34px !important;
     padding: 0 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .icon-button > span[aria-hidden="true"] {
+.stage.canvas-actions-open .canvas-toolbar .icon-button > span[aria-hidden="true"] {
     display: grid !important;
     width: 100% !important;
     height: 100% !important;
     place-items: center !important;
     line-height: 1 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .canvas-action-label {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .canvas-action-label {
     display: none !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact #playPauseBtn {
+.stage.canvas-actions-open .canvas-toolbar .tool-group.compact #playPauseBtn {
     flex-basis: 38px !important;
     width: 38px !important;
     height: 38px !important;
@@ -778,40 +669,31 @@ body.controls-drawer-open {
     max-height: 38px !important;
     font-size: 1rem !important;
   }
-
-  .stage:not(.canvas-actions-open) .canvas-toolbar .canvas-reset-button,
-  .stage:not(.canvas-actions-open) .canvas-toolbar .canvas-action-menu,
-  .stage:not(.canvas-actions-open) .canvas-toolbar .interaction-toggle {
+.stage:not(.canvas-actions-open) .canvas-toolbar .canvas-reset-button,
+.stage:not(.canvas-actions-open) .canvas-toolbar .canvas-action-menu,
+.stage:not(.canvas-actions-open) .canvas-toolbar .interaction-toggle {
     display: none !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-reset-button {
+.stage.canvas-actions-open .canvas-toolbar .canvas-reset-button {
     display: inline-grid !important;
     order: 2 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu {
     display: contents !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .focus-controls-toggle {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .focus-controls-toggle {
     display: none !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-options-toggle,
-  .stage.canvas-actions-open .canvas-toolbar .canvas-focus-exit {
+.stage.canvas-actions-open .canvas-toolbar .canvas-options-toggle {
     display: none !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #stepBtn {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #stepBtn {
     order: 3 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #saveBtn {
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu #saveBtn {
     order: 4 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
+.stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: stretch !important;
@@ -826,8 +708,7 @@ body.controls-drawer-open {
     overflow: hidden !important;
     order: 5 !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
+.stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
     display: grid !important;
     place-items: center !important;
     flex: 1 1 0 !important;
@@ -843,75 +724,68 @@ body.controls-drawer-open {
     white-space: nowrap !important;
   }
 }
-
 @media (max-width: 390px) {
-  .canvas-toolbar {
+.canvas-toolbar {
     justify-content: flex-start !important;
   }
-
-  .canvas-toolbar .tool-group.compact {
+.canvas-toolbar .tool-group.compact {
     flex: 0 0 auto !important;
     justify-content: center !important;
   }
-
-  .canvas-toolbar .interaction-toggle {
+.canvas-toolbar .interaction-toggle {
     flex: 1 1 108px !important;
     max-width: 126px !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar {
-    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 54px) !important;
-    gap: 3px !important;
+.stage.canvas-actions-open .canvas-toolbar {
+    left: calc(max(var(--fullscreen-edge), env(safe-area-inset-left)) + 52px) !important;
+    gap: 2px !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .icon-button,
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-toggle {
-    flex-basis: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    max-width: 32px !important;
-    max-height: 32px !important;
+.stage.canvas-actions-open .canvas-toolbar .icon-button,
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-toggle {
+    flex-basis: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
     font-size: 0.88rem !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .icon-button {
-    height: 32px !important;
-    min-height: 32px !important;
-    max-height: 32px !important;
+.stage.canvas-actions-open .canvas-toolbar .canvas-action-menu .icon-button {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact #playPauseBtn {
-    flex-basis: 36px !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-    max-width: 36px !important;
-    max-height: 36px !important;
+.stage.canvas-actions-open .canvas-toolbar .tool-group.compact #playPauseBtn {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    max-width: 38px !important;
+    max-height: 38px !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
-    flex-basis: 110px !important;
-    width: 110px !important;
-    min-width: 110px !important;
-    max-width: 110px !important;
+.stage.canvas-actions-open .canvas-toolbar .interaction-toggle {
+    flex-basis: 104px !important;
+    width: 104px !important;
+    min-width: 104px !important;
+    max-width: 104px !important;
+    height: 38px !important;
+    min-height: 38px !important;
   }
-
-  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
+.stage.canvas-actions-open .canvas-toolbar .interaction-toggle .mode-toggle-button {
+    height: 34px !important;
+    min-height: 34px !important;
     padding-inline: 4px !important;
     font-size: 0.58rem !important;
   }
-
-  .control-panel .mobile-layer-button {
+.control-panel .mobile-layer-button {
     grid-template-columns: auto minmax(0, max-content) !important;
     gap: 4px !important;
     padding-inline: 5px !important;
     font-size: 0.58rem !important;
   }
 }
-
 /* General drawer density and task-first ordering. */
 .control-panel {
   gap: clamp(8px, 0.75vw, 12px) !important;
@@ -921,39 +795,32 @@ body.controls-drawer-open {
     max(10px, env(safe-area-inset-bottom))
     max(10px, env(safe-area-inset-left)) !important;
 }
-
 .control-panel-header {
   gap: 8px !important;
 }
-
 .control-panel-title-block .panel-kicker {
   margin-bottom: 1px !important;
   font-size: 0.62rem !important;
   line-height: 1.05 !important;
 }
-
 .control-panel-title-block h2 {
   font-size: clamp(0.95rem, 1.25vw, 1.18rem) !important;
   line-height: 1.08 !important;
 }
-
 .control-panel-actions {
   gap: 6px !important;
 }
-
 .control-panel-actions .theme-toggle {
   flex-basis: clamp(120px, 11vw, 150px) !important;
   width: clamp(120px, 11vw, 150px) !important;
   min-width: 120px !important;
   max-width: 150px !important;
 }
-
 .control-panel-actions .theme-toggle .mode-toggle-button {
   min-height: 30px !important;
   padding-inline: 7px !important;
   font-size: 0.64rem !important;
 }
-
 .control-panel .control-drawer-close {
   flex-basis: 34px !important;
   width: 34px !important;
@@ -962,36 +829,30 @@ body.controls-drawer-open {
   min-height: 34px !important;
   font-size: 1rem !important;
 }
-
 .control-panel .mobile-layer-nav {
   gap: 5px !important;
   grid-auto-rows: minmax(34px, auto) !important;
   padding: 5px !important;
   border-radius: 16px !important;
 }
-
 .control-panel .mobile-layer-button {
   min-height: 34px !important;
   padding: 5px 8px !important;
   border-radius: 12px !important;
   font-size: 0.66rem !important;
 }
-
 .control-panel .mobile-layer-button .nav-step {
   width: 18px !important;
   height: 18px !important;
   font-size: 0.56rem !important;
 }
-
 .control-tab-panels {
   scrollbar-gutter: stable !important;
 }
-
 .control-tab-panel.is-active {
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)) !important;
   gap: 9px !important;
 }
-
 .control-tab-panel > .panel-section,
 .control-tab-panel > details,
 .control-tab-panel > .config-detail-panel,
@@ -1000,7 +861,6 @@ body.controls-drawer-open {
   padding: 11px !important;
   border-radius: 16px !important;
 }
-
 .control-panel .panel-section h2,
 .control-panel .results-panel-head h2,
 .control-panel .visual-panel-head h2,
@@ -1008,11 +868,9 @@ body.controls-drawer-open {
   font-size: 0.86rem !important;
   line-height: 1.12 !important;
 }
-
 .control-panel .panel-section h2 {
   margin-bottom: 7px !important;
 }
-
 .control-panel .panel-kicker,
 .control-panel label > span,
 .control-panel .control-row > span,
@@ -1027,7 +885,6 @@ body.controls-drawer-open {
   font-weight: 760 !important;
   line-height: 1.14 !important;
 }
-
 .control-panel input[type="search"],
 .control-panel select,
 .control-panel input[type="number"] {
@@ -1037,20 +894,16 @@ body.controls-drawer-open {
   font-size: 0.74rem !important;
   font-weight: 780 !important;
 }
-
 .control-panel input[type="range"] {
   height: 24px !important;
 }
-
 .control-panel .control-row,
 .control-panel .solver-row {
   gap: 7px !important;
 }
-
 .control-panel .control-row {
   grid-template-columns: minmax(62px, 0.65fr) minmax(0, 1.6fr) minmax(54px, auto) !important;
 }
-
 .control-panel .two-col,
 .control-panel .button-row,
 .control-panel .inspector-actions,
@@ -1059,7 +912,6 @@ body.controls-drawer-open {
 .control-panel .analysis-panel-header {
   gap: 7px !important;
 }
-
 .control-panel .control-row output,
 .control-panel label > output {
   min-width: 54px !important;
@@ -1069,176 +921,128 @@ body.controls-drawer-open {
   font-size: 0.69rem !important;
   font-weight: 820 !important;
 }
-
 .control-panel .text-button {
   min-height: 36px !important;
   padding: 7px 10px !important;
   font-size: 0.74rem !important;
 }
-
 .control-panel details > summary {
   min-height: 34px !important;
   padding: 7px 10px !important;
 }
-
 .control-panel .results-detail-body,
 .control-panel .config-detail-body {
   gap: 8px !important;
   padding-top: 8px !important;
 }
-
 #tab-scenes .scene-section {
   display: grid !important;
   gap: 8px !important;
 }
-
 #tab-scenes .scene-select-fallback {
   order: 1 !important;
 }
-
 #tab-scenes .scene-browser {
   order: 2 !important;
 }
-
 #tab-scenes .scene-note {
   order: 3 !important;
   margin: 0 !important;
   font-size: 0.72rem !important;
   line-height: 1.25 !important;
 }
-
 #tab-scenes .scene-guide-panel {
   order: 4 !important;
 }
-
 #tab-scenes #slabThicknessControl {
   order: 5 !important;
 }
-
 #tab-scenes .scene-browser,
 #tab-scenes .scene-filter-bar,
 #tab-scenes .scene-cards {
   gap: 7px !important;
 }
-
 #tab-scenes .scene-filter-bar {
   padding: 6px !important;
 }
-
 #tab-scenes .scene-filter-button {
   min-height: 34px !important;
   padding: 5px 9px !important;
   font-size: 0.66rem !important;
 }
-
 #tab-scenes .scene-browser-meta output {
   min-height: 28px !important;
   font-size: 0.68rem !important;
 }
-
 #tab-scenes .scene-card {
   min-height: 86px !important;
   padding: 9px !important;
 }
-
 #tab-scenes .scene-card-title {
   font-size: 0.82rem !important;
   line-height: 1.16 !important;
 }
-
 #tab-scenes .scene-card-description {
   font-size: 0.72rem !important;
   line-height: 1.28 !important;
 }
-
 #tab-simulation .run-section {
   order: 1 !important;
 }
-
-#tab-simulation .status-section {
+#tab-simulation .inspector-section {
   order: 2 !important;
 }
-
-#tab-simulation .inspector-section {
+#tab-simulation .simulation-guide-section {
   order: 3 !important;
 }
-
-#tab-simulation .edit-section {
-  order: 4 !important;
-}
-
-#tab-simulation .simulation-guide-section {
-  order: 5 !important;
-}
-
 .control-panel[data-mobile-layer="objects"] #tab-simulation .inspector-section {
   order: 1 !important;
 }
-
-.control-panel[data-mobile-layer="objects"] #tab-simulation .edit-section {
+.control-panel[data-mobile-layer="objects"] #tab-simulation .run-section {
   order: 2 !important;
 }
-
-.control-panel[data-mobile-layer="objects"] #tab-simulation .run-section {
+.control-panel[data-mobile-layer="objects"] #tab-simulation .simulation-guide-section {
   order: 3 !important;
 }
-
-.control-panel[data-mobile-layer="objects"] #tab-simulation .status-section {
-  order: 4 !important;
-}
-
-.control-panel[data-mobile-layer="objects"] #tab-simulation .simulation-guide-section {
-  order: 5 !important;
-}
-
 #tab-simulation .simulation-guide-grid,
 #tab-simulation .status-grid,
 #tab-simulation .inspector-details {
   gap: 7px !important;
 }
-
 #tab-simulation .simulation-guide-card {
   min-height: 48px !important;
   padding: 8px !important;
 }
-
 #tab-visual .visual-field-section {
   order: 1 !important;
 }
-
 #tab-visual .visual-overlays-section {
   order: 2 !important;
 }
-
 #tab-visual .visual-summary-section {
   order: 3 !important;
 }
-
 #tab-visual .visual-control-stack,
 #tab-visual .visual-summary-grid,
 #tab-visual .visual-layer-grid {
   gap: 7px !important;
 }
-
 .control-panel #tab-visual .canvas-mode-toggle,
 .control-panel #tab-visual .visual-panel-profile {
   min-height: 38px !important;
   padding: 4px !important;
   border-radius: 14px !important;
 }
-
 .control-panel #tab-visual .mode-toggle-button {
   min-height: 31px !important;
   padding-inline: 6px !important;
   font-size: 0.68rem !important;
 }
-
 .control-panel #tab-visual .visual-panel-layer {
   min-height: 42px !important;
   gap: 7px !important;
   padding: 6px 8px !important;
 }
-
 .control-panel #tab-visual .visual-summary-card,
 .control-panel .results-summary-card,
 .control-panel .config-summary-card,
@@ -1247,41 +1051,32 @@ body.controls-drawer-open {
   min-height: 50px !important;
   padding: 8px !important;
 }
-
 #tab-results .diagnostics-section {
   display: grid !important;
   gap: 8px !important;
 }
-
 #tab-results .results-panel-head {
   order: 1 !important;
 }
-
 #tab-results .results-summary-grid {
   order: 2 !important;
 }
-
 #tab-results .results-insight-note {
   order: 3 !important;
   margin: 0 !important;
 }
-
 #tab-results .monitor-panel {
   order: 4 !important;
 }
-
 #tab-results .analysis-panel {
   order: 5 !important;
 }
-
 #tab-results .sweep-panel {
   order: 6 !important;
 }
-
 #tab-results .performance-panel {
   order: 7 !important;
 }
-
 #tab-results .results-summary-grid,
 #tab-results .diagnostics-grid,
 #tab-results .performance-grid,
@@ -1290,32 +1085,25 @@ body.controls-drawer-open {
 #tab-config .config-status-grid {
   gap: 7px !important;
 }
-
 #tab-config .scale-section {
   order: 1 !important;
 }
-
 #tab-config .reproducibility-section {
   order: 2 !important;
 }
-
 #tab-config .config-summary-section {
   order: 3 !important;
 }
-
 #tab-config .grid-section {
   order: 4 !important;
 }
-
 #tab-config .stability-section {
   order: 5 !important;
 }
-
 #tab-config .share-url-output {
   min-height: 56px !important;
   font-size: 0.72rem !important;
 }
-
 .scene-guide-panel {
   display: grid !important;
   gap: 8px !important;
@@ -1326,13 +1114,11 @@ body.controls-drawer-open {
   background: color-mix(in srgb, var(--neu-surface) 86%, transparent) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
 }
-
 .scene-guide-header {
   display: grid !important;
   gap: 3px !important;
   min-width: 0 !important;
 }
-
 .scene-guide-header span {
   color: var(--neu-accent) !important;
   font-size: 0.62rem !important;
@@ -1340,21 +1126,18 @@ body.controls-drawer-open {
   letter-spacing: 0 !important;
   text-transform: uppercase !important;
 }
-
 .scene-guide-header strong {
   min-width: 0 !important;
   color: var(--neu-ink) !important;
   font-size: 0.9rem !important;
   line-height: 1.14 !important;
 }
-
 .scene-guide-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)) !important;
   gap: 7px !important;
   min-width: 0 !important;
 }
-
 .scene-guide-item {
   display: grid !important;
   align-content: start !important;
@@ -1365,7 +1148,6 @@ body.controls-drawer-open {
   background: color-mix(in srgb, var(--neu-surface-low) 78%, transparent) !important;
   box-shadow: var(--neu-shadow-small) !important;
 }
-
 .scene-guide-item h3 {
   margin: 0 !important;
   color: color-mix(in srgb, var(--neu-ink) 76%, var(--neu-muted)) !important;
@@ -1374,7 +1156,6 @@ body.controls-drawer-open {
   line-height: 1.1 !important;
   text-transform: uppercase !important;
 }
-
 .scene-guide-item p,
 .scene-guide-item li {
   margin: 0 !important;
@@ -1383,21 +1164,18 @@ body.controls-drawer-open {
   font-weight: 650 !important;
   line-height: 1.32 !important;
 }
-
 .scene-guide-item ul {
   display: grid !important;
   gap: 4px !important;
   margin: 0 !important;
   padding-left: 15px !important;
 }
-
 .scene-guide-details {
   min-width: 0 !important;
   border-radius: 12px !important;
   background: color-mix(in srgb, var(--neu-surface-low) 58%, transparent) !important;
   box-shadow: var(--neu-shadow-inset-tight) !important;
 }
-
 .scene-guide-details > summary {
   display: flex !important;
   align-items: center !important;
@@ -1411,11 +1189,9 @@ body.controls-drawer-open {
   line-height: 1 !important;
   list-style: none !important;
 }
-
 .scene-guide-details > summary::-webkit-details-marker {
   display: none !important;
 }
-
 .scene-guide-details > summary::after {
   content: "+" !important;
   display: inline-grid !important;
@@ -1427,24 +1203,20 @@ body.controls-drawer-open {
   color: var(--neu-accent) !important;
   box-shadow: var(--neu-shadow-small) !important;
 }
-
 .scene-guide-details[open] > summary::after {
   content: "-" !important;
 }
-
 .scene-guide-details > .scene-guide-grid,
 .scene-guide-reference-grid {
   padding: 0 8px 8px !important;
 }
-
 .scene-guide-reference-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)) !important;
   gap: 7px !important;
 }
-
 @media (max-width: 760px) {
-  .control-panel {
+.control-panel {
     gap: 8px !important;
     padding:
       max(8px, env(safe-area-inset-top))
@@ -1452,66 +1224,56 @@ body.controls-drawer-open {
       max(8px, env(safe-area-inset-bottom))
       max(8px, env(safe-area-inset-left)) !important;
   }
-
-  .control-panel .mobile-layer-nav {
+.control-panel .mobile-layer-nav {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-auto-rows: minmax(32px, auto) !important;
     min-height: 0 !important;
   }
-
-  .control-panel .mobile-layer-button {
+.control-panel .mobile-layer-button {
     min-height: 32px !important;
     padding: 4px 6px !important;
     font-size: 0.6rem !important;
   }
-
-  .control-tab-panel.is-active {
+.control-tab-panel.is-active {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
   }
-
-  .control-tab-panel > .panel-section,
-  .control-tab-panel > details,
-  .control-tab-panel > .config-detail-panel {
+.control-tab-panel > .panel-section,
+.control-tab-panel > details,
+.control-tab-panel > .config-detail-panel {
     padding: 10px !important;
   }
-
-  .control-panel .panel-section h2,
-  .control-panel .results-panel-head h2,
-  .control-panel .visual-panel-head h2 {
+.control-panel .panel-section h2,
+.control-panel .results-panel-head h2,
+.control-panel .visual-panel-head h2 {
     font-size: 0.82rem !important;
   }
-
-  .control-panel .control-row {
+.control-panel .control-row {
     grid-template-columns: minmax(54px, max-content) minmax(0, 1fr) minmax(48px, auto) !important;
   }
 }
-
 @media (min-width: 761px) {
-  .control-panel .mobile-layer-nav {
+.control-panel .mobile-layer-nav {
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
     grid-auto-rows: minmax(34px, auto) !important;
   }
 }
-
 @media (max-width: 390px) {
-  .control-panel-actions .theme-toggle {
+.control-panel-actions .theme-toggle {
     flex-basis: 110px !important;
     width: 110px !important;
     min-width: 110px !important;
   }
-
-  .control-panel-actions .theme-toggle .mode-toggle-button {
-    min-height: 28px !important;
+.control-panel-actions .theme-toggle .mode-toggle-button {
+    min-height: 34px !important;
     padding-inline: 4px !important;
-    font-size: 0.56rem !important;
+    font-size: 0.58rem !important;
   }
-
-  .control-panel .control-drawer-close {
-    flex-basis: 32px !important;
-    width: 32px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    min-height: 32px !important;
+.control-panel .control-drawer-close {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
   }
 }
