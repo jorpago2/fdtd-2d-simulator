@@ -1282,6 +1282,9 @@ function currentSceneRecordFallback(value = state.preset) {
 function sceneGuideFamily(record) {
   const haystack = normalizeSceneText(`${record.value} ${record.title} ${record.group} ${record.description}`);
   if (record.value === "empty") return "empty";
+  if (/(pt-symmetric|exceptional|non-hermitian|skin)/.test(haystack)) return "nonhermitian";
+  if (/(temporal|modulat|floquet|space-time|traveling|synthetic frequency)/.test(haystack)) return "temporal";
+  if (/(chiral|bianisotropic|gyrotropic|ferrite|tensor|hyperbolic)/.test(haystack)) return "tensor";
   if (/(pec cylinder|cylinder scattering|mie|rcs|kerker|dimer|multiple scattering|localization|random medium)/.test(haystack)) return "scattering";
   if (/(interface|refraction|brewster|tir|coating|bragg mirror|lossy interface|anisotropic interface)/.test(haystack)) return "interface";
   if (/(dipole|huygens|array|aperture|radiator|ntff|far-field)/.test(haystack)) return "radiation";
@@ -1290,83 +1293,87 @@ function sceneGuideFamily(record) {
   if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|bloch|bic)/.test(haystack)) return "periodic";
   if (/(drude|lorentz|debye|plasma|enz|metal|spp|plasmon|negative-index|superlens|hyperlens|metasurface)/.test(haystack)) return "dispersive";
   if (/(kerr|chi2|chi3|nonlinear|vo2|pcm|saturable|switch|limiter)/.test(haystack)) return "nonlinear";
-  if (/(temporal|modulat|floquet|space-time|traveling|synthetic frequency)/.test(haystack)) return "temporal";
-  if (/(pt-symmetric|exceptional|non-hermitian|skin)/.test(haystack)) return "nonhermitian";
   return "propagation";
 }
 
 const sceneGuideReferenceSets = {
   propagation: {
     books: ["A. Taflove and S. Hagness, Computational Electrodynamics, 3rd ed.", "J. D. Jackson, Classical Electrodynamics."],
-    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 1966.", "J.-P. Berenger, J. Comput. Phys. 1994."],
-    reviews: ["A. Oskooi et al., Comput. Phys. Commun. 2010."],
-    recent: ["Modern FDTD and adjoint-design papers in open nanophotonics toolchains."],
+    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 14, 302-307 (1966).", "J.-P. Berenger, J. Comput. Phys. 114, 185-200 (1994)."],
+    reviews: ["A. F. Oskooi et al., Comput. Phys. Commun. 181, 687-702 (2010)."],
+    recent: ["A. Y. Piggott et al., Sci. Rep. 5, 11327 (2015)."],
   },
   interface: {
-    books: ["M. Born and E. Wolf, Principles of Optics.", "A. Yariv and P. Yeh, Photonics."],
-    classics: ["A. Fresnel, wave-reflection and refraction memoirs.", "H. A. Macleod, Thin-Film Optical Filters."],
-    reviews: ["Reviews on multilayer optics and antireflection coatings."],
-    recent: ["Recent metasurface and thin-film inverse-design work on engineered interfaces."],
+    books: ["M. Born and E. Wolf, Principles of Optics.", "H. A. Macleod, Thin-Film Optical Filters."],
+    classics: ["A. Fresnel, Ann. Chim. Phys. 17, 102-111 (1821).", "H. Kogelnik, Bell Syst. Tech. J. 48, 2909-2947 (1969)."],
+    reviews: ["P. Yeh, Optical Waves in Layered Media."],
+    recent: ["N. Yu and F. Capasso, Nat. Mater. 13, 139-150 (2014)."],
   },
   radiation: {
     books: ["C. A. Balanis, Antenna Theory.", "L. Novotny and B. Hecht, Principles of Nano-Optics."],
-    classics: ["A. Sommerfeld, radiation from dipoles near interfaces.", "J. A. Stratton, Electromagnetic Theory."],
-    reviews: ["Reviews on nanoantennas, Huygens sources, and near-to-far transformations."],
-    recent: ["Recent dielectric and topological nanoantenna papers using directional emission."],
+    classics: ["J. A. Stratton, Electromagnetic Theory.", "L. Rayleigh, Philos. Mag. 41, 107-120 (1871)."],
+    reviews: ["P. Biagioni, J.-S. Huang, and B. Hecht, Rep. Prog. Phys. 75, 024402 (2012)."],
+    recent: ["M. Decker and I. Staude, J. Opt. 18, 103001 (2016)."],
   },
   guided: {
     books: ["A. W. Snyder and J. Love, Optical Waveguide Theory.", "D. Marcuse, Theory of Dielectric Optical Waveguides."],
-    classics: ["E. A. J. Marcatili, Bell Syst. Tech. J. 1969.", "H. Kogelnik, guided-wave coupled-mode theory."],
-    reviews: ["Reviews on silicon photonics and integrated optical waveguides."],
-    recent: ["Recent integrated-photonics papers on compact bends, MMI splitters, and couplers."],
+    classics: ["E. A. J. Marcatili, Bell Syst. Tech. J. 48, 2071-2102 (1969).", "L. B. Soldano and E. C. M. Pennings, J. Lightwave Technol. 13, 615-627 (1995)."],
+    reviews: ["D. Thomson et al., J. Opt. 18, 073003 (2016)."],
+    recent: ["D. Dai, J. Lightwave Technol. 35, 572-587 (2017)."],
   },
   resonator: {
     books: ["A. Yariv and P. Yeh, Photonics.", "H. A. Haus, Waves and Fields in Optoelectronics."],
-    classics: ["H. Kogelnik and T. Li, Appl. Opt. 1966.", "A. Yariv, Electron. Lett. 2000."],
-    reviews: ["Reviews on microcavities, ring resonators, Purcell enhancement, and cavity Q."],
-    recent: ["Recent nanophotonic cavity papers on high-Q/V resonators and sensors."],
+    classics: ["E. M. Purcell, Phys. Rev. 69, 681 (1946).", "A. Yariv, Electron. Lett. 36, 321-322 (2000)."],
+    reviews: ["K. J. Vahala, Nature 424, 839-846 (2003)."],
+    recent: ["M. Notomi, Rep. Prog. Phys. 73, 096501 (2010)."],
   },
   scattering: {
     books: ["C. F. Bohren and D. R. Huffman, Absorption and Scattering of Light by Small Particles.", "H. C. van de Hulst, Light Scattering by Small Particles."],
-    classics: ["G. Mie, Ann. Phys. 1908.", "M. Kerker et al., J. Opt. Soc. Am. 1983."],
-    reviews: ["Reviews on Mie resonances, Kerker scattering, and optical nanoantennas."],
-    recent: ["Recent all-dielectric metasurface papers exploiting directional scattering."],
+    classics: ["G. Mie, Ann. Phys. 330, 377-445 (1908).", "M. Kerker, D.-S. Wang, and C. L. Giles, J. Opt. Soc. Am. 73, 765-767 (1983)."],
+    reviews: ["A. I. Kuznetsov et al., Science 354, aag2472 (2016)."],
+    recent: ["Y. Kivshar and A. Miroshnichenko, Opt. Photon. News 28, 24-31 (2017)."],
   },
   dispersive: {
     books: ["S. A. Maier, Plasmonics.", "N. Engheta and R. W. Ziolkowski, Metamaterials."],
-    classics: ["J. B. Pendry, Phys. Rev. Lett. 2000.", "R. A. Shelby, D. R. Smith, and S. Schultz, Science 2001."],
-    reviews: ["Reviews on plasmonics, ENZ media, and metamaterials."],
-    recent: ["Recent ENZ, metasurface, and low-loss plasmonic material papers."],
+    classics: ["J. B. Pendry, Phys. Rev. Lett. 85, 3966-3969 (2000).", "R. A. Shelby, D. R. Smith, and S. Schultz, Science 292, 77-79 (2001)."],
+    reviews: ["N. I. Zheludev and Y. S. Kivshar, Nat. Mater. 11, 917-924 (2012).", "M. Silveirinha and N. Engheta, Phys. Rev. Lett. 97, 157403 (2006)."],
+    recent: ["Z. Jacob, L. V. Alekseyev, and E. Narimanov, Opt. Express 14, 8247-8256 (2006).", "Z. Liu et al., Science 315, 1686 (2007)."],
+  },
+  tensor: {
+    books: ["J. A. Kong, Electromagnetic Wave Theory.", "I. V. Lindell et al., Electromagnetic Waves in Chiral and Bi-Isotropic Media."],
+    classics: ["B. D. H. Tellegen, Philips Res. Rep. 3, 81-101 (1948).", "D. L. Jaggard, A. R. Mickelson, and C. H. Papas, Appl. Phys. 18, 211-216 (1979)."],
+    reviews: ["A. Serdyukov et al., Electromagnetics of Bi-Anisotropic Materials."],
+    recent: ["C. Caloz and A. Sihvola, IEEE Antennas Propag. Mag. 62, 58-71 (2020)."],
   },
   nonlinear: {
     books: ["R. W. Boyd, Nonlinear Optics.", "Y. R. Shen, The Principles of Nonlinear Optics."],
-    classics: ["P. A. Franken et al., Phys. Rev. Lett. 1961.", "N. Bloembergen, nonlinear optics foundations."],
-    reviews: ["Reviews on nonlinear nanophotonics and phase-change photonics."],
-    recent: ["Recent all-optical switching, Kerr microcavity, VO2, and PCM photonics papers."],
+    classics: ["P. A. Franken et al., Phys. Rev. Lett. 7, 118-119 (1961).", "J. A. Armstrong et al., Phys. Rev. 127, 1918-1939 (1962)."],
+    reviews: ["D. N. Neshev and I. Aharonovich, Light Sci. Appl. 7, 58 (2018).", "M. Wuttig, H. Bhaskaran, and T. Taubner, Nat. Photonics 11, 465-476 (2017)."],
+    recent: ["A. Shaltout, V. Shalaev, and M. Brongersma, Science 364, eaat3100 (2019)."],
   },
   temporal: {
-    books: ["R. W. Boyd, Nonlinear Optics.", "C. Caloz et al., Electromagnetic Nonreciprocity."],
-    classics: ["F. R. Morgenthaler, IRE Trans. Microwave Theory Tech. 1958.", "Foundational Floquet theory papers."],
-    reviews: ["Reviews on time-varying media, space-time metamaterials, and synthetic dimensions."],
-    recent: ["Recent space-time photonics and temporal-interface papers."],
+    books: ["C. Caloz et al., Electromagnetic Nonreciprocity.", "R. W. Boyd, Nonlinear Optics."],
+    classics: ["F. R. Morgenthaler, IRE Trans. Microwave Theory Tech. 6, 167-172 (1958).", "J. R. Zurita-Sanchez, P. Halevi, and J. C. Cervantes-Gonzalez, Phys. Rev. A 79, 053821 (2009)."],
+    reviews: ["D. L. Sounas and A. Alu, Nat. Photonics 11, 774-783 (2017)."],
+    recent: ["A. Shaltout et al., Science 364, eaat3100 (2019).", "E. Galiffi et al., Adv. Photonics 4, 014002 (2022)."],
   },
   periodic: {
-    books: ["J. D. Joannopoulos et al., Photonic Crystals.", "S. G. Johnson and J. D. Joannopoulos, block-iterative frequency-domain methods."],
-    classics: ["E. Yablonovitch, Phys. Rev. Lett. 1987.", "S. John, Phys. Rev. Lett. 1987."],
-    reviews: ["L. Lu, J. D. Joannopoulos, and M. Soljacic, Nat. Photonics 2014.", "T. Ozawa et al., Rev. Mod. Phys. 2019."],
-    recent: ["Recent valley-Hall, BIC, and topological integrated-photonics papers."],
+    books: ["J. D. Joannopoulos et al., Photonic Crystals.", "K. Sakoda, Optical Properties of Photonic Crystals."],
+    classics: ["E. Yablonovitch, Phys. Rev. Lett. 58, 2059-2062 (1987).", "S. John, Phys. Rev. Lett. 58, 2486-2489 (1987).", "S. G. Johnson and J. D. Joannopoulos, Opt. Express 8, 173-190 (2001)."],
+    reviews: ["L. Lu, J. D. Joannopoulos, and M. Soljacic, Nat. Photonics 8, 821-829 (2014).", "T. Ozawa et al., Rev. Mod. Phys. 91, 015006 (2019)."],
+    recent: ["C. W. Hsu et al., Nat. Rev. Mater. 1, 16048 (2016).", "M. I. Shalaev et al., Nat. Nanotechnol. 14, 31-34 (2019)."],
   },
   nonhermitian: {
-    books: ["N. Moiseyev, Non-Hermitian Quantum Mechanics.", "Tutorial literature on photonic PT symmetry."],
-    classics: ["C. M. Bender and S. Boettcher, Phys. Rev. Lett. 1998.", "Ruter et al., Nat. Phys. 2010."],
-    reviews: ["M.-A. Miri and A. Alu, Science 2019.", "S. K. Ozdemir et al., Nat. Mater. 2019."],
-    recent: ["Recent exceptional-point sensing and non-Hermitian skin-effect photonics papers."],
+    books: ["N. Moiseyev, Non-Hermitian Quantum Mechanics.", "C. M. Bender, PT Symmetry."],
+    classics: ["C. M. Bender and S. Boettcher, Phys. Rev. Lett. 80, 5243-5246 (1998).", "C. E. Ruter et al., Nat. Phys. 6, 192-195 (2010)."],
+    reviews: ["M.-A. Miri and A. Alu, Science 363, eaar7709 (2019).", "S. K. Ozdemir et al., Nat. Mater. 18, 783-798 (2019)."],
+    recent: ["S. Weidemann et al., Science 368, 311-314 (2020)."],
   },
   empty: {
     books: ["A. Taflove and S. Hagness, Computational Electrodynamics."],
-    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 1966."],
-    reviews: ["A. Oskooi et al., Comput. Phys. Commun. 2010."],
-    recent: ["Recent open-source computational-photonics workflows."],
+    classics: ["K. S. Yee, IEEE Trans. Antennas Propag. 14, 302-307 (1966)."],
+    reviews: ["A. F. Oskooi et al., Comput. Phys. Commun. 181, 687-702 (2010)."],
+    recent: ["A. Y. Piggott et al., Sci. Rep. 5, 11327 (2015)."],
   },
 };
 
@@ -1444,6 +1451,12 @@ function sceneGuideTemplate(record) {
       geometry: "Nonlinear slab, guide, resonator, phase-change region, or switching cell.",
       expected: "Field-dependent phase shift, harmonic content, bistability, saturation, or persistent material-state changes.",
       explanation: "The material update depends on local field intensity or state variables, so response changes during the run.",
+    },
+    tensor: {
+      phenomenon: "Tensor, chiral, gyrotropic, or bianisotropic material response",
+      geometry: "Anisotropic or magnetoelectrically coupled regions embedded in the finite Yee grid.",
+      expected: "Polarization conversion, rotated phase fronts, non-reciprocal-looking bias effects, or tensor-conditioned field patterns.",
+      explanation: "The local constitutive update couples field components through tensor permittivity, gyrotropy, or the reduced kappa_n bianisotropic proxy.",
     },
     temporal: {
       phenomenon: "Time-varying media, Floquet sidebands, and space-time modulation",
@@ -1874,6 +1887,10 @@ function updateInspector() {
       el.inspectorNote.textContent = sourceUsesWidth(source.shape)
         ? `FWHM / λ0 ${formatLambda(source.widthLambda)}.`
         : "Point or line source; spatial width control is inactive.";
+    }
+    if (el.inspectorNote && source.shape === "evanescentLine") {
+      const ratio = source.evanescentKParallelRatio ?? source.widthLambda;
+      el.inspectorNote.textContent = `Evanescent source: k_parallel/k0 = ${formatLambda(ratio)}.`;
     }
     return;
   }
@@ -2385,10 +2402,17 @@ function normalizeSource(source) {
   source.amplitude = clamp(Number(source.amplitude) || defaultSourceConfig.amplitude, 0.05, 1.2);
   source.xLambda = clamp(Number(source.xLambda) || defaultSourceConfig.xLambda, minSourceXLambda(), maxSourceXLambda());
   source.yLambda = clamp(Number(source.yLambda) || defaultSourceConfig.yLambda, minSourceYLambda(), maxSourceYLambda());
-  source.widthLambda =
-    source.shape === "evanescentLine"
-      ? clamp(Number(source.widthLambda) || 1.25, 1.01, 2.5)
-      : clamp(Number(source.widthLambda) || defaultSourceConfig.widthLambda, 0.05, 1.5);
+  if (source.shape === "evanescentLine") {
+    const kParallelRatio = clamp(
+      Number(source.evanescentKParallelRatio ?? source.kParallelRatio ?? source.widthLambda) || defaultSourceConfig.evanescentKParallelRatio,
+      1.01,
+      2.5,
+    );
+    source.evanescentKParallelRatio = kParallelRatio;
+    source.widthLambda = kParallelRatio;
+  } else {
+    source.widthLambda = clamp(Number(source.widthLambda) || defaultSourceConfig.widthLambda, 0.05, 1.5);
+  }
   source.angleDeg = clamp(Number(source.angleDeg) || 0, 0, 360);
   source.phaseDeg = clamp(Number(source.phaseDeg) || 0, -180, 180);
   source.multipoleOrder = clampInt(source.multipoleOrder, 1, 8);
@@ -5167,6 +5191,23 @@ function updateAnalysisControls() {
       }
       if (leakageAnalysisPresets.has(state.preset)) topologicalText += ` | Qk~${formatFieldValue(metrics.phcBloch.qProxy)}`;
     }
+    const coupled = metrics?.coupledWorkflow;
+    const coupledText =
+      coupled && coupledWorkflowAnalysisPresets.has(state.preset)
+        ? state.preset === "nonHermitianSkin"
+          ? ` | skin=${formatDiagnosticRatio(coupled.skinEdgeFraction)} | bias=${formatDiagnosticRatio(coupled.skinBias)} | GL=${formatDiagnosticRatio(
+              coupled.gainLossBias,
+            )}`
+          : state.preset === "bicKerr" || state.preset === "bicEnz"
+            ? ` | active=${formatDiagnosticRatio(coupled.activeMaterialFraction)} | cav=${formatDiagnosticRatio(coupled.cavityEnergyFraction)}`
+          : state.preset === "huygensCavity"
+            ? ` | cav=${formatDiagnosticRatio(coupled.cavityEnergyFraction)} | src=${formatDiagnosticRatio(coupled.sourceOverlapFraction)}`
+            : state.preset === "janusTopologicalGuide"
+              ? ` | guide=${formatDiagnosticRatio(coupled.guideEnergyFraction)} | mat=${formatDiagnosticRatio(coupled.materialEnergyFraction)}`
+              : ` | guide=${formatDiagnosticRatio(coupled.guideEnergyFraction)} | Cw=${formatDiagnosticRatio(
+                  coupled.modulationPhase?.spatialCoherence || 0,
+                )}`
+        : "";
     const absorptionText =
       absorptionAnalysisPresets.has(state.preset) && sim.diagnosticSamples > 8
         ? ` | A~${formatDiagnosticRatio(
@@ -5187,6 +5228,7 @@ function updateAnalysisControls() {
       }
     }
     const floquetPlusOrder = metrics?.floquet?.orders?.find((channel) => channel.order === 1);
+    const floquetPhaseCoherence = metrics?.floquet?.modulationPhase?.spatialCoherence || 0;
     const floquetText =
       metrics?.floquet && temporalFloquetAnalysisPresets.has(state.preset)
         ? metrics.floquet.scatteringMatrix
@@ -5194,15 +5236,21 @@ function updateAnalysisControls() {
               metrics.floquet.firstLower,
             )} | R+1=${formatDiagnosticRatio(floquetPlusOrder?.reflectedAmplitudeRatio || 0)} | Pout=${formatDiagnosticRatio(
               metrics.floquet.scatteringMatrix.totalOutgoingPower,
-            )} | m*=${metrics.floquet.maxSidebandOrder}`
+            )} | dP=${formatDiagnosticRatio(metrics.floquet.scatteringMatrix.powerBalanceAbsResidual)} | m*=${
+              metrics.floquet.maxSidebandOrder
+            } | Cphi=${formatDiagnosticRatio(floquetPhaseCoherence)}`
           : ` | probe S+1=${formatDiagnosticRatio(metrics.floquet.firstUpper)} | S-1=${formatDiagnosticRatio(
               metrics.floquet.firstLower,
-            )} | Pside=${formatDiagnosticRatio(metrics.floquet.sidebandPower)} | m*=${metrics.floquet.maxSidebandOrder}`
+            )} | Pside=${formatDiagnosticRatio(metrics.floquet.sidebandPower)} | m*=${
+              metrics.floquet.maxSidebandOrder
+            } | Cphi=${formatDiagnosticRatio(floquetPhaseCoherence)}`
         : "";
     const hyperlensText =
       metrics?.hyperlens && state.preset === "hyperlens"
         ? ` | Hout/Hin=${formatDiagnosticRatio(metrics.hyperlens.transfer)} | detail=${formatDiagnosticRatio(
             metrics.hyperlens.detailTransfer,
+          )} | MTF=${formatDiagnosticRatio(metrics.hyperlens.mtfMean)} | m50=${formatFieldValue(
+            metrics.hyperlens.mtfBandwidthOrder,
           )}`
         : "";
     const negativeIndexText =
@@ -5213,13 +5261,17 @@ function updateAnalysisControls() {
             )}lambda`
           : ` | theta_slab=${formatFieldValue(metrics.negativeIndex.slabAngleDeg)}deg | neg=${formatDiagnosticRatio(
               metrics.negativeIndex.negativeRefractionScore,
+            )} | phi=${formatFieldValue(metrics.negativeIndex.slabPhaseAngleDeg)}deg | coh=${formatDiagnosticRatio(
+              metrics.negativeIndex.slabPhaseCoherence,
             )} | resid=${formatDiagnosticRatio(metrics.negativeIndex.powerResidual)}`
         : "";
     const bianisotropyText =
       metrics?.bianisotropy && bianisotropyAnalysisPresets.has(state.preset)
         ? ` | xpol=${formatDiagnosticRatio(metrics.bianisotropy.materialCrossFraction)} | out=${formatDiagnosticRatio(
             metrics.bianisotropy.outputCrossFraction,
-          )} | pass=${formatDiagnosticRatio(metrics.bianisotropy.passivityMargin)}`
+          )} | corr=${formatDiagnosticRatio(metrics.bianisotropy.kappaSignedOutputCorrelation)} | pass=${formatDiagnosticRatio(
+            metrics.bianisotropy.passivityMargin,
+          )}`
         : "";
     el.analysisStatus.textContent = state.analysisEnabled
       ? `${sampleText} · ${contourText} · f=${formatFieldValue(sim.diagnosticFrequency())}`
@@ -5227,7 +5279,7 @@ function updateAnalysisControls() {
     if (state.analysisEnabled) {
       el.analysisStatus.textContent = `${sampleText} | ${contourText} | f=${formatFieldValue(
         sim.diagnosticFrequency(),
-      )}${scatteringText}${resonatorText}${topologicalText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}${bianisotropyText}`;
+      )}${scatteringText}${resonatorText}${topologicalText}${coupledText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}${bianisotropyText}`;
     }
   }
 }
@@ -5478,21 +5530,35 @@ async function runSweep() {
         floquetPowerTotal: floquetMatrix?.totalOutgoingPower || 0,
         floquetPowerTransmitted: floquetMatrix?.totalTransmittedPower || 0,
         floquetPowerReflected: floquetMatrix?.totalReflectedPower || 0,
+        floquetPowerResidual: floquetMatrix?.powerBalanceResidual || 0,
+        floquetPowerAbsResidual: floquetMatrix?.powerBalanceAbsResidual || 0,
         floquetPowerSideband: metrics?.floquet?.sidebandPower || 0,
         floquetPowerReflectedSideband: metrics?.floquet?.reflectedSidebandPower || 0,
         floquetPowerUp: metrics?.floquet?.upPower || 0,
         floquetPowerDown: metrics?.floquet?.downPower || 0,
         floquetMaxSideband: metrics?.floquet?.maxSidebandRatio || 0,
         floquetMaxOrder: metrics?.floquet?.maxSidebandOrder || 0,
+        floquetModulationPhaseCoherence: metrics?.floquet?.modulationPhase?.spatialCoherence || 0,
+        floquetModulationPhaseVelocity: metrics?.floquet?.modulationPhase?.phaseVelocityLambdaPerStep || 0,
         floquetMethod: metrics?.floquet?.portDft ? "port-dft" : metrics?.floquet ? "probe-dft" : "",
         hyperlensTransfer: metrics?.hyperlens?.transfer || 0,
         hyperlensDetailTransfer: metrics?.hyperlens?.detailTransfer || 0,
+        hyperlensMtfMean: metrics?.hyperlens?.mtfMean || 0,
+        hyperlensMtfPeakTransfer: metrics?.hyperlens?.mtfPeakTransfer || 0,
+        hyperlensMtfHighOrderMean: metrics?.hyperlens?.mtfHighOrderMean || 0,
+        hyperlensMtfBandwidthOrder: metrics?.hyperlens?.mtfBandwidthOrder || 0,
+        hyperlensMtfLowOrderTransfer: metrics?.hyperlens?.mtfLowOrderTransfer || 0,
         hyperlensInnerEnergy: metrics?.hyperlens?.innerEnergy || 0,
         hyperlensOuterEnergy: metrics?.hyperlens?.outerEnergy || 0,
         negativeSourceAngleDeg: metrics?.negativeIndex?.sourceAngleDeg || 0,
         negativeIncidentAngleDeg: metrics?.negativeIndex?.incidentAngleDeg || 0,
         negativeSlabAngleDeg: metrics?.negativeIndex?.slabAngleDeg || 0,
         negativeTransmittedAngleDeg: metrics?.negativeIndex?.transmittedAngleDeg || 0,
+        negativeIncidentPhaseAngleDeg: metrics?.negativeIndex?.incidentPhaseAngleDeg || 0,
+        negativeSlabPhaseAngleDeg: metrics?.negativeIndex?.slabPhaseAngleDeg || 0,
+        negativeTransmittedPhaseAngleDeg: metrics?.negativeIndex?.transmittedPhaseAngleDeg || 0,
+        negativeSlabPhaseFrontAngleDeg: metrics?.negativeIndex?.slabPhaseFrontAngleDeg || 0,
+        negativeSlabPhaseCoherence: metrics?.negativeIndex?.slabPhaseCoherence || 0,
         negativeRefractionScore: metrics?.negativeIndex?.negativeRefractionScore || 0,
         negativePowerResidual: metrics?.negativeIndex?.powerResidual || 0,
         negativeNEff: metrics?.negativeIndex?.material?.nEff || 0,
@@ -5514,8 +5580,24 @@ async function runSweep() {
         bianisotropyOutputCrossFraction: metrics?.bianisotropy?.outputCrossFraction || 0,
         bianisotropyGeneratedCrossFraction: metrics?.bianisotropy?.generatedCrossFraction || 0,
         bianisotropyOutputConversionRatio: metrics?.bianisotropy?.outputConversionRatio || 0,
+        bianisotropyInputCrossCorrelation: metrics?.bianisotropy?.inputCrossCorrelation || 0,
+        bianisotropyOutputCrossCorrelation: metrics?.bianisotropy?.outputCrossCorrelation || 0,
+        bianisotropyGeneratedCrossCorrelation: metrics?.bianisotropy?.generatedCrossCorrelation || 0,
+        bianisotropyKappaSignedOutputCorrelation: metrics?.bianisotropy?.kappaSignedOutputCorrelation || 0,
         bianisotropyPowerResidual: metrics?.bianisotropy?.powerResidual || 0,
         bianisotropyPassiveFlag: metrics?.bianisotropy?.passiveDefinite ? 1 : 0,
+        coupledCentroidX: metrics?.coupledWorkflow?.centroidXNorm || 0,
+        coupledCentroidY: metrics?.coupledWorkflow?.centroidYNorm || 0,
+        coupledSkinEdgeFraction: metrics?.coupledWorkflow?.skinEdgeFraction || 0,
+        coupledSkinBias: metrics?.coupledWorkflow?.skinBias || 0,
+        coupledGainLossBias: metrics?.coupledWorkflow?.gainLossBias || 0,
+        coupledGuideEnergyFraction: metrics?.coupledWorkflow?.guideEnergyFraction || 0,
+        coupledCavityEnergyFraction: metrics?.coupledWorkflow?.cavityEnergyFraction || 0,
+        coupledMaterialEnergyFraction: metrics?.coupledWorkflow?.materialEnergyFraction || 0,
+        coupledHighIndexEnergyFraction: metrics?.coupledWorkflow?.highIndexEnergyFraction || 0,
+        coupledActiveMaterialFraction: metrics?.coupledWorkflow?.activeMaterialFraction || 0,
+        coupledSourceOverlapFraction: metrics?.coupledWorkflow?.sourceOverlapFraction || 0,
+        coupledPhaseCoherence: metrics?.coupledWorkflow?.modulationPhase?.spatialCoherence || 0,
         phaseState: metrics?.phaseAverage || 0,
         split: metrics?.split || 0,
         spectralSplit: metrics?.spectralSplit || 0,
@@ -6067,6 +6149,8 @@ function exportSweepCsv() {
     "floquetPowerTotal",
     "floquetPowerTransmitted",
     "floquetPowerReflected",
+    "floquetPowerResidual",
+    "floquetPowerAbsResidual",
     "floquetPowerSideband",
     "floquetPowerReflectedSideband",
     "floquetPowerUp",
@@ -6076,12 +6160,22 @@ function exportSweepCsv() {
     "floquetMethod",
     "hyperlensTransfer",
     "hyperlensDetailTransfer",
+    "hyperlensMtfMean",
+    "hyperlensMtfPeakTransfer",
+    "hyperlensMtfHighOrderMean",
+    "hyperlensMtfBandwidthOrder",
+    "hyperlensMtfLowOrderTransfer",
     "hyperlensInnerEnergy",
     "hyperlensOuterEnergy",
     "negativeSourceAngleDeg",
     "negativeIncidentAngleDeg",
     "negativeSlabAngleDeg",
     "negativeTransmittedAngleDeg",
+    "negativeIncidentPhaseAngleDeg",
+    "negativeSlabPhaseAngleDeg",
+    "negativeTransmittedPhaseAngleDeg",
+    "negativeSlabPhaseFrontAngleDeg",
+    "negativeSlabPhaseCoherence",
     "negativeRefractionScore",
     "negativePowerResidual",
     "negativeNEff",
@@ -6103,6 +6197,10 @@ function exportSweepCsv() {
     "bianisotropyOutputCrossFraction",
     "bianisotropyGeneratedCrossFraction",
     "bianisotropyOutputConversionRatio",
+    "bianisotropyInputCrossCorrelation",
+    "bianisotropyOutputCrossCorrelation",
+    "bianisotropyGeneratedCrossCorrelation",
+    "bianisotropyKappaSignedOutputCorrelation",
     "bianisotropyPowerResidual",
     "bianisotropyPassiveFlag",
     "phaseState",

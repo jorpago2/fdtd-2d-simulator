@@ -54,6 +54,7 @@ class FDTDSim {
       this.hCbY = new Float32Array(this.ny);
     }
     this.modulatedMaterial = new Uint8Array(this.n);
+    this.modulationPhaseOffset = new Float32Array(this.n);
     this.dispersiveMaterial = new Uint8Array(this.n);
     this.dispersionAxes = new Uint8Array(this.n);
     this.dispersionAxisX = new Float32Array(this.n);
@@ -319,6 +320,7 @@ class FDTDSim {
       muLossY: new Float32Array(this.muLossY),
       material: new Uint8Array(this.material),
       modulatedMaterial: new Uint8Array(this.modulatedMaterial),
+      modulationPhaseOffset: new Float32Array(this.modulationPhaseOffset),
       nonlinearMaterial: new Uint8Array(this.nonlinearMaterial),
       dispersiveMaterial: new Uint8Array(this.dispersiveMaterial),
       dispersionAxes: new Uint8Array(this.dispersionAxes),
@@ -385,6 +387,7 @@ class FDTDSim {
     this.wasmBackend = backend;
     this.wasmBackend.configure(this);
     this.modulatedMaterial = new Uint8Array(this.n);
+    this.modulationPhaseOffset = new Float32Array(this.n);
     this.dispersiveMaterial = new Uint8Array(this.n);
     this.dispersionAxes = new Uint8Array(this.n);
     this.dispersionAxisX = new Float32Array(this.n);
@@ -458,6 +461,7 @@ class FDTDSim {
     this.muLossY.set(previous.muLossY);
     this.material.set(previous.material);
     this.modulatedMaterial.set(previous.modulatedMaterial);
+    this.modulationPhaseOffset.set(previous.modulationPhaseOffset);
     this.nonlinearMaterial.set(previous.nonlinearMaterial);
     this.dispersiveMaterial.set(previous.dispersiveMaterial);
     this.dispersionAxes.set(previous.dispersionAxes);

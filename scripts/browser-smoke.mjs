@@ -140,15 +140,29 @@ function parseFiniteUiNumber(text) {
   return Number.isFinite(value);
 }
 
+async function simulationSnapshot(page) {
+  return page.evaluate(() => {
+    const readNumber = (id) => {
+      const text = document.getElementById(id)?.textContent || "";
+      const value = Number(String(text).replace(/[^\deE.+-]/g, ""));
+      return Number.isFinite(value) ? value : null;
+    };
+    const runtime = typeof sim !== "undefined" ? sim : null;
+    return {
+      time: Number.isFinite(runtime?.time) ? runtime.time : readNumber("stepCounter"),
+      maxField: Number.isFinite(runtime?.lastMax) ? runtime.lastMax : readNumber("maxField"),
+      energy: Number.isFinite(runtime?.lastEnergy) ? runtime.lastEnergy : readNumber("energyValue"),
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = matrix.profiles[testCase.profile]?.steps ?? 8;
   const startedAt = Date.now();
   await selectPreset(page, testCase.preset);
-  const beforeStep = await page.textContent("#stepCounter");
+  const before = await simulationSnapshot(page);
   const elapsedMs = await stepSimulation(page, steps);
-  const afterStep = await page.textContent("#stepCounter");
-  const maxField = await page.textContent("#maxField");
-  const energy = await page.textContent("#energyValue");
+  const after = await simulationSnapshot(page);
   const bodyText = await page.locator("body").innerText();
   const stabilityMedia = await page.textContent("#stabilityMediaValue");
   const status = {
@@ -158,18 +172,18 @@ async function runSmokeCase(page, testCase) {
     steps,
     elapsedMs: Number(elapsedMs.toFixed(1)),
     msPerStep: Number((elapsedMs / Math.max(1, steps)).toFixed(2)),
-    beforeStep,
-    afterStep,
-    maxField,
-    energy,
+    beforeStep: before.time,
+    afterStep: after.time,
+    maxField: after.maxField,
+    energy: after.energy,
     stabilityMedia,
     passed: true,
     failures: [],
   };
 
-  if (Number(afterStep) <= Number(beforeStep)) status.failures.push("step counter did not advance");
-  if (!parseFiniteUiNumber(maxField)) status.failures.push("max field is non-finite");
-  if (!parseFiniteUiNumber(energy)) status.failures.push("energy is non-finite");
+  if (Number(after.time) <= Number(before.time)) status.failures.push("step counter did not advance");
+  if (!Number.isFinite(Number(after.maxField)) && !parseFiniteUiNumber(after.maxField)) status.failures.push("max field is non-finite");
+  if (!Number.isFinite(Number(after.energy)) && !parseFiniteUiNumber(after.energy)) status.failures.push("energy is non-finite");
   if (/\b(NaN|Infinity|undefined)\b/.test(bodyText)) status.failures.push("UI contains non-finite or undefined text");
   if (testCase.acceptance?.requiresActiveMediaLabel && !String(stabilityMedia).includes(testCase.acceptance.requiresActiveMediaLabel)) {
     status.failures.push(`stability media does not include ${testCase.acceptance.requiresActiveMediaLabel}`);

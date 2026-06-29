@@ -7,6 +7,12 @@ resetDiagnostics() {
   this.diagnosticReflectedPower = 0;
   this.diagnosticIncidentPower = 0;
   this.diagnosticTransmittedPower = 0;
+  this.diagnosticReflectedPowerEwma = 0;
+  this.diagnosticIncidentPowerEwma = 0;
+  this.diagnosticTransmittedPowerEwma = 0;
+  this.diagnosticReflectedPhasorPower = 0;
+  this.diagnosticIncidentPhasorPower = 0;
+  this.diagnosticTransmittedPhasorPower = 0;
   this.diagnosticIncidentFlux = 0;
   this.diagnosticReflectance = 0;
   this.diagnosticTransmittance = 0;
@@ -59,6 +65,10 @@ resetAnalysisDiagnostics() {
   this.analysisHyperlensOuterEnergyEwma = 0;
   this.analysisHyperlensInnerDetailEwma = 0;
   this.analysisHyperlensOuterDetailEwma = 0;
+  this.analysisHyperlensMtfMeanEwma = 0;
+  this.analysisHyperlensMtfPeakEwma = 0;
+  this.analysisHyperlensMtfHighOrderEwma = 0;
+  this.analysisHyperlensMtfBandwidthEwma = 0;
   this.analysisMetrics = null;
 },
 
@@ -102,6 +112,24 @@ ensureAnalysisContour() {
 scalarAnalysisValueAt(idx) {
   const value = this.fieldValueAt(idx, "scalar") * this.fieldScale;
   return Number.isFinite(value) ? value : 0;
+},
+
+analysisFieldEnergyDensityAt(idx) {
+  const scaleSquared = Number.isFinite(this.fieldScale) ? this.fieldScale * this.fieldScale : 0;
+  if (scaleSquared <= 0 || this.material[idx] === 2) return 0;
+  let energy = 0;
+  if (state.fieldComponent === "hz") {
+    energy =
+      Math.abs(this.mu[idx]) * this.ez[idx] * this.ez[idx] +
+      Math.abs(this.eps[idx]) * this.hx[idx] * this.hx[idx] +
+      Math.abs(this.epsY[idx]) * this.hy[idx] * this.hy[idx];
+  } else {
+    energy =
+      Math.abs(this.eps[idx]) * this.ez[idx] * this.ez[idx] +
+      Math.abs(this.mu[idx]) * this.hx[idx] * this.hx[idx] +
+      Math.abs(this.muY[idx]) * this.hy[idx] * this.hy[idx];
+  }
+  return Number.isFinite(energy) && energy > 0 ? 0.5 * energy * scaleSquared : 0;
 },
 
 analysisSourceCell() {
@@ -164,9 +192,9 @@ analysisTotalFieldEnergy() {
 hyperlensRingSample(radiusCells, angleCount = 96) {
   const centerX = clampInt(Math.round(this.nx * 0.5 + lambdaToCells(0.35)), this.activeInteriorMinX(), this.activeInteriorMaxX());
   const centerY = clampInt(Math.round(this.ny * 0.5), this.activeInteriorMinY(), this.activeInteriorMaxY());
-  const harmonics = [2, 3, 4, 5, 6, 7, 8];
-  const re = new Array(harmonics.length).fill(0);
-  const im = new Array(harmonics.length).fill(0);
+  const harmonicOrders = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const re = new Array(harmonicOrders.length).fill(0);
+  const im = new Array(harmonicOrders.length).fill(0);
   let energy = 0;
   let samples = 0;
   for (let n = 0; n < angleCount; n += 1) {
@@ -177,30 +205,95 @@ hyperlensRingSample(radiusCells, angleCount = 96) {
     if (this.material[idx] === 2) continue;
     const value = this.scalarAnalysisValueAt(idx);
     energy += value * value;
-    for (let h = 0; h < harmonics.length; h += 1) {
-      const phase = harmonics[h] * theta;
+    for (let h = 0; h < harmonicOrders.length; h += 1) {
+      const phase = harmonicOrders[h] * theta;
       re[h] += value * Math.cos(phase);
       im[h] -= value * Math.sin(phase);
     }
     samples += 1;
   }
-  if (samples <= 0) return { energy: 0, detail: 0 };
+  if (samples <= 0) return { energy: 0, detail: 0, harmonics: [] };
   let detail = 0;
-  for (let h = 0; h < harmonics.length; h += 1) {
+  const harmonics = [];
+  for (let h = 0; h < harmonicOrders.length; h += 1) {
     const amplitude = (2 * Math.hypot(re[h], im[h])) / samples;
-    detail += amplitude * amplitude;
+    const power = amplitude * amplitude;
+    harmonics.push({ order: harmonicOrders[h], amplitude, power });
+    detail += power;
   }
-  return { energy: energy / samples, detail };
+  return { energy: energy / samples, detail, harmonics };
+},
+
+hyperlensMtfStats(innerHarmonics = [], outerHarmonics = []) {
+  const outerByOrder = new Map(outerHarmonics.map((item) => [item.order, item]));
+  const curve = innerHarmonics.map((inner) => {
+    const outer = outerByOrder.get(inner.order) || {};
+    const innerAmplitude = Math.max(0, Number(inner.amplitude) || 0);
+    const outerAmplitude = Math.max(0, Number(outer.amplitude) || 0);
+    const transfer = innerAmplitude > 1e-12 ? outerAmplitude / innerAmplitude : 0;
+    return {
+      order: inner.order,
+      innerAmplitude,
+      outerAmplitude,
+      transfer: Number.isFinite(transfer) ? transfer : 0,
+      normalizedTransfer: 0,
+    };
+  });
+  const valid = curve.filter((item) => item.innerAmplitude > 1e-12 && Number.isFinite(item.transfer));
+  const lowOrder = valid.filter((item) => item.order <= 3 && item.transfer > 0);
+  const lowOrderTransfer =
+    lowOrder.length > 0
+      ? lowOrder.reduce((sum, item) => sum + item.transfer, 0) / lowOrder.length
+      : valid.reduce((peak, item) => Math.max(peak, item.transfer), 0);
+  let meanTransfer = 0;
+  let peakTransfer = 0;
+  let mtfMean = 0;
+  let mtfHighOrderMean = 0;
+  let mtfHighOrderCount = 0;
+  let mtfBandwidthOrder = 0;
+  for (const item of valid) {
+    meanTransfer += item.transfer;
+    peakTransfer = Math.max(peakTransfer, item.transfer);
+    item.normalizedTransfer = lowOrderTransfer > 1e-12 ? item.transfer / lowOrderTransfer : 0;
+    mtfMean += item.normalizedTransfer;
+    if (item.order >= 6) {
+      mtfHighOrderMean += item.normalizedTransfer;
+      mtfHighOrderCount += 1;
+    }
+    if (item.normalizedTransfer >= 0.5) mtfBandwidthOrder = Math.max(mtfBandwidthOrder, item.order);
+  }
+  if (valid.length > 0) {
+    meanTransfer /= valid.length;
+    mtfMean /= valid.length;
+  }
+  if (mtfHighOrderCount > 0) mtfHighOrderMean /= mtfHighOrderCount;
+  return {
+    curve,
+    validCount: valid.length,
+    lowOrderTransfer,
+    meanTransfer,
+    peakTransfer,
+    mtfMean,
+    mtfHighOrderMean,
+    mtfBandwidthOrder,
+  };
 },
 
 updateHyperlensAnalysis(alpha) {
   if (state.preset !== "hyperlens") return;
   const inner = this.hyperlensRingSample(lambdaToCells(0.52));
   const outer = this.hyperlensRingSample(lambdaToCells(1.16));
+  const mtf = this.hyperlensMtfStats(inner.harmonics, outer.harmonics);
   this.analysisHyperlensInnerEnergyEwma = (1 - alpha) * this.analysisHyperlensInnerEnergyEwma + alpha * inner.energy;
   this.analysisHyperlensOuterEnergyEwma = (1 - alpha) * this.analysisHyperlensOuterEnergyEwma + alpha * outer.energy;
   this.analysisHyperlensInnerDetailEwma = (1 - alpha) * this.analysisHyperlensInnerDetailEwma + alpha * inner.detail;
   this.analysisHyperlensOuterDetailEwma = (1 - alpha) * this.analysisHyperlensOuterDetailEwma + alpha * outer.detail;
+  this.analysisHyperlensMtfMeanEwma = (1 - alpha) * this.analysisHyperlensMtfMeanEwma + alpha * mtf.mtfMean;
+  this.analysisHyperlensMtfPeakEwma = (1 - alpha) * this.analysisHyperlensMtfPeakEwma + alpha * mtf.peakTransfer;
+  this.analysisHyperlensMtfHighOrderEwma =
+    (1 - alpha) * this.analysisHyperlensMtfHighOrderEwma + alpha * mtf.mtfHighOrderMean;
+  this.analysisHyperlensMtfBandwidthEwma =
+    (1 - alpha) * this.analysisHyperlensMtfBandwidthEwma + alpha * mtf.mtfBandwidthOrder;
 },
 
 analysisHyperlensEstimate() {
@@ -209,6 +302,10 @@ analysisHyperlensEstimate() {
   const outerEnergy = Math.max(0, this.analysisHyperlensOuterEnergyEwma);
   const innerDetail = Math.max(0, this.analysisHyperlensInnerDetailEwma);
   const outerDetail = Math.max(0, this.analysisHyperlensOuterDetailEwma);
+  const instantInner = this.hyperlensRingSample(lambdaToCells(0.52));
+  const instantOuter = this.hyperlensRingSample(lambdaToCells(1.16));
+  const mtf = this.hyperlensMtfStats(instantInner.harmonics, instantOuter.harmonics);
+  const mtfBandwidthOrder = Math.max(0, Math.round(this.analysisHyperlensMtfBandwidthEwma || mtf.mtfBandwidthOrder));
   return {
     innerEnergy,
     outerEnergy,
@@ -216,6 +313,13 @@ analysisHyperlensEstimate() {
     innerDetail,
     outerDetail,
     detailTransfer: innerDetail > 1e-24 ? outerDetail / innerDetail : 0,
+    mtfCurve: mtf.curve,
+    mtfValidCount: mtf.validCount,
+    mtfLowOrderTransfer: mtf.lowOrderTransfer,
+    mtfMean: Math.max(0, this.analysisHyperlensMtfMeanEwma || mtf.mtfMean),
+    mtfPeakTransfer: Math.max(0, this.analysisHyperlensMtfPeakEwma || mtf.peakTransfer),
+    mtfHighOrderMean: Math.max(0, this.analysisHyperlensMtfHighOrderEwma || mtf.mtfHighOrderMean),
+    mtfBandwidthOrder,
   };
 },
 
@@ -455,6 +559,7 @@ analysisFloquetEstimate(orderLimit = 2) {
   return {
     carrierFrequency,
     modulationFrequency,
+    modulationPhase: this.modulationPhaseCoherenceEstimate(),
     carrierMagnitude,
     orders,
     sidebandPower,
@@ -464,6 +569,116 @@ analysisFloquetEstimate(orderLimit = 2) {
     maxSidebandOrder,
     firstUpper: orders.find((channel) => channel.order === 1)?.amplitudeRatio || 0,
     firstLower: orders.find((channel) => channel.order === -1)?.amplitudeRatio || 0,
+  };
+},
+
+coupledWorkflowEstimate() {
+  if (!coupledWorkflowAnalysisPresets.has(state.preset)) return null;
+  const minX = this.activeInteriorMinX();
+  const maxX = this.activeInteriorMaxX();
+  const minY = this.activeInteriorMinY();
+  const maxY = this.activeInteriorMaxY();
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const edgeWidth = Math.max(3, Math.round(state.cellsPerWavelength * 0.45));
+  const source = state.sources[0] || defaultSourceConfig;
+  const sourceX = this.sourceXCell(source);
+  const sourceY = this.sourceYCell(source);
+  const sourceRadius = Math.max(2, Math.round(this.sourceEnvelopeFwhmCells(source) * 0.85));
+  const guideBand = Math.max(3, Math.round(state.cellsPerWavelength * 0.34));
+  const cavityRadius = Math.max(3, Math.round(state.cellsPerWavelength * 0.85));
+  const centerX = Math.round((minX + maxX) * 0.5);
+  const centerY = Math.round((minY + maxY) * 0.5);
+
+  let totalEnergy = 0;
+  let materialEnergy = 0;
+  let highIndexEnergy = 0;
+  let modulatedEnergy = 0;
+  let nonlinearEnergy = 0;
+  let dispersiveEnergy = 0;
+  let guideEnergy = 0;
+  let cavityEnergy = 0;
+  let sourceRegionEnergy = 0;
+  let leftEdgeEnergy = 0;
+  let rightEdgeEnergy = 0;
+  let gainWeightedEnergy = 0;
+  let lossWeightedEnergy = 0;
+  let weightedX = 0;
+  let weightedY = 0;
+  let peakEnergy = 0;
+  let peakX = centerX;
+  let peakY = centerY;
+
+  for (let y = minY; y <= maxY; y += 1) {
+    const row = y * this.nx;
+    for (let x = minX; x <= maxX; x += 1) {
+      const idx = row + x;
+      const energy = this.analysisFieldEnergyDensityAt(idx);
+      if (energy <= 0) continue;
+      totalEnergy += energy;
+      weightedX += x * energy;
+      weightedY += y * energy;
+      if (energy > peakEnergy) {
+        peakEnergy = energy;
+        peakX = x;
+        peakY = y;
+      }
+      if (this.material[idx] !== 0) materialEnergy += energy;
+      if (Math.max(Math.abs(this.eps[idx]), Math.abs(this.epsY[idx])) > 2.2) highIndexEnergy += energy;
+      if (this.modulatedMaterial[idx]) modulatedEnergy += energy;
+      if (this.nonlinearMaterial[idx]) nonlinearEnergy += energy;
+      if (this.dispersiveMaterial?.[idx] || this.muDispersiveMaterial?.[idx]) dispersiveEnergy += energy;
+      if (Math.abs(y - sourceY) <= guideBand) guideEnergy += energy;
+      if (Math.hypot(x - centerX, y - centerY) <= cavityRadius) cavityEnergy += energy;
+      if (Math.hypot(x - sourceX, y - sourceY) <= sourceRadius) sourceRegionEnergy += energy;
+      if (x <= minX + edgeWidth) leftEdgeEnergy += energy;
+      if (x >= maxX - edgeWidth) rightEdgeEnergy += energy;
+      const loss = Number(this.loss[idx]) || 0;
+      if (loss < -1e-9) gainWeightedEnergy += -loss * energy;
+      if (loss > 1e-9) lossWeightedEnergy += loss * energy;
+    }
+  }
+
+  if (totalEnergy <= 1e-24) {
+    return {
+      totalEnergy: 0,
+      centroidXNorm: 0.5,
+      centroidYNorm: 0.5,
+      peakXLambda: peakX / Math.max(1, state.cellsPerWavelength),
+      peakYLambda: peakY / Math.max(1, state.cellsPerWavelength),
+      skinEdgeFraction: 0,
+      skinBias: 0,
+      guideEnergyFraction: 0,
+      cavityEnergyFraction: 0,
+      materialEnergyFraction: 0,
+      activeMaterialFraction: 0,
+      sourceOverlapFraction: 0,
+      gainLossBias: 0,
+      modulationPhase: this.modulationPhaseCoherenceEstimate(),
+    };
+  }
+
+  const centroidX = weightedX / totalEnergy;
+  const centroidY = weightedY / totalEnergy;
+  const edgeEnergy = leftEdgeEnergy + rightEdgeEnergy;
+  const activeMaterialEnergy = modulatedEnergy + nonlinearEnergy + dispersiveEnergy;
+  const gainLossTotal = gainWeightedEnergy + lossWeightedEnergy;
+  return {
+    totalEnergy,
+    centroidXNorm: clamp((centroidX - minX) / spanX, 0, 1),
+    centroidYNorm: clamp((centroidY - minY) / spanY, 0, 1),
+    peakXLambda: peakX / Math.max(1, state.cellsPerWavelength),
+    peakYLambda: peakY / Math.max(1, state.cellsPerWavelength),
+    skinEdgeFraction: clamp(edgeEnergy / totalEnergy, 0, 1),
+    skinBias: edgeEnergy > 1e-24 ? clamp((rightEdgeEnergy - leftEdgeEnergy) / edgeEnergy, -1, 1) : 0,
+    guideEnergyFraction: clamp(guideEnergy / totalEnergy, 0, 1),
+    cavityEnergyFraction: clamp(cavityEnergy / totalEnergy, 0, 1),
+    materialEnergyFraction: clamp(materialEnergy / totalEnergy, 0, 1),
+    highIndexEnergyFraction: clamp(highIndexEnergy / totalEnergy, 0, 1),
+    activeMaterialFraction: clamp(activeMaterialEnergy / totalEnergy, 0, 1),
+    sourceOverlapFraction: clamp(sourceRegionEnergy / totalEnergy, 0, 1),
+    gainLossBias: gainLossTotal > 1e-24 ? clamp((gainWeightedEnergy - lossWeightedEnergy) / gainLossTotal, -1, 1) : 0,
+    modulationPhase: this.modulationPhaseCoherenceEstimate(),
   };
 },
 
@@ -870,6 +1085,7 @@ analysisMetricEstimate() {
   const hyperlens = this.analysisHyperlensEstimate();
   const negativeIndex = this.negativeIndexQuantitativeEstimate();
   const bianisotropy = this.bianisotropyQuantitativeEstimate();
+  const coupledWorkflow = this.coupledWorkflowEstimate();
   if (this.analysisSamples < 8) {
     this.analysisMetrics = {
       spectrum: null,
@@ -891,6 +1107,7 @@ analysisMetricEstimate() {
       hyperlens,
       negativeIndex,
       bianisotropy,
+      coupledWorkflow,
     };
     return this.analysisMetrics;
   }
@@ -940,6 +1157,7 @@ analysisMetricEstimate() {
     hyperlens,
     negativeIndex,
     bianisotropy,
+    coupledWorkflow,
   };
   return this.analysisMetrics;
 },
@@ -1383,6 +1601,54 @@ negativeIndexLineImageStats(xCenter, yMin, yMax, halfWidth = 1) {
   };
 },
 
+negativeIndexPhaseFrontFit(xMin, xMax, yMin, yMax) {
+  xMin = clampInt(Math.round(xMin), Math.max(1, this.activeInteriorMinX()), Math.min(this.nx - 2, this.activeInteriorMaxX()));
+  xMax = clampInt(Math.round(xMax), xMin, Math.min(this.nx - 2, this.activeInteriorMaxX()));
+  yMin = clampInt(Math.round(yMin), Math.max(1, this.activeInteriorMinY()), Math.min(this.ny - 2, this.activeInteriorMaxY()));
+  yMax = clampInt(Math.round(yMax), yMin, Math.min(this.ny - 2, this.activeInteriorMaxY()));
+  let sxx = 0;
+  let sxy = 0;
+  let syy = 0;
+  let energy = 0;
+  let gradientEnergy = 0;
+  let samples = 0;
+  for (let y = yMin; y <= yMax; y += 1) {
+    for (let x = xMin; x <= xMax; x += 1) {
+      const idx = this.id(x, y);
+      if (this.material[idx] === 2) continue;
+      const center = this.scalarAnalysisValueAt(idx);
+      const gx =
+        0.5 * (this.scalarAnalysisValueAt(this.id(x + 1, y)) - this.scalarAnalysisValueAt(this.id(x - 1, y)));
+      const gy =
+        0.5 * (this.scalarAnalysisValueAt(this.id(x, y + 1)) - this.scalarAnalysisValueAt(this.id(x, y - 1)));
+      const intensity = center * center;
+      const grad2 = gx * gx + gy * gy;
+      if (!Number.isFinite(grad2) || grad2 <= 1e-24) continue;
+      sxx += gx * gx;
+      sxy += gx * gy;
+      syy += gy * gy;
+      energy += Number.isFinite(intensity) ? intensity : 0;
+      gradientEnergy += grad2;
+      samples += 1;
+    }
+  }
+  const trace = sxx + syy;
+  if (samples < 9 || trace <= 1e-24) return null;
+  const anisotropy = Math.hypot(sxx - syy, 2 * sxy);
+  const waveAxisAngleRad = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+  const waveAxisAngleDeg = (waveAxisAngleRad * 180) / Math.PI;
+  const phaseFrontAngleDeg = waveAxisAngleDeg >= 0 ? waveAxisAngleDeg - 90 : waveAxisAngleDeg + 90;
+  return {
+    waveAxisAngleDeg,
+    phaseFrontAngleDeg,
+    waveAxisSlope: Math.tan(waveAxisAngleRad),
+    coherence: clamp(anisotropy / trace, 0, 1),
+    rmsGradient: Math.sqrt(gradientEnergy / samples),
+    energy,
+    samples,
+  };
+},
+
 negativeIndexQuantitativeEstimate() {
   if (!negativeIndexAnalysisPresets.has(state.preset)) return null;
   const bounds = this.negativeIndexMaterialBounds();
@@ -1396,6 +1662,9 @@ negativeIndexQuantitativeEstimate() {
   const incident = this.negativeIndexBeamCentroidFit(bounds.minX - span, bounds.minX - pad, yMin, yMax);
   const slab = this.negativeIndexBeamCentroidFit(bounds.minX + 1, bounds.maxX - 1, yMin, yMax);
   const transmitted = this.negativeIndexBeamCentroidFit(bounds.maxX + pad, bounds.maxX + span, yMin, yMax);
+  const incidentPhase = this.negativeIndexPhaseFrontFit(bounds.minX - span, bounds.minX - pad, yMin, yMax);
+  const slabPhase = this.negativeIndexPhaseFrontFit(bounds.minX + 1, bounds.maxX - 1, yMin, yMax);
+  const transmittedPhase = this.negativeIndexPhaseFrontFit(bounds.maxX + pad, bounds.maxX + span, yMin, yMax);
   const source = state.sources[0] || defaultSourceConfig;
   const sourceAngleDeg = Number(source.angleDeg) || 0;
   const sourceSlope = Math.tan((sourceAngleDeg * Math.PI) / 180);
@@ -1426,9 +1695,17 @@ negativeIndexQuantitativeEstimate() {
     incidentAngleDeg: incident?.angleDeg ?? 0,
     slabAngleDeg: slab?.angleDeg ?? 0,
     transmittedAngleDeg: transmitted?.angleDeg ?? 0,
+    incidentPhaseAngleDeg: incidentPhase?.waveAxisAngleDeg ?? 0,
+    slabPhaseAngleDeg: slabPhase?.waveAxisAngleDeg ?? 0,
+    transmittedPhaseAngleDeg: transmittedPhase?.waveAxisAngleDeg ?? 0,
+    slabPhaseFrontAngleDeg: slabPhase?.phaseFrontAngleDeg ?? 0,
+    slabPhaseCoherence: slabPhase?.coherence ?? 0,
     incident,
     slab,
     transmitted,
+    incidentPhase,
+    slabPhase,
+    transmittedPhase,
     negativeRefractionScore,
     negativeRefractionObserved: negativeRefractionScore > 0,
     powerResidual,
@@ -1569,6 +1846,9 @@ bianisotropyLineEnergyStats(xCenter, yMin, yMax, halfWidth = 1) {
   let samples = 0;
   let primaryPeak = 0;
   let crossPeak = 0;
+  let primaryCrossDot = 0;
+  let primaryNorm = 0;
+  let crossNorm = 0;
   for (let x = xMin; x <= xMax; x += 1) {
     for (let y = yMin; y <= yMax; y += 1) {
       const idx = this.id(x, y);
@@ -1582,6 +1862,9 @@ bianisotropyLineEnergyStats(xCenter, yMin, yMax, halfWidth = 1) {
       primaryMagneticEnergy += primaryMagnetic;
       crossElectricEnergy += crossElectric;
       crossMagneticEnergy += crossMagnetic;
+      primaryCrossDot += this.ez[idx] * this.dualEz[idx] + this.hx[idx] * this.dualHx[idx] + this.hy[idx] * this.dualHy[idx];
+      primaryNorm += primaryElectric + primaryMagnetic;
+      crossNorm += crossElectric + crossMagnetic;
       primaryPeak = Math.max(primaryPeak, primaryElectric + primaryMagnetic);
       crossPeak = Math.max(crossPeak, crossElectric + crossMagnetic);
       samples += 1;
@@ -1603,6 +1886,7 @@ bianisotropyLineEnergyStats(xCenter, yMin, yMax, halfWidth = 1) {
     crossPeak,
     conversionRatio: crossEnergy / Math.max(1e-18, primaryEnergy),
     crossFraction: crossEnergy / Math.max(1e-18, totalEnergy),
+    crossCorrelation: primaryCrossDot / Math.max(1e-18, Math.sqrt(primaryNorm * crossNorm)),
   };
 },
 
@@ -1619,6 +1903,8 @@ bianisotropyQuantitativeEstimate() {
   const inputLine = this.bianisotropyLineEnergyStats(bounds.minX, yMin, yMax, interfaceHalfWidth);
   const outputLine = this.bianisotropyLineEnergyStats(bounds.maxX, yMin, yMax, interfaceHalfWidth);
   const generatedCrossFraction = Math.max(0, outputLine.crossFraction - inputLine.crossFraction);
+  const generatedCrossCorrelation = outputLine.crossCorrelation - inputLine.crossCorrelation;
+  const kappaSign = Math.abs(material.meanKappa) > 1e-9 ? Math.sign(material.meanKappa) : 0;
   const powerResidual =
     this.diagnosticSamples > 0 ? 1 - (this.diagnosticReflectance || 0) - (this.diagnosticTransmittance || 0) : null;
   return {
@@ -1630,6 +1916,10 @@ bianisotropyQuantitativeEstimate() {
     materialConversionRatio: material.crossEnergyRatio,
     outputCrossFraction: outputLine.crossFraction,
     outputConversionRatio: outputLine.conversionRatio,
+    outputCrossCorrelation: outputLine.crossCorrelation,
+    inputCrossCorrelation: inputLine.crossCorrelation,
+    generatedCrossCorrelation,
+    kappaSignedOutputCorrelation: kappaSign * outputLine.crossCorrelation,
     generatedCrossFraction,
     inputCrossFraction: inputLine.crossFraction,
     passivityMargin: material.minPassivityMargin,
@@ -1834,6 +2124,8 @@ lineWaveSeparationAt(x, direction = this.diagnosticDirection()) {
   const y1 = this.activeInteriorMaxY();
   let forward = 0;
   let backward = 0;
+  let forwardPower = 0;
+  let backwardPower = 0;
   let impedance = 0;
   let samples = 0;
   for (let y = y0; y <= y1; y += 1) {
@@ -1844,13 +2136,24 @@ lineWaveSeparationAt(x, direction = this.diagnosticDirection()) {
     const z = Math.sqrt(muValue / epsValue);
     if (!Number.isFinite(z) || z <= 0) continue;
     const tangential = this.directionalTangentialFieldsAt(idx, direction);
-    forward += 0.5 * (tangential.electric + z * tangential.magnetic);
-    backward += 0.5 * (tangential.electric - z * tangential.magnetic);
+    const forwardField = 0.5 * (tangential.electric + z * tangential.magnetic);
+    const backwardField = 0.5 * (tangential.electric - z * tangential.magnetic);
+    forward += forwardField;
+    backward += backwardField;
+    forwardPower += (forwardField * forwardField) / z;
+    backwardPower += (backwardField * backwardField) / z;
     impedance += z;
     samples += 1;
   }
-  if (samples <= 0) return { forward: 0, backward: 0, impedance: 1 };
-  return { forward: forward / samples, backward: backward / samples, impedance: impedance / samples };
+  if (samples <= 0) return { forward: 0, backward: 0, forwardPower: 0, backwardPower: 0, impedance: 1 };
+  const powerScale = this.fieldPowerScale();
+  return {
+    forward: forward / samples,
+    backward: backward / samples,
+    forwardPower: (forwardPower / samples) * powerScale,
+    backwardPower: (backwardPower / samples) * powerScale,
+    impedance: impedance / samples,
+  };
 },
 
 diagnosticFrequency() {
@@ -1861,6 +2164,50 @@ diagnosticFrequency() {
 diagnosticDftOrders() {
   const omega = Math.abs(Number(state.modulationFrequency) || 0);
   return temporalFloquetAnalysisPresets.has(state.preset) && omega > 1e-6 ? [-2, -1, 0, 1, 2] : [];
+},
+
+modulationPhaseCoherenceEstimate() {
+  if (!state.materialModulationEnabled || Math.abs(Number(state.modulationDepth) || 0) <= 1e-9) return null;
+  const periodLambda = Math.max(0.1, Number(state.modulationPeriodLambda) || 1);
+  const periodCells = Math.max(1, lambdaToCells(periodLambda));
+  const theta = (((Number(state.modulationAngleDeg) || 0) % 360) * Math.PI) / 180;
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+  const globalPhase = ((Number(state.modulationPhaseDeg) || 0) * Math.PI) / 180;
+  let count = 0;
+  let re = 0;
+  let im = 0;
+  let phaseMin = Infinity;
+  let phaseMax = -Infinity;
+
+  for (let y = 0; y < this.ny; y += 1) {
+    const row = y * this.nx;
+    for (let x = 0; x < this.nx; x += 1) {
+      const idx = row + x;
+      if (!this.modulatedMaterial[idx]) continue;
+      const localPhase = Number.isFinite(this.modulationPhaseOffset?.[idx]) ? this.modulationPhaseOffset[idx] : 0;
+      const phase = (2 * Math.PI * (x * cosTheta + y * sinTheta)) / periodCells + globalPhase + localPhase;
+      re += Math.cos(phase);
+      im += Math.sin(phase);
+      phaseMin = Math.min(phaseMin, phase);
+      phaseMax = Math.max(phaseMax, phase);
+      count += 1;
+    }
+  }
+  if (count <= 0) return null;
+  const meanRe = re / count;
+  const meanIm = im / count;
+  const spatialCoherence = clamp(Math.hypot(meanRe, meanIm), 0, 1);
+  const modulationFrequency = Number(state.modulationFrequency) || 0;
+  return {
+    count,
+    spatialCoherence,
+    phaseSpreadRad: Number.isFinite(phaseMin) && Number.isFinite(phaseMax) ? phaseMax - phaseMin : 0,
+    meanPhaseRad: Math.atan2(meanIm, meanRe),
+    periodLambda,
+    modulationFrequency,
+    phaseVelocityLambdaPerStep: modulationFrequency * periodLambda,
+  };
 },
 
 ensureDiagnosticDftChannels() {
@@ -1941,6 +2288,12 @@ accumulatePhasorObject(target, value, phase, alpha) {
   if (!target || !Number.isFinite(value)) return;
   target.re = (1 - alpha) * target.re + alpha * value * Math.cos(phase);
   target.im = (1 - alpha) * target.im - alpha * value * Math.sin(phase);
+},
+
+accumulateDiagnosticPower(name, value) {
+  if (!Number.isFinite(value) || value < 0) return;
+  const alpha = this.diagnosticSamples < 24 ? 0.18 : 0.035;
+  this[name] = (1 - alpha) * (Number(this[name]) || 0) + alpha * value;
 },
 
 diagnosticPowerFromPhasor(name, impedance) {
@@ -2052,9 +2405,13 @@ updateDiagnosticDftChannels(incident, transmitted, rightIncident = false) {
       maxSidebandOrder = channel.order;
     }
   });
+  const totalOutgoingPower = totalTransmittedPower + totalReflectedPower;
+  const powerBalanceResidual = totalOutgoingPower - 1;
+  const modulationPhase = this.modulationPhaseCoherenceEstimate();
   this.diagnosticDftSummary = {
     carrierFrequency: carrier.frequency,
     modulationFrequency: Math.abs(Number(state.modulationFrequency) || 0),
+    modulationPhase,
     carrierIncidentPower,
     carrierIncidentAmplitude,
     orders: this.diagnosticDftChannels.map((channel) => ({
@@ -2082,10 +2439,13 @@ updateDiagnosticDftChannels(incident, transmitted, rightIncident = false) {
       entries: scatteringEntries,
       totalTransmittedPower,
       totalReflectedPower,
-      totalOutgoingPower: totalTransmittedPower + totalReflectedPower,
+      totalOutgoingPower,
+      powerBalanceResidual,
+      powerBalanceAbsResidual: Math.abs(powerBalanceResidual),
       transmittedSidebandPower,
       reflectedSidebandPower,
       normalization: "carrier incident DFT phasor at the input monitor",
+      balanceNote: "Pout/Pinc - 1 for the measured orders; temporal modulation, loss/gain, truncation, and de-embedding error can all contribute.",
     },
     sidebandPower: transmittedSidebandPower,
     reflectedSidebandPower,
@@ -2119,13 +2479,19 @@ updateDiagnostics({ forceAnalysis = false } = {}) {
   this.accumulateDiagnosticPhasor("incident", incident.forward, phase);
   this.accumulateDiagnosticPhasor("reflected", incident.backward, phase);
   this.accumulateDiagnosticPhasor("transmitted", transmitted.forward, phase);
+  this.accumulateDiagnosticPower("diagnosticIncidentPowerEwma", incident.forwardPower);
+  this.accumulateDiagnosticPower("diagnosticReflectedPowerEwma", incident.backwardPower);
+  this.accumulateDiagnosticPower("diagnosticTransmittedPowerEwma", transmitted.forwardPower);
   this.updateDiagnosticDftChannels(incident, transmitted, rightIncident);
   this.diagnosticSamples += 1;
   this.diagnosticImpedanceLeft = left.impedance;
   this.diagnosticImpedanceRight = right.impedance;
-  this.diagnosticIncidentPower = this.diagnosticPowerFromPhasor("incident", incident.impedance);
-  this.diagnosticReflectedPower = this.diagnosticPowerFromPhasor("reflected", incident.impedance);
-  this.diagnosticTransmittedPower = this.diagnosticPowerFromPhasor("transmitted", transmitted.impedance);
+  this.diagnosticIncidentPhasorPower = this.diagnosticPowerFromPhasor("incident", incident.impedance);
+  this.diagnosticReflectedPhasorPower = this.diagnosticPowerFromPhasor("reflected", incident.impedance);
+  this.diagnosticTransmittedPhasorPower = this.diagnosticPowerFromPhasor("transmitted", transmitted.impedance);
+  this.diagnosticIncidentPower = this.diagnosticIncidentPowerEwma || this.diagnosticIncidentPhasorPower;
+  this.diagnosticReflectedPower = this.diagnosticReflectedPowerEwma || this.diagnosticReflectedPhasorPower;
+  this.diagnosticTransmittedPower = this.diagnosticTransmittedPowerEwma || this.diagnosticTransmittedPhasorPower;
   if (this.diagnosticIncidentPower > 1e-12) {
     this.diagnosticReflectance = clamp(this.diagnosticReflectedPower / this.diagnosticIncidentPower, 0, 9.999);
     this.diagnosticTransmittance = clamp(this.diagnosticTransmittedPower / this.diagnosticIncidentPower, 0, 9.999);

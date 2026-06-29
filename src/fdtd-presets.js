@@ -344,7 +344,21 @@ Object.assign(FDTDSim.prototype, {
       this.muLoss[idx] = material === 2 ? 0 : muLoss;
       this.muY[idx] = material === 2 ? 1 : muY;
       this.muLossY[idx] = material === 2 ? 0 : muLossY;
-      this.setCellModulation(idx, Boolean(params.modulated) && material !== 2, this.eps[idx], this.epsY[idx]);
+      const modulationPhaseOffset =
+        typeof params.modulationPhaseOffsetRad === "function"
+          ? params.modulationPhaseOffsetRad(x, y, idx)
+          : Number.isFinite(params.modulationPhaseOffsetRad)
+            ? params.modulationPhaseOffsetRad
+            : Number.isFinite(params.modulationPhaseOffsetDeg)
+              ? (params.modulationPhaseOffsetDeg * Math.PI) / 180
+              : 0;
+      this.setCellModulation(
+        idx,
+        Boolean(params.modulated) && material !== 2,
+        this.eps[idx],
+        this.epsY[idx],
+        modulationPhaseOffset,
+      );
       this.setCellNonlinearity(idx, Boolean(params.nonlinear) && material !== 2, this.eps[idx], this.epsY[idx]);
       this.setCellDispersion(idx, material !== 2 ? params : null);
       this.setCellMagneticDispersion(idx, material !== 2 ? params : null);
@@ -371,6 +385,16 @@ Object.assign(FDTDSim.prototype, {
     const rectL = (xL, yL, wL, hL, params) => {
       rectCells(lambdaToCells(xL), lambdaToCells(yL), Math.max(1, lambdaToCells(wL)), Math.max(1, lambdaToCells(hL)), params);
     };
+    const uniformModulationPhaseOffset = (x, y, extraPhaseRad = 0) => {
+      const periodCells = Math.max(1, lambdaToCells(Math.max(0.1, state.modulationPeriodLambda)));
+      const theta = ((Number(state.modulationAngleDeg) || 0) * Math.PI) / 180;
+      return extraPhaseRad - (2 * Math.PI * (x * Math.cos(theta) + y * Math.sin(theta))) / periodCells;
+    };
+    const uniformTemporalMaterial = (params, extraPhaseRad = 0) => ({
+      ...params,
+      modulated: true,
+      modulationPhaseOffsetRad: (x, y) => uniformModulationPhaseOffset(x, y, extraPhaseRad),
+    });
     const ellipseCells = (cx, cy, rx, ry, params) => {
       const rX = Math.max(1, Math.round(rx));
       const rY = Math.max(1, Math.round(ry));
@@ -698,6 +722,7 @@ Object.assign(FDTDSim.prototype, {
             xLambda: sourceX(1.05),
             yLambda: sourceY(midYLambda),
             widthLambda: 1.28,
+            evanescentKParallelRatio: 1.28,
             amplitude: 0.32,
           },
         ]);
@@ -825,7 +850,9 @@ Object.assign(FDTDSim.prototype, {
       }
       case "phasedDipoleArray": {
         const sources = [];
-        const phaseStep = 35;
+        const elementSpacingLambda = 0.5;
+        const steeringAngleDeg = -12;
+        const phaseStep = -360 * elementSpacingLambda * Math.sin((steeringAngleDeg * Math.PI) / 180);
         for (let i = 0; i < 8; i += 1) {
           sources.push({
             shape: "pointDipole",
@@ -834,6 +861,9 @@ Object.assign(FDTDSim.prototype, {
             widthLambda: 0.24,
             amplitude: 0.32,
             phaseDeg: (i - 3.5) * phaseStep,
+            arrayElementIndex: i,
+            arrayPhaseStepDeg: phaseStep,
+            arraySteeringAngleDeg: steeringAngleDeg,
           });
         }
         setSources(sources);
@@ -1723,9 +1753,8 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         rectL(midXLambda, 0.55, domainXLambda - midXLambda - 0.55, domainYLambda - 1.1, {
-          ...mat.n15,
+          ...uniformTemporalMaterial(mat.n15),
           loss: 0.001,
-          modulated: true,
         });
         setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
         break;
@@ -1738,7 +1767,7 @@ Object.assign(FDTDSim.prototype, {
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        rectL(midXLambda - 0.75, 0.55, 1.5, domainYLambda - 1.1, { ...mat.n15, loss: 0.001, modulated: true });
+        rectL(midXLambda - 0.75, 0.55, 1.5, domainYLambda - 1.1, uniformTemporalMaterial({ ...mat.n15, loss: 0.001 }));
         setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
         break;
       case "temporalModulation":
@@ -1750,7 +1779,7 @@ Object.assign(FDTDSim.prototype, {
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        rectL(midXLambda - 1.25, midYLambda - 1.0, 2.5, 2.0, { ...mat.n15, modulated: true });
+        rectL(midXLambda - 1.25, midYLambda - 1.0, 2.5, 2.0, uniformTemporalMaterial(mat.n15));
         setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.4 }]);
         break;
       case "temporalCrystal":
@@ -1762,9 +1791,9 @@ Object.assign(FDTDSim.prototype, {
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 2;
-        rectL(1.15, 0.65, domainXLambda - 2.3, domainYLambda - 1.3, { ...mat.n15, loss: 0.001, modulated: true });
+        rectL(1.15, 0.65, domainXLambda - 2.3, domainYLambda - 1.3, uniformTemporalMaterial({ ...mat.n15, loss: 0.001 }));
         for (let i = -4; i <= 4; i += 1) {
-          rectL(midXLambda + i * 0.48 - 0.035, 0.65, 0.07, domainYLambda - 1.3, { ...mat.n20, loss: 0.001, modulated: true });
+          rectL(midXLambda + i * 0.48 - 0.035, 0.65, 0.07, domainYLambda - 1.3, uniformTemporalMaterial({ ...mat.n20, loss: 0.001 }));
         }
         setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.85), yLambda: sourceY(midYLambda), amplitude: 0.38 }]);
         break;
@@ -1778,7 +1807,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         guide(midYLambda, 0.34, mat.n15, 0.6, domainXLambda - 0.6);
-        guide(midYLambda, 0.34, { ...mat.n20, loss: 0.001, modulated: true }, midXLambda - 1.25, midXLambda + 1.25);
+        guide(midYLambda, 0.34, uniformTemporalMaterial({ ...mat.n20, loss: 0.001 }), midXLambda - 1.25, midXLambda + 1.25);
         guideSource(midYLambda, { type: "sine", widthLambda: 0.32, amplitude: 0.42 });
         break;
       case "travelingModulation":
@@ -1821,7 +1850,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         guide(midYLambda + 0.54, 0.26, mat.n15, 0.6, domainXLambda - 0.6);
-        ringL(midXLambda + 0.2, midYLambda - 0.16, 0.62, 0.62, 0.43, 0.43, { ...mat.n34, loss: 0.0015, modulated: true });
+        ringL(midXLambda + 0.2, midYLambda - 0.16, 0.62, 0.62, 0.43, 0.43, uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }));
         guideSource(midYLambda + 0.54, { type: "sine", widthLambda: 0.28, amplitude: 0.42 });
         break;
       case "floquetResonators":
@@ -1835,7 +1864,13 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 2;
         guide(midYLambda + 0.42, 0.24, mat.n15, 0.65, domainXLambda - 0.65);
         for (let i = -1; i <= 1; i += 1) {
-          ellipseL(midXLambda + i * 0.72, midYLambda - 0.1, 0.28, 0.28, { ...mat.n34, loss: 0.0015, modulated: true });
+          ellipseL(
+            midXLambda + i * 0.72,
+            midYLambda - 0.1,
+            0.28,
+            0.28,
+            uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }, ((i + 1) * 2 * Math.PI) / 3),
+          );
         }
         guideSource(midYLambda + 0.42, { type: "sine", widthLambda: 0.26, amplitude: 0.4 });
         break;
@@ -1850,7 +1885,13 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 2;
         guide(midYLambda + 0.48, 0.22, mat.n15, 0.7, domainXLambda - 0.7);
         for (let i = -2; i <= 2; i += 1) {
-          ellipseL(midXLambda + i * 0.48, midYLambda - 0.02, 0.2, 0.2, { ...mat.n20, loss: 0.002, modulated: true });
+          ellipseL(
+            midXLambda + i * 0.48,
+            midYLambda - 0.02,
+            0.2,
+            0.2,
+            uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }, ((i + 2) * 2 * Math.PI) / 5),
+          );
         }
         guideSource(midYLambda + 0.48, { type: "sine", widthLambda: 0.24, amplitude: 0.38 });
         break;
@@ -1970,7 +2011,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         valleyHallLattice();
-        rectL(midXLambda - 0.75, midYLambda - 0.16, 1.5, 0.32, { ...mat.n20, loss: 0.002, modulated: true });
+        rectL(midXLambda - 0.75, midYLambda - 0.16, 1.5, 0.32, uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }));
         setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.52 }]);
         break;
       case "nonreciprocalValleyHall":

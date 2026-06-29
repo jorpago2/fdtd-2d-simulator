@@ -197,6 +197,60 @@
       "rationale": "Ensures examples can be reproduced across sessions."
     },
     {
+      "id": "source_physics_first_pass",
+      "priority": "P1",
+      "preset": "evanescentWave",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "evanescent source stores explicit k_parallel/k0 > 1",
+        "evanescent injection applies tangential phase and normal exponential decay",
+        "in-plane electric dipole preset forces the Hz solver and injects localized Jx/Jy",
+        "progressive dipole array phase step is derived from the target steering angle",
+        "compare source patterns against analytic phase and envelope references"
+      ],
+      "acceptance": {
+        "status": "first-source-physics-pass-implemented; analytic-pattern-regression-and-convergence-pending"
+      },
+      "rationale": "Tracks Atlas 11, 24, and 32 after replacing ambiguous source parameters with explicit physics metadata."
+    },
+    {
+      "id": "monitor_observable_first_pass",
+      "priority": "P1",
+      "preset": "brewsterTeTm",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "line monitors report finite separated incident, reflected, and transmitted powers",
+        "oblique-incidence R/T does not rely on raw transverse field averaging",
+        "TE/TM angular sweep stores both numerical polarizations",
+        "Fresnel/Brewster reference curve is available for comparison",
+        "NTFF/scattering scenes expose normalized angular observables"
+      ],
+      "acceptance": {
+        "status": "first-monitor-observable-pass-implemented; analytic-sweep-regression-and-grid-convergence-pending"
+      },
+      "rationale": "Tracks the shared monitor and sweep infrastructure used by Atlas 9, 10, 15, 16, 34, 62, 65, and related observable-heavy scenes."
+    },
+    {
+      "id": "nonlinear_material_first_pass",
+      "priority": "P1",
+      "preset": "spmKerrPulse",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "Kerr, phase-change, harmonic, and saturable-gain responses use physical field scale after internal renormalization",
+        "SHG/THG scenes report harmonic proxies H2/H3",
+        "SPM and bistability amplitude sweeps report sideband and hysteresis proxies",
+        "VO2/PCM/saturable/limiter scenes report average switched-state proxy",
+        "PT/EP scenes report gamma-sweep modal splitting proxy"
+      ],
+      "acceptance": {
+        "status": "first-nonlinear-material-pass-field-scale-corrected; calibrated-transfer-curves-and-convergence-pending"
+      },
+      "rationale": "Tracks Atlas 111-120 and 131-132 after making nonlinear intensity, harmonic polarization, phase-state thresholds, and saturable gain consistent with field renormalization."
+    },
+    {
       "id": "negative_index_quantitative_gap",
       "priority": "P1",
       "preset": "negativeIndexSlab",
@@ -205,14 +259,72 @@
       "checks": [
         "finite fields",
         "measure in-slab beam-centroid angle",
+        "measure in-slab field-gradient phase-front proxy and coherence",
         "measure superlens image transfer and image width",
         "beam-case power-balance residual",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "first-fdtd-observables-added; calibrated-reference-and-convergence-pending"
+        "status": "first-fdtd-observables-and-phase-front-proxy-added; calibrated-reference-and-convergence-pending"
       },
       "rationale": "Tracks the quantitative validation gap for double-negative and superlens scenes after first-pass field observables."
+    },
+    {
+      "id": "floquet_power_balance_gap",
+      "priority": "P1",
+      "preset": "temporalModulation",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "finite fields",
+        "accumulate input and output monitor DFT phasors",
+        "estimate reduced S_m0 transmitted and reflected sidebands",
+        "report measured-order power-balance residual",
+        "report modulation phase coherence to distinguish uniform temporal modulation from traveling or staggered phase modulation",
+        "de-embed reference planes",
+        "repeat with reverse and sideband incident channels"
+      ],
+      "acceptance": {
+        "status": "first-measured-order-power-residual-and-modulation-phase-coherence-added; deembedding-multi-incidence-and-truncation-validation-pending"
+      },
+      "rationale": "Tracks the calibrated Floquet scattering-matrix validation gap after adding a normalized measured-order power residual and a phase-coherence check to the reduced S_m0 readout."
+    },
+    {
+      "id": "coupled_workflow_first_pass",
+      "priority": "P1",
+      "preset": "nonHermitianSkin",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "non-Hermitian skin analogue reports field centroid, edge accumulation, and gain/loss localization proxies",
+        "BIC + Kerr and BIC + ENZ report active-material overlap alongside Bloch-k leakage proxy",
+        "Janus/topological and Huygens/cavity workflows report guide, cavity, source-overlap, and material-energy proxies",
+        "topology + temporal modulation, nonreciprocal Valley Hall, and space-time crystal expose coupled workflow proxies together with reduced Floquet sideband readouts",
+        "metrics remain finite during short browser execution"
+      ],
+      "acceptance": {
+        "status": "first-coupled-workflow-proxy-pass; calibrated eigenmode, non-Bloch, and device-level validation pending"
+      },
+      "rationale": "Tracks Atlas 133-140 after adding scene-level reduced observables for composite workflows rather than relying only on reused component diagnostics."
+    },
+    {
+      "id": "hyperlens_mtf_quantitative_gap",
+      "priority": "P1",
+      "preset": "hyperlens",
+      "profile": "physics",
+      "browserSmoke": false,
+      "checks": [
+        "finite fields",
+        "measure inner and outer ring field transfer",
+        "measure normalized angular-harmonic MTF proxy",
+        "estimate MTF50 angular order",
+        "compare against controlled subwavelength source pattern",
+        "grid convergence"
+      ],
+      "acceptance": {
+        "status": "first-mtf-proxy-added; calibrated-source-reference-and-convergence-pending"
+      },
+      "rationale": "Tracks the hyperlens PSF/MTF validation gap after adding angular-harmonic transfer metrics from FDTD field samples."
     },
     {
       "id": "bianisotropy_quantitative_gap",
@@ -224,12 +336,13 @@
         "six-field path finite",
         "cross-polarized energy finite",
         "output-line cross-polarized conversion finite",
+        "output-line primary/cross correlation and kappa-signed convention proxy finite",
         "passivity margin positive",
         "compare against calibrated omega/chiral reference",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "first-fdtd-observables-added; calibrated-reference-and-convergence-pending"
+        "status": "first-fdtd-observables-and-convention-proxy-added; calibrated-reference-and-convergence-pending"
       },
       "rationale": "Tracks the quantitative validation gap for six-field bianisotropy after adding direct conversion and passivity-margin observables."
     }

@@ -78,6 +78,11 @@ static inline float electric_loss_decay(float loss, float intensity, i32 runtime
   return 1.0f / (1.0f + value);
 }
 
+static inline float physical_intensity(float rawIntensity, float fieldScale) {
+  const float scale = fieldScale == 0.0f ? 1.0f : fieldScale;
+  return minf(rawIntensity * scale * scale, 1.0e12f);
+}
+
 static inline void apply_kerr_response(
   i32 nx,
   i32 ny,
@@ -92,7 +97,8 @@ static inline void apply_kerr_response(
   u8* material,
   u8* nonlinearMaterial,
   float* modulationBaseEps,
-  float* modulationBaseEpsY
+  float* modulationBaseEpsY,
+  float fieldScale
 ) {
   if (kerrChi3 == 0.0f) return;
   const i32 n = nx * ny;
@@ -100,7 +106,7 @@ static inline void apply_kerr_response(
   for (i32 i = 0; i < n; i += 1) {
     if (!nonlinearMaterial[i] || material[i] == 2) continue;
     const float rawIntensity = hzMode ? hx[i] * hx[i] + hy[i] * hy[i] : ez[i] * ez[i];
-    const float limitedIntensity = minf(rawIntensity, 1.0e6f);
+    const float limitedIntensity = minf(physical_intensity(rawIntensity, fieldScale), 1.0e6f);
     const float saturatedIntensity = limitedIntensity / (1.0f + limitedIntensity / saturation);
     const float deltaEps = kerrChi3 * saturatedIntensity;
     eps[i] = clampf(modulationBaseEps[i] + deltaEps, -30.0f, 30.0f);
@@ -339,7 +345,7 @@ static inline void apply_tfsf_tm_electric(
       if (material[leftIdx] != 2) {
         const float scalar = tfsf_incident_scalar(p, static_cast<float>(x0) - 0.5f, static_cast<float>(y), t, fieldScale);
         const float hLeft = -cosTheta * scalar * invZ;
-        const float intensity = ez[leftIdx] * ez[leftIdx];
+        const float intensity = physical_intensity(ez[leftIdx] * ez[leftIdx], fieldScale);
         ezx[leftIdx] -= electric_update_coeff_x(leftIdx, x0, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbX) * hLeft;
         ez[leftIdx] = ezx[leftIdx] + ezy[leftIdx];
       }
@@ -347,7 +353,7 @@ static inline void apply_tfsf_tm_electric(
       if (material[rightIdx] != 2) {
         const float scalar = tfsf_incident_scalar(p, static_cast<float>(x1) + 0.5f, static_cast<float>(y), t, fieldScale);
         const float hRight = -cosTheta * scalar * invZ;
-        const float intensity = ez[rightIdx] * ez[rightIdx];
+        const float intensity = physical_intensity(ez[rightIdx] * ez[rightIdx], fieldScale);
         ezx[rightIdx] += electric_update_coeff_x(rightIdx, x1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbX) * hRight;
         ez[rightIdx] = ezx[rightIdx] + ezy[rightIdx];
       }
@@ -357,7 +363,7 @@ static inline void apply_tfsf_tm_electric(
       if (material[topIdx] != 2) {
         const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0) - 0.5f, t, fieldScale);
         const float hTop = sinTheta * scalar * invZ;
-        const float intensity = ez[topIdx] * ez[topIdx];
+        const float intensity = physical_intensity(ez[topIdx] * ez[topIdx], fieldScale);
         ezy[topIdx] += electric_update_coeff_y(topIdx, y0, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbY) * hTop;
         ez[topIdx] = ezx[topIdx] + ezy[topIdx];
       }
@@ -365,7 +371,7 @@ static inline void apply_tfsf_tm_electric(
       if (material[bottomIdx] != 2) {
         const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1) + 0.5f, t, fieldScale);
         const float hBottom = sinTheta * scalar * invZ;
-        const float intensity = ez[bottomIdx] * ez[bottomIdx];
+        const float intensity = physical_intensity(ez[bottomIdx] * ez[bottomIdx], fieldScale);
         ezy[bottomIdx] -= electric_update_coeff_y(bottomIdx, y1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbY) * hBottom;
         ez[bottomIdx] = ezx[bottomIdx] + ezy[bottomIdx];
       }
@@ -406,13 +412,13 @@ static inline void apply_tfsf_te_electric(
       const i32 leftIdx = cell_id(x0 - 1, y, nx);
       if (material[leftIdx] != 2) {
         const float hLeft = tfsf_incident_scalar(p, static_cast<float>(x0), static_cast<float>(y), time, fieldScale);
-        const float intensity = ex[leftIdx] * ex[leftIdx] + ey[leftIdx] * ey[leftIdx];
+        const float intensity = physical_intensity(ex[leftIdx] * ex[leftIdx] + ey[leftIdx] * ey[leftIdx], fieldScale);
         ey[leftIdx] += transverse_electric_update_coeff_y(leftIdx, x0 - 1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbX) * hLeft;
       }
       const i32 rightIdx = cell_id(x1, y, nx);
       if (material[rightIdx] != 2) {
         const float hRight = tfsf_incident_scalar(p, static_cast<float>(x1), static_cast<float>(y), time, fieldScale);
-        const float intensity = ex[rightIdx] * ex[rightIdx] + ey[rightIdx] * ey[rightIdx];
+        const float intensity = physical_intensity(ex[rightIdx] * ex[rightIdx] + ey[rightIdx] * ey[rightIdx], fieldScale);
         ey[rightIdx] -= transverse_electric_update_coeff_y(rightIdx, x1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbX) * hRight;
       }
     }
@@ -420,13 +426,13 @@ static inline void apply_tfsf_te_electric(
       const i32 topIdx = cell_id(x, y0 - 1, nx);
       if (material[topIdx] != 2) {
         const float hTop = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0), time, fieldScale);
-        const float intensity = ex[topIdx] * ex[topIdx] + ey[topIdx] * ey[topIdx];
+        const float intensity = physical_intensity(ex[topIdx] * ex[topIdx] + ey[topIdx] * ey[topIdx], fieldScale);
         ex[topIdx] -= transverse_electric_update_coeff_x(topIdx, y0 - 1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbY) * hTop;
       }
       const i32 bottomIdx = cell_id(x, y1, nx);
       if (material[bottomIdx] != 2) {
         const float hBottom = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1), time, fieldScale);
-        const float intensity = ex[bottomIdx] * ex[bottomIdx] + ey[bottomIdx] * ey[bottomIdx];
+        const float intensity = physical_intensity(ex[bottomIdx] * ex[bottomIdx] + ey[bottomIdx] * ey[bottomIdx], fieldScale);
         ex[bottomIdx] += transverse_electric_update_coeff_x(bottomIdx, y1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbY) * hBottom;
       }
     }
@@ -572,7 +578,7 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* tfsfSources = f32(tfsfSourcesOffset);
 
   if (runtimeFlags & STEP_KERR) {
-    apply_kerr_response(nx, ny, 0, kerrChi3, kerrSaturation, ez, hx, hy, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY);
+    apply_kerr_response(nx, ny, 0, kerrChi3, kerrSaturation, ez, hx, hy, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
   }
 
   for (i32 y = 0; y < ny - 1; y += 1) {
@@ -617,7 +623,7 @@ extern "C" __attribute__((export_name("step"))) void step(
       const float sigmaCaY = (1.0f - sigmaDampY) / (1.0f + sigmaDampY);
       const float sigmaCbX = 1.0f / (1.0f + sigmaDampX);
       const float sigmaCbY = 1.0f / (1.0f + sigmaDampY);
-      const float intensity = ez[i] * ez[i];
+      const float intensity = physical_intensity(ez[i] * ez[i], fieldScale);
       const float decayX = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
       const float decayY = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
       const float ezxNew = (sigmaCaX * eCaX[x] * ezx[i] + sigmaCbX * eCbX[x] * (s / eps[i]) * dHyDx) * decayX;
@@ -733,7 +739,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* tfsfSources = f32(tfsfSourcesOffset);
 
   if (runtimeFlags & STEP_KERR) {
-    apply_kerr_response(nx, ny, 1, kerrChi3, kerrSaturation, hz, ex, ey, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY);
+    apply_kerr_response(nx, ny, 1, kerrChi3, kerrSaturation, hz, ex, ey, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
   }
 
   for (i32 y = 0; y < ny - 1; y += 1) {
@@ -750,7 +756,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
       const float sigmaDamp = conductivity_damp(conductivity[i], eps[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-      const float intensity = ex[i] * ex[i] + ey[i] * ey[i];
+      const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
       const float decay = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
       ex[i] = (sigmaCa * ca * ex[i] + sigmaCb * cb * (s / eps[i]) * (hz[i + nx] - hz[i])) * decay;
     }
@@ -768,7 +774,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
       const float sigmaDamp = conductivity_damp(conductivityY[i], epsY[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-      const float intensity = ex[i] * ex[i] + ey[i] * ey[i];
+      const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
       const float decay = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
       ey[i] = (sigmaCa * eCaX[x] * ey[i] - sigmaCb * eCbX[x] * (s / epsY[i]) * (hz[i + 1] - hz[i])) * decay;
     }
@@ -805,7 +811,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         const float sourceY = -sigmaCbY * eCbX[x] * s * (hz[i + 1] - hz[i]);
         const float coupledX = (epsYi * sourceX - upperOffDiagonal * sourceY) / safeDet;
         const float coupledY = (-lowerOffDiagonal * sourceX + epsX * sourceY) / safeDet;
-        const float intensity = ex[i] * ex[i] + ey[i] * ey[i];
+        const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
         const float decayX = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
         const float decayY = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
         ex[i] = (sigmaCaX * caX * ex[i] + coupledX) * decayX;

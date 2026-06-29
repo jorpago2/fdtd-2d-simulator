@@ -52,7 +52,7 @@ Current P0 cases:
 | `resonator_ringdown_q` | `qRingdown` | Ringdown analysis and Q proxy. |
 | `advanced_material_smoke` | `drudeMetal` | ADE/dispersive material state arrays. |
 
-P1 entries document known quantitative gaps, including negative-index/superlens validation and calibrated six-field bianisotropy validation.
+P1 entries document known quantitative gaps, including the first-pass source-physics examples, monitor/observable sweeps, field-scale-corrected nonlinear material examples, coupled-workflow proxies, Floquet power-balance/de-embedding validation, negative-index/superlens validation, hyperlens MTF validation, and calibrated six-field bianisotropy validation.
 
 ## Interpretation
 
@@ -73,5 +73,10 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 
 - The browser smoke test is intentionally short; it is a regression guard, not a full physical proof.
 - Some Atlas scenes are qualitative demonstrations by design.
-- Quantitative Floquet, BIC, chiral/bianisotropic, hyperlens, negative-index, and nonlinear transfer validations still need calibrated references and convergence workflows.
+- The first-pass source-physics scenes still need analytic source-pattern regression tests for phase, envelope, and steering-angle sign.
+- The first-pass monitor/observable scenes now use separated forward/backward power estimates for R/T, but still need analytic angular-sweep regression and grid convergence before quantitative claims.
+- The first-pass nonlinear material scenes now use physical field-scale-corrected Kerr, harmonic, phase-change, and saturable-gain responses, but nonlinear transfer curves still need calibrated references and convergence workflows.
+- Temporal/Floquet scenes now distinguish uniform temporal modulation from traveling or staggered phase modulation through local phase offsets and a modulation-phase coherence proxy, but calibrated de-embedded multi-incidence scattering matrices still need dedicated validation.
+- Coupled workflow scenes now expose reduced localization, guide/cavity/source-overlap, active-material, and modulation-coherence proxies; these are comparative diagnostics, not substitutes for full eigenmode, non-Bloch, or device-level validation.
+- Quantitative BIC, chiral/bianisotropic, hyperlens, and negative-index validations still need calibrated references and convergence workflows.
 - `test:browser` depends on Playwright and a local Chromium install. `npm test` has no external runtime dependency beyond Node.

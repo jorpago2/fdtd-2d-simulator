@@ -330,10 +330,10 @@ applyTfsfTeMagneticCorrections(params) {
 
 evanescentWaveNumbers(source) {
   const k0 = (2 * Math.PI * Math.max(1e-9, source.frequency)) / Math.max(COURANT, 1e-9);
-  const kParallelRatio = clamp(Number(source.widthLambda) || 1.25, 1.01, 2.5);
+  const kParallelRatio = clamp(Number(source.evanescentKParallelRatio ?? source.kParallelRatio ?? source.widthLambda) || 1.25, 1.01, 2.5);
   const kParallel = k0 * kParallelRatio;
   const alpha = k0 * Math.sqrt(Math.max(0, kParallelRatio * kParallelRatio - 1));
-  return { k0, kParallel, alpha };
+  return { k0, kParallel, kParallelRatio, alpha };
 },
 
 injectEvanescentLineIncidentField(source, sx, sy) {

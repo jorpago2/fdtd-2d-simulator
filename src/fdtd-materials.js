@@ -12,6 +12,7 @@ clearMaterials(resetFields = true) {
   this.muY.fill(1);
   this.muLossY.fill(0);
   this.modulatedMaterial.fill(0);
+  this.modulationPhaseOffset.fill(0);
   this.nonlinearMaterial.fill(0);
   this.dispersiveMaterial.fill(0);
   this.dispersionAxes.fill(0);
@@ -106,6 +107,7 @@ copyMaterialCellByIndex(targetIdx, sourceIdx) {
   this.muY[targetIdx] = this.muY[sourceIdx];
   this.muLossY[targetIdx] = this.muLossY[sourceIdx];
   this.modulatedMaterial[targetIdx] = this.modulatedMaterial[sourceIdx];
+  this.modulationPhaseOffset[targetIdx] = this.modulationPhaseOffset[sourceIdx];
   this.nonlinearMaterial[targetIdx] = this.nonlinearMaterial[sourceIdx];
   this.dispersiveMaterial[targetIdx] = this.dispersiveMaterial[sourceIdx];
   this.dispersionAxes[targetIdx] = this.dispersionAxes[sourceIdx];
@@ -175,10 +177,11 @@ copyMaterialCellByIndex(targetIdx, sourceIdx) {
   this.harmonicPrevPy[targetIdx] = this.harmonicPrevPy[sourceIdx];
 },
 
-setCellModulation(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx]) {
+setCellModulation(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx], phaseOffsetRad = 0) {
   this.modulatedMaterial[idx] = enabled ? 1 : 0;
   this.modulationBaseEps[idx] = Number.isFinite(baseEps) ? baseEps : this.eps[idx];
   this.modulationBaseEpsY[idx] = Number.isFinite(baseEpsY) ? baseEpsY : this.epsY[idx];
+  this.modulationPhaseOffset[idx] = enabled && Number.isFinite(phaseOffsetRad) ? phaseOffsetRad : 0;
 },
 
 setCellNonlinearity(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx]) {
@@ -442,6 +445,7 @@ snapshotMaterialCell(x, y) {
     muY: this.muY[idx],
     muLossY: this.muLossY[idx],
     modulated: this.modulatedMaterial[idx],
+    modulationPhaseOffset: this.modulationPhaseOffset[idx],
     nonlinear: this.nonlinearMaterial[idx],
     dispersive: this.dispersiveMaterial[idx],
     dispersionAxes: this.dispersionAxes[idx],
@@ -501,6 +505,7 @@ writeMaterialCell(x, y, cell) {
   this.muY[idx] = cell.muY;
   this.muLossY[idx] = cell.muLossY;
   this.modulatedMaterial[idx] = cell.modulated ? 1 : 0;
+  this.modulationPhaseOffset[idx] = cell.modulated && Number.isFinite(cell.modulationPhaseOffset) ? cell.modulationPhaseOffset : 0;
   this.nonlinearMaterial[idx] = cell.nonlinear ? 1 : 0;
   this.dispersiveMaterial[idx] = cell.dispersive || 0;
   this.dispersionAxes[idx] = this.dispersiveMaterial[idx] ? dispersionAxesMask(cell.dispersionAxes, 3) : 0;
@@ -586,6 +591,7 @@ writeAirCellAtIndex(idx) {
   this.muY[idx] = 1;
   this.muLossY[idx] = 0;
   this.modulatedMaterial[idx] = 0;
+  this.modulationPhaseOffset[idx] = 0;
   this.nonlinearMaterial[idx] = 0;
   this.dispersiveMaterial[idx] = 0;
   this.dispersionAxes[idx] = 0;
@@ -723,6 +729,7 @@ snapshotMaterialArrays() {
     muY: new Float32Array(this.muY),
     muLossY: new Float32Array(this.muLossY),
     modulatedMaterial: new Uint8Array(this.modulatedMaterial),
+    modulationPhaseOffset: new Float32Array(this.modulationPhaseOffset),
     nonlinearMaterial: new Uint8Array(this.nonlinearMaterial),
     dispersiveMaterial: new Uint8Array(this.dispersiveMaterial),
     dispersionAxes: new Uint8Array(this.dispersionAxes),
@@ -779,6 +786,8 @@ restoreMaterialArrays(snapshot) {
   this.muY.set(snapshot.muY);
   this.muLossY.set(snapshot.muLossY);
   this.modulatedMaterial.set(snapshot.modulatedMaterial);
+  if (snapshot.modulationPhaseOffset) this.modulationPhaseOffset.set(snapshot.modulationPhaseOffset);
+  else this.modulationPhaseOffset.fill(0);
   this.nonlinearMaterial.set(snapshot.nonlinearMaterial);
   this.dispersiveMaterial.set(snapshot.dispersiveMaterial);
   this.dispersionAxes.set(snapshot.dispersionAxes);
@@ -837,6 +846,7 @@ snapshotMaterialArraysWithoutRegion(region) {
     snapshot.muY[idx] = 1;
     snapshot.muLossY[idx] = 0;
     snapshot.modulatedMaterial[idx] = 0;
+    snapshot.modulationPhaseOffset[idx] = 0;
     snapshot.nonlinearMaterial[idx] = 0;
     snapshot.dispersiveMaterial[idx] = 0;
     snapshot.dispersionAxes[idx] = 0;
@@ -946,6 +956,7 @@ updateCustomMaterialCells(resetFields = true) {
     this.modulationBaseEps[i] = this.eps[i];
     this.modulationBaseEpsY[i] = this.epsY[i];
     this.modulatedMaterial[i] = state.materialModulationEnabled ? 1 : 0;
+    this.modulationPhaseOffset[i] = 0;
     this.setCellNonlinearity(i, state.materialNonlinearEnabled || state.materialHarmonicEnabled, this.eps[i], this.epsY[i]);
     this.setCellDispersion(i, brushDispersionParams());
     const conductivity = brushConductivityParams();
@@ -977,10 +988,12 @@ restoreModulatedMaterialsToBase() {
 },
 
 nonlinearIntensityAt(idx) {
+  const scale = Number.isFinite(this.fieldScale) ? this.fieldScale : 1;
+  const scaleSquared = scale * scale;
   if (state.fieldComponent === "hz") {
-    return this.hx[idx] * this.hx[idx] + this.hy[idx] * this.hy[idx];
+    return (this.hx[idx] * this.hx[idx] + this.hy[idx] * this.hy[idx]) * scaleSquared;
   }
-  return this.ez[idx] * this.ez[idx];
+  return this.ez[idx] * this.ez[idx] * scaleSquared;
 },
 
 nonlinearPolarization(fieldValue) {
@@ -998,6 +1011,8 @@ applyHarmonicNonlinearResponse() {
   const nx = this.nx;
   const ny = this.ny;
   const s = this.courant;
+  const fieldScale = Number.isFinite(this.fieldScale) ? this.fieldScale : 1;
+  const rawScale = 1 / Math.max(1e-12, fieldScale);
 
   if (state.fieldComponent === "hz") {
     for (let y = 1; y < ny - 1; y += 1) {
@@ -1005,10 +1020,10 @@ applyHarmonicNonlinearResponse() {
       for (let x = 1; x < nx - 1; x += 1) {
         const idx = row + x;
         if (!this.nonlinearMaterial[idx] || this.material[idx] === 2) continue;
-        const px = this.nonlinearPolarization(this.hx[idx]);
-        const py = this.nonlinearPolarization(this.hy[idx]);
-        const jx = clamp(px - this.harmonicPrevPx[idx], -1e4, 1e4);
-        const jy = clamp(py - this.harmonicPrevPy[idx], -1e4, 1e4);
+        const px = this.nonlinearPolarization(this.hx[idx] * fieldScale);
+        const py = this.nonlinearPolarization(this.hy[idx] * fieldScale);
+        const jx = clamp((px - this.harmonicPrevPx[idx]) * rawScale, -1e4, 1e4);
+        const jy = clamp((py - this.harmonicPrevPy[idx]) * rawScale, -1e4, 1e4);
         this.harmonicPrevPx[idx] = px;
         this.harmonicPrevPy[idx] = py;
         this.hx[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jx;
@@ -1023,8 +1038,8 @@ applyHarmonicNonlinearResponse() {
     for (let x = 1; x < nx - 1; x += 1) {
       const idx = row + x;
       if (!this.nonlinearMaterial[idx] || this.material[idx] === 2) continue;
-      const pz = this.nonlinearPolarization(this.ez[idx]);
-      const jz = clamp(pz - this.harmonicPrevPz[idx], -1e4, 1e4);
+      const pz = this.nonlinearPolarization(this.ez[idx] * fieldScale);
+      const jz = clamp((pz - this.harmonicPrevPz[idx]) * rawScale, -1e4, 1e4);
       this.harmonicPrevPz[idx] = pz;
       this.ezx[idx] -= this.eCbX[x] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jz * 0.5;
       this.ezy[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.epsY[idx]))) * jz * 0.5;
@@ -1055,13 +1070,14 @@ applyDynamicMaterialResponse() {
       let factor = 1;
       if (depth > 0 && this.modulatedMaterial[idx]) {
         const spatialCycles = (x * cosTheta + y * sinTheta) / periodCells;
-        const argument = 2 * Math.PI * (spatialCycles - omegaCycles * this.time) + phase;
+        const localPhase = Number.isFinite(this.modulationPhaseOffset[idx]) ? this.modulationPhaseOffset[idx] : 0;
+        const argument = 2 * Math.PI * (spatialCycles - omegaCycles * this.time) + phase + localPhase;
         factor += depth * Math.cos(argument);
       }
       let deltaEps = 0;
       if (chi3 !== 0 && this.nonlinearMaterial[idx]) {
-        const rawIntensity = Math.min(this.nonlinearIntensityAt(idx), 1e6);
-        const saturatedIntensity = rawIntensity / (1 + rawIntensity / saturation);
+        const physicalIntensity = Math.min(this.nonlinearIntensityAt(idx), 1e6);
+        const saturatedIntensity = physicalIntensity / (1 + physicalIntensity / saturation);
         deltaEps = chi3 * saturatedIntensity;
       }
       this.eps[idx] = clamp(this.modulationBaseEps[idx] * factor + deltaEps, -30, 30);
