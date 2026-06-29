@@ -1390,11 +1390,11 @@ body.controls-drawer-open {
 .control-panel {
     --large-drawer-edge: clamp(22px, 2.4vw, 56px);
     --large-drawer-width: clamp(1080px, 42vw, 1440px);
-    --large-drawer-height: min(1260px, calc(100dvh - (2 * var(--large-drawer-edge))));
+    --large-drawer-height: min(1440px, calc(100dvh - (2 * var(--large-drawer-edge))));
     inset: 50% auto auto var(--large-drawer-edge) !important;
     width: var(--large-drawer-width) !important;
     max-width: calc(100vw - (2 * var(--large-drawer-edge))) !important;
-    height: var(--large-drawer-height) !important;
+    height: auto !important;
     max-height: var(--large-drawer-height) !important;
     padding: clamp(14px, 1vw, 22px) !important;
     border: 1px solid color-mix(in srgb, var(--neu-border) 74%, transparent) !important;
@@ -1430,6 +1430,7 @@ body.controls-drawer-open {
   }
 .control-tab-panels {
     min-height: 0 !important;
+    max-height: calc(var(--large-drawer-height) - 134px) !important;
     overflow: auto !important;
     padding-right: 6px !important;
   }
@@ -1466,20 +1467,20 @@ body.controls-drawer-open {
 #tab-scenes .scene-guide-panel {
     grid-column: 2 !important;
     grid-row: 2 / span 4 !important;
-    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
-    height: min(860px, calc(var(--large-drawer-height) - 160px)) !important;
-    max-height: min(860px, calc(var(--large-drawer-height) - 160px)) !important;
-    overflow: auto !important;
+    grid-template-rows: auto auto auto auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
   }
 #tab-scenes .scene-guide-panel > .scene-guide-grid {
-    align-content: stretch !important;
-    grid-auto-rows: minmax(92px, 1fr) !important;
+    align-content: start !important;
+    grid-auto-rows: auto !important;
   }
 #tab-scenes .scene-guide-panel .scene-guide-item {
     min-height: 0 !important;
   }
 #tab-scenes .scene-guide-panel .scene-guide-details {
-    align-self: end !important;
+    align-self: start !important;
   }
 #tab-scenes .scene-cards {
     max-height: min(420px, calc(var(--large-drawer-height) - 420px)) !important;
@@ -1593,4 +1594,246 @@ body.controls-drawer-open {
 #tab-results .sweep-panel {
     grid-column: 1 / -1 !important;
   }
+}
+
+/* Canonical drawer polish: backdrop, glass surface, and reliable control sizing. */
+:root {
+  --drawer-scrim-bg: color-mix(in srgb, #eaf2f6 54%, transparent);
+  --drawer-scrim-blur: blur(16px) saturate(1.28) brightness(1.04);
+  --drawer-panel-bg: color-mix(in srgb, var(--fullscreen-panel-bg) 90%, rgba(255, 255, 255, 0.48));
+  --drawer-surface-bg: color-mix(in srgb, var(--neu-surface) 90%, rgba(255, 255, 255, 0.28));
+  --drawer-card-bg: color-mix(in srgb, var(--neu-surface-low) 88%, rgba(255, 255, 255, 0.22));
+  --drawer-control-bg: color-mix(in srgb, var(--neu-surface-raised) 86%, rgba(255, 255, 255, 0.22));
+  --drawer-border: color-mix(in srgb, var(--neu-border) 72%, rgba(255, 255, 255, 0.32));
+  --drawer-panel-blur: blur(24px) saturate(1.22) brightness(1.02);
+  --drawer-surface-blur: blur(14px) saturate(1.12);
+  --drawer-control-min: 36px;
+  --drawer-nav-min: 40px;
+}
+html[data-theme="dark"] {
+  --drawer-scrim-bg: color-mix(in srgb, #03080c 62%, transparent);
+  --drawer-scrim-blur: blur(18px) saturate(1.18) brightness(0.86);
+  --drawer-panel-bg: color-mix(in srgb, var(--fullscreen-panel-bg) 88%, rgba(10, 16, 22, 0.56));
+  --drawer-surface-bg: color-mix(in srgb, var(--neu-surface) 88%, rgba(7, 12, 18, 0.28));
+  --drawer-card-bg: color-mix(in srgb, var(--neu-surface-low) 88%, rgba(7, 12, 18, 0.22));
+  --drawer-control-bg: color-mix(in srgb, var(--neu-surface-raised) 82%, rgba(255, 255, 255, 0.06));
+  --drawer-border: color-mix(in srgb, var(--neu-border) 82%, rgba(255, 255, 255, 0.08));
+  --drawer-panel-blur: blur(24px) saturate(1.08) brightness(0.95);
+  --drawer-surface-blur: blur(14px) saturate(1.02);
+}
+
+body.controls-drawer-open .control-drawer-backdrop:not([hidden]) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 110 !important;
+  display: block !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  appearance: none !important;
+  background: var(--drawer-scrim-bg) !important;
+  backdrop-filter: var(--drawer-scrim-blur) !important;
+  -webkit-backdrop-filter: var(--drawer-scrim-blur) !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+.control-panel {
+  background: var(--drawer-panel-bg) !important;
+  backdrop-filter: var(--drawer-panel-blur) !important;
+  -webkit-backdrop-filter: var(--drawer-panel-blur) !important;
+  border-color: var(--drawer-border) !important;
+  isolation: isolate !important;
+}
+.control-panel-header,
+.control-panel .mobile-layer-nav,
+.control-panel .control-tabs,
+.control-tab-panels {
+  background: var(--drawer-surface-bg) !important;
+  border: 1px solid var(--drawer-border) !important;
+  backdrop-filter: var(--drawer-surface-blur) !important;
+  -webkit-backdrop-filter: var(--drawer-surface-blur) !important;
+}
+.control-panel-header {
+  border-radius: clamp(15px, 1.4vw, 22px) !important;
+  padding: clamp(6px, 0.65vw, 10px) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+.control-tab-panels {
+  border-radius: clamp(16px, 1.4vw, 22px) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+.control-panel .panel-section,
+.control-panel details,
+.control-panel .results-detail-panel,
+.control-panel .config-detail-panel,
+.control-panel .analysis-panel,
+.control-panel .sweep-panel,
+.control-panel .performance-panel,
+.control-panel .scene-guide-panel {
+  background: var(--drawer-card-bg) !important;
+  border: 1px solid var(--drawer-border) !important;
+  box-shadow: var(--neu-shadow-small) !important;
+}
+.control-panel .canvas-mode-toggle,
+.control-panel .visual-panel-profile,
+.control-panel .segmented,
+.control-panel .scene-filter-bar,
+.control-panel .visual-layer-grid,
+.control-panel .diagnostics-grid,
+.control-panel .config-summary-grid,
+.control-panel .results-summary-grid,
+.control-panel .simulation-guide-grid,
+.control-panel .inspector-details,
+.control-panel .config-status-grid,
+.control-panel .performance-grid {
+  background: color-mix(in srgb, var(--drawer-surface-bg) 82%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--drawer-border) 74%, transparent) !important;
+  box-shadow: var(--neu-shadow-inset-tight) !important;
+}
+.control-panel .mode-toggle-button,
+.control-panel .segment,
+.control-panel .text-button,
+.control-panel .icon-button,
+.control-panel select,
+.control-panel input[type="number"],
+.control-panel input[type="search"],
+.control-panel output,
+.control-panel .toolbar-switch,
+.control-panel .visual-panel-layer,
+.control-panel .scene-filter-button,
+.control-panel .mobile-layer-button,
+.control-panel .control-tab-button {
+  min-height: var(--drawer-control-min) !important;
+  background: var(--drawer-control-bg) !important;
+  border-color: color-mix(in srgb, var(--drawer-border) 86%, transparent) !important;
+  line-height: 1.05 !important;
+}
+.control-panel .mobile-layer-button,
+.control-panel .control-tab-button,
+.control-panel .control-drawer-close {
+  min-height: var(--drawer-nav-min) !important;
+}
+.control-panel .mode-toggle-button,
+.control-panel .segment {
+  display: inline-grid !important;
+  place-items: center !important;
+  align-content: center !important;
+  justify-content: center !important;
+  padding-block: 0 !important;
+  text-align: center !important;
+}
+.control-panel .text-button,
+.control-panel .icon-button,
+.control-panel .toolbar-switch,
+.control-panel .visual-panel-layer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+.control-panel .toolbar-switch,
+.control-panel .visual-panel-layer {
+  justify-content: flex-start !important;
+}
+.control-panel input[type="checkbox"] {
+  min-width: 48px !important;
+  width: 48px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+}
+.control-panel .mode-toggle-button.is-active,
+.control-panel .segment.is-active,
+.control-panel .mobile-layer-button.is-active,
+.control-panel .control-tab-button.is-active {
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--neu-accent-soft) 52%, var(--drawer-control-bg)),
+      color-mix(in srgb, var(--drawer-control-bg) 78%, var(--neu-accent) 22%)
+    ) !important;
+  border-color: color-mix(in srgb, var(--neu-accent) 62%, var(--drawer-border)) !important;
+  color: var(--neu-accent) !important;
+}
+
+@media (max-width: 760px) {
+  .control-panel {
+    background: var(--drawer-panel-bg) !important;
+  }
+  .control-panel-header,
+  .control-panel .mobile-layer-nav,
+  .control-tab-panels {
+    border-radius: 17px !important;
+  }
+  .control-panel .mode-toggle-button,
+  .control-panel .segment,
+  .control-panel .text-button,
+  .control-panel .scene-filter-button {
+    min-height: 36px !important;
+  }
+  .control-panel .mobile-layer-button,
+  .control-panel .control-drawer-close {
+    min-height: 40px !important;
+  }
+}
+
+@media (min-width: 1500px) and (min-height: 820px) {
+  .control-panel {
+    z-index: 120 !important;
+    background: var(--drawer-panel-bg) !important;
+  }
+  .app-shell.controls-open .topbar {
+    z-index: 130 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  .app-shell.controls-open .canvas-toolbar {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .control-tab-panels {
+    background: color-mix(in srgb, var(--drawer-surface-bg) 78%, transparent) !important;
+  }
+}
+
+/* Final specificity pass for legacy button/output rules that set shorter heights. */
+.control-panel .control-panel-actions .theme-toggle .mode-toggle-button,
+.control-panel #tab-visual .mode-toggle-button,
+.control-panel .visual-panel-profile .mode-toggle-button,
+.control-panel .visual-control-row .mode-toggle-button,
+.control-panel #tab-scenes .scene-filter-button {
+  min-height: var(--drawer-control-min) !important;
+  height: auto !important;
+  max-height: none !important;
+}
+.control-panel output,
+.control-panel .control-row output,
+.control-panel label > output,
+.control-panel #tab-simulation .control-row output,
+.control-panel .simulation-guide-card output,
+.control-panel .diagnostic-metric output,
+.control-panel .visual-summary-card output,
+.control-panel .config-summary-card output,
+.control-panel #tab-scenes .scene-browser-meta output {
+  min-height: var(--drawer-control-min) !important;
+  height: var(--drawer-control-min) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.control-panel #tab-simulation .run-section .control-row > span {
+  min-width: max-content !important;
+  overflow: visible !important;
+}
+.control-panel #tab-simulation .run-section .solver-row {
+  grid-template-columns: minmax(68px, max-content) minmax(0, 1fr) !important;
+}
+.control-panel #tab-simulation .run-section .solver-row > span {
+  min-width: max-content !important;
+  width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
 }
