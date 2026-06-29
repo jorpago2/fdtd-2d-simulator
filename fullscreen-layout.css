@@ -1061,21 +1061,24 @@ body.controls-drawer-open {
 #tab-results .results-summary-grid {
   order: 2 !important;
 }
-#tab-results .results-insight-note {
+#tab-results .custom-monitor-panel {
   order: 3 !important;
+}
+#tab-results .results-insight-note {
+  order: 4 !important;
   margin: 0 !important;
 }
 #tab-results .monitor-panel {
-  order: 4 !important;
-}
-#tab-results .analysis-panel {
   order: 5 !important;
 }
-#tab-results .sweep-panel {
+#tab-results .analysis-panel {
   order: 6 !important;
 }
-#tab-results .performance-panel {
+#tab-results .sweep-panel {
   order: 7 !important;
+}
+#tab-results .performance-panel {
+  order: 8 !important;
 }
 #tab-results .results-summary-grid,
 #tab-results .diagnostics-grid,
@@ -1085,19 +1088,19 @@ body.controls-drawer-open {
 #tab-config .config-status-grid {
   gap: 7px !important;
 }
-#tab-config .scale-section {
+#tab-config .config-summary-section {
   order: 1 !important;
 }
-#tab-config .reproducibility-section {
+#tab-config .scale-section {
   order: 2 !important;
 }
-#tab-config .config-summary-section {
+#tab-config .grid-section {
   order: 3 !important;
 }
-#tab-config .grid-section {
+#tab-config .stability-section {
   order: 4 !important;
 }
-#tab-config .stability-section {
+#tab-config .reproducibility-section {
   order: 5 !important;
 }
 #tab-config .share-url-output {
@@ -1237,6 +1240,14 @@ body.controls-drawer-open {
 .control-tab-panel.is-active {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
+    align-content: start !important;
+    min-height: 100% !important;
+  }
+.control-tab-panels {
+    border-radius: 17px !important;
+    background: color-mix(in srgb, var(--neu-surface) 88%, transparent) !important;
+    box-shadow: var(--neu-shadow-inset-tight) !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
   }
 .control-tab-panel > .panel-section,
 .control-tab-panel > details,
@@ -1250,6 +1261,102 @@ body.controls-drawer-open {
   }
 .control-panel .control-row {
     grid-template-columns: minmax(54px, max-content) minmax(0, 1fr) minmax(48px, auto) !important;
+  }
+#tab-scenes .scene-section {
+    gap: 7px !important;
+  }
+#tab-scenes .scene-note {
+    padding: 7px 8px !important;
+    font-size: 0.68rem !important;
+    line-height: 1.22 !important;
+  }
+#tab-scenes .scene-guide-panel {
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+#tab-scenes .scene-guide-header {
+    gap: 1px !important;
+  }
+#tab-scenes .scene-guide-header strong {
+    font-size: 0.84rem !important;
+  }
+#tab-scenes .scene-guide-grid,
+#tab-scenes .scene-guide-reference-grid {
+    gap: 5px !important;
+  }
+#tab-scenes .scene-guide-item {
+    gap: 3px !important;
+    padding: 7px !important;
+    border-radius: 10px !important;
+  }
+#tab-scenes .scene-guide-item h3 {
+    font-size: 0.6rem !important;
+  }
+#tab-scenes .scene-guide-item p,
+#tab-scenes .scene-guide-item li {
+    font-size: 0.68rem !important;
+    line-height: 1.24 !important;
+  }
+#tab-scenes .scene-guide-details > summary {
+    min-height: 28px !important;
+    padding: 6px 8px !important;
+  }
+#tab-visual .visual-summary-section {
+    display: none !important;
+  }
+#tab-visual .visual-control-stack {
+    gap: 7px !important;
+  }
+#tab-visual .visual-control-row {
+    grid-template-columns: minmax(58px, 0.5fr) minmax(0, 1.65fr) !important;
+    gap: 6px !important;
+  }
+#tab-visual .visual-control-row > span {
+    font-size: 0.64rem !important;
+  }
+#tab-visual .visual-panel-profile {
+    min-height: 72px !important;
+    gap: 6px !important;
+  }
+#tab-visual .visual-layer-grid {
+    gap: 6px !important;
+  }
+#tab-visual .visual-panel-layer {
+    min-height: 38px !important;
+    padding: 5px 7px !important;
+  }
+#tab-config .config-summary-section,
+#tab-config .scale-section,
+#tab-config .grid-section,
+#tab-config .stability-section,
+#tab-config .reproducibility-section {
+    padding: 8px !important;
+  }
+#tab-config .config-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+#tab-config .config-summary-card {
+    min-height: 42px !important;
+    padding: 6px 7px !important;
+  }
+#tab-config .config-summary-card span {
+    font-size: 0.6rem !important;
+  }
+#tab-config .config-summary-card output {
+    font-size: 0.66rem !important;
+  }
+#tab-config .scale-section .two-col {
+    gap: 6px !important;
+  }
+#tab-config .scale-section label {
+    gap: 4px !important;
+  }
+#tab-config .scale-section input[type="number"] {
+    min-height: 38px !important;
+  }
+#tab-config details > summary {
+    min-height: 42px !important;
   }
 }
 @media (min-width: 761px) {
@@ -1275,5 +1382,215 @@ body.controls-drawer-open {
     min-width: 38px !important;
     height: 38px !important;
     min-height: 38px !important;
+  }
+}
+
+/* Large-screen drawer: keep the canvas readable and make controls denser on 4K-class displays. */
+@media (min-width: 1500px) and (min-height: 820px) {
+.control-panel {
+    --large-drawer-edge: clamp(22px, 2.4vw, 56px);
+    --large-drawer-width: clamp(1080px, 42vw, 1440px);
+    --large-drawer-height: min(1260px, calc(100dvh - (2 * var(--large-drawer-edge))));
+    inset: 50% auto auto var(--large-drawer-edge) !important;
+    width: var(--large-drawer-width) !important;
+    max-width: calc(100vw - (2 * var(--large-drawer-edge))) !important;
+    height: var(--large-drawer-height) !important;
+    max-height: var(--large-drawer-height) !important;
+    padding: clamp(14px, 1vw, 22px) !important;
+    border: 1px solid color-mix(in srgb, var(--neu-border) 74%, transparent) !important;
+    border-radius: clamp(20px, 1.4vw, 30px) !important;
+    background: color-mix(in srgb, var(--fullscreen-panel-bg) 96%, transparent) !important;
+    box-shadow:
+      0 30px 90px color-mix(in srgb, var(--neu-shadow) 28%, transparent),
+      var(--neu-shadow-small) !important;
+    transform: translate(-112%, -50%) scale(0.985) !important;
+  }
+.app-shell.controls-open .control-panel {
+    transform: translate(0, -50%) scale(1) !important;
+  }
+.app-shell.controls-open .topbar {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+.control-panel-header {
+    align-items: center !important;
+  }
+.control-panel-title-block h2 {
+    font-size: clamp(1.05rem, 0.95vw, 1.25rem) !important;
+  }
+.control-panel .mobile-layer-nav {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    padding: 7px !important;
+  }
+.control-panel .mobile-layer-button {
+    min-height: 38px !important;
+    padding: 7px 9px !important;
+  }
+.control-tab-panels {
+    min-height: 0 !important;
+    overflow: auto !important;
+    padding-right: 6px !important;
+  }
+.control-panel .control-tab-panel.is-active {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 0.75vw, 14px) !important;
+  }
+.control-panel .control-tab-panel > .panel-section,
+.control-panel .control-tab-panel > details,
+.control-panel .control-tab-panel > .config-detail-panel,
+.control-panel .control-tab-panel > .sweep-panel,
+.control-panel .control-tab-panel > .analysis-panel {
+    grid-column: auto !important;
+    padding: clamp(12px, 0.8vw, 16px) !important;
+  }
+#tab-scenes.control-tab-panel.is-active {
+    grid-template-columns: 1fr !important;
+  }
+#tab-scenes .scene-section {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr) !important;
+    align-items: start !important;
+    gap: clamp(10px, 0.8vw, 15px) !important;
+  }
+#tab-scenes .scene-section > h2 {
+    grid-column: 1 / -1 !important;
+    margin-bottom: 0 !important;
+  }
+#tab-scenes .scene-select-fallback,
+#tab-scenes .scene-browser,
+#tab-scenes .scene-note,
+#tab-scenes #slabThicknessControl {
+    grid-column: 1 !important;
+  }
+#tab-scenes .scene-guide-panel {
+    grid-column: 2 !important;
+    grid-row: 2 / span 4 !important;
+    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+    height: min(860px, calc(var(--large-drawer-height) - 160px)) !important;
+    max-height: min(860px, calc(var(--large-drawer-height) - 160px)) !important;
+    overflow: auto !important;
+  }
+#tab-scenes .scene-guide-panel > .scene-guide-grid {
+    align-content: stretch !important;
+    grid-auto-rows: minmax(92px, 1fr) !important;
+  }
+#tab-scenes .scene-guide-panel .scene-guide-item {
+    min-height: 0 !important;
+  }
+#tab-scenes .scene-guide-panel .scene-guide-details {
+    align-self: end !important;
+  }
+#tab-scenes .scene-cards {
+    max-height: min(420px, calc(var(--large-drawer-height) - 420px)) !important;
+  }
+#tab-scenes .scene-filter-bar {
+    max-height: 132px !important;
+  }
+#tab-simulation .run-section {
+    order: 1 !important;
+  }
+#tab-simulation .simulation-guide-section {
+    order: 2 !important;
+  }
+#tab-simulation .inspector-section {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+  }
+.control-panel[data-mobile-layer="objects"] #tab-simulation .inspector-section {
+    order: 1 !important;
+  }
+.control-panel[data-mobile-layer="objects"] #tab-simulation .run-section {
+    order: 2 !important;
+  }
+.control-panel[data-mobile-layer="objects"] #tab-simulation .simulation-guide-section {
+    order: 3 !important;
+  }
+#tab-simulation .inspector-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+#tab-simulation .inspector-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+#tab-visual .visual-field-section {
+    order: 1 !important;
+  }
+#tab-visual .visual-overlays-section {
+    order: 2 !important;
+  }
+#tab-visual .visual-summary-section {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+  }
+#tab-visual .visual-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+#tab-results.control-tab-panel.is-active {
+    grid-template-columns: 1fr !important;
+  }
+#tab-results .diagnostics-section {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: clamp(10px, 0.75vw, 14px) !important;
+  }
+#tab-results .results-panel-head,
+#tab-results .results-summary-grid,
+#tab-results .results-insight-note,
+#tab-results .custom-monitor-panel,
+#tab-results .analysis-panel,
+#tab-results .sweep-panel {
+    grid-column: 1 / -1 !important;
+  }
+#tab-results .results-panel-head {
+    order: 1 !important;
+  }
+#tab-results .results-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    order: 2 !important;
+  }
+#tab-results .custom-monitor-panel {
+    order: 3 !important;
+  }
+#tab-results .results-insight-note {
+    order: 4 !important;
+  }
+#tab-results .monitor-panel {
+    grid-column: auto !important;
+    order: 5 !important;
+  }
+#tab-results .performance-panel {
+    grid-column: auto !important;
+    order: 6 !important;
+  }
+#tab-results .analysis-panel {
+    order: 7 !important;
+  }
+#tab-results .sweep-panel {
+    order: 8 !important;
+  }
+#tab-config .config-summary-section {
+    grid-column: 1 / -1 !important;
+    order: 1 !important;
+  }
+#tab-config .scale-section {
+    order: 2 !important;
+  }
+#tab-config .grid-section {
+    order: 3 !important;
+  }
+#tab-config .stability-section {
+    order: 4 !important;
+  }
+#tab-config .reproducibility-section {
+    grid-column: auto !important;
+    order: 5 !important;
+  }
+#tab-config .config-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+#tab-results .analysis-panel,
+#tab-results .sweep-panel {
+    grid-column: 1 / -1 !important;
   }
 }
