@@ -509,7 +509,7 @@ localizedSourceProfile(shape, order, u, v, source) {
 
 sourceFwhmCanvasRadius(source) {
   const fwhm = this.sourceEnvelopeFwhmCells(source);
-  const pixelsPerCell = Math.min(this.canvas.width / this.visibleGridWidth(), this.canvas.height / this.visibleGridHeight());
+  const pixelsPerCell = this.renderViewport().pixelsPerCell;
   return Math.max(6 * Math.max(1, window.devicePixelRatio || 1), 0.5 * fwhm * pixelsPerCell);
 },
 

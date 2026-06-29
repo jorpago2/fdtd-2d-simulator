@@ -339,6 +339,7 @@ renderMaterialImage(data) {
 render() {
   this.fitCanvas();
   this.clampView();
+  const viewport = this.renderViewport();
   const perf = window.fdtdPerformance;
   const canRecordRenderBreakdown = typeof perf?.record === "function" && typeof perf?.now === "function";
   let renderPhaseStart = canRecordRenderBreakdown ? perf.now() : 0;
@@ -370,7 +371,8 @@ render() {
   }
 
   this.offscreenCtx.putImageData(this.image, 0, 0);
-  this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  this.ctx.fillStyle = state.theme === "dark" ? "rgb(3, 8, 12)" : "rgb(235, 244, 248)";
+  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   this.ctx.imageSmoothingEnabled = false;
   this.ctx.drawImage(
     this.offscreen,
@@ -378,10 +380,10 @@ render() {
     this.viewY,
     this.visibleGridWidth(),
     this.visibleGridHeight(),
-    0,
-    0,
-    this.canvas.width,
-    this.canvas.height
+    viewport.left,
+    viewport.top,
+    viewport.width,
+    viewport.height
   );
   if (canRecordRenderBreakdown) {
     perf.record("renderPresentMs", perf.now() - renderPhaseStart);
@@ -471,8 +473,9 @@ drawPmlOverlay() {
   normalizeBoundarySides();
 
   const ctx = this.ctx;
-  const w = this.canvas.width;
-  const h = this.canvas.height;
+  const viewport = this.renderViewport();
+  const w = viewport.width;
+  const h = viewport.height;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const dark = state.theme === "dark";
   const palette = {
@@ -602,20 +605,20 @@ drawPmlOverlay() {
     ctx.beginPath();
     if (side === "left") {
       const x = this.gridToCanvasX(layer);
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
+      ctx.moveTo(x, viewport.top);
+      ctx.lineTo(x, viewport.bottom);
     } else if (side === "right") {
       const x = this.gridToCanvasX(this.nx - layer);
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
+      ctx.moveTo(x, viewport.top);
+      ctx.lineTo(x, viewport.bottom);
     } else if (side === "top") {
       const y = this.gridToCanvasY(layer);
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
+      ctx.moveTo(viewport.left, y);
+      ctx.lineTo(viewport.right, y);
     } else if (side === "bottom") {
       const y = this.gridToCanvasY(this.ny - layer);
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
+      ctx.moveTo(viewport.left, y);
+      ctx.lineTo(viewport.right, y);
     }
     ctx.stroke();
     ctx.restore();
@@ -628,10 +631,11 @@ drawFieldQuiverOverlay() {
 
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const viewport = this.renderViewport();
   const viewW = this.visibleGridWidth();
   const viewH = this.visibleGridHeight();
-  const cols = clampInt(this.canvas.width / (58 * dpr), 8, 26);
-  const rows = clampInt(this.canvas.height / (58 * dpr), 6, 22);
+  const cols = clampInt(viewport.width / (58 * dpr), 8, 26);
+  const rows = clampInt(viewport.height / (58 * dpr), 6, 22);
   const samples = [];
   let maxMag = 0;
 
@@ -653,7 +657,7 @@ drawFieldQuiverOverlay() {
 
   if (maxMag <= 1e-12) return;
 
-  const maxLength = clamp(Math.min(this.canvas.width / cols, this.canvas.height / rows) * 0.42, 8 * dpr, 22 * dpr);
+  const maxLength = clamp(Math.min(viewport.width / cols, viewport.height / rows) * 0.42, 8 * dpr, 22 * dpr);
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -698,20 +702,21 @@ drawDiagnosticsOverlay() {
   if (state.viewProjection !== "2d") return;
   const ctx = this.ctx;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const viewport = this.renderViewport();
   const monitors = this.diagnosticMonitorPositions();
   const drawLine = (xCell, label, color) => {
     const x = this.gridToCanvasX(xCell + 0.5);
-    if (x < -2 * dpr || x > this.canvas.width + 2 * dpr) return;
+    if (x < viewport.left - 2 * dpr || x > viewport.right + 2 * dpr) return;
     ctx.save();
     ctx.setLineDash([7 * dpr, 6 * dpr]);
     ctx.lineWidth = Math.max(1.4 * dpr, 1);
     ctx.strokeStyle = color;
     ctx.beginPath();
-    ctx.moveTo(x, 10 * dpr);
-    ctx.lineTo(x, this.canvas.height - 10 * dpr);
+    ctx.moveTo(x, viewport.top + 10 * dpr);
+    ctx.lineTo(x, viewport.bottom - 10 * dpr);
     ctx.stroke();
     ctx.setLineDash([]);
-    this.drawOverlayLabel(label, x + 12 * dpr, 24 * dpr, "left");
+    this.drawOverlayLabel(label, x + 12 * dpr, viewport.top + 24 * dpr, "left");
     ctx.restore();
   };
   if (visualLayerEnabled("monitors") && state.diagnosticsEnabled) {
@@ -735,12 +740,13 @@ drawCustomMonitorMarker(monitor) {
   const x1 = this.gridToCanvasX(segment.x1);
   const y1 = this.gridToCanvasY(segment.y1);
   const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const viewport = this.renderViewport();
   const margin = 24 * dpr;
   const minX = Math.min(x0, x1);
   const maxX = Math.max(x0, x1);
   const minY = Math.min(y0, y1);
   const maxY = Math.max(y0, y1);
-  if (maxX < -margin || minX > this.canvas.width + margin || maxY < -margin || minY > this.canvas.height + margin) return;
+  if (maxX < viewport.left - margin || minX > viewport.right + margin || maxY < viewport.top - margin || minY > viewport.bottom + margin) return;
 
   const active = monitor.id === state.selectedMonitorId;
   const hovered = monitor.id === state.hoveredMonitorId;
@@ -787,18 +793,17 @@ drawReferenceOverlay() {
 
 drawScaleBarOverlay() {
   const ctx = this.ctx;
-  const w = this.canvas.width;
-  const h = this.canvas.height;
+  const viewport = this.renderViewport();
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const visibleLambdaWidth = Math.max(cellsToLambda(this.visibleGridWidth()), 1e-6);
   const scaleLambda = niceScaleLength(visibleLambdaWidth) * 0.5;
   const colorbarReserve = 108 * dpr;
   const rightPad = state.viewMode === "field" || state.viewMode === "poynting" || state.viewProjection === "3d" ? colorbarReserve : 22 * dpr;
-  const x1 = Math.max(96 * dpr, w - rightPad);
-  const availableWidth = Math.max(48 * dpr, x1 - 22 * dpr);
-  const scaleWidth = clamp((scaleLambda / visibleLambdaWidth) * w, 42 * dpr, availableWidth * 0.72);
-  const x0 = Math.max(22 * dpr, x1 - scaleWidth);
-  const y = h - 34 * dpr;
+  const x1 = Math.max(viewport.left + 96 * dpr, viewport.right - rightPad);
+  const availableWidth = Math.max(48 * dpr, x1 - (viewport.left + 22 * dpr));
+  const scaleWidth = clamp((scaleLambda / visibleLambdaWidth) * viewport.width, 42 * dpr, availableWidth * 0.72);
+  const x0 = Math.max(viewport.left + 22 * dpr, x1 - scaleWidth);
+  const y = viewport.bottom - 34 * dpr;
   const tick = 8 * dpr;
 
   ctx.save();
@@ -851,15 +856,14 @@ drawWaveVectorGlyphOverlay() {
 },
 
 referenceGlyphLayout() {
-  const w = this.canvas.width;
-  const h = this.canvas.height;
+  const viewport = this.renderViewport();
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const pmlLeft = boundarySideIsAbsorbing("left") && this.pmlLayer > 0 ? this.gridToCanvasX(this.pmlLayer) : 0;
-  const pmlBottom = boundarySideIsAbsorbing("bottom") && this.pmlLayer > 0 ? this.gridToCanvasY(this.ny - this.pmlLayer) : h;
-  const pmlWidth = pmlLeft > 10 * dpr ? pmlLeft : Math.min(w * 0.22, 126 * dpr);
-  const pmlHeight = h - pmlBottom > 10 * dpr ? h - pmlBottom : Math.min(h * 0.18, 96 * dpr);
-  const left = 0;
-  const top = h - pmlHeight;
+  const pmlRight = boundarySideIsAbsorbing("left") && this.pmlLayer > 0 ? this.gridToCanvasX(this.pmlLayer) : viewport.left;
+  const pmlTop = boundarySideIsAbsorbing("bottom") && this.pmlLayer > 0 ? this.gridToCanvasY(this.ny - this.pmlLayer) : viewport.bottom;
+  const pmlWidth = pmlRight - viewport.left > 10 * dpr ? pmlRight - viewport.left : Math.min(viewport.width * 0.22, 126 * dpr);
+  const pmlHeight = viewport.bottom - pmlTop > 10 * dpr ? viewport.bottom - pmlTop : Math.min(viewport.height * 0.18, 96 * dpr);
+  const left = viewport.left;
+  const top = viewport.bottom - pmlHeight;
   const centerX = left + pmlWidth * 0.5;
   const centerY = top + pmlHeight * 0.52;
   const size = clamp(Math.min(pmlWidth, pmlHeight) * 0.34, 24 * dpr, 44 * dpr);
@@ -882,8 +886,9 @@ overlayReferenceColor() {
 
 overlayTextFontPx(scale = 1) {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const cssWidth = this.canvas.width / dpr;
-  const cssHeight = this.canvas.height / dpr;
+  const viewport = this.renderViewport();
+  const cssWidth = viewport.width / dpr;
+  const cssHeight = viewport.height / dpr;
   const cssSize = clamp(Math.min(cssWidth, cssHeight) * 0.017, 12.5, 18);
   return cssSize * scale * dpr;
 },
@@ -957,13 +962,15 @@ drawSourceMarker(source) {
   const sy = this.sourceYCell(source);
   const x = this.gridToCanvasX(sx + 0.5);
   const y = this.gridToCanvasY(sy + 0.5);
-  const margin = 12 * Math.max(1, window.devicePixelRatio || 1);
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const viewport = this.renderViewport();
+  const margin = 12 * dpr;
   const isLineLike = lineLikeIncidentSourceShapes.has(source.shape);
-  if (isLineLike && (x < -margin || x > this.canvas.width + margin)) return;
-  if (!isLineLike && (x < -margin || x > this.canvas.width + margin || y < -margin || y > this.canvas.height + margin)) return;
+  if (isLineLike && (x < viewport.left - margin || x > viewport.right + margin)) return;
+  if (!isLineLike && (x < viewport.left - margin || x > viewport.right + margin || y < viewport.top - margin || y > viewport.bottom + margin)) return;
   this.ctx.save();
   this.ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-  this.ctx.lineWidth = Math.max(1, window.devicePixelRatio || 1);
+  this.ctx.lineWidth = Math.max(1, dpr);
   if (source.id === state.selectedSourceId) {
     this.drawSourceSelectionHalo(x, y, source);
   } else if (source.id === state.hoveredSourceId) {
@@ -971,19 +978,19 @@ drawSourceMarker(source) {
   }
   if (source.shape === "line" || source.shape === "evanescentLine") {
     this.ctx.beginPath();
-    this.ctx.moveTo(x, 8);
-    this.ctx.lineTo(x, this.canvas.height - 8);
+    this.ctx.moveTo(x, viewport.top + 8 * dpr);
+    this.ctx.lineTo(x, viewport.bottom - 8 * dpr);
     this.ctx.stroke();
     if (source.shape === "evanescentLine") {
       const { alpha } = this.evanescentWaveNumbers(source);
-      const decayPixels = (1 / Math.max(alpha, 1e-9)) * (this.canvas.width / this.visibleGridWidth());
-      const arrowLength = Math.max(18 * Math.max(1, window.devicePixelRatio || 1), Math.min(70 * Math.max(1, window.devicePixelRatio || 1), decayPixels * 2.5));
+      const decayPixels = (1 / Math.max(alpha, 1e-9)) * viewport.pixelsPerCell;
+      const arrowLength = Math.max(18 * dpr, Math.min(70 * dpr, decayPixels * 2.5));
       this.drawOverlayArrow(x + 7, y, x + 7 + arrowLength, y, true);
       this.drawOverlayLabel("ev", x + 14 + arrowLength, y, "left", true);
     }
   } else if (source.shape === "gaussianProfile") {
     const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-    const halfHeight = (fwhm * 0.5) * (this.canvas.height / this.visibleGridHeight());
+    const halfHeight = (fwhm * 0.5) * viewport.pixelsPerCell;
     this.ctx.beginPath();
     this.ctx.moveTo(x, y - halfHeight);
     this.ctx.lineTo(x, y + halfHeight);
