@@ -1961,3 +1961,143 @@ body.controls-drawer-open .control-drawer-backdrop:not([hidden]) {
     align-items: start !important;
   }
 }
+
+/* 4K / large desktop operability pass.
+   Keep the brand visible, but make the options drawer behave like a real
+   side panel: fixed top edge, stable height, and internal scrolling. */
+@media (min-width: 1500px) and (min-height: 820px) {
+  .control-panel {
+    --large-drawer-edge: clamp(20px, 1.35vw, 42px);
+    --large-drawer-top: calc(max(var(--fullscreen-edge), env(safe-area-inset-top)) + 72px);
+    --large-drawer-width: clamp(960px, 35vw, 1320px);
+    --large-drawer-height: calc(100dvh - var(--large-drawer-top) - var(--large-drawer-edge));
+    inset: var(--large-drawer-top) auto auto var(--large-drawer-edge) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    width: var(--large-drawer-width) !important;
+    max-width: min(var(--large-drawer-width), calc(100vw - (2 * var(--large-drawer-edge)))) !important;
+    height: auto !important;
+    max-height: var(--large-drawer-height) !important;
+    padding: clamp(12px, 0.75vw, 18px) !important;
+    transform: translateX(calc(-100% - var(--large-drawer-edge))) scale(0.985) !important;
+  }
+
+  .control-panel[data-mobile-layer="scenes"] {
+    height: var(--large-drawer-height) !important;
+  }
+
+  .app-shell.controls-open .control-panel {
+    transform: translateX(0) scale(1) !important;
+  }
+
+  .control-panel-header {
+    min-height: 54px !important;
+    padding: 8px 10px !important;
+  }
+
+  .control-panel .mobile-layer-nav {
+    grid-auto-rows: minmax(38px, auto) !important;
+    min-height: 0 !important;
+    padding: 6px !important;
+  }
+
+  .control-panel .mobile-layer-button {
+    min-height: 38px !important;
+    padding: 6px 8px !important;
+  }
+
+  .control-tab-panels {
+    align-self: start !important;
+    height: auto !important;
+    max-height: calc(var(--large-drawer-height) - 134px) !important;
+    overflow: auto !important;
+  }
+
+  .control-panel[data-mobile-layer="scenes"] .control-tab-panels {
+    align-self: stretch !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  .control-panel .control-tab-panel.is-active {
+    min-height: 0 !important;
+    align-content: start !important;
+    grid-auto-rows: max-content !important;
+  }
+
+  #tab-scenes.control-tab-panel.is-active {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  #tab-scenes .scene-section {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+    align-items: stretch !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  #tab-scenes .scene-section > h2 {
+    grid-column: 1 / -1 !important;
+  }
+
+  #tab-scenes .scene-select-fallback {
+    align-self: start !important;
+  }
+
+  #tab-scenes .scene-browser {
+    display: grid !important;
+    grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  #tab-scenes .scene-filter-bar {
+    max-height: 118px !important;
+    overflow: auto !important;
+  }
+
+  #tab-scenes .scene-cards {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: calc(var(--large-drawer-height) - 610px) !important;
+  }
+
+  #tab-scenes .scene-guide-panel {
+    align-self: start !important;
+    grid-row: 2 / span 3 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: calc(var(--large-drawer-height) - 250px) !important;
+    overflow: auto !important;
+  }
+
+  #tab-scenes .scene-guide-panel > .scene-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #tab-scenes .scene-guide-details,
+  #tab-scenes .scene-guide-reference-grid {
+    min-height: 0 !important;
+  }
+
+  #tab-visual.control-tab-panel.is-active,
+  #tab-results.control-tab-panel.is-active,
+  #tab-config.control-tab-panel.is-active {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  #tab-visual .visual-summary-section {
+    grid-column: 1 / -1 !important;
+  }
+
+  #tab-config .config-summary-section {
+    grid-column: 1 / -1 !important;
+  }
+
+  #tab-results .diagnostics-section {
+    min-height: 0 !important;
+  }
+}
