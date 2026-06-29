@@ -390,7 +390,7 @@ render() {
   if (visualLayerEnabled("boundaries")) {
     this.drawPmlOverlay();
   }
-  if (visualLayerEnabled("monitors")) {
+  if (visualLayerEnabled("monitors") || state.monitors?.length) {
     this.drawDiagnosticsOverlay();
   }
   this.drawMaterialHoverOverlay();
@@ -714,7 +714,7 @@ drawDiagnosticsOverlay() {
     this.drawOverlayLabel(label, x + 12 * dpr, 24 * dpr, "left");
     ctx.restore();
   };
-  if (state.diagnosticsEnabled) {
+  if (visualLayerEnabled("monitors") && state.diagnosticsEnabled) {
     drawLine(monitors.left, "L", "rgba(11, 98, 232, 0.74)");
     drawLine(monitors.right, "R", "rgba(16, 136, 82, 0.74)");
   }

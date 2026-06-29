@@ -186,7 +186,7 @@ const VISUAL_LAYER_STATE_KEYS = Object.freeze({
 const VISUAL_LAYER_LABELS = Object.freeze({
   boundaries: "PML/bounds",
   diagnostics: "k vector",
-  monitors: "monitors",
+  monitors: "line monitors",
   axes: "axes",
   scale: "scale",
   sources: "sources",
@@ -236,7 +236,7 @@ const state = {
   fieldComponent: "ez",
   fieldDisplay: "scalar",
   fieldQuiver: false,
-  diagnosticsEnabled: true,
+  diagnosticsEnabled: false,
   visualProfile: "auto",
   visualLayerBoundaries: true,
   visualLayerDiagnostics: true,
@@ -2580,7 +2580,7 @@ function clampAllSourcesToInterior() {
 function monitorQuantityLabel(quantity) {
   return {
     scalar: `${scalarFieldComponentKey()} mean`,
-    magnitude: "field RMS",
+    magnitude: `mean |${scalarFieldComponentKey()}|`,
     normalFlux: "normal flux",
     tangentFlux: "tangential flux",
   }[quantity] || `${scalarFieldComponentKey()} mean`;
@@ -2640,7 +2640,6 @@ function addMonitor(overrides = {}) {
   state.selectedMonitorId = monitor.id;
   state.selectedSourceId = null;
   state.visualProfile = "custom";
-  state.visualLayerMonitors = true;
   clearMaterialSelection(false);
   state.monitorDefaults = { ...monitor };
   delete state.monitorDefaults.id;
@@ -4212,6 +4211,7 @@ function renderCustomMonitorResults({ force = false } = {}) {
     [
       ["Value", formatFieldValue(measurement.value)],
       ["Mean", formatFieldValue(measurement.mean)],
+      ["Mean |F|", formatFieldValue(measurement.magnitude)],
       ["RMS", formatFieldValue(measurement.rms)],
       ["Flux n", formatFieldValue(measurement.normalFlux)],
       ["Flux t", formatFieldValue(measurement.tangentFlux)],
@@ -5931,7 +5931,7 @@ function normalizeImportedStateValues() {
   state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
   state.visualProfile = normalizedVisualProfile(state.visualProfile);
   Object.values(VISUAL_LAYER_STATE_KEYS).forEach((stateKey) => {
-    state[stateKey] = state[stateKey] == null ? true : Boolean(state[stateKey]);
+    state[stateKey] = state[stateKey] == null ? stateKey !== "visualLayerMonitors" : Boolean(state[stateKey]);
   });
   state.analysisEnabled = Boolean(state.analysisEnabled);
   state.analysisSampleEvery = clampInt(state.analysisSampleEvery, 1, 16);

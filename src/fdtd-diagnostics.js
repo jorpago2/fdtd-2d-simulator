@@ -1645,6 +1645,12 @@ fieldPhysicalScale() {
   return state.viewMode === "poynting" ? this.fieldScale * this.fieldScale : this.fieldScale;
 },
 
+fieldPowerScale() {
+  const scale = Number(this.fieldScale);
+  if (!Number.isFinite(scale)) return scale > 0 ? Infinity : 0;
+  return scale * scale;
+},
+
 fieldPhysicalLogScale() {
   return (state.viewMode === "poynting" ? 2 : 1) * this.fieldLog10Scale;
 },
@@ -1736,16 +1742,14 @@ monitorSampleCells(monitor) {
 },
 
 monitorFieldMagnitudeAt(idx) {
-  if (state.fieldComponent === "hz") {
-    return Math.hypot(this.ez[idx], this.hx[idx], this.hy[idx]);
-  }
-  return Math.hypot(this.ez[idx], this.hx[idx], this.hy[idx]);
+  return Math.abs(this.ez[idx]);
 },
 
 measureCustomMonitor(monitor) {
   const normalized = typeof normalizeMonitor === "function" ? normalizeMonitor({ ...monitor }) : monitor;
   const { segment, cells } = this.monitorSampleCells(normalized);
-  const scale = this.fieldPhysicalScale();
+  const amplitudeScale = this.fieldScale;
+  const powerScale = this.fieldPowerScale();
   let sum = 0;
   let absSum = 0;
   let squareSum = 0;
@@ -1753,11 +1757,11 @@ measureCustomMonitor(monitor) {
   let normalFluxSum = 0;
   let tangentFluxSum = 0;
   for (const sample of cells) {
-    const scalar = this.fieldValueAt(sample.idx, "scalar") * scale;
-    const magnitude = this.monitorFieldMagnitudeAt(sample.idx) * scale;
+    const scalar = this.ez[sample.idx] * amplitudeScale;
+    const magnitude = this.monitorFieldMagnitudeAt(sample.idx) * amplitudeScale;
     const poynting = this.poyntingAt(sample.idx);
-    const normalFlux = (poynting.x * segment.nx + poynting.y * segment.ny) * this.fieldPhysicalScale();
-    const tangentFlux = (poynting.x * segment.ux + poynting.y * segment.uy) * this.fieldPhysicalScale();
+    const normalFlux = (poynting.x * segment.nx + poynting.y * segment.ny) * powerScale;
+    const tangentFlux = (poynting.x * segment.ux + poynting.y * segment.uy) * powerScale;
     sum += scalar;
     absSum += Math.abs(scalar);
     squareSum += scalar * scalar;
@@ -1811,7 +1815,7 @@ lineDirectionalFluxAt(x, direction = this.diagnosticDirection()) {
     flux += s.x * direction.cos + s.y * direction.sin;
     samples += 1;
   }
-  return samples > 0 ? (flux / samples) * this.fieldPhysicalScale() : 0;
+  return samples > 0 ? (flux / samples) * this.fieldPowerScale() : 0;
 },
 
 directionalTangentialFieldsAt(idx, direction) {
@@ -1944,14 +1948,14 @@ diagnosticPowerFromPhasor(name, impedance) {
   if (!target || this.diagnosticSamples <= 0) return 0;
   const amplitude = 2 * Math.hypot(target.re, target.im);
   const z = Math.max(1e-9, Math.abs(impedance));
-  return (amplitude * amplitude * this.fieldPhysicalScale()) / (2 * z);
+  return (amplitude * amplitude * this.fieldPowerScale()) / (2 * z);
 },
 
 diagnosticPowerFromPhasorObject(target, impedance) {
   if (!target || this.diagnosticSamples <= 0) return 0;
   const amplitude = 2 * Math.hypot(target.re, target.im);
   const z = Math.max(1e-9, Math.abs(impedance));
-  return (amplitude * amplitude * this.fieldPhysicalScale()) / (2 * z);
+  return (amplitude * amplitude * this.fieldPowerScale()) / (2 * z);
 },
 
 updateDiagnosticDftChannels(incident, transmitted, rightIncident = false) {
