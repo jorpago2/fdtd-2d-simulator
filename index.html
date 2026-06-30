@@ -16,19 +16,9 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-fresh-css-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-legacy-cleanup-1" />
   </head>
   <body>
-    <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
-      <filter id="liquidGlassControl" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="11" result="surfaceNoise" />
-        <feDisplacementMap in="SourceGraphic" in2="surfaceNoise" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="refracted" />
-        <feGaussianBlur in="refracted" stdDeviation="0.08" result="softened" />
-        <feComponentTransfer in="softened">
-          <feFuncA type="table" tableValues="0 0.98" />
-        </feComponentTransfer>
-      </filter>
-    </svg>
     <main class="app-shell" data-ui-depth="advanced">
       <header class="topbar">
         <div class="brand-lockup">

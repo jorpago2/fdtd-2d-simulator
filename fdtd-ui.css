@@ -1,29 +1,29 @@
 /*
   Maxwell FDTD Lab UI
-  Fresh single-file stylesheet.
+  Minimal operational stylesheet.
 
-  Intent:
-  - one active CSS file;
-  - no dependency on the previous cascade;
+  Goals:
+  - one predictable CSS file;
   - canvas-first layout;
-  - responsive fullscreen drawer on mobile/tablet;
-  - left drawer on QHD/4K;
-  - stable, centered controls.
+  - flat controls with stable dimensions;
+  - responsive fullscreen controls on small/medium screens;
+  - limited left drawer on large screens;
+  - no decorative glass, deep shadows, or fragile visual effects.
 
   Section map:
-  01. Foundation and theme tokens
-  02. App shell, canvas, and floating chrome
-  03. Shared layout primitives
-  04. Buttons, segmented controls, and switches
-  05. Canvas overlays and context menus
-  06. Forms and compact data rows
-  07. Control drawer shell and navigation
-  08. Panel sections and scene browser
-  09. Educational guide, summaries, results, and charts
-  10. Utilities and responsive rules
+  01. Foundation, theme tokens, and base elements
+  02. Canvas shell and floating chrome
+  03. Shared buttons, segmented controls, and switches
+  04. Canvas overlays and context menus
+  05. Forms and compact data rows
+  06. Control drawer shell and navigation
+  07. Panels, scene browser, and repeated content
+  08. Results, visual controls, charts, and utilities
+  09. Global state overrides
+  10. Responsive behavior
 */
 
-/* 01. Foundation and theme tokens */
+/* 01. Foundation, theme tokens, and base elements */
 
 *,
 *::before,
@@ -33,80 +33,60 @@
 
 :root {
   color-scheme: light;
-  --bg: #edf4f6;
-  --bg-rgb: 237 244 246;
-  --surface: #f7fbfc;
-  --surface-2: #e7eff3;
-  --surface-3: #dce8ed;
-  --ink: #17242d;
-  --muted: #667783;
-  --line: rgb(111 140 153 / 0.22);
-  --line-strong: rgb(75 105 119 / 0.35);
-  --accent: #087f8b;
-  --accent-2: #0c5f69;
-  --accent-soft: rgb(8 127 139 / 0.13);
-  --good: #08776d;
-  --warn: #a9680a;
-  --bad: #ba2f45;
-  --white: #ffffff;
-  --shadow: -7px -7px 18px rgb(255 255 255 / 0.76), 8px 8px 22px rgb(125 147 158 / 0.24);
-  --shadow-tight: -4px -4px 11px rgb(255 255 255 / 0.74), 5px 5px 13px rgb(125 147 158 / 0.22);
-  --inset: inset 3px 3px 9px rgb(128 150 160 / 0.22), inset -4px -4px 10px rgb(255 255 255 / 0.8);
-  --radius-xs: 10px;
-  --radius-sm: 14px;
-  --radius-md: 18px;
-  --radius-lg: 26px;
+  --bg: #eef4f6;
+  --canvas-bg: #ffffff;
+  --panel: #f8fbfc;
+  --panel-2: #edf3f5;
+  --panel-3: #e3ebef;
+  --text: #17222b;
+  --muted: #63727c;
+  --border: #cbd8de;
+  --border-strong: #9fb3bd;
+  --accent: #0a7f8d;
+  --accent-strong: #075f6b;
+  --accent-soft: #d9f0f2;
+  --good: #087a6c;
+  --warn: #a06000;
+  --bad: #b3263d;
+  --shadow: 0 10px 28px rgb(31 48 58 / 0.12);
+  --shadow-sm: 0 4px 12px rgb(31 48 58 / 0.09);
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --pill: 999px;
-  --edge: clamp(10px, 1.25vw, 20px);
+  --edge: clamp(10px, 1.2vw, 18px);
   --gap: 10px;
   --control: 40px;
   --touch: 44px;
-  --toolbar: 48px;
+  --toolbar: 46px;
   --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --serif: Georgia, "Times New Roman", serif;
-  --drawer-width: clamp(960px, 35vw, 1320px);
-  --visual-switch-track-width: 44px;
-  --visual-switch-track-height: 24px;
-  --visual-switch-thumb-size: 18px;
-  --sim-aspect-ratio: 1.5 / 1;
-  --sim-frame-width-limit: 100vw;
-
-  /* Compatibility aliases for code/markup that still names the old tokens. */
-  --neu-bg: var(--bg);
-  --neu-surface: var(--surface);
-  --neu-surface-low: var(--surface-2);
-  --neu-surface-raised: var(--white);
-  --neu-ink: var(--ink);
-  --neu-muted: var(--muted);
-  --neu-border: var(--line);
-  --neu-accent: var(--accent);
-  --neu-accent-soft: var(--accent-soft);
-  --neu-radius-card-tight: var(--radius-sm);
-  --neu-shadow-soft: var(--shadow);
-  --neu-shadow-small: var(--shadow-tight);
-  --neu-shadow-inset-tight: var(--inset);
+  --drawer-width: clamp(720px, 38vw, 1080px);
+  --switch-w: 42px;
+  --switch-h: 24px;
+  --switch-thumb: 18px;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0f161b;
-  --bg-rgb: 15 22 27;
-  --surface: #151f27;
-  --surface-2: #0e151b;
-  --surface-3: #1e2b35;
-  --ink: #edf6fb;
-  --muted: #aebdc6;
-  --line: rgb(255 255 255 / 0.12);
-  --line-strong: rgb(255 255 255 / 0.2);
-  --accent: #52c5ce;
-  --accent-2: #2b929d;
-  --accent-soft: rgb(82 197 206 / 0.15);
-  --good: #54d6c8;
-  --warn: #ffca68;
-  --bad: #ff879b;
-  --shadow: -5px -5px 15px rgb(57 72 82 / 0.28), 8px 8px 22px rgb(0 0 0 / 0.36);
-  --shadow-tight: -4px -4px 11px rgb(57 72 82 / 0.24), 5px 5px 14px rgb(0 0 0 / 0.32);
-  --inset: inset 3px 3px 8px rgb(0 0 0 / 0.38), inset -4px -4px 10px rgb(65 79 89 / 0.2);
+  --bg: #0e151a;
+  --canvas-bg: #030708;
+  --panel: #141d24;
+  --panel-2: #101820;
+  --panel-3: #1d2a33;
+  --text: #edf5f8;
+  --muted: #a7b6bf;
+  --border: #2b3a43;
+  --border-strong: #465864;
+  --accent: #55c7d2;
+  --accent-strong: #74dce5;
+  --accent-soft: #19343a;
+  --good: #54d4c3;
+  --warn: #ffc069;
+  --bad: #ff7c90;
+  --shadow: 0 12px 28px rgb(0 0 0 / 0.32);
+  --shadow-sm: 0 5px 14px rgb(0 0 0 / 0.24);
 }
 
 html,
@@ -120,10 +100,10 @@ body {
 body {
   min-height: 100dvh;
   overflow: hidden;
-  color: var(--ink);
+  color: var(--text);
   background: var(--bg);
   font-family: var(--font);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -144,7 +124,7 @@ button:disabled,
 input:disabled,
 select:disabled {
   cursor: not-allowed;
-  opacity: 0.52;
+  opacity: 0.48;
 }
 
 button:focus-visible,
@@ -153,8 +133,8 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 canvas:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  outline-offset: 3px;
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 h1,
@@ -168,15 +148,7 @@ p {
   display: none;
 }
 
-.liquid-glass-filters {
-  position: fixed;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-/* 02. App shell, canvas, and floating chrome */
+/* 02. Canvas shell and floating chrome */
 
 .app-shell,
 .workspace,
@@ -185,21 +157,34 @@ p {
   min-height: 100dvh;
 }
 
-.app-shell {
+.app-shell,
+.workspace,
+.stage {
   position: relative;
-  overflow: hidden;
-}
-
-.workspace {
-  position: relative;
-  isolation: isolate;
   overflow: hidden;
 }
 
 .stage {
-  position: relative;
+  background: var(--canvas-bg);
+}
+
+.canvas-frame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  background: var(--bg);
+}
+
+#simCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--canvas-bg);
+  touch-action: none;
 }
 
 .topbar,
@@ -211,18 +196,17 @@ p {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 6px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow: var(--shadow-tight);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
 }
 
 .topbar {
   left: max(var(--edge), env(safe-area-inset-left));
-  max-width: min(520px, calc(100vw - 2 * var(--edge)));
+  max-width: min(560px, calc(100vw - 2 * var(--edge)));
 }
 
 .canvas-toolbar {
@@ -236,15 +220,35 @@ p {
   padding-inline: 8px 4px;
 }
 
+.brand-main,
+.brand-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .eyebrow,
 .maxwell-strip {
-  display: none;
+  color: var(--accent-strong);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.maxwell-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+  text-transform: none;
 }
 
 .brand-title {
-  color: var(--ink);
-  font-size: clamp(1rem, 1.15vw, 1.45rem);
-  font-weight: 950;
+  color: var(--text);
+  font-size: clamp(1rem, 1.15vw, 1.38rem);
+  font-weight: 850;
   line-height: 1;
   white-space: nowrap;
 }
@@ -256,33 +260,11 @@ p {
   font-weight: 700;
 }
 
-.canvas-frame {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: stretch;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+html[data-theme="dark"] .brand-emblem {
+  color: #8bbdff;
 }
 
-#simCanvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  background: #ffffff;
-  touch-action: none;
-}
-
-html[data-theme="dark"] #simCanvas {
-  background: #020606;
-}
-
-/* 03. Shared layout primitives */
+/* 03. Shared buttons, segmented controls, and switches */
 
 .tool-group,
 .button-row,
@@ -290,7 +272,9 @@ html[data-theme="dark"] #simCanvas {
 .performance-actions,
 .sweep-actions,
 .run-actions-row,
-.analysis-panel-header {
+.analysis-panel-header,
+.control-panel-actions,
+.inspector-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -301,8 +285,6 @@ html[data-theme="dark"] #simCanvas {
 .tool-group.compact {
   flex-wrap: nowrap;
 }
-
-/* 04. Buttons, segmented controls, and switches */
 
 .icon-button,
 .compact-button,
@@ -317,14 +299,11 @@ html[data-theme="dark"] #simCanvas {
 .visual-panel-layer {
   min-width: 0;
   min-height: var(--control);
-  border: 1px solid color-mix(in srgb, var(--line) 76%, white 16%);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: color-mix(in srgb, var(--ink) 84%, var(--muted));
-  background:
-    radial-gradient(circle at 28% 14%, rgb(255 255 255 / 0.52), transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, white), var(--surface-2));
-  box-shadow: var(--shadow-tight);
-  font-weight: 900;
+  color: var(--text);
+  background: var(--panel);
+  font-weight: 750;
   line-height: 1;
   text-align: center;
 }
@@ -351,6 +330,7 @@ html[data-theme="dark"] #simCanvas {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-height: var(--control);
   padding: 0 14px;
   white-space: nowrap;
 }
@@ -359,15 +339,13 @@ html[data-theme="dark"] #simCanvas {
 .primary-button,
 .icon-button.primary {
   color: #fff;
-  border-color: color-mix(in srgb, var(--accent) 58%, white 18%);
-  background:
-    radial-gradient(circle at 28% 14%, rgb(255 255 255 / 0.28), transparent 34%),
-    linear-gradient(145deg, var(--accent), var(--accent-2));
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .danger-button {
   color: var(--bad);
-  border-color: color-mix(in srgb, var(--bad) 38%, var(--line));
+  border-color: var(--bad);
 }
 
 .icon-button:hover,
@@ -376,19 +354,20 @@ html[data-theme="dark"] #simCanvas {
 .mode-toggle-button:hover,
 .mobile-layer-button:hover,
 .control-tab-button:hover,
-.scene-filter-button:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+.scene-filter-button:hover,
+.segment:hover {
+  border-color: var(--accent);
 }
 
 .icon-button:active,
 .text-button:active,
+.primary-button:active,
 .mode-toggle-button:active,
 .mobile-layer-button:active,
 .control-tab-button:active,
-.scene-filter-button:active {
+.scene-filter-button:active,
+.segment:active {
   transform: translateY(1px);
-  box-shadow: var(--inset);
 }
 
 #playPauseBtn {
@@ -403,12 +382,13 @@ html[data-theme="dark"] #simCanvas {
   width: 8px;
   height: 8px;
   border-radius: var(--pill);
-  background: color-mix(in srgb, white 78%, var(--accent));
+  background: rgb(255 255 255 / 0.76);
   content: "";
 }
 
 #playPauseBtn.is-running {
-  background: linear-gradient(145deg, #0e8f6a, #05606a);
+  background: var(--good);
+  border-color: var(--good);
 }
 
 .canvas-action-menu {
@@ -419,11 +399,6 @@ html[data-theme="dark"] #simCanvas {
 
 .stage.canvas-actions-open .canvas-action-menu {
   display: flex;
-}
-
-.stage.canvas-actions-open .canvas-toolbar {
-  left: calc(max(var(--edge), env(safe-area-inset-left)) + 58px);
-  right: var(--edge);
 }
 
 .canvas-action-label {
@@ -439,18 +414,17 @@ html[data-theme="dark"] #simCanvas {
 .brush-tool-toggle {
   display: grid;
   align-items: stretch;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--pill);
-  padding: 5px;
-  background: color-mix(in srgb, var(--surface-2) 84%, var(--surface) 16%);
-  box-shadow: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  background: var(--panel-2);
 }
 
 .canvas-mode-toggle {
   grid-auto-flow: column;
-  grid-auto-columns: minmax(74px, 1fr);
+  grid-auto-columns: minmax(72px, 1fr);
 }
 
 .theme-toggle,
@@ -463,6 +437,10 @@ html[data-theme="dark"] #simCanvas {
 .view-toggle,
 .visual-profile-toggle {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.visual-profile-toggle .mode-toggle-button {
+  font-size: 0.78rem;
 }
 
 .field-display-toggle {
@@ -481,11 +459,10 @@ html[data-theme="dark"] #simCanvas {
   min-width: 36px;
   min-height: 36px;
   border-color: transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-xs);
   padding: 0 9px;
-  color: color-mix(in srgb, var(--ink) 72%, var(--muted));
+  color: var(--muted);
   background: transparent;
-  box-shadow: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -495,13 +472,13 @@ html[data-theme="dark"] #simCanvas {
 .segment.is-active,
 .mobile-layer-button.is-active,
 .control-tab-button.is-active,
-.scene-filter-button.is-active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
-  background:
-    radial-gradient(circle at 32% 12%, rgb(255 255 255 / 0.54), transparent 36%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface) 88%, white), color-mix(in srgb, var(--accent) 12%, var(--surface-2)));
-  box-shadow: var(--shadow-tight);
+.scene-filter-button.is-active,
+.mode-toggle-button[aria-pressed="true"],
+.segment[aria-pressed="true"],
+.scene-filter-button[aria-pressed="true"] {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .nav-step {
@@ -512,17 +489,22 @@ html[data-theme="dark"] #simCanvas {
   height: 18px;
   border-radius: var(--pill);
   color: var(--muted);
-  background: color-mix(in srgb, var(--surface-3) 78%, transparent);
-  box-shadow: var(--inset);
-  font-size: 0.58rem;
-  font-weight: 950;
+  background: var(--panel-3);
+  font-size: 0.6rem;
+  font-weight: 800;
 }
 
 .is-active > .nav-step,
 .mobile-layer-button.is-active .nav-step,
 .control-tab-button.is-active .nav-step {
-  color: #fff;
-  background: var(--accent);
+  color: var(--accent);
+  background: #fff;
+}
+
+html[data-theme="dark"] .is-active > .nav-step,
+html[data-theme="dark"] .mobile-layer-button.is-active .nav-step,
+html[data-theme="dark"] .control-tab-button.is-active .nav-step {
+  background: #0a1217;
 }
 
 .canvas-view-controls {
@@ -532,25 +514,28 @@ html[data-theme="dark"] #simCanvas {
   right: max(var(--edge), env(safe-area-inset-right));
   display: grid;
   gap: 10px;
-  width: min(460px, calc(100vw - 2 * var(--edge)));
+  width: min(480px, calc(100vw - 2 * var(--edge)));
   max-height: calc(100dvh - 96px);
   overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 12px;
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  background: var(--panel);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+}
+
+.toolbar-switch,
+.visual-panel-layer,
+.toggle-row {
+  display: grid;
+  grid-template-columns: var(--switch-w) minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
 }
 
 .toolbar-switch,
 .visual-panel-layer {
-  display: grid;
-  grid-template-columns: var(--visual-switch-track-width) minmax(0, 1fr);
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   min-height: var(--touch);
 }
 
@@ -561,14 +546,13 @@ html[data-theme="dark"] #simCanvas {
   -webkit-appearance: none;
   position: relative;
   display: inline-block;
-  width: var(--visual-switch-track-width);
-  min-width: var(--visual-switch-track-width);
-  height: var(--visual-switch-track-height);
+  width: var(--switch-w);
+  min-width: var(--switch-w);
+  height: var(--switch-h);
   margin: 0;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--border-strong);
   border-radius: var(--pill);
-  background: color-mix(in srgb, #0b1118 84%, var(--surface));
-  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.34);
+  background: var(--panel-3);
 }
 
 .toolbar-switch input::before,
@@ -577,37 +561,39 @@ html[data-theme="dark"] #simCanvas {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: var(--visual-switch-thumb-size);
-  height: var(--visual-switch-thumb-size);
+  width: var(--switch-thumb);
+  height: var(--switch-thumb);
   border-radius: var(--pill);
-  background: linear-gradient(145deg, #263341, #111923);
-  box-shadow: 0 2px 5px rgb(0 0 0 / 0.34);
+  background: var(--muted);
   content: "";
-  transition: transform 160ms ease;
+  transition: transform 120ms ease, background 120ms ease;
 }
 
 .toolbar-switch input:checked,
 .visual-panel-layer input:checked,
 .toggle-row input:checked {
-  border-color: color-mix(in srgb, var(--accent) 52%, transparent);
-  background: linear-gradient(145deg, #74b9ff, #5aa4ff);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .toolbar-switch input:checked::before,
 .visual-panel-layer input:checked::before,
 .toggle-row input:checked::before {
-  transform: translateX(calc(var(--visual-switch-track-width) - var(--visual-switch-thumb-size) - 4px));
+  background: var(--accent);
+  transform: translateX(calc(var(--switch-w) - var(--switch-thumb) - 4px));
 }
 
 .toolbar-switch span,
-.visual-panel-layer span {
+.visual-panel-layer span,
+.toggle-row > span {
   min-width: 0;
   overflow: hidden;
+  color: var(--text);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* 05. Canvas overlays and context menus */
+/* 04. Canvas overlays and context menus */
 
 .colorbar {
   position: fixed;
@@ -616,35 +602,32 @@ html[data-theme="dark"] #simCanvas {
   top: 50%;
   display: grid;
   gap: 6px;
-  width: 82px;
-  border: 1px solid var(--line);
+  width: 78px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 9px 8px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
-  box-shadow: var(--shadow-tight);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  padding: 8px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-50%);
   pointer-events: none;
 }
 
 .colorbar-title {
-  font-size: 0.72rem;
-  font-weight: 950;
+  font-size: 0.7rem;
+  font-weight: 850;
   text-align: center;
 }
 
 .colorbar-body {
   display: grid;
   grid-template-columns: 16px 1fr;
-  align-items: stretch;
   gap: 6px;
-  min-height: 150px;
+  min-height: 142px;
 }
 
 .colorbar-gradient {
-  min-height: 150px;
+  min-height: 142px;
   border-radius: var(--pill);
   background: linear-gradient(to bottom, #5c001f, #e99524, #f6f6dc, #3eb7e6, #23008a);
 }
@@ -653,8 +636,9 @@ html[data-theme="dark"] #simCanvas {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  font-size: 0.66rem;
-  font-weight: 750;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .source-menu {
@@ -665,14 +649,12 @@ html[data-theme="dark"] #simCanvas {
   width: min(420px, calc(100vw - 24px));
   max-height: min(760px, calc(100dvh - 24px));
   overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 12px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  background: var(--panel);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(22px) saturate(1.16);
-  -webkit-backdrop-filter: blur(22px) saturate(1.16);
 }
 
 .source-menu-header {
@@ -687,13 +669,11 @@ html[data-theme="dark"] #simCanvas {
   line-height: 1.15;
 }
 
-/* 06. Forms and compact data rows */
-
 .source-menu-hint,
 .panel-kicker {
   color: var(--muted);
   font-size: 0.68rem;
-  font-weight: 900;
+  font-weight: 800;
   line-height: 1.15;
   text-transform: uppercase;
 }
@@ -718,12 +698,15 @@ html[data-theme="dark"] #simCanvas {
 .analysis-chart-grid,
 .scene-guide-grid,
 .scene-guide-reference-grid,
-.context-choice-grid {
+.context-choice-grid,
+.visual-layer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 10px;
   min-width: 0;
 }
+
+/* 05. Forms and compact data rows */
 
 label:not(.toolbar-switch, .toggle-row, .visual-panel-layer),
 .control-row,
@@ -734,7 +717,7 @@ label:not(.toolbar-switch, .toggle-row, .visual-panel-layer),
 }
 
 .control-row {
-  grid-template-columns: minmax(72px, 0.68fr) minmax(0, 1.55fr) minmax(58px, auto);
+  grid-template-columns: minmax(72px, 0.7fr) minmax(0, 1.5fr) minmax(58px, auto);
   align-items: center;
 }
 
@@ -745,12 +728,11 @@ label:not(.toolbar-switch, .toggle-row, .visual-panel-layer),
 
 label > span,
 .control-row > span,
-.solver-row > span,
-.toggle-row > span {
+.solver-row > span {
   min-width: 0;
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 750;
   line-height: 1.15;
 }
 
@@ -761,13 +743,12 @@ textarea,
 output {
   min-width: 0;
   min-height: var(--control);
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
-  box-shadow: var(--inset);
-  font-weight: 850;
+  color: var(--text);
+  background: var(--panel-2);
+  font-weight: 700;
 }
 
 input[type="range"] {
@@ -781,14 +762,12 @@ textarea {
   line-height: 1.35;
 }
 
-.toggle-row {
-  display: grid;
-  grid-template-columns: var(--visual-switch-track-width) minmax(0, 1fr);
-  align-items: center;
-  gap: 9px;
+.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-/* 07. Control drawer shell and navigation */
+/* 06. Control drawer shell and navigation */
 
 .control-drawer-backdrop {
   position: fixed;
@@ -796,9 +775,7 @@ textarea {
   z-index: 100;
   width: 100%;
   height: 100%;
-  background: rgb(var(--bg-rgb) / 0.62);
-  backdrop-filter: blur(18px) saturate(1.18);
-  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  background: rgb(10 18 24 / 0.42);
 }
 
 body.controls-drawer-open {
@@ -819,35 +796,33 @@ body.controls-drawer-open {
     max(10px, env(safe-area-inset-right))
     max(10px, env(safe-area-inset-bottom))
     max(10px, env(safe-area-inset-left));
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  border: 1px solid var(--border);
+  background: var(--panel);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(24px) saturate(1.16);
-  -webkit-backdrop-filter: blur(24px) saturate(1.16);
   overflow: hidden;
-  transition: opacity 160ms ease, transform 160ms ease;
 }
 
 .app-shell:not(.controls-open) .control-panel {
   pointer-events: none;
+  visibility: hidden;
   opacity: 0;
-  transform: translateY(12px) scale(0.99);
+  transform: translateY(8px);
 }
 
 .app-shell.controls-open .control-panel {
   pointer-events: auto;
+  visibility: visible;
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .control-panel-header,
 .mobile-layer-nav,
 .control-tab-panels {
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-  box-shadow: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
 }
 
 .control-panel-header {
@@ -867,16 +842,8 @@ body.controls-drawer-open {
 .control-panel-title-block h2 {
   overflow-wrap: anywhere;
   font-size: clamp(1rem, 1.3vw, 1.28rem);
-  font-weight: 950;
+  font-weight: 850;
   line-height: 1.06;
-}
-
-.control-panel-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: end;
-  gap: 8px;
-  min-width: 0;
 }
 
 .theme-toggle {
@@ -887,7 +854,8 @@ body.controls-drawer-open {
 .control-tabs {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-auto-rows: minmax(var(--control), auto);
-  padding: 5px;
+  padding: 4px;
+  background: var(--panel-2);
 }
 
 .control-tabs {
@@ -911,10 +879,10 @@ body.controls-drawer-open {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   align-content: start;
-  padding: 1px;
+  padding: 10px;
 }
 
-/* 08. Panel sections and scene browser */
+/* 07. Panels, scene browser, and repeated content */
 
 .panel-section,
 .results-detail-panel,
@@ -924,20 +892,19 @@ body.controls-drawer-open {
 .sweep-panel,
 .performance-panel {
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: 14px;
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
-  box-shadow: var(--shadow-tight);
+  background: var(--panel);
 }
 
 .panel-section h2,
 .results-panel-head h2,
 .visual-panel-head h2,
 details > summary {
-  color: var(--ink);
-  font-size: 0.95rem;
-  font-weight: 950;
+  color: var(--text);
+  font-size: 0.96rem;
+  font-weight: 850;
   line-height: 1.14;
 }
 
@@ -958,12 +925,11 @@ details > summary::after {
   content: "+";
   display: inline-grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
   border-radius: var(--pill);
   color: var(--accent);
-  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
-  box-shadow: var(--shadow-tight);
 }
 
 details[open] > summary::after {
@@ -978,7 +944,11 @@ details[open] > summary::after {
 .visual-summary-section,
 .run-section,
 .inspector-section,
-.simulation-guide-section {
+.simulation-guide-section,
+.scale-section,
+.grid-section,
+.stability-section,
+.reproducibility-section {
   display: grid;
   gap: 10px;
   align-content: start;
@@ -995,12 +965,12 @@ details[open] > summary::after {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-height: 138px;
+  max-height: 140px;
   overflow: auto;
-  border-radius: var(--radius-md);
-  padding: 7px;
-  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
-  box-shadow: var(--inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--panel-2);
 }
 
 .scene-filter-button {
@@ -1008,7 +978,7 @@ details[open] > summary::after {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  flex: 1 1 178px;
+  flex: 1 1 172px;
   padding-inline: 12px;
 }
 
@@ -1020,43 +990,76 @@ details[open] > summary::after {
 
 .scene-cards {
   display: grid;
-  gap: 9px;
+  gap: 8px;
   min-height: 0;
-  max-height: min(52vh, 760px);
+  max-height: min(52vh, 720px);
   overflow: auto;
 }
 
 .scene-card {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr);
   align-items: start;
   gap: 10px;
-  min-height: 96px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  min-height: 88px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px;
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  box-shadow: var(--shadow-tight);
+  color: var(--text);
+  background: var(--panel);
+}
+
+.scene-card > :not(.scene-card-thumb) {
+  grid-column: 2;
+  min-width: 0;
 }
 
 .scene-card.is-active {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .scene-card-thumb {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface-2));
+  background: var(--accent-soft);
+}
+
+.scene-card-header,
+.scene-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.scene-card-number,
+.scene-card-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  border-radius: var(--pill);
+  padding: 0 8px;
+  color: var(--muted);
+  background: var(--panel-2);
+  font-size: 0.65rem;
+  font-weight: 750;
 }
 
 .scene-card-title {
-  color: var(--ink);
+  color: var(--text);
   font-size: 0.84rem;
-  font-weight: 950;
+  font-weight: 850;
   line-height: 1.16;
+}
+
+.scene-card-group {
+  color: var(--accent-strong);
+  font-size: 0.68rem;
+  font-weight: 800;
 }
 
 .scene-card-description,
@@ -1067,44 +1070,39 @@ details[open] > summary::after {
 .inspector-note,
 .brush-material-warning,
 .material-warning {
-  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+  color: var(--muted);
   font-size: 0.76rem;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.35;
 }
 
-.scene-guide-panel {
+.scene-guide-panel,
+.scene-guide-header,
+.scene-guide-item {
   display: grid;
-  gap: 9px;
-}
-
-.scene-guide-header {
-  display: grid;
-  gap: 3px;
+  gap: 8px;
 }
 
 .scene-guide-header span {
-  color: var(--accent);
-  font-size: 0.64rem;
-  font-weight: 950;
+  color: var(--accent-strong);
+  font-size: 0.65rem;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .scene-guide-item {
-  display: grid;
   align-content: start;
-  gap: 5px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 9px;
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  box-shadow: var(--inset);
+  padding: 10px;
+  background: var(--panel-2);
 }
 
 .scene-guide-item h3 {
   margin: 0;
   color: var(--muted);
   font-size: 0.66rem;
-  font-weight: 950;
+  font-weight: 800;
   line-height: 1.1;
   text-transform: uppercase;
 }
@@ -1112,19 +1110,19 @@ details[open] > summary::after {
 .scene-guide-item p,
 .scene-guide-item li {
   margin: 0;
-  font-size: 0.74rem;
-  font-weight: 650;
+  font-size: 0.75rem;
+  font-weight: 500;
   line-height: 1.34;
 }
 
 .scene-guide-details {
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding-inline: 8px;
-  background: color-mix(in srgb, var(--surface-2) 58%, transparent);
-  box-shadow: var(--inset);
+  padding: 6px 10px;
+  background: var(--panel-2);
 }
 
-/* 09. Educational guide, summaries, results, and charts */
+/* 08. Results, visual controls, charts, and utilities */
 
 .simulation-guide-card,
 .visual-summary-card,
@@ -1138,11 +1136,10 @@ details[open] > summary::after {
   gap: 5px;
   min-width: 0;
   min-height: 56px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
-  background: color-mix(in srgb, var(--surface-2) 74%, transparent);
-  box-shadow: var(--inset);
+  background: var(--panel-2);
 }
 
 .simulation-guide-card span,
@@ -1156,7 +1153,7 @@ details[open] > summary::after {
   overflow: hidden;
   color: var(--muted);
   font-size: 0.68rem;
-  font-weight: 900;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1169,12 +1166,13 @@ details[open] > summary::after {
 .config-status-grid output,
 .inspector-details output {
   min-width: 0;
-  overflow: hidden;
-  color: var(--ink);
+  overflow: visible;
+  color: var(--text);
   font-size: 0.86rem;
-  font-weight: 950;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .results-panel-head,
@@ -1187,20 +1185,20 @@ details[open] > summary::after {
   min-width: 0;
 }
 
-.results-state-pill {
+.results-state-pill,
+.visual-profile-pill,
+.inspector-kind {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 84px;
-  min-height: 32px;
-  border: 1px solid color-mix(in srgb, var(--good) 40%, var(--line));
+  min-height: 30px;
+  border: 1px solid var(--border);
   border-radius: var(--pill);
   padding: 0 11px;
-  color: var(--good);
-  background: color-mix(in srgb, var(--good) 12%, var(--surface-2));
-  box-shadow: var(--inset);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
   font-size: 0.68rem;
-  font-weight: 950;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
@@ -1221,28 +1219,13 @@ details[open] > summary::after {
 
 .visual-control-row {
   display: grid;
-  grid-template-columns: minmax(82px, 0.7fr) minmax(0, 1.6fr);
-  align-items: center;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  gap: 6px;
 }
 
-.visual-layer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-  gap: 9px;
-}
-
-.visual-profile-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  border-radius: var(--pill);
-  padding: 0 14px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: var(--shadow-tight);
-  font-size: 0.74rem;
-  font-weight: 950;
+.visual-control-row > span {
+  min-width: 0;
 }
 
 .chart-footer {
@@ -1251,10 +1234,10 @@ details[open] > summary::after {
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  box-shadow: var(--inset);
+  background: var(--panel-2);
 }
 
 .chart-legend {
@@ -1292,10 +1275,9 @@ details[open] > summary::after {
 .sweep-chart {
   width: 100%;
   min-height: 150px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
-  box-shadow: var(--inset);
+  background: var(--panel-2);
 }
 
 .share-url-output {
@@ -1305,13 +1287,26 @@ details[open] > summary::after {
   overflow-wrap: anywhere;
 }
 
-.is-disabled {
-  opacity: 0.52;
-  pointer-events: none;
+/* 09. Global state overrides */
+
+/*
+  Keep this after component display rules. Several menus and panels are
+  normally grid/flex containers, so the hidden state must win late.
+*/
+[hidden],
+.source-menu[hidden],
+.canvas-view-controls[hidden],
+.control-drawer-backdrop[hidden],
+.control-tab-panel[hidden],
+.brush-geometry-panel[hidden],
+.modulation-panel[hidden],
+.material-part-toggle[hidden] {
+  display: none;
 }
 
-/* 10. Utilities and responsive rules */
+/* 10. Responsive behavior */
 
+/* Large screens: keep the title visible and use a limited left drawer. */
 @media (min-width: 1500px) and (min-height: 820px) {
   .app-shell.controls-open .topbar {
     z-index: 120;
@@ -1326,23 +1321,23 @@ details[open] > summary::after {
 
   .control-panel {
     inset:
-      calc(max(var(--edge), env(safe-area-inset-top)) + 72px)
+      calc(max(var(--edge), env(safe-area-inset-top)) + 68px)
       auto
       auto
       max(var(--edge), env(safe-area-inset-left));
     width: var(--drawer-width);
     min-height: 0;
-    height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 92px);
-    max-height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 92px);
+    height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 88px);
+    max-height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 88px);
     border-radius: var(--radius-lg);
   }
 
   .app-shell:not(.controls-open) .control-panel {
-    transform: translateX(calc(-100% - var(--edge))) scale(0.985);
+    transform: translateX(calc(-100% - var(--edge)));
   }
 
   .control-tab-panels {
-    max-height: calc(100dvh - 250px);
+    max-height: calc(100dvh - 240px);
   }
 
   #tab-scenes.control-tab-panel.is-active {
@@ -1350,7 +1345,7 @@ details[open] > summary::after {
   }
 
   #tab-scenes .scene-section {
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     height: 100%;
     align-items: start;
@@ -1370,26 +1365,25 @@ details[open] > summary::after {
   #tab-scenes .scene-guide-panel {
     grid-column: 2;
     grid-row: 2 / span 3;
-    max-height: calc(100dvh - 360px);
+    max-height: calc(100dvh - 350px);
     overflow: auto;
   }
 
   .scene-cards {
-    max-height: min(420px, calc(100dvh - 520px));
+    max-height: min(430px, calc(100dvh - 500px));
   }
 
-  #tab-visual .visual-summary-section,
-  #tab-config .config-summary-section,
-  #tab-results .results-panel-head,
-  #tab-results .results-summary-grid,
-  #tab-results .results-insight-note,
+  #tab-results .diagnostics-section,
   #tab-results .custom-monitor-panel,
   #tab-results .analysis-panel,
-  #tab-results .sweep-panel {
+  #tab-results .sweep-panel,
+  #tab-config .config-summary-section,
+  #tab-visual .visual-summary-section {
     grid-column: 1 / -1;
   }
 }
 
+/* Medium screens: preserve canvas space and compact the floating toolbar. */
 @media (max-width: 1180px) {
   .topbar .brand-lockup {
     max-width: min(300px, calc(100vw - 120px));
@@ -1400,30 +1394,35 @@ details[open] > summary::after {
     justify-content: flex-end;
   }
 
-  .canvas-action-toggle {
-    display: inline-grid;
-  }
-
   .stage:not(.canvas-actions-open) .canvas-action-menu {
     display: none;
   }
 }
 
+/* Mobile/tablet drawer: use one primary vertical scroll for scene browsing. */
+@media (max-width: 900px) {
+  .topbar {
+    width: auto;
+    padding: 4px;
+  }
+
+  .topbar .brand-lockup {
+    display: none;
+  }
+
+  .scene-cards {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Narrow screens: reduce chrome density and switch panels to one column. */
 @media (max-width: 760px) {
   :root {
     --edge: 10px;
     --toolbar: 42px;
     --control: 38px;
     --touch: 40px;
-  }
-
-  .topbar {
-    width: auto;
-    padding: 4px;
-  }
-
-  .brand-lockup {
-    display: none;
   }
 
   .canvas-toolbar {
@@ -1442,19 +1441,15 @@ details[open] > summary::after {
     min-width: 112px;
   }
 
-  .canvas-toolbar .canvas-action-menu {
-    display: none;
-  }
-
-  .stage.canvas-actions-open .canvas-action-menu {
-    display: flex;
-  }
-
   .stage:not(.canvas-actions-open) #resetBtn,
   .stage:not(.canvas-actions-open) #stepBtn,
   .stage:not(.canvas-actions-open) #saveBtn,
   .stage:not(.canvas-actions-open) #focusControlsBtn {
     display: none;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar {
+    left: max(var(--edge), env(safe-area-inset-left));
   }
 
   .canvas-mode-toggle {
@@ -1467,7 +1462,7 @@ details[open] > summary::after {
   }
 
   .colorbar {
-    width: 68px;
+    width: 66px;
     right: 8px;
     transform: translateY(-50%) scale(0.9);
     transform-origin: right center;
@@ -1478,7 +1473,6 @@ details[open] > summary::after {
   }
 
   .control-panel-header {
-    grid-template-columns: minmax(0, 1fr) auto;
     padding: 8px;
   }
 
@@ -1497,11 +1491,12 @@ details[open] > summary::after {
   .mobile-layer-button {
     min-height: 40px;
     padding-inline: 5px;
-    font-size: 0.62rem;
+    font-size: 0.64rem;
   }
 
   .control-tab-panel.is-active {
     grid-template-columns: 1fr;
+    padding: 8px;
   }
 
   .panel-section,
@@ -1509,7 +1504,6 @@ details[open] > summary::after {
   .config-detail-panel,
   .scene-guide-panel {
     padding: 10px;
-    border-radius: var(--radius-md);
   }
 
   .control-row {
@@ -1531,7 +1525,7 @@ details[open] > summary::after {
   }
 
   .visual-control-row {
-    grid-template-columns: minmax(58px, 0.55fr) minmax(0, 1.6fr);
+    grid-template-columns: 1fr;
   }
 
   .visual-panel-profile,
@@ -1540,7 +1534,7 @@ details[open] > summary::after {
   }
 
   .field-display-toggle {
-    grid-template-columns: repeat(3, minmax(44px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .visual-summary-section {
@@ -1552,6 +1546,7 @@ details[open] > summary::after {
   }
 }
 
+/* Very narrow phones: keep toolbar and summary cards from overflowing. */
 @media (max-width: 420px) {
   .canvas-toolbar {
     gap: 4px;
@@ -1592,6 +1587,7 @@ details[open] > summary::after {
   }
 }
 
+/* Accessibility: avoid animated transitions when requested by the OS. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
