@@ -1307,7 +1307,7 @@ details[open] > summary::after {
 /* 10. Responsive behavior */
 
 /* Large screens: keep the title visible and use a limited left drawer. */
-@media (min-width: 1500px) and (min-height: 820px) {
+@media (min-width: 1280px) and (min-height: 760px) {
   .app-shell.controls-open .topbar {
     z-index: 120;
     opacity: 1;
@@ -1390,7 +1390,7 @@ details[open] > summary::after {
   }
 
   .canvas-toolbar {
-    left: calc(max(var(--edge), env(safe-area-inset-left)) + 58px);
+    left: auto;
     justify-content: flex-end;
   }
 
@@ -1449,7 +1449,26 @@ details[open] > summary::after {
   }
 
   .stage.canvas-actions-open .canvas-toolbar {
-    left: max(var(--edge), env(safe-area-inset-left));
+    left: calc(max(var(--edge), env(safe-area-inset-left)) + 58px);
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle,
+  .stage.canvas-actions-open #focusControlsBtn {
+    display: none;
+  }
+
+  .stage.canvas-actions-open #canvasActionToggle {
+    margin-left: auto;
+    order: 4;
+  }
+
+  .stage.canvas-actions-open #canvasActionMenu {
+    order: 3;
   }
 
   .canvas-mode-toggle {

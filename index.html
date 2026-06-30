@@ -16,7 +16,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-legacy-cleanup-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-desktop-drawer-1" />
   </head>
   <body>
     <main class="app-shell" data-ui-depth="advanced">
@@ -871,7 +871,7 @@
                 </label>
                 <div id="sceneFilterBar" class="scene-filter-bar" role="group" aria-label="Scene families"></div>
                 <div class="scene-browser-meta" aria-live="polite">
-                  <output id="sceneBrowserCount">140 scenes</output>
+                  <output id="sceneBrowserCount">1 scene in General</output>
                   <output id="sceneBrowserActive">Selected: Empty</output>
                 </div>
                 <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
@@ -1365,6 +1365,7 @@
     <script src="js-next/runtime/core/numerics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/colormaps.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/catalog.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/data/scene-catalog-loader.js?v=20260630-scene-json-1"></script>
     <script src="js-next/runtime/simulation/fdtd-sim.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-array-state.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-engine-routing.js?v=20260630-js-next-cutover-1"></script>
@@ -1393,8 +1394,8 @@
     <script src="js-next/runtime/ui/ui-core.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-dom.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-drawer.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/ui/ui-scenes.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-scenes.js?v=20260630-scene-json-1"></script>
+    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260630-scene-json-1"></script>
     <script src="js-next/runtime/ui/ui-results.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/control-sync-ui.js?v=20260630-js-next-cutover-1"></script>
@@ -1448,6 +1449,6 @@
     <script src="js-next/runtime/core/boundary-state.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/control-ui-state-controller.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/runtime-dependencies.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/app/main.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/main.js?v=20260630-scene-json-1"></script>
   </body>
 </html>

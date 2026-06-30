@@ -186,6 +186,57 @@ function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
   return dropdownPresets;
 }
 
+function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
+  const catalogPath = repoPath("js-next", "runtime", "data", "scene-catalog.json");
+  if (!fs.existsSync(catalogPath)) {
+    addCheck("scene catalog JSON", "BLOCK", "Missing js-next/runtime/data/scene-catalog.json");
+    return;
+  }
+
+  let catalog = null;
+  try {
+    catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  } catch (error) {
+    addCheck("scene catalog JSON", "BLOCK", error.message);
+    return;
+  }
+
+  const groups = Array.isArray(catalog.groups) ? catalog.groups : [];
+  const scenes = Array.isArray(catalog.scenes) ? catalog.scenes : [];
+  const jsonSceneIds = scenes.map((scene) => scene.id).filter(Boolean);
+  const duplicateJsonIds = jsonSceneIds.filter((id, index) => jsonSceneIds.indexOf(id) !== index);
+  const groupIds = new Set(groups.map((group) => group.id));
+  const scenesWithoutGroup = scenes.filter((scene) => scene.groupId && !groupIds.has(scene.groupId)).map((scene) => scene.id);
+  const missingFromJson = dropdownPresets.filter((preset) => !jsonSceneIds.includes(preset));
+  const orphanJsonScenes = jsonSceneIds.filter((preset) => !dropdownPresets.includes(preset));
+  const missingJsonDescriptions = jsonSceneIds.filter((preset) => !String(scenes.find((scene) => scene.id === preset)?.description || "").trim());
+  const mismatchedDescriptions = jsonSceneIds.filter((preset) => {
+    const jsonDescription = String(scenes.find((scene) => scene.id === preset)?.description || "");
+    const embeddedDescription = String(sceneDescriptions[preset] || "");
+    return embeddedDescription && jsonDescription !== embeddedDescription;
+  });
+  const missingGuides = scenes.filter((scene) => !scene.guide || typeof scene.guide !== "object").map((scene) => scene.id);
+
+  const failures = [
+    ...duplicateJsonIds.map((id) => `duplicate id ${id}`),
+    ...scenesWithoutGroup.map((id) => `unknown group for ${id}`),
+    ...missingFromJson.map((id) => `missing ${id}`),
+    ...orphanJsonScenes.map((id) => `orphan ${id}`),
+    ...missingJsonDescriptions.map((id) => `empty description for ${id}`),
+    ...missingGuides.map((id) => `missing guide for ${id}`),
+  ];
+  addCheck(
+    "scene catalog JSON",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0 ? `${jsonSceneIds.length} scenes in ${groups.length} groups` : failures.join(", "),
+  );
+  addCheck(
+    "scene catalog description parity",
+    mismatchedDescriptions.length === 0 ? "PASS" : "WARN",
+    mismatchedDescriptions.length === 0 ? "JSON descriptions match embedded catalog" : mismatchedDescriptions.join(", "),
+  );
+}
+
 function validateValidationMatrix(dropdownPresets) {
   const matrix = JSON.parse(readText("scripts", "validation-matrix.json"));
   const ids = matrix.cases.map((testCase) => testCase.id);
@@ -367,6 +418,7 @@ function main() {
     catalog.sceneDescriptions,
     readActiveScript(activeScripts, "fdtd-presets.js", ["legacy/js/src", "fdtd-presets.js"]),
   );
+  validateSceneCatalogJson(dropdownPresets, catalog.sceneDescriptions);
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);

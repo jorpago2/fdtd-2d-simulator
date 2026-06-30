@@ -414,6 +414,27 @@ function buildSceneBrowser() {
   sceneBrowser.buildSceneBrowser();
 }
 
+function loadSceneCatalogForUi() {
+  const loader = window.FdtdSceneCatalogLoader;
+  if (!loader?.loadSceneCatalog) return;
+  loader
+    .loadSceneCatalog()
+    .then((catalog) => {
+      if (catalog?.descriptions) {
+        Object.assign(sceneDescriptions, catalog.descriptions);
+      }
+      sceneBrowser.setSceneCatalog(catalog);
+      updateSceneGuidePanel();
+      syncSceneBrowserSelection();
+      if (el.sceneNote) {
+        el.sceneNote.textContent = sceneDescriptions[state.preset] || sceneDescriptions.empty || "";
+      }
+    })
+    .catch((error) => {
+      console.warn("Scene catalog JSON unavailable; using embedded scene metadata.", error);
+    });
+}
+
 function selectScenePreset(value) {
   if (!el.presetInput || !value) return;
   el.presetInput.value = value;
@@ -2148,3 +2169,5 @@ appBootstrapModule.runAppBootstrap({
   initWasmBackend,
   runtimeController,
 });
+
+loadSceneCatalogForUi();

@@ -85,6 +85,31 @@
     return record;
   }
 
+  function createSceneRecordFromCatalogScene(scene) {
+    const record = {
+      value: scene.value || scene.id,
+      index: scene.index == null ? null : Number(scene.index),
+      title: scene.title || "Untitled scene",
+      group: scene.group || scene.groupName || cleanSceneGroupLabel(scene.groupLabel),
+      groupLabel: scene.groupLabel || scene.group || "General",
+      description: scene.description || "",
+      guide: scene.guide || null,
+      badges: [],
+      thumbnail: "wave",
+      haystack: "",
+    };
+    record.badges = scene.badges?.length ? scene.badges.map(String) : sceneBadgeLabels(record);
+    record.thumbnail = scene.thumbnail || sceneThumbnailKind(record);
+    record.haystack = normalizeSceneText(
+      `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
+    );
+    return record;
+  }
+
+  function groupCountLabel(count) {
+    return `${count} scene${count === 1 ? "" : "s"}`;
+  }
+
   function createSceneBrowserController(options) {
     const {
       documentRef = global.document,
@@ -97,13 +122,30 @@
     if (!el) throw new Error("createSceneBrowserController requires DOM refs");
 
     const state = {
-      filter: "all",
+      catalog: null,
+      filter: "",
       records: [],
     };
 
     function collectSceneRecords() {
+      if (state.catalog?.scenes?.length) {
+        return state.catalog.scenes.map(createSceneRecordFromCatalogScene);
+      }
       if (!el.presetInput) return [];
       return Array.from(el.presetInput.querySelectorAll("option")).map((option) => createSceneRecordFromOption(option, sceneDescriptions));
+    }
+
+    function currentSceneGroupLabel() {
+      return sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.())?.groupLabel || "";
+    }
+
+    function firstAvailableGroupLabel(records = state.records) {
+      return records.find((record) => record.groupLabel)?.groupLabel || "";
+    }
+
+    function ensureActiveFilter() {
+      if (state.records.some((record) => record.groupLabel === state.filter)) return;
+      state.filter = currentSceneGroupLabel() || firstAvailableGroupLabel();
     }
 
     function sceneSearchTerms() {
@@ -117,8 +159,9 @@
 
     function visibleSceneRecords() {
       const terms = sceneSearchTerms();
+      ensureActiveFilter();
       return state.records.filter((record) => {
-        if (state.filter !== "all" && record.groupLabel !== state.filter) return false;
+        if (record.groupLabel !== state.filter) return false;
         return sceneRecordMatchesSearch(record, terms);
       });
     }
@@ -155,12 +198,13 @@
 
     function updateSceneBrowserMeta(records = visibleSceneRecords()) {
       const visibleCount = records.length;
-      const totalCount = state.records.length;
+      const groupTotal = state.records.filter((record) => record.groupLabel === state.filter).length;
       const searchActive = Boolean((el.sceneSearchInput?.value || "").trim());
-      const filterActive = state.filter !== "all";
+      const groupName = cleanSceneGroupLabel(state.filter || "Group");
       if (el.sceneBrowserCount) {
-        el.sceneBrowserCount.textContent =
-          searchActive || filterActive ? `${visibleCount} of ${totalCount} scenes` : `${totalCount} scenes`;
+        el.sceneBrowserCount.textContent = searchActive
+          ? `${visibleCount} of ${groupCountLabel(groupTotal)} in ${groupName}`
+          : `${groupCountLabel(visibleCount)} in ${groupName}`;
       }
       if (el.sceneBrowserActive) {
         const current = sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.());
@@ -170,20 +214,21 @@
 
     function renderSceneFilterBar() {
       if (!el.sceneFilterBar) return;
+      ensureActiveFilter();
       const groups = Array.from(new Set(state.records.map((record) => record.groupLabel)));
       const terms = sceneSearchTerms();
       const matchingRecords = state.records.filter((record) => sceneRecordMatchesSearch(record, terms));
-      const counts = new Map([["all", matchingRecords.length]]);
+      const counts = new Map();
       groups.forEach((groupLabel) => {
         counts.set(
           groupLabel,
           matchingRecords.filter((record) => record.groupLabel === groupLabel).length
         );
       });
-      const filters = [{ value: "all", label: "All" }, ...groups.map((groupLabel) => ({
+      const filters = groups.map((groupLabel) => ({
         value: groupLabel,
         label: cleanSceneGroupLabel(groupLabel),
-      }))];
+      }));
 
       el.sceneFilterBar.replaceChildren();
       filters.forEach((filter) => {
@@ -221,7 +266,7 @@
       if (records.length === 0) {
         const emptyState = documentRef.createElement("p");
         emptyState.className = "scene-empty-state";
-        emptyState.textContent = "No matching scenes. Clear the search or switch back to All.";
+        emptyState.textContent = "No matching scenes in this group. Clear the search or choose another group.";
         el.sceneCards.appendChild(emptyState);
         return;
       }
@@ -282,6 +327,7 @@
     function syncSceneBrowserSelection() {
       if (!el.sceneCards) return;
       const currentPreset = el.presetInput?.value || getCurrentPreset?.();
+      if (!state.filter) ensureActiveFilter();
       updateSceneBrowserMeta(visibleSceneRecords());
       el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
         const active = card.dataset.sceneCard === currentPreset;
@@ -292,10 +338,23 @@
       });
     }
 
-    function buildSceneBrowser() {
+    function rebuildSceneBrowser({ focusCurrent = false } = {}) {
       state.records = collectSceneRecords();
+      if (focusCurrent || !state.filter) {
+        state.filter = currentSceneGroupLabel() || firstAvailableGroupLabel();
+      }
+      ensureActiveFilter();
       renderSceneFilterBar();
       renderSceneCards();
+    }
+
+    function buildSceneBrowser() {
+      rebuildSceneBrowser();
+    }
+
+    function setSceneCatalog(catalog) {
+      state.catalog = catalog && Array.isArray(catalog.scenes) ? catalog : null;
+      rebuildSceneBrowser({ focusCurrent: true });
     }
 
     return Object.freeze({
@@ -311,6 +370,7 @@
       sceneRecordMatchesSearch,
       sceneSearchTerms,
       sceneThumbnailKind,
+      setSceneCatalog,
       syncSceneBrowserSelection,
       updateSceneBrowserMeta,
       visibleSceneRecords,
