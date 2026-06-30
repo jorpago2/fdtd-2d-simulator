@@ -1,25 +1,76 @@
 "use strict";
 
-const appStateModule = window.FdtdAppState;
-const appFormattersModule = window.FdtdAppFormatters;
-if (!appStateModule) {
-  throw new Error("js-next runtime module app-state.js must be loaded before js-next/runtime/app/main.js");
+const runtimeDependenciesModule = window.FdtdRuntimeDependencies;
+if (!runtimeDependenciesModule) {
+  throw new Error("js-next runtime module runtime-dependencies.js must be loaded before js-next/runtime/app/main.js");
 }
 
-if (!appFormattersModule) {
-  throw new Error("js-next runtime module app-formatters.js must be loaded before js-next/runtime/app/main.js");
-}
+const {
+  appStateModule,
+  appFormattersModule,
+  visualLayerModel,
+  boundaryStateModule,
+  uiCore,
+  uiDom,
+  uiDrawerModule,
+  uiScenesModule,
+  uiSceneGuideModule,
+  uiResultsModule,
+  uiResultsChartsModule,
+  controlSyncUi,
+  sceneCodec,
+  sourceMonitorModel,
+  sourceMonitorOperationsModule,
+  materialEditorModel,
+  materialEditorUi,
+  materialOperationsModule,
+  materialSelectionModule,
+  entitySelectionModule,
+  sceneApplicationModule,
+  stateNormalizerModule,
+  simulationEffectsModule,
+  runtimeControllerModule,
+  canvasRenderControllerModule,
+  canvasColorbarModule,
+  canvasExportModule,
+  runtimeControlBindingsModule,
+  visualControlBindingsModule,
+  resultsControlBindingsModule,
+  sourceMonitorControlBindingsModule,
+  materialControlBindingsModule,
+  configControlBindingsModule,
+  brushControlBindingsModule,
+  shellControlBindingsModule,
+  layoutControlBindingsModule,
+  sceneReproModule,
+  canvasInteractionModel,
+  canvasPointerStateModule,
+  canvasDragStateModule,
+  canvasInteractionsModule,
+  contextMenuModule,
+  canvasContextActionsModule,
+  appBootstrapModule,
+  appLayoutModule,
+  appPerformanceModule,
+  controlUiStateModule,
+  sweepAnalysisModule,
+  materialStabilityModule,
+  sourceMonitorEditorsModule,
+  brushControlsModule,
+  inspectorModule,
+  controlTextModule,
+  sceneStateControllerModule,
+  canvasEditActionsModule,
+  canvasGestureActionsModule,
+  configMaterialHandlersModule,
+} = runtimeDependenciesModule.resolveRuntimeDependencies(window);
+
 const {
   defaultMonitorConfig,
   normalizeTheme,
   normalizeUiDepth,
   createInitialAppState,
 } = appStateModule;
-
-const visualLayerModel = window.FdtdVisualLayerModel;
-if (!visualLayerModel) {
-  throw new Error("js-next runtime module visual-layer-model.js must be loaded before js-next/runtime/app/main.js");
-}
 
 const VISUAL_LAYER_STATE_KEYS = visualLayerModel.VISUAL_LAYER_STATE_KEYS;
 const visualLayerEnabled = visualLayerModel.visualLayerEnabled;
@@ -38,6 +89,8 @@ let sceneRepro = null;
 let sceneStateController = null;
 let canvasEditActionsController = null;
 let canvasGestureActionsController = null;
+let canvasContextActionsController = null;
+let boundaryStateController = null;
 
 const state = createInitialAppState({
   defaultSourceConfig,
@@ -87,7 +140,7 @@ let entitySelection = null;
 let hoveredMaterialRegion = null;
 
 function normalizeBoundaryMode(mode) {
-  return mode === "reflective" ? "reflective" : "absorbing";
+  return boundaryStateModule.normalizeBoundaryMode(mode);
 }
 
 function normalizeDispersionModel(model) {
@@ -137,261 +190,29 @@ function brushBianisotropyValue() {
 }
 
 function normalizeBoundarySides() {
-  const fallback = normalizeBoundaryMode(state.boundary);
-  if (!state.boundarySides || typeof state.boundarySides !== "object") {
-    state.boundarySides = {
-      left: fallback,
-      right: fallback,
-      top: fallback,
-      bottom: fallback,
-    };
-  }
-  for (const side of BOUNDARY_SIDES) {
-    state.boundarySides[side] = normalizeBoundaryMode(state.boundarySides[side] || fallback);
-  }
-  const modes = BOUNDARY_SIDES.map((side) => state.boundarySides[side]);
-  state.boundary = modes.every((mode) => mode === "absorbing")
-    ? "absorbing"
-    : modes.every((mode) => mode === "reflective")
-      ? "reflective"
-      : "mixed";
-  return state.boundarySides;
+  return boundaryState().normalizeBoundarySides();
 }
 
 function boundarySideMode(side) {
-  const sides = normalizeBoundarySides();
-  return sides[side] || "absorbing";
+  return boundaryState().boundarySideMode(side);
 }
 
 function boundarySideIsAbsorbing(side) {
-  return boundarySideMode(side) === "absorbing";
+  return boundaryState().boundarySideIsAbsorbing(side);
 }
 
 function anyAbsorbingBoundarySide() {
-  return BOUNDARY_SIDES.some((side) => boundarySideIsAbsorbing(side));
+  return boundaryState().anyAbsorbingBoundarySide();
 }
 
 function setBoundarySideMode(side, mode) {
-  normalizeBoundarySides();
-  if (!BOUNDARY_SIDES.includes(side)) return;
-  state.boundarySides[side] = normalizeBoundaryMode(mode);
-  normalizeBoundarySides();
+  boundaryState().setBoundarySideMode(side, mode);
 }
 
 function boundarySummaryLabel() {
-  normalizeBoundarySides();
-  if (state.boundary === "absorbing") return "PML absorbing";
-  if (state.boundary === "reflective") return "reflective";
-  const absorbing = BOUNDARY_SIDES.filter((side) => boundarySideIsAbsorbing(side))
-    .map((side) => boundarySideLabels[side].toLowerCase())
-    .join(", ");
-  return `mixed boundary (${absorbing || "no"} PML)`;
+  return boundaryState().boundarySummaryLabel();
 }
 
-const uiCore = window.FdtdUiCore;
-const uiDom = window.FdtdUiDom;
-const uiDrawerModule = window.FdtdUiDrawer;
-const uiScenesModule = window.FdtdUiScenes;
-const uiSceneGuideModule = window.FdtdUiSceneGuide;
-const uiResultsModule = window.FdtdUiResults;
-const uiResultsChartsModule = window.FdtdUiResultsCharts;
-const controlSyncUi = window.FdtdControlSyncUi;
-const sceneCodec = window.FdtdSceneCodec;
-const sourceMonitorModel = window.FdtdSourceMonitorModel;
-const sourceMonitorOperationsModule = window.FdtdSourceMonitorOperations;
-const materialEditorModel = window.FdtdMaterialEditorModel;
-const materialEditorUi = window.FdtdMaterialEditorUi;
-const materialOperationsModule = window.FdtdMaterialOperations;
-const materialSelectionModule = window.FdtdMaterialSelectionController;
-const entitySelectionModule = window.FdtdEntitySelectionController;
-const sceneApplicationModule = window.FdtdSceneApplication;
-const stateNormalizerModule = window.FdtdStateNormalizer;
-const simulationEffectsModule = window.FdtdSimulationEffects;
-const runtimeControllerModule = window.FdtdRuntimeController;
-const canvasRenderControllerModule = window.FdtdCanvasRenderController;
-const canvasColorbarModule = window.FdtdCanvasColorbar;
-const canvasExportModule = window.FdtdCanvasExport;
-const runtimeControlBindingsModule = window.FdtdRuntimeControlBindings;
-const visualControlBindingsModule = window.FdtdVisualControlBindings;
-const resultsControlBindingsModule = window.FdtdResultsControlBindings;
-const sourceMonitorControlBindingsModule = window.FdtdSourceMonitorControlBindings;
-const materialControlBindingsModule = window.FdtdMaterialControlBindings;
-const configControlBindingsModule = window.FdtdConfigControlBindings;
-const brushControlBindingsModule = window.FdtdBrushControlBindings;
-const shellControlBindingsModule = window.FdtdShellControlBindings;
-const layoutControlBindingsModule = window.FdtdLayoutControlBindings;
-const sceneReproModule = window.FdtdSceneRepro;
-const canvasInteractionModel = window.FdtdCanvasInteractionModel;
-const canvasPointerStateModule = window.FdtdCanvasPointerState;
-const canvasDragStateModule = window.FdtdCanvasDragState;
-const canvasInteractionsModule = window.FdtdCanvasInteractions;
-const contextMenuModule = window.FdtdContextMenuController;
-const appBootstrapModule = window.FdtdAppBootstrap;
-const appLayoutModule = window.FdtdAppLayout;
-const appPerformanceModule = window.FdtdAppPerformance;
-const sweepAnalysisModule = window.FdtdSweepAnalysis;
-const materialStabilityModule = window.FdtdMaterialStability;
-const sourceMonitorEditorsModule = window.FdtdSourceMonitorEditors;
-const brushControlsModule = window.FdtdBrushControls;
-const inspectorModule = window.FdtdInspectorController;
-const controlTextModule = window.FdtdControlTextController;
-const sceneStateControllerModule = window.FdtdSceneStateController;
-const canvasEditActionsModule = window.FdtdCanvasEditActions;
-const canvasGestureActionsModule = window.FdtdCanvasGestureActions;
-const configMaterialHandlersModule = window.FdtdConfigMaterialHandlers;
-if (!uiCore) {
-  throw new Error("js-next runtime module ui-core.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiDom) {
-  throw new Error("js-next runtime module ui-dom.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiDrawerModule) {
-  throw new Error("js-next runtime module ui-drawer.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiScenesModule) {
-  throw new Error("js-next runtime module ui-scenes.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiSceneGuideModule) {
-  throw new Error("js-next runtime module ui-scene-guide.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiResultsModule) {
-  throw new Error("js-next runtime module ui-results.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!uiResultsChartsModule) {
-  throw new Error("js-next runtime module ui-results-charts.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!controlSyncUi) {
-  throw new Error("js-next runtime module control-sync-ui.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sceneCodec) {
-  throw new Error("js-next runtime module scene-codec.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sourceMonitorModel) {
-  throw new Error("js-next runtime module source-monitor-model.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sourceMonitorOperationsModule) {
-  throw new Error("js-next runtime module source-monitor-operations.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialEditorModel) {
-  throw new Error("js-next runtime module material-editor-model.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialEditorUi) {
-  throw new Error("js-next runtime module material-editor-ui.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialOperationsModule) {
-  throw new Error("js-next runtime module material-operations.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialSelectionModule) {
-  throw new Error("js-next runtime module material-selection-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!entitySelectionModule) {
-  throw new Error("js-next runtime module entity-selection-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sceneApplicationModule) {
-  throw new Error("js-next runtime module scene-application.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!stateNormalizerModule) {
-  throw new Error("js-next runtime module state-normalizer.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!simulationEffectsModule) {
-  throw new Error("js-next runtime module simulation-effects.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!runtimeControllerModule) {
-  throw new Error("js-next runtime module runtime-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasRenderControllerModule) {
-  throw new Error("js-next runtime module canvas-render-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasColorbarModule) {
-  throw new Error("js-next runtime module canvas-colorbar.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasExportModule) {
-  throw new Error("js-next runtime module canvas-export.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!runtimeControlBindingsModule) {
-  throw new Error("js-next runtime module runtime-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!visualControlBindingsModule) {
-  throw new Error("js-next runtime module visual-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!resultsControlBindingsModule) {
-  throw new Error("js-next runtime module results-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sourceMonitorControlBindingsModule) {
-  throw new Error("js-next runtime module source-monitor-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialControlBindingsModule) {
-  throw new Error("js-next runtime module material-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!configControlBindingsModule) {
-  throw new Error("js-next runtime module config-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!brushControlBindingsModule) {
-  throw new Error("js-next runtime module brush-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!shellControlBindingsModule) {
-  throw new Error("js-next runtime module shell-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!layoutControlBindingsModule) {
-  throw new Error("js-next runtime module layout-control-bindings.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sceneReproModule) {
-  throw new Error("js-next runtime module scene-repro.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasInteractionModel) {
-  throw new Error("js-next runtime module canvas-interaction-model.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasPointerStateModule) {
-  throw new Error("js-next runtime module canvas-pointer-state.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasDragStateModule) {
-  throw new Error("js-next runtime module canvas-drag-state.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasInteractionsModule) {
-  throw new Error("js-next runtime module canvas-interactions.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!contextMenuModule) {
-  throw new Error("js-next runtime module context-menu-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!appBootstrapModule) {
-  throw new Error("js-next runtime module app-bootstrap.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!appLayoutModule) {
-  throw new Error("js-next runtime module app-layout.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!appPerformanceModule) {
-  throw new Error("js-next runtime module app-performance.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sweepAnalysisModule) {
-  throw new Error("js-next runtime module sweep-analysis-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!materialStabilityModule) {
-  throw new Error("js-next runtime module material-stability-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sourceMonitorEditorsModule) {
-  throw new Error("js-next runtime module source-monitor-editor-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!brushControlsModule) {
-  throw new Error("js-next runtime module brush-controls-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!inspectorModule) {
-  throw new Error("js-next runtime module inspector-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!controlTextModule) {
-  throw new Error("js-next runtime module control-text-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!sceneStateControllerModule) {
-  throw new Error("js-next runtime module scene-state-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasEditActionsModule) {
-  throw new Error("js-next runtime module canvas-edit-actions-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!canvasGestureActionsModule) {
-  throw new Error("js-next runtime module canvas-gesture-actions-controller.js must be loaded before js-next/runtime/app/main.js");
-}
-if (!configMaterialHandlersModule) {
-  throw new Error("js-next runtime module config-material-handlers-controller.js must be loaded before js-next/runtime/app/main.js");
-}
 const SCENE_SHARE_URL_LIMIT = sceneCodec.SCENE_SHARE_URL_LIMIT;
 const SERIALIZABLE_STATE_KEYS = sceneCodec.SERIALIZABLE_STATE_KEYS;
 const el = uiDom.validateDomRefs(uiDom.collectDomRefs(document));
@@ -808,156 +629,89 @@ function isEditableKeyTarget(target) {
   return Boolean(target.closest("input, textarea, select, button, [contenteditable='true'], [contenteditable='']"));
 }
 
+function boundaryState() {
+  if (!boundaryStateController) {
+    boundaryStateController = boundaryStateModule.createBoundaryStateController({
+      state,
+      boundarySides: BOUNDARY_SIDES,
+      boundarySideLabels,
+    });
+  }
+  return boundaryStateController;
+}
+
+let controlUiStateController = null;
+function controlUiState() {
+  if (!controlUiStateController) {
+    controlUiStateController = controlUiStateModule.createControlUiStateController({
+      state,
+      el,
+      uiCore,
+      visualLayerModel,
+      documentElement: document.documentElement,
+      windowRef: window,
+      normalizeTheme,
+      normalizeUiDepth,
+      themeStorageKey: THEME_STORAGE_KEY,
+      mobileCanvasViewportActive,
+      fieldDisplayConfig,
+      clearCanvasHover,
+      updateControlText,
+      getSim: () => sim,
+      getCanvasColorbarController: () => canvasColorbarController,
+      isControlTextReady: () => Boolean(controlTextController),
+    });
+  }
+  return controlUiStateController;
+}
+
 function updateThemeControls() {
-  state.theme = normalizeTheme(state.theme);
-  document.documentElement.dataset.theme = state.theme;
-  uiCore.setExclusiveButtonState(el.themeButtons, "themeChoice", state.theme, {
-    selectedAttribute: "aria-pressed",
-  });
+  controlUiState().updateThemeControls();
 }
 
 function applyTheme(theme, render = true) {
-  state.theme = normalizeTheme(theme);
-  try {
-    window.localStorage?.setItem(THEME_STORAGE_KEY, state.theme);
-  } catch {
-    // Local storage can be unavailable in private or embedded browser contexts.
-  }
-  updateThemeControls();
-  canvasColorbarController?.update?.();
-  if (render) sim?.render?.();
+  controlUiState().applyTheme(theme, render);
 }
 
 function applyUiDepth(depth, refresh = true) {
-  state.uiDepth = normalizeUiDepth(depth);
-  uiCore.setExclusiveButtonState(el.uiDepthButtons, "uiDepthChoice", state.uiDepth, {
-    selectedAttribute: "aria-pressed",
-  });
-  if (refresh && controlTextController) {
-    updateControlText();
-  }
-  if (refresh) sim?.render?.();
+  controlUiState().applyUiDepth(depth, refresh);
 }
 
 function setCanvasMode(mode) {
-  const nextMode = mode === "brush" ? "brush" : "select";
-  if (state.canvasMode === nextMode) {
-    updateCanvasModeControls();
-    updateCanvasInteractionState();
-    return;
-  }
-  state.canvasMode = nextMode;
-  clearCanvasHover(false);
-  updateCanvasModeControls();
-  updateCanvasInteractionState();
-  sim?.render?.();
+  controlUiState().setCanvasMode(mode);
 }
 
 function updateCanvasModeControls() {
-  uiCore.setPressed(el.selectModeBtn, state.canvasMode === "select");
-  uiCore.setPressed(el.brushModeBtn, state.canvasMode === "brush");
+  controlUiState().updateCanvasModeControls();
 }
 
 function updateCanvasInteractionState() {
-  el.canvasFrame?.classList.toggle("is-draw-mode", state.canvasMode === "brush");
-  el.stage?.classList.toggle("is-draw-mode", state.canvasMode === "brush");
-  el.canvas?.setAttribute("data-canvas-mode", state.canvasMode);
+  controlUiState().updateCanvasInteractionState();
 }
 
 function updateRunControls() {
-  const running = Boolean(state.running);
-  if (el.playPauseIcon) {
-    el.playPauseIcon.textContent = running ? "Ⅱ" : "▶";
-  }
-  if (el.playPauseBtn) {
-    const label = running ? "Pause simulation" : "Start simulation";
-    el.playPauseBtn.title = label;
-    el.playPauseBtn.setAttribute("aria-label", label);
-    uiCore.setPressed(el.playPauseBtn, running);
-  }
+  controlUiState().updateRunControls();
 }
 
 function updateFieldDisplayControls() {
-  uiCore.setExclusiveButtonState(el.fieldDisplayButtons, "fieldDisplay", state.fieldDisplay, {
-    selectedAttribute: "aria-pressed",
-  });
-  const fieldDisplayVisible = state.viewMode === "field" || state.viewMode === "poynting";
-  if (el.fieldDisplayControl) el.fieldDisplayControl.hidden = !fieldDisplayVisible;
-  el.visualComponentRows?.forEach?.((row) => {
-    row.hidden = !fieldDisplayVisible;
-  });
-  el.fieldQuiverInputs?.forEach?.((input) => {
-    input.checked = Boolean(state.fieldQuiver);
-  });
-  const quiverAvailable = state.viewProjection === "2d" && (state.viewMode === "field" || state.viewMode === "poynting");
-  el.fieldQuiverControls?.forEach?.((control) => {
-    control.classList.toggle("is-disabled", !quiverAvailable);
-  });
+  controlUiState().updateFieldDisplayControls();
 }
 
 function effectiveVisualProfileName() {
-  return visualLayerModel.effectiveVisualProfile(state, {
-    mobileCanvasViewportActive: mobileCanvasViewportActive(),
-  });
+  return controlUiState().effectiveVisualProfileName();
 }
 
 function updateVisualControls() {
-  const activeProfile = visualLayerModel.normalizedVisualProfile(state.visualProfile);
-  const effectiveProfile = effectiveVisualProfileName();
-  const visualSnapshot = visualLayerModel.visualLayerSnapshot(state, {
-    mobileCanvasViewportActive: mobileCanvasViewportActive(),
-    profile: effectiveProfile,
-  });
-
-  uiCore.setExclusiveButtonState(el.visualProfileButtons, "visualProfile", activeProfile, {
-    selectedAttribute: "aria-pressed",
-  });
-  el.visualLayerInputs?.forEach?.((input) => {
-    const layer = input.dataset.visualLayer;
-    input.checked = Boolean(visualSnapshot[layer]);
-  });
-  if (el.visualGuideProfile) {
-    el.visualGuideProfile.textContent = activeProfile === "auto" ? `Auto (${effectiveProfile})` : effectiveProfile;
-  }
-  if (el.visualGuideProjection) {
-    el.visualGuideProjection.textContent = state.viewProjection === "3d" ? "3D surface" : "2D map";
-  }
-  if (el.visualGuideField) {
-    const fieldLabel = state.viewMode === "field"
-      ? "Field"
-      : state.viewMode === "poynting"
-        ? "Poynting"
-        : state.viewMode === "epsilon"
-          ? "Permittivity"
-          : "Permeability";
-    el.visualGuideField.innerHTML = `${fieldLabel} · ${fieldDisplayConfig().labelHtml}`;
-  }
-  if (el.visualGuideScale) {
-    el.visualGuideScale.textContent = `${state.wavelengthUm.toFixed(2)} µm · ${state.cellsPerWavelength}/λ₀`;
-  }
-  if (el.visualGuideOverlays) {
-    el.visualGuideOverlays.textContent = visualLayerModel.visualOverlaySummary(state, { snapshot: visualSnapshot });
-  }
-  if (el.visualGuideNote) {
-    el.visualGuideNote.textContent = visualLayerModel.visualGuideNoteText(state, { profile: effectiveProfile });
-  }
-  canvasColorbarController?.update?.();
+  controlUiState().updateVisualControls();
 }
 
 function applyVisualProfile(profile) {
-  state.visualProfile = visualLayerModel.normalizedVisualProfile(profile);
-  updateVisualControls();
-  sim?.render?.();
+  controlUiState().applyVisualProfile(profile);
 }
 
 function setCustomVisualLayer(layer, enabled) {
-  visualLayerModel.applyCustomVisualLayer(state, layer, enabled, {
-    mobileCanvasViewportActive: mobileCanvasViewportActive(),
-  });
-  updateVisualControls();
-  sim?.render?.();
+  controlUiState().setCustomVisualLayer(layer, enabled);
 }
-
 function lambdaToCells(valueLambda) {
   return Math.round((Number(valueLambda) || 0) * state.cellsPerWavelength);
 }
@@ -1259,165 +1013,96 @@ function syncMonitorEditorTarget() {
   return sourceMonitorEditors().syncMonitorEditorTarget();
 }
 
-function gridPointToSourcePosition(point) {
-  const x = clampInt(point.x, sim.sourcePlacementMinX(), sim.sourcePlacementMaxX());
-  const y = clampInt(point.y, sim.sourcePlacementMinY(), sim.sourcePlacementMaxY());
-  return {
-    xLambda: cellsToLambda(x),
-    yLambda: cellsToLambda(y),
-  };
-}
-
-function gridPointToMonitorPosition(point) {
-  const x = clampInt(point.x, sim.activeInteriorMinX(), sim.activeInteriorMaxX());
-  const y = clampInt(point.y, sim.activeInteriorMinY(), sim.activeInteriorMaxY());
-  return {
-    xLambda: cellsToLambda(x),
-    yLambda: cellsToLambda(y),
-  };
+function canvasContextActions() {
+  if (!canvasContextActionsController) {
+    canvasContextActionsController = canvasContextActionsModule.createCanvasContextActionsController({
+      state,
+      el,
+      contextMenus,
+      contextMenuState,
+      boundarySideLabels,
+      inPlaneElectricCurrentShapes,
+      getSim: () => sim,
+      getSimulationEffects: () => simulationEffects,
+      getEntitySelection: () => entitySelection,
+      clearMaterialSelection,
+      clampInt,
+      cellsToLambda,
+      formatLambda,
+      makeSource,
+      makeMonitor,
+      addSource,
+      addMonitor,
+      selectedSource,
+      explicitlySelectedMonitor,
+      normalizeSource,
+      normalizeMonitor,
+      readSourceEditorValues,
+      readMonitorEditorValues,
+      normalizeBoundarySides,
+      boundarySideMode,
+      boundarySideIsAbsorbing,
+      updateControlText,
+    });
+  }
+  return canvasContextActionsController;
 }
 
 function openCanvasContextMenuAt(clientX, clientY) {
-  if (!el.canvasContextMenu) return;
-  clearMaterialSelection(false);
-  const point = sim.clientToGridCell(clientX, clientY);
-  if (el.canvasContextMenuHint) {
-    el.canvasContextMenuHint.textContent = `x / λ0 ${formatLambda(cellsToLambda(point.x))}, y / λ0 ${formatLambda(cellsToLambda(point.y))}`;
-  }
-  contextMenus.openCanvasContextMenuAt(clientX, clientY, point);
-  sim.render();
+  canvasContextActions().openCanvasContextMenuAt(clientX, clientY);
 }
 
 function openSourceMenuAt(clientX, clientY, source = null) {
-  if (!el.sourceMenu) return;
-  let draft = null;
-  let mode = "add";
-  if (source) {
-    mode = "edit";
-    entitySelection.selectSource(source.id);
-  } else {
-    const point = sim.clientToGridCell(clientX, clientY);
-    draft = makeSource(gridPointToSourcePosition(point), false);
-  }
-  contextMenus.openSourceMenuAt(clientX, clientY, { mode, draft });
-  updateControlText();
-  sim.render();
+  canvasContextActions().openSourceMenuAt(clientX, clientY, source);
 }
 
 function closeSourceMenu() {
-  contextMenus.closeSourceMenu();
+  canvasContextActions().closeSourceMenu();
 }
 
 function openMonitorMenuAt(clientX, clientY, monitor = null) {
-  if (!el.monitorMenu) return;
-  let draft = null;
-  let mode = "add";
-  if (monitor) {
-    mode = "edit";
-    entitySelection.selectMonitor(monitor.id);
-  } else {
-    const point = sim.clientToGridCell(clientX, clientY);
-    draft = makeMonitor(gridPointToMonitorPosition(point), false);
-  }
-  contextMenus.openMonitorMenuAt(clientX, clientY, { mode, draft });
-  updateControlText();
-  sim.render();
+  canvasContextActions().openMonitorMenuAt(clientX, clientY, monitor);
 }
 
 function closeMonitorMenu() {
-  contextMenus.closeMonitorMenu();
+  canvasContextActions().closeMonitorMenu();
 }
 
 function closeCanvasContextMenu() {
-  contextMenus.closeCanvasContextMenu();
+  canvasContextActions().closeCanvasContextMenu();
 }
 
 function openBrushMenuAt(clientX, clientY, options = {}) {
-  if (!el.brushMenu) return;
-  const mode = options.mode === "region" ? "region" : "brush";
-  contextMenus.openBrushMenuAt(clientX, clientY, { mode });
-  if (mode === "brush") {
-    state.canvasMode = "brush";
-  }
-  updateControlText();
-  sim.render();
+  canvasContextActions().openBrushMenuAt(clientX, clientY, options);
 }
 
 function closeBrushMenu() {
-  contextMenus.closeBrushMenu();
+  canvasContextActions().closeBrushMenu();
 }
 
 function updateBoundaryMenuControls() {
-  normalizeBoundarySides();
-  if (el.boundaryMenuInput) {
-    el.boundaryMenuInput.value = boundarySideMode(contextMenuState.boundaryMenuSide);
-  }
-  if (el.boundaryMenuHint) {
-    const sideLabel = boundarySideLabels[contextMenuState.boundaryMenuSide] || "Boundary";
-    const modeLabel = boundarySideIsAbsorbing(contextMenuState.boundaryMenuSide) ? "PML absorbing" : "reflective";
-    el.boundaryMenuHint.textContent = `${sideLabel} boundary · ${modeLabel}`;
-  }
+  canvasContextActions().updateBoundaryMenuControls();
 }
 
 function openBoundaryMenuAt(clientX, clientY) {
-  if (!el.boundaryMenu) return;
-  const side = sim.boundarySideAtClientPoint(clientX, clientY) || contextMenuState.boundaryMenuSide || "top";
-  contextMenus.openBoundaryMenuAt(clientX, clientY, side);
-  updateBoundaryMenuControls();
-  sim.render();
+  canvasContextActions().openBoundaryMenuAt(clientX, clientY);
 }
 
 function closeBoundaryMenu() {
-  contextMenus.closeBoundaryMenu();
+  canvasContextActions().closeBoundaryMenu();
 }
 
 function closeContextMenus() {
-  contextMenus.closeContextMenus();
+  canvasContextActions().closeContextMenus();
 }
 
 function applySourceMenu() {
-  simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
-  const values = readSourceEditorValues();
-  const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
-  if (componentChanged) {
-    state.fieldComponent = "hz";
-  }
-  if (contextMenuState.sourceMenuMode === "add") {
-    addSource(values);
-  } else {
-    const source = selectedSource();
-    if (source) {
-      Object.assign(source, values);
-      normalizeSource(source);
-      state.sourceDefaults = { ...source };
-      delete state.sourceDefaults.id;
-    }
-  }
-  closeSourceMenu();
-  if (componentChanged) {
-    sim.resetFields();
-  }
-  simulationEffects.commitSourceMutation({ dirty: false, disableResponsiveGrid: false });
+  canvasContextActions().applySourceMenu();
 }
 
 function applyMonitorMenu() {
-  simulationEffects.commit({ disableResponsiveGrid: true });
-  const values = readMonitorEditorValues();
-  if (contextMenuState.monitorMenuMode === "add") {
-    addMonitor(values);
-  } else {
-    const monitor = explicitlySelectedMonitor();
-    if (monitor) {
-      Object.assign(monitor, values);
-      normalizeMonitor(monitor);
-      state.monitorDefaults = { ...monitor };
-      delete state.monitorDefaults.id;
-    }
-  }
-  closeMonitorMenu();
-  simulationEffects.commitMonitorMutation({ disableResponsiveGrid: false });
+  canvasContextActions().applyMonitorMenu();
 }
-
 let controlTextController = null;
 function controlText() {
   if (!controlTextController) {

@@ -25,6 +25,12 @@ Runs `scripts/validate-static.mjs`. It checks:
 - Reproducibility UI and scene snapshot functions.
 
 ```powershell
+npm run validate:architecture
+```
+
+Runs refactor guardrails: active assets must not load legacy paths, the app must keep a single canonical stylesheet, runtime dependency checks must stay delegated to `runtime-dependencies.js`, pure simulation files must avoid DOM APIs outside documented integration exceptions, and `main.js` must stay below the staged centrality budget.
+
+```powershell
 npm install
 npx playwright install chromium
 npm run test:browser
