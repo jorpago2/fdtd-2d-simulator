@@ -16,11 +16,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="styles.css?v=20260629-custom-monitors-1" />
-    <link rel="stylesheet" href="ui-ux.css?v=20260628-visual-architecture-1" />
-    <link rel="stylesheet" href="visual-controls.css?v=20260628-results-monitors-1" />
-    <link rel="stylesheet" href="button-system.css?v=20260628-neu-tabs-1" />
-    <link rel="stylesheet" href="fullscreen-layout.css?v=20260629-4k-menu-operability-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-fresh-css-1" />
   </head>
   <body>
     <svg class="liquid-glass-filters" width="0" height="0" aria-hidden="true" focusable="false">
@@ -1374,21 +1370,90 @@
       </section>
     </main>
 
-    <script src="src/constants.js?v=20260629-nonlinear-scale-1"></script>
-    <script src="src/wasm-backend.js?v=20260628-tfsf-wasm-1"></script>
-    <script src="src/numerics.js?v=20260627-split-2"></script>
-    <script src="src/colormaps.js?v=20260628-render-lut-1"></script>
-    <script src="src/catalog.js?v=20260629-coupled-proxy-1"></script>
-    <script src="src/fdtd-sim.js?v=20260629-temporal-phase-1"></script>
-    <script src="src/fdtd-materials.js?v=20260629-temporal-phase-1"></script>
-    <script src="src/fdtd-boundaries.js?v=20260628-pml-continuation-1"></script>
-    <script src="src/fdtd-presets.js?v=20260629-temporal-phase-1"></script>
-    <script src="src/fdtd-sources.js?v=20260629-source-pass-1"></script>
-    <script src="src/fdtd-diagnostics.js?v=20260629-coupled-proxy-1"></script>
-    <script src="src/fdtd-yee.js?v=20260628-exact-tfsf-1"></script>
-    <script src="src/fdtd-rendering.js?v=20260629-aspect-viewport-1"></script>
-    <script src="src/fdtd-worker-protocol.js?v=20260629-temporal-phase-1"></script>
-    <script src="src/worker-engine.js?v=20260628-pml-continuation-1"></script>
-    <script src="app.js?v=20260629-coupled-proxy-1"></script>
+    <script src="js-next/runtime/core/constants.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/wasm-backend.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/numerics.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/data/colormaps.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/data/catalog.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-sim.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-array-state.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-engine-routing.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-viewport.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-field-state.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-materials.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-field-observables.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-boundaries.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-presets.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-sources.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-custom-monitors.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-line-diagnostics.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-analysis-observables.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-material-diagnostics.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-diagnostics.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-yee.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-rendering.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-reference-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-source-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-monitor-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-material-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-boundary-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-worker-protocol.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/worker-engine.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-core.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-dom.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-drawer.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-scenes.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-results.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-results-charts.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/control-sync-ui.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/scene-codec.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/source-monitor-model.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-editor-model.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-editor-ui.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-selection-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/entity-selection-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/visual-layer-model.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/state-normalizer.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/simulation-effects.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/runtime-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-colorbar.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-export.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-render-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/runtime-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/visual-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/results-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/source-monitor-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/config-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/brush-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/shell-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/layout-control-bindings.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/scene-application.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/scene-repro.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-interaction-model.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-pointer-state.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-drag-state.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/context-menu-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-interactions.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/app-state.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/app-formatters.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/source-monitor-operations.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-operations.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/app-bootstrap.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/app-layout.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/app-performance.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/sweep-analysis-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/material-stability-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/source-monitor-editor-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/brush-controls-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/inspector-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/control-text-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/scene-state-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-edit-actions-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-gesture-actions-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/config-material-handlers-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/app/main.js?v=20260630-js-next-cutover-1"></script>
   </body>
 </html>

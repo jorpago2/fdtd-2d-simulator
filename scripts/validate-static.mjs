@@ -32,10 +32,32 @@ function readText(...parts) {
   return fs.readFileSync(repoPath(...parts), "utf8");
 }
 
-function fileExistsFromUrl(assetUrl) {
+function fileExistsFromUrl(assetUrl, baseDir = "") {
   const [pathname] = assetUrl.split("?");
   const normalized = pathname.replace(/^\.\//, "");
-  return fs.existsSync(repoPath(normalized));
+  return fs.existsSync(repoPath(baseDir, normalized));
+}
+
+function assetPath(assetUrl) {
+  const [pathname] = String(assetUrl || "").split("?");
+  return pathname.replace(/^\.\//, "").replace(/\\/g, "/");
+}
+
+function resolveRelativeAsset(assetUrl, baseFile) {
+  const cleanAsset = assetPath(assetUrl);
+  if (!baseFile || cleanAsset.startsWith("/")) return cleanAsset.replace(/^\/+/, "");
+  const baseDir = path.posix.dirname(baseFile.replace(/\\/g, "/"));
+  return path.posix.normalize(path.posix.join(baseDir, cleanAsset));
+}
+
+function scriptPathMap(indexHtml) {
+  const scripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml).map(assetPath);
+  return new Map(scripts.map((scriptPath) => [path.posix.basename(scriptPath), scriptPath]));
+}
+
+function readActiveScript(scriptMap, basename, fallbackParts) {
+  const activePath = scriptMap.get(basename);
+  return activePath ? readText(...activePath.split("/")) : readText(...fallbackParts);
 }
 
 function extractAll(pattern, text, group = 1) {
@@ -44,6 +66,21 @@ function extractAll(pattern, text, group = 1) {
 
 function unique(values) {
   return Array.from(new Set(values)).sort();
+}
+
+function listFilesRecursive(relativeDir, extension) {
+  const absoluteDir = repoPath(relativeDir);
+  if (!fs.existsSync(absoluteDir)) return [];
+  const files = [];
+  for (const entry of fs.readdirSync(absoluteDir, { withFileTypes: true })) {
+    const relativePath = path.join(relativeDir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...listFilesRecursive(relativePath, extension));
+    } else if (entry.isFile() && entry.name.endsWith(extension)) {
+      files.push(relativePath.replace(/\\/g, "/"));
+    }
+  }
+  return files;
 }
 
 function runNodeSyntaxCheck(files) {
@@ -64,10 +101,23 @@ function runNodeSyntaxCheck(files) {
   );
 }
 
-function loadCatalog() {
+function validateJsNextCore() {
+  const result = spawnSync(process.execPath, [repoPath("scripts", "validate-js-next-core.mjs")], {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  const output = `${result.stdout || ""}${result.stderr || ""}`.trim();
+  addCheck(
+    "js-next core equivalence",
+    result.status === 0 ? "PASS" : "BLOCK",
+    output || "No output",
+  );
+}
+
+function loadCatalog(constantsJs, catalogJs) {
   const code = [
-    readText("src", "constants.js"),
-    readText("src", "catalog.js"),
+    constantsJs,
+    catalogJs,
     "globalThis.__catalog = { materialNames, sourceShapeLabels, sceneDescriptions, BOUNDARY_SIDES };",
     "globalThis.__constants = { COURANT, DEFAULT_GRID, MAX_GRID };",
   ].join("\n");
@@ -91,10 +141,27 @@ function validateHtmlAssets(indexHtml) {
   );
 }
 
-function validatePresets(indexHtml, sceneDescriptions) {
+function workerImportAssets(workerJs) {
+  const importBlocks = extractAll(/importScripts\(([\s\S]*?)\);/g, workerJs);
+  return unique(importBlocks.flatMap((block) => extractAll(/["']([^"']+)["']/g, block)));
+}
+
+function validateWorkerImports(workerJs, workerFile) {
+  const imports = workerImportAssets(workerJs);
+  const resolvedImports = imports.map((asset) => resolveRelativeAsset(asset, workerFile));
+  const missing = resolvedImports.filter((asset) => !fs.existsSync(repoPath(asset)));
+  addCheck(
+    "worker importScripts assets",
+    missing.length === 0 ? "PASS" : "BLOCK",
+    missing.length === 0 ? `${imports.length} worker imports found` : `Missing: ${missing.join(", ")}`,
+  );
+  return resolvedImports;
+}
+
+function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
   const presetSelect = indexHtml.match(/<select\s+id="presetInput"[\s\S]*?<\/select>/)?.[0] || "";
   const dropdownPresets = unique(extractAll(/<option\s+value="([^"]+)"/g, presetSelect));
-  const presetCases = unique(extractAll(/case\s+"([^"]+)"/g, readText("src", "fdtd-presets.js")));
+  const presetCases = unique(extractAll(/case\s+"([^"]+)"/g, presetSourceJs));
   const descriptions = unique(Object.keys(sceneDescriptions));
   const missingPresetCases = dropdownPresets.filter((preset) => preset !== "empty" && !presetCases.includes(preset));
   const missingDescriptions = dropdownPresets.filter((preset) => !descriptions.includes(preset));
@@ -168,7 +235,7 @@ function validateNumerics(constants) {
   );
 }
 
-function validateUiReproducibility(indexHtml, appJs) {
+function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneReproJs = "") {
   const requiredIds = [
     "stabilityCflValue",
     "stabilityResolutionValue",
@@ -187,7 +254,8 @@ function validateUiReproducibility(indexHtml, appJs) {
     "copySceneUrl",
     "updateStabilitySummary",
   ];
-  const missingSymbols = requiredSymbols.filter((symbol) => !appJs.includes(symbol));
+  const reproducibilityJs = `${appJs}\n${sceneCodecJs}\n${sceneReproJs}`;
+  const missingSymbols = requiredSymbols.filter((symbol) => !reproducibilityJs.includes(symbol));
   addCheck(
     "reproducibility UI ids",
     missingIds.length === 0 ? "PASS" : "BLOCK",
@@ -200,7 +268,7 @@ function validateUiReproducibility(indexHtml, appJs) {
   );
 }
 
-function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, workerEngineJs, wasmCpp) {
+function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, workerEngineJs, wasmCpp, activeFiles) {
   const requiredIds = [
     "performanceBackendOutput",
     "performanceGridOutput",
@@ -230,14 +298,14 @@ function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, wo
     "fdtd-worker.js",
     "kernel_features",
   ];
-  const performanceSources = `${indexHtml}\n${appJs}\n${fdtdSimJs}\n${wasmBackendJs}\n${workerEngineJs}\n${wasmCpp}`;
+  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${wasmBackendJs}\n${workerEngineJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
     ["wasm-src", "fdtd-core.cpp"],
     ["scripts", "build-wasm-cpp.ps1"],
-    ["src", "fdtd-worker.js"],
-    ["src", "worker-engine.js"],
+    activeFiles.fdtdWorker.split("/"),
+    activeFiles.workerEngine.split("/"),
   ];
   const missingFiles = requiredFiles
     .map((parts) => ({ parts, filePath: repoPath(...parts) }))
@@ -257,40 +325,56 @@ function validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, wo
 
 function main() {
   const indexHtml = readText("index.html");
-  const appJs = readText("app.js");
-  const fdtdSimJs = readText("src", "fdtd-sim.js");
-  const wasmBackendJs = readText("src", "wasm-backend.js");
-  const workerEngineJs = readText("src", "worker-engine.js");
+  const activeScripts = scriptPathMap(indexHtml);
+  const appFile = activeScripts.get("main.js") || "legacy/js/app.js";
+  const fdtdWorkerFile = activeScripts.get("fdtd-worker.js") || "js-next/runtime/simulation/fdtd-worker.js";
+  const workerEngineFile = activeScripts.get("worker-engine.js") || "legacy/js/src/worker-engine.js";
+  const appJs = readText(...appFile.split("/"));
+  const sceneCodecJs = readActiveScript(activeScripts, "scene-codec.js", ["legacy/js/src", "scene-codec.js"]);
+  const sceneReproJs = readActiveScript(activeScripts, "scene-repro.js", ["legacy/js/src", "scene-repro.js"]);
+  const fdtdSimJs = readActiveScript(activeScripts, "fdtd-sim.js", ["legacy/js/src", "fdtd-sim.js"]);
+  const fdtdEngineRoutingJs = readActiveScript(activeScripts, "fdtd-engine-routing.js", ["legacy/js/src", "fdtd-engine-routing.js"]);
+  const fdtdWorkerJs = readText(...fdtdWorkerFile.split("/"));
+  const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js", ["legacy/js/src", "wasm-backend.js"]);
+  const workerEngineJs = readText(...workerEngineFile.split("/"));
   const wasmCpp = readText("wasm-src", "fdtd-core.cpp");
-  const jsFiles = [
-    "src/constants.js",
-    "src/wasm-backend.js",
-    "src/numerics.js",
-    "src/colormaps.js",
-    "src/catalog.js",
-    "src/fdtd-sim.js",
-    "src/fdtd-materials.js",
-    "src/fdtd-boundaries.js",
-    "src/fdtd-presets.js",
-    "src/fdtd-sources.js",
-    "src/fdtd-diagnostics.js",
-    "src/fdtd-yee.js",
-    "src/fdtd-rendering.js",
-    "src/fdtd-worker-protocol.js",
-    "src/worker-engine.js",
-    "src/fdtd-worker.js",
-    "app.js",
+  const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
+    .map(assetPath)
+    .filter(Boolean);
+  const workerImportFiles = workerImportAssets(fdtdWorkerJs)
+    .map((asset) => resolveRelativeAsset(asset, fdtdWorkerFile))
+    .filter(Boolean);
+  const jsNextFiles = listFilesRecursive("js-next", ".js");
+  const jsFiles = unique([
+    ...linkedJsFiles,
+    ...workerImportFiles,
+    ...jsNextFiles,
+    "scripts/serve-static.mjs",
+    "scripts/validate-js-next-core.mjs",
     "scripts/performance-benchmark.mjs",
-  ];
+  ]);
 
   runNodeSyntaxCheck(jsFiles);
+  validateJsNextCore();
   validateHtmlAssets(indexHtml);
-  const { catalog, constants } = loadCatalog();
-  const dropdownPresets = validatePresets(indexHtml, catalog.sceneDescriptions);
+  validateWorkerImports(fdtdWorkerJs, fdtdWorkerFile);
+  const { catalog, constants } = loadCatalog(
+    readActiveScript(activeScripts, "constants.js", ["legacy/js/src", "constants.js"]),
+    readActiveScript(activeScripts, "catalog.js", ["legacy/js/src", "catalog.js"]),
+  );
+  const dropdownPresets = validatePresets(
+    indexHtml,
+    catalog.sceneDescriptions,
+    readActiveScript(activeScripts, "fdtd-presets.js", ["legacy/js/src", "fdtd-presets.js"]),
+  );
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
-  validateUiReproducibility(indexHtml, appJs);
-  validatePerformanceRoute(indexHtml, appJs, fdtdSimJs, wasmBackendJs, workerEngineJs, wasmCpp);
+  validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
+  const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js", ["legacy/js/src", "app-performance.js"]);
+  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, workerEngineJs, wasmCpp, {
+    fdtdWorker: fdtdWorkerFile,
+    workerEngine: workerEngineFile,
+  });
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

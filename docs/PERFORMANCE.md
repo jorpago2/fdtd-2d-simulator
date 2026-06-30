@@ -56,7 +56,7 @@ These values are hardware- and browser-dependent. They are useful as a local reg
 
 ## Current Backend
 
-The app currently loads `fdtd-core.wasm` through `src/wasm-backend.js`. The active kernel is now built from `wasm-src/fdtd-core.cpp`, which exports:
+The app currently loads `fdtd-core.wasm` through `js-next/runtime/simulation/wasm-backend.js`. The active kernel is now built from `wasm-src/fdtd-core.cpp`, which exports:
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
@@ -66,7 +66,7 @@ The compiled kernel includes finite conductivity `J = sigma E`, Kerr permittivit
 
 ## Worker Engine
 
-Continuous Play can now advance FDTD steps in `src/fdtd-worker.js`. The main thread keeps UI, controls, and canvas rendering responsive while `src/worker-engine.js` sends step batches to a headless worker-side simulator. The worker loads the same physics modules as the main app and tries to use the same C++/WASM backend; if Worker or WASM loading fails, the app falls back to the previous main-thread stepping path.
+Continuous Play can now advance FDTD steps in `js-next/runtime/simulation/fdtd-worker.js`. The main thread keeps UI, controls, and canvas rendering responsive while `js-next/runtime/simulation/worker-engine.js` sends step batches to a headless worker-side simulator. The worker loads the same physics modules as the main app and tries to use the same C++/WASM backend; if Worker or WASM loading fails, the app falls back to the previous main-thread stepping path.
 
 The worker syncs a full simulation snapshot when a run starts, returns field/material arrays needed for rendering after each batch, and performs a full sync when pausing. Geometry, source, material, preset, boundary, grid, import, reset, or backend changes invalidate the worker snapshot so the next run starts from the current main-thread state.
 

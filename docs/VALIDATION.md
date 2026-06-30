@@ -30,7 +30,13 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Runs `scripts/browser-smoke.mjs`. It starts a local static server, opens Chromium, loads P0 validation scenes, advances the simulation for a few steps, checks for non-finite UI values, checks active media labels where relevant, and reports an approximate `msPerStep`.
+Runs the fast smoke subset in `scripts/browser-smoke.mjs`. It starts a local static server, opens Chromium, loads P0 cases whose profile is `smoke`, advances the simulation for a few steps, checks for non-finite UI values, checks active media labels where relevant, verifies JSON scene export, and reports an approximate `msPerStep`.
+
+```powershell
+npm run test:browser:physics
+```
+
+Runs the heavier P0 browser cases whose profile is `physics`. These scenarios use longer runs and should be treated as validation/diagnostic checks, not as a quick pre-commit smoke test.
 
 ## Matrix
 
@@ -79,4 +85,6 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 - Temporal/Floquet scenes now distinguish uniform temporal modulation from traveling or staggered phase modulation through local phase offsets and a modulation-phase coherence proxy, but calibrated de-embedded multi-incidence scattering matrices still need dedicated validation.
 - Coupled workflow scenes now expose reduced localization, guide/cavity/source-overlap, active-material, and modulation-coherence proxies; these are comparative diagnostics, not substitutes for full eigenmode, non-Bloch, or device-level validation.
 - Quantitative BIC, chiral/bianisotropic, hyperlens, and negative-index validations still need calibrated references and convergence workflows.
-- `test:browser` depends on Playwright and a local Chromium install. `npm test` has no external runtime dependency beyond Node.
+- `test:browser` depends on Playwright and a local Chromium install, but is intentionally short.
+- `test:browser:physics` is intentionally slower because it runs the long browser physics cases from the matrix.
+- `npm test` has no external runtime dependency beyond Node.

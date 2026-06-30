@@ -1,2 +1,4 @@
 .codex-remote-attachments/
 tmp/
+.cache/
+node_modules/

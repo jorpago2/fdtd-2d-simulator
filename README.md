@@ -7,13 +7,13 @@ The app uses ordered classic scripts rather than a build pipeline. Open `index.h
 ## Run
 
 ```powershell
-python -m http.server 8766
+npm run serve
 ```
 
 Then open:
 
 ```text
-http://127.0.0.1:8766/index.html
+http://127.0.0.1:8768/index.html
 ```
 
 ## Validation
@@ -63,7 +63,7 @@ Not every scene is quantitatively calibrated. Treat advanced examples as teachin
 See:
 
 ```text
-src/README.md
+docs/PROJECT_MAP.md
 ```
 
-The app intentionally keeps the physics modules separate from UI orchestration in `app.js`.
+The active browser code is loaded from `js-next/runtime/`. The old `src/` tree and root `app.js` are archived under `legacy/js/` as reference material during the migration.

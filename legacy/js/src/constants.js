@@ -1,0 +1,21 @@
+"use strict";
+
+const COURANT = 0.48;
+const DEFAULT_GRID = { nx: 360, ny: 240 };
+const DEFAULT_PORTRAIT_GRID = { nx: DEFAULT_GRID.ny, ny: DEFAULT_GRID.nx };
+const PHONE_PORTRAIT_GRID = { nx: 208, ny: 384 };
+const MAX_GRID = { nx: 1200, ny: 800 };
+const MIN_CANVAS_DISPLAY_ASPECT = 0.5;
+const MAX_CANVAS_DISPLAY_ASPECT = 6;
+const MIN_CANVAS_DISPLAY_HEIGHT = 220;
+const MAX_CANVAS_DISPLAY_HEIGHT = 1500;
+const CANVAS_DISPLAY_VIEWPORT_FRACTION = 0.68;
+const WASM_CORE_URL = "fdtd-core.wasm?v=20260629-nonlinear-scale-1";
+const WASM_PAGE_BYTES = 65536;
+const WASM_MAX_PAGES = 4096;
+const FIELD_RENORMALIZE_HIGH = 1e12;
+const FIELD_RENORMALIZE_TARGET = 1e3;
+const DIAGNOSTIC_DFT_WINDOW = 512;
+const BIANISOTROPY_KAPPA_LIMIT = 0.85;
+const THEME_STORAGE_KEY = "fdtdTheme";
+const UI_DEPTH_STORAGE_KEY = "fdtdUiDepth";

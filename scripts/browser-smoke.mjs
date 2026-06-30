@@ -10,9 +10,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const matrix = JSON.parse(fs.readFileSync(path.join(__dirname, "validation-matrix.json"), "utf8"));
-const smokeCases = matrix.cases.filter((testCase) => testCase.browserSmoke);
+const mode = process.argv.includes("--physics") ? "physics" : "smoke";
+const smokeCases = matrix.cases.filter(
+  (testCase) =>
+    testCase.browserSmoke &&
+    testCase.priority === "P0" &&
+    (mode === "physics" ? testCase.profile === "physics" : testCase.profile === "smoke"),
+);
 const report = {
   status: "PASS",
+  mode,
   cases: [],
   consoleErrors: [],
   pageErrors: [],
@@ -231,10 +238,12 @@ async function main() {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    for (const testCase of smokeCases.filter((item) => item.priority === "P0")) {
+    for (const testCase of smokeCases) {
       report.cases.push(await runSmokeCase(page, testCase));
     }
-    report.cases.push(await runReproducibilitySmoke(page));
+    if (mode === "smoke") {
+      report.cases.push(await runReproducibilitySmoke(page));
+    }
   } finally {
     await browser.close();
     server.close();
