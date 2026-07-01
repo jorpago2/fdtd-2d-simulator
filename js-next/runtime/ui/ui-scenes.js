@@ -106,6 +106,69 @@
     return record;
   }
 
+  function cloneSceneCardTemplate(documentRef) {
+    const template = typeof documentRef.getElementById === "function" ? documentRef.getElementById("sceneCardTemplate") : null;
+    const templateContent = template?.content?.firstElementChild;
+    if (templateContent) return templateContent.cloneNode(true);
+
+    const span = (className) => {
+      const node = documentRef.createElement("span");
+      node.className = className;
+      return node;
+    };
+    const card = documentRef.createElement("button");
+    card.type = "button";
+    card.className = "scene-card";
+    card.dataset.sceneCard = "";
+    const thumbnail = span("scene-card-thumb");
+    thumbnail.setAttribute("aria-hidden", "true");
+    thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
+    const header = span("scene-card-header");
+    header.append(span("scene-card-number"), span("scene-card-title"));
+    card.append(thumbnail, header, span("scene-card-group"), span("scene-card-description"), span("scene-card-badges"));
+    return card;
+  }
+
+  function fillSceneCard(card, record, documentRef, onSelectScene, getCurrentPreset) {
+    const active = record.value === getCurrentPreset?.();
+    card.dataset.sceneCard = record.value;
+    card.dataset.sceneThumb = record.thumbnail;
+    card.setAttribute("aria-pressed", String(active));
+
+    const thumbnail = card.querySelector(".scene-card-thumb") || documentRef.createElement("span");
+    thumbnail.className = "scene-card-thumb";
+    thumbnail.setAttribute("aria-hidden", "true");
+    if (!thumbnail.childElementCount) {
+      thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
+      card.prepend(thumbnail);
+    }
+
+    const number = card.querySelector(".scene-card-number");
+    const title = card.querySelector(".scene-card-title");
+    const group = card.querySelector(".scene-card-group");
+    const description = card.querySelector(".scene-card-description");
+    const badgeRow = card.querySelector(".scene-card-badges");
+
+    if (number) number.textContent = record.index == null ? "-" : String(record.index);
+    if (title) title.textContent = record.title;
+    if (group) group.textContent = record.group;
+    if (description) description.textContent = record.description || "Custom FDTD scene.";
+    if (badgeRow) {
+      badgeRow.replaceChildren();
+      record.badges.forEach((badgeLabel) => {
+        const badge = documentRef.createElement("span");
+        badge.className = "scene-card-badge";
+        badge.textContent = badgeLabel;
+        badgeRow.appendChild(badge);
+      });
+    }
+
+    card.addEventListener("click", () => {
+      onSelectScene?.(record.value);
+    });
+    return card;
+  }
+
   function groupCountLabel(count) {
     return `${count} scene${count === 1 ? "" : "s"}`;
   }
@@ -237,7 +300,8 @@
         button.type = "button";
         button.className = `scene-filter-button${active ? " is-active" : ""}`;
         button.dataset.sceneFilter = filter.value;
-        button.setAttribute("aria-pressed", String(active));
+        button.setAttribute("role", "radio");
+        button.setAttribute("aria-checked", String(active));
         const filterCount = counts.get(filter.value) || 0;
         button.disabled = !active && filterCount === 0;
         button.setAttribute("aria-label", `${filter.label}: ${filterCount} scenes`);
@@ -249,9 +313,16 @@
         count.textContent = String(filterCount);
         button.append(label, count);
         button.addEventListener("click", () => {
+          const shouldRestoreFocus = documentRef.activeElement === button;
           state.filter = filter.value;
           renderSceneFilterBar();
           renderSceneCards();
+          if (shouldRestoreFocus) {
+            const replacement = Array.from(el.sceneFilterBar.querySelectorAll("[data-scene-filter]")).find(
+              (candidate) => candidate.dataset.sceneFilter === filter.value
+            );
+            replacement?.focus?.({ preventScroll: true });
+          }
         });
         el.sceneFilterBar.appendChild(button);
       });
@@ -272,52 +343,7 @@
       }
 
       records.forEach((record) => {
-        const card = documentRef.createElement("button");
-        card.type = "button";
-        card.className = "scene-card";
-        card.dataset.sceneCard = record.value;
-        card.dataset.sceneThumb = record.thumbnail;
-        card.setAttribute("aria-pressed", String(record.value === getCurrentPreset?.()));
-
-        const thumbnail = documentRef.createElement("span");
-        thumbnail.className = "scene-card-thumb";
-        thumbnail.setAttribute("aria-hidden", "true");
-        thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
-
-        const header = documentRef.createElement("span");
-        header.className = "scene-card-header";
-
-        const number = documentRef.createElement("span");
-        number.className = "scene-card-number";
-        number.textContent = record.index == null ? "-" : String(record.index);
-
-        const title = documentRef.createElement("span");
-        title.className = "scene-card-title";
-        title.textContent = record.title;
-
-        header.append(number, title);
-
-        const group = documentRef.createElement("span");
-        group.className = "scene-card-group";
-        group.textContent = record.group;
-
-        const description = documentRef.createElement("span");
-        description.className = "scene-card-description";
-        description.textContent = record.description || "Custom FDTD scene.";
-
-        const badgeRow = documentRef.createElement("span");
-        badgeRow.className = "scene-card-badges";
-        record.badges.forEach((badgeLabel) => {
-          const badge = documentRef.createElement("span");
-          badge.className = "scene-card-badge";
-          badge.textContent = badgeLabel;
-          badgeRow.appendChild(badge);
-        });
-
-        card.append(thumbnail, header, group, description, badgeRow);
-        card.addEventListener("click", () => {
-          onSelectScene?.(record.value);
-        });
+        const card = fillSceneCard(cloneSceneCardTemplate(documentRef), record, documentRef, onSelectScene, getCurrentPreset);
         el.sceneCards.appendChild(card);
       });
 

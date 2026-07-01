@@ -1,8 +1,13 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Interactive 2D FDTD electromagnetics simulator with CPML boundaries, configurable sources, material drawing, and field diagnostics."
+    />
+    <meta name="color-scheme" content="light dark" />
     <title>Maxwell FDTD Lab</title>
     <script>
       try {
@@ -86,10 +91,11 @@
                 </button>
               </div>
             </div>
-            <div class="canvas-mode-toggle interaction-toggle" aria-label="Canvas interaction mode">
-              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" aria-pressed="true" title="Select and move canvas objects">Select</button>
-              <button id="brushModeBtn" class="mode-toggle-button" type="button" aria-pressed="false" title="Draw materials and geometries">Draw</button>
-            </div>
+            <fieldset class="canvas-mode-toggle interaction-toggle" role="radiogroup" aria-label="Canvas interaction mode">
+              <legend class="sr-only">Canvas interaction mode</legend>
+              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" role="radio" aria-checked="true" title="Select and move canvas objects">Select</button>
+              <button id="brushModeBtn" class="mode-toggle-button" type="button" role="radio" aria-checked="false" title="Draw materials and geometries">Draw</button>
+            </fieldset>
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
@@ -103,38 +109,43 @@
               ⋯
             </button>
             <div id="canvasViewControls" class="canvas-view-controls" aria-label="Canvas display" hidden>
-              <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Projection">
-                <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
-                <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
-              </div>
-              <div class="canvas-mode-toggle view-toggle" role="group" aria-label="View">
-                <button class="mode-toggle-button is-active" type="button" data-view-mode="field" aria-pressed="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
-                <button class="mode-toggle-button" type="button" data-view-mode="poynting" aria-pressed="false" title="Show Poynting vector flux"><i>S</i></button>
-                <button class="mode-toggle-button" type="button" data-view-mode="epsilon" aria-pressed="false" title="Show permittivity map">&epsilon;</button>
-                <button class="mode-toggle-button" type="button" data-view-mode="mu" aria-pressed="false" title="Show permeability map">&mu;</button>
-              </div>
-              <div id="fieldDisplayControl" class="canvas-mode-toggle field-display-toggle" role="group" aria-label="Field component">
-                <button class="mode-toggle-button is-active" type="button" data-field-display="scalar" aria-pressed="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
-                <button class="mode-toggle-button" type="button" data-field-display="transverseX" aria-pressed="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
-                <button class="mode-toggle-button" type="button" data-field-display="transverseY" aria-pressed="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
-                <button class="mode-toggle-button" type="button" data-field-display="electricMag" aria-pressed="false" title="Show electric-field magnitude">|<i>E</i>|</button>
-                <button class="mode-toggle-button" type="button" data-field-display="magneticMag" aria-pressed="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
-              </div>
+              <fieldset class="canvas-mode-toggle projection-toggle" role="radiogroup" aria-label="Projection">
+                <legend class="sr-only">Projection</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-view-projection="2d" aria-checked="true" title="Show flat 2D map">2D</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-view-projection="3d" aria-checked="false" title="Show 3D surface">3D</button>
+              </fieldset>
+              <fieldset class="canvas-mode-toggle view-toggle" role="radiogroup" aria-label="View">
+                <legend class="sr-only">View</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-view-mode="field" aria-checked="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
+                <button class="mode-toggle-button" type="button" role="radio" data-view-mode="poynting" aria-checked="false" title="Show Poynting vector flux"><i>S</i></button>
+                <button class="mode-toggle-button" type="button" role="radio" data-view-mode="epsilon" aria-checked="false" title="Show permittivity map">&epsilon;</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-view-mode="mu" aria-checked="false" title="Show permeability map">&mu;</button>
+              </fieldset>
+              <fieldset id="fieldDisplayControl" class="canvas-mode-toggle field-display-toggle" role="radiogroup" aria-label="Field component">
+                <legend class="sr-only">Field component</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-field-display="scalar" aria-checked="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
+                <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseX" aria-checked="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
+                <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseY" aria-checked="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
+                <button class="mode-toggle-button" type="button" role="radio" data-field-display="electricMag" aria-checked="false" title="Show electric-field magnitude">|<i>E</i>|</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-field-display="magneticMag" aria-checked="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
+              </fieldset>
               <label id="fieldQuiverControl" class="toolbar-switch quiver-switch" title="Overlay vector arrows" data-field-quiver-control>
                 <input id="fieldQuiverInput" type="checkbox" data-field-quiver-input />
                 <span id="fieldQuiverLabel" data-field-quiver-label><i>H</i> quiver</span>
               </label>
-              <div id="materialPartControl" class="canvas-mode-toggle material-part-toggle" role="group" aria-label="Material component" hidden>
-                <button class="mode-toggle-button is-active" type="button" data-material-part="real" aria-pressed="true">Re</button>
-                <button class="mode-toggle-button" type="button" data-material-part="imag" aria-pressed="false">Im</button>
-              </div>
+              <fieldset id="materialPartControl" class="canvas-mode-toggle material-part-toggle" role="radiogroup" aria-label="Material component" hidden>
+                <legend class="sr-only">Material component</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-material-part="real" aria-checked="true">Re</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-material-part="imag" aria-checked="false">Im</button>
+              </fieldset>
               <span class="visual-options-divider" aria-hidden="true"></span>
-              <div class="canvas-mode-toggle visual-profile-toggle" role="group" aria-label="Visual profile">
-                <button class="mode-toggle-button is-active" type="button" data-visual-profile="auto" aria-pressed="true" title="Choose a responsive visual profile">Auto</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="clean" aria-pressed="false" title="Minimal overlays">Clean</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="teaching" aria-pressed="false" title="Show teaching overlays">Teach</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
-              </div>
+              <fieldset class="canvas-mode-toggle visual-profile-toggle" role="radiogroup" aria-label="Visual profile">
+                <legend class="sr-only">Visual profile</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-visual-profile="auto" aria-checked="true" title="Choose a responsive visual profile">Auto</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="clean" aria-checked="false" title="Minimal overlays">Clean</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="teaching" aria-checked="false" title="Show teaching overlays">Teach</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="analysis" aria-checked="false" title="Show analysis overlays">Analysis</button>
+              </fieldset>
               <label class="toolbar-switch visual-layer-switch" title="Show CPML and reflective boundary overlays">
                 <input type="checkbox" data-visual-layer="boundaries" checked />
                 <span>CPML/bounds</span>
@@ -167,7 +178,19 @@
           </div>
 
           <div class="canvas-frame">
-            <canvas id="simCanvas" width="900" height="600" tabindex="0" aria-label="Normalized E z field of the FDTD simulation"></canvas>
+            <canvas
+              id="simCanvas"
+              width="900"
+              height="600"
+              tabindex="0"
+              aria-label="Normalized electromagnetic field map"
+              aria-describedby="canvasFallbackDescription"
+            >
+              Interactive 2D FDTD field map. Use the control panel to choose a scene, source, boundary condition, material model, and visualized field component.
+            </canvas>
+            <p id="canvasFallbackDescription" class="sr-only">
+              Interactive 2D FDTD field map with selectable electromagnetic field, material, Poynting-vector, and overlay views.
+            </p>
             <div class="colorbar" aria-label="Normalized E z over E 0 color scale">
               <span id="colorbarTitle" class="colorbar-title"><i>E</i><sub>z</sub> / <i>E</i><sub>0</sub></span>
               <div class="colorbar-body">
@@ -179,11 +202,18 @@
                 </div>
               </div>
             </div>
-            <div id="canvasContextMenu" class="source-menu context-choice-menu" role="dialog" aria-label="Add canvas element" hidden>
+            <div
+              id="canvasContextMenu"
+              class="source-menu context-choice-menu"
+              role="dialog"
+              aria-labelledby="canvasContextMenuTitle"
+              aria-describedby="canvasContextMenuHint"
+              hidden
+            >
               <div class="source-menu-header">
                 <div>
                   <p id="canvasContextMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
-                  <h2>Add element</h2>
+                  <h2 id="canvasContextMenuTitle">Add element</h2>
                 </div>
                 <button id="canvasContextCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close canvas menu">×</button>
               </div>
@@ -192,7 +222,14 @@
                 <button class="text-button" type="button" data-canvas-add="monitor">Monitor</button>
               </div>
             </div>
-            <div id="sourceMenu" class="source-menu" role="dialog" aria-label="Source editor" hidden>
+            <div
+              id="sourceMenu"
+              class="source-menu"
+              role="dialog"
+              aria-labelledby="sourceMenuTitle"
+              aria-describedby="sourceMenuHint"
+              hidden
+            >
               <div class="source-menu-header">
                 <div>
                   <p id="sourceMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
@@ -237,42 +274,44 @@
                 <label class="control-row">
                   <span><i>f</i></span>
                   <input id="frequencyInput" type="range" min="6" max="95" step="1" value="24" />
-                  <output id="frequencyOutput">0.024</output>
+                  <output id="frequencyOutput" for="frequencyInput">0.024</output>
                 </label>
                 <label class="control-row">
                   <span id="sourceAmplitudeLabel"><i>J</i><sub>z,0</sub></span>
                   <input id="amplitudeInput" type="range" min="5" max="120" step="5" value="55" />
-                  <output id="amplitudeOutput">0.55</output>
+                  <output id="amplitudeOutput" for="amplitudeInput">0.55</output>
                 </label>
-                <div class="two-col">
+                <fieldset class="two-col">
+                  <legend class="sr-only">Source position</legend>
                   <label>
                     <span><i>x</i> / λ<sub>0</sub></span>
-                    <input id="sourceXInput" type="number" min="0.2" max="8.8" step="0.05" value="1.2" />
+                    <input id="sourceXInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="8.8" step="0.05" value="1.2" />
                   </label>
                   <label>
                     <span><i>y</i> / λ<sub>0</sub></span>
-                    <input id="sourceYInput" type="number" min="0.2" max="5.8" step="0.05" value="3.0" />
+                    <input id="sourceYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
-                </div>
+                </fieldset>
                 <label id="sourceWidthControl" class="control-row is-disabled">
                   <span>FWHM / λ<sub>0</sub></span>
                   <input id="sourceWidthInput" type="range" min="0.05" max="1.5" step="0.05" value="0.35" disabled />
-                  <output id="sourceWidthOutput">0.35</output>
+                  <output id="sourceWidthOutput" for="sourceWidthInput">0.35</output>
                 </label>
                 <label id="sourceAngleControl" class="control-row is-disabled">
                   <span>J<sub>z</sub> axis θ</span>
                   <input id="sourceAngleInput" type="range" min="0" max="360" step="1" value="0" disabled />
-                  <output id="sourceAngleOutput">0°</output>
+                  <output id="sourceAngleOutput" for="sourceAngleInput">0°</output>
                 </label>
                 <label id="sourceTimePhaseControl" class="control-row" data-ui-scope="advanced">
                   <span>phase φ</span>
                   <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
-                  <output id="sourceTimePhaseOutput">0°</output>
+                  <output id="sourceTimePhaseOutput" for="sourceTimePhaseInput">0°</output>
                 </label>
-                <div class="two-col source-order-controls" data-ui-scope="advanced">
+                <fieldset class="two-col source-order-controls" data-ui-scope="advanced">
+                  <legend class="sr-only">Multipole angular profile</legend>
                   <label id="sourceOrderControl" class="is-disabled">
                     <span><i>n</i></span>
-                    <input id="sourceOrderInput" type="number" min="1" max="8" step="1" value="3" disabled />
+                    <input id="sourceOrderInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="8" step="1" value="3" disabled />
                   </label>
                   <label id="sourcePhaseControl" class="is-disabled">
                     <span>angular part</span>
@@ -281,14 +320,21 @@
                       <option value="sin">sin(nφ)</option>
                     </select>
                   </label>
-                </div>
+                </fieldset>
               </div>
               <div class="source-menu-actions">
                 <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
                 <button id="sourceApplyBtn" class="text-button primary-button" type="button">Add source</button>
               </div>
             </div>
-            <div id="monitorMenu" class="source-menu monitor-menu" role="dialog" aria-label="Monitor editor" hidden>
+            <div
+              id="monitorMenu"
+              class="source-menu monitor-menu"
+              role="dialog"
+              aria-labelledby="monitorMenuTitle"
+              aria-describedby="monitorMenuHint"
+              hidden
+            >
               <div class="source-menu-header">
                 <div>
                   <p id="monitorMenuHint" class="source-menu-hint">Line monitor</p>
@@ -306,25 +352,26 @@
                     <option value="tangentFlux">Tangential flux</option>
                   </select>
                 </label>
-                <div class="two-col">
+                <fieldset class="two-col">
+                  <legend class="sr-only">Monitor position</legend>
                   <label>
                     <span><i>x</i> / λ<sub>0</sub></span>
-                    <input id="monitorXInput" type="number" min="0.2" max="8.8" step="0.05" value="4.5" />
+                    <input id="monitorXInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="8.8" step="0.05" value="4.5" />
                   </label>
                   <label>
                     <span><i>y</i> / λ<sub>0</sub></span>
-                    <input id="monitorYInput" type="number" min="0.2" max="5.8" step="0.05" value="3.0" />
+                    <input id="monitorYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
-                </div>
+                </fieldset>
                 <label class="control-row">
                   <span>Length / λ<sub>0</sub></span>
                   <input id="monitorLengthInput" type="range" min="0.1" max="8" step="0.05" value="2.0" />
-                  <output id="monitorLengthOutput">2.00</output>
+                  <output id="monitorLengthOutput" for="monitorLengthInput">2.00</output>
                 </label>
                 <label class="control-row">
                   <span>Angle θ</span>
                   <input id="monitorAngleInput" type="range" min="0" max="180" step="1" value="90" />
-                  <output id="monitorAngleOutput">90°</output>
+                  <output id="monitorAngleOutput" for="monitorAngleInput">90°</output>
                 </label>
               </div>
               <div class="source-menu-actions">
@@ -332,18 +379,26 @@
                 <button id="monitorApplyBtn" class="text-button primary-button" type="button">Add monitor</button>
               </div>
             </div>
-            <div id="brushMenu" class="source-menu brush-menu" role="dialog" aria-label="Draw editor" hidden>
+            <div
+              id="brushMenu"
+              class="source-menu brush-menu"
+              role="dialog"
+              aria-labelledby="brushMenuTitle"
+              aria-describedby="brushMenuHint"
+              hidden
+            >
               <div class="source-menu-header">
                 <div>
                   <p id="brushMenuHint" class="source-menu-hint">Draw medium</p>
-                  <h2>Draw</h2>
+                  <h2 id="brushMenuTitle">Draw</h2>
                 </div>
                 <button id="brushMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close draw editor">×</button>
               </div>
-              <div id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="group" aria-label="Draw tool">
-                <button class="mode-toggle-button is-active" type="button" data-brush-tool="paint" aria-pressed="true">Brush</button>
-                <button class="mode-toggle-button" type="button" data-brush-tool="geometry" aria-pressed="false">Geometry</button>
-              </div>
+              <fieldset id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="radiogroup" aria-label="Draw tool">
+                <legend class="sr-only">Draw tool</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-brush-tool="paint" aria-checked="true">Brush</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-brush-tool="geometry" aria-checked="false">Geometry</button>
+              </fieldset>
               <div id="brushGeometryPanel" class="modulation-panel brush-geometry-panel" hidden>
                 <label>
                   <span>Geometry</span>
@@ -354,43 +409,47 @@
                     <option value="ring">Donut / ring</option>
                   </select>
                 </label>
-                <div class="two-col material-params geometry-params">
+                <fieldset class="two-col material-params geometry-params">
+                  <legend class="sr-only">Geometry dimensions</legend>
                   <label id="geometryWidthControl">
                     <span><i>w</i> / &lambda;<sub>0</sub></span>
-                    <input id="geometryWidthInput" type="number" min="0.05" max="50" step="0.05" value="1.00" />
+                    <input id="geometryWidthInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="50" step="0.05" value="1.00" />
                   </label>
                   <label id="geometryHeightControl">
                     <span><i>h</i> / &lambda;<sub>0</sub></span>
-                    <input id="geometryHeightInput" type="number" min="0.05" max="50" step="0.05" value="0.50" />
+                    <input id="geometryHeightInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="50" step="0.05" value="0.50" />
                   </label>
-                </div>
-                <div class="two-col material-params geometry-params">
+                </fieldset>
+                <fieldset class="two-col material-params geometry-params">
+                  <legend class="sr-only">Geometry radii</legend>
                   <label id="geometryRadiusControl">
                     <span><i>r</i> / &lambda;<sub>0</sub></span>
-                    <input id="geometryRadiusInput" type="number" min="0.05" max="25" step="0.05" value="0.45" />
+                    <input id="geometryRadiusInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="25" step="0.05" value="0.45" />
                   </label>
                   <label id="geometryInnerRadiusControl">
                     <span><i>r</i><sub>in</sub> / &lambda;<sub>0</sub></span>
-                    <input id="geometryInnerRadiusInput" type="number" min="0.01" max="25" step="0.05" value="0.25" />
+                    <input id="geometryInnerRadiusInput" type="number" inputmode="decimal" autocomplete="off" min="0.01" max="25" step="0.05" value="0.25" />
                   </label>
-                </div>
+                </fieldset>
               </div>
               <label id="brushSizeControl" class="control-row">
                 <span>Brush size</span>
                 <input id="brushMenuSizeInput" type="range" min="0.05" max="0.8" step="0.05" value="0.2" />
-                <output id="brushMenuSizeOutput">0.20 λ₀</output>
+                <output id="brushMenuSizeOutput" for="brushMenuSizeInput">0.20 λ₀</output>
               </label>
-              <div class="segmented" role="group" aria-label="Material">
-                <button class="segment is-active" type="button" data-brush="custom">Custom ε, μ</button>
-                <button class="segment" type="button" data-brush="pec">PEC</button>
-                <button class="segment" type="button" data-brush="lossy">Loss</button>
-                <button class="segment" type="button" data-brush="erase">Erase</button>
-              </div>
+              <fieldset class="segmented" role="radiogroup" aria-label="Material">
+                <legend class="sr-only">Material</legend>
+                <button class="segment is-active" type="button" role="radio" data-brush="custom" aria-checked="true">Custom ε, μ</button>
+                <button class="segment" type="button" role="radio" data-brush="pec" aria-checked="false">PEC</button>
+                <button class="segment" type="button" role="radio" data-brush="lossy" aria-checked="false">Loss</button>
+                <button class="segment" type="button" role="radio" data-brush="erase" aria-checked="false">Erase</button>
+              </fieldset>
               <label class="toggle-row brush-anisotropy-toggle" data-ui-scope="advanced">
                 <input id="customAnisotropyInput" type="checkbox" />
                 <span>Anisotropic ε, μ</span>
               </label>
-              <div id="brushMaterialGrid" class="material-tensor-editor brush-material-params" aria-label="Custom epsilon and mu">
+              <fieldset id="brushMaterialGrid" class="material-tensor-editor brush-material-params" aria-label="Custom epsilon and mu">
+                <legend class="sr-only">Custom epsilon and mu</legend>
                 <div class="material-tensor-part material-tensor-real" aria-label="Real material components">
                   <span class="material-tensor-title">Real</span>
                   <span class="material-tensor-axis" aria-hidden="true"></span>
@@ -399,20 +458,20 @@
                   <span class="material-tensor-row">&epsilon;</span>
                   <label class="material-tensor-cell material-cell-eps-real">
                     <span id="customEpsRealLabel">&epsilon;&prime;</span>
-                    <input id="customEpsRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                    <input id="customEpsRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="4.00" />
                   </label>
                   <label class="material-tensor-cell material-cell-eps-y-real brush-anisotropic-params" hidden>
                     <span>&epsilon;<sub>y</sub>&prime;</span>
-                    <input id="customEpsYRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                    <input id="customEpsYRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="4.00" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
                   <label class="material-tensor-cell material-cell-mu-real" data-ui-scope="advanced">
                     <span id="customMuRealLabel">&mu;&prime;</span>
-                    <input id="customMuRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                    <input id="customMuRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="1.00" />
                   </label>
                   <label class="material-tensor-cell material-cell-mu-y-real brush-anisotropic-params" data-ui-scope="advanced" hidden>
                     <span>&mu;<sub>y</sub>&prime;</span>
-                    <input id="customMuYRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                    <input id="customMuYRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="1.00" />
                   </label>
                 </div>
                 <div class="material-tensor-part material-tensor-imag" aria-label="Imaginary material components">
@@ -423,23 +482,23 @@
                   <span class="material-tensor-row">&epsilon;</span>
                   <label class="material-tensor-cell material-cell-eps-imag">
                     <span id="customEpsImagLabel">&epsilon;&Prime;</span>
-                    <input id="customEpsImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                    <input id="customEpsImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0005" />
                   </label>
                   <label class="material-tensor-cell material-cell-eps-y-imag brush-anisotropic-params" hidden>
                     <span>&epsilon;<sub>y</sub>&Prime;</span>
-                    <input id="customEpsYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                    <input id="customEpsYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0005" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
                   <label class="material-tensor-cell material-cell-mu-imag" data-ui-scope="advanced">
                     <span id="customMuImagLabel">&mu;&Prime;</span>
-                    <input id="customMuImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                    <input id="customMuImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <label class="material-tensor-cell material-cell-mu-y-imag brush-anisotropic-params" data-ui-scope="advanced" hidden>
                     <span>&mu;<sub>y</sub>&Prime;</span>
-                    <input id="customMuYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                    <input id="customMuYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                 </div>
-              </div>
+              </fieldset>
               <div class="modulation-panel gyrotropy-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">
                   <input id="gyrotropyEnabledInput" type="checkbox" />
@@ -447,7 +506,7 @@
                 </label>
                 <label class="gyrotropy-params">
                   <span><i>g</i><sub>&epsilon;</sub></span>
-                  <input id="gyrotropyGInput" type="number" min="-5" max="5" step="0.01" value="0.25" />
+                  <input id="gyrotropyGInput" type="number" inputmode="decimal" autocomplete="off" min="-5" max="5" step="0.01" value="0.25" />
                 </label>
               </div>
               <div class="modulation-panel bianisotropy-panel" data-ui-scope="advanced">
@@ -457,7 +516,7 @@
                 </label>
                 <label class="bianisotropy-params">
                   <span>&kappa;<sub>n</sub></span>
-                  <input id="bianisotropyKappaInput" type="number" min="-0.85" max="0.85" step="0.01" value="0.20" />
+                  <input id="bianisotropyKappaInput" type="number" inputmode="decimal" autocomplete="off" min="-0.85" max="0.85" step="0.01" value="0.20" />
                 </label>
               </div>
               <div class="modulation-panel conductivity-panel" data-ui-scope="advanced">
@@ -468,11 +527,11 @@
                 <div class="two-col material-params conductivity-params">
                   <label>
                     <span>&sigma;<sub>x</sub> norm.</span>
-                    <input id="conductivitySigmaInput" type="number" min="0" max="5" step="0.01" value="0.00" />
+                    <input id="conductivitySigmaInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="5" step="0.01" value="0.00" />
                   </label>
                   <label id="conductivitySigmaYControl" class="brush-anisotropic-params" hidden>
                     <span>&sigma;<sub>y</sub> norm.</span>
-                    <input id="conductivitySigmaYInput" type="number" min="0" max="5" step="0.01" value="0.00" />
+                    <input id="conductivitySigmaYInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="5" step="0.01" value="0.00" />
                   </label>
                 </div>
               </div>
@@ -483,7 +542,7 @@
                 </label>
                 <label class="saturable-gain-params">
                   <span><i>I</i><sub>sat,g</sub></span>
-                  <input id="gainSaturationInput" type="number" min="0.05" max="100" step="0.05" value="4.00" />
+                  <input id="gainSaturationInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="100" step="0.05" value="4.00" />
                 </label>
               </div>
               <output id="materialWarning" class="material-warning brush-material-warning" aria-live="polite"></output>
@@ -495,26 +554,26 @@
                 <div class="two-col material-params modulation-params">
                   <label>
                     <span><i>m</i></span>
-                    <input id="modulationDepthInput" type="number" min="0" max="0.95" step="0.05" value="0.20" />
+                    <input id="modulationDepthInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="0.95" step="0.05" value="0.20" />
                   </label>
                   <label>
                     <span><i>f</i><sub>m</sub></span>
-                    <input id="modulationFrequencyInput" type="number" min="-0.2" max="0.2" step="0.001" value="0.010" />
+                    <input id="modulationFrequencyInput" type="number" inputmode="decimal" autocomplete="off" min="-0.2" max="0.2" step="0.001" value="0.010" />
                   </label>
                 </div>
                 <div class="two-col material-params modulation-params">
                   <label>
                     <span>&Lambda;<sub>m</sub> / &lambda;<sub>0</sub></span>
-                    <input id="modulationPeriodInput" type="number" min="0.1" max="20" step="0.1" value="2.0" />
+                    <input id="modulationPeriodInput" type="number" inputmode="decimal" autocomplete="off" min="0.1" max="20" step="0.1" value="2.0" />
                   </label>
                   <label>
                     <span>&theta;<sub>m</sub></span>
-                    <input id="modulationAngleInput" type="number" min="0" max="360" step="5" value="0" />
+                    <input id="modulationAngleInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="360" step="5" value="0" />
                   </label>
                 </div>
                 <label>
                   <span>&phi;<sub>m</sub></span>
-                  <input id="modulationPhaseInput" type="number" min="-180" max="180" step="5" value="0" />
+                  <input id="modulationPhaseInput" type="number" inputmode="decimal" autocomplete="off" min="-180" max="180" step="5" value="0" />
                 </label>
               </div>
               <div class="modulation-panel nonlinear-panel" data-ui-scope="advanced">
@@ -525,11 +584,11 @@
                 <div class="two-col material-params nonlinear-params">
                   <label>
                     <span>&chi;<sup>(3)</sup></span>
-                    <input id="kerrChi3Input" type="number" min="-20" max="20" step="0.05" value="0.50" />
+                    <input id="kerrChi3Input" type="number" inputmode="decimal" autocomplete="off" min="-20" max="20" step="0.05" value="0.50" />
                   </label>
                   <label>
                     <span><i>I</i><sub>sat</sub></span>
-                    <input id="kerrSaturationInput" type="number" min="0.05" max="50" step="0.05" value="5.00" />
+                    <input id="kerrSaturationInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="50" step="0.05" value="5.00" />
                   </label>
                 </div>
               </div>
@@ -541,16 +600,16 @@
                 <div class="two-col material-params harmonic-params">
                   <label>
                     <span>&chi;<sup>(2)</sup></span>
-                    <input id="harmonicChi2Input" type="number" min="-2" max="2" step="0.01" value="0.08" />
+                    <input id="harmonicChi2Input" type="number" inputmode="decimal" autocomplete="off" min="-2" max="2" step="0.01" value="0.08" />
                   </label>
                   <label>
                     <span>&chi;<sup>(3)</sup><sub>H</sub></span>
-                    <input id="harmonicChi3Input" type="number" min="-2" max="2" step="0.01" value="0.00" />
+                    <input id="harmonicChi3Input" type="number" inputmode="decimal" autocomplete="off" min="-2" max="2" step="0.01" value="0.00" />
                   </label>
                 </div>
                 <label class="harmonic-params">
                   <span><i>I</i><sub>sat,H</sub></span>
-                  <input id="harmonicSaturationInput" type="number" min="0.05" max="50" step="0.05" value="6.00" />
+                  <input id="harmonicSaturationInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="50" step="0.05" value="6.00" />
                 </label>
               </div>
               <div class="modulation-panel phase-change-panel" data-ui-scope="advanced">
@@ -561,31 +620,31 @@
                 <div class="two-col material-params phase-change-params">
                   <label>
                     <span>&epsilon;<sub>on</sub>&prime;</span>
-                    <input id="phaseEpsOnInput" type="number" min="-30" max="30" step="0.05" value="9.00" />
+                    <input id="phaseEpsOnInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="9.00" />
                   </label>
                   <label>
                     <span>&epsilon;<sub>on</sub>&Prime;</span>
-                    <input id="phaseLossOnInput" type="number" min="-30" max="30" step="0.0005" value="0.0800" />
+                    <input id="phaseLossOnInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0800" />
                   </label>
                 </div>
                 <div class="two-col material-params phase-change-params">
                   <label>
                     <span><i>I</i><sub>on</sub></span>
-                    <input id="phaseThresholdOnInput" type="number" min="0" max="100" step="0.05" value="0.80" />
+                    <input id="phaseThresholdOnInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="100" step="0.05" value="0.80" />
                   </label>
                   <label>
                     <span><i>I</i><sub>off</sub></span>
-                    <input id="phaseThresholdOffInput" type="number" min="0" max="100" step="0.05" value="0.20" />
+                    <input id="phaseThresholdOffInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="100" step="0.05" value="0.20" />
                   </label>
                 </div>
                 <div class="two-col material-params phase-change-params">
                   <label>
                     <span>&tau;<sub>on</sub></span>
-                    <input id="phaseTauOnInput" type="number" min="1" max="1000" step="1" value="18" />
+                    <input id="phaseTauOnInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="1000" step="1" value="18" />
                   </label>
                   <label>
                     <span>&tau;<sub>off</sub></span>
-                    <input id="phaseTauOffInput" type="number" min="1" max="2000" step="1" value="180" />
+                    <input id="phaseTauOffInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="2000" step="1" value="180" />
                   </label>
                 </div>
               </div>
@@ -603,26 +662,26 @@
                 <div class="two-col material-params dispersion-params">
                   <label id="dispersionOmegaPControl">
                     <span>&omega;<sub>p</sub></span>
-                    <input id="dispersionOmegaPInput" type="number" min="0" max="1.2" step="0.005" value="0.28" />
+                    <input id="dispersionOmegaPInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="1.2" step="0.005" value="0.28" />
                   </label>
                   <label id="dispersionGammaControl">
                     <span>&gamma;</span>
-                    <input id="dispersionGammaInput" type="number" min="0" max="0.5" step="0.001" value="0.018" />
+                    <input id="dispersionGammaInput" type="number" inputmode="decimal" autocomplete="off" min="0" max="0.5" step="0.001" value="0.018" />
                   </label>
                 </div>
                 <div class="two-col material-params dispersion-params">
                   <label id="dispersionOmega0Control">
                     <span>&omega;<sub>0</sub></span>
-                    <input id="dispersionOmega0Input" type="number" min="0" max="1.2" step="0.005" value="0.15" />
+                    <input id="dispersionOmega0Input" type="number" inputmode="decimal" autocomplete="off" min="0" max="1.2" step="0.005" value="0.15" />
                   </label>
                   <label id="dispersionDeltaEpsControl">
                     <span>&Delta;&epsilon;</span>
-                    <input id="dispersionDeltaEpsInput" type="number" min="-20" max="20" step="0.05" value="2.00" />
+                    <input id="dispersionDeltaEpsInput" type="number" inputmode="decimal" autocomplete="off" min="-20" max="20" step="0.05" value="2.00" />
                   </label>
                 </div>
                 <label id="dispersionTauControl" class="dispersion-params">
                   <span>&tau;</span>
-                  <input id="dispersionTauInput" type="number" min="1" max="200" step="1" value="18" />
+                  <input id="dispersionTauInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="200" step="1" value="18" />
                 </label>
               </div>
               <div class="button-row">
@@ -630,11 +689,18 @@
                 <button id="brushMenuClearFieldsBtn" class="text-button" type="button">Clear field</button>
               </div>
             </div>
-            <div id="boundaryMenu" class="source-menu boundary-menu" role="dialog" aria-label="Boundary editor" hidden>
+            <div
+              id="boundaryMenu"
+              class="source-menu boundary-menu"
+              role="dialog"
+              aria-labelledby="boundaryMenuTitle"
+              aria-describedby="boundaryMenuHint"
+              hidden
+            >
               <div class="source-menu-header">
                 <div>
                   <p id="boundaryMenuHint" class="source-menu-hint">CPML region</p>
-                  <h2>Boundary</h2>
+                  <h2 id="boundaryMenuTitle">Boundary</h2>
                 </div>
                 <button id="boundaryMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close boundary editor">&times;</button>
               </div>
@@ -658,10 +724,11 @@
               <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
             <div class="control-panel-actions">
-              <div class="canvas-mode-toggle theme-toggle" role="group" aria-label="Color theme">
-                <button class="mode-toggle-button is-active" type="button" data-theme-choice="light" aria-pressed="true" title="Use light theme">Light</button>
-                <button class="mode-toggle-button" type="button" data-theme-choice="dark" aria-pressed="false" title="Use dark theme">Dark</button>
-              </div>
+              <fieldset class="canvas-mode-toggle theme-toggle" role="radiogroup" aria-label="Color theme">
+                <legend class="sr-only">Color theme</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-theme-choice="light" aria-checked="true" title="Use light theme">Light</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-theme-choice="dark" aria-checked="false" title="Use dark theme">Dark</button>
+              </fieldset>
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
           </div>
@@ -873,11 +940,23 @@
                   <span>Search</span>
                   <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
                 </label>
-                <div id="sceneFilterBar" class="scene-filter-bar" role="group" aria-label="Scene families"></div>
+                <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
                 <div class="scene-browser-meta" aria-live="polite">
                   <output id="sceneBrowserCount">1 scene in General</output>
                   <output id="sceneBrowserActive">Selected: Empty</output>
                 </div>
+                <template id="sceneCardTemplate">
+                  <button class="scene-card" type="button" data-scene-card="">
+                    <span class="scene-card-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <span class="scene-card-header">
+                      <span class="scene-card-number"></span>
+                      <span class="scene-card-title"></span>
+                    </span>
+                    <span class="scene-card-group"></span>
+                    <span class="scene-card-description"></span>
+                    <span class="scene-card-badges"></span>
+                  </button>
+                </template>
                 <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
               </div>
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
@@ -932,10 +1011,11 @@
               <h2>Run</h2>
               <div class="solver-row">
                 <span>Simulate</span>
-                <div class="canvas-mode-toggle solver-toggle" role="group" aria-label="Simulated field component">
-                  <button class="mode-toggle-button is-active" type="button" data-field-component="ez" aria-pressed="true" title="TMz: solve Ez, Hx, Hy"><i>E</i><sub>z</sub></button>
-                  <button class="mode-toggle-button" type="button" data-field-component="hz" aria-pressed="false" title="TEz: solve Hz, Ex, Ey"><i>H</i><sub>z</sub></button>
-                </div>
+                <fieldset class="canvas-mode-toggle solver-toggle" role="radiogroup" aria-label="Simulated field component">
+                  <legend class="sr-only">Simulated field component</legend>
+                  <button class="mode-toggle-button is-active" type="button" role="radio" data-field-component="ez" aria-checked="true" title="TMz: solve Ez, Hx, Hy"><i>E</i><sub>z</sub></button>
+                  <button class="mode-toggle-button" type="button" role="radio" data-field-component="hz" aria-checked="false" title="TEz: solve Hz, Ex, Ey"><i>H</i><sub>z</sub></button>
+                </fieldset>
               </div>
               <div class="control-row">
                 <span>Engine</span>
@@ -954,12 +1034,12 @@
               <label class="control-row">
                 <span>Speed</span>
                 <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
-                <output id="speedOutput">1</output>
+                <output id="speedOutput" for="speedInput">1</output>
               </label>
               <label class="control-row">
                 <span>Gain</span>
                 <input id="gainInput" type="range" min="20" max="260" step="5" value="100" />
-                <output id="gainOutput">1.00</output>
+                <output id="gainOutput" for="gainInput">1.00</output>
               </label>
               <label class="toggle-row">
                 <input id="autoScaleInput" type="checkbox" checked />
@@ -1001,29 +1081,32 @@
               <div class="visual-control-stack">
                 <div class="visual-control-row">
                   <span>Projection</span>
-                  <div class="canvas-mode-toggle projection-toggle" role="group" aria-label="Visual panel projection">
-                    <button class="mode-toggle-button is-active" type="button" data-view-projection="2d" aria-pressed="true" title="Show flat 2D map">2D</button>
-                    <button class="mode-toggle-button" type="button" data-view-projection="3d" aria-pressed="false" title="Show 3D surface">3D</button>
-                  </div>
+                  <fieldset class="canvas-mode-toggle projection-toggle" role="radiogroup" aria-label="Visual panel projection">
+                    <legend class="sr-only">Visual panel projection</legend>
+                    <button class="mode-toggle-button is-active" type="button" role="radio" data-view-projection="2d" aria-checked="true" title="Show flat 2D map">2D</button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-view-projection="3d" aria-checked="false" title="Show 3D surface">3D</button>
+                  </fieldset>
                 </div>
                 <div class="visual-control-row">
                   <span>Quantity</span>
-                  <div class="canvas-mode-toggle view-toggle" role="group" aria-label="Visual panel quantity">
-                    <button class="mode-toggle-button is-active" type="button" data-view-mode="field" aria-pressed="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
-                    <button class="mode-toggle-button" type="button" data-view-mode="poynting" aria-pressed="false" title="Show Poynting vector flux"><i>S</i></button>
-                    <button class="mode-toggle-button" type="button" data-view-mode="epsilon" aria-pressed="false" title="Show permittivity map">&epsilon;</button>
-                    <button class="mode-toggle-button" type="button" data-view-mode="mu" aria-pressed="false" title="Show permeability map">&mu;</button>
-                  </div>
+                  <fieldset class="canvas-mode-toggle view-toggle" role="radiogroup" aria-label="Visual panel quantity">
+                    <legend class="sr-only">Visual panel quantity</legend>
+                    <button class="mode-toggle-button is-active" type="button" role="radio" data-view-mode="field" aria-checked="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="poynting" aria-checked="false" title="Show Poynting vector flux"><i>S</i></button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="epsilon" aria-checked="false" title="Show permittivity map">&epsilon;</button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="mu" aria-checked="false" title="Show permeability map">&mu;</button>
+                  </fieldset>
                 </div>
                 <div class="visual-control-row visual-component-row">
                   <span>Component</span>
-                  <div class="canvas-mode-toggle field-display-toggle" role="group" aria-label="Visual panel field component">
-                    <button class="mode-toggle-button is-active" type="button" data-field-display="scalar" aria-pressed="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
-                    <button class="mode-toggle-button" type="button" data-field-display="transverseX" aria-pressed="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
-                    <button class="mode-toggle-button" type="button" data-field-display="transverseY" aria-pressed="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
-                    <button class="mode-toggle-button" type="button" data-field-display="electricMag" aria-pressed="false" title="Show electric-field magnitude">|<i>E</i>|</button>
-                    <button class="mode-toggle-button" type="button" data-field-display="magneticMag" aria-pressed="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
-                  </div>
+                  <fieldset class="canvas-mode-toggle field-display-toggle" role="radiogroup" aria-label="Visual panel field component">
+                    <legend class="sr-only">Visual panel field component</legend>
+                    <button class="mode-toggle-button is-active" type="button" role="radio" data-field-display="scalar" aria-checked="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseX" aria-checked="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseY" aria-checked="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="electricMag" aria-checked="false" title="Show electric-field magnitude">|<i>E</i>|</button>
+                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="magneticMag" aria-checked="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
+                  </fieldset>
                 </div>
                 <label class="toggle-row visual-quiver-row" title="Overlay vector arrows" data-field-quiver-control>
                   <input type="checkbox" data-field-quiver-input />
@@ -1033,12 +1116,13 @@
             </section>
 <section class="panel-section visual-overlays-section">
               <h2>Overlays</h2>
-              <div class="canvas-mode-toggle visual-profile-toggle visual-panel-profile" role="group" aria-label="Visual profile">
-                <button class="mode-toggle-button is-active" type="button" data-visual-profile="auto" aria-pressed="true" title="Choose a responsive visual profile">Auto</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="clean" aria-pressed="false" title="Minimal overlays">Clean</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="teaching" aria-pressed="false" title="Show teaching overlays">Teach</button>
-                <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
-              </div>
+              <fieldset class="canvas-mode-toggle visual-profile-toggle visual-panel-profile" role="radiogroup" aria-label="Visual profile">
+                <legend class="sr-only">Visual profile</legend>
+                <button class="mode-toggle-button is-active" type="button" role="radio" data-visual-profile="auto" aria-checked="true" title="Choose a responsive visual profile">Auto</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="clean" aria-checked="false" title="Minimal overlays">Clean</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="teaching" aria-checked="false" title="Show teaching overlays">Teach</button>
+                <button class="mode-toggle-button" type="button" role="radio" data-visual-profile="analysis" aria-checked="false" title="Show analysis overlays">Analysis</button>
+              </fieldset>
               <div class="visual-layer-grid" aria-label="Canvas overlay layers">
                 <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show CPML and reflective boundary overlays">
                   <input type="checkbox" data-visual-layer="boundaries" checked />
@@ -1208,22 +1292,22 @@
                     </label>
                     <label>
                       <span>points</span>
-                      <input id="sweepSamplesInput" type="number" min="3" max="41" step="1" value="9" />
+                      <input id="sweepSamplesInput" type="number" inputmode="decimal" autocomplete="off" min="3" max="41" step="1" value="9" />
                     </label>
                   </div>
                   <div class="two-col">
                     <label>
                       <span>start</span>
-                      <input id="sweepStartInput" type="number" min="-80" max="80" step="1" value="0" />
+                      <input id="sweepStartInput" type="number" inputmode="decimal" autocomplete="off" min="-80" max="80" step="1" value="0" />
                     </label>
                     <label>
                       <span>end</span>
-                      <input id="sweepEndInput" type="number" min="-80" max="80" step="1" value="70" />
+                      <input id="sweepEndInput" type="number" inputmode="decimal" autocomplete="off" min="-80" max="80" step="1" value="70" />
                     </label>
                   </div>
                   <label>
                     <span>steps / point</span>
-                    <input id="sweepStepsInput" type="number" min="120" max="4000" step="60" value="720" />
+                    <input id="sweepStepsInput" type="number" inputmode="decimal" autocomplete="off" min="120" max="4000" step="60" value="720" />
                   </label>
                   <label class="toggle-row sweep-memory-row">
                     <input id="sweepBidirectionalInput" type="checkbox" />
@@ -1304,11 +1388,11 @@
               <div class="two-col">
                 <label>
                   <span>λ<sub>0</sub> (µm)</span>
-                  <input id="wavelengthInput" type="number" min="0.1" max="10" step="0.05" value="1.00" />
+                  <input id="wavelengthInput" type="number" inputmode="decimal" autocomplete="off" min="0.1" max="10" step="0.05" value="1.00" />
                 </label>
                 <label>
                   <span>cells / λ<sub>0</sub></span>
-                  <input id="cellsPerWavelengthInput" type="number" min="8" max="80" step="1" value="20" />
+                  <input id="cellsPerWavelengthInput" type="number" inputmode="decimal" autocomplete="off" min="8" max="80" step="1" value="20" />
                 </label>
               </div>
             </section>
@@ -1318,11 +1402,11 @@
                 <div class="two-col">
                   <label>
                     <span><i>N</i><sub>x</sub> cells</span>
-                    <input id="gridNxInput" type="number" min="80" max="1200" step="10" value="360" />
+                    <input id="gridNxInput" type="number" inputmode="decimal" autocomplete="off" min="80" max="1200" step="10" value="360" />
                   </label>
                   <label>
                     <span><i>N</i><sub>y</sub> cells</span>
-                    <input id="gridNyInput" type="number" min="60" max="800" step="10" value="240" />
+                    <input id="gridNyInput" type="number" inputmode="decimal" autocomplete="off" min="60" max="800" step="10" value="240" />
                   </label>
                 </div>
               </div>

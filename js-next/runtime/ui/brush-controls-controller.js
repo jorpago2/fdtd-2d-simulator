@@ -75,7 +75,11 @@
     function updateBrushControls() {
       normalizeBrushGeometryState();
       document.querySelectorAll("[data-brush]").forEach((button) => {
-        button.classList.toggle("is-active", button.dataset.brush === state.brush);
+        const active = button.dataset.brush === state.brush;
+        button.classList.toggle("is-active", active);
+        if (button.getAttribute("role") === "radio") {
+          button.setAttribute("aria-checked", String(active));
+        }
       });
       const editsRegion = contextMenuState.brushMenuMode === "region" && Boolean(materialSelection.region);
       const isCustomBrush = state.brush === "custom";

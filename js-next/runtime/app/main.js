@@ -1815,6 +1815,7 @@ shellControlBindingsModule.bindShellControls({
   closeCanvasContextMenuAndRender,
   handleCanvasContextAdd,
 });
+uiCore.bindRadioGroupKeyboardNavigation(document);
 
 sourceMonitorControlBindingsModule.bindSourceMonitorControls({
   el,
