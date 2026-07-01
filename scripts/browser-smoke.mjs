@@ -301,6 +301,76 @@ async function runControlNavigationSmoke(page) {
   };
 }
 
+async function runMobileSimulatePanelScrollSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  const localErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") localErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    localErrors.push(error.message);
+  });
+
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    await page.locator("#controlDrawerToggle").click();
+    await page.locator('[data-mobile-layer="simulation"]:visible').click();
+    await page.waitForTimeout(120);
+    const status = await page.evaluate(() => {
+      const panel = document.getElementById("controlPanel");
+      const panels = document.querySelector(".control-tab-panels");
+      const header = document.querySelector(".control-panel-header");
+      const nav = document.querySelector(".mobile-layer-nav");
+      const run = document.querySelector("#tab-simulation .run-section");
+      const rect = (node) => {
+        if (!node) return null;
+        const bounds = node.getBoundingClientRect();
+        return {
+          top: Math.round(bounds.top),
+          bottom: Math.round(bounds.bottom),
+          left: Math.round(bounds.left),
+          right: Math.round(bounds.right),
+          width: Math.round(bounds.width),
+          height: Math.round(bounds.height),
+        };
+      };
+      return {
+        panelScrollTop: panel?.scrollTop ?? null,
+        panelsScrollTop: panels?.scrollTop ?? null,
+        header: rect(header),
+        nav: rect(nav),
+        run: rect(run),
+        activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        viewportHeight: window.innerHeight,
+      };
+    });
+    const failures = [...localErrors];
+    if (status.activePanel !== "tab-simulation") failures.push("mobile Simulate layer did not activate the simulation panel");
+    if (Number(status.panelScrollTop) > 1) failures.push(`control panel scrolled out of frame (${status.panelScrollTop})`);
+    if (!status.header || status.header.top < 0 || status.header.bottom <= 0) failures.push("control panel header is not visible after tapping Simulate");
+    if (!status.nav || status.nav.top < 0 || status.nav.bottom <= 0) failures.push("mobile layer navigation is not visible after tapping Simulate");
+    if (!status.run || !status.nav || status.run.top < status.nav.bottom - 1) failures.push("Run controls overlap or precede the mobile layer navigation");
+    if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
+    return {
+      id: "mobile_simulate_panel_scroll",
+      preset: "current",
+      priority: "P1",
+      ...status,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
@@ -862,6 +932,7 @@ async function main() {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
+      report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
       report.cases.push(await runSourceDependentParamsSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));

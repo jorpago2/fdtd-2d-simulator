@@ -66,12 +66,31 @@
     });
   }
 
+  function nearestScrollableAncestor(element, stopAt) {
+    let parent = element?.parentElement;
+    while (parent && parent !== stopAt) {
+      const style = global.getComputedStyle?.(parent);
+      const overflowY = style?.overflowY || "";
+      if ((overflowY === "auto" || overflowY === "scroll") && parent.scrollHeight > parent.clientHeight) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  }
+
   function scrollChildIntoView(container, selector) {
     if (!container || !selector) return;
     const schedule = global.requestAnimationFrame || ((callback) => global.setTimeout(callback, 0));
     schedule(() => {
       const section = container.querySelector(selector);
-      section?.scrollIntoView?.({ block: "start", inline: "nearest" });
+      if (!section) return;
+      container.scrollTop = 0;
+      const scrollParent = nearestScrollableAncestor(section, container);
+      if (!scrollParent) return;
+      const sectionRect = section.getBoundingClientRect();
+      const parentRect = scrollParent.getBoundingClientRect();
+      scrollParent.scrollTop += sectionRect.top - parentRect.top;
     });
   }
 
