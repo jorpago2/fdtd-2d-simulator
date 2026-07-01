@@ -1348,8 +1348,7 @@ details[open] > summary::after {
 
   #tab-scenes .scene-select-fallback,
   #tab-scenes .scene-browser,
-  #tab-scenes .scene-note,
-  #tab-scenes #slabThicknessControl {
+  #tab-scenes .scene-note {
     grid-column: 1;
   }
 
