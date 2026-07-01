@@ -390,45 +390,55 @@
                 <input id="customAnisotropyInput" type="checkbox" />
                 <span>Anisotropic ε, μ</span>
               </label>
-              <div class="two-col material-params brush-material-params brush-isotropic-params">
-                <label>
-                  <span id="customEpsRealLabel">ε′</span>
-                  <input id="customEpsRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
-                </label>
-                <label>
-                  <span id="customEpsImagLabel">ε″</span>
-                  <input id="customEpsImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
-                </label>
-              </div>
-              <div class="two-col material-params brush-material-params brush-anisotropic-params" hidden>
-                <label>
-                  <span>ε<sub>y</sub>′</span>
-                  <input id="customEpsYRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
-                </label>
-                <label>
-                  <span>ε<sub>y</sub>″</span>
-                  <input id="customEpsYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
-                </label>
-              </div>
-              <div class="two-col material-params brush-material-params" data-ui-scope="advanced">
-                <label>
-                  <span id="customMuRealLabel">μ′</span>
-                  <input id="customMuRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
-                </label>
-                <label>
-                  <span id="customMuImagLabel">μ″</span>
-                  <input id="customMuImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
-                </label>
-              </div>
-              <div class="two-col material-params brush-material-params brush-anisotropic-params" hidden>
-                <label>
-                  <span>μ<sub>y</sub>′</span>
-                  <input id="customMuYRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
-                </label>
-                <label>
-                  <span>μ<sub>y</sub>″</span>
-                  <input id="customMuYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
-                </label>
+              <div id="brushMaterialGrid" class="material-tensor-editor brush-material-params" aria-label="Custom epsilon and mu">
+                <div class="material-tensor-part material-tensor-real" aria-label="Real material components">
+                  <span class="material-tensor-title">Real</span>
+                  <span class="material-tensor-axis" aria-hidden="true"></span>
+                  <span class="material-tensor-axis">x</span>
+                  <span class="material-tensor-axis brush-anisotropic-params" hidden>y</span>
+                  <span class="material-tensor-row">&epsilon;</span>
+                  <label class="material-tensor-cell material-cell-eps-real">
+                    <span id="customEpsRealLabel">&epsilon;&prime;</span>
+                    <input id="customEpsRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                  </label>
+                  <label class="material-tensor-cell material-cell-eps-y-real brush-anisotropic-params" hidden>
+                    <span>&epsilon;<sub>y</sub>&prime;</span>
+                    <input id="customEpsYRealInput" type="number" min="-30" max="30" step="0.05" value="4.00" />
+                  </label>
+                  <span class="material-tensor-row">&mu;</span>
+                  <label class="material-tensor-cell material-cell-mu-real" data-ui-scope="advanced">
+                    <span id="customMuRealLabel">&mu;&prime;</span>
+                    <input id="customMuRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                  </label>
+                  <label class="material-tensor-cell material-cell-mu-y-real brush-anisotropic-params" data-ui-scope="advanced" hidden>
+                    <span>&mu;<sub>y</sub>&prime;</span>
+                    <input id="customMuYRealInput" type="number" min="-30" max="30" step="0.05" value="1.00" />
+                  </label>
+                </div>
+                <div class="material-tensor-part material-tensor-imag" aria-label="Imaginary material components">
+                  <span class="material-tensor-title">Imag.</span>
+                  <span class="material-tensor-axis" aria-hidden="true"></span>
+                  <span class="material-tensor-axis">x</span>
+                  <span class="material-tensor-axis brush-anisotropic-params" hidden>y</span>
+                  <span class="material-tensor-row">&epsilon;</span>
+                  <label class="material-tensor-cell material-cell-eps-imag">
+                    <span id="customEpsImagLabel">&epsilon;&Prime;</span>
+                    <input id="customEpsImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                  </label>
+                  <label class="material-tensor-cell material-cell-eps-y-imag brush-anisotropic-params" hidden>
+                    <span>&epsilon;<sub>y</sub>&Prime;</span>
+                    <input id="customEpsYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0005" />
+                  </label>
+                  <span class="material-tensor-row">&mu;</span>
+                  <label class="material-tensor-cell material-cell-mu-imag" data-ui-scope="advanced">
+                    <span id="customMuImagLabel">&mu;&Prime;</span>
+                    <input id="customMuImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                  </label>
+                  <label class="material-tensor-cell material-cell-mu-y-imag brush-anisotropic-params" data-ui-scope="advanced" hidden>
+                    <span>&mu;<sub>y</sub>&Prime;</span>
+                    <input id="customMuYImagInput" type="number" min="-30" max="30" step="0.0005" value="0.0000" />
+                  </label>
+                </div>
               </div>
               <div class="modulation-panel gyrotropy-panel" data-ui-scope="advanced">
                 <label class="toggle-row modulation-toggle">

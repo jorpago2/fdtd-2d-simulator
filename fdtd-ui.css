@@ -758,6 +758,110 @@ textarea {
   pointer-events: none;
 }
 
+.material-tensor-editor {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.material-tensor-editor:not(.is-anisotropic) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-tensor-part {
+  display: contents;
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-tensor-title,
+.material-tensor-editor:not(.is-anisotropic) .material-tensor-axis,
+.material-tensor-editor:not(.is-anisotropic) .material-tensor-row {
+  display: none;
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-cell-eps-real {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-cell-eps-imag {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-cell-mu-real {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.material-tensor-editor:not(.is-anisotropic) .material-cell-mu-imag {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.material-tensor-editor.is-anisotropic {
+  grid-template-columns: repeat(auto-fit, minmax(min(176px, 100%), 1fr));
+}
+
+.material-tensor-part {
+  min-width: 0;
+}
+
+.material-tensor-editor.is-anisotropic .material-tensor-part {
+  display: grid;
+  grid-template-columns: minmax(22px, max-content) repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--panel-2);
+}
+
+.material-tensor-title {
+  grid-column: 1 / -1;
+  color: var(--accent-strong);
+  font-size: 0.66rem;
+  font-weight: 850;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.material-tensor-axis,
+.material-tensor-row {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+}
+
+.material-tensor-row {
+  text-align: right;
+}
+
+.material-tensor-cell {
+  position: relative;
+  min-width: 0;
+  gap: 4px;
+}
+
+.material-tensor-cell input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 8px;
+  font-size: 0.86rem;
+}
+
+.material-tensor-editor.is-anisotropic .material-tensor-cell > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* 06. Control drawer shell and navigation */
 
 .control-drawer-backdrop {

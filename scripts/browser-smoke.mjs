@@ -277,6 +277,12 @@ async function runBrushDependentParamsSmoke(page) {
       Array.from(document.querySelectorAll(selector)).every((control) => control.hidden && !isRendered(control));
     const allVisible = (selector) =>
       Array.from(document.querySelectorAll(selector)).every((control) => !control.hidden && isRendered(control));
+    const visibleMaterialInputs = () =>
+      Array.from(document.querySelectorAll("#brushMaterialGrid input")).filter(isRendered);
+    const visibleInputGridShape = (inputs) => ({
+      columns: new Set(inputs.map((input) => Math.round(input.getBoundingClientRect().left / 4))).size,
+      rows: new Set(inputs.map((input) => Math.round(input.getBoundingClientRect().top / 4))).size,
+    });
 
     state.brush = "custom";
     Object.assign(state, {
@@ -299,6 +305,13 @@ async function runBrushDependentParamsSmoke(page) {
     const dispersionHiddenWhenNone = allHidden(".dispersion-params");
     const materialWarning = document.getElementById("materialWarning");
     const emptyWarningHidden = materialWarning?.hidden === true && !isRendered(materialWarning);
+    const isotropicMaterialInputs = visibleMaterialInputs();
+    const isotropicInputShape = visibleInputGridShape(isotropicMaterialInputs);
+    const isotropicMaterialGrid =
+      document.getElementById("brushMaterialGrid")?.classList.contains("is-anisotropic") === false &&
+      isotropicMaterialInputs.length === 4 &&
+      isotropicInputShape.columns === 2 &&
+      isotropicInputShape.rows === 2;
 
     Object.assign(state, {
       customAnisotropic: true,
@@ -315,6 +328,13 @@ async function runBrushDependentParamsSmoke(page) {
     const conductivityVisibleWhenOn = allVisible(".conductivity-params");
     const conductivityYControl = document.getElementById("conductivitySigmaYControl");
     const conductivityYVisibleWhenAnisotropic = conductivityYControl?.hidden === false && isRendered(conductivityYControl);
+    const anisotropicMaterialInputs = visibleMaterialInputs();
+    const anisotropicMaterialGrid =
+      document.getElementById("brushMaterialGrid")?.classList.contains("is-anisotropic") === true &&
+      anisotropicMaterialInputs.length === 8 &&
+      Array.from(document.querySelectorAll(".material-tensor-part")).filter(isRendered).length === 2 &&
+      Array.from(document.querySelectorAll(".material-tensor-real input")).filter(isRendered).length === 4 &&
+      Array.from(document.querySelectorAll(".material-tensor-imag input")).filter(isRendered).length === 4;
     const lorentzFieldsVisible =
       document.getElementById("dispersionGammaControl")?.hidden === false &&
       isRendered(document.getElementById("dispersionGammaControl")) &&
@@ -337,11 +357,13 @@ async function runBrushDependentParamsSmoke(page) {
       modulationPhaseHiddenWhenOff,
       dispersionHiddenWhenNone,
       emptyWarningHidden,
+      isotropicMaterialGrid,
       gyrotropyVisibleWhenOn,
       modulationVisibleWhenOn,
       modulationPhaseVisibleWhenOn,
       conductivityVisibleWhenOn,
       conductivityYVisibleWhenAnisotropic,
+      anisotropicMaterialGrid,
       lorentzFieldsVisible,
       unrelatedDispersionFieldsHidden,
       hiddenWhenNonCustom,
@@ -352,6 +374,7 @@ async function runBrushDependentParamsSmoke(page) {
   if (!status.modulationPhaseHiddenWhenOff) failures.push("modulation phase remains visible when modulation is disabled");
   if (!status.dispersionHiddenWhenNone) failures.push("dispersion parameter rows remain visible for the None model");
   if (!status.emptyWarningHidden) failures.push("empty material warning output remains visible");
+  if (!status.isotropicMaterialGrid) failures.push("isotropic epsilon/mu controls are not arranged as a 2x2 grid");
   if (!status.gyrotropyVisibleWhenOn) failures.push("gyrotropy parameters do not appear when gyrotropy is enabled");
   if (!status.modulationVisibleWhenOn || !status.modulationPhaseVisibleWhenOn) {
     failures.push("modulation parameters do not appear when modulation is enabled");
@@ -359,6 +382,7 @@ async function runBrushDependentParamsSmoke(page) {
   if (!status.conductivityVisibleWhenOn || !status.conductivityYVisibleWhenAnisotropic) {
     failures.push("conductivity parameters do not appear for an enabled anisotropic material");
   }
+  if (!status.anisotropicMaterialGrid) failures.push("anisotropic epsilon/mu controls are not arranged as real/imag matrices");
   if (!status.lorentzFieldsVisible || !status.unrelatedDispersionFieldsHidden) {
     failures.push("Lorentz dispersion does not show exactly its expected parameter fields");
   }

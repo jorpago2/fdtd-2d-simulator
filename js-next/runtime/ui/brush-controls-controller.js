@@ -111,6 +111,7 @@
       setControlDisabled(el.geometryRadiusControl, el.geometryRadiusInput, !geometryUsesRadius() || editsRegion);
       setControlDisabled(el.geometryInnerRadiusControl, el.geometryInnerRadiusInput, !geometryUsesInnerRadius() || editsRegion);
       setControlDisabled(el.customAnisotropyInput?.closest("label"), el.customAnisotropyInput, !isCustomBrush);
+      el.brushMaterialGrid?.classList.toggle("is-anisotropic", isCustomBrush && state.customAnisotropic);
       document.querySelectorAll(".brush-material-params").forEach((control) => {
         setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush);
       });

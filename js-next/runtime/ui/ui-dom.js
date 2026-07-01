@@ -160,6 +160,7 @@
       wavelengthInput: documentRef.getElementById("wavelengthInput"),
       cellsPerWavelengthInput: documentRef.getElementById("cellsPerWavelengthInput"),
       customAnisotropyInput: documentRef.getElementById("customAnisotropyInput"),
+      brushMaterialGrid: documentRef.getElementById("brushMaterialGrid"),
       customEpsRealLabel: documentRef.getElementById("customEpsRealLabel"),
       customEpsImagLabel: documentRef.getElementById("customEpsImagLabel"),
       customMuRealLabel: documentRef.getElementById("customMuRealLabel"),
