@@ -54,6 +54,11 @@ static inline float clampf(float value, float low, float high) {
   return minf(maxf(value, low), high);
 }
 
+static inline bool nearly_equal(float left, float right) {
+  const float scale = maxf(1.0f, maxf(absf(left), absf(right)));
+  return absf(left - right) <= 1.0e-6f * scale;
+}
+
 static inline i32 cell_id(i32 x, i32 y, i32 nx) {
   return x + y * nx;
 }
@@ -136,6 +141,64 @@ static inline void zero_te_cell(float* hz, float* hzx, float* hzy, float* ex, fl
   hzy[i] = 0.0f;
   ex[i] = 0.0f;
   ey[i] = 0.0f;
+}
+
+static inline void rebalance_tm_split_storage(
+  i32 n,
+  float* ez,
+  float* ezx,
+  float* ezy,
+  float* eps,
+  float* loss,
+  float* epsY,
+  float* lossY,
+  float* conductivity,
+  float* conductivityY,
+  u8* material
+) {
+  for (i32 i = 0; i < n; i += 1) {
+    if (material[i] == 2) {
+      zero_tm_cell(ez, ezx, ezy, i);
+      continue;
+    }
+    if (
+      !nearly_equal(eps[i], epsY[i]) ||
+      !nearly_equal(loss[i], lossY[i]) ||
+      !nearly_equal(conductivity[i], conductivityY[i])
+    ) {
+      continue;
+    }
+    const float value = ez[i];
+    const float half = 0.5f * value;
+    ezx[i] = half;
+    ezy[i] = value - half;
+  }
+}
+
+static inline void rebalance_te_split_storage(
+  i32 n,
+  float* hz,
+  float* hzx,
+  float* hzy,
+  float* ex,
+  float* ey,
+  float* mu,
+  float* muLoss,
+  float* muY,
+  float* muLossY,
+  u8* material
+) {
+  for (i32 i = 0; i < n; i += 1) {
+    if (material[i] == 2) {
+      zero_te_cell(hz, hzx, hzy, ex, ey, i);
+      continue;
+    }
+    if (!nearly_equal(mu[i], muY[i]) || !nearly_equal(muLoss[i], muLossY[i])) continue;
+    const float value = hz[i];
+    const float half = 0.5f * value;
+    hzx[i] = half;
+    hzy[i] = value - half;
+  }
 }
 
 struct TfsfIncident {
@@ -643,6 +706,7 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* cpmlPsiEzX = f32(cpmlPsiEzXOffset);
   float* cpmlPsiEzY = f32(cpmlPsiEzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
+  const i32 n = nx * ny;
 
   if (runtimeFlags & STEP_KERR) {
     apply_kerr_response(nx, ny, 0, kerrChi3, kerrSaturation, ez, hx, hy, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
@@ -726,6 +790,8 @@ extern "C" __attribute__((export_name("step"))) void step(
       gainSaturation
     );
   }
+
+  rebalance_tm_split_storage(n, ez, ezx, ezy, eps, loss, epsY, lossY, conductivity, conductivityY, material);
 }
 
 extern "C" __attribute__((export_name("step_hz"))) void step_hz(
@@ -824,6 +890,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* cpmlPsiHzX = f32(cpmlPsiHzXOffset);
   float* cpmlPsiHzY = f32(cpmlPsiHzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
+  const i32 n = nx * ny;
 
   if (runtimeFlags & STEP_KERR) {
     apply_kerr_response(nx, ny, 1, kerrChi3, kerrSaturation, hz, ex, ey, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
@@ -951,4 +1018,6 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   if (tfsfSourceCount > 0) {
     apply_tfsf_te_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hz, hzx, hzy, mu, muLoss, muY, muLossY, material);
   }
+
+  rebalance_te_split_storage(n, hz, hzx, hzy, ex, ey, mu, muLoss, muY, muLossY, material);
 }

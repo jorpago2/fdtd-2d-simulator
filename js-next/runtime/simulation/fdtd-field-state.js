@@ -1,6 +1,31 @@
 (function initFdtdFieldState() {
   "use strict";
 
+  function valuesNearlyEqual(left, right) {
+    const scale = Math.max(1, Math.abs(left), Math.abs(right));
+    return Math.abs(left - right) <= 1e-6 * scale;
+  }
+
+  function rebalanceSplitPair(totalField, splitX, splitY, previousSplitX = null, previousSplitY = null, shouldRebalance = null) {
+    if (!totalField || !splitX || !splitY) return;
+    const length = Math.min(totalField.length, splitX.length, splitY.length);
+    for (let i = 0; i < length; i += 1) {
+      if (shouldRebalance && !shouldRebalance(i)) continue;
+      const value = totalField[i];
+      if (!Number.isFinite(value)) {
+        totalField[i] = 0;
+        splitX[i] = 0;
+        splitY[i] = 0;
+      } else {
+        const half = value * 0.5;
+        splitX[i] = half;
+        splitY[i] = value - half;
+      }
+      if (previousSplitX && i < previousSplitX.length) previousSplitX[i] = splitX[i];
+      if (previousSplitY && i < previousSplitY.length) previousSplitY[i] = splitY[i];
+    }
+  }
+
   Object.assign(FDTDSim.prototype, {
     resetFields() {
       this.ez.fill(0);
@@ -52,6 +77,43 @@
       this.fieldLog10Scale = 0;
       this.lastRenormalized = false;
       this.lastDiverged = false;
+    },
+
+    splitScalarStorageIsIsotropic(i) {
+      if (this.material?.[i] === 2) return true;
+      if (this.bianisotropicMaterial?.[i]) return false;
+      if (state.fieldComponent === "hz") {
+        return valuesNearlyEqual(this.mu[i], this.muY[i]) && valuesNearlyEqual(this.muLoss[i], this.muLossY[i]);
+      }
+      return (
+        valuesNearlyEqual(this.eps[i], this.epsY[i]) &&
+        valuesNearlyEqual(this.loss[i], this.lossY[i]) &&
+        valuesNearlyEqual(this.conductivity[i], this.conductivityY[i])
+      );
+    },
+
+    reconcileSplitScalarState(options = {}) {
+      const shouldRebalance = options.isotropicOnly ? (i) => this.splitScalarStorageIsIsotropic(i) : null;
+      rebalanceSplitPair(this.ez, this.ezx, this.ezy, this.bianisotropyPrevSplitX, this.bianisotropyPrevSplitY, shouldRebalance);
+      if (this.dualEz && this.dualEzx && this.dualEzy) {
+        rebalanceSplitPair(
+          this.dualEz,
+          this.dualEzx,
+          this.dualEzy,
+          this.bianisotropyPrevDualEzx,
+          this.bianisotropyPrevDualEzy,
+          shouldRebalance,
+        );
+      }
+    },
+
+    stabilizeAfterSourceMutation() {
+      this.reconcileSplitScalarState({ isotropicOnly: true });
+      this.resetCpmlMemory?.();
+      this.liveRenderScaleCache = null;
+      this.lastRenormalized = false;
+      this.lastDiverged = false;
+      this.resetDiagnostics();
     },
 
     setFieldLog10Scale(value) {

@@ -46,6 +46,9 @@
     }
 
     function commitSourceMutation(options = {}) {
+      if (options.stabilizeFields !== false) {
+        sim.stabilizeAfterSourceMutation?.();
+      }
       commit({
         dirty: options.dirty ?? true,
         disableResponsiveGrid: options.disableResponsiveGrid ?? true,

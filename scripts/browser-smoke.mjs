@@ -221,6 +221,90 @@ async function runReproducibilitySmoke(page) {
   };
 }
 
+async function splitStorageSnapshot(page) {
+  return page.evaluate(() => {
+    const maxAbs = (array) => {
+      let max = 0;
+      let nonFinite = 0;
+      for (let i = 0; i < array.length; i += 1) {
+        const value = array[i];
+        if (!Number.isFinite(value)) {
+          nonFinite += 1;
+          continue;
+        }
+        max = Math.max(max, Math.abs(value));
+      }
+      return { max, nonFinite };
+    };
+    return {
+      time: sim.time,
+      sourceCount: state.sources.length,
+      engine: sim.engineLabel(),
+      diverged: Boolean(sim.lastDiverged),
+      renormalizedCount: sim.renormalizedCount,
+      scalar: maxAbs(sim.ez),
+      splitX: maxAbs(sim.ezx),
+      splitY: maxAbs(sim.ezy),
+      transverseX: maxAbs(sim.hx),
+      transverseY: maxAbs(sim.hy),
+    };
+  });
+}
+
+async function runSourceMutationStability(page) {
+  await selectPreset(page, "poyntingPlaneWave");
+  await page.evaluate((steps) => {
+    for (let i = 0; i < steps; i += 1) sim.step();
+    sim.measure();
+  }, 480);
+  const beforeDelete = await splitStorageSnapshot(page);
+  await page.evaluate(() => {
+    const sourceId = state.sources[0]?.id;
+    if (typeof deleteSource === "function" && sourceId != null) deleteSource(sourceId);
+    else state.sources.splice(0, state.sources.length);
+    simulationEffects.commitSourceMutation({ render: false });
+  });
+  const afterDelete = await splitStorageSnapshot(page);
+  await page.evaluate((steps) => {
+    for (let i = 0; i < steps; i += 1) sim.step();
+    sim.measure();
+  }, 480);
+  const afterRun = await splitStorageSnapshot(page);
+  const failures = [];
+  const snapshots = [
+    ["before delete", beforeDelete],
+    ["after delete", afterDelete],
+    ["after run", afterRun],
+  ];
+  for (const [label, snapshot] of snapshots) {
+    const nonFinite =
+      snapshot.scalar.nonFinite +
+      snapshot.splitX.nonFinite +
+      snapshot.splitY.nonFinite +
+      snapshot.transverseX.nonFinite +
+      snapshot.transverseY.nonFinite;
+    if (nonFinite > 0) failures.push(`${label} contains ${nonFinite} non-finite field values`);
+    if (snapshot.diverged) failures.push(`${label} reports divergence`);
+    if (snapshot.renormalizedCount > 0) failures.push(`${label} unexpectedly renormalized fields`);
+    const splitMax = Math.max(snapshot.splitX.max, snapshot.splitY.max);
+    const splitLimit = Math.max(1e-6, 0.75 * snapshot.scalar.max);
+    if (splitMax > splitLimit) failures.push(`${label} split scalar storage drifted (${splitMax} > ${splitLimit})`);
+  }
+  if (afterDelete.sourceCount !== 0 || afterRun.sourceCount !== 0) failures.push("source was not removed from the simulation state");
+  if (afterRun.time <= beforeDelete.time) failures.push("simulation did not advance after source deletion");
+  return {
+    id: "source_mutation_split_stability",
+    preset: "poyntingPlaneWave",
+    priority: "P0",
+    steps: 960,
+    beforeDelete,
+    afterDelete,
+    afterRun,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function main() {
   const { chromium } = await importPlaywright();
   const server = await startStaticServer();
@@ -240,6 +324,9 @@ async function main() {
     await page.goto(url, { waitUntil: "networkidle" });
     for (const testCase of smokeCases) {
       report.cases.push(await runSmokeCase(page, testCase));
+    }
+    if (mode === "physics") {
+      report.cases.push(await runSourceMutationStability(page));
     }
     if (mode === "smoke") {
       report.cases.push(await runReproducibilitySmoke(page));

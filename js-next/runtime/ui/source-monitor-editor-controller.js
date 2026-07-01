@@ -192,10 +192,19 @@
       if (componentChanged) {
         sim.resetFields();
       }
-      simulationEffects.commit({
-        controls: true,
-        render: contextMenuState.sourceMenuMode === "edit",
-      });
+      if (contextMenuState.sourceMenuMode === "edit") {
+        simulationEffects.commitSourceMutation({
+          dirty: false,
+          disableResponsiveGrid: false,
+          controls: true,
+          render: true,
+        });
+      } else {
+        simulationEffects.commit({
+          controls: true,
+          render: false,
+        });
+      }
     }
     
     function populateMonitorEditor(monitor) {
