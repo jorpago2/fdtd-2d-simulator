@@ -48,6 +48,30 @@
       return materialEditorModel.geometryUsesInnerRadius(shape);
     }
 
+    function controlInputs(control) {
+      return Array.from(control?.querySelectorAll?.("input, select, textarea") || []);
+    }
+
+    function syncDependentControl(control, visible) {
+      if (!control) return;
+      control.hidden = !visible;
+      setControlDisabled(control, controlInputs(control), !visible);
+    }
+
+    function syncDependentControls(selector, visible) {
+      document.querySelectorAll(selector).forEach((control) => {
+        syncDependentControl(control, visible);
+      });
+    }
+
+    function syncChildControlGroupVisibility(control) {
+      const childControls = Array.from(control?.children || []).filter((child) => child.matches?.("label"));
+      if (childControls.length === 0) return;
+      const visible = childControls.some((child) => !child.hidden);
+      control.hidden = !visible;
+      setControlDisabled(control, [], !visible);
+    }
+
     function updateBrushControls() {
       normalizeBrushGeometryState();
       document.querySelectorAll("[data-brush]").forEach((button) => {
@@ -87,72 +111,42 @@
       setControlDisabled(el.geometryRadiusControl, el.geometryRadiusInput, !geometryUsesRadius() || editsRegion);
       setControlDisabled(el.geometryInnerRadiusControl, el.geometryInnerRadiusInput, !geometryUsesInnerRadius() || editsRegion);
       setControlDisabled(el.customAnisotropyInput?.closest("label"), el.customAnisotropyInput, !isCustomBrush);
-      document.querySelectorAll(".brush-anisotropic-params").forEach((control) => {
-        control.hidden = !state.customAnisotropic;
-      });
       document.querySelectorAll(".brush-material-params").forEach((control) => {
         setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush);
       });
+      syncDependentControls(".brush-anisotropic-params", isCustomBrush && state.customAnisotropic);
       setControlDisabled(el.gyrotropyEnabledInput?.closest("label"), el.gyrotropyEnabledInput, !isCustomBrush);
-      document.querySelectorAll(".gyrotropy-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialGyrotropyEnabled);
-      });
+      syncDependentControls(".gyrotropy-params", isCustomBrush && state.materialGyrotropyEnabled);
       setControlDisabled(el.bianisotropyEnabledInput?.closest("label"), el.bianisotropyEnabledInput, !isCustomBrush);
-      document.querySelectorAll(".bianisotropy-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialBianisotropyEnabled);
-      });
+      syncDependentControls(".bianisotropy-params", isCustomBrush && state.materialBianisotropyEnabled);
       const modulationControlsDisabled = !isCustomBrush;
       setControlDisabled(el.modulationEnabledInput?.closest("label"), el.modulationEnabledInput, modulationControlsDisabled);
-      document.querySelectorAll(".modulation-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], modulationControlsDisabled || !state.materialModulationEnabled);
-      });
-      setControlDisabled(el.modulationPhaseInput?.closest("label"), el.modulationPhaseInput, modulationControlsDisabled || !state.materialModulationEnabled);
+      syncDependentControls(".modulation-params", isCustomBrush && state.materialModulationEnabled);
+      syncDependentControl(el.modulationPhaseInput?.closest("label"), isCustomBrush && state.materialModulationEnabled);
       setControlDisabled(el.nonlinearEnabledInput?.closest("label"), el.nonlinearEnabledInput, modulationControlsDisabled);
-      document.querySelectorAll(".nonlinear-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], modulationControlsDisabled || !state.materialNonlinearEnabled);
-      });
+      syncDependentControls(".nonlinear-params", isCustomBrush && state.materialNonlinearEnabled);
       setControlDisabled(el.harmonicEnabledInput?.closest("label"), el.harmonicEnabledInput, modulationControlsDisabled);
-      document.querySelectorAll(".harmonic-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], modulationControlsDisabled || !state.materialHarmonicEnabled);
-      });
+      syncDependentControls(".harmonic-params", isCustomBrush && state.materialHarmonicEnabled);
       setControlDisabled(el.phaseChangeEnabledInput?.closest("label"), el.phaseChangeEnabledInput, !isCustomBrush);
-      document.querySelectorAll(".phase-change-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialPhaseChangeEnabled);
-      });
+      syncDependentControls(".phase-change-params", isCustomBrush && state.materialPhaseChangeEnabled);
       setControlDisabled(el.conductivityEnabledInput?.closest("label"), el.conductivityEnabledInput, !isCustomBrush);
-      if (el.conductivitySigmaYControl) {
-        el.conductivitySigmaYControl.hidden = !state.customAnisotropic;
-      }
-      document.querySelectorAll(".conductivity-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialConductivityEnabled);
-      });
+      syncDependentControls(".conductivity-params", isCustomBrush && state.materialConductivityEnabled);
+      syncDependentControl(el.conductivitySigmaYControl, isCustomBrush && state.materialConductivityEnabled && state.customAnisotropic);
       setControlDisabled(el.saturableGainEnabledInput?.closest("label"), el.saturableGainEnabledInput, !isCustomBrush);
-      document.querySelectorAll(".saturable-gain-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush || !state.materialSaturableGainEnabled);
-      });
+      syncDependentControls(".saturable-gain-params", isCustomBrush && state.materialSaturableGainEnabled);
       const dispersionModel = normalizeDispersionModel(state.dispersionModel);
-      const dispersionDisabled = !isCustomBrush || dispersionModel === "none";
+      const dispersionActive = isCustomBrush && dispersionModel !== "none";
       if (el.dispersionModelInput) {
         el.dispersionModelInput.value = dispersionModel;
       }
       setControlDisabled(el.dispersionModelInput?.closest("label"), el.dispersionModelInput, !isCustomBrush);
-      if (el.dispersionOmegaPControl) {
-        el.dispersionOmegaPControl.hidden = !["drude", "plasma"].includes(dispersionModel);
-      }
-      if (el.dispersionGammaControl) {
-        el.dispersionGammaControl.hidden = !["drude", "plasma", "lorentz"].includes(dispersionModel);
-      }
-      if (el.dispersionOmega0Control) {
-        el.dispersionOmega0Control.hidden = dispersionModel !== "lorentz";
-      }
-      if (el.dispersionDeltaEpsControl) {
-        el.dispersionDeltaEpsControl.hidden = !["lorentz", "debye"].includes(dispersionModel);
-      }
-      if (el.dispersionTauControl) {
-        el.dispersionTauControl.hidden = dispersionModel !== "debye";
-      }
+      syncDependentControl(el.dispersionOmegaPControl, dispersionActive && ["drude", "plasma"].includes(dispersionModel));
+      syncDependentControl(el.dispersionGammaControl, dispersionActive && ["drude", "plasma", "lorentz"].includes(dispersionModel));
+      syncDependentControl(el.dispersionOmega0Control, dispersionActive && dispersionModel === "lorentz");
+      syncDependentControl(el.dispersionDeltaEpsControl, dispersionActive && ["lorentz", "debye"].includes(dispersionModel));
+      syncDependentControl(el.dispersionTauControl, dispersionActive && dispersionModel === "debye");
       document.querySelectorAll(".dispersion-params").forEach((control) => {
-        setControlDisabled(control, [...control.querySelectorAll("input")], dispersionDisabled);
+        syncChildControlGroupVisibility(control);
       });
       if (el.brushMenuSizeInput) {
         el.brushMenuSizeInput.value = String(state.brushSizeLambda);

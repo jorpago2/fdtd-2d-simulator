@@ -160,7 +160,7 @@
     }
 
     function canvasActionsMenuActive() {
-      return compactCanvasActive();
+      return Boolean(el.canvasActionToggle && el.canvasActionMenu);
     }
 
     function setCanvasActionsOpen(open) {

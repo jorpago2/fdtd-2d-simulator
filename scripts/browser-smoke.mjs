@@ -221,6 +221,136 @@ async function runReproducibilitySmoke(page) {
   };
 }
 
+async function runCanvasActionMenuSmoke(page) {
+  const status = await page.evaluate(() => {
+    const toggle = document.getElementById("canvasActionToggle");
+    const menu = document.getElementById("canvasActionMenu");
+    const stage = document.querySelector(".stage");
+    if (!toggle || !menu || !stage) {
+      return { opened: false, expanded: null, menuDisplay: "", stageOpen: false };
+    }
+    toggle.click();
+    const style = getComputedStyle(menu);
+    return {
+      opened: stage.classList.contains("canvas-actions-open") && style.display !== "none",
+      expanded: toggle.getAttribute("aria-expanded"),
+      menuDisplay: style.display,
+      stageOpen: stage.classList.contains("canvas-actions-open"),
+    };
+  });
+  const failures = [];
+  if (!status.opened) failures.push("canvas action menu did not open from the toolbar toggle");
+  if (status.expanded !== "true") failures.push("canvas action toggle did not report aria-expanded=true");
+  return {
+    id: "canvas_action_menu_toggle",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runBrushDependentParamsSmoke(page) {
+  const status = await page.evaluate(() => {
+    const dependentSelectors = [
+      ".brush-anisotropic-params",
+      ".gyrotropy-params",
+      ".bianisotropy-params",
+      ".modulation-params",
+      ".nonlinear-params",
+      ".harmonic-params",
+      ".phase-change-params",
+      ".conductivity-params",
+      ".saturable-gain-params",
+    ];
+    const allHidden = (selector) =>
+      Array.from(document.querySelectorAll(selector)).every((control) => control.hidden);
+    const allVisible = (selector) =>
+      Array.from(document.querySelectorAll(selector)).every((control) => !control.hidden);
+
+    state.brush = "custom";
+    Object.assign(state, {
+      customAnisotropic: false,
+      dispersionModel: "none",
+      materialBianisotropyEnabled: false,
+      materialConductivityEnabled: false,
+      materialGyrotropyEnabled: false,
+      materialHarmonicEnabled: false,
+      materialModulationEnabled: false,
+      materialNonlinearEnabled: false,
+      materialPhaseChangeEnabled: false,
+      materialSaturableGainEnabled: false,
+    });
+    updateControlText();
+    const hiddenWhenOff = dependentSelectors.every(allHidden);
+    const modulationPhaseHiddenWhenOff = document.getElementById("modulationPhaseInput")?.closest("label")?.hidden === true;
+    const dispersionHiddenWhenNone = allHidden(".dispersion-params");
+
+    Object.assign(state, {
+      customAnisotropic: true,
+      dispersionModel: "lorentz",
+      materialConductivityEnabled: true,
+      materialGyrotropyEnabled: true,
+      materialModulationEnabled: true,
+    });
+    updateControlText();
+    const gyrotropyVisibleWhenOn = allVisible(".gyrotropy-params");
+    const modulationVisibleWhenOn = allVisible(".modulation-params");
+    const modulationPhaseVisibleWhenOn = document.getElementById("modulationPhaseInput")?.closest("label")?.hidden === false;
+    const conductivityVisibleWhenOn = allVisible(".conductivity-params");
+    const conductivityYVisibleWhenAnisotropic = document.getElementById("conductivitySigmaYControl")?.hidden === false;
+    const lorentzFieldsVisible =
+      document.getElementById("dispersionGammaControl")?.hidden === false &&
+      document.getElementById("dispersionOmega0Control")?.hidden === false &&
+      document.getElementById("dispersionDeltaEpsControl")?.hidden === false;
+    const unrelatedDispersionFieldsHidden =
+      document.getElementById("dispersionOmegaPControl")?.hidden === true &&
+      document.getElementById("dispersionTauControl")?.hidden === true;
+
+    state.brush = "pec";
+    updateControlText();
+    const hiddenWhenNonCustom = dependentSelectors.every(allHidden) && allHidden(".dispersion-params");
+
+    return {
+      hiddenWhenOff,
+      modulationPhaseHiddenWhenOff,
+      dispersionHiddenWhenNone,
+      gyrotropyVisibleWhenOn,
+      modulationVisibleWhenOn,
+      modulationPhaseVisibleWhenOn,
+      conductivityVisibleWhenOn,
+      conductivityYVisibleWhenAnisotropic,
+      lorentzFieldsVisible,
+      unrelatedDispersionFieldsHidden,
+      hiddenWhenNonCustom,
+    };
+  });
+  const failures = [];
+  if (!status.hiddenWhenOff) failures.push("dependent draw parameter groups remain visible when disabled");
+  if (!status.modulationPhaseHiddenWhenOff) failures.push("modulation phase remains visible when modulation is disabled");
+  if (!status.dispersionHiddenWhenNone) failures.push("dispersion parameter rows remain visible for the None model");
+  if (!status.gyrotropyVisibleWhenOn) failures.push("gyrotropy parameters do not appear when gyrotropy is enabled");
+  if (!status.modulationVisibleWhenOn || !status.modulationPhaseVisibleWhenOn) {
+    failures.push("modulation parameters do not appear when modulation is enabled");
+  }
+  if (!status.conductivityVisibleWhenOn || !status.conductivityYVisibleWhenAnisotropic) {
+    failures.push("conductivity parameters do not appear for an enabled anisotropic material");
+  }
+  if (!status.lorentzFieldsVisible || !status.unrelatedDispersionFieldsHidden) {
+    failures.push("Lorentz dispersion does not show exactly its expected parameter fields");
+  }
+  if (!status.hiddenWhenNonCustom) failures.push("dependent draw parameters remain visible for non-custom brushes");
+  return {
+    id: "brush_dependent_params_visibility",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function splitStorageSnapshot(page) {
   return page.evaluate(() => {
     const maxAbs = (array) => {
@@ -333,6 +463,8 @@ async function main() {
     }
     if (mode === "smoke") {
       report.cases.push(await runReproducibilitySmoke(page));
+      report.cases.push(await runCanvasActionMenuSmoke(page));
+      report.cases.push(await runBrushDependentParamsSmoke(page));
     }
   } finally {
     await browser.close();
