@@ -3,17 +3,14 @@
 
   const DEFAULT_CONTROL_PANEL_CONTEXTS = Object.freeze({
     scenes: Object.freeze({ compactTitle: "Scene", kicker: "Step 1 · Scene", title: "Scene setup" }),
-    simulation: Object.freeze({ compactTitle: "Run", kicker: "Step 2 · Run", title: "Simulation control" }),
-    visual: Object.freeze({ compactTitle: "Visual", kicker: "Step 3 · Visual", title: "Canvas display" }),
-    objects: Object.freeze({ compactTitle: "Edit", kicker: "Step 4 · Edit", title: "Object editor" }),
-    results: Object.freeze({ compactTitle: "Results", kicker: "Step 5 · Results", title: "Measurements" }),
-    config: Object.freeze({ compactTitle: "Config", kicker: "Step 6 · Config", title: "Numerics" }),
+    simulation: Object.freeze({ compactTitle: "Simulate", kicker: "Step 2 · Simulate", title: "Run and display" }),
+    results: Object.freeze({ compactTitle: "Results", kicker: "Step 3 · Results", title: "Measurements" }),
+    config: Object.freeze({ compactTitle: "Numerics", kicker: "Step 4 · Numerics", title: "Numerics" }),
   });
 
   const DEFAULT_TAB_LAYERS = Object.freeze({
     scenes: "scenes",
     simulation: "simulation",
-    visual: "visual",
     results: "results",
     config: "config",
   });
@@ -21,8 +18,6 @@
   const DEFAULT_MOBILE_LAYER_ROUTES = Object.freeze({
     scenes: Object.freeze({ tab: "scenes", focusSelector: ".scene-section" }),
     simulation: Object.freeze({ tab: "simulation", focusSelector: ".run-section" }),
-    visual: Object.freeze({ tab: "visual", focusSelector: ".visual-field-section" }),
-    objects: Object.freeze({ tab: "simulation", focusSelector: ".inspector-section" }),
     results: Object.freeze({ tab: "results", focusSelector: ".diagnostics-section" }),
     config: Object.freeze({ tab: "config", focusSelector: ".scale-section" }),
   });
@@ -189,12 +184,13 @@
       uiCore.setExpanded(el.canvasOptionsToggle, isOpen);
       if (isOpen) {
         closeCanvasActionsMenu();
-        setMobileLayerActive("visual");
+        setMobileLayerActive("simulation");
       }
     }
 
     function closeCanvasOptionsMenu() {
-      const restorePanelLayer = activeMobileLayerName() === "visual";
+      const restorePanelLayer =
+        activeMobileLayerName() === "simulation" && controlTabLayerName(activeControlTabName()) !== "simulation";
       setCanvasOptionsOpen(false);
       if (restorePanelLayer) {
         setMobileLayerActive(controlTabLayerName(activeControlTabName()));

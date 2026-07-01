@@ -43,7 +43,7 @@
     return {
       running: false,
       theme: readStoredTheme(themeStorageKey, windowRef),
-      uiDepth: config.uiDepth == null ? "advanced" : normalizeUiDepth(config.uiDepth),
+      uiDepth: config.uiDepth == null ? "teaching" : normalizeUiDepth(config.uiDepth),
       stepsPerFrame: 1,
       gain: 1,
       autoScale: true,

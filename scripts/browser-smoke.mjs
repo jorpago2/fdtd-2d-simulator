@@ -251,11 +251,62 @@ async function runCanvasActionMenuSmoke(page) {
   };
 }
 
+async function runControlNavigationSmoke(page) {
+  const status = await page.evaluate(() => {
+    const tabButtons = Array.from(document.querySelectorAll("[data-control-tab]"));
+    const mobileButtons = Array.from(document.querySelectorAll(".mobile-layer-button[data-mobile-layer]"));
+    const controlLabel = (button) =>
+      `${button.querySelector(".nav-step")?.textContent.trim() || ""} ${button.querySelector(".nav-label")?.textContent.trim() || ""}`.trim();
+    const tabLabels = tabButtons.map(controlLabel);
+    const mobileLabels = mobileButtons.map(controlLabel);
+    const clickTab = (name) => {
+      document.querySelector(`[data-control-tab="${name}"]`)?.click();
+      return {
+        activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
+        runVisible: Boolean(document.querySelector("#tab-simulation .run-section")),
+        visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
+        numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
+      };
+    };
+    const simulateState = clickTab("simulation");
+    const numericsState = clickTab("config");
+    return {
+      tabLabels,
+      mobileLabels,
+      hasVisualTab: Boolean(document.getElementById("tab-visual")),
+      simulateState,
+      numericsState,
+    };
+  });
+  const failures = [];
+  const expectedTabs = ["1 Scenes", "2 Simulate", "3 Results", "4 Numerics"];
+  const expectedMobile = ["1 Scene", "2 Simulate", "3 Results", "4 Numerics"];
+  if (status.tabLabels.join("|") !== expectedTabs.join("|")) failures.push("desktop control tabs do not match the four-section flow");
+  if (status.mobileLabels.join("|") !== expectedMobile.join("|")) failures.push("mobile control layers do not match the four-section flow");
+  if (status.hasVisualTab) failures.push("standalone Visual tab still exists after merging into Simulate");
+  if (status.simulateState?.activePanel !== "tab-simulation") failures.push("Simulate tab did not activate the simulation panel");
+  if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
+    failures.push("Simulate tab does not contain both run and visual controls");
+  }
+  if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerics") {
+    failures.push("Numerics tab did not activate the numerical setup panel");
+  }
+  return {
+    id: "control_navigation_four_sections",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
     const sourceMenu = document.getElementById("sourceMenu");
     if (sourceMenu) sourceMenu.hidden = false;
+    const sourceDetailPanel = document.querySelector(".source-detail-panel");
     const isRendered = (control) => {
       if (!control) return false;
       const style = getComputedStyle(control);
@@ -298,7 +349,13 @@ async function runSourceDependentParamsSmoke(page) {
         timePhaseVisible: timePhaseControl?.hidden === false && isRendered(timePhaseControl),
       };
     };
+    if (sourceDetailPanel) sourceDetailPanel.open = false;
+    const closedAdvanced = shapeControlState("multipole");
+    const sourceDetailsClosed = sourceDetailPanel?.open === false;
+    if (sourceDetailPanel) sourceDetailPanel.open = true;
     return {
+      sourceDetailsClosed,
+      closedAdvanced,
       point: shapeControlState("point"),
       gaussianSpot: shapeControlState("gaussianSpot"),
       line: shapeControlState("line"),
@@ -308,6 +365,10 @@ async function runSourceDependentParamsSmoke(page) {
     };
   });
   const failures = [];
+  if (!status.sourceDetailsClosed) failures.push("source details should start collapsed");
+  if (status.closedAdvanced?.timePhaseVisible || status.closedAdvanced?.multipoleGroupVisible) {
+    failures.push("source advanced controls remain visible while Source details is collapsed");
+  }
   const expectations = {
     point: [],
     gaussianSpot: ["sourceWidthControl"],
@@ -499,6 +560,7 @@ async function runBrushDependentParamsSmoke(page) {
   const status = await page.evaluate(() => {
     const brushMenu = document.getElementById("brushMenu");
     if (brushMenu) brushMenu.hidden = false;
+    const materialDetailPanel = document.querySelector(".material-detail-panel");
     const isRendered = (control) => {
       if (!control) return false;
       const style = getComputedStyle(control);
@@ -541,7 +603,9 @@ async function runBrushDependentParamsSmoke(page) {
       materialPhaseChangeEnabled: false,
       materialSaturableGainEnabled: false,
     });
+    if (materialDetailPanel) materialDetailPanel.open = false;
     updateControlText();
+    const advancedMaterialClosedByDefault = materialDetailPanel?.open === false;
     const hiddenWhenOff = dependentSelectors.every(allHidden);
     const modulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
     const modulationPhaseHiddenWhenOff = modulationPhaseControl?.hidden === true && !isRendered(modulationPhaseControl);
@@ -588,6 +652,7 @@ async function runBrushDependentParamsSmoke(page) {
       materialGyrotropyEnabled: true,
       materialModulationEnabled: true,
     });
+    if (materialDetailPanel) materialDetailPanel.open = true;
     updateControlText();
     const gyrotropyVisibleWhenOn = allVisible(".gyrotropy-params");
     const modulationVisibleWhenOn = allVisible(".modulation-params");
@@ -621,6 +686,7 @@ async function runBrushDependentParamsSmoke(page) {
     const hiddenWhenNonCustom = dependentSelectors.every(allHidden) && allHidden(".dispersion-params");
 
     return {
+      advancedMaterialClosedByDefault,
       hiddenWhenOff,
       modulationPhaseHiddenWhenOff,
       dispersionHiddenWhenNone,
@@ -639,6 +705,7 @@ async function runBrushDependentParamsSmoke(page) {
     };
   });
   const failures = [];
+  if (!status.advancedMaterialClosedByDefault) failures.push("advanced material model should start collapsed");
   if (!status.hiddenWhenOff) failures.push("dependent draw parameter groups remain visible when disabled");
   if (!status.modulationPhaseHiddenWhenOff) failures.push("modulation phase remains visible when modulation is disabled");
   if (!status.dispersionHiddenWhenNone) failures.push("dispersion parameter rows remain visible for the None model");
@@ -794,6 +861,7 @@ async function main() {
     if (mode === "smoke") {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
+      report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runSourceDependentParamsSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));

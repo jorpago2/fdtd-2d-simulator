@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="fdtd-ui.css?v=20260630-desktop-drawer-1" />
   </head>
   <body>
-    <main class="app-shell" data-ui-depth="advanced">
+    <main class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
           <p class="eyebrow">2D-FDTD electromagnetics</p>
@@ -290,25 +290,30 @@
                   <input id="sourceAngleInput" type="range" min="0" max="360" step="1" value="0" disabled />
                   <output id="sourceAngleOutput" for="sourceAngleInput">0°</output>
                 </label>
-                <label id="sourceTimePhaseControl" class="control-row" data-ui-scope="advanced">
-                  <span>phase φ</span>
-                  <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
-                  <output id="sourceTimePhaseOutput" for="sourceTimePhaseInput">0°</output>
-                </label>
-                <fieldset class="two-col source-order-controls" data-ui-scope="advanced">
-                  <legend class="sr-only">Multipole angular profile</legend>
-                  <label id="sourceOrderControl" class="is-disabled">
-                    <span><i>n</i></span>
-                    <input id="sourceOrderInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="8" step="1" value="3" disabled />
-                  </label>
-                  <label id="sourcePhaseControl" class="is-disabled">
-                    <span>angular part</span>
-                    <select id="sourcePhaseInput" disabled>
-                      <option value="cos">cos(nφ)</option>
-                      <option value="sin">sin(nφ)</option>
-                    </select>
-                  </label>
-                </fieldset>
+                <details class="source-detail-panel context-detail-panel">
+                  <summary>Source details</summary>
+                  <div class="source-detail-body">
+                    <label id="sourceTimePhaseControl" class="control-row">
+                      <span>phase φ</span>
+                      <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
+                      <output id="sourceTimePhaseOutput" for="sourceTimePhaseInput">0°</output>
+                    </label>
+                    <fieldset class="two-col source-order-controls">
+                      <legend class="sr-only">Multipole angular profile</legend>
+                      <label id="sourceOrderControl" class="is-disabled">
+                        <span><i>n</i></span>
+                        <input id="sourceOrderInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="8" step="1" value="3" disabled />
+                      </label>
+                      <label id="sourcePhaseControl" class="is-disabled">
+                        <span>angular part</span>
+                        <select id="sourcePhaseInput" disabled>
+                          <option value="cos">cos(nφ)</option>
+                          <option value="sin">sin(nφ)</option>
+                        </select>
+                      </label>
+                    </fieldset>
+                  </div>
+                </details>
               </div>
               <div class="source-menu-actions">
                 <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
@@ -432,10 +437,7 @@
                 <button class="segment" type="button" role="radio" data-brush="lossy" aria-checked="false">Loss</button>
                 <button class="segment" type="button" role="radio" data-brush="erase" aria-checked="false">Erase</button>
               </fieldset>
-              <label class="toggle-row brush-anisotropy-toggle" data-ui-scope="advanced">
-                <input id="customAnisotropyInput" type="checkbox" />
-                <span>Anisotropic ε, μ</span>
-              </label>
+              <output id="materialWarning" class="material-warning brush-material-warning" aria-live="polite"></output>
               <fieldset id="brushMaterialGrid" class="material-tensor-editor brush-material-params" aria-label="Custom epsilon and mu">
                 <legend class="sr-only">Custom epsilon and mu</legend>
                 <div class="material-tensor-part material-tensor-real" aria-label="Real material components">
@@ -453,11 +455,11 @@
                     <input id="customEpsYRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="4.00" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
-                  <label class="material-tensor-cell material-cell-mu-real" data-ui-scope="advanced">
+                  <label class="material-tensor-cell material-cell-mu-real">
                     <span id="customMuRealLabel">&mu;&prime;</span>
                     <input id="customMuRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="1.00" />
                   </label>
-                  <label class="material-tensor-cell material-cell-mu-y-real brush-anisotropic-params" data-ui-scope="advanced" hidden>
+                  <label class="material-tensor-cell material-cell-mu-y-real brush-anisotropic-params" hidden>
                     <span>&mu;<sub>y</sub>&prime;</span>
                     <input id="customMuYRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="1.00" />
                   </label>
@@ -477,17 +479,24 @@
                     <input id="customEpsYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0005" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
-                  <label class="material-tensor-cell material-cell-mu-imag" data-ui-scope="advanced">
+                  <label class="material-tensor-cell material-cell-mu-imag">
                     <span id="customMuImagLabel">&mu;&Prime;</span>
                     <input id="customMuImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
-                  <label class="material-tensor-cell material-cell-mu-y-imag brush-anisotropic-params" data-ui-scope="advanced" hidden>
+                  <label class="material-tensor-cell material-cell-mu-y-imag brush-anisotropic-params" hidden>
                     <span>&mu;<sub>y</sub>&Prime;</span>
                     <input id="customMuYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                 </div>
               </fieldset>
-              <div class="modulation-panel gyrotropy-panel" data-ui-scope="advanced">
+              <details class="material-detail-panel context-detail-panel">
+                <summary>Advanced material model</summary>
+                <div class="source-detail-body">
+                  <label class="toggle-row brush-anisotropy-toggle">
+                    <input id="customAnisotropyInput" type="checkbox" />
+                    <span>Anisotropic ε, μ</span>
+                  </label>
+              <div class="modulation-panel gyrotropy-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="gyrotropyEnabledInput" type="checkbox" />
                   <span>Gyrotropic &epsilon; tensor (Hz mode)</span>
@@ -497,7 +506,7 @@
                   <input id="gyrotropyGInput" type="number" inputmode="decimal" autocomplete="off" min="-5" max="5" step="0.01" value="0.25" />
                 </label>
               </div>
-              <div class="modulation-panel bianisotropy-panel" data-ui-scope="advanced">
+              <div class="modulation-panel bianisotropy-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="bianisotropyEnabledInput" type="checkbox" />
                   <span>Magnetoelectric coupling &kappa; / &radic;&epsilon;&mu;</span>
@@ -507,7 +516,7 @@
                   <input id="bianisotropyKappaInput" type="number" inputmode="decimal" autocomplete="off" min="-0.85" max="0.85" step="0.01" value="0.20" />
                 </label>
               </div>
-              <div class="modulation-panel conductivity-panel" data-ui-scope="advanced">
+              <div class="modulation-panel conductivity-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="conductivityEnabledInput" type="checkbox" />
                   <span>Finite conductivity <i>J</i> = &sigma;<i>E</i> (normalized)</span>
@@ -523,7 +532,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel saturable-gain-panel" data-ui-scope="advanced">
+              <div class="modulation-panel saturable-gain-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="saturableGainEnabledInput" type="checkbox" />
                   <span>Saturable gain for negative &epsilon;&Prime;</span>
@@ -533,8 +542,7 @@
                   <input id="gainSaturationInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="100" step="0.05" value="4.00" />
                 </label>
               </div>
-              <output id="materialWarning" class="material-warning brush-material-warning" aria-live="polite"></output>
-              <div class="modulation-panel" data-ui-scope="advanced">
+              <div class="modulation-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="modulationEnabledInput" type="checkbox" />
                   <span>Space-time &epsilon;&prime; modulation</span>
@@ -564,7 +572,7 @@
                   <input id="modulationPhaseInput" type="number" inputmode="decimal" autocomplete="off" min="-180" max="180" step="5" value="0" />
                 </label>
               </div>
-              <div class="modulation-panel nonlinear-panel" data-ui-scope="advanced">
+              <div class="modulation-panel nonlinear-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="nonlinearEnabledInput" type="checkbox" />
                   <span>Kerr &chi;<sup>(3)</sup> nonlinearity</span>
@@ -580,7 +588,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel harmonic-panel" data-ui-scope="advanced">
+              <div class="modulation-panel harmonic-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="harmonicEnabledInput" type="checkbox" />
                   <span>Harmonic polarization <i>P</i><sub>NL</sub></span>
@@ -600,7 +608,7 @@
                   <input id="harmonicSaturationInput" type="number" inputmode="decimal" autocomplete="off" min="0.05" max="50" step="0.05" value="6.00" />
                 </label>
               </div>
-              <div class="modulation-panel phase-change-panel" data-ui-scope="advanced">
+              <div class="modulation-panel phase-change-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="phaseChangeEnabledInput" type="checkbox" />
                   <span>Phase-change memory <i>s</i></span>
@@ -636,7 +644,7 @@
                   </label>
                 </div>
               </div>
-              <div class="modulation-panel dispersion-panel" data-ui-scope="advanced">
+              <div class="modulation-panel dispersion-panel">
                 <label>
                   <span>Dispersive model</span>
                   <select id="dispersionModelInput">
@@ -672,6 +680,8 @@
                   <input id="dispersionTauInput" type="number" inputmode="decimal" autocomplete="off" min="1" max="200" step="1" value="18" />
                 </label>
               </div>
+                </div>
+              </details>
               <div class="button-row">
                 <button id="brushMenuClearMaterialsBtn" class="text-button" type="button">Clear medium</button>
                 <button id="brushMenuClearFieldsBtn" class="text-button" type="button">Clear field</button>
@@ -724,20 +734,14 @@
             <button class="mobile-layer-button is-active" type="button" data-mobile-layer="scenes" aria-current="page" aria-label="Scene layer">
               <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
             </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation" aria-label="Run layer">
-              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Run</span>
-            </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="visual" aria-label="Visual layer">
-              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Visual</span>
-            </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="objects" aria-label="Objects layer">
-              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Edit</span>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation" aria-label="Simulate layer">
+              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
             </button>
             <button class="mobile-layer-button" type="button" data-mobile-layer="results" aria-label="Results layer">
-              <span class="nav-step" aria-hidden="true">5</span><span class="nav-label">Results</span>
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
             </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="config" aria-label="Configuration layer">
-              <span class="nav-step" aria-hidden="true">6</span><span class="nav-label">Config</span>
+            <button class="mobile-layer-button" type="button" data-mobile-layer="config" aria-label="Numerics layer">
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
             </button>
           </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
@@ -745,16 +749,13 @@
               <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scenes</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">
-              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulation</span>
-            </button>
-            <button class="control-tab-button" type="button" role="tab" id="tab-visual-button" aria-controls="tab-visual" aria-selected="false" data-control-tab="visual">
-              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Visual</span>
+              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-results-button" aria-controls="tab-results" aria-selected="false" data-control-tab="results">
-              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Results</span>
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-config-button" aria-controls="tab-config" aria-selected="false" data-control-tab="config">
-              <span class="nav-step" aria-hidden="true">5</span><span class="nav-label">Config</span>
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
             </button>
           </div>
           <div class="control-tab-panels">
@@ -950,6 +951,23 @@
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
               <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
             </section>
+<section class="panel-section inspector-section" aria-live="polite">
+              <h2>Selection</h2>
+              <div class="inspector-head">
+                <span id="inspectorKind" class="inspector-kind">Scene</span>
+                <strong id="inspectorTitle">No explicit selection</strong>
+              </div>
+              <div id="inspectorDetails" class="inspector-details">
+                <div><span>Preset</span><output>Empty</output></div>
+                <div><span>Sources</span><output>1</output></div>
+                <div><span>Medium</span><output>Air</output></div>
+              </div>
+              <p id="inspectorNote" class="inspector-note">Select a source or material region on the canvas.</p>
+              <div class="inspector-actions">
+                <button id="inspectorEditBtn" class="text-button" type="button" disabled>Edit selected</button>
+                <button id="inspectorClearBtn" class="text-button" type="button" disabled>Clear selection</button>
+              </div>
+            </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
 <section class="panel-section simulation-guide-section">
@@ -977,23 +995,6 @@
                 </div>
               </div>
               <p id="simGuideWarning" class="simulation-guide-note">Ready</p>
-            </section>
-<section class="panel-section inspector-section" aria-live="polite">
-              <h2>Inspector</h2>
-              <div class="inspector-head">
-                <span id="inspectorKind" class="inspector-kind">Scene</span>
-                <strong id="inspectorTitle">No explicit selection</strong>
-              </div>
-              <div id="inspectorDetails" class="inspector-details">
-                <div><span>Preset</span><output>Empty</output></div>
-                <div><span>Sources</span><output>1</output></div>
-                <div><span>Medium</span><output>Air</output></div>
-              </div>
-              <p id="inspectorNote" class="inspector-note">Select a source or material region on the canvas.</p>
-              <div class="inspector-actions">
-                <button id="inspectorEditBtn" class="text-button" type="button" disabled>Edit selected</button>
-                <button id="inspectorClearBtn" class="text-button" type="button" disabled>Clear selection</button>
-              </div>
             </section>
 <section class="panel-section run-section">
               <h2>Run</h2>
@@ -1034,8 +1035,6 @@
                 <span>Autoscale</span>
               </label>
             </section>
-            </div>
-            <div id="tab-visual" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-visual-button" data-control-panel="visual" hidden>
 <section class="panel-section visual-summary-section">
               <div class="visual-panel-head">
                 <div>
@@ -1171,7 +1170,7 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
-              <details class="monitor-panel results-detail-panel" data-ui-scope="advanced">
+              <details class="monitor-panel results-detail-panel">
                 <summary>Line monitors</summary>
                 <div class="results-detail-body">
                   <label class="toggle-row">
@@ -1215,7 +1214,7 @@
                   </div>
                 </div>
               </details>
-              <details class="performance-panel results-detail-panel" data-ui-scope="advanced">
+              <details class="performance-panel results-detail-panel">
                 <summary>Performance</summary>
                 <div class="results-detail-body">
                   <div class="performance-grid" aria-label="Performance summary">
@@ -1262,7 +1261,7 @@
                   <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
                 </div>
               </details>
-              <details class="sweep-panel results-detail-panel" data-ui-scope="advanced">
+              <details class="sweep-panel results-detail-panel">
                 <summary>Parameter sweep</summary>
                 <div class="results-detail-body">
                   <div class="two-col">
@@ -1317,7 +1316,7 @@
                   </div>
                 </div>
               </details>
-              <details class="analysis-panel results-detail-panel" data-ui-scope="advanced">
+              <details class="analysis-panel results-detail-panel">
                 <summary>Spectral / NTFF</summary>
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
@@ -1348,7 +1347,7 @@
               <div class="results-panel-head">
                 <div>
                   <p class="panel-kicker">Numerics</p>
-                  <h2>Config</h2>
+                  <h2>Numerics</h2>
                 </div>
                 <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">stable</output>
               </div>
@@ -1384,7 +1383,7 @@
                 </label>
               </div>
             </section>
-            <details class="panel-section grid-section config-detail-panel" data-ui-scope="advanced">
+            <details class="panel-section grid-section config-detail-panel">
               <summary>Grid</summary>
               <div class="config-detail-body">
                 <div class="two-col">
@@ -1399,7 +1398,7 @@
                 </div>
               </div>
             </details>
-            <details class="panel-section stability-section config-detail-panel" data-ui-scope="advanced">
+            <details class="panel-section stability-section config-detail-panel">
               <summary>Stability</summary>
               <div class="config-detail-body">
                 <div class="config-status-grid">
@@ -1411,7 +1410,7 @@
                 <p id="stabilityNote" class="simulation-guide-note">Explicit 2D Yee stability is checked against S &lt; 1/sqrt(2).</p>
               </div>
             </details>
-            <details class="panel-section reproducibility-section config-detail-panel" data-ui-scope="advanced">
+            <details class="panel-section reproducibility-section config-detail-panel">
               <summary>Reproducibility</summary>
               <div class="config-detail-body">
                 <div class="button-row">

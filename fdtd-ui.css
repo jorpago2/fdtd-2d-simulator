@@ -700,11 +700,36 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 }
 
 .source-menu-body,
+.source-detail-body,
 .config-detail-body,
 .results-detail-body {
   display: grid;
   gap: 10px;
   min-width: 0;
+}
+
+.context-detail-panel {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: var(--panel-2);
+}
+
+.context-detail-panel[open] {
+  background: var(--panel);
+}
+
+.context-detail-panel:not([open]) > :not(summary) {
+  display: none !important;
+}
+
+.context-detail-panel > summary {
+  color: var(--muted);
+}
+
+.context-detail-panel .source-detail-body {
+  padding-top: 8px;
 }
 
 .two-col,
@@ -993,7 +1018,7 @@ body.controls-drawer-open {
 
 .mobile-layer-nav,
 .control-tabs {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: minmax(var(--control), auto);
   padding: 4px;
   background: var(--panel-2);
@@ -1520,7 +1545,7 @@ details[open] > summary::after {
   #tab-results .analysis-panel,
   #tab-results .sweep-panel,
   #tab-config .config-summary-section,
-  #tab-visual .visual-summary-section {
+  #tab-simulation .visual-summary-section {
     grid-column: 1 / -1;
   }
 }
@@ -1555,6 +1580,10 @@ details[open] > summary::after {
   .scene-cards {
     max-height: none;
     overflow: visible;
+  }
+
+  .theme-toggle {
+    width: 132px;
   }
 }
 
@@ -1618,11 +1647,11 @@ details[open] > summary::after {
   }
 
   .theme-toggle {
-    width: 116px;
+    width: 128px;
   }
 
   .mobile-layer-nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .mobile-layer-button {
@@ -1704,7 +1733,7 @@ details[open] > summary::after {
   }
 
   .theme-toggle {
-    width: 108px;
+    width: 124px;
   }
 
   .control-panel-actions {

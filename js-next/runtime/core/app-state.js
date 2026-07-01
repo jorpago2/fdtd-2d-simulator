@@ -26,7 +26,7 @@
   }
 
   function initialUiDepth() {
-    return "advanced";
+    return "teaching";
   }
 
   function createInitialAppState({
