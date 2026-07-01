@@ -76,7 +76,7 @@
       const drawReflectiveEdge = (side) => {
         if (boundarySideIsAbsorbing(side)) return;
         const layer = Math.max(1, this.boundaryControlLayer());
-        const metalCells = clampInt(Math.round(state.cellsPerWavelength * 0.14), 3, Math.max(3, Math.min(10, Math.floor(layer * 0.45))));
+        const metalCells = this.reflectiveWallThicknessCells(layer);
         const rect =
           side === "top"
             ? this.gridRectToCanvas(0, layer - metalCells, this.nx, layer)

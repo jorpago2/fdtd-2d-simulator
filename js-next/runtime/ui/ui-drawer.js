@@ -138,7 +138,6 @@
       uiCore.setClass(el.appShell, "controls-open", isOpen);
       uiCore.setClass(documentRef.body, "controls-drawer-open", isOpen);
       uiCore.setExpanded(el.controlDrawerToggle, isOpen);
-      uiCore.setExpanded(el.focusControlsBtn, isOpen);
       uiCore.setHidden(el.controlDrawerBackdrop, !isOpen);
       if (isOpen) {
         closeCanvasActionsMenu();

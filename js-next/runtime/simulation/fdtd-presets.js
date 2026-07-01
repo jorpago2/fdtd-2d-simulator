@@ -119,7 +119,7 @@ Object.assign(FDTDSim.prototype, {
   },
 
   activeInteriorBoundaryLayer(side) {
-    return boundarySideIsAbsorbing(side) ? this.cpmlLayer : 0;
+    return boundarySideIsAbsorbing(side) ? this.cpmlLayer : this.boundaryControlLayer();
   },
 
   activeInteriorMinX() {

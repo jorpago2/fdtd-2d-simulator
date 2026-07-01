@@ -113,6 +113,10 @@ Object.assign(FDTDSim.prototype, {
     return this.cpmlLayer > 0 ? this.cpmlLayer : this.nominalBoundaryLayer();
   },
 
+  reflectiveWallThicknessCells(layer = this.boundaryControlLayer()) {
+    return clampInt(Math.round(state.cellsPerWavelength * 0.14), 3, Math.max(3, Math.min(10, Math.floor(layer * 0.45))));
+  },
+
   zeroOuterElectricField() {
     const nx = this.nx;
     const ny = this.ny;
@@ -153,7 +157,31 @@ Object.assign(FDTDSim.prototype, {
   },
 
   zeroReflectiveBoundaryFields() {
-    // Reflective sides use the outer zeroed Yee boundary, not an artificial thick PEC layer.
+    const layer = this.boundaryControlLayer();
+    if (layer <= 0) return;
+    const thickness = this.reflectiveWallThicknessCells(layer);
+
+    const zeroRect = (x0, y0, x1, y1) => {
+      const minX = clampInt(x0, 0, this.nx);
+      const minY = clampInt(y0, 0, this.ny);
+      const maxX = clampInt(x1, 0, this.nx);
+      const maxY = clampInt(y1, 0, this.ny);
+      for (let y = minY; y < maxY; y += 1) {
+        const row = y * this.nx;
+        for (let x = minX; x < maxX; x += 1) {
+          const idx = row + x;
+          this.zeroElectricCell(idx);
+          this.hx[idx] = 0;
+          this.hy[idx] = 0;
+          this.zeroDualFieldCell(idx);
+        }
+      }
+    };
+
+    if (!boundarySideIsAbsorbing("left")) zeroRect(layer - thickness, 0, layer, this.ny);
+    if (!boundarySideIsAbsorbing("right")) zeroRect(this.nx - layer, 0, this.nx - layer + thickness, this.ny);
+    if (!boundarySideIsAbsorbing("top")) zeroRect(0, layer - thickness, this.nx, layer);
+    if (!boundarySideIsAbsorbing("bottom")) zeroRect(0, this.ny - layer, this.nx, this.ny - layer + thickness);
   },
 
   zeroBoundaryFields() {

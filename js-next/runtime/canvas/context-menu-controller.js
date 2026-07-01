@@ -14,6 +14,9 @@
 
   function createContextMenuController(dependencies) {
     const el = requireObject(dependencies.el, "el");
+    const floatingMenuPad = 10;
+    const minimumDragRoom = 12;
+    let activeMenuDrag = null;
     const state = {
       sourceMenuMode: "add",
       sourceMenuDraft: null,
@@ -68,30 +71,164 @@
       });
     }
 
+    function floatingMenuBounds(menu) {
+      const frame = menu?.parentElement;
+      if (!frame || !menu) return;
+      const frameRect = frame.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
+      const maxLeft = Math.max(
+        floatingMenuPad,
+        Math.min(
+          frameRect.width - menuRect.width - floatingMenuPad,
+          global.innerWidth - frameRect.left - menuRect.width - floatingMenuPad
+        )
+      );
+      const maxTop = Math.max(
+        floatingMenuPad,
+        Math.min(
+          frameRect.height - menuRect.height - floatingMenuPad,
+          global.innerHeight - frameRect.top - menuRect.height - floatingMenuPad
+        )
+      );
+      return {
+        minLeft: floatingMenuPad,
+        minTop: floatingMenuPad,
+        maxLeft,
+        maxTop,
+        canDragX: maxLeft - floatingMenuPad > minimumDragRoom,
+        canDragY: maxTop - floatingMenuPad > minimumDragRoom,
+      };
+    }
+
+    function updateFloatingMenuDragAvailability(menu, bounds = floatingMenuBounds(menu)) {
+      if (!menu || menu.hidden) return;
+      menu.dataset.floatingMenuDraggable = String(Boolean(bounds?.canDragX || bounds?.canDragY));
+    }
+
+    function clampFloatingMenuPosition(menu, desiredLeft, desiredTop) {
+      const bounds = floatingMenuBounds(menu);
+      if (!bounds) return null;
+      const left = clamp(desiredLeft, bounds.minLeft, bounds.maxLeft);
+      const top = clamp(desiredTop, bounds.minTop, bounds.maxTop);
+      menu.style.left = `${left}px`;
+      menu.style.top = `${top}px`;
+      updateFloatingMenuDragAvailability(menu, bounds);
+      return { left, top, bounds };
+    }
+
+    function refreshFloatingMenuPosition(menu) {
+      if (!menu || menu.hidden) return;
+      const left = Number.parseFloat(menu.style.left);
+      const top = Number.parseFloat(menu.style.top);
+      if (!Number.isFinite(left) || !Number.isFinite(top)) return;
+      clampFloatingMenuPosition(menu, left, top);
+    }
+
+    function refreshOpenFloatingMenus() {
+      contextMenuElements().forEach(refreshFloatingMenuPosition);
+    }
+
     function positionFloatingMenu(menu, clientX, clientY) {
       const frame = menu?.parentElement;
       if (!frame || !menu) return;
       const frameRect = frame.getBoundingClientRect();
-      const pad = 10;
       menu.style.removeProperty("max-height");
       menu.style.removeProperty("overflow-y");
       const cssMaxHeight = Number.parseFloat(global.getComputedStyle(menu).maxHeight);
       const preferredMaxHeight = Number.isFinite(cssMaxHeight) && cssMaxHeight > 0 ? cssMaxHeight : Infinity;
       const availableHeight = Math.max(
         220,
-        Math.min(preferredMaxHeight, frameRect.height - pad * 2, global.innerHeight - frameRect.top - pad)
+        Math.min(preferredMaxHeight, frameRect.height - floatingMenuPad * 2, global.innerHeight - frameRect.top - floatingMenuPad)
       );
       menu.style.setProperty("max-height", `${availableHeight}px`, "important");
       menu.style.setProperty("overflow-y", "auto", "important");
-      const menuRect = menu.getBoundingClientRect();
-      const left = clamp(clientX - frameRect.left + pad, pad, Math.max(pad, frameRect.width - menuRect.width - pad));
-      const maxTop = Math.max(
-        pad,
-        Math.min(frameRect.height - menuRect.height - pad, global.innerHeight - frameRect.top - menuRect.height - pad)
+      clampFloatingMenuPosition(menu, clientX - frameRect.left + floatingMenuPad, clientY - frameRect.top + floatingMenuPad);
+    }
+
+    function isInteractiveDragTarget(target) {
+      return Boolean(target?.closest?.("button, input, select, textarea, a, label, summary, [role='button']"));
+    }
+
+    function endFloatingMenuDrag(event) {
+      if (!activeMenuDrag || (event?.pointerId != null && event.pointerId !== activeMenuDrag.pointerId)) return;
+      activeMenuDrag.menu.classList.remove("is-dragging");
+      try {
+        activeMenuDrag.header.releasePointerCapture?.(activeMenuDrag.pointerId);
+      } catch {
+        // Pointer capture may already be gone if the browser cancelled the gesture.
+      }
+      activeMenuDrag = null;
+      global.document.removeEventListener("pointermove", handleFloatingMenuDragMove, true);
+      global.document.removeEventListener("pointerup", endFloatingMenuDrag, true);
+      global.document.removeEventListener("pointercancel", endFloatingMenuDrag, true);
+    }
+
+    function handleFloatingMenuDragMove(event) {
+      if (!activeMenuDrag || event.pointerId !== activeMenuDrag.pointerId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const dx = activeMenuDrag.bounds.canDragX ? event.clientX - activeMenuDrag.startClientX : 0;
+      const dy = activeMenuDrag.bounds.canDragY ? event.clientY - activeMenuDrag.startClientY : 0;
+      const result = clampFloatingMenuPosition(
+        activeMenuDrag.menu,
+        activeMenuDrag.startLeft + dx,
+        activeMenuDrag.startTop + dy
       );
-      const top = clamp(clientY - frameRect.top + pad, pad, maxTop);
-      menu.style.left = `${left}px`;
-      menu.style.top = `${top}px`;
+      if (result?.bounds) {
+        activeMenuDrag.bounds = result.bounds;
+      }
+    }
+
+    function beginFloatingMenuDrag(event) {
+      if (event.button != null && event.button !== 0) return;
+      if (isInteractiveDragTarget(event.target)) return;
+      const header = event.currentTarget;
+      const menu = header.closest?.(".source-menu");
+      if (!menu || menu.hidden) return;
+      const currentLeft = Number.parseFloat(menu.style.left);
+      const currentTop = Number.parseFloat(menu.style.top);
+      const bounds = floatingMenuBounds(menu);
+      if (!bounds || (!bounds.canDragX && !bounds.canDragY) || !Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) {
+        updateFloatingMenuDragAvailability(menu, bounds);
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      activeMenuDrag = {
+        menu,
+        header,
+        bounds,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startLeft: currentLeft,
+        startTop: currentTop,
+      };
+      menu.classList.add("is-dragging");
+      try {
+        header.setPointerCapture?.(event.pointerId);
+      } catch {
+        // Continue with document-level listeners if pointer capture is unavailable.
+      }
+      global.document.addEventListener("pointermove", handleFloatingMenuDragMove, true);
+      global.document.addEventListener("pointerup", endFloatingMenuDrag, true);
+      global.document.addEventListener("pointercancel", endFloatingMenuDrag, true);
+    }
+
+    function bindFloatingMenuDrag() {
+      contextMenuElements().forEach((menu) => {
+        const header = menu.querySelector(".source-menu-header");
+        if (!header || header.dataset.dragBound === "true") return;
+        header.dataset.dragBound = "true";
+        header.addEventListener("pointerdown", beginFloatingMenuDrag);
+      });
+      if (typeof global.ResizeObserver === "function") {
+        const observer = new global.ResizeObserver((entries) => {
+          entries.forEach((entry) => refreshFloatingMenuPosition(entry.target));
+        });
+        contextMenuElements().forEach((menu) => observer.observe(menu));
+      }
+      global.addEventListener("resize", refreshOpenFloatingMenus);
     }
 
     function closeCanvasContextMenu() {
@@ -202,6 +339,8 @@
       positionFloatingMenu(el.boundaryMenu, clientX, clientY);
       focusFirstMenuControl(el.boundaryMenu);
     }
+
+    bindFloatingMenuDrag();
 
     return {
       state,

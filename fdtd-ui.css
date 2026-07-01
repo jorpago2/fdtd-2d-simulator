@@ -402,6 +402,11 @@ html[data-theme="dark"] .brand-emblem {
 
 .stage.canvas-actions-open .canvas-action-menu {
   display: flex;
+  order: 2;
+}
+
+.stage.canvas-actions-open #canvasActionToggle {
+  order: 3;
 }
 
 .canvas-action-label {
@@ -668,6 +673,16 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   align-items: start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.source-menu[data-floating-menu-draggable="true"] .source-menu-header {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.source-menu.is-dragging .source-menu-header {
+  cursor: grabbing;
 }
 
 .source-menu-header h2 {
@@ -1570,32 +1585,8 @@ details[open] > summary::after {
 
   .stage:not(.canvas-actions-open) #resetBtn,
   .stage:not(.canvas-actions-open) #stepBtn,
-  .stage:not(.canvas-actions-open) #saveBtn,
-  .stage:not(.canvas-actions-open) #focusControlsBtn {
+  .stage:not(.canvas-actions-open) #saveBtn {
     display: none;
-  }
-
-  .stage.canvas-actions-open .canvas-toolbar {
-    left: calc(max(var(--edge), env(safe-area-inset-left)) + 58px);
-  }
-
-  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
-    flex: 1 1 100%;
-    min-width: 0;
-  }
-
-  .stage.canvas-actions-open .canvas-toolbar .interaction-toggle,
-  .stage.canvas-actions-open #focusControlsBtn {
-    display: none;
-  }
-
-  .stage.canvas-actions-open #canvasActionToggle {
-    margin-left: auto;
-    order: 4;
-  }
-
-  .stage.canvas-actions-open #canvasActionMenu {
-    order: 3;
   }
 
   .canvas-mode-toggle {

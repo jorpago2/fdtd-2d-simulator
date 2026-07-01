@@ -93,7 +93,6 @@
       resetBtn: documentRef.getElementById("resetBtn"),
       runStepBtn: documentRef.getElementById("runStepBtn"),
       runResetBtn: documentRef.getElementById("runResetBtn"),
-      focusControlsBtn: documentRef.getElementById("focusControlsBtn"),
       saveBtn: documentRef.getElementById("saveBtn"),
       selectModeBtn: documentRef.getElementById("selectModeBtn"),
       brushModeBtn: documentRef.getElementById("brushModeBtn"),

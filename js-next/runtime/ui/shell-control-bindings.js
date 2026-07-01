@@ -61,10 +61,6 @@
     el.selectModeBtn?.addEventListener("click", () => setCanvasMode("select"));
     el.brushModeBtn?.addEventListener("click", () => setCanvasMode("brush"));
 
-    el.focusControlsBtn?.addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleControlDrawer();
-    });
     el.controlDrawerToggle?.addEventListener("click", toggleControlDrawer);
     el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
     el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);

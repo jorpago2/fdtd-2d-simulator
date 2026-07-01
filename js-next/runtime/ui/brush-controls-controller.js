@@ -110,10 +110,11 @@
       if (el.geometryInnerRadiusInput) {
         el.geometryInnerRadiusInput.value = state.geometryInnerRadiusLambda.toFixed(2);
       }
-      setControlDisabled(el.geometryWidthControl, el.geometryWidthInput, !geometryUsesWidth() || editsRegion);
-      setControlDisabled(el.geometryHeightControl, el.geometryHeightInput, !geometryUsesHeight() || editsRegion);
-      setControlDisabled(el.geometryRadiusControl, el.geometryRadiusInput, !geometryUsesRadius() || editsRegion);
-      setControlDisabled(el.geometryInnerRadiusControl, el.geometryInnerRadiusInput, !geometryUsesInnerRadius() || editsRegion);
+      syncDependentControl(el.geometryWidthControl, !editsRegion && geometryUsesWidth());
+      syncDependentControl(el.geometryHeightControl, !editsRegion && geometryUsesHeight());
+      syncDependentControl(el.geometryRadiusControl, !editsRegion && geometryUsesRadius());
+      syncDependentControl(el.geometryInnerRadiusControl, !editsRegion && geometryUsesInnerRadius());
+      document.querySelectorAll(".geometry-params").forEach(syncChildControlGroupVisibility);
       setControlDisabled(el.customAnisotropyInput?.closest("label"), el.customAnisotropyInput, !isCustomBrush);
       el.brushMaterialGrid?.classList.toggle("is-anisotropic", isCustomBrush && state.customAnisotropic);
       document.querySelectorAll(".brush-material-params").forEach((control) => {

@@ -91,6 +91,24 @@
       if (circularDipoleSourceShapes.has(shape)) return `spin axis &theta;`;
       return `${currentSourceLetter()}<sub>z</sub> axis &theta;`;
     }
+
+    function controlInputs(control) {
+      return Array.from(control?.querySelectorAll?.("input, select, textarea") || []);
+    }
+
+    function syncDependentControl(control, visible) {
+      if (!control) return;
+      control.hidden = !visible;
+      setControlDisabled(control, controlInputs(control), !visible);
+    }
+
+    function syncChildControlGroupVisibility(control) {
+      const childControls = Array.from(control?.children || []).filter((child) => child.matches?.("label"));
+      if (childControls.length === 0) return;
+      const visible = childControls.some((child) => !child.hidden);
+      control.hidden = !visible;
+      setControlDisabled(control, [], !visible);
+    }
     
     function updateSourceShapeOptionLabels() {
       if (!el.sourceShapeInput) return;
@@ -149,10 +167,11 @@
       }
       el.sourceOrderInput.value = String(normalized.multipoleOrder);
       el.sourcePhaseInput.value = normalized.multipolePhase;
-      setControlDisabled(el.sourceWidthControl, el.sourceWidthInput, !sourceUsesWidth(normalized.shape));
-      setControlDisabled(el.sourceAngleControl, el.sourceAngleInput, !sourceUsesAngle(normalized.shape));
-      setControlDisabled(el.sourceOrderControl, el.sourceOrderInput, !sourceUsesMultipoleControls(normalized.shape));
-      setControlDisabled(el.sourcePhaseControl, el.sourcePhaseInput, !sourceUsesMultipoleControls(normalized.shape));
+      syncDependentControl(el.sourceWidthControl, sourceUsesWidth(normalized.shape));
+      syncDependentControl(el.sourceAngleControl, sourceUsesAngle(normalized.shape));
+      syncDependentControl(el.sourceOrderControl, sourceUsesMultipoleControls(normalized.shape));
+      syncDependentControl(el.sourcePhaseControl, sourceUsesMultipoleControls(normalized.shape));
+      syncChildControlGroupVisibility(el.sourceOrderControl?.closest(".source-order-controls"));
       if (el.sourceMenuTitle) {
         el.sourceMenuTitle.textContent = contextMenuState.sourceMenuMode === "edit" ? `Edit source ${normalized.id ?? ""}`.trim() : "Add source";
       }

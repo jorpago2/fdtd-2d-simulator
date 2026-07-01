@@ -251,6 +251,249 @@ async function runCanvasActionMenuSmoke(page) {
   };
 }
 
+async function runSourceDependentParamsSmoke(page) {
+  await selectPreset(page, "planeWaveAir");
+  const status = await page.evaluate(() => {
+    const sourceMenu = document.getElementById("sourceMenu");
+    if (sourceMenu) sourceMenu.hidden = false;
+    const isRendered = (control) => {
+      if (!control) return false;
+      const style = getComputedStyle(control);
+      const rect = control.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+    };
+    const sourceTemplate = {
+      id: 1,
+      type: "sine",
+      frequency: 0.024,
+      amplitude: 0.55,
+      xLambda: 1.2,
+      yLambda: 3.0,
+      widthLambda: 0.35,
+      angleDeg: 30,
+      phaseDeg: 0,
+      multipoleOrder: 3,
+      multipolePhase: "cos",
+    };
+    const shapeControlState = (shape) => {
+      populateSourceEditor({
+        ...sourceTemplate,
+        shape,
+        widthLambda: shape === "evanescentLine" ? 1.25 : sourceTemplate.widthLambda,
+      });
+      const visibleSourceIds = [
+        "sourceWidthControl",
+        "sourceAngleControl",
+        "sourceOrderControl",
+        "sourcePhaseControl",
+      ].filter((id) => {
+        const control = document.getElementById(id);
+        return control?.hidden === false && isRendered(control);
+      });
+      const multipoleGroup = document.querySelector(".source-order-controls");
+      const timePhaseControl = document.getElementById("sourceTimePhaseControl");
+      return {
+        visibleSourceIds,
+        multipoleGroupVisible: multipoleGroup?.hidden === false && isRendered(multipoleGroup),
+        timePhaseVisible: timePhaseControl?.hidden === false && isRendered(timePhaseControl),
+      };
+    };
+    return {
+      point: shapeControlState("point"),
+      gaussianSpot: shapeControlState("gaussianSpot"),
+      line: shapeControlState("line"),
+      gaussianProfile: shapeControlState("gaussianProfile"),
+      evanescentLine: shapeControlState("evanescentLine"),
+      multipole: shapeControlState("multipole"),
+    };
+  });
+  const failures = [];
+  const expectations = {
+    point: [],
+    gaussianSpot: ["sourceWidthControl"],
+    line: ["sourceAngleControl"],
+    gaussianProfile: ["sourceAngleControl"],
+    evanescentLine: ["sourceWidthControl", "sourceAngleControl"],
+    multipole: ["sourceWidthControl", "sourceAngleControl", "sourceOrderControl", "sourcePhaseControl"],
+  };
+  for (const [shape, expectedIds] of Object.entries(expectations)) {
+    const actual = status[shape]?.visibleSourceIds || [];
+    if (actual.join(",") !== expectedIds.join(",")) {
+      failures.push(`${shape} source controls should show only ${expectedIds.join(", ") || "always-on controls"}`);
+    }
+    if (!status[shape]?.timePhaseVisible) {
+      failures.push(`${shape} source should keep the temporal phase control visible`);
+    }
+    const expectsMultipoleGroup = expectedIds.includes("sourceOrderControl");
+    if (Boolean(status[shape]?.multipoleGroupVisible) !== expectsMultipoleGroup) {
+      failures.push(`${shape} source multipole group visibility is inconsistent`);
+    }
+  }
+  return {
+    id: "source_dependent_params_visibility",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runFloatingContextMenuDragSmoke(page) {
+  await selectPreset(page, "planeWaveAir");
+  const status = await page.evaluate(async () => {
+    const canvas = document.getElementById("simCanvas");
+    const menu = document.getElementById("sourceMenu");
+    const header = menu?.querySelector(".source-menu-header");
+    if (!canvas || !menu || !header || typeof openSourceMenuAt !== "function") {
+      return { opened: false, draggable: null, movedX: 0, movedY: 0, withinFrame: false };
+    }
+    const canvasRect = canvas.getBoundingClientRect();
+    openSourceMenuAt(canvasRect.left + canvasRect.width * 0.38, canvasRect.top + canvasRect.height * 0.28, null);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const before = menu.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    const pointerId = 37;
+    const startX = headerRect.left + Math.min(36, headerRect.width * 0.35);
+    const startY = headerRect.top + Math.min(18, headerRect.height * 0.5);
+    header.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        pointerId,
+        button: 0,
+        buttons: 1,
+        clientX: startX,
+        clientY: startY,
+      })
+    );
+    document.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        pointerId,
+        buttons: 1,
+        clientX: startX + 96,
+        clientY: startY + 54,
+      })
+    );
+    document.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        pointerId,
+        button: 0,
+        buttons: 0,
+        clientX: startX + 96,
+        clientY: startY + 54,
+      })
+    );
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const after = menu.getBoundingClientRect();
+    const frame = menu.parentElement.getBoundingClientRect();
+    return {
+      opened: menu.hidden === false,
+      draggable: menu.dataset.floatingMenuDraggable,
+      movedX: Number((after.left - before.left).toFixed(1)),
+      movedY: Number((after.top - before.top).toFixed(1)),
+      withinFrame:
+        after.left >= frame.left - 0.5 &&
+        after.top >= frame.top - 0.5 &&
+        after.right <= frame.right + 0.5 &&
+        after.bottom <= frame.bottom + 0.5,
+    };
+  });
+  const failures = [];
+  if (!status.opened) failures.push("source menu did not open before the drag test");
+  if (status.draggable !== "true") failures.push("source menu did not advertise draggable state on a large viewport");
+  if (Math.abs(status.movedX) < 20 && Math.abs(status.movedY) < 20) failures.push("source menu did not move after dragging the header");
+  if (!status.withinFrame) failures.push("dragged source menu escaped the canvas frame");
+  return {
+    id: "floating_context_menu_drag",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runReflectiveBoundaryWallSmoke(page) {
+  await selectPreset(page, "empty");
+  const status = await page.evaluate(() => {
+    state.running = false;
+    for (const side of ["left", "right", "top", "bottom"]) setBoundarySideMode(side, "absorbing");
+    setBoundarySideMode("right", "reflective");
+    sim.buildBoundary();
+    sim.clearBoundarySideMaterials("right");
+    sim.clearCpmlMaterials();
+    sim.resetFields();
+
+    const layer = sim.boundaryControlLayer();
+    const thickness = sim.reflectiveWallThicknessCells(layer);
+    const wallStart = sim.nx - layer;
+    const wallEnd = Math.min(sim.nx, wallStart + thickness);
+    const probeX = Math.max(1, wallStart - 3);
+    const probeY = Math.floor(sim.ny * 0.5);
+    const probeIdx = sim.id(probeX, probeY);
+    sim.ez[probeIdx] = 1;
+    sim.ezx[probeIdx] = 0.5;
+    sim.ezy[probeIdx] = 0.5;
+    sim.hx[probeIdx] = 0.25;
+    sim.hy[probeIdx] = -0.25;
+
+    for (let y = 1; y < sim.ny - 1; y += 1) {
+      for (let x = wallStart; x < wallEnd; x += 1) {
+        const idx = sim.id(x, y);
+        sim.ez[idx] = 1;
+        sim.ezx[idx] = 0.5;
+        sim.ezy[idx] = 0.5;
+        sim.hx[idx] = 0.25;
+        sim.hy[idx] = -0.25;
+      }
+    }
+
+    sim.zeroBoundaryFields();
+
+    let wallAbs = 0;
+    for (let y = 1; y < sim.ny - 1; y += 1) {
+      for (let x = wallStart; x < wallEnd; x += 1) {
+        const idx = sim.id(x, y);
+        wallAbs += Math.abs(sim.ez[idx]) + Math.abs(sim.ezx[idx]) + Math.abs(sim.ezy[idx]) + Math.abs(sim.hx[idx]) + Math.abs(sim.hy[idx]);
+      }
+    }
+    const probeAbs =
+      Math.abs(sim.ez[probeIdx]) +
+      Math.abs(sim.ezx[probeIdx]) +
+      Math.abs(sim.ezy[probeIdx]) +
+      Math.abs(sim.hx[probeIdx]) +
+      Math.abs(sim.hy[probeIdx]);
+
+    return {
+      boundary: { ...state.boundarySides },
+      cpmlLayer: sim.cpmlLayer,
+      layer,
+      thickness,
+      wallStart,
+      activeInteriorMaxX: sim.activeInteriorMaxX(),
+      sourcePlacementMaxX: sim.sourcePlacementMaxX(),
+      wallAbs,
+      probeAbs,
+    };
+  });
+  const failures = [];
+  if (status.boundary?.right !== "reflective") failures.push("right boundary did not enter reflective mode");
+  if (status.wallAbs !== 0) failures.push("reflective boundary wall did not zero the visible PEC strip");
+  if (status.probeAbs <= 0) failures.push("reflective boundary zeroing leaked into the active interior");
+  if (status.activeInteriorMaxX >= status.wallStart) failures.push("active interior overlaps the reflective wall");
+  if (status.sourcePlacementMaxX >= status.wallStart) failures.push("source placement overlaps the reflective wall");
+  return {
+    id: "reflective_boundary_wall",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runBrushDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
@@ -312,8 +555,33 @@ async function runBrushDependentParamsSmoke(page) {
       isotropicMaterialInputs.length === 4 &&
       isotropicInputShape.columns === 2 &&
       isotropicInputShape.rows === 2;
+    const geometryControlShape = (geometry) => {
+      state.brushTool = "geometry";
+      state.brushGeometry = geometry;
+      updateControlText();
+      const visibleGeometryIds = [
+        "geometryWidthControl",
+        "geometryHeightControl",
+        "geometryRadiusControl",
+        "geometryInnerRadiusControl",
+      ].filter((id) => {
+        const control = document.getElementById(id);
+        return control?.hidden === false && isRendered(control);
+      });
+      const visibleGroups = Array.from(document.querySelectorAll(".geometry-params")).filter(
+        (control) => control.hidden === false && isRendered(control)
+      ).length;
+      return { visibleGeometryIds, visibleGroups };
+    };
+    const geometryShapes = {
+      rectangle: geometryControlShape("rectangle"),
+      disk: geometryControlShape("disk"),
+      ellipse: geometryControlShape("ellipse"),
+      ring: geometryControlShape("ring"),
+    };
 
     Object.assign(state, {
+      brushTool: "paint",
       customAnisotropic: true,
       dispersionModel: "lorentz",
       materialConductivityEnabled: true,
@@ -358,6 +626,7 @@ async function runBrushDependentParamsSmoke(page) {
       dispersionHiddenWhenNone,
       emptyWarningHidden,
       isotropicMaterialGrid,
+      geometryShapes,
       gyrotropyVisibleWhenOn,
       modulationVisibleWhenOn,
       modulationPhaseVisibleWhenOn,
@@ -375,6 +644,21 @@ async function runBrushDependentParamsSmoke(page) {
   if (!status.dispersionHiddenWhenNone) failures.push("dispersion parameter rows remain visible for the None model");
   if (!status.emptyWarningHidden) failures.push("empty material warning output remains visible");
   if (!status.isotropicMaterialGrid) failures.push("isotropic epsilon/mu controls are not arranged as a 2x2 grid");
+  const geometryExpectations = {
+    rectangle: ["geometryWidthControl", "geometryHeightControl"],
+    disk: ["geometryRadiusControl"],
+    ellipse: ["geometryWidthControl", "geometryHeightControl"],
+    ring: ["geometryRadiusControl", "geometryInnerRadiusControl"],
+  };
+  for (const [geometry, expectedIds] of Object.entries(geometryExpectations)) {
+    const actual = status.geometryShapes?.[geometry]?.visibleGeometryIds || [];
+    if (actual.join(",") !== expectedIds.join(",")) {
+      failures.push(`${geometry} geometry controls should show only ${expectedIds.join(", ")}`);
+    }
+    if ((status.geometryShapes?.[geometry]?.visibleGroups || 0) < 1) {
+      failures.push(`${geometry} geometry controls should keep at least one visible group`);
+    }
+  }
   if (!status.gyrotropyVisibleWhenOn) failures.push("gyrotropy parameters do not appear when gyrotropy is enabled");
   if (!status.modulationVisibleWhenOn || !status.modulationPhaseVisibleWhenOn) {
     failures.push("modulation parameters do not appear when modulation is enabled");
@@ -510,6 +794,9 @@ async function main() {
     if (mode === "smoke") {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
+      report.cases.push(await runSourceDependentParamsSmoke(page));
+      report.cases.push(await runFloatingContextMenuDragSmoke(page));
+      report.cases.push(await runReflectiveBoundaryWallSmoke(page));
       report.cases.push(await runBrushDependentParamsSmoke(page));
     }
   } finally {
