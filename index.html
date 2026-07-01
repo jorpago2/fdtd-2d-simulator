@@ -141,9 +141,9 @@
                 <button class="mode-toggle-button" type="button" data-visual-profile="teaching" aria-pressed="false" title="Show teaching overlays">Teach</button>
                 <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
               </div>
-              <label class="toolbar-switch visual-layer-switch" title="Show PML and reflective boundary overlays">
+              <label class="toolbar-switch visual-layer-switch" title="Show CPML and reflective boundary overlays">
                 <input type="checkbox" data-visual-layer="boundaries" checked />
-                <span>PML/bounds</span>
+                <span>CPML/bounds</span>
               </label>
               <label class="toolbar-switch visual-layer-switch" title="Show incident wave-vector direction">
                 <input type="checkbox" data-visual-layer="diagnostics" checked />
@@ -629,7 +629,7 @@
             <div id="boundaryMenu" class="source-menu boundary-menu" role="dialog" aria-label="Boundary editor" hidden>
               <div class="source-menu-header">
                 <div>
-                  <p id="boundaryMenuHint" class="source-menu-hint">PML region</p>
+                  <p id="boundaryMenuHint" class="source-menu-hint">CPML region</p>
                   <h2>Boundary</h2>
                 </div>
                 <button id="boundaryMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close boundary editor">&times;</button>
@@ -638,7 +638,7 @@
                 <label>
                   <span>Boundary condition</span>
                   <select id="boundaryMenuInput">
-                    <option value="absorbing">PML absorbing</option>
+                    <option value="absorbing">CPML absorbing</option>
                     <option value="reflective">Reflective</option>
                   </select>
                 </label>
@@ -718,7 +718,7 @@
                     <option value="teTmComparison">9 · TEz/TMz comparison</option>
                     <option value="poyntingPlaneWave">10 · Poynting vector</option>
                     <option value="evanescentWave">11 · Evanescent isolated wave</option>
-                    <option value="pmlAbsorption">12 · PML absorption check</option>
+                    <option value="pmlAbsorption">12 · CPML absorption check</option>
                   </optgroup>
                   <optgroup label="2. Interfaces">
                     <option value="normalInterface">13 · Normal air-dielectric interface</option>
@@ -899,7 +899,7 @@
                 </div>
                 <div class="simulation-guide-card">
                   <span>Boundary</span>
-                  <output id="simGuideBoundary">PML absorbing</output>
+                  <output id="simGuideBoundary">CPML absorbing</output>
                 </div>
                 <div class="simulation-guide-card">
                   <span>Medium</span>
@@ -992,7 +992,7 @@
                 </div>
                 <div class="visual-summary-card">
                   <span>Overlays</span>
-                  <output id="visualGuideOverlays">PML, k vector, scale</output>
+                  <output id="visualGuideOverlays">CPML, k vector, scale</output>
                 </div>
               </div>
               <p id="visualGuideNote" class="simulation-guide-note">Use this panel to choose what physical quantity is shown on the canvas.</p>
@@ -1041,9 +1041,9 @@
                 <button class="mode-toggle-button" type="button" data-visual-profile="analysis" aria-pressed="false" title="Show analysis overlays">Analysis</button>
               </div>
               <div class="visual-layer-grid" aria-label="Canvas overlay layers">
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show PML and reflective boundary overlays">
+                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show CPML and reflective boundary overlays">
                   <input type="checkbox" data-visual-layer="boundaries" checked />
-                  <span>PML/bounds</span>
+                  <span>CPML/bounds</span>
                 </label>
                 <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show incident wave-vector direction">
                   <input type="checkbox" data-visual-layer="diagnostics" checked />
@@ -1292,7 +1292,7 @@
                 </div>
                 <div class="config-summary-card">
                   <span>Boundary</span>
-                  <output id="configBoundaryOutput">PML absorbing</output>
+                  <output id="configBoundaryOutput">CPML absorbing</output>
                 </div>
                 <div class="config-summary-card">
                   <span>CFL</span>
@@ -1375,6 +1375,7 @@
     <script src="js-next/runtime/simulation/fdtd-field-observables.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-boundaries.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-presets.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-incident-field.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-sources.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-custom-monitors.js?v=20260630-js-next-cutover-1"></script>

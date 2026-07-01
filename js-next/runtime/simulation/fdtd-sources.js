@@ -1,5 +1,10 @@
 "use strict";
 
+const incidentFieldModule = globalThis.FdtdIncidentField;
+if (!incidentFieldModule) {
+  throw new Error("fdtd-incident-field.js must be loaded before fdtd-sources.js");
+}
+
 Object.assign(FDTDSim.prototype, {
 sourceSample(source, phaseRad = 0) {
   return this.sourceSampleAtPhaseTime(source, this.time, phaseRad);
@@ -65,123 +70,77 @@ hasTfsfIncidentSource() {
   return state.sources.some((source) => this.isTfsfIncidentSource(source));
 },
 
-sourceIncidentMedium(source, sx, sy) {
-  const idx = this.id(sx, sy);
-  const eps = Math.max(1e-6, Math.abs(0.5 * ((Number(this.eps[idx]) || 1) + (Number(this.epsY[idx]) || 1))));
-  const mu = Math.max(1e-6, Math.abs(0.5 * ((Number(this.mu[idx]) || 1) + (Number(this.muY[idx]) || 1))));
-  return {
-    n: Math.sqrt(eps * mu),
-    z: Math.sqrt(mu / eps),
-  };
-},
-
 tfsfSourceParams(source) {
-  const sx = this.sourceXCell(source);
-  const sy = this.sourceYCell(source);
-  const theta = (source.angleDeg * Math.PI) / 180;
-  const cosTheta = Math.cos(theta);
-  const sinTheta = Math.sin(theta);
-  const medium = this.sourceIncidentMedium(source, sx, sy);
-  const directionX = cosTheta >= 0 ? 1 : -1;
-  const minX = 1;
-  const maxX = this.nx - 2;
-  const minY = 1;
-  const maxY = this.ny - 2;
-  const x0 = directionX > 0 ? clampInt(sx, minX + 1, maxX - 1) : minX;
-  const x1 = directionX > 0 ? maxX : clampInt(sx, minX + 1, maxX - 1);
-  if (x1 <= x0 || minY + 1 >= maxY) return null;
-  return {
+  return incidentFieldModule.createTfsfDescriptor({
+    sim: this,
+    state,
     source,
-    sx,
-    sy,
-    cosTheta,
-    sinTheta,
-    kCells: (2 * Math.PI * source.frequency * medium.n) / Math.max(COURANT, 1e-9),
-    z: medium.z,
-    x0,
-    x1,
-    y0: minY,
-    y1: maxY,
-  };
+    courant: COURANT,
+  });
 },
 
 tfsfIncidentEnvelope(params, x, y) {
-  if (params.source.shape !== "gaussianProfile") return 1;
-  const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-  const transverse = -(x - params.sx) * params.sinTheta + (y - params.sy) * params.cosTheta;
-  return Math.exp(-4 * Math.LN2 * (transverse / fwhm) * (transverse / fwhm));
+  return incidentFieldModule.envelope(params, x, y);
 },
 
 tfsfIncidentScalar(params, x, y, t) {
-  const phase = -params.kCells * ((x - params.sx) * params.cosTheta + (y - params.sy) * params.sinTheta);
-  const envelope = this.tfsfIncidentEnvelope(params, x, y);
-  const value = this.sourceSampleAtPhaseTime(params.source, t, phase) * envelope;
-  return Number.isFinite(this.fieldScale) ? value / this.fieldScale : 0;
+  return incidentFieldModule.scalar(params, x, y, t, this.fieldScale);
 },
 
 tfsfTmIncidentH(params, x, y, t) {
-  const scalar = this.tfsfIncidentScalar(params, x, y, t);
-  const invZ = 1 / Math.max(1e-9, params.z);
-  return {
-    hx: params.sinTheta * scalar * invZ,
-    hy: -params.cosTheta * scalar * invZ,
-  };
+  return incidentFieldModule.tmIncidentH(params, x, y, t, this.fieldScale);
 },
 
 tfsfTeIncidentE(params, x, y, t) {
-  const scalar = this.tfsfIncidentScalar(params, x, y, t);
-  return {
-    ex: -params.sinTheta * scalar * params.z,
-    ey: params.cosTheta * scalar * params.z,
-  };
+  return incidentFieldModule.teIncidentE(params, x, y, t, this.fieldScale);
 },
 
 electricUpdateCoeffX(idx, x) {
   const eps = this.safeMaterialDenominator(this.eps[idx]);
   const sigmaDamp = this.conductivityDamp(this.conductivity[idx], eps);
   const sigmaCb = 1 / (1 + sigmaDamp);
-  return sigmaCb * this.eCbX[x] * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
+  return sigmaCb * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
 },
 
 electricUpdateCoeffY(idx, y) {
   const epsY = this.safeMaterialDenominator(this.epsY[idx]);
   const sigmaDamp = this.conductivityDamp(this.conductivityY[idx], epsY);
   const sigmaCb = 1 / (1 + sigmaDamp);
-  return sigmaCb * this.eCbY[y] * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
+  return sigmaCb * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
 },
 
 transverseElectricUpdateCoeffX(idx, y) {
   const eps = this.safeMaterialDenominator(this.eps[idx]);
   const sigmaDamp = this.conductivityDamp(this.conductivity[idx], eps);
   const sigmaCb = 1 / (1 + sigmaDamp);
-  return sigmaCb * this.eCbY[y] * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
+  return sigmaCb * (this.courant / eps) * this.electricLossDecay(this.loss[idx], idx);
 },
 
 transverseElectricUpdateCoeffY(idx, x) {
   const epsY = this.safeMaterialDenominator(this.epsY[idx]);
   const sigmaDamp = this.conductivityDamp(this.conductivityY[idx], epsY);
   const sigmaCb = 1 / (1 + sigmaDamp);
-  return sigmaCb * this.eCbX[x] * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
+  return sigmaCb * (this.courant / epsY) * this.electricLossDecay(this.lossY[idx], idx);
 },
 
 magneticUpdateCoeffX(idx, x) {
   const mu = this.safeMaterialDenominator(this.mu[idx]);
-  return this.hCbX[x] * (this.courant / mu) / (1 + this.muLoss[idx]);
+  return (this.courant / mu) * this.magneticLossDecay(this.muLoss[idx]);
 },
 
 magneticUpdateCoeffY(idx, y) {
   const muY = this.safeMaterialDenominator(this.muY[idx]);
-  return this.hCbY[y] * (this.courant / muY) / (1 + this.muLossY[idx]);
+  return (this.courant / muY) * this.magneticLossDecay(this.muLossY[idx]);
 },
 
 transverseMagneticUpdateCoeffX(idx, x) {
   const muY = this.safeMaterialDenominator(this.muY[idx]);
-  return this.hCbX[x] * (this.courant / muY) / (1 + this.muLossY[idx]);
+  return (this.courant / muY) * this.magneticLossDecay(this.muLossY[idx]);
 },
 
 transverseMagneticUpdateCoeffY(idx, y) {
   const mu = this.safeMaterialDenominator(this.mu[idx]);
-  return this.hCbY[y] * (this.courant / mu) / (1 + this.muLoss[idx]);
+  return (this.courant / mu) * this.magneticLossDecay(this.muLoss[idx]);
 },
 
 applyTfsfTransverseCorrections() {
@@ -333,11 +292,18 @@ evanescentWaveNumbers(source) {
   const kParallelRatio = clamp(Number(source.evanescentKParallelRatio ?? source.kParallelRatio ?? source.widthLambda) || 1.25, 1.01, 2.5);
   const kParallel = k0 * kParallelRatio;
   const alpha = k0 * Math.sqrt(Math.max(0, kParallelRatio * kParallelRatio - 1));
-  return { k0, kParallel, kParallelRatio, alpha };
+  return { k0, kParallel, kParallelRatio, alpha, alphaRatio: alpha / Math.max(k0, 1e-9) };
+},
+
+sourceLocalImpedance(sx, sy) {
+  const idx = this.id(sx, sy);
+  const eps = Math.max(1e-6, Math.abs(0.5 * (this.safeMaterialDenominator(this.eps[idx]) + this.safeMaterialDenominator(this.epsY[idx]))));
+  const mu = Math.max(1e-6, Math.abs(0.5 * (this.safeMaterialDenominator(this.mu[idx]) + this.safeMaterialDenominator(this.muY[idx]))));
+  return Math.sqrt(mu / eps);
 },
 
 injectEvanescentLineIncidentField(source, sx, sy) {
-  const { k0, kParallel, alpha } = this.evanescentWaveNumbers(source);
+  const { k0, kParallel, kParallelRatio, alpha, alphaRatio } = this.evanescentWaveNumbers(source);
   const lambdaCells = (2 * Math.PI) / Math.max(k0, 1e-9);
   const decayCells = 1 / Math.max(alpha, 1e-9);
   const stripWidth = Math.ceil(Math.max(5, Math.min(lambdaCells * 3, decayCells * 4)));
@@ -347,18 +313,28 @@ injectEvanescentLineIncidentField(source, sx, sy) {
   const y0 = Math.max(this.activeInteriorMinY(), sy - halfWindow);
   const y1 = Math.min(this.activeInteriorMaxY(), sy + halfWindow);
   const ySpan = Math.max(1, y1 - y0);
+  const impedance = this.sourceLocalImpedance(sx, sy);
+  const invImpedance = 1 / Math.max(1e-9, impedance);
 
   for (let y = y0; y <= y1; y += 1) {
     const edgeTaper = Math.sin(Math.PI * (y - y0) / ySpan);
     const phase = -kParallel * (y - sy);
     const lineValue = this.sourceSample(source, phase) * edgeTaper;
-    if (Math.abs(lineValue) < 1e-8) continue;
+    const quadratureValue = this.sourceSample(source, phase + Math.PI / 2) * edgeTaper;
+    if (Math.max(Math.abs(lineValue), Math.abs(quadratureValue)) < 1e-8) continue;
     for (let x = x0; x <= x1; x += 1) {
       const idx = this.id(x, y);
       if (this.material[idx] === 2) continue;
       const decay = Math.exp(-alpha * Math.max(0, x - x0));
       if (decay < 1e-4) break;
-      this.addIncidentScalarField(idx, lineValue * decay);
+      const scalarValue = lineValue * decay;
+      const quadratureScalar = quadratureValue * decay;
+      this.addIncidentScalarField(idx, scalarValue);
+      if (state.fieldComponent === "hz") {
+        this.addTransverseIncidentField(idx, -impedance * kParallelRatio * scalarValue, impedance * alphaRatio * quadratureScalar);
+      } else {
+        this.addTransverseIncidentField(idx, invImpedance * kParallelRatio * scalarValue, -invImpedance * alphaRatio * quadratureScalar);
+      }
     }
   }
 },
@@ -545,6 +521,12 @@ addIncidentScalarField(idx, value) {
   this.ez[idx] = this.ezx[idx] + this.ezy[idx];
 },
 
+addTransverseIncidentField(idx, xValue, yValue) {
+  const scale = Number.isFinite(this.fieldScale) && this.fieldScale !== 0 ? this.fieldScale : 1;
+  this.hx[idx] += xValue / scale;
+  this.hy[idx] += yValue / scale;
+},
+
 addScalarCurrentSource(idx, value, x, y) {
   if (state.fieldComponent === "hz") {
     this.addMagneticCurrentMz(idx, value, x, y);
@@ -556,8 +538,8 @@ addScalarCurrentSource(idx, value, x, y) {
 addElectricCurrentJz(idx, jz, x, y) {
   const scaledJz = Number.isFinite(this.fieldScale) ? jz / this.fieldScale : 0;
   const halfJz = scaledJz * 0.5;
-  const currentScaleX = this.eCbX[x] * (this.courant / this.eps[idx]);
-  const currentScaleY = this.eCbY[y] * (this.courant / this.epsY[idx]);
+  const currentScaleX = this.courant / this.safeMaterialDenominator(this.eps[idx]);
+  const currentScaleY = this.courant / this.safeMaterialDenominator(this.epsY[idx]);
   const decayX = this.electricLossDecay(this.loss[idx], idx);
   const decayY = this.electricLossDecay(this.lossY[idx], idx);
   this.ezx[idx] -= currentScaleX * halfJz * decayX;
@@ -568,10 +550,10 @@ addElectricCurrentJz(idx, jz, x, y) {
 addMagneticCurrentMz(idx, mz, x, y) {
   const scaledMz = Number.isFinite(this.fieldScale) ? mz / this.fieldScale : 0;
   const halfMz = scaledMz * 0.5;
-  const currentScaleX = this.hCbX[x] * (this.courant / this.mu[idx]);
-  const currentScaleY = this.hCbY[y] * (this.courant / this.muY[idx]);
-  const decayX = 1 / (1 + this.muLoss[idx]);
-  const decayY = 1 / (1 + this.muLossY[idx]);
+  const currentScaleX = this.courant / this.safeMaterialDenominator(this.mu[idx]);
+  const currentScaleY = this.courant / this.safeMaterialDenominator(this.muY[idx]);
+  const decayX = this.magneticLossDecay(this.muLoss[idx]);
+  const decayY = this.magneticLossDecay(this.muLossY[idx]);
   this.ezx[idx] -= currentScaleX * halfMz * decayX;
   this.ezy[idx] -= currentScaleY * halfMz * decayY;
   this.ez[idx] = this.ezx[idx] + this.ezy[idx];
@@ -579,14 +561,14 @@ addMagneticCurrentMz(idx, mz, x, y) {
 
 addElectricCurrentJx(idx, jx, x, y) {
   const scaledJx = Number.isFinite(this.fieldScale) ? jx / this.fieldScale : 0;
-  const currentScale = this.eCbY[y] * (this.courant / this.eps[idx]);
+  const currentScale = this.courant / this.safeMaterialDenominator(this.eps[idx]);
   const decay = this.electricLossDecay(this.loss[idx], idx);
   this.hx[idx] -= currentScale * scaledJx * decay;
 },
 
 addElectricCurrentJy(idx, jy, x, y) {
   const scaledJy = Number.isFinite(this.fieldScale) ? jy / this.fieldScale : 0;
-  const currentScale = this.eCbX[x] * (this.courant / this.epsY[idx]);
+  const currentScale = this.courant / this.safeMaterialDenominator(this.epsY[idx]);
   const decay = this.electricLossDecay(this.lossY[idx], idx);
   this.hy[idx] -= currentScale * scaledJy * decay;
 }

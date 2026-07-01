@@ -94,7 +94,7 @@ Object.assign(FDTDSim.prototype, {
       addRectangle(width, height);
     }
 
-    this.refreshPmlMaterialContinuation(false);
+    this.refreshCpmlMaterialContinuation(false);
     if (kind === "erase" || inserted.length === 0) return null;
     return {
       cells: inserted,
@@ -118,20 +118,24 @@ Object.assign(FDTDSim.prototype, {
     return Math.max(2, lambdaToCells(source.widthLambda));
   },
 
+  activeInteriorBoundaryLayer(side) {
+    return boundarySideIsAbsorbing(side) ? this.cpmlLayer : 0;
+  },
+
   activeInteriorMinX() {
-    return this.boundaryControlLayer() + 1;
+    return this.activeInteriorBoundaryLayer("left") + 1;
   },
 
   activeInteriorMaxX() {
-    return this.nx - this.boundaryControlLayer() - 2;
+    return this.nx - this.activeInteriorBoundaryLayer("right") - 2;
   },
 
   activeInteriorMinY() {
-    return this.boundaryControlLayer() + 1;
+    return this.activeInteriorBoundaryLayer("top") + 1;
   },
 
   activeInteriorMaxY() {
-    return this.ny - this.boundaryControlLayer() - 2;
+    return this.ny - this.activeInteriorBoundaryLayer("bottom") - 2;
   },
 
   sourceGuardMarginCells(side) {
@@ -2067,7 +2071,7 @@ Object.assign(FDTDSim.prototype, {
       default:
         break;
     }
-    this.refreshPmlMaterialContinuation(false);
+    this.refreshCpmlMaterialContinuation(false);
     this.resetFields();
   }
 });

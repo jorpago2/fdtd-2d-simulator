@@ -90,7 +90,7 @@ clearMaterials(resetFields = true) {
   this.harmonicPrevPz.fill(0);
   this.harmonicPrevPx.fill(0);
   this.harmonicPrevPy.fill(0);
-  this.refreshPmlMaterialContinuation(false);
+  this.refreshCpmlMaterialContinuation(false);
   if (resetFields) {
     this.resetFields();
   }
@@ -175,6 +175,88 @@ copyMaterialCellByIndex(targetIdx, sourceIdx) {
   this.harmonicPrevPz[targetIdx] = this.harmonicPrevPz[sourceIdx];
   this.harmonicPrevPx[targetIdx] = this.harmonicPrevPx[sourceIdx];
   this.harmonicPrevPy[targetIdx] = this.harmonicPrevPy[sourceIdx];
+},
+
+copyPassiveCpmlMaterialCellByIndex(targetIdx, sourceIdx) {
+  this.material[targetIdx] = this.material[sourceIdx];
+  this.eps[targetIdx] = this.eps[sourceIdx];
+  this.epsY[targetIdx] = this.epsY[sourceIdx];
+  this.mu[targetIdx] = this.mu[sourceIdx];
+  this.muY[targetIdx] = this.muY[sourceIdx];
+  this.loss[targetIdx] = Math.max(0, Number(this.loss[sourceIdx]) || 0);
+  this.lossY[targetIdx] = Math.max(0, Number(this.lossY[sourceIdx]) || 0);
+  this.muLoss[targetIdx] = Math.max(0, Number(this.muLoss[sourceIdx]) || 0);
+  this.muLossY[targetIdx] = Math.max(0, Number(this.muLossY[sourceIdx]) || 0);
+  this.conductivity[targetIdx] = Math.max(0, Number(this.conductivity[sourceIdx]) || 0);
+  this.conductivityY[targetIdx] = Math.max(0, Number(this.conductivityY[sourceIdx]) || 0);
+
+  this.modulatedMaterial[targetIdx] = 0;
+  this.modulationPhaseOffset[targetIdx] = 0;
+  this.nonlinearMaterial[targetIdx] = 0;
+  this.dispersiveMaterial[targetIdx] = 0;
+  this.dispersionAxes[targetIdx] = 0;
+  this.dispersionAxisX[targetIdx] = 1;
+  this.dispersionAxisY[targetIdx] = 0;
+  this.electricTensorMaterial[targetIdx] = 0;
+  this.epsilonXY[targetIdx] = 0;
+  this.gyrotropicMaterial[targetIdx] = 0;
+  this.gyrotropyG[targetIdx] = 0;
+  this.bianisotropicMaterial[targetIdx] = 0;
+  this.bianisotropyKappa[targetIdx] = 0;
+  this.phaseChangeMaterial[targetIdx] = 0;
+  this.phaseState[targetIdx] = 0;
+  this.phaseEpsOff[targetIdx] = this.eps[targetIdx];
+  this.phaseLossOff[targetIdx] = this.loss[targetIdx];
+  this.phaseEpsYOff[targetIdx] = this.epsY[targetIdx];
+  this.phaseLossYOff[targetIdx] = this.lossY[targetIdx];
+  this.phaseEpsOn[targetIdx] = this.eps[targetIdx];
+  this.phaseLossOn[targetIdx] = this.loss[targetIdx];
+  this.phaseEpsYOn[targetIdx] = this.epsY[targetIdx];
+  this.phaseLossYOn[targetIdx] = this.lossY[targetIdx];
+  this.modulationBaseEps[targetIdx] = this.eps[targetIdx];
+  this.modulationBaseEpsY[targetIdx] = this.epsY[targetIdx];
+  this.dispersionOmegaP[targetIdx] = 0;
+  this.dispersionGamma[targetIdx] = 0;
+  this.dispersionOmega0[targetIdx] = 0;
+  this.dispersionDeltaEps[targetIdx] = 0;
+  this.dispersionTau[targetIdx] = 1;
+  this.muDispersiveMaterial[targetIdx] = 0;
+  this.muDispersionAxes[targetIdx] = 0;
+  this.muDispersionOmegaP[targetIdx] = 0;
+  this.muDispersionGamma[targetIdx] = 0;
+  this.muDispersionOmega0[targetIdx] = 0;
+  this.muDispersionDeltaMu[targetIdx] = 0;
+  this.muDispersionTau[targetIdx] = 1;
+  this.dispPz[targetIdx] = 0;
+  this.dispJz[targetIdx] = 0;
+  this.dispPx[targetIdx] = 0;
+  this.dispJx[targetIdx] = 0;
+  this.dispPy[targetIdx] = 0;
+  this.dispJy[targetIdx] = 0;
+  this.magDispMz[targetIdx] = 0;
+  this.magDispJz[targetIdx] = 0;
+  this.magDispMx[targetIdx] = 0;
+  this.magDispJx[targetIdx] = 0;
+  this.magDispMy[targetIdx] = 0;
+  this.magDispJy[targetIdx] = 0;
+  this.bianisotropyPrevScalar[targetIdx] = 0;
+  this.bianisotropyPrevSplitX[targetIdx] = 0;
+  this.bianisotropyPrevSplitY[targetIdx] = 0;
+  this.bianisotropyPrevTx[targetIdx] = 0;
+  this.bianisotropyPrevTy[targetIdx] = 0;
+  this.dualEz[targetIdx] = 0;
+  this.dualEzx[targetIdx] = 0;
+  this.dualEzy[targetIdx] = 0;
+  this.dualHx[targetIdx] = 0;
+  this.dualHy[targetIdx] = 0;
+  this.bianisotropyPrevDualEz[targetIdx] = 0;
+  this.bianisotropyPrevDualEzx[targetIdx] = 0;
+  this.bianisotropyPrevDualEzy[targetIdx] = 0;
+  this.bianisotropyPrevDualHx[targetIdx] = 0;
+  this.bianisotropyPrevDualHy[targetIdx] = 0;
+  this.harmonicPrevPz[targetIdx] = 0;
+  this.harmonicPrevPx[targetIdx] = 0;
+  this.harmonicPrevPy[targetIdx] = 0;
 },
 
 setCellModulation(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx], phaseOffsetRad = 0) {
@@ -922,7 +1004,7 @@ renderMaterialRegionFromBase(base, region, dx, dy) {
   for (const cell of shifted.cells) {
     this.writeMaterialCell(cell.x, cell.y, cell);
   }
-  this.refreshPmlMaterialContinuation(false);
+  this.refreshCpmlMaterialContinuation(false);
   this.resetFields();
   return shifted;
 },
@@ -933,14 +1015,14 @@ applyMaterialKindToRegion(region, kind) {
     for (const cell of region.cells) {
       this.setMaterial(cell.x, cell.y, "erase");
     }
-    this.refreshPmlMaterialContinuation(false);
+    this.refreshCpmlMaterialContinuation(false);
     this.resetFields();
     return null;
   }
   for (const cell of region.cells) {
     this.setMaterial(cell.x, cell.y, kind);
   }
-  this.refreshPmlMaterialContinuation(false);
+  this.refreshCpmlMaterialContinuation(false);
   this.resetFields();
   const firstCell = region.cells[0];
   return firstCell ? this.findMaterialRegionAtCell(firstCell.x, firstCell.y) : null;
@@ -969,7 +1051,7 @@ updateCustomMaterialCells(resetFields = true) {
     this.muY[i] = state.customAnisotropic ? state.customMuYReal : state.customMuReal;
     this.muLossY[i] = state.customAnisotropic ? state.customMuYImag : state.customMuImag;
   }
-  this.refreshPmlMaterialContinuation(false);
+  this.refreshCpmlMaterialContinuation(false);
   if (resetFields) {
     this.resetFields();
   }
@@ -1026,8 +1108,8 @@ applyHarmonicNonlinearResponse() {
         const jy = clamp((py - this.harmonicPrevPy[idx]) * rawScale, -1e4, 1e4);
         this.harmonicPrevPx[idx] = px;
         this.harmonicPrevPy[idx] = py;
-        this.hx[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jx;
-        this.hy[idx] -= this.eCbX[x] * (s / Math.max(1e-6, Math.abs(this.epsY[idx]))) * jy;
+        this.hx[idx] -= (s / this.safeMaterialDenominator(this.eps[idx])) * jx;
+        this.hy[idx] -= (s / this.safeMaterialDenominator(this.epsY[idx])) * jy;
       }
     }
     return;
@@ -1041,8 +1123,8 @@ applyHarmonicNonlinearResponse() {
       const pz = this.nonlinearPolarization(this.ez[idx] * fieldScale);
       const jz = clamp((pz - this.harmonicPrevPz[idx]) * rawScale, -1e4, 1e4);
       this.harmonicPrevPz[idx] = pz;
-      this.ezx[idx] -= this.eCbX[x] * (s / Math.max(1e-6, Math.abs(this.eps[idx]))) * jz * 0.5;
-      this.ezy[idx] -= this.eCbY[y] * (s / Math.max(1e-6, Math.abs(this.epsY[idx]))) * jz * 0.5;
+      this.ezx[idx] -= (s / this.safeMaterialDenominator(this.eps[idx])) * jz * 0.5;
+      this.ezy[idx] -= (s / this.safeMaterialDenominator(this.epsY[idx])) * jz * 0.5;
       this.ez[idx] = this.ezx[idx] + this.ezy[idx];
     }
   }
@@ -1130,6 +1212,7 @@ canUseCompiledFullVectorBianisotropy() {
     this.fullVectorBianisotropyActive() &&
       this.wasmBackend?.canStep("hz") &&
       this.wasmBackend?.canStep("ez") &&
+      (!this.cpmlActive?.() || this.wasmBackend?.supportsCpml?.()) &&
       !this.hasTfsfIncidentSource?.() &&
       !state.materialModulationEnabled &&
       !state.materialNonlinearEnabled &&
@@ -1173,13 +1256,12 @@ stepDualTmMode() {
 
   for (let y = 0; y < ny - 1; y += 1) {
     const row = y * nx;
-    const ca = this.hCaY[y];
-    const cb = this.hCbY[y];
     for (let x = 0; x < nx; x += 1) {
       const i = row + x;
-      const magneticDecay = 1 / (1 + Math.max(0, Number(this.muLoss[i]) || 0));
+      const dEzDy = this.cpmlDerivativeY(ez[i + nx] - ez[i], this.cpmlPsiDualHxY, i, y, false);
+      const magneticDecay = this.magneticLossDecay(this.muLoss[i]);
       const magneticScale = s / this.safeMaterialDenominator(this.mu[i]);
-      hx[i] = (ca * hx[i] - cb * magneticScale * (ez[i + nx] - ez[i])) * magneticDecay;
+      hx[i] = (hx[i] - magneticScale * dEzDy) * magneticDecay;
     }
   }
 
@@ -1187,9 +1269,10 @@ stepDualTmMode() {
     const row = y * nx;
     for (let x = 0; x < nx - 1; x += 1) {
       const i = row + x;
-      const magneticDecay = 1 / (1 + Math.max(0, Number(this.muLossY[i]) || 0));
+      const dEzDx = this.cpmlDerivativeX(ez[i + 1] - ez[i], this.cpmlPsiDualHyX, i, x, false);
+      const magneticDecay = this.magneticLossDecay(this.muLossY[i]);
       const magneticScale = s / this.safeMaterialDenominator(this.muY[i]);
-      hy[i] = (this.hCaX[x] * hy[i] + this.hCbX[x] * magneticScale * (ez[i + 1] - ez[i])) * magneticDecay;
+      hy[i] = (hy[i] + magneticScale * dEzDx) * magneticDecay;
     }
   }
 
@@ -1201,8 +1284,8 @@ stepDualTmMode() {
         this.zeroDualFieldCell(i);
         continue;
       }
-      const dHyDx = hy[i] - hy[i - 1];
-      const dHxDy = hx[i] - hx[i - nx];
+      const dHyDx = this.cpmlDerivativeX(hy[i] - hy[i - 1], this.cpmlPsiDualEzX, i, x, true);
+      const dHxDy = this.cpmlDerivativeY(hx[i] - hx[i - nx], this.cpmlPsiDualEzY, i, y, true);
       const decayX = this.electricLossDecay(this.loss[i], i);
       const decayY = this.electricLossDecay(this.lossY[i], i);
       const materialScaleX = s / this.safeMaterialDenominator(this.eps[i]);
@@ -1213,19 +1296,20 @@ stepDualTmMode() {
       const sigmaCaY = (1 - sigmaDampY) / (1 + sigmaDampY);
       const sigmaCbX = 1 / (1 + sigmaDampX);
       const sigmaCbY = 1 / (1 + sigmaDampY);
-      ezx[i] = (sigmaCaX * this.eCaX[x] * ezx[i] + sigmaCbX * this.eCbX[x] * materialScaleX * dHyDx) * decayX;
-      ezy[i] = (sigmaCaY * this.eCaY[y] * ezy[i] - sigmaCbY * this.eCbY[y] * materialScaleY * dHxDy) * decayY;
+      ezx[i] = (sigmaCaX * ezx[i] + sigmaCbX * materialScaleX * dHyDx) * decayX;
+      ezy[i] = (sigmaCaY * ezy[i] - sigmaCbY * materialScaleY * dHxDy) * decayY;
       ez[i] = ezx[i] + ezy[i];
     }
   }
 },
 
 solveBianisotropicIncrement(oldElectric, oldMagnetic, nextElectric, nextMagnetic, epsValue, muValue, kappaNorm) {
-  const epsEff = Math.max(1e-6, Math.abs(epsValue));
-  const muEff = Math.max(1e-6, Math.abs(muValue));
-  const kappa = normalizeBianisotropyKappa(kappaNorm) * Math.sqrt(epsEff * muEff);
+  const epsEff = this.safeMaterialDenominator(epsValue);
+  const muEff = this.safeMaterialDenominator(muValue);
+  const kappaScale = Math.sqrt(Math.abs(epsEff * muEff));
+  const kappa = normalizeBianisotropyKappa(kappaNorm) * kappaScale;
   const det = epsEff * muEff - kappa * kappa;
-  if (!Number.isFinite(det) || det <= 1e-9) {
+  if (!Number.isFinite(det) || Math.abs(det) <= 1e-9) {
     return { electric: nextElectric, magnetic: nextMagnetic };
   }
   const deltaElectric0 = clamp(nextElectric - oldElectric, -1e4, 1e4);
@@ -1342,8 +1426,8 @@ applyFullVectorBianisotropicResponse() {
     this.hy[i] = pairY.electric;
     this.dualHy[i] = pairY.magnetic;
 
-    const epsZ = 0.5 * (Math.abs(this.eps[i]) + Math.abs(this.epsY[i]));
-    const muZ = 0.5 * (Math.abs(this.mu[i]) + Math.abs(this.muY[i]));
+    const epsZ = 0.5 * (this.safeMaterialDenominator(this.eps[i]) + this.safeMaterialDenominator(this.epsY[i]));
+    const muZ = 0.5 * (this.safeMaterialDenominator(this.mu[i]) + this.safeMaterialDenominator(this.muY[i]));
     const pairZ = this.solveBianisotropicIncrement(
       this.bianisotropyPrevDualEz[i],
       this.bianisotropyPrevScalar[i],
@@ -1369,24 +1453,48 @@ applyFullVectorBianisotropicResponse() {
   }
 },
 
+advanceSecondOrderPolarization(fieldValue, polarizationValue, currentValue, resonanceOmega, dampingGamma, driveCoeff) {
+  const gammaHalf = 0.5 * Math.max(0, dampingGamma);
+  const omega = Math.max(0, resonanceOmega);
+  const omega2 = omega * omega;
+  const previousPolarization = polarizationValue - currentValue;
+  const denominator = 1 + gammaHalf;
+  const nextPolarization = (
+    (2 - omega2) * polarizationValue
+    - (1 - gammaHalf) * previousPolarization
+    + driveCoeff * fieldValue
+  ) / denominator;
+  return {
+    polarization: nextPolarization,
+    current: nextPolarization - polarizationValue,
+  };
+},
+
 advanceDispersiveCurrent(idx, fieldValue, polarization, current) {
   const kind = this.dispersiveMaterial[idx];
   if (!kind) return 0;
   const gamma = Math.max(0, this.dispersionGamma[idx]);
-  const decay = Math.exp(-gamma);
-  const sourceCoeff = gamma > 1e-6 ? (1 - decay) / gamma : 1;
   let p = polarization[idx];
   let j = current[idx];
 
   if (kind === 1) {
     const omegaP = Math.max(0, this.dispersionOmegaP[idx]);
-    j = decay * j + sourceCoeff * omegaP * omegaP * fieldValue;
-    p += j;
+    const next = this.advanceSecondOrderPolarization(fieldValue, p, j, 0, gamma, omegaP * omegaP);
+    p = next.polarization;
+    j = next.current;
   } else if (kind === 2) {
     const omega0 = Math.max(0, this.dispersionOmega0[idx]);
     const deltaEps = this.dispersionDeltaEps[idx];
-    j = decay * j + sourceCoeff * (deltaEps * omega0 * omega0 * fieldValue - omega0 * omega0 * p);
-    p += j;
+    const next = this.advanceSecondOrderPolarization(
+      fieldValue,
+      p,
+      j,
+      omega0,
+      gamma,
+      deltaEps * omega0 * omega0,
+    );
+    p = next.polarization;
+    j = next.current;
   } else if (kind === 3) {
     const tau = Math.max(1, this.dispersionTau[idx]);
     const relax = Math.exp(-1 / tau);
@@ -1404,20 +1512,27 @@ advanceMagneticDispersiveCurrent(idx, fieldValue, magnetization, current) {
   const kind = this.muDispersiveMaterial[idx];
   if (!kind) return 0;
   const gamma = Math.max(0, this.muDispersionGamma[idx]);
-  const decay = Math.exp(-gamma);
-  const sourceCoeff = gamma > 1e-6 ? (1 - decay) / gamma : 1;
   let m = magnetization[idx];
   let j = current[idx];
 
   if (kind === 1) {
     const omegaP = Math.max(0, this.muDispersionOmegaP[idx]);
-    j = decay * j + sourceCoeff * omegaP * omegaP * fieldValue;
-    m += j;
+    const next = this.advanceSecondOrderPolarization(fieldValue, m, j, 0, gamma, omegaP * omegaP);
+    m = next.polarization;
+    j = next.current;
   } else if (kind === 2) {
     const omega0 = Math.max(0, this.muDispersionOmega0[idx]);
     const deltaMu = this.muDispersionDeltaMu[idx];
-    j = decay * j + sourceCoeff * (deltaMu * omega0 * omega0 * fieldValue - omega0 * omega0 * m);
-    m += j;
+    const next = this.advanceSecondOrderPolarization(
+      fieldValue,
+      m,
+      j,
+      omega0,
+      gamma,
+      deltaMu * omega0 * omega0,
+    );
+    m = next.polarization;
+    j = next.current;
   } else if (kind === 3) {
     const tau = Math.max(1, this.muDispersionTau[idx]);
     const relax = Math.exp(-1 / tau);
@@ -1439,8 +1554,8 @@ safeMaterialDenominator(value) {
 
 applyHzElectricCurrentVector(idx, x, y, jx, jy) {
   if (jx === 0 && jy === 0) return;
-  const sourceX = -this.eCbY[y] * this.courant * jx;
-  const sourceY = -this.eCbX[x] * this.courant * jy;
+  const sourceX = -this.courant * jx;
+  const sourceY = -this.courant * jy;
   const epsX = this.eps[idx];
   const epsYi = this.epsY[idx];
   const k = this.epsilonXY[idx] || 0;
@@ -1491,10 +1606,10 @@ applyDispersiveElectricResponse() {
       if (!this.dispersiveMaterial[idx] || this.material[idx] === 2) continue;
       if (!((this.dispersionAxes[idx] || 3) & 1)) continue;
       const jz = this.advanceDispersiveCurrent(idx, this.ez[idx], this.dispPz, this.dispJz);
-      const epsX = Math.max(1e-6, Math.abs(this.eps[idx]));
-      const epsY = Math.max(1e-6, Math.abs(this.epsY[idx]));
-      this.ezx[idx] -= this.eCbX[x] * (s / epsX) * jz * 0.5;
-      this.ezy[idx] -= this.eCbY[y] * (s / epsY) * jz * 0.5;
+      const epsX = this.safeMaterialDenominator(this.eps[idx]);
+      const epsY = this.safeMaterialDenominator(this.epsY[idx]);
+      this.ezx[idx] -= (s / epsX) * jz * 0.5;
+      this.ezy[idx] -= (s / epsY) * jz * 0.5;
       this.ez[idx] = this.ezx[idx] + this.ezy[idx];
     }
   }
@@ -1516,10 +1631,10 @@ applyDispersiveMagneticResponse(component = state.fieldComponent) {
         const jz = this.advanceMagneticDispersiveCurrent(idx, this.ez[idx], this.magDispMz, this.magDispJz);
         const muX = this.safeMaterialDenominator(this.mu[idx]);
         const muY = this.safeMaterialDenominator(this.muY[idx]);
-        const decayX = 1 / (1 + Math.max(0, Number(this.muLoss[idx]) || 0));
-        const decayY = 1 / (1 + Math.max(0, Number(this.muLossY[idx]) || 0));
-        this.ezx[idx] -= this.hCbX[x] * (s / muX) * jz * 0.5 * decayX;
-        this.ezy[idx] -= this.hCbY[y] * (s / muY) * jz * 0.5 * decayY;
+        const decayX = this.magneticLossDecay(this.muLoss[idx]);
+        const decayY = this.magneticLossDecay(this.muLossY[idx]);
+        this.ezx[idx] -= (s / muX) * jz * 0.5 * decayX;
+        this.ezy[idx] -= (s / muY) * jz * 0.5 * decayY;
         this.ez[idx] = this.ezx[idx] + this.ezy[idx];
       }
     }
@@ -1534,8 +1649,8 @@ applyDispersiveMagneticResponse(component = state.fieldComponent) {
       if (!((this.muDispersionAxes[idx] || 3) & 1)) continue;
       const jx = this.advanceMagneticDispersiveCurrent(idx, this.hx[idx], this.magDispMx, this.magDispJx);
       const muX = this.safeMaterialDenominator(this.mu[idx]);
-      const decay = 1 / (1 + Math.max(0, Number(this.muLoss[idx]) || 0));
-      this.hx[idx] -= this.hCbY[y] * (s / muX) * jx * decay;
+      const decay = this.magneticLossDecay(this.muLoss[idx]);
+      this.hx[idx] -= (s / muX) * jx * decay;
     }
   }
 
@@ -1547,8 +1662,8 @@ applyDispersiveMagneticResponse(component = state.fieldComponent) {
       if (!((this.muDispersionAxes[idx] || 3) & 2)) continue;
       const jy = this.advanceMagneticDispersiveCurrent(idx, this.hy[idx], this.magDispMy, this.magDispJy);
       const muY = this.safeMaterialDenominator(this.muY[idx]);
-      const decay = 1 / (1 + Math.max(0, Number(this.muLossY[idx]) || 0));
-      this.hy[idx] -= this.hCbX[x] * (s / muY) * jy * decay;
+      const decay = this.magneticLossDecay(this.muLossY[idx]);
+      this.hy[idx] -= (s / muY) * jy * decay;
     }
   }
 },
@@ -1572,5 +1687,13 @@ effectiveElectricLoss(lossValue, idx) {
 
 electricLossDecay(lossValue, idx) {
   return 1 / (1 + this.effectiveElectricLoss(lossValue, idx));
+},
+
+effectiveMagneticLoss(lossValue) {
+  return Math.max(-0.95, Number(lossValue) || 0);
+},
+
+magneticLossDecay(lossValue) {
+  return 1 / (1 + this.effectiveMagneticLoss(lossValue));
 }
 });

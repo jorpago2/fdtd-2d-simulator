@@ -390,7 +390,7 @@ render() {
     renderPhaseStart = perf.now();
   }
   if (visualLayerEnabled("boundaries")) {
-    this.drawPmlOverlay();
+    this.drawCpmlOverlay();
   }
   if (visualLayerEnabled("monitors") || state.monitors?.length) {
     this.drawDiagnosticsOverlay();

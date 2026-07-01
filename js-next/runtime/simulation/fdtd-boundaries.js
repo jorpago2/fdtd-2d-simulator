@@ -4,42 +4,100 @@ Object.assign(FDTDSim.prototype, {
   buildBoundary() {
     normalizeBoundarySides();
     const layer = anyAbsorbingBoundarySide() ? this.nominalBoundaryLayer() : 0;
-    const order = 4;
-    const targetReflection = 1e-10;
+    this.cpmlLayer = layer;
+    this.cpmlOrder = 4;
+    this.cpmlKappaMax = 6;
+    this.cpmlAlphaMax = 0.08 * this.courant;
+    this.cpmlTargetReflection = 1e-10;
+
+    this.buildCpmlProfile(this.cpmlKappaEX, this.cpmlAlphaEX, this.cpmlAEX, this.cpmlBEX, this.nx, 0, "left", "right");
+    this.buildCpmlProfile(this.cpmlKappaEY, this.cpmlAlphaEY, this.cpmlAEY, this.cpmlBEY, this.ny, 0, "top", "bottom");
+    this.buildCpmlProfile(this.cpmlKappaHX, this.cpmlAlphaHX, this.cpmlAHX, this.cpmlBHX, this.nx, 0.5, "left", "right");
+    this.buildCpmlProfile(this.cpmlKappaHY, this.cpmlAlphaHY, this.cpmlAHY, this.cpmlBHY, this.ny, 0.5, "top", "bottom");
+    this.resetCpmlMemory();
+    this.refreshCpmlMaterialContinuation(false);
+  },
+
+  buildCpmlProfile(kappaArray, alphaArray, aArray, bArray, length, offset, minSide, maxSide) {
+    const layer = this.cpmlLayer;
+    const order = this.cpmlOrder || 4;
+    const kappaMax = Math.max(1, Number(this.cpmlKappaMax) || 1);
+    const alphaMax = Math.max(0, Number(this.cpmlAlphaMax) || 0);
+    const targetReflection = Math.min(0.5, Math.max(1e-14, Number(this.cpmlTargetReflection) || 1e-10));
     const sigmaMax = layer > 0 ? (-Math.log(targetReflection) * (order + 1)) / (2 * layer) : 0;
-    this.pmlLayer = layer;
+    const minSideAbsorbing = boundarySideIsAbsorbing(minSide);
+    const maxSideAbsorbing = boundarySideIsAbsorbing(maxSide);
+    const edge = length - 1;
 
-    const fillProfile = (ca, cb, length, offset, minSideAbsorbing, maxSideAbsorbing) => {
-      const edge = length - 1;
-      for (let i = 0; i < length; i += 1) {
-        let sigma = 0;
-        if (layer > 0) {
-          const position = i + offset;
-          const leftDepth = minSideAbsorbing ? layer - position : 0;
-          const rightDepth = maxSideAbsorbing ? layer - (edge - position) : 0;
-          const depth = Math.max(leftDepth, rightDepth, 0);
-          if (depth > 0) {
-            const normalizedDepth = depth / layer;
-            sigma = this.courant * sigmaMax * Math.pow(normalizedDepth, order);
-          }
-        }
-
-        if (sigma > 1e-9) {
-          const decay = Math.exp(-sigma);
-          ca[i] = decay;
-          cb[i] = (1 - decay) / sigma;
-        } else {
-          ca[i] = 1;
-          cb[i] = 1;
-        }
+    for (let i = 0; i < length; i += 1) {
+      let normalizedDepth = 0;
+      if (layer > 0) {
+        const position = i + offset;
+        const minDepth = minSideAbsorbing ? layer - position : 0;
+        const maxDepth = maxSideAbsorbing ? layer - (edge - position) : 0;
+        normalizedDepth = clamp(Math.max(minDepth, maxDepth, 0) / layer, 0, 1);
       }
-    };
 
-    fillProfile(this.eCaX, this.eCbX, this.nx, 0, boundarySideIsAbsorbing("left"), boundarySideIsAbsorbing("right"));
-    fillProfile(this.eCaY, this.eCbY, this.ny, 0, boundarySideIsAbsorbing("top"), boundarySideIsAbsorbing("bottom"));
-    fillProfile(this.hCaX, this.hCbX, this.nx, 0.5, boundarySideIsAbsorbing("left"), boundarySideIsAbsorbing("right"));
-    fillProfile(this.hCaY, this.hCbY, this.ny, 0.5, boundarySideIsAbsorbing("top"), boundarySideIsAbsorbing("bottom"));
-    this.refreshPmlMaterialContinuation(false);
+      if (normalizedDepth <= 0) {
+        kappaArray[i] = 1;
+        alphaArray[i] = 0;
+        aArray[i] = 0;
+        bArray[i] = 1;
+        continue;
+      }
+
+      const graded = Math.pow(normalizedDepth, order);
+      const sigmaDt = this.courant * sigmaMax * graded;
+      const kappa = 1 + (kappaMax - 1) * graded;
+      const alphaDt = alphaMax * (1 - normalizedDepth);
+      const decayArgument = sigmaDt / kappa + alphaDt;
+      const b = Math.exp(-decayArgument);
+      const denominator = sigmaDt * kappa + kappa * kappa * alphaDt;
+      const a = denominator > 1e-12 ? (sigmaDt * (b - 1)) / denominator : 0;
+      kappaArray[i] = kappa;
+      alphaArray[i] = alphaDt;
+      aArray[i] = a;
+      bArray[i] = b;
+    }
+  },
+
+  resetCpmlMemory() {
+    this.cpmlPsiHxY?.fill(0);
+    this.cpmlPsiHyX?.fill(0);
+    this.cpmlPsiEzX?.fill(0);
+    this.cpmlPsiEzY?.fill(0);
+    this.cpmlPsiExY?.fill(0);
+    this.cpmlPsiEyX?.fill(0);
+    this.cpmlPsiHzX?.fill(0);
+    this.cpmlPsiHzY?.fill(0);
+    this.cpmlPsiDualHxY?.fill(0);
+    this.cpmlPsiDualHyX?.fill(0);
+    this.cpmlPsiDualEzX?.fill(0);
+    this.cpmlPsiDualEzY?.fill(0);
+  },
+
+  cpmlDerivativeX(rawDerivative, memory, idx, x, electricFieldPosition = true) {
+    const kappaArray = electricFieldPosition ? this.cpmlKappaEX : this.cpmlKappaHX;
+    const aArray = electricFieldPosition ? this.cpmlAEX : this.cpmlAHX;
+    const bArray = electricFieldPosition ? this.cpmlBEX : this.cpmlBHX;
+    const kappa = kappaArray[x] || 1;
+    const a = aArray[x] || 0;
+    if (a !== 0) memory[idx] = (bArray[x] || 0) * memory[idx] + a * rawDerivative;
+    return rawDerivative / kappa + (a !== 0 ? memory[idx] : 0);
+  },
+
+  cpmlDerivativeY(rawDerivative, memory, idx, y, electricFieldPosition = true) {
+    const kappaArray = electricFieldPosition ? this.cpmlKappaEY : this.cpmlKappaHY;
+    const aArray = electricFieldPosition ? this.cpmlAEY : this.cpmlAHY;
+    const bArray = electricFieldPosition ? this.cpmlBEY : this.cpmlBHY;
+    const kappa = kappaArray[y] || 1;
+    const a = aArray[y] || 0;
+    if (a !== 0) memory[idx] = (bArray[y] || 0) * memory[idx] + a * rawDerivative;
+    return rawDerivative / kappa + (a !== 0 ? memory[idx] : 0);
+  },
+
+  cpmlActive() {
+    return this.cpmlLayer > 0 && anyAbsorbingBoundarySide();
   },
 
   nominalBoundaryLayer() {
@@ -52,7 +110,7 @@ Object.assign(FDTDSim.prototype, {
   },
 
   boundaryControlLayer() {
-    return this.pmlLayer > 0 ? this.pmlLayer : this.nominalBoundaryLayer();
+    return this.cpmlLayer > 0 ? this.cpmlLayer : this.nominalBoundaryLayer();
   },
 
   zeroOuterElectricField() {
@@ -95,30 +153,7 @@ Object.assign(FDTDSim.prototype, {
   },
 
   zeroReflectiveBoundaryFields() {
-    const layer = this.boundaryControlLayer();
-    if (layer <= 0) return;
-
-    const zeroRect = (x0, y0, x1, y1) => {
-      const minX = clampInt(x0, 0, this.nx);
-      const minY = clampInt(y0, 0, this.ny);
-      const maxX = clampInt(x1, 0, this.nx);
-      const maxY = clampInt(y1, 0, this.ny);
-      for (let y = minY; y < maxY; y += 1) {
-        const row = y * this.nx;
-        for (let x = minX; x < maxX; x += 1) {
-          const idx = row + x;
-          this.zeroElectricCell(idx);
-          this.hx[idx] = 0;
-          this.hy[idx] = 0;
-          this.zeroDualFieldCell(idx);
-        }
-      }
-    };
-
-    if (!boundarySideIsAbsorbing("left")) zeroRect(0, 0, layer, this.ny);
-    if (!boundarySideIsAbsorbing("right")) zeroRect(this.nx - layer, 0, this.nx, this.ny);
-    if (!boundarySideIsAbsorbing("top")) zeroRect(0, 0, this.nx, layer);
-    if (!boundarySideIsAbsorbing("bottom")) zeroRect(0, this.ny - layer, this.nx, this.ny);
+    // Reflective sides use the outer zeroed Yee boundary, not an artificial thick PEC layer.
   },
 
   zeroBoundaryFields() {
@@ -126,8 +161,8 @@ Object.assign(FDTDSim.prototype, {
     this.zeroReflectiveBoundaryFields();
   },
 
-  refreshPmlMaterialContinuation(resetPmlFields = false) {
-    if (!anyAbsorbingBoundarySide() || this.pmlLayer <= 0) return;
+  refreshCpmlMaterialContinuation(resetCpmlFields = false) {
+    if (!anyAbsorbingBoundarySide() || this.cpmlLayer <= 0) return;
     const minX = this.activeInteriorMinX();
     const minY = this.activeInteriorMinY();
     const maxX = this.activeInteriorMaxX();
@@ -137,11 +172,11 @@ Object.assign(FDTDSim.prototype, {
     for (let y = 0; y < this.ny; y += 1) {
       const sourceY = Math.max(minY, Math.min(maxY, y));
       for (let x = 0; x < this.nx; x += 1) {
-        if (!this.isInPml(x, y)) continue;
+        if (!this.isInCpml(x, y)) continue;
         const sourceX = Math.max(minX, Math.min(maxX, x));
         const idx = this.id(x, y);
-        this.copyMaterialCellByIndex(idx, this.id(sourceX, sourceY));
-        if (resetPmlFields || this.material[idx] === 2) {
+        this.copyPassiveCpmlMaterialCellByIndex(idx, this.id(sourceX, sourceY));
+        if (resetCpmlFields || this.material[idx] === 2) {
           this.zeroElectricCell(idx);
           this.hx[idx] = 0;
           this.hy[idx] = 0;
@@ -150,17 +185,17 @@ Object.assign(FDTDSim.prototype, {
     }
   },
 
-  clearPmlMaterials() {
-    this.refreshPmlMaterialContinuation(true);
+  clearCpmlMaterials() {
+    this.refreshCpmlMaterialContinuation(true);
   },
 
-  isInPml(x, y) {
+  isInCpml(x, y) {
     return (
-      this.pmlLayer > 0 &&
-      ((boundarySideIsAbsorbing("left") && x < this.pmlLayer) ||
-        (boundarySideIsAbsorbing("right") && x >= this.nx - this.pmlLayer) ||
-        (boundarySideIsAbsorbing("top") && y < this.pmlLayer) ||
-        (boundarySideIsAbsorbing("bottom") && y >= this.ny - this.pmlLayer))
+      this.cpmlLayer > 0 &&
+      ((boundarySideIsAbsorbing("left") && x < this.cpmlLayer) ||
+        (boundarySideIsAbsorbing("right") && x >= this.nx - this.cpmlLayer) ||
+        (boundarySideIsAbsorbing("top") && y < this.cpmlLayer) ||
+        (boundarySideIsAbsorbing("bottom") && y >= this.ny - this.cpmlLayer))
     );
   },
 

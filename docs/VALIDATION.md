@@ -59,7 +59,7 @@ Current P0 cases:
 | `air_propagation` | `planeWaveAir` | Baseline homogeneous Yee propagation. |
 | `normal_interface_fresnel` | `normalInterface` | First quantitative Fresnel R/T check. |
 | `brewster_tm_minimum` | `brewsterTm` | Oblique incidence and TM Brewster minimum. |
-| `pml_reflection` | `pmlAbsorption` | Absorbing-boundary residual/reflection check. |
+| `pml_reflection` | `pmlAbsorption` | CPML absorbing-boundary residual/reflection check. |
 | `slab_waveguide_confinement` | `slabWaveguide` | Integrated-photonics guided-mode workflow. |
 | `resonator_ringdown_q` | `qRingdown` | Ringdown analysis and Q proxy. |
 | `advanced_material_smoke` | `drudeMetal` | ADE/dispersive material state arrays. |
@@ -78,7 +78,7 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 
 - Grid refinement, for example 12, 20, and 32 cells per lambda0.
 - Longer runs to reduce transient contamination.
-- Power-balance checks, especially for interfaces, PML, gain/loss, and dispersive media.
+- Power-balance checks, especially for interfaces, CPML, gain/loss, and dispersive media.
 - Analytical or independent numerical references where available.
 
 ## Current Limitations

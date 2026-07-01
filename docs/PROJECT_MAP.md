@@ -25,7 +25,7 @@ Historical CSS files are archived under `legacy/css/`. They are kept only as ref
 | Group | Active path | Purpose |
 | --- | --- | --- |
 | Core/data | `js-next/runtime/core`, `js-next/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
-| Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, PML, diagnostics, worker and WASM route. |
+| Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, worker and WASM route. |
 | Canvas | `js-next/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, context menus and inspector. |
 | UI/controllers | `js-next/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |
 | App orchestration | `js-next/runtime/app` | Bootstrap, runtime loop, layout, performance instrumentation and main wiring. |

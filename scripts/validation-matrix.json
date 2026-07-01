@@ -100,13 +100,14 @@
       "checks": [
         "pulse leaves the domain",
         "late-time residual energy decreases",
-        "left/right monitor reflection remains small"
+        "left/right monitor reflection remains small",
+        "CPML uses graded sigma, kappa, alpha and recursive psi memory"
       ],
       "acceptance": {
         "lateEnergyRatioMax": 0.08,
         "reflectionMax": 0.08
       },
-      "rationale": "PML quality controls every open-domain example."
+      "rationale": "CPML quality controls every open-domain example."
     },
     {
       "id": "slab_waveguide_confinement",

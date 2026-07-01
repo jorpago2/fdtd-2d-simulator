@@ -14,7 +14,7 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 10. `fdtd-field-state.js`: field reset, physical field scale, divergence recovery, and renormalization.
 11. `fdtd-materials.js`: material state, cell/region editing, conductivity, nonlinear response, phase change, bianisotropy, and ADE dispersion.
 12. `fdtd-field-observables.js`: field, Poynting vector, magnitude, scale, and transverse-vector observables shared by rendering and diagnostics.
-13. `fdtd-boundaries.js`: absorbing PML profiles, reflective boundary clearing, boundary hit testing, and boundary material continuation.
+13. `fdtd-boundaries.js`: CPML absorbing-boundary profiles, reflective boundary clearing, boundary hit testing, and boundary material continuation.
 14. `fdtd-presets.js`: brush geometry, source placement bounds, Atlas geometry builders, and preset scene assembly.
 15. `fdtd-sources.js`: source waveforms, incident-field injection, localized/multipole sources, and current-source coupling.
 16. `fdtd-analysis-sampling.js`: analysis buffers, contour sampling, probe/energy series, EWMA observables, and deferred analysis updates.
@@ -29,7 +29,7 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 25. `canvas-source-overlays.js`: source glyphs, source selection/hover overlays, and source hit testing.
 26. `canvas-monitor-overlays.js`: diagnostic line monitor overlays, custom monitor overlays, and monitor hit testing.
 27. `canvas-material-overlays.js`: material region selection and hover overlays.
-28. `canvas-boundary-overlays.js`: PML and reflective boundary overlays.
+28. `canvas-boundary-overlays.js`: CPML and reflective boundary overlays.
 29. `canvas-colorbar.js` and `canvas-export.js`: colorbar state plus PNG export composition.
 30. `canvas-edit-actions-controller.js`: canvas paint and brush-geometry insertion actions used by pointer interactions.
 31. `canvas-gesture-actions-controller.js`: keyboard view controls, pinch/pan, touch promotion, and source/monitor/material drag actions.
@@ -51,6 +51,6 @@ The browser app still uses classic ordered scripts instead of ES modules. Keep t
 47. `config-material-handlers-controller.js`: wavelength/grid/preset/boundary/material-editor/brush action handlers shared by Config, Material, and Brush bindings.
 48. `../app.js`: remaining orchestration glue, controllers, thin handler adapters, and app startup wiring.
 
-The active compiled kernel is built from `../wasm-src/fdtd-core.cpp` -> `../fdtd-core.wasm` and includes finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy support. The previous hand-maintained reference remains in `../fdtd-core.wat`; see `../docs/PERFORMANCE.md` before changing the WASM build path.
+The active compiled kernel is built from `../wasm-src/fdtd-core.cpp` -> `../fdtd-core.wasm` and includes CPML, finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy support. The old hand-maintained WAT build path has been removed; keep numerical kernel changes in the C++ source.
 
 Next safe refactors are smaller: move more remaining `app.js` orchestration into explicit modules, especially canvas interaction glue and context-menu callbacks.

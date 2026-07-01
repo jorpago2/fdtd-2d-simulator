@@ -42,7 +42,7 @@
     if (/(anisotropic|gyrotropic|bianisotropic|chiral|hyperbolic|tensor)/.test(haystack)) add("Tensor");
     if (/(photonic crystal|phc|ssh|valley|topolog|bic|honeycomb|bloch)/.test(haystack)) add("Periodic/topology");
     if (/(ntff|far-field|rcs|scattering|kerker|mie)/.test(haystack)) add("NTFF");
-    if (/(pml|absorbing)/.test(haystack)) add("PML");
+    if (/(pml|cpml|absorbing)/.test(haystack)) add("CPML");
     if (/(tez|hz solver|in-plane|magnetic mz)/.test(haystack)) add("TEz");
     if (/(tm|jz|ez|electric dipole)/.test(haystack) && !badges.includes("TEz")) add("TMz");
 

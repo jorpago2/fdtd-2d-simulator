@@ -24,7 +24,6 @@ const mimeTypes = new Map([
   [".svg", "image/svg+xml; charset=utf-8"],
   [".txt", "text/plain; charset=utf-8"],
   [".wasm", "application/wasm"],
-  [".wat", "text/plain; charset=utf-8"],
 ]);
 
 function send(response, statusCode, body, contentType = "text/plain; charset=utf-8") {

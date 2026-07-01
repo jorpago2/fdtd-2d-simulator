@@ -79,7 +79,7 @@
         updateStats();
         sim.render();
       } else {
-        sim.refreshPmlMaterialContinuation(true);
+        sim.refreshCpmlMaterialContinuation(true);
         sim.zeroBoundaryFields();
         sim.measure();
         updateStats();
@@ -148,7 +148,7 @@
       if (previousMode === "absorbing" && boundarySideMode(side) === "reflective") {
         sim.clearBoundarySideMaterials(side);
       }
-      sim.clearPmlMaterials();
+      sim.clearCpmlMaterials();
       sim.zeroBoundaryFields();
       sim.measure();
       updateControlText();

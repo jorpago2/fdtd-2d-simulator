@@ -61,13 +61,13 @@
 
     function boundarySummaryLabel() {
       normalizeBoundarySides();
-      if (state.boundary === "absorbing") return "PML absorbing";
+      if (state.boundary === "absorbing") return "CPML absorbing";
       if (state.boundary === "reflective") return "reflective";
       const absorbing = boundarySides
         .filter((side) => boundarySideIsAbsorbing(side))
         .map((side) => (boundarySideLabels[side] || side).toLowerCase())
         .join(", ");
-      return `mixed boundary (${absorbing || "no"} PML)`;
+      return `mixed boundary (${absorbing || "no"} CPML)`;
     }
 
     return Object.freeze({

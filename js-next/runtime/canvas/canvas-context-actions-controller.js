@@ -150,7 +150,7 @@
       }
       if (el.boundaryMenuHint) {
         const sideLabel = boundarySideLabels[contextMenuState.boundaryMenuSide] || "Boundary";
-        const modeLabel = boundarySideIsAbsorbing(contextMenuState.boundaryMenuSide) ? "PML absorbing" : "reflective";
+        const modeLabel = boundarySideIsAbsorbing(contextMenuState.boundaryMenuSide) ? "CPML absorbing" : "reflective";
         el.boundaryMenuHint.textContent = `${sideLabel} boundary \u00b7 ${modeLabel}`;
       }
     }

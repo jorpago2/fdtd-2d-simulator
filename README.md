@@ -54,7 +54,7 @@ Not every scene is quantitatively calibrated. Treat advanced examples as teachin
 
 - Explicit 2D Yee update with fixed Courant number.
 - Current CFL setting is checked against `S < 1 / sqrt(2)`.
-- Absorbing boundaries are PML-style numerical layers.
+- Absorbing boundaries use CPML-style numerical layers with graded sigma, kappa, alpha, and recursive memory terms.
 - Many advanced media are reduced 2D analogues, not full 3D constitutive solvers.
 - Publication-grade results require grid refinement and documented monitor/sweep settings.
 

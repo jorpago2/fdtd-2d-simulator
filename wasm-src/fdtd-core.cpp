@@ -1,7 +1,7 @@
 // Minimal C++ source for the browser WASM FDTD kernel.
 //
-// The exported signatures intentionally match fdtd-core.wat and
-// src/wasm-backend.js: array arguments are byte offsets into the imported
+// The exported signatures intentionally match js-next/runtime/simulation/wasm-backend.js:
+// array arguments are byte offsets into the imported
 // WebAssembly linear memory owned by JavaScript.
 
 using i32 = int;
@@ -13,6 +13,7 @@ static constexpr i32 FEATURE_KERR = 1 << 1;
 static constexpr i32 FEATURE_SATURABLE_GAIN = 1 << 2;
 static constexpr i32 FEATURE_TENSOR_GYRO = 1 << 3;
 static constexpr i32 FEATURE_TFSF = 1 << 4;
+static constexpr i32 FEATURE_CPML = 1 << 5;
 
 static constexpr i32 STEP_KERR = 1 << 0;
 static constexpr i32 STEP_SATURABLE_GAIN = 1 << 1;
@@ -45,6 +46,10 @@ static inline float maxf(float a, float b) {
   return a > b ? a : b;
 }
 
+static inline float sqrtf_local(float value) {
+  return value <= 0.0f ? 0.0f : __builtin_sqrtf(value);
+}
+
 static inline float clampf(float value, float low, float high) {
   return minf(maxf(value, low), high);
 }
@@ -65,7 +70,7 @@ static inline float conductivity_damp(float sigma, float materialValue, float co
 }
 
 extern "C" __attribute__((export_name("kernel_features"))) i32 kernel_features() {
-  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF;
+  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML;
 }
 
 static inline float electric_loss_decay(float loss, float intensity, i32 runtimeFlags, float gainSaturation) {
@@ -75,6 +80,11 @@ static inline float electric_loss_decay(float loss, float intensity, i32 runtime
     value = value / (1.0f + minf(intensity, 1.0e12f) / saturation);
   }
   value = maxf(-0.95f, value);
+  return 1.0f / (1.0f + value);
+}
+
+static inline float magnetic_loss_decay(float loss) {
+  const float value = maxf(-0.95f, loss);
   return 1.0f / (1.0f + value);
 }
 
@@ -128,130 +138,181 @@ static inline void zero_te_cell(float* hz, float* hzx, float* hzy, float* ex, fl
   ey[i] = 0.0f;
 }
 
-static inline float source_sample_at_time(i32 type, float frequency, float amplitude, float t) {
-  if (type == 1) {
+struct TfsfIncident {
+  i32 type;
+  i32 profile;
+  i32 x0;
+  i32 x1;
+  i32 y0;
+  i32 y1;
+  float sx;
+  float sy;
+  float cosTheta;
+  float sinTheta;
+  float kCells;
+  float z;
+  float frequency;
+  float amplitude;
+  float phaseRad;
+  float fwhm;
+  float tmHxScale;
+  float tmHyScale;
+  float teExScale;
+  float teEyScale;
+};
+
+static inline TfsfIncident make_tfsf_incident(const float* p) {
+  TfsfIncident incident = {};
+  incident.type = static_cast<i32>(p[0]);
+  incident.profile = static_cast<i32>(p[1]);
+  incident.sx = p[2];
+  incident.sy = p[3];
+  incident.cosTheta = p[4];
+  incident.sinTheta = p[5];
+  incident.kCells = p[6];
+  incident.z = p[7];
+  incident.x0 = static_cast<i32>(p[8]);
+  incident.x1 = static_cast<i32>(p[9]);
+  incident.y0 = static_cast<i32>(p[10]);
+  incident.y1 = static_cast<i32>(p[11]);
+  incident.frequency = p[12];
+  incident.amplitude = p[13];
+  incident.phaseRad = p[14];
+  incident.fwhm = maxf(1.0e-6f, p[15]);
+
+  const float sinKx = fdtd_sinf(0.5f * incident.kCells * incident.cosTheta);
+  const float sinKy = fdtd_sinf(0.5f * incident.kCells * incident.sinTheta);
+  const float spatialNorm = sqrtf_local(sinKx * sinKx + sinKy * sinKy);
+  const float zSafe = maxf(1.0e-9f, incident.z);
+  if (spatialNorm <= 1.0e-12f) {
+    incident.tmHxScale = incident.sinTheta / zSafe;
+    incident.tmHyScale = -incident.cosTheta / zSafe;
+    incident.teExScale = -incident.sinTheta * incident.z;
+    incident.teEyScale = incident.cosTheta * incident.z;
+  } else {
+    incident.tmHxScale = sinKy / (zSafe * spatialNorm);
+    incident.tmHyScale = -sinKx / (zSafe * spatialNorm);
+    incident.teExScale = -incident.z * sinKy / spatialNorm;
+    incident.teEyScale = incident.z * sinKx / spatialNorm;
+  }
+  return incident;
+}
+
+static inline float tfsf_source_sample_at_time(const TfsfIncident& incident, float t) {
+  if (incident.type == 1) {
     const float center = 48.0f;
     const float width = 14.0f;
     const float dt = t - center;
-    return amplitude * fdtd_expf(-(dt * dt) / (2.0f * width * width));
+    return incident.amplitude * fdtd_expf(-(dt * dt) / (2.0f * width * width));
   }
-  if (type == 2) {
+  if (incident.type == 2) {
     const float center = 48.0f;
-    const float a = PI_F * frequency * (t - center);
+    const float a = PI_F * incident.frequency * (t - center);
     const float a2 = a * a;
-    return amplitude * (1.0f - 2.0f * a2) * fdtd_expf(-a2);
+    return incident.amplitude * (1.0f - 2.0f * a2) * fdtd_expf(-a2);
   }
-  return amplitude * fdtd_sinf(TWO_PI_F * frequency * t);
+  if (incident.frequency <= 0.0f || t <= 0.0f) return 0.0f;
+  const float rampDuration = maxf(24.0f, 1.5f / incident.frequency);
+  const float rampAngle = 0.5f * PI_F * minf(t, rampDuration) / rampDuration;
+  const float rampSine = fdtd_sinf(rampAngle);
+  return incident.amplitude * rampSine * rampSine * fdtd_sinf(TWO_PI_F * incident.frequency * t);
 }
 
-static inline float tfsf_incident_envelope(const float* p, float x, float y) {
-  const i32 profile = static_cast<i32>(p[1]);
-  if (profile != 1) return 1.0f;
-  const float fwhm = maxf(1.0e-6f, p[15]);
-  const float sx = p[2];
-  const float sy = p[3];
-  const float cosTheta = p[4];
-  const float sinTheta = p[5];
-  const float transverse = -(x - sx) * sinTheta + (y - sy) * cosTheta;
-  const float normalized = transverse / fwhm;
+static inline float tfsf_incident_envelope(const TfsfIncident& incident, float x, float y) {
+  if (incident.profile != 1) return 1.0f;
+  const float transverse = -(x - incident.sx) * incident.sinTheta + (y - incident.sy) * incident.cosTheta;
+  const float normalized = transverse / incident.fwhm;
   return fdtd_expf(-FOUR_LN2_F * normalized * normalized);
 }
 
-static inline float tfsf_incident_scalar(const float* p, float x, float y, float t, float fieldScale) {
+static inline float tfsf_incident_scalar(const TfsfIncident& incident, float x, float y, float t, float fieldScale) {
   if (fieldScale == 0.0f) return 0.0f;
-  const i32 type = static_cast<i32>(p[0]);
-  const float sx = p[2];
-  const float sy = p[3];
-  const float cosTheta = p[4];
-  const float sinTheta = p[5];
-  const float kCells = p[6];
-  const float frequency = p[12];
-  const float amplitude = p[13];
-  const float phaseRad = p[14];
-  const float phase = -kCells * ((x - sx) * cosTheta + (y - sy) * sinTheta);
-  const float phaseTimeOffset = frequency > 0.0f ? (phase + phaseRad) / (TWO_PI_F * frequency) : 0.0f;
-  const float value = source_sample_at_time(type, frequency, amplitude, t + phaseTimeOffset) * tfsf_incident_envelope(p, x, y);
+  const float phase = -incident.kCells * ((x - incident.sx) * incident.cosTheta + (y - incident.sy) * incident.sinTheta);
+  const float phaseTimeOffset = incident.frequency > 0.0f ? (phase + incident.phaseRad) / (TWO_PI_F * incident.frequency) : 0.0f;
+  const float value = tfsf_source_sample_at_time(incident, t + phaseTimeOffset) * tfsf_incident_envelope(incident, x, y);
   return value / fieldScale;
 }
 
-static inline float magnetic_update_coeff_x(i32 i, i32 x, float s, float* mu, float* muLoss, float* hCbX) {
-  return hCbX[x] * (s / safe_material_denominator(mu[i])) / (1.0f + muLoss[i]);
+static inline float cpml_derivative(float rawDerivative, float* memory, i32 i, i32 axis, float* kappa, float* a, float* b) {
+  const float kappaValue = absf(kappa[axis]) > 1.0e-12f ? kappa[axis] : 1.0f;
+  const float aValue = a[axis];
+  if (aValue != 0.0f) {
+    memory[i] = b[axis] * memory[i] + aValue * rawDerivative;
+    return rawDerivative / kappaValue + memory[i];
+  }
+  return rawDerivative / kappaValue;
 }
 
-static inline float magnetic_update_coeff_y(i32 i, i32 y, float s, float* muY, float* muLossY, float* hCbY) {
-  return hCbY[y] * (s / safe_material_denominator(muY[i])) / (1.0f + muLossY[i]);
+static inline float magnetic_update_coeff_x(i32 i, float s, float* mu, float* muLoss) {
+  return (s / safe_material_denominator(mu[i])) * magnetic_loss_decay(muLoss[i]);
+}
+
+static inline float magnetic_update_coeff_y(i32 i, float s, float* muY, float* muLossY) {
+  return (s / safe_material_denominator(muY[i])) * magnetic_loss_decay(muLossY[i]);
 }
 
 static inline float electric_update_coeff_x(
   i32 i,
-  i32 x,
   float s,
   float intensity,
   i32 runtimeFlags,
   float gainSaturation,
   float* eps,
   float* loss,
-  float* conductivity,
-  float* eCbX
+  float* conductivity
 ) {
   const float epsValue = safe_material_denominator(eps[i]);
   const float sigmaDamp = conductivity_damp(conductivity[i], epsValue, s);
   const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-  return sigmaCb * eCbX[x] * (s / epsValue) * electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
+  return sigmaCb * (s / epsValue) * electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
 }
 
 static inline float electric_update_coeff_y(
   i32 i,
-  i32 y,
   float s,
   float intensity,
   i32 runtimeFlags,
   float gainSaturation,
   float* epsY,
   float* lossY,
-  float* conductivityY,
-  float* eCbY
+  float* conductivityY
 ) {
   const float epsValue = safe_material_denominator(epsY[i]);
   const float sigmaDamp = conductivity_damp(conductivityY[i], epsValue, s);
   const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-  return sigmaCb * eCbY[y] * (s / epsValue) * electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
+  return sigmaCb * (s / epsValue) * electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
 }
 
 static inline float transverse_electric_update_coeff_x(
   i32 i,
-  i32 y,
   float s,
   float intensity,
   i32 runtimeFlags,
   float gainSaturation,
   float* eps,
   float* loss,
-  float* conductivity,
-  float* eCbY
+  float* conductivity
 ) {
   const float epsValue = safe_material_denominator(eps[i]);
   const float sigmaDamp = conductivity_damp(conductivity[i], epsValue, s);
   const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-  return sigmaCb * eCbY[y] * (s / epsValue) * electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
+  return sigmaCb * (s / epsValue) * electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
 }
 
 static inline float transverse_electric_update_coeff_y(
   i32 i,
-  i32 x,
   float s,
   float intensity,
   i32 runtimeFlags,
   float gainSaturation,
   float* epsY,
   float* lossY,
-  float* conductivityY,
-  float* eCbX
+  float* conductivityY
 ) {
   const float epsValue = safe_material_denominator(epsY[i]);
   const float sigmaDamp = conductivity_damp(conductivityY[i], epsValue, s);
   const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
-  return sigmaCb * eCbX[x] * (s / epsValue) * electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
+  return sigmaCb * (s / epsValue) * electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
 }
 
 static inline void apply_tfsf_tm_magnetic(
@@ -268,39 +329,37 @@ static inline void apply_tfsf_tm_magnetic(
   float* muLoss,
   float* muY,
   float* muLossY,
-  u8* material,
-  float* hCbX,
-  float* hCbY
+  u8* material
 ) {
   for (i32 n = 0; n < tfsfSourceCount; n += 1) {
-    const float* p = tfsfSources + n * TFSF_STRIDE;
-    const i32 x0 = static_cast<i32>(p[8]);
-    const i32 x1 = static_cast<i32>(p[9]);
-    const i32 y0 = static_cast<i32>(p[10]);
-    const i32 y1 = static_cast<i32>(p[11]);
+    const TfsfIncident incident = make_tfsf_incident(tfsfSources + n * TFSF_STRIDE);
+    const i32 x0 = incident.x0;
+    const i32 x1 = incident.x1;
+    const i32 y0 = incident.y0;
+    const i32 y1 = incident.y1;
     if (x0 < 1 || x1 >= nx - 1 || y0 < 1 || y1 >= ny - 1 || x1 <= x0 || y1 <= y0) continue;
     for (i32 y = y0; y <= y1; y += 1) {
       const i32 leftIdx = cell_id(x0 - 1, y, nx);
       if (material[leftIdx] != 2) {
-        const float eLeft = tfsf_incident_scalar(p, static_cast<float>(x0), static_cast<float>(y), time, fieldScale);
-        hy[leftIdx] -= magnetic_update_coeff_x(leftIdx, x0 - 1, s, muY, muLossY, hCbX) * eLeft;
+        const float eLeft = tfsf_incident_scalar(incident, static_cast<float>(x0), static_cast<float>(y), time, fieldScale);
+        hy[leftIdx] -= magnetic_update_coeff_x(leftIdx, s, muY, muLossY) * eLeft;
       }
       const i32 rightIdx = cell_id(x1, y, nx);
       if (material[rightIdx] != 2) {
-        const float eRight = tfsf_incident_scalar(p, static_cast<float>(x1), static_cast<float>(y), time, fieldScale);
-        hy[rightIdx] += magnetic_update_coeff_x(rightIdx, x1, s, muY, muLossY, hCbX) * eRight;
+        const float eRight = tfsf_incident_scalar(incident, static_cast<float>(x1), static_cast<float>(y), time, fieldScale);
+        hy[rightIdx] += magnetic_update_coeff_x(rightIdx, s, muY, muLossY) * eRight;
       }
     }
     for (i32 x = x0; x <= x1; x += 1) {
       const i32 topIdx = cell_id(x, y0 - 1, nx);
       if (material[topIdx] != 2) {
-        const float eTop = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0), time, fieldScale);
-        hx[topIdx] += magnetic_update_coeff_y(topIdx, y0 - 1, s, mu, muLoss, hCbY) * eTop;
+        const float eTop = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y0), time, fieldScale);
+        hx[topIdx] += magnetic_update_coeff_y(topIdx, s, mu, muLoss) * eTop;
       }
       const i32 bottomIdx = cell_id(x, y1, nx);
       if (material[bottomIdx] != 2) {
-        const float eBottom = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1), time, fieldScale);
-        hx[bottomIdx] -= magnetic_update_coeff_y(bottomIdx, y1, s, mu, muLoss, hCbY) * eBottom;
+        const float eBottom = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y1), time, fieldScale);
+        hx[bottomIdx] -= magnetic_update_coeff_y(bottomIdx, s, mu, muLoss) * eBottom;
       }
     }
   }
@@ -324,55 +383,50 @@ static inline void apply_tfsf_tm_electric(
   float* conductivity,
   float* conductivityY,
   u8* material,
-  float* eCbX,
-  float* eCbY,
   i32 runtimeFlags,
   float gainSaturation
 ) {
   const float t = time + 0.5f;
   for (i32 n = 0; n < tfsfSourceCount; n += 1) {
-    const float* p = tfsfSources + n * TFSF_STRIDE;
-    const i32 x0 = static_cast<i32>(p[8]);
-    const i32 x1 = static_cast<i32>(p[9]);
-    const i32 y0 = static_cast<i32>(p[10]);
-    const i32 y1 = static_cast<i32>(p[11]);
+    const TfsfIncident incident = make_tfsf_incident(tfsfSources + n * TFSF_STRIDE);
+    const i32 x0 = incident.x0;
+    const i32 x1 = incident.x1;
+    const i32 y0 = incident.y0;
+    const i32 y1 = incident.y1;
     if (x0 < 1 || x1 >= nx - 1 || y0 < 1 || y1 >= ny - 1 || x1 <= x0 || y1 <= y0) continue;
-    const float cosTheta = p[4];
-    const float sinTheta = p[5];
-    const float invZ = 1.0f / maxf(1.0e-9f, p[7]);
     for (i32 y = y0; y <= y1; y += 1) {
       const i32 leftIdx = cell_id(x0, y, nx);
       if (material[leftIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x0) - 0.5f, static_cast<float>(y), t, fieldScale);
-        const float hLeft = -cosTheta * scalar * invZ;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x0) - 0.5f, static_cast<float>(y), t, fieldScale);
+        const float hLeft = incident.tmHyScale * scalar;
         const float intensity = physical_intensity(ez[leftIdx] * ez[leftIdx], fieldScale);
-        ezx[leftIdx] -= electric_update_coeff_x(leftIdx, x0, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbX) * hLeft;
+        ezx[leftIdx] -= electric_update_coeff_x(leftIdx, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity) * hLeft;
         ez[leftIdx] = ezx[leftIdx] + ezy[leftIdx];
       }
       const i32 rightIdx = cell_id(x1, y, nx);
       if (material[rightIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x1) + 0.5f, static_cast<float>(y), t, fieldScale);
-        const float hRight = -cosTheta * scalar * invZ;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x1) + 0.5f, static_cast<float>(y), t, fieldScale);
+        const float hRight = incident.tmHyScale * scalar;
         const float intensity = physical_intensity(ez[rightIdx] * ez[rightIdx], fieldScale);
-        ezx[rightIdx] += electric_update_coeff_x(rightIdx, x1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbX) * hRight;
+        ezx[rightIdx] += electric_update_coeff_x(rightIdx, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity) * hRight;
         ez[rightIdx] = ezx[rightIdx] + ezy[rightIdx];
       }
     }
     for (i32 x = x0; x <= x1; x += 1) {
       const i32 topIdx = cell_id(x, y0, nx);
       if (material[topIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0) - 0.5f, t, fieldScale);
-        const float hTop = sinTheta * scalar * invZ;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y0) - 0.5f, t, fieldScale);
+        const float hTop = incident.tmHxScale * scalar;
         const float intensity = physical_intensity(ez[topIdx] * ez[topIdx], fieldScale);
-        ezy[topIdx] += electric_update_coeff_y(topIdx, y0, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbY) * hTop;
+        ezy[topIdx] += electric_update_coeff_y(topIdx, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY) * hTop;
         ez[topIdx] = ezx[topIdx] + ezy[topIdx];
       }
       const i32 bottomIdx = cell_id(x, y1, nx);
       if (material[bottomIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1) + 0.5f, t, fieldScale);
-        const float hBottom = sinTheta * scalar * invZ;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y1) + 0.5f, t, fieldScale);
+        const float hBottom = incident.tmHxScale * scalar;
         const float intensity = physical_intensity(ez[bottomIdx] * ez[bottomIdx], fieldScale);
-        ezy[bottomIdx] -= electric_update_coeff_y(bottomIdx, y1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbY) * hBottom;
+        ezy[bottomIdx] -= electric_update_coeff_y(bottomIdx, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY) * hBottom;
         ez[bottomIdx] = ezx[bottomIdx] + ezy[bottomIdx];
       }
     }
@@ -396,44 +450,42 @@ static inline void apply_tfsf_te_electric(
   float* conductivity,
   float* conductivityY,
   u8* material,
-  float* eCbX,
-  float* eCbY,
   i32 runtimeFlags,
   float gainSaturation
 ) {
   for (i32 n = 0; n < tfsfSourceCount; n += 1) {
-    const float* p = tfsfSources + n * TFSF_STRIDE;
-    const i32 x0 = static_cast<i32>(p[8]);
-    const i32 x1 = static_cast<i32>(p[9]);
-    const i32 y0 = static_cast<i32>(p[10]);
-    const i32 y1 = static_cast<i32>(p[11]);
+    const TfsfIncident incident = make_tfsf_incident(tfsfSources + n * TFSF_STRIDE);
+    const i32 x0 = incident.x0;
+    const i32 x1 = incident.x1;
+    const i32 y0 = incident.y0;
+    const i32 y1 = incident.y1;
     if (x0 < 1 || x1 >= nx - 1 || y0 < 1 || y1 >= ny - 1 || x1 <= x0 || y1 <= y0) continue;
     for (i32 y = y0; y <= y1; y += 1) {
       const i32 leftIdx = cell_id(x0 - 1, y, nx);
       if (material[leftIdx] != 2) {
-        const float hLeft = tfsf_incident_scalar(p, static_cast<float>(x0), static_cast<float>(y), time, fieldScale);
+        const float hLeft = tfsf_incident_scalar(incident, static_cast<float>(x0), static_cast<float>(y), time, fieldScale);
         const float intensity = physical_intensity(ex[leftIdx] * ex[leftIdx] + ey[leftIdx] * ey[leftIdx], fieldScale);
-        ey[leftIdx] += transverse_electric_update_coeff_y(leftIdx, x0 - 1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbX) * hLeft;
+        ey[leftIdx] += transverse_electric_update_coeff_y(leftIdx, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY) * hLeft;
       }
       const i32 rightIdx = cell_id(x1, y, nx);
       if (material[rightIdx] != 2) {
-        const float hRight = tfsf_incident_scalar(p, static_cast<float>(x1), static_cast<float>(y), time, fieldScale);
+        const float hRight = tfsf_incident_scalar(incident, static_cast<float>(x1), static_cast<float>(y), time, fieldScale);
         const float intensity = physical_intensity(ex[rightIdx] * ex[rightIdx] + ey[rightIdx] * ey[rightIdx], fieldScale);
-        ey[rightIdx] -= transverse_electric_update_coeff_y(rightIdx, x1, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY, eCbX) * hRight;
+        ey[rightIdx] -= transverse_electric_update_coeff_y(rightIdx, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY) * hRight;
       }
     }
     for (i32 x = x0; x <= x1; x += 1) {
       const i32 topIdx = cell_id(x, y0 - 1, nx);
       if (material[topIdx] != 2) {
-        const float hTop = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0), time, fieldScale);
+        const float hTop = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y0), time, fieldScale);
         const float intensity = physical_intensity(ex[topIdx] * ex[topIdx] + ey[topIdx] * ey[topIdx], fieldScale);
-        ex[topIdx] -= transverse_electric_update_coeff_x(topIdx, y0 - 1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbY) * hTop;
+        ex[topIdx] -= transverse_electric_update_coeff_x(topIdx, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity) * hTop;
       }
       const i32 bottomIdx = cell_id(x, y1, nx);
       if (material[bottomIdx] != 2) {
-        const float hBottom = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1), time, fieldScale);
+        const float hBottom = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y1), time, fieldScale);
         const float intensity = physical_intensity(ex[bottomIdx] * ex[bottomIdx] + ey[bottomIdx] * ey[bottomIdx], fieldScale);
-        ex[bottomIdx] += transverse_electric_update_coeff_x(bottomIdx, y1, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity, eCbY) * hBottom;
+        ex[bottomIdx] += transverse_electric_update_coeff_x(bottomIdx, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity) * hBottom;
       }
     }
   }
@@ -454,50 +506,45 @@ static inline void apply_tfsf_te_magnetic(
   float* muLoss,
   float* muY,
   float* muLossY,
-  u8* material,
-  float* hCbX,
-  float* hCbY
+  u8* material
 ) {
   const float t = time + 0.5f;
   for (i32 n = 0; n < tfsfSourceCount; n += 1) {
-    const float* p = tfsfSources + n * TFSF_STRIDE;
-    const i32 x0 = static_cast<i32>(p[8]);
-    const i32 x1 = static_cast<i32>(p[9]);
-    const i32 y0 = static_cast<i32>(p[10]);
-    const i32 y1 = static_cast<i32>(p[11]);
+    const TfsfIncident incident = make_tfsf_incident(tfsfSources + n * TFSF_STRIDE);
+    const i32 x0 = incident.x0;
+    const i32 x1 = incident.x1;
+    const i32 y0 = incident.y0;
+    const i32 y1 = incident.y1;
     if (x0 < 1 || x1 >= nx - 1 || y0 < 1 || y1 >= ny - 1 || x1 <= x0 || y1 <= y0) continue;
-    const float cosTheta = p[4];
-    const float sinTheta = p[5];
-    const float z = p[7];
     for (i32 y = y0; y <= y1; y += 1) {
       const i32 leftIdx = cell_id(x0, y, nx);
       if (material[leftIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x0) - 0.5f, static_cast<float>(y), t, fieldScale);
-        const float eLeft = cosTheta * z * scalar;
-        hzx[leftIdx] += magnetic_update_coeff_x(leftIdx, x0, s, mu, muLoss, hCbX) * eLeft;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x0) - 0.5f, static_cast<float>(y), t, fieldScale);
+        const float eLeft = incident.teEyScale * scalar;
+        hzx[leftIdx] += magnetic_update_coeff_x(leftIdx, s, mu, muLoss) * eLeft;
         hz[leftIdx] = hzx[leftIdx] + hzy[leftIdx];
       }
       const i32 rightIdx = cell_id(x1, y, nx);
       if (material[rightIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x1) + 0.5f, static_cast<float>(y), t, fieldScale);
-        const float eRight = cosTheta * z * scalar;
-        hzx[rightIdx] -= magnetic_update_coeff_x(rightIdx, x1, s, mu, muLoss, hCbX) * eRight;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x1) + 0.5f, static_cast<float>(y), t, fieldScale);
+        const float eRight = incident.teEyScale * scalar;
+        hzx[rightIdx] -= magnetic_update_coeff_x(rightIdx, s, mu, muLoss) * eRight;
         hz[rightIdx] = hzx[rightIdx] + hzy[rightIdx];
       }
     }
     for (i32 x = x0; x <= x1; x += 1) {
       const i32 topIdx = cell_id(x, y0, nx);
       if (material[topIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y0) - 0.5f, t, fieldScale);
-        const float eTop = -sinTheta * z * scalar;
-        hzy[topIdx] -= magnetic_update_coeff_y(topIdx, y0, s, muY, muLossY, hCbY) * eTop;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y0) - 0.5f, t, fieldScale);
+        const float eTop = incident.teExScale * scalar;
+        hzy[topIdx] -= magnetic_update_coeff_y(topIdx, s, muY, muLossY) * eTop;
         hz[topIdx] = hzx[topIdx] + hzy[topIdx];
       }
       const i32 bottomIdx = cell_id(x, y1, nx);
       if (material[bottomIdx] != 2) {
-        const float scalar = tfsf_incident_scalar(p, static_cast<float>(x), static_cast<float>(y1) + 0.5f, t, fieldScale);
-        const float eBottom = -sinTheta * z * scalar;
-        hzy[bottomIdx] += magnetic_update_coeff_y(bottomIdx, y1, s, muY, muLossY, hCbY) * eBottom;
+        const float scalar = tfsf_incident_scalar(incident, static_cast<float>(x), static_cast<float>(y1) + 0.5f, t, fieldScale);
+        const float eBottom = incident.teExScale * scalar;
+        hzy[bottomIdx] += magnetic_update_coeff_y(bottomIdx, s, muY, muLossY) * eBottom;
         hz[bottomIdx] = hzx[bottomIdx] + hzy[bottomIdx];
       }
     }
@@ -531,14 +578,26 @@ extern "C" __attribute__((export_name("step"))) void step(
   u32 modulationBaseEpsYOffset,
   u32 epsilonXYOffset,
   u32 gyrotropyGOffset,
-  u32 eCaXOffset,
-  u32 eCbXOffset,
-  u32 eCaYOffset,
-  u32 eCbYOffset,
-  u32 hCaXOffset,
-  u32 hCbXOffset,
-  u32 hCaYOffset,
-  u32 hCbYOffset,
+  u32 cpmlKappaEXOffset,
+  u32 cpmlKappaHXOffset,
+  u32 cpmlKappaEYOffset,
+  u32 cpmlKappaHYOffset,
+  u32 cpmlAEXOffset,
+  u32 cpmlAHXOffset,
+  u32 cpmlAEYOffset,
+  u32 cpmlAHYOffset,
+  u32 cpmlBEXOffset,
+  u32 cpmlBHXOffset,
+  u32 cpmlBEYOffset,
+  u32 cpmlBHYOffset,
+  u32 cpmlPsiHxYOffset,
+  u32 cpmlPsiHyXOffset,
+  u32 cpmlPsiEzXOffset,
+  u32 cpmlPsiEzYOffset,
+  u32 cpmlPsiExYOffset,
+  u32 cpmlPsiEyXOffset,
+  u32 cpmlPsiHzXOffset,
+  u32 cpmlPsiHzYOffset,
   i32 runtimeFlags,
   float kerrChi3,
   float kerrSaturation,
@@ -567,14 +626,22 @@ extern "C" __attribute__((export_name("step"))) void step(
   u8* nonlinearMaterial = u8_array(nonlinearMaterialOffset);
   float* modulationBaseEps = f32(modulationBaseEpsOffset);
   float* modulationBaseEpsY = f32(modulationBaseEpsYOffset);
-  float* eCaX = f32(eCaXOffset);
-  float* eCbX = f32(eCbXOffset);
-  float* eCaY = f32(eCaYOffset);
-  float* eCbY = f32(eCbYOffset);
-  float* hCaX = f32(hCaXOffset);
-  float* hCbX = f32(hCbXOffset);
-  float* hCaY = f32(hCaYOffset);
-  float* hCbY = f32(hCbYOffset);
+  float* cpmlKappaEX = f32(cpmlKappaEXOffset);
+  float* cpmlKappaHX = f32(cpmlKappaHXOffset);
+  float* cpmlKappaEY = f32(cpmlKappaEYOffset);
+  float* cpmlKappaHY = f32(cpmlKappaHYOffset);
+  float* cpmlAEX = f32(cpmlAEXOffset);
+  float* cpmlAHX = f32(cpmlAHXOffset);
+  float* cpmlAEY = f32(cpmlAEYOffset);
+  float* cpmlAHY = f32(cpmlAHYOffset);
+  float* cpmlBEX = f32(cpmlBEXOffset);
+  float* cpmlBHX = f32(cpmlBHXOffset);
+  float* cpmlBEY = f32(cpmlBEYOffset);
+  float* cpmlBHY = f32(cpmlBHYOffset);
+  float* cpmlPsiHxY = f32(cpmlPsiHxYOffset);
+  float* cpmlPsiHyX = f32(cpmlPsiHyXOffset);
+  float* cpmlPsiEzX = f32(cpmlPsiEzXOffset);
+  float* cpmlPsiEzY = f32(cpmlPsiEzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
 
   if (runtimeFlags & STEP_KERR) {
@@ -583,13 +650,12 @@ extern "C" __attribute__((export_name("step"))) void step(
 
   for (i32 y = 0; y < ny - 1; y += 1) {
     const i32 row = y * nx;
-    const float ca = hCaY[y];
-    const float cb = hCbY[y];
     for (i32 x = 0; x < nx; x += 1) {
       const i32 i = row + x;
-      const float decay = 1.0f / (1.0f + muLoss[i]);
-      const float materialScale = s / mu[i];
-      hx[i] = (ca * hx[i] - cb * materialScale * (ez[i + nx] - ez[i])) * decay;
+      const float dEzDy = cpml_derivative(ez[i + nx] - ez[i], cpmlPsiHxY, i, y, cpmlKappaHY, cpmlAHY, cpmlBHY);
+      const float decay = magnetic_loss_decay(muLoss[i]);
+      const float materialScale = s / safe_material_denominator(mu[i]);
+      hx[i] = (hx[i] - materialScale * dEzDy) * decay;
     }
   }
 
@@ -597,14 +663,15 @@ extern "C" __attribute__((export_name("step"))) void step(
     const i32 row = y * nx;
     for (i32 x = 0; x < nx - 1; x += 1) {
       const i32 i = row + x;
-      const float decay = 1.0f / (1.0f + muLossY[i]);
-      const float materialScale = s / muY[i];
-      hy[i] = (hCaX[x] * hy[i] + hCbX[x] * materialScale * (ez[i + 1] - ez[i])) * decay;
+      const float dEzDx = cpml_derivative(ez[i + 1] - ez[i], cpmlPsiHyX, i, x, cpmlKappaHX, cpmlAHX, cpmlBHX);
+      const float decay = magnetic_loss_decay(muLossY[i]);
+      const float materialScale = s / safe_material_denominator(muY[i]);
+      hy[i] = (hy[i] + materialScale * dEzDx) * decay;
     }
   }
 
   if (tfsfSourceCount > 0) {
-    apply_tfsf_tm_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hx, hy, mu, muLoss, muY, muLossY, material, hCbX, hCbY);
+    apply_tfsf_tm_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hx, hy, mu, muLoss, muY, muLossY, material);
   }
 
   for (i32 y = 1; y < ny - 1; y += 1) {
@@ -615,8 +682,8 @@ extern "C" __attribute__((export_name("step"))) void step(
         zero_tm_cell(ez, ezx, ezy, i);
         continue;
       }
-      const float dHyDx = hy[i] - hy[i - 1];
-      const float dHxDy = hx[i] - hx[i - nx];
+      const float dHyDx = cpml_derivative(hy[i] - hy[i - 1], cpmlPsiEzX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
+      const float dHxDy = cpml_derivative(hx[i] - hx[i - nx], cpmlPsiEzY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
       const float sigmaDampX = conductivity_damp(conductivity[i], eps[i], s);
       const float sigmaDampY = conductivity_damp(conductivityY[i], epsY[i], s);
       const float sigmaCaX = (1.0f - sigmaDampX) / (1.0f + sigmaDampX);
@@ -626,8 +693,10 @@ extern "C" __attribute__((export_name("step"))) void step(
       const float intensity = physical_intensity(ez[i] * ez[i], fieldScale);
       const float decayX = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
       const float decayY = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
-      const float ezxNew = (sigmaCaX * eCaX[x] * ezx[i] + sigmaCbX * eCbX[x] * (s / eps[i]) * dHyDx) * decayX;
-      const float ezyNew = (sigmaCaY * eCaY[y] * ezy[i] - sigmaCbY * eCbY[y] * (s / epsY[i]) * dHxDy) * decayY;
+      const float ezxNew =
+        (sigmaCaX * ezx[i] + sigmaCbX * (s / safe_material_denominator(eps[i])) * dHyDx) * decayX;
+      const float ezyNew =
+        (sigmaCaY * ezy[i] - sigmaCbY * (s / safe_material_denominator(epsY[i])) * dHxDy) * decayY;
       ezx[i] = ezxNew;
       ezy[i] = ezyNew;
       ez[i] = ezxNew + ezyNew;
@@ -653,8 +722,6 @@ extern "C" __attribute__((export_name("step"))) void step(
       conductivity,
       conductivityY,
       material,
-      eCbX,
-      eCbY,
       runtimeFlags,
       gainSaturation
     );
@@ -688,14 +755,26 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   u32 modulationBaseEpsYOffset,
   u32 epsilonXYOffset,
   u32 gyrotropyGOffset,
-  u32 eCaXOffset,
-  u32 eCbXOffset,
-  u32 eCaYOffset,
-  u32 eCbYOffset,
-  u32 hCaXOffset,
-  u32 hCbXOffset,
-  u32 hCaYOffset,
-  u32 hCbYOffset,
+  u32 cpmlKappaEXOffset,
+  u32 cpmlKappaHXOffset,
+  u32 cpmlKappaEYOffset,
+  u32 cpmlKappaHYOffset,
+  u32 cpmlAEXOffset,
+  u32 cpmlAHXOffset,
+  u32 cpmlAEYOffset,
+  u32 cpmlAHYOffset,
+  u32 cpmlBEXOffset,
+  u32 cpmlBHXOffset,
+  u32 cpmlBEYOffset,
+  u32 cpmlBHYOffset,
+  u32 cpmlPsiHxYOffset,
+  u32 cpmlPsiHyXOffset,
+  u32 cpmlPsiEzXOffset,
+  u32 cpmlPsiEzYOffset,
+  u32 cpmlPsiExYOffset,
+  u32 cpmlPsiEyXOffset,
+  u32 cpmlPsiHzXOffset,
+  u32 cpmlPsiHzYOffset,
   i32 runtimeFlags,
   float kerrChi3,
   float kerrSaturation,
@@ -728,14 +807,22 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* modulationBaseEpsY = f32(modulationBaseEpsYOffset);
   float* epsilonXY = f32(epsilonXYOffset);
   float* gyrotropyG = f32(gyrotropyGOffset);
-  float* eCaX = f32(eCaXOffset);
-  float* eCbX = f32(eCbXOffset);
-  float* eCaY = f32(eCaYOffset);
-  float* eCbY = f32(eCbYOffset);
-  float* hCaX = f32(hCaXOffset);
-  float* hCbX = f32(hCbXOffset);
-  float* hCaY = f32(hCaYOffset);
-  float* hCbY = f32(hCbYOffset);
+  float* cpmlKappaEX = f32(cpmlKappaEXOffset);
+  float* cpmlKappaHX = f32(cpmlKappaHXOffset);
+  float* cpmlKappaEY = f32(cpmlKappaEYOffset);
+  float* cpmlKappaHY = f32(cpmlKappaHYOffset);
+  float* cpmlAEX = f32(cpmlAEXOffset);
+  float* cpmlAHX = f32(cpmlAHXOffset);
+  float* cpmlAEY = f32(cpmlAEYOffset);
+  float* cpmlAHY = f32(cpmlAHYOffset);
+  float* cpmlBEX = f32(cpmlBEXOffset);
+  float* cpmlBHX = f32(cpmlBHXOffset);
+  float* cpmlBEY = f32(cpmlBEYOffset);
+  float* cpmlBHY = f32(cpmlBHYOffset);
+  float* cpmlPsiExY = f32(cpmlPsiExYOffset);
+  float* cpmlPsiEyX = f32(cpmlPsiEyXOffset);
+  float* cpmlPsiHzX = f32(cpmlPsiHzXOffset);
+  float* cpmlPsiHzY = f32(cpmlPsiHzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
 
   if (runtimeFlags & STEP_KERR) {
@@ -744,8 +831,6 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
 
   for (i32 y = 0; y < ny - 1; y += 1) {
     const i32 row = y * nx;
-    const float ca = eCaY[y];
-    const float cb = eCbY[y];
     for (i32 x = 0; x < nx; x += 1) {
       const i32 i = row + x;
       if (material[i] == 2) {
@@ -753,12 +838,13 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         continue;
       }
       if ((runtimeFlags & STEP_TENSOR_GYRO) && (gyrotropicMaterial[i] || electricTensorMaterial[i])) continue;
+      const float dHzDy = cpml_derivative(hz[i + nx] - hz[i], cpmlPsiExY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
       const float sigmaDamp = conductivity_damp(conductivity[i], eps[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
       const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
       const float decay = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
-      ex[i] = (sigmaCa * ca * ex[i] + sigmaCb * cb * (s / eps[i]) * (hz[i + nx] - hz[i])) * decay;
+      ex[i] = (sigmaCa * ex[i] + sigmaCb * (s / safe_material_denominator(eps[i])) * dHzDy) * decay;
     }
   }
 
@@ -771,20 +857,19 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         continue;
       }
       if ((runtimeFlags & STEP_TENSOR_GYRO) && (gyrotropicMaterial[i] || electricTensorMaterial[i])) continue;
+      const float dHzDx = cpml_derivative(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
       const float sigmaDamp = conductivity_damp(conductivityY[i], epsY[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
       const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
       const float decay = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
-      ey[i] = (sigmaCa * eCaX[x] * ey[i] - sigmaCb * eCbX[x] * (s / epsY[i]) * (hz[i + 1] - hz[i])) * decay;
+      ey[i] = (sigmaCa * ey[i] - sigmaCb * (s / safe_material_denominator(epsY[i])) * dHzDx) * decay;
     }
   }
 
   if (runtimeFlags & STEP_TENSOR_GYRO) {
     for (i32 y = 0; y < ny - 1; y += 1) {
       const i32 row = y * nx;
-      const float caX = eCaY[y];
-      const float cbX = eCbY[y];
       for (i32 x = 0; x < nx - 1; x += 1) {
         const i32 i = row + x;
         if (!gyrotropicMaterial[i] && !electricTensorMaterial[i]) continue;
@@ -807,15 +892,17 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         const float sigmaCaY = (1.0f - sigmaDampY) / (1.0f + sigmaDampY);
         const float sigmaCbX = 1.0f / (1.0f + sigmaDampX);
         const float sigmaCbY = 1.0f / (1.0f + sigmaDampY);
-        const float sourceX = sigmaCbX * cbX * s * (hz[i + nx] - hz[i]);
-        const float sourceY = -sigmaCbY * eCbX[x] * s * (hz[i + 1] - hz[i]);
+        const float dHzDy = cpml_derivative(hz[i + nx] - hz[i], cpmlPsiExY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
+        const float dHzDx = cpml_derivative(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
+        const float sourceX = sigmaCbX * s * dHzDy;
+        const float sourceY = -sigmaCbY * s * dHzDx;
         const float coupledX = (epsYi * sourceX - upperOffDiagonal * sourceY) / safeDet;
         const float coupledY = (-lowerOffDiagonal * sourceX + epsX * sourceY) / safeDet;
         const float intensity = physical_intensity(ex[i] * ex[i] + ey[i] * ey[i], fieldScale);
         const float decayX = electric_loss_decay(loss[i], intensity, runtimeFlags, gainSaturation);
         const float decayY = electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
-        ex[i] = (sigmaCaX * caX * ex[i] + coupledX) * decayX;
-        ey[i] = (sigmaCaY * eCaX[x] * ey[i] + coupledY) * decayY;
+        ex[i] = (sigmaCaX * ex[i] + coupledX) * decayX;
+        ey[i] = (sigmaCaY * ey[i] + coupledY) * decayY;
       }
     }
   }
@@ -838,8 +925,6 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
       conductivity,
       conductivityY,
       material,
-      eCbX,
-      eCbY,
       runtimeFlags,
       gainSaturation
     );
@@ -853,10 +938,10 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         zero_te_cell(hz, hzx, hzy, ex, ey, i);
         continue;
       }
-      const float dEyDx = ey[i] - ey[i - 1];
-      const float dExDy = ex[i] - ex[i - nx];
-      const float hzxNew = (hCaX[x] * hzx[i] - hCbX[x] * (s / mu[i]) * dEyDx) / (1.0f + muLoss[i]);
-      const float hzyNew = (hCaY[y] * hzy[i] + hCbY[y] * (s / muY[i]) * dExDy) / (1.0f + muLossY[i]);
+      const float dEyDx = cpml_derivative(ey[i] - ey[i - 1], cpmlPsiHzX, i, x, cpmlKappaHX, cpmlAHX, cpmlBHX);
+      const float dExDy = cpml_derivative(ex[i] - ex[i - nx], cpmlPsiHzY, i, y, cpmlKappaHY, cpmlAHY, cpmlBHY);
+      const float hzxNew = (hzx[i] - (s / safe_material_denominator(mu[i])) * dEyDx) * magnetic_loss_decay(muLoss[i]);
+      const float hzyNew = (hzy[i] + (s / safe_material_denominator(muY[i])) * dExDy) * magnetic_loss_decay(muLossY[i]);
       hzx[i] = hzxNew;
       hzy[i] = hzyNew;
       hz[i] = hzxNew + hzyNew;
@@ -864,6 +949,6 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   }
 
   if (tfsfSourceCount > 0) {
-    apply_tfsf_te_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hz, hzx, hzy, mu, muLoss, muY, muLossY, material, hCbX, hCbY);
+    apply_tfsf_te_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hz, hzx, hzy, mu, muLoss, muY, muLossY, material);
   }
 }

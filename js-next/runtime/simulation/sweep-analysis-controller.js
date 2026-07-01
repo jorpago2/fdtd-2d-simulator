@@ -293,7 +293,7 @@
     function restoreSymmetrySweepSnapshot(snapshot) {
       if (!snapshot) return;
       sim.restoreMaterialArrays(snapshot);
-      sim.refreshPmlMaterialContinuation(false);
+      sim.refreshCpmlMaterialContinuation(false);
     }
     
     function applySymmetrySweepValue(snapshot, value) {
@@ -301,7 +301,7 @@
       const delta = clampSweepRangeForMode("symmetry", value);
       sim.restoreMaterialArrays(snapshot);
       if (delta <= 1e-9) {
-        sim.refreshPmlMaterialContinuation(false);
+        sim.refreshCpmlMaterialContinuation(false);
         return 0;
       }
     
@@ -335,7 +335,7 @@
           count += 1;
         }
       }
-      sim.refreshPmlMaterialContinuation(false);
+      sim.refreshCpmlMaterialContinuation(false);
       return count;
     }
     

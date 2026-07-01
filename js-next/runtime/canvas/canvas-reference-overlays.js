@@ -84,15 +84,15 @@
     referenceGlyphLayout() {
       const viewport = this.renderViewport();
       const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const pmlRight = boundarySideIsAbsorbing("left") && this.pmlLayer > 0 ? this.gridToCanvasX(this.pmlLayer) : viewport.left;
-      const pmlTop = boundarySideIsAbsorbing("bottom") && this.pmlLayer > 0 ? this.gridToCanvasY(this.ny - this.pmlLayer) : viewport.bottom;
-      const pmlWidth = pmlRight - viewport.left > 10 * dpr ? pmlRight - viewport.left : Math.min(viewport.width * 0.22, 126 * dpr);
-      const pmlHeight = viewport.bottom - pmlTop > 10 * dpr ? viewport.bottom - pmlTop : Math.min(viewport.height * 0.18, 96 * dpr);
+      const cpmlRight = boundarySideIsAbsorbing("left") && this.cpmlLayer > 0 ? this.gridToCanvasX(this.cpmlLayer) : viewport.left;
+      const cpmlTop = boundarySideIsAbsorbing("bottom") && this.cpmlLayer > 0 ? this.gridToCanvasY(this.ny - this.cpmlLayer) : viewport.bottom;
+      const cpmlWidth = cpmlRight - viewport.left > 10 * dpr ? cpmlRight - viewport.left : Math.min(viewport.width * 0.22, 126 * dpr);
+      const cpmlHeight = viewport.bottom - cpmlTop > 10 * dpr ? viewport.bottom - cpmlTop : Math.min(viewport.height * 0.18, 96 * dpr);
       const left = viewport.left;
-      const centerX = left + pmlWidth * 0.5;
-      const centerY = viewport.bottom - pmlHeight + pmlHeight * 0.52;
-      const size = clamp(Math.min(pmlWidth, pmlHeight) * 0.34, 24 * dpr, 44 * dpr);
-      const gap = clamp(pmlHeight * 0.18, 15 * dpr, 24 * dpr);
+      const centerX = left + cpmlWidth * 0.5;
+      const centerY = viewport.bottom - cpmlHeight + cpmlHeight * 0.52;
+      const size = clamp(Math.min(cpmlWidth, cpmlHeight) * 0.34, 24 * dpr, 44 * dpr);
+      const gap = clamp(cpmlHeight * 0.18, 15 * dpr, 24 * dpr);
       const kLength = clamp(size * 0.76, 22 * dpr, 36 * dpr);
       return {
         dpr,

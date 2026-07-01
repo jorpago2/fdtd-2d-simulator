@@ -39,6 +39,7 @@
       this.harmonicPrevPz?.fill(0);
       this.harmonicPrevPx?.fill(0);
       this.harmonicPrevPy?.fill(0);
+      this.resetCpmlMemory?.();
       this.time = 0;
       this.lastMax = 0;
       this.lastMaxLog10 = -Infinity;
@@ -65,6 +66,18 @@
         this.ezy,
         this.hx,
         this.hy,
+        this.cpmlPsiHxY,
+        this.cpmlPsiHyX,
+        this.cpmlPsiEzX,
+        this.cpmlPsiEzY,
+        this.cpmlPsiExY,
+        this.cpmlPsiEyX,
+        this.cpmlPsiHzX,
+        this.cpmlPsiHzY,
+        this.cpmlPsiDualHxY,
+        this.cpmlPsiDualHyX,
+        this.cpmlPsiDualEzX,
+        this.cpmlPsiDualEzY,
       ].filter(Boolean);
 
       if (state.materialBianisotropyEnabled) {

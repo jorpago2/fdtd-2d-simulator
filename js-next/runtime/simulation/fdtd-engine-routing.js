@@ -11,7 +11,7 @@
       this.allocateAuxiliaryArrays();
       this.restoreWasmMigrationArrays(previous);
       this.buildBoundary(state.boundary);
-      this.clearPmlMaterials();
+      this.clearCpmlMaterials();
       this.zeroBoundaryFields();
     },
 
@@ -32,8 +32,13 @@
       );
     },
 
+    canUseCompiledBoundaryStep() {
+      return !this.cpmlActive?.() || Boolean(this.wasmBackend?.supportsCpml?.());
+    },
+
     canUseCompiledMaterialStep() {
       if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
+      if (!this.canUseCompiledBoundaryStep()) return false;
       if (this.hasTfsfIncidentSource?.()) {
         if (!this.wasmBackend.supportsTfsf?.()) return false;
         if (!this.wasmBackend.canPackTfsfSources?.(this)) return false;
@@ -63,6 +68,7 @@
     compiledMaterialEngineLabel() {
       if (!this.canUseCompiledMaterialStep()) return "";
       const labels = [];
+      if (this.cpmlActive?.()) labels.push("CPML");
       if (state.materialConductivityEnabled) labels.push("sigma");
       if (state.materialNonlinearEnabled) labels.push("Kerr");
       if (state.materialSaturableGainEnabled) labels.push("gain");
@@ -70,6 +76,12 @@
       if (state.materialDispersionEnabled) labels.push("JS ADE");
       if (this.hasTfsfIncidentSource?.()) labels.push("TFSF");
       return labels.length > 0 ? `WASM ${labels.join("+")}` : "WASM";
+    },
+
+    cpmlEngineLabel(label) {
+      if (!this.cpmlActive?.() || !String(label).startsWith("JS")) return label;
+      if (label === "JS") return "JS CPML";
+      return label.replace(/^JS\s+/, "JS CPML+");
     },
 
     engineLabel() {
@@ -86,21 +98,24 @@
         state.materialBianisotropyEnabled
       ) {
         if (this.canUseCompiledFullVectorBianisotropy()) return "WASM+JS 6-field";
-        if (this.fullVectorBianisotropyActive()) return "JS 6-field";
-        if (state.materialBianisotropyEnabled) return "JS bianiso";
-        if (state.materialGyrotropyEnabled) return "JS tensor";
-        if (state.materialPhaseChangeEnabled) return "JS memory";
-        if (this.hasTfsfIncidentSource?.()) return "JS TFSF+dynamic";
-        return state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic";
+        if (this.fullVectorBianisotropyActive()) return this.cpmlEngineLabel("JS 6-field");
+        if (state.materialBianisotropyEnabled) return this.cpmlEngineLabel("JS bianiso");
+        if (state.materialGyrotropyEnabled) return this.cpmlEngineLabel("JS tensor");
+        if (state.materialPhaseChangeEnabled) return this.cpmlEngineLabel("JS memory");
+        if (this.hasTfsfIncidentSource?.()) return this.cpmlEngineLabel("JS TFSF+dynamic");
+        return this.cpmlEngineLabel(state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic");
       }
       if (state.materialConductivityEnabled) {
-        return this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsConductivity()
+        return this.canUseCompiledBoundaryStep() && this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsConductivity()
           ? "WASM sigma"
-          : "JS sigma";
+          : this.cpmlEngineLabel("JS sigma");
       }
       if (this.hasTfsfIncidentSource?.()) {
-        return this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsTfsf?.() ? "WASM TFSF" : "JS TFSF";
+        return this.canUseCompiledBoundaryStep() && this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsTfsf?.()
+          ? "WASM TFSF"
+          : this.cpmlEngineLabel("JS TFSF");
       }
+      if (this.cpmlActive?.()) return this.canUseCompiledBoundaryStep() && this.wasmBackend?.canStep(state.fieldComponent) ? "WASM CPML" : "JS CPML";
       return this.wasmBackend?.canStep(state.fieldComponent) ? "WASM" : "JS";
     },
 

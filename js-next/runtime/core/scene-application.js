@@ -51,7 +51,7 @@
         if (!isPlainObject(cell)) return;
         sim.writeMaterialCell(clampInt(cell.x, 1, sim.nx - 2), clampInt(cell.y, 1, sim.ny - 2), cell);
       });
-      sim.refreshPmlMaterialContinuation(false);
+      sim.refreshCpmlMaterialContinuation(false);
       return;
     }
     sim.applyPreset(state.preset);

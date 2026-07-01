@@ -22,7 +22,7 @@ class FDTDSim {
     this.ny = ny;
     this.n = nx * ny;
     this.allocateArrays();
-    this.pmlLayer = 0;
+    this.cpmlLayer = 0;
     this.time = 0;
     this.lastMax = 0;
     this.lastMaxLog10 = -Infinity;

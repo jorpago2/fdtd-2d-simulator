@@ -44,6 +44,7 @@
     "src/fdtd-engine-routing.js": "js-next/runtime/simulation/fdtd-engine-routing.js",
     "src/fdtd-field-observables.js": "js-next/runtime/simulation/fdtd-field-observables.js",
     "src/fdtd-field-state.js": "js-next/runtime/simulation/fdtd-field-state.js",
+    "src/fdtd-incident-field.js": "js-next/runtime/simulation/fdtd-incident-field.js",
     "src/fdtd-line-diagnostics.js": "js-next/runtime/simulation/fdtd-line-diagnostics.js",
     "src/fdtd-material-diagnostics.js": "js-next/runtime/simulation/fdtd-material-diagnostics.js",
     "src/fdtd-materials.js": "js-next/runtime/simulation/fdtd-materials.js",

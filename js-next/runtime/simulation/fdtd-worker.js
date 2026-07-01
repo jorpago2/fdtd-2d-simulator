@@ -37,6 +37,7 @@ function makeHeadlessCanvas(width = 1, height = 1) {
     width,
     height,
     style: {},
+    dataset: {},
     getContext() {
       return makeHeadlessContext();
     },
@@ -126,6 +127,7 @@ importScripts(
   "fdtd-field-observables.js?v=20260630-js-next-cutover-1",
   "fdtd-boundaries.js?v=20260630-js-next-cutover-1",
   "fdtd-presets.js?v=20260630-js-next-cutover-1",
+  "fdtd-incident-field.js?v=20260630-js-next-cutover-1",
   "fdtd-sources.js?v=20260630-js-next-cutover-1",
   "fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1",
   "fdtd-custom-monitors.js?v=20260630-js-next-cutover-1",

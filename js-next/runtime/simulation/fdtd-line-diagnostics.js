@@ -77,15 +77,34 @@
       return samples > 0 ? (flux / samples) * this.fieldPowerScale() : 0;
     },
 
-    directionalTangentialFieldsAt(idx, direction) {
+    staggeredAverageX(array, x, y) {
+      const idx = this.id(x, y);
+      return x > 0 ? 0.5 * (array[idx] + array[idx - 1]) : array[idx];
+    },
+
+    staggeredAverageY(array, x, y) {
+      const idx = this.id(x, y);
+      return y > 0 ? 0.5 * (array[idx] + array[idx - this.nx]) : array[idx];
+    },
+
+    directionalTangentialFieldsAtCell(x, y, direction) {
       const cos = direction.cos;
       const sin = direction.sin;
+      const idx = this.id(x, y);
       if (state.fieldComponent === "hz") {
-        const eParallel = this.hy[idx] * cos - this.hx[idx] * sin;
+        const ex = this.staggeredAverageY(this.hx, x, y);
+        const ey = this.staggeredAverageX(this.hy, x, y);
+        const eParallel = ey * cos - ex * sin;
         return { electric: eParallel, magnetic: this.ez[idx] };
       }
-      const hParallel = this.hx[idx] * sin - this.hy[idx] * cos;
+      const hx = this.staggeredAverageY(this.hx, x, y);
+      const hy = this.staggeredAverageX(this.hy, x, y);
+      const hParallel = hx * sin - hy * cos;
       return { electric: this.ez[idx], magnetic: hParallel };
+    },
+
+    directionalTangentialFieldsAt(idx, direction) {
+      return this.directionalTangentialFieldsAtCell(idx % this.nx, Math.floor(idx / this.nx), direction);
     },
 
     lineWaveSeparationAt(x, direction = this.diagnosticDirection()) {
@@ -97,6 +116,10 @@
       let backwardPower = 0;
       let impedance = 0;
       let samples = 0;
+      const centerY = clampInt(Math.round((y0 + y1) * 0.5), y0, y1);
+      let centerForward = 0;
+      let centerBackward = 0;
+      let centerDistance = Infinity;
       for (let y = y0; y <= y1; y += 1) {
         const idx = this.id(x, y);
         if (this.material[idx] === 2) continue;
@@ -104,9 +127,15 @@
         const muValue = Math.max(1e-6, Math.abs(state.fieldComponent === "hz" ? this.mu[idx] : this.muY[idx]));
         const z = Math.sqrt(muValue / epsValue);
         if (!Number.isFinite(z) || z <= 0) continue;
-        const tangential = this.directionalTangentialFieldsAt(idx, direction);
+        const tangential = this.directionalTangentialFieldsAtCell(x, y, direction);
         const forwardField = 0.5 * (tangential.electric + z * tangential.magnetic);
         const backwardField = 0.5 * (tangential.electric - z * tangential.magnetic);
+        const distance = Math.abs(y - centerY);
+        if (distance < centerDistance) {
+          centerDistance = distance;
+          centerForward = forwardField;
+          centerBackward = backwardField;
+        }
         forward += forwardField;
         backward += backwardField;
         forwardPower += (forwardField * forwardField) / z;
@@ -117,8 +146,10 @@
       if (samples <= 0) return { forward: 0, backward: 0, forwardPower: 0, backwardPower: 0, impedance: 1 };
       const powerScale = this.fieldPowerScale();
       return {
-        forward: forward / samples,
-        backward: backward / samples,
+        forward: Number.isFinite(centerForward) ? centerForward : forward / samples,
+        backward: Number.isFinite(centerBackward) ? centerBackward : backward / samples,
+        forwardMean: forward / samples,
+        backwardMean: backward / samples,
         forwardPower: (forwardPower / samples) * powerScale,
         backwardPower: (backwardPower / samples) * powerScale,
         impedance: impedance / samples,

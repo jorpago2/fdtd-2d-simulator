@@ -15,6 +15,8 @@
     return value;
   }
 
+  const VACUUM_2D_CFL_LIMIT = 1 / Math.sqrt(2);
+
   function createMaterialStabilityController(dependencies) {
     const state = requireObject(dependencies.state, "state");
     const el = requireObject(dependencies.el, "el");
@@ -163,7 +165,7 @@
       const warningText = notes.join(" ");
       el.materialWarning.textContent = warningText;
       if (el.simGuideWarning) {
-        el.simGuideWarning.textContent = warningText || `CFL S = ${COURANT.toFixed(2)} < ${(1 / Math.sqrt(2)).toFixed(2)} explicit 2D Yee limit.`;
+        el.simGuideWarning.textContent = warningText || `CFL S = ${COURANT.toFixed(2)} < ${VACUUM_2D_CFL_LIMIT.toFixed(2)} vacuum 2D Yee limit.`;
         el.simGuideWarning.classList.toggle("is-warning", Boolean(warningText));
       }
     }
@@ -185,7 +187,55 @@
       return labels.length > 0 ? labels : ["static"];
     }
     
-    function materialStabilityFlags() {
+    function materialCflEstimate() {
+      let minMaterialProduct = 1;
+      let checkedCells = 0;
+      let nearZeroProductCells = 0;
+      let negativeMaterialCells = 0;
+      let nonFiniteMaterialCells = 0;
+
+      for (let i = 0; i < sim.n; i += 1) {
+        if (sim.material[i] === 2) continue;
+        const epsX = Number(sim.eps[i]);
+        const epsY = Number(sim.epsY[i]);
+        const muX = Number(sim.mu[i]);
+        const muY = Number(sim.muY[i]);
+        const values = [epsX, epsY, muX, muY];
+        if (values.some((value) => !Number.isFinite(value))) {
+          nonFiniteMaterialCells += 1;
+          continue;
+        }
+
+        checkedCells += 1;
+        if (values.some((value) => value < 0)) negativeMaterialCells += 1;
+
+        const products = [epsX * muX, epsX * muY, epsY * muX, epsY * muY];
+        const cellMinProduct = products.reduce((minimum, product) => {
+          if (!Number.isFinite(product)) return minimum;
+          return Math.min(minimum, Math.abs(product));
+        }, Infinity);
+        if (!Number.isFinite(cellMinProduct)) {
+          nonFiniteMaterialCells += 1;
+          continue;
+        }
+        if (cellMinProduct < 1e-6) nearZeroProductCells += 1;
+        minMaterialProduct = Math.min(minMaterialProduct, cellMinProduct);
+      }
+
+      const minEffectiveIndex = Math.sqrt(Math.max(0, minMaterialProduct));
+      const materialLimit = Math.min(VACUUM_2D_CFL_LIMIT, VACUUM_2D_CFL_LIMIT * minEffectiveIndex);
+      return {
+        checkedCells,
+        materialLimit,
+        minEffectiveIndex,
+        nearZeroProductCells,
+        negativeMaterialCells,
+        nonFiniteMaterialCells,
+        vacuumLimit: VACUUM_2D_CFL_LIMIT,
+      };
+    }
+
+    function materialStabilityFlags(cflEstimate) {
       const flags = [];
       let minAbsEps = Infinity;
       let minAbsMu = Infinity;
@@ -202,15 +252,20 @@
       if (Number.isFinite(minAbsEps) && minAbsEps < 0.2) flags.push("near-zero eps");
       if (Number.isFinite(minAbsMu) && minAbsMu < 0.2) flags.push("near-zero mu");
       if (negativeLossCells > 0 || state.customEpsImag < 0 || state.customMuImag < 0) flags.push("gain or negative loss");
+      if (cflEstimate.nonFiniteMaterialCells > 0) flags.push("non-finite material coefficient");
+      if (cflEstimate.nearZeroProductCells > 0) flags.push("near-zero epsilon*mu");
+      if (cflEstimate.negativeMaterialCells > 0 && !state.materialDispersionEnabled) flags.push("negative epsilon/mu without ADE");
+      if (cflEstimate.materialLimit < cflEstimate.vacuumLimit - 1e-6) flags.push("reduced material CFL");
       if (state.materialModulationEnabled && state.modulationDepth > 0.5) flags.push("deep modulation");
       if (state.materialBianisotropyEnabled && Math.abs(state.bianisotropyKappa) > BIANISOTROPY_KAPPA_LIMIT * 0.8) flags.push("strong kappa");
       if (sim.lastDiverged) flags.push("recent non-finite field");
       return flags;
     }
     
-    function healthStatusReason(cflStable, flags, limit) {
+    function healthStatusReason(cflStable, flags, cflEstimate) {
+      const limit = cflEstimate.materialLimit;
       if (!cflStable) {
-        return `CFL S=${COURANT.toFixed(2)} exceeds the explicit 2D Yee limit ${limit.toFixed(2)}.`;
+        return `CFL S=${COURANT.toFixed(2)} exceeds the material-aware 2D Yee estimate ${limit.toFixed(2)}; min sqrt(|epsilon*mu|)~${formatFieldValue(cflEstimate.minEffectiveIndex)}.`;
       }
       if (sim.lastDiverged) {
         return "Non-finite field was detected and the fields were reset.";
@@ -218,7 +273,7 @@
       if (flags.length > 0) {
         return `Check before quantitative use: ${flags.join(", ")}.`;
       }
-      return `CFL S=${COURANT.toFixed(2)} is below ${limit.toFixed(2)} and no material stability flags are active.`;
+      return `CFL S=${COURANT.toFixed(2)} is below the material-aware estimate ${limit.toFixed(2)} and no material stability flags are active.`;
     }
     
     function applyHealthState(output, level, reason) {
@@ -238,18 +293,19 @@
     
     function updateStabilitySummary() {
       if (!el.stabilityCflValue) return;
-      const limit = 1 / Math.sqrt(2);
+      const cflEstimate = materialCflEstimate();
+      const limit = cflEstimate.materialLimit;
       const media = activeMediaLabels();
-      const flags = materialStabilityFlags();
+      const flags = materialStabilityFlags(cflEstimate);
       const cflStable = COURANT < limit;
       const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
-      const healthReason = healthStatusReason(cflStable, flags, limit);
+      const healthReason = healthStatusReason(cflStable, flags, cflEstimate);
       el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
       el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / λ₀`;
       el.stabilityMediaValue.textContent = media.join(", ");
       updateHealthStatusOutputs(level, healthReason);
       if (el.stabilityNote) {
-        const base = `Explicit 2D Yee check: S must stay below 1/sqrt(2). Current S=${COURANT.toFixed(2)}.`;
+        const base = `Explicit 2D Yee check: S must stay below min(1/sqrt(2), n_min/sqrt(2)). Current material estimate=${limit.toFixed(2)}.`;
         el.stabilityNote.textContent =
           flags.length > 0
             ? `${base} Watch: ${flags.join(", ")}. Run convergence checks for publishable results.`

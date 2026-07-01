@@ -60,24 +60,15 @@ Object.assign(FDTDSim.prototype, {
     const muLoss = this.muLoss;
     const muY = this.muY;
     const muLossY = this.muLossY;
-    const eCaX = this.eCaX;
-    const eCbX = this.eCbX;
-    const eCaY = this.eCaY;
-    const eCbY = this.eCbY;
-    const hCaX = this.hCaX;
-    const hCbX = this.hCbX;
-    const hCaY = this.hCaY;
-    const hCbY = this.hCbY;
 
     for (let y = 0; y < ny - 1; y += 1) {
       const row = y * nx;
-      const ca = hCaY[y];
-      const cb = hCbY[y];
       for (let x = 0; x < nx; x += 1) {
         const i = row + x;
-        const magneticDecay = 1 / (1 + muLoss[i]);
-        const magneticScale = s / mu[i];
-        hx[i] = (ca * hx[i] - cb * magneticScale * (ez[i + nx] - ez[i])) * magneticDecay;
+        const dEzDy = this.cpmlDerivativeY(ez[i + nx] - ez[i], this.cpmlPsiHxY, i, y, false);
+        const magneticDecay = this.magneticLossDecay(muLoss[i]);
+        const magneticScale = s / this.safeMaterialDenominator(mu[i]);
+        hx[i] = (hx[i] - magneticScale * dEzDy) * magneticDecay;
       }
     }
 
@@ -85,9 +76,10 @@ Object.assign(FDTDSim.prototype, {
       const row = y * nx;
       for (let x = 0; x < nx - 1; x += 1) {
         const i = row + x;
-        const magneticDecay = 1 / (1 + muLossY[i]);
-        const magneticScale = s / muY[i];
-        hy[i] = (hCaX[x] * hy[i] + hCbX[x] * magneticScale * (ez[i + 1] - ez[i])) * magneticDecay;
+        const dEzDx = this.cpmlDerivativeX(ez[i + 1] - ez[i], this.cpmlPsiHyX, i, x, false);
+        const magneticDecay = this.magneticLossDecay(muLossY[i]);
+        const magneticScale = s / this.safeMaterialDenominator(muY[i]);
+        hy[i] = (hy[i] + magneticScale * dEzDx) * magneticDecay;
       }
     }
 
@@ -102,20 +94,20 @@ Object.assign(FDTDSim.prototype, {
           this.zeroElectricCell(i);
           continue;
         }
-        const dHyDx = hy[i] - hy[i - 1];
-        const dHxDy = hx[i] - hx[i - nx];
+        const dHyDx = this.cpmlDerivativeX(hy[i] - hy[i - 1], this.cpmlPsiEzX, i, x, true);
+        const dHxDy = this.cpmlDerivativeY(hx[i] - hx[i - nx], this.cpmlPsiEzY, i, y, true);
         const decayX = this.electricLossDecay(loss[i], i);
         const decayY = this.electricLossDecay(lossY[i], i);
-        const materialScaleX = s / eps[i];
-        const materialScaleY = s / epsY[i];
+        const materialScaleX = s / this.safeMaterialDenominator(eps[i]);
+        const materialScaleY = s / this.safeMaterialDenominator(epsY[i]);
         const sigmaDampX = this.conductivityDamp(conductivity[i], eps[i]);
         const sigmaDampY = this.conductivityDamp(conductivityY[i], epsY[i]);
         const sigmaCaX = (1 - sigmaDampX) / (1 + sigmaDampX);
         const sigmaCaY = (1 - sigmaDampY) / (1 + sigmaDampY);
         const sigmaCbX = 1 / (1 + sigmaDampX);
         const sigmaCbY = 1 / (1 + sigmaDampY);
-        ezx[i] = (sigmaCaX * eCaX[x] * ezx[i] + sigmaCbX * eCbX[x] * materialScaleX * dHyDx) * decayX;
-        ezy[i] = (sigmaCaY * eCaY[y] * ezy[i] - sigmaCbY * eCbY[y] * materialScaleY * dHxDy) * decayY;
+        ezx[i] = (sigmaCaX * ezx[i] + sigmaCbX * materialScaleX * dHyDx) * decayX;
+        ezy[i] = (sigmaCaY * ezy[i] - sigmaCbY * materialScaleY * dHxDy) * decayY;
         ez[i] = ezx[i] + ezy[i];
       }
     }
@@ -144,19 +136,9 @@ Object.assign(FDTDSim.prototype, {
     const muLoss = this.muLoss;
     const muY = this.muY;
     const muLossY = this.muLossY;
-    const eCaX = this.eCaX;
-    const eCbX = this.eCbX;
-    const eCaY = this.eCaY;
-    const eCbY = this.eCbY;
-    const hCaX = this.hCaX;
-    const hCbX = this.hCbX;
-    const hCaY = this.hCaY;
-    const hCbY = this.hCbY;
 
     for (let y = 0; y < ny - 1; y += 1) {
       const row = y * nx;
-      const ca = eCaY[y];
-      const cb = eCbY[y];
       for (let x = 0; x < nx; x += 1) {
         const i = row + x;
         if (this.material[i] === 2) {
@@ -164,12 +146,13 @@ Object.assign(FDTDSim.prototype, {
           continue;
         }
         if (gyrotropicMaterial[i] || electricTensorMaterial[i]) continue;
+        const dHzDy = this.cpmlDerivativeY(hz[i + nx] - hz[i], this.cpmlPsiExY, i, y, true);
         const electricDecay = this.electricLossDecay(loss[i], i);
-        const electricScale = s / eps[i];
+        const electricScale = s / this.safeMaterialDenominator(eps[i]);
         const sigmaDamp = this.conductivityDamp(conductivity[i], eps[i]);
         const sigmaCa = (1 - sigmaDamp) / (1 + sigmaDamp);
         const sigmaCb = 1 / (1 + sigmaDamp);
-        ex[i] = (sigmaCa * ca * ex[i] + sigmaCb * cb * electricScale * (hz[i + nx] - hz[i])) * electricDecay;
+        ex[i] = (sigmaCa * ex[i] + sigmaCb * electricScale * dHzDy) * electricDecay;
       }
     }
 
@@ -182,19 +165,18 @@ Object.assign(FDTDSim.prototype, {
           continue;
         }
         if (gyrotropicMaterial[i] || electricTensorMaterial[i]) continue;
+        const dHzDx = this.cpmlDerivativeX(hz[i + 1] - hz[i], this.cpmlPsiEyX, i, x, true);
         const electricDecay = this.electricLossDecay(lossY[i], i);
-        const electricScale = s / epsY[i];
+        const electricScale = s / this.safeMaterialDenominator(epsY[i]);
         const sigmaDamp = this.conductivityDamp(conductivityY[i], epsY[i]);
         const sigmaCa = (1 - sigmaDamp) / (1 + sigmaDamp);
         const sigmaCb = 1 / (1 + sigmaDamp);
-        ey[i] = (sigmaCa * eCaX[x] * ey[i] - sigmaCb * eCbX[x] * electricScale * (hz[i + 1] - hz[i])) * electricDecay;
+        ey[i] = (sigmaCa * ey[i] - sigmaCb * electricScale * dHzDx) * electricDecay;
       }
     }
 
     for (let y = 0; y < ny - 1; y += 1) {
       const row = y * nx;
-      const caX = eCaY[y];
-      const cbX = eCbY[y];
       for (let x = 0; x < nx - 1; x += 1) {
         const i = row + x;
         if (!gyrotropicMaterial[i] && !electricTensorMaterial[i]) continue;
@@ -217,14 +199,16 @@ Object.assign(FDTDSim.prototype, {
         const sigmaCaY = (1 - sigmaDampY) / (1 + sigmaDampY);
         const sigmaCbX = 1 / (1 + sigmaDampX);
         const sigmaCbY = 1 / (1 + sigmaDampY);
-        const sourceX = sigmaCbX * cbX * s * (hz[i + nx] - hz[i]);
-        const sourceY = -sigmaCbY * eCbX[x] * s * (hz[i + 1] - hz[i]);
+        const dHzDy = this.cpmlDerivativeY(hz[i + nx] - hz[i], this.cpmlPsiExY, i, y, true);
+        const dHzDx = this.cpmlDerivativeX(hz[i + 1] - hz[i], this.cpmlPsiEyX, i, x, true);
+        const sourceX = sigmaCbX * s * dHzDy;
+        const sourceY = -sigmaCbY * s * dHzDx;
         const coupledX = (epsYi * sourceX - upperOffDiagonal * sourceY) / safeDet;
         const coupledY = (-lowerOffDiagonal * sourceX + epsX * sourceY) / safeDet;
         const decayX = this.electricLossDecay(loss[i], i);
         const decayY = this.electricLossDecay(lossY[i], i);
-        ex[i] = (sigmaCaX * caX * ex[i] + coupledX) * decayX;
-        ey[i] = (sigmaCaY * eCaX[x] * ey[i] + coupledY) * decayY;
+        ex[i] = (sigmaCaX * ex[i] + coupledX) * decayX;
+        ey[i] = (sigmaCaY * ey[i] + coupledY) * decayY;
       }
     }
 
@@ -241,14 +225,14 @@ Object.assign(FDTDSim.prototype, {
           ey[i] = 0;
           continue;
         }
-        const dEyDx = ey[i] - ey[i - 1];
-        const dExDy = ex[i] - ex[i - nx];
-        const decayX = 1 / (1 + muLoss[i]);
-        const decayY = 1 / (1 + muLossY[i]);
-        const materialScaleX = s / mu[i];
-        const materialScaleY = s / muY[i];
-        hzx[i] = (hCaX[x] * hzx[i] - hCbX[x] * materialScaleX * dEyDx) * decayX;
-        hzy[i] = (hCaY[y] * hzy[i] + hCbY[y] * materialScaleY * dExDy) * decayY;
+        const dEyDx = this.cpmlDerivativeX(ey[i] - ey[i - 1], this.cpmlPsiHzX, i, x, false);
+        const dExDy = this.cpmlDerivativeY(ex[i] - ex[i - nx], this.cpmlPsiHzY, i, y, false);
+        const decayX = this.magneticLossDecay(muLoss[i]);
+        const decayY = this.magneticLossDecay(muLossY[i]);
+        const materialScaleX = s / this.safeMaterialDenominator(mu[i]);
+        const materialScaleY = s / this.safeMaterialDenominator(muY[i]);
+        hzx[i] = (hzx[i] - materialScaleX * dEyDx) * decayX;
+        hzy[i] = (hzy[i] + materialScaleY * dExDy) * decayY;
         hz[i] = hzx[i] + hzy[i];
       }
     }

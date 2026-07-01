@@ -12,7 +12,7 @@
     colorbar: "visualLayerColorbar",
   });
   const VISUAL_LAYER_LABELS = Object.freeze({
-    boundaries: "PML/bounds",
+    boundaries: "CPML/bounds",
     diagnostics: "k vector",
     monitors: "line monitors",
     axes: "axes",

@@ -60,9 +60,9 @@ The app currently loads `fdtd-core.wasm` through `js-next/runtime/simulation/was
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
-- `kernel_features`: compiled-kernel capability bitmask. Bit 0 is finite electric conductivity, bit 1 is Kerr, bit 2 is saturable gain, bit 3 is TEz tensor/gyrotropy, and bit 4 is exact TFSF injection.
+- `kernel_features`: compiled-kernel capability bitmask. Bit 0 is finite electric conductivity, bit 1 is Kerr, bit 2 is saturable gain, bit 3 is TEz tensor/gyrotropy, bit 4 is exact TFSF injection, and bit 5 is CPML with recursive memory terms.
 
-The compiled kernel includes finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, TEz tensor/gyrotropic electric updates, and exact rectangular TFSF boundary corrections for line and Gaussian incident fields. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order; when exact TFSF and ADE would conflict in update order, the app keeps the JavaScript path. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
+The compiled kernel includes CPML absorbing boundaries, finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, TEz tensor/gyrotropic electric updates, and exact rectangular TFSF boundary corrections for line and Gaussian incident fields. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order; when exact TFSF and ADE would conflict in update order, the app keeps the JavaScript path. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
 
 ## Worker Engine
 
@@ -100,6 +100,6 @@ For scientific confidence, also compare short JS and WASM trajectories on homoge
 ## Priority Order
 
 1. Use the runtime panel to identify whether the current bottleneck is stepping, rendering, or diagnostics.
-2. Compile and validate the C++ kernel as a replacement for the WAT-maintained WASM.
-3. Port dynamic material kernels that currently force JavaScript fallback. Finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy are in the C++/WASM kernel; electric ADE uses the compiled Yee + JS memory-response route. Remaining candidates are full ADE memory-current kernels, modulation, phase change, harmonic nonlinear polarization, and broader bianisotropy.
+2. Compile and validate the C++ kernel after every numerical change to the Yee/CPML update.
+3. Port dynamic material kernels that currently force JavaScript fallback. CPML, finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy are in the C++/WASM kernel; electric ADE uses the compiled Yee + JS memory-response route. Remaining candidates are full ADE memory-current kernels, modulation, phase change, harmonic nonlinear polarization, and broader bianisotropy.
 4. Extend the Worker route to long-running sweeps and consider zero-copy/shared-memory rendering for very large grids.

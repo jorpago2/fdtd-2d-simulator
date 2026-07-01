@@ -5,6 +5,7 @@ const WASM_FEATURE_KERR = 1 << 1;
 const WASM_FEATURE_SATURABLE_GAIN = 1 << 2;
 const WASM_FEATURE_TENSOR_GYRO = 1 << 3;
 const WASM_FEATURE_TFSF = 1 << 4;
+const WASM_FEATURE_CPML = 1 << 5;
 
 const WASM_STEP_KERR = 1 << 0;
 const WASM_STEP_SATURABLE_GAIN = 1 << 1;
@@ -83,14 +84,34 @@ class WasmFdtdBackend {
     f32("modulationBaseEpsY", n);
     f32("epsilonXY", n);
     f32("gyrotropyG", n);
-    f32("eCaX", nx);
-    f32("eCbX", nx);
-    f32("hCaX", nx);
-    f32("hCbX", nx);
-    f32("eCaY", ny);
-    f32("eCbY", ny);
-    f32("hCaY", ny);
-    f32("hCbY", ny);
+    f32("cpmlKappaEX", nx);
+    f32("cpmlKappaHX", nx);
+    f32("cpmlKappaEY", ny);
+    f32("cpmlKappaHY", ny);
+    f32("cpmlAlphaEX", nx);
+    f32("cpmlAlphaHX", nx);
+    f32("cpmlAlphaEY", ny);
+    f32("cpmlAlphaHY", ny);
+    f32("cpmlAEX", nx);
+    f32("cpmlAHX", nx);
+    f32("cpmlAEY", ny);
+    f32("cpmlAHY", ny);
+    f32("cpmlBEX", nx);
+    f32("cpmlBHX", nx);
+    f32("cpmlBEY", ny);
+    f32("cpmlBHY", ny);
+    f32("cpmlPsiHxY", n);
+    f32("cpmlPsiHyX", n);
+    f32("cpmlPsiEzX", n);
+    f32("cpmlPsiEzY", n);
+    f32("cpmlPsiExY", n);
+    f32("cpmlPsiEyX", n);
+    f32("cpmlPsiHzX", n);
+    f32("cpmlPsiHzY", n);
+    f32("cpmlPsiDualHxY", n);
+    f32("cpmlPsiDualHyX", n);
+    f32("cpmlPsiDualEzX", n);
+    f32("cpmlPsiDualEzY", n);
     f32("tfsfSources", WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
 
     return {
@@ -146,14 +167,34 @@ class WasmFdtdBackend {
     sim.modulationBaseEpsY = new Float32Array(buffer, o.modulationBaseEpsY, n);
     sim.epsilonXY = new Float32Array(buffer, o.epsilonXY, n);
     sim.gyrotropyG = new Float32Array(buffer, o.gyrotropyG, n);
-    sim.eCaX = new Float32Array(buffer, o.eCaX, sim.nx);
-    sim.eCbX = new Float32Array(buffer, o.eCbX, sim.nx);
-    sim.hCaX = new Float32Array(buffer, o.hCaX, sim.nx);
-    sim.hCbX = new Float32Array(buffer, o.hCbX, sim.nx);
-    sim.eCaY = new Float32Array(buffer, o.eCaY, sim.ny);
-    sim.eCbY = new Float32Array(buffer, o.eCbY, sim.ny);
-    sim.hCaY = new Float32Array(buffer, o.hCaY, sim.ny);
-    sim.hCbY = new Float32Array(buffer, o.hCbY, sim.ny);
+    sim.cpmlKappaEX = new Float32Array(buffer, o.cpmlKappaEX, sim.nx);
+    sim.cpmlKappaHX = new Float32Array(buffer, o.cpmlKappaHX, sim.nx);
+    sim.cpmlKappaEY = new Float32Array(buffer, o.cpmlKappaEY, sim.ny);
+    sim.cpmlKappaHY = new Float32Array(buffer, o.cpmlKappaHY, sim.ny);
+    sim.cpmlAlphaEX = new Float32Array(buffer, o.cpmlAlphaEX, sim.nx);
+    sim.cpmlAlphaHX = new Float32Array(buffer, o.cpmlAlphaHX, sim.nx);
+    sim.cpmlAlphaEY = new Float32Array(buffer, o.cpmlAlphaEY, sim.ny);
+    sim.cpmlAlphaHY = new Float32Array(buffer, o.cpmlAlphaHY, sim.ny);
+    sim.cpmlAEX = new Float32Array(buffer, o.cpmlAEX, sim.nx);
+    sim.cpmlAHX = new Float32Array(buffer, o.cpmlAHX, sim.nx);
+    sim.cpmlAEY = new Float32Array(buffer, o.cpmlAEY, sim.ny);
+    sim.cpmlAHY = new Float32Array(buffer, o.cpmlAHY, sim.ny);
+    sim.cpmlBEX = new Float32Array(buffer, o.cpmlBEX, sim.nx);
+    sim.cpmlBHX = new Float32Array(buffer, o.cpmlBHX, sim.nx);
+    sim.cpmlBEY = new Float32Array(buffer, o.cpmlBEY, sim.ny);
+    sim.cpmlBHY = new Float32Array(buffer, o.cpmlBHY, sim.ny);
+    sim.cpmlPsiHxY = new Float32Array(buffer, o.cpmlPsiHxY, n);
+    sim.cpmlPsiHyX = new Float32Array(buffer, o.cpmlPsiHyX, n);
+    sim.cpmlPsiEzX = new Float32Array(buffer, o.cpmlPsiEzX, n);
+    sim.cpmlPsiEzY = new Float32Array(buffer, o.cpmlPsiEzY, n);
+    sim.cpmlPsiExY = new Float32Array(buffer, o.cpmlPsiExY, n);
+    sim.cpmlPsiEyX = new Float32Array(buffer, o.cpmlPsiEyX, n);
+    sim.cpmlPsiHzX = new Float32Array(buffer, o.cpmlPsiHzX, n);
+    sim.cpmlPsiHzY = new Float32Array(buffer, o.cpmlPsiHzY, n);
+    sim.cpmlPsiDualHxY = new Float32Array(buffer, o.cpmlPsiDualHxY, n);
+    sim.cpmlPsiDualHyX = new Float32Array(buffer, o.cpmlPsiDualHyX, n);
+    sim.cpmlPsiDualEzX = new Float32Array(buffer, o.cpmlPsiDualEzX, n);
+    sim.cpmlPsiDualEzY = new Float32Array(buffer, o.cpmlPsiDualEzY, n);
     this.tfsfSources = new Float32Array(buffer, o.tfsfSources, WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
   }
 
@@ -168,15 +209,8 @@ class WasmFdtdBackend {
       if (!params) continue;
       const offset = count * WASM_TFSF_STRIDE;
       const type = WASM_TFSF_SOURCE_TYPE[source.type] ?? WASM_TFSF_SOURCE_TYPE.sine;
-      const profile = source.shape === "gaussianProfile" ? 1 : 0;
-      const fwhm =
-        source.shape === "gaussianProfile"
-          ? state.preset === "customSlab"
-            ? sim.slabCoreThicknessCells()
-            : Math.max(4, Math.round(sim.ny * 0.09))
-          : 1;
       this.tfsfSources[offset + 0] = type;
-      this.tfsfSources[offset + 1] = profile;
+      this.tfsfSources[offset + 1] = params.profileCode;
       this.tfsfSources[offset + 2] = params.sx;
       this.tfsfSources[offset + 3] = params.sy;
       this.tfsfSources[offset + 4] = params.cosTheta;
@@ -190,7 +224,7 @@ class WasmFdtdBackend {
       this.tfsfSources[offset + 12] = source.frequency;
       this.tfsfSources[offset + 13] = source.amplitude;
       this.tfsfSources[offset + 14] = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
-      this.tfsfSources[offset + 15] = fwhm;
+      this.tfsfSources[offset + 15] = params.fwhmCells;
       count += 1;
     }
     return count;
@@ -239,14 +273,26 @@ class WasmFdtdBackend {
       o.modulationBaseEpsY,
       o.epsilonXY,
       o.gyrotropyG,
-      o.eCaX,
-      o.eCbX,
-      o.eCaY,
-      o.eCbY,
-      o.hCaX,
-      o.hCbX,
-      o.hCaY,
-      o.hCbY,
+      o.cpmlKappaEX,
+      o.cpmlKappaHX,
+      o.cpmlKappaEY,
+      o.cpmlKappaHY,
+      o.cpmlAEX,
+      o.cpmlAHX,
+      o.cpmlAEY,
+      o.cpmlAHY,
+      o.cpmlBEX,
+      o.cpmlBHX,
+      o.cpmlBEY,
+      o.cpmlBHY,
+      o.cpmlPsiHxY,
+      o.cpmlPsiHyX,
+      o.cpmlPsiEzX,
+      o.cpmlPsiEzY,
+      o.cpmlPsiExY,
+      o.cpmlPsiEyX,
+      o.cpmlPsiHzX,
+      o.cpmlPsiHzY,
       runtimeFlags,
       Number(state.kerrChi3) || 0,
       Math.max(0.05, Number(state.kerrSaturation) || 5),
@@ -275,6 +321,10 @@ class WasmFdtdBackend {
       ezy: o.dualEzy,
       hx: o.dualHx,
       hy: o.dualHy,
+      cpmlPsiHxY: o.cpmlPsiDualHxY,
+      cpmlPsiHyX: o.cpmlPsiDualHyX,
+      cpmlPsiEzX: o.cpmlPsiDualEzX,
+      cpmlPsiEzY: o.cpmlPsiDualEzY,
     });
   }
 
@@ -308,6 +358,10 @@ class WasmFdtdBackend {
 
   supportsTfsf() {
     return this.supportsFeature(WASM_FEATURE_TFSF);
+  }
+
+  supportsCpml() {
+    return this.supportsFeature(WASM_FEATURE_CPML);
   }
 
   stepRuntimeFlags(component) {

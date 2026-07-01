@@ -2,7 +2,7 @@
   "use strict";
 
   Object.assign(FDTDSim.prototype, {
-    drawPmlOverlay() {
+    drawCpmlOverlay() {
       normalizeBoundarySides();
 
       const ctx = this.ctx;
@@ -20,9 +20,9 @@
         interfaceStroke: dark ? "rgba(90, 236, 230, 0.54)" : "rgba(0, 97, 107, 0.58)",
       };
       const spacing = clamp(Math.min(w, h) / 26, 13 * dpr, 26 * dpr);
-      const drawPmlLabel = (rect) => {
+      const drawCpmlLabel = (rect) => {
         const fontPx = this.overlayTextFontPx(0.92);
-        const label = "PML";
+        const label = "CPML";
         ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`;
         const metrics = ctx.measureText(label);
         const padX = Math.max(6 * dpr, fontPx * 0.45);
@@ -42,7 +42,7 @@
         ctx.textBaseline = "middle";
         ctx.fillText(label, rect.left + rect.width / 2, rect.top + rect.height / 2 + 0.5 * dpr);
       };
-      const drawPmlRegion = (side, x0, y0, x1, y1) => {
+      const drawCpmlRegion = (side, x0, y0, x1, y1) => {
         const rect = this.gridRectToCanvas(x0, y0, x1, y1);
         if (!rect) return;
         ctx.save();
@@ -68,7 +68,7 @@
         }
         ctx.stroke();
         if (rect.width > 36 * dpr && rect.height > 18 * dpr) {
-          drawPmlLabel(rect);
+          drawCpmlLabel(rect);
         }
         ctx.restore();
       };
@@ -116,13 +116,13 @@
         ctx.restore();
       };
 
-      if (this.pmlLayer > 0) {
-        const topInset = boundarySideIsAbsorbing("top") ? this.pmlLayer : 0;
-        const bottomInset = boundarySideIsAbsorbing("bottom") ? this.pmlLayer : 0;
-        if (boundarySideIsAbsorbing("top")) drawPmlRegion("top", 0, 0, this.nx, this.pmlLayer);
-        if (boundarySideIsAbsorbing("bottom")) drawPmlRegion("bottom", 0, this.ny - this.pmlLayer, this.nx, this.ny);
-        if (boundarySideIsAbsorbing("left")) drawPmlRegion("left", 0, topInset, this.pmlLayer, this.ny - bottomInset);
-        if (boundarySideIsAbsorbing("right")) drawPmlRegion("right", this.nx - this.pmlLayer, topInset, this.nx, this.ny - bottomInset);
+      if (this.cpmlLayer > 0) {
+        const topInset = boundarySideIsAbsorbing("top") ? this.cpmlLayer : 0;
+        const bottomInset = boundarySideIsAbsorbing("bottom") ? this.cpmlLayer : 0;
+        if (boundarySideIsAbsorbing("top")) drawCpmlRegion("top", 0, 0, this.nx, this.cpmlLayer);
+        if (boundarySideIsAbsorbing("bottom")) drawCpmlRegion("bottom", 0, this.ny - this.cpmlLayer, this.nx, this.ny);
+        if (boundarySideIsAbsorbing("left")) drawCpmlRegion("left", 0, topInset, this.cpmlLayer, this.ny - bottomInset);
+        if (boundarySideIsAbsorbing("right")) drawCpmlRegion("right", this.nx - this.cpmlLayer, topInset, this.nx, this.ny - bottomInset);
       }
 
       BOUNDARY_SIDES.forEach((side) => drawReflectiveEdge(side));

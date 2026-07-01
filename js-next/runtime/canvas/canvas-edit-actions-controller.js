@@ -39,7 +39,7 @@
       clearMaterialSelection(false);
       const point = canvasToGrid(event);
       sim.paint(point.x, point.y, Math.max(1, lambdaToCells(state.brushSizeLambda)), state.brush);
-      sim.refreshPmlMaterialContinuation(false);
+      sim.refreshCpmlMaterialContinuation(false);
       simulationEffects.repaint();
     }
 
