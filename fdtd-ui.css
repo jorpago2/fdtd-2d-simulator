@@ -1665,6 +1665,22 @@ details[open] > summary::after {
     padding: 8px;
   }
 
+  #tab-simulation .run-section {
+    order: 1;
+  }
+
+  #tab-simulation .simulation-guide-section {
+    order: 2;
+  }
+
+  #tab-simulation .visual-field-section {
+    order: 3;
+  }
+
+  #tab-simulation .visual-overlays-section {
+    order: 4;
+  }
+
   .panel-section,
   .results-detail-panel,
   .config-detail-panel,
