@@ -72,6 +72,7 @@ class FdtdWorkerEngine {
 
   applyProps(props = {}) {
     fdtdWorkerApplyProps(this.sim, props);
+    this.sim.pruneRetiredSources?.();
     if (props.engine) this.lastEngine = props.engine;
   }
 

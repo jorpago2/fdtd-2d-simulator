@@ -859,6 +859,7 @@ const sourceMonitorOperations = sourceMonitorOperationsModule.createSourceMonito
   getSourceBounds: sourceBoundsLambda,
   getMonitorBounds: monitorBoundsLambda,
   getEntitySelection: () => entitySelection,
+  getSim: () => sim,
 });
 const {
   sourceModelContext,

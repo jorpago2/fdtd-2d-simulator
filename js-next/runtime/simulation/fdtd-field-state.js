@@ -109,7 +109,6 @@
 
     stabilizeAfterSourceMutation() {
       this.reconcileSplitScalarState({ isotropicOnly: true });
-      this.resetCpmlMemory?.();
       this.liveRenderScaleCache = null;
       this.lastRenormalized = false;
       this.lastDiverged = false;

@@ -120,6 +120,7 @@
       state.sweepResults = [];
       state.sweepRunning = false;
       state.sweepCancelRequested = false;
+      state.retiringSources = [];
 
       sim.resize(state.gridNx, state.gridNy);
       sanitizeImportedSources(importedState);

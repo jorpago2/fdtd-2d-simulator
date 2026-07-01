@@ -170,6 +170,7 @@ Object.assign(FDTDSim.prototype, {
     for (const side of BOUNDARY_SIDES) setBoundarySideMode(side, "absorbing");
     this.buildBoundary();
     this.clearMaterials(false);
+    state.retiringSources = [];
 
     state.fieldComponent = "ez";
     state.fieldDisplay = "scalar";

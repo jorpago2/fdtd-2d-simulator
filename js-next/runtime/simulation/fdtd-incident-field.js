@@ -98,6 +98,16 @@
     return t >= rampDuration ? 1 : Math.sin((0.5 * Math.PI * t) / rampDuration) ** 2;
   }
 
+  function sourceShutdownFactor(source, solverTime) {
+    const retireStartTime = Number(source?.retireStartTime);
+    const retireDuration = Math.max(1, Number(source?.retireDuration) || 0);
+    if (!Number.isFinite(retireStartTime) || !(retireDuration > 0)) return 1;
+    const elapsed = (Number(solverTime) || 0) - retireStartTime;
+    if (!(elapsed > 0)) return 1;
+    if (elapsed >= retireDuration) return 0;
+    return 0.5 * (1 + Math.cos((Math.PI * elapsed) / retireDuration));
+  }
+
   function sourceSampleAtTime(source, t) {
     const f = Number(source.frequency) || 0;
     const amp = Number(source.amplitude) || 0;
@@ -126,7 +136,8 @@
     const f = Number(source.frequency) || 0;
     const absolutePhase = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
     const phaseTimeOffset = f > 0 ? (phaseRad + absolutePhase) / (2 * Math.PI * f) : 0;
-    return sourceSampleAtTime(source, t + phaseTimeOffset);
+    const shutdown = sourceShutdownFactor(source, t);
+    return shutdown <= 0 ? 0 : shutdown * sourceSampleAtTime(source, t + phaseTimeOffset);
   }
 
   function scalar(descriptor, x, y, t, fieldScale) {
@@ -198,6 +209,7 @@
     createTfsfDescriptor,
     envelope,
     scalar,
+    sourceShutdownFactor,
     sourceSampleAtTime,
     teIncidentE,
     tmIncidentH,

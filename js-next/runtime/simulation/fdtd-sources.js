@@ -6,6 +6,29 @@ if (!incidentFieldModule) {
 }
 
 Object.assign(FDTDSim.prototype, {
+sourceShutdownFactor(source, solverTime = this.time) {
+  return incidentFieldModule.sourceShutdownFactor?.(source, solverTime) ?? 1;
+},
+
+effectiveSourceAmplitude(source, solverTime = this.time) {
+  return (Number(source?.amplitude) || 0) * this.sourceShutdownFactor(source, solverTime);
+},
+
+pruneRetiredSources() {
+  if (!Array.isArray(state.retiringSources)) {
+    state.retiringSources = [];
+    return;
+  }
+  if (state.retiringSources.length === 0) return;
+  state.retiringSources = state.retiringSources.filter((source) => this.sourceShutdownFactor(source, this.time) > 0);
+},
+
+activeSolverSources() {
+  this.pruneRetiredSources();
+  const retiringSources = Array.isArray(state.retiringSources) ? state.retiringSources : [];
+  return retiringSources.length > 0 ? state.sources.concat(retiringSources) : state.sources;
+},
+
 sourceSample(source, phaseRad = 0) {
   return this.sourceSampleAtPhaseTime(source, this.time, phaseRad);
 },
@@ -14,7 +37,8 @@ sourceSampleAtPhaseTime(source, t, phaseRad = 0) {
   const f = source.frequency;
   const absolutePhase = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
   const phaseTimeOffset = f > 0 ? (phaseRad + absolutePhase) / (2 * Math.PI * f) : 0;
-  return this.sourceSampleAtTime(source, t + phaseTimeOffset);
+  const shutdown = this.sourceShutdownFactor(source, t);
+  return shutdown <= 0 ? 0 : shutdown * this.sourceSampleAtTime(source, t + phaseTimeOffset);
 },
 
 sourceSampleAtTime(source, t) {
@@ -35,7 +59,7 @@ sourceSampleAtTime(source, t) {
 },
 
 injectSource() {
-  for (const source of state.sources) {
+  for (const source of this.activeSolverSources()) {
     this.injectSingleSource(source);
   }
 },
@@ -67,7 +91,7 @@ isTfsfIncidentSource(source) {
 },
 
 hasTfsfIncidentSource() {
-  return state.sources.some((source) => this.isTfsfIncidentSource(source));
+  return this.activeSolverSources().some((source) => this.isTfsfIncidentSource(source));
 },
 
 tfsfSourceParams(source) {
@@ -144,7 +168,7 @@ transverseMagneticUpdateCoeffY(idx, y) {
 },
 
 applyTfsfTransverseCorrections() {
-  for (const source of state.sources) {
+  for (const source of this.activeSolverSources()) {
     if (!this.isTfsfIncidentSource(source)) continue;
     const params = this.tfsfSourceParams(source);
     if (!params) continue;
@@ -154,7 +178,7 @@ applyTfsfTransverseCorrections() {
 },
 
 applyTfsfScalarCorrections() {
-  for (const source of state.sources) {
+  for (const source of this.activeSolverSources()) {
     if (!this.isTfsfIncidentSource(source)) continue;
     const params = this.tfsfSourceParams(source);
     if (!params) continue;

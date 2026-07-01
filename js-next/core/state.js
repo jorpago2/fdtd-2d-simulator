@@ -77,6 +77,7 @@
       hoveredSourceId: null,
       hoveredMonitorId: null,
       sources: [{ id: 1, ...contracts.clonePlainData(defaultSourceConfig) }],
+      retiringSources: [],
       selectedSourceId: 1,
       nextSourceId: 2,
       sourceDefaults: contracts.clonePlainData(defaultSourceConfig),

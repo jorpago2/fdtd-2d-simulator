@@ -202,7 +202,8 @@ class WasmFdtdBackend {
     if (!this.tfsfSources) return 0;
     this.tfsfSources.fill(0);
     let count = 0;
-    for (const source of state.sources) {
+    const sources = typeof sim.activeSolverSources === "function" ? sim.activeSolverSources() : state.sources;
+    for (const source of sources) {
       if (count >= WASM_MAX_TFSF_SOURCES) break;
       if (!sim.isTfsfIncidentSource?.(source)) continue;
       const params = sim.tfsfSourceParams?.(source);
@@ -222,7 +223,8 @@ class WasmFdtdBackend {
       this.tfsfSources[offset + 10] = params.y0;
       this.tfsfSources[offset + 11] = params.y1;
       this.tfsfSources[offset + 12] = source.frequency;
-      this.tfsfSources[offset + 13] = source.amplitude;
+      this.tfsfSources[offset + 13] =
+        typeof sim.effectiveSourceAmplitude === "function" ? sim.effectiveSourceAmplitude(source, sim.time) : source.amplitude;
       this.tfsfSources[offset + 14] = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
       this.tfsfSources[offset + 15] = params.fwhmCells;
       count += 1;
@@ -232,7 +234,8 @@ class WasmFdtdBackend {
 
   canPackTfsfSources(sim) {
     let count = 0;
-    for (const source of state.sources) {
+    const sources = typeof sim.activeSolverSources === "function" ? sim.activeSolverSources() : state.sources;
+    for (const source of sources) {
       if (!sim.isTfsfIncidentSource?.(source)) continue;
       if (!sim.tfsfSourceParams?.(source)) continue;
       count += 1;

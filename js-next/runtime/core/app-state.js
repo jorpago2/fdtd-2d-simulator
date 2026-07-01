@@ -73,6 +73,7 @@
       hoveredSourceId: null,
       hoveredMonitorId: null,
       sources: [{ id: 1, ...defaultSourceConfig }],
+      retiringSources: [],
       selectedSourceId: 1,
       nextSourceId: 2,
       sourceDefaults: { ...defaultSourceConfig },

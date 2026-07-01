@@ -10,7 +10,11 @@
     getSourceBounds,
     getMonitorBounds,
     getEntitySelection,
+    getSim = () => null,
   }) {
+    const sourceRetireCycles = 2.5;
+    const minRetireSteps = 24;
+
     function sourceModelContext() {
       return {
         defaultSourceConfig,
@@ -72,9 +76,30 @@
       return source;
     }
 
+    function sourceRetireDuration(source) {
+      const frequency = Math.max(0, Number(source?.frequency) || 0);
+      if (source?.type === "sine" && frequency > 0) {
+        return Math.max(minRetireSteps, Math.ceil(sourceRetireCycles / frequency));
+      }
+      return minRetireSteps;
+    }
+
+    function retireSourceForShutdown(source) {
+      const sim = getSim();
+      const retireStartTime = Number.isFinite(sim?.time) ? sim.time : 0;
+      if (!(retireStartTime > 0) || Math.abs(Number(source?.amplitude) || 0) <= 0) return;
+      if (!Array.isArray(state.retiringSources)) state.retiringSources = [];
+      state.retiringSources.push({
+        ...source,
+        retireStartTime,
+        retireDuration: sourceRetireDuration(source),
+      });
+    }
+
     function deleteSource(sourceId) {
       const index = state.sources.findIndex((source) => source.id === sourceId);
       if (index < 0) return;
+      retireSourceForShutdown(state.sources[index]);
       state.sources.splice(index, 1);
       getEntitySelection().setSourceId(state.sources[Math.min(index, state.sources.length - 1)]?.id ?? null);
     }

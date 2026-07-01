@@ -239,6 +239,7 @@ async function splitStorageSnapshot(page) {
     return {
       time: sim.time,
       sourceCount: state.sources.length,
+      retiringSourceCount: Array.isArray(state.retiringSources) ? state.retiringSources.length : 0,
       engine: sim.engineLabel(),
       diverged: Boolean(sim.lastDiverged),
       renormalizedCount: sim.renormalizedCount,
@@ -290,7 +291,9 @@ async function runSourceMutationStability(page) {
     const splitLimit = Math.max(1e-6, 0.75 * snapshot.scalar.max);
     if (splitMax > splitLimit) failures.push(`${label} split scalar storage drifted (${splitMax} > ${splitLimit})`);
   }
-  if (afterDelete.sourceCount !== 0 || afterRun.sourceCount !== 0) failures.push("source was not removed from the simulation state");
+  if (afterDelete.sourceCount !== 0 || afterRun.sourceCount !== 0) failures.push("source was not removed from the visible simulation state");
+  if (afterDelete.retiringSourceCount <= 0) failures.push("deleted source did not enter the soft shutdown queue");
+  if (afterRun.retiringSourceCount !== 0) failures.push("soft shutdown source was not pruned after the retirement window");
   if (afterRun.time <= beforeDelete.time) failures.push("simulation did not advance after source deletion");
   return {
     id: "source_mutation_split_stability",
