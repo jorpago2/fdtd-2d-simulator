@@ -252,7 +252,16 @@ async function runCanvasActionMenuSmoke(page) {
 }
 
 async function runBrushDependentParamsSmoke(page) {
+  await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
+    const brushMenu = document.getElementById("brushMenu");
+    if (brushMenu) brushMenu.hidden = false;
+    const isRendered = (control) => {
+      if (!control) return false;
+      const style = getComputedStyle(control);
+      const rect = control.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+    };
     const dependentSelectors = [
       ".brush-anisotropic-params",
       ".gyrotropy-params",
@@ -265,14 +274,15 @@ async function runBrushDependentParamsSmoke(page) {
       ".saturable-gain-params",
     ];
     const allHidden = (selector) =>
-      Array.from(document.querySelectorAll(selector)).every((control) => control.hidden);
+      Array.from(document.querySelectorAll(selector)).every((control) => control.hidden && !isRendered(control));
     const allVisible = (selector) =>
-      Array.from(document.querySelectorAll(selector)).every((control) => !control.hidden);
+      Array.from(document.querySelectorAll(selector)).every((control) => !control.hidden && isRendered(control));
 
     state.brush = "custom";
     Object.assign(state, {
       customAnisotropic: false,
       dispersionModel: "none",
+      materialDispersionEnabled: false,
       materialBianisotropyEnabled: false,
       materialConductivityEnabled: false,
       materialGyrotropyEnabled: false,
@@ -284,8 +294,11 @@ async function runBrushDependentParamsSmoke(page) {
     });
     updateControlText();
     const hiddenWhenOff = dependentSelectors.every(allHidden);
-    const modulationPhaseHiddenWhenOff = document.getElementById("modulationPhaseInput")?.closest("label")?.hidden === true;
+    const modulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
+    const modulationPhaseHiddenWhenOff = modulationPhaseControl?.hidden === true && !isRendered(modulationPhaseControl);
     const dispersionHiddenWhenNone = allHidden(".dispersion-params");
+    const materialWarning = document.getElementById("materialWarning");
+    const emptyWarningHidden = materialWarning?.hidden === true && !isRendered(materialWarning);
 
     Object.assign(state, {
       customAnisotropic: true,
@@ -297,16 +310,23 @@ async function runBrushDependentParamsSmoke(page) {
     updateControlText();
     const gyrotropyVisibleWhenOn = allVisible(".gyrotropy-params");
     const modulationVisibleWhenOn = allVisible(".modulation-params");
-    const modulationPhaseVisibleWhenOn = document.getElementById("modulationPhaseInput")?.closest("label")?.hidden === false;
+    const visibleModulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
+    const modulationPhaseVisibleWhenOn = visibleModulationPhaseControl?.hidden === false && isRendered(visibleModulationPhaseControl);
     const conductivityVisibleWhenOn = allVisible(".conductivity-params");
-    const conductivityYVisibleWhenAnisotropic = document.getElementById("conductivitySigmaYControl")?.hidden === false;
+    const conductivityYControl = document.getElementById("conductivitySigmaYControl");
+    const conductivityYVisibleWhenAnisotropic = conductivityYControl?.hidden === false && isRendered(conductivityYControl);
     const lorentzFieldsVisible =
       document.getElementById("dispersionGammaControl")?.hidden === false &&
+      isRendered(document.getElementById("dispersionGammaControl")) &&
       document.getElementById("dispersionOmega0Control")?.hidden === false &&
-      document.getElementById("dispersionDeltaEpsControl")?.hidden === false;
+      isRendered(document.getElementById("dispersionOmega0Control")) &&
+      document.getElementById("dispersionDeltaEpsControl")?.hidden === false &&
+      isRendered(document.getElementById("dispersionDeltaEpsControl"));
     const unrelatedDispersionFieldsHidden =
       document.getElementById("dispersionOmegaPControl")?.hidden === true &&
-      document.getElementById("dispersionTauControl")?.hidden === true;
+      !isRendered(document.getElementById("dispersionOmegaPControl")) &&
+      document.getElementById("dispersionTauControl")?.hidden === true &&
+      !isRendered(document.getElementById("dispersionTauControl"));
 
     state.brush = "pec";
     updateControlText();
@@ -316,6 +336,7 @@ async function runBrushDependentParamsSmoke(page) {
       hiddenWhenOff,
       modulationPhaseHiddenWhenOff,
       dispersionHiddenWhenNone,
+      emptyWarningHidden,
       gyrotropyVisibleWhenOn,
       modulationVisibleWhenOn,
       modulationPhaseVisibleWhenOn,
@@ -330,6 +351,7 @@ async function runBrushDependentParamsSmoke(page) {
   if (!status.hiddenWhenOff) failures.push("dependent draw parameter groups remain visible when disabled");
   if (!status.modulationPhaseHiddenWhenOff) failures.push("modulation phase remains visible when modulation is disabled");
   if (!status.dispersionHiddenWhenNone) failures.push("dispersion parameter rows remain visible for the None model");
+  if (!status.emptyWarningHidden) failures.push("empty material warning output remains visible");
   if (!status.gyrotropyVisibleWhenOn) failures.push("gyrotropy parameters do not appear when gyrotropy is enabled");
   if (!status.modulationVisibleWhenOn || !status.modulationPhaseVisibleWhenOn) {
     failures.push("modulation parameters do not appear when modulation is enabled");

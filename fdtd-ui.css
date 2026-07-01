@@ -1286,13 +1286,15 @@ details[open] > summary::after {
 */
 [hidden],
 .source-menu[hidden],
+.source-menu label[hidden],
 .canvas-view-controls[hidden],
 .control-drawer-backdrop[hidden],
 .control-tab-panel[hidden],
 .brush-geometry-panel[hidden],
+.material-params[hidden],
 .modulation-panel[hidden],
 .material-part-toggle[hidden] {
-  display: none;
+  display: none !important;
 }
 
 /* 10. Responsive behavior */
