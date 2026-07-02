@@ -301,6 +301,120 @@ async function runControlNavigationSmoke(page) {
   };
 }
 
+async function runSceneMenuResponsiveSmoke(browser, url) {
+  const viewports = [
+    { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
+    { name: "tablet", width: 768, height: 1024, isMobile: true, deviceScaleFactor: 2 },
+    { name: "desktop", width: 1440, height: 1000, isMobile: false, deviceScaleFactor: 1 },
+    { name: "uhd", width: 3840, height: 2160, isMobile: false, deviceScaleFactor: 1 },
+  ];
+  const states = [];
+  const failures = [];
+
+  for (const viewport of viewports) {
+    const context = await browser.newContext({
+      viewport: { width: viewport.width, height: viewport.height },
+      deviceScaleFactor: viewport.deviceScaleFactor,
+      isMobile: viewport.isMobile,
+      hasTouch: viewport.isMobile,
+    });
+    const page = await context.newPage();
+    const localErrors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") localErrors.push(message.text());
+    });
+    page.on("pageerror", (error) => {
+      localErrors.push(error.message);
+    });
+
+    try {
+      await page.goto(url, { waitUntil: "networkidle" });
+      await page.locator("#controlDrawerToggle").click();
+      await page.waitForTimeout(120);
+      await page.evaluate(() => {
+        document.querySelector('[data-control-tab="scenes"]')?.click();
+        document.querySelector('.mobile-layer-button[data-mobile-layer="scenes"]')?.click();
+      });
+      await selectPreset(page, "topologyTemporalMod");
+      await page.waitForTimeout(120);
+      const status = await page.evaluate((viewportName) => {
+        const rect = (selector) => {
+          const node = document.querySelector(selector);
+          if (!node) return null;
+          const bounds = node.getBoundingClientRect();
+          return {
+            top: Math.round(bounds.top),
+            bottom: Math.round(bounds.bottom),
+            left: Math.round(bounds.left),
+            right: Math.round(bounds.right),
+            width: Math.round(bounds.width),
+            height: Math.round(bounds.height),
+          };
+        };
+        const panel = document.getElementById("controlPanel");
+        const panelBounds = panel?.getBoundingClientRect();
+        const spotlight = document.getElementById("sceneSpotlight");
+        const title = document.getElementById("sceneSpotlightTitle");
+        const description = document.getElementById("sceneSpotlightDescription");
+        const search = document.getElementById("sceneSearchInput");
+        const fallback = document.querySelector(".scene-select-fallback");
+        const cards = document.getElementById("sceneCards");
+        const panelOverflow = panel ? panel.scrollWidth - panel.clientWidth : 0;
+        return {
+          viewport: viewportName,
+          activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
+          cardCount: cards?.querySelectorAll("[data-scene-card]").length || 0,
+          descriptionText: description?.textContent?.trim() || "",
+          documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          fallbackDisplay: fallback ? getComputedStyle(fallback).display : "",
+          family: document.getElementById("sceneSpotlightGroup")?.textContent?.trim() || "",
+          panel: panelBounds
+            ? {
+                left: Math.round(panelBounds.left),
+                right: Math.round(panelBounds.right),
+                width: Math.round(panelBounds.width),
+              }
+            : null,
+          panelOverflow,
+          search: rect("#sceneSearchInput"),
+          spotlight: rect("#sceneSpotlight"),
+          titleText: title?.textContent?.trim() || "",
+        };
+      }, viewport.name);
+      states.push(status);
+      failures.push(...localErrors.map((error) => `${viewport.name}: ${error}`));
+      if (status.activePanel !== "tab-scenes") failures.push(`${viewport.name}: Scene panel is not active`);
+      if (!status.titleText || !status.descriptionText) failures.push(`${viewport.name}: spotlight title/description is empty`);
+      if (!status.family) failures.push(`${viewport.name}: spotlight family is empty`);
+      if (status.cardCount <= 0) failures.push(`${viewport.name}: scene cards did not render`);
+      if (status.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);
+      if (!status.spotlight || !status.search || status.spotlight.bottom > status.search.top) {
+        failures.push(`${viewport.name}: scene spotlight does not lead the scene browser`);
+      }
+      if (status.documentOverflow > 1) failures.push(`${viewport.name}: document horizontal overflow ${status.documentOverflow}`);
+      if (status.panelOverflow > 1) failures.push(`${viewport.name}: control panel horizontal overflow ${status.panelOverflow}`);
+      if (
+        status.panel &&
+        status.spotlight &&
+        (status.spotlight.left < status.panel.left - 1 || status.spotlight.right > status.panel.right + 1)
+      ) {
+        failures.push(`${viewport.name}: spotlight exceeds the control panel bounds`);
+      }
+    } finally {
+      await context.close();
+    }
+  }
+
+  return {
+    id: "scene_menu_spotlight_responsive",
+    preset: "topologyTemporalMod",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runMobileSimulatePanelScrollSmoke(browser, url) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -1262,6 +1376,7 @@ async function main() {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
+      report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
       report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
       report.cases.push(await runMobileToolbarHeightSmoke(browser, url));

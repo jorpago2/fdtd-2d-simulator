@@ -11,6 +11,7 @@
     "validate:static": "node scripts/validate-static.mjs",
     "validate:json": "node scripts/validate-static.mjs --json",
     "validate:architecture": "node scripts/validate-architecture.mjs",
+    "validate:scenes": "node scripts/validate-scene-library.mjs",
     "validate:all": "npm run validate:static && npm run validate:architecture",
     "validate:js-next": "node scripts/validate-js-next-core.mjs",
     "validate:ui": "node scripts/audit-ui.mjs",

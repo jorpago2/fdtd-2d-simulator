@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260630-desktop-drawer-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260702-scene-focus-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -780,7 +780,7 @@
                     <option value="evanescentWave">11 · Evanescent isolated wave</option>
                     <option value="pmlAbsorption">12 · CPML absorption check</option>
                   </optgroup>
-                  <optgroup label="2. Interfaces">
+                  <optgroup label="2. Interfaces and multilayers">
                     <option value="normalInterface">13 · Normal air-dielectric interface</option>
                     <option value="obliqueRefraction">14 · Oblique refraction</option>
                     <option value="brewsterTm">15 · Brewster TM minimum</option>
@@ -820,7 +820,7 @@
                     <option value="microstrip">45 · Microstrip line</option>
                     <option value="stubResonator">46 · Stub resonator</option>
                   </optgroup>
-                  <optgroup label="5. Resonators">
+                  <optgroup label="5. Resonators and cavities">
                     <option value="fabryPerot">47 · Fabry-Perot cavity</option>
                     <option value="fabryPerotStanding">48 · Fabry-Perot standing field</option>
                     <option value="ringResonator">49 · Ring resonator</option>
@@ -834,7 +834,7 @@
                     <option value="betaFactor">57 · beta-factor guide coupling</option>
                     <option value="degenerateModes">58 · Degenerate cavity modes</option>
                   </optgroup>
-                  <optgroup label="6-7. Scattering and materials">
+                  <optgroup label="6. Scattering and disorder">
                     <option value="pecCylinder">59 · PEC cylinder scattering</option>
                     <option value="dielectricCylinder">60 · Dielectric cylinder scattering</option>
                     <option value="mieCylinder">61 · High-index Mie cylinder</option>
@@ -846,6 +846,8 @@
                     <option value="weakLocalization">67 · Weak-localization disorder</option>
                     <option value="andersonLocalization">68 · Anderson-localization disorder</option>
                     <option value="diffusiveRandomMedium">69 · Diffusive random medium</option>
+                  </optgroup>
+                  <optgroup label="7. Material models and tensors">
                     <option value="finiteConductivity">70 · Finite-conductivity skin depth</option>
                     <option value="drudeMetal">71 · Drude metal</option>
                     <option value="lorentzMedium">72 · Lorentz resonant medium</option>
@@ -858,7 +860,7 @@
                     <option value="bianisotropicMedium">79 · 6-field bianisotropic medium</option>
                     <option value="gyrotropicMedium">80 · Gyrotropic medium</option>
                   </optgroup>
-                  <optgroup label="8-9. Periodic and topological">
+                  <optgroup label="8. Periodic photonics and BICs">
                     <option value="braggStack">81 · 1D Bragg stack</option>
                     <option value="photonicCrystal">82 · 2D photonic crystal</option>
                     <option value="phcPointDefect">83 · PhC point defect</option>
@@ -869,6 +871,8 @@
                     <option value="quasiBic">88 · Quasi-BIC cavity</option>
                     <option value="symmetryProtectedBic">89 · Symmetry-protected BIC</option>
                     <option value="fanoResonator">90 · Fano side resonator</option>
+                  </optgroup>
+                  <optgroup label="9. Topological photonics">
                     <option value="sshTrivial">91 · SSH chain, trivial</option>
                     <option value="sshTopological">92 · SSH chain, topological</option>
                     <option value="sshInterface">93 · SSH interface</option>
@@ -880,7 +884,7 @@
                     <option value="topologicalPumping">99 · Topological pumping</option>
                     <option value="topologyDefect">100 · Topology with strong defect</option>
                   </optgroup>
-                  <optgroup label="10-13. Metamaterials, nonlinear and non-Hermitian">
+                  <optgroup label="10. Plasmonics and metamaterials">
                     <option value="sppInterface">101 · SPP metal-dielectric interface</option>
                     <option value="sppGrating">102 · SPP grating coupler</option>
                     <option value="localizedPlasmon">103 · Localized plasmon disk</option>
@@ -891,6 +895,8 @@
                     <option value="superlensSlab">108 · Drude superlens slab</option>
                     <option value="hyperlens">109 · Hyperlens</option>
                     <option value="enzEmitter">110 · Dipole near ENZ slab</option>
+                  </optgroup>
+                  <optgroup label="11. Nonlinear and active media">
                     <option value="kerrSlab">111 · Kerr nonlinear slab</option>
                     <option value="shgSlab">112 · SHG χ² slab</option>
                     <option value="thgSlab">113 · THG χ³ slab</option>
@@ -901,6 +907,8 @@
                     <option value="saturableAbsorber">118 · Saturable absorber</option>
                     <option value="allOpticalSwitch">119 · All-optical switch</option>
                     <option value="nonlinearLimiter">120 · Nonlinear limiter</option>
+                  </optgroup>
+                  <optgroup label="12. Time-varying and Floquet media">
                     <option value="temporalInterface">121 · Temporal interface</option>
                     <option value="temporalSlab">122 · Temporal slab</option>
                     <option value="temporalModulation">123 · Temporal epsilon modulation</option>
@@ -911,6 +919,8 @@
                     <option value="modulatedRing">128 · Modulated ring</option>
                     <option value="floquetResonators">129 · Floquet resonators</option>
                     <option value="syntheticFrequency">130 · Synthetic frequency dimension</option>
+                  </optgroup>
+                  <optgroup label="13. Coupled and non-Hermitian workflows">
                     <option value="ptSymmetricCoupler">131 · PT-symmetric gain/loss guides</option>
                     <option value="exceptionalPointCoupler">132 · Exceptional point proxy</option>
                     <option value="nonHermitianSkin">133 · Non-Hermitian skin analogue</option>
@@ -925,6 +935,26 @@
                 </select>
               </label>
               <div class="scene-browser" aria-label="Scene library">
+                <section
+                  id="sceneSpotlight"
+                  class="scene-spotlight"
+                  aria-labelledby="sceneSpotlightTitle"
+                  aria-describedby="sceneSpotlightDescription"
+                  data-scene-thumb="wave"
+                >
+                  <span class="scene-card-thumb scene-spotlight-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
+                  <div class="scene-spotlight-body">
+                    <span class="scene-spotlight-kicker">
+                      <span id="sceneSpotlightNumber" class="scene-card-number">Example</span>
+                      <span id="sceneSpotlightGroup" class="scene-spotlight-group">General</span>
+                    </span>
+                    <h3 id="sceneSpotlightTitle" class="scene-spotlight-title">Empty</h3>
+                    <span id="sceneSpotlightDescription" class="scene-spotlight-description">
+                      Blank domain with CPML boundaries, ready for a custom source or material layout.
+                    </span>
+                    <span id="sceneSpotlightBadges" class="scene-card-badges scene-spotlight-badges"></span>
+                  </div>
+                </section>
                 <label class="scene-search-label">
                   <span>Search</span>
                   <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
@@ -932,7 +962,7 @@
                 <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
                 <div class="scene-browser-meta" aria-live="polite">
                   <output id="sceneBrowserCount">1 scene in General</output>
-                  <output id="sceneBrowserActive">Selected: Empty</output>
+                  <output id="sceneBrowserActive">Family: General</output>
                 </div>
                 <template id="sceneCardTemplate">
                   <button class="scene-card" type="button" data-scene-card="">
@@ -1435,7 +1465,7 @@
     <script src="js-next/runtime/core/numerics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/colormaps.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/catalog.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/data/scene-catalog-loader.js?v=20260630-scene-json-1"></script>
+    <script src="js-next/runtime/data/scene-catalog-loader.js?v=20260702-scene-library-1"></script>
     <script src="js-next/runtime/simulation/fdtd-sim.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-array-state.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-engine-routing.js?v=20260630-js-next-cutover-1"></script>
@@ -1463,10 +1493,10 @@
     <script src="js-next/runtime/simulation/fdtd-worker-protocol.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/worker-engine.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-core.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/ui/ui-dom.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/ui-dom.js?v=20260702-scene-focus-1"></script>
     <script src="js-next/runtime/ui/ui-drawer.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/ui/ui-scenes.js?v=20260630-scene-json-1"></script>
-    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260630-scene-json-1"></script>
+    <script src="js-next/runtime/ui/ui-scenes.js?v=20260702-scene-focus-1"></script>
+    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260702-scene-library-1"></script>
     <script src="js-next/runtime/ui/ui-results.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/control-sync-ui.js?v=20260630-js-next-cutover-1"></script>

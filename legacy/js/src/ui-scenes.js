@@ -25,7 +25,7 @@
   }
 
   function sceneBadgeLabels(record) {
-    const haystack = normalizeSceneText(`${record.title} ${record.group} ${record.description}`);
+    const haystack = normalizeSceneText(`${record.value} ${record.title} ${record.description}`);
     const badges = [];
     const add = (label) => {
       if (!badges.includes(label)) badges.push(label);
@@ -41,6 +41,7 @@
     if (/(temporal|modulat|floquet|space-time|traveling)/.test(haystack)) add("Time-varying");
     if (/(anisotropic|gyrotropic|bianisotropic|chiral|hyperbolic|tensor)/.test(haystack)) add("Tensor");
     if (/(photonic crystal|phc|ssh|valley|topolog|bic|honeycomb|bloch)/.test(haystack)) add("Periodic/topology");
+    if (/(pt-symmetric|exceptional|non-hermitian|skin-effect|balanced gain)/.test(haystack)) add("Gain/loss");
     if (/(ntff|far-field|rcs|scattering|kerker|mie)/.test(haystack)) add("NTFF");
     if (/(pml|absorbing)/.test(haystack)) add("PML");
     if (/(tez|hz solver|in-plane|magnetic mz)/.test(haystack)) add("TEz");
@@ -50,7 +51,7 @@
   }
 
   function sceneThumbnailKind(record) {
-    const haystack = normalizeSceneText(`${record.title} ${record.group} ${record.description} ${record.badges.join(" ")}`);
+    const haystack = normalizeSceneText(`${record.value} ${record.title} ${record.description} ${record.badges.join(" ")}`);
     if (/(ring|resonator|cavity|fabry|purcell)/.test(haystack)) return "resonator";
     if (/(waveguide|guide|coupler|mmi|mach|microstrip|stub)/.test(haystack)) return "waveguide";
     if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|lattice)/.test(haystack)) return "lattice";
@@ -59,6 +60,27 @@
     if (/(temporal|modulat|floquet|space-time|traveling)/.test(haystack)) return "temporal";
     if (/(drude|plasmon|spp|enz|metal|negative-index|superlens|hyperlens)/.test(haystack)) return "dispersive";
     return "wave";
+  }
+
+  function ensureSceneThumb(thumbnail, documentRef) {
+    thumbnail.className = thumbnail.classList?.contains("scene-spotlight-thumb")
+      ? "scene-card-thumb scene-spotlight-thumb"
+      : "scene-card-thumb";
+    thumbnail.setAttribute("aria-hidden", "true");
+    if (!thumbnail.childElementCount) {
+      thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
+    }
+  }
+
+  function fillSceneBadges(badgeRow, record, documentRef) {
+    if (!badgeRow) return;
+    badgeRow.replaceChildren();
+    record.badges.forEach((badgeLabel) => {
+      const badge = documentRef.createElement("span");
+      badge.className = "scene-card-badge";
+      badge.textContent = badgeLabel;
+      badgeRow.appendChild(badge);
+    });
   }
 
   function createSceneRecordFromOption(option, sceneDescriptions) {
@@ -136,14 +158,14 @@
           group: "General",
           groupLabel: "General",
           index: null,
+          thumbnail: "wave",
           title: "Custom scene",
           value,
         };
       }
       const parsed = parseSceneOptionLabel(option.textContent || option.value);
       const groupLabel = option.parentElement?.tagName === "OPTGROUP" ? option.parentElement.label : "General";
-      return {
-        badges: ["FDTD"],
+      const record = {
         description: sceneDescriptions[value] || sceneDescriptions.empty,
         group: cleanSceneGroupLabel(groupLabel),
         groupLabel,
@@ -151,6 +173,27 @@
         title: parsed.title,
         value,
       };
+      record.badges = sceneBadgeLabels(record);
+      record.thumbnail = sceneThumbnailKind(record);
+      return record;
+    }
+
+    function updateSceneSpotlight(record) {
+      if (!el.sceneSpotlight) return;
+      const current = record || sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.()) || currentSceneRecordFallback();
+      const thumbnailKind = current.thumbnail || sceneThumbnailKind(current);
+      el.sceneSpotlight.dataset.sceneThumb = thumbnailKind;
+      const thumb = el.sceneSpotlight.querySelector(".scene-spotlight-thumb");
+      if (thumb) ensureSceneThumb(thumb, documentRef);
+      if (el.sceneSpotlightNumber) {
+        el.sceneSpotlightNumber.textContent = current.index == null ? "Custom" : `Example ${current.index}`;
+      }
+      if (el.sceneSpotlightGroup) el.sceneSpotlightGroup.textContent = current.group || cleanSceneGroupLabel(current.groupLabel);
+      if (el.sceneSpotlightTitle) el.sceneSpotlightTitle.textContent = current.title || "Custom scene";
+      if (el.sceneSpotlightDescription) {
+        el.sceneSpotlightDescription.textContent = current.description || sceneDescriptions.empty || "Custom FDTD scene.";
+      }
+      fillSceneBadges(el.sceneSpotlightBadges, current, documentRef);
     }
 
     function updateSceneBrowserMeta(records = visibleSceneRecords()) {
@@ -164,8 +207,9 @@
       }
       if (el.sceneBrowserActive) {
         const current = sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.());
-        el.sceneBrowserActive.textContent = current ? `Selected: ${current.title}` : "Selected: custom scene";
+        el.sceneBrowserActive.textContent = current ? `Family: ${current.group}` : "Family: custom";
       }
+      updateSceneSpotlight(sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.()));
     }
 
     function renderSceneFilterBar() {
@@ -235,9 +279,7 @@
         card.setAttribute("aria-pressed", String(record.value === getCurrentPreset?.()));
 
         const thumbnail = documentRef.createElement("span");
-        thumbnail.className = "scene-card-thumb";
-        thumbnail.setAttribute("aria-hidden", "true");
-        thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
+        ensureSceneThumb(thumbnail, documentRef);
 
         const header = documentRef.createElement("span");
         header.className = "scene-card-header";
@@ -262,12 +304,7 @@
 
         const badgeRow = documentRef.createElement("span");
         badgeRow.className = "scene-card-badges";
-        record.badges.forEach((badgeLabel) => {
-          const badge = documentRef.createElement("span");
-          badge.className = "scene-card-badge";
-          badge.textContent = badgeLabel;
-          badgeRow.appendChild(badge);
-        });
+        fillSceneBadges(badgeRow, record, documentRef);
 
         card.append(thumbnail, header, group, description, badgeRow);
         card.addEventListener("click", () => {

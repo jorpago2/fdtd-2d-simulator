@@ -1124,18 +1124,90 @@ details[open] > summary::after {
   align-content: start;
 }
 
+.scene-select-fallback,
+.scene-section > .scene-note {
+  display: none !important;
+}
+
 .scene-browser {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   gap: 10px;
   min-height: 0;
+}
+
+.scene-spotlight {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: linear-gradient(180deg, var(--panel), var(--accent-soft));
+}
+
+.scene-spotlight-thumb {
+  width: 64px;
+  height: 64px;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  background:
+    repeating-linear-gradient(0deg, transparent 0 9px, color-mix(in srgb, var(--border) 44%, transparent) 9px 10px),
+    repeating-linear-gradient(90deg, transparent 0 9px, color-mix(in srgb, var(--border) 44%, transparent) 9px 10px),
+    var(--panel);
+}
+
+.scene-spotlight-body {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.scene-spotlight-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.scene-spotlight-group {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-strong);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.scene-spotlight-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 900;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.scene-spotlight-description {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.38;
+}
+
+.scene-spotlight-badges {
+  padding-top: 2px;
 }
 
 .scene-filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-height: 140px;
+  max-height: 120px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1168,13 +1240,13 @@ details[open] > summary::after {
 
 .scene-card {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-columns: 42px minmax(0, 1fr);
   align-items: start;
-  gap: 10px;
-  min-height: 88px;
+  gap: 9px;
+  min-height: 78px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 10px;
+  padding: 9px;
   color: var(--text);
   background: var(--panel);
 }
@@ -1186,14 +1258,15 @@ details[open] > summary::after {
 
 .scene-card.is-active {
   border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 54%, var(--panel));
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .scene-card-thumb {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
 }
@@ -1221,7 +1294,7 @@ details[open] > summary::after {
 
 .scene-card-title {
   color: var(--text);
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 850;
   line-height: 1.16;
 }
@@ -1244,6 +1317,13 @@ details[open] > summary::after {
   font-size: 0.76rem;
   font-weight: 500;
   line-height: 1.35;
+}
+
+.scene-card-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .scene-guide-panel,
@@ -1517,7 +1597,7 @@ details[open] > summary::after {
   }
 
   #tab-scenes .scene-section {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     height: 100%;
     align-items: start;
@@ -1527,7 +1607,6 @@ details[open] > summary::after {
     grid-column: 1 / -1;
   }
 
-  #tab-scenes .scene-select-fallback,
   #tab-scenes .scene-browser,
   #tab-scenes .scene-note {
     grid-column: 1;
@@ -1790,6 +1869,25 @@ details[open] > summary::after {
 @media (max-width: 420px) {
   :root {
     --toolbar: 40px;
+  }
+
+  .scene-spotlight {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .scene-spotlight-thumb {
+    width: 52px;
+    height: 52px;
+  }
+
+  .scene-spotlight-title {
+    font-size: 0.98rem;
+  }
+
+  .scene-spotlight-description {
+    font-size: 0.8rem;
   }
 
   .canvas-toolbar {

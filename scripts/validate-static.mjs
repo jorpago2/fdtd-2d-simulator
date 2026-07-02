@@ -186,7 +186,52 @@ function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
   return dropdownPresets;
 }
 
-function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
+function decodeHtmlText(value) {
+  return String(value || "")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+function parseSceneOptionLabel(label) {
+  const text = decodeHtmlText(label);
+  const match = text.match(/^(\d+)\s*[\u00b7.-]\s*(.+)$/);
+  if (!match) return { index: null, title: text || "Untitled scene" };
+  return {
+    index: Number(match[1]),
+    title: match[2].trim(),
+  };
+}
+
+function parsePresetSelect(indexHtml) {
+  const presetSelect = indexHtml.match(/<select\s+id="presetInput"[\s\S]*?<\/select>/)?.[0] || "";
+  const scenes = [];
+  const groups = new Map();
+  let currentGroupLabel = "General";
+  const tokenPattern = /<optgroup\s+label="([^"]+)"\s*>|<\/optgroup>|<option\s+value="([^"]+)">([\s\S]*?)<\/option>/g;
+  for (const match of presetSelect.matchAll(tokenPattern)) {
+    if (match[1]) {
+      currentGroupLabel = decodeHtmlText(match[1]);
+      if (!groups.has(currentGroupLabel)) groups.set(currentGroupLabel, []);
+      continue;
+    }
+    if (match[0].startsWith("</optgroup")) {
+      currentGroupLabel = "General";
+      continue;
+    }
+    const id = match[2];
+    const parsed = parseSceneOptionLabel(match[3]);
+    if (!groups.has(currentGroupLabel)) groups.set(currentGroupLabel, []);
+    groups.get(currentGroupLabel).push(id);
+    scenes.push({ id, groupLabel: currentGroupLabel, ...parsed });
+  }
+  return { groups, scenes };
+}
+
+function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions) {
   const catalogPath = repoPath("js-next", "runtime", "data", "scene-catalog.json");
   if (!fs.existsSync(catalogPath)) {
     addCheck("scene catalog JSON", "BLOCK", "Missing js-next/runtime/data/scene-catalog.json");
@@ -203,6 +248,8 @@ function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
 
   const groups = Array.isArray(catalog.groups) ? catalog.groups : [];
   const scenes = Array.isArray(catalog.scenes) ? catalog.scenes : [];
+  const htmlPresetData = parsePresetSelect(indexHtml);
+  const htmlSceneById = new Map(htmlPresetData.scenes.map((scene) => [scene.id, scene]));
   const jsonSceneIds = scenes.map((scene) => scene.id).filter(Boolean);
   const duplicateJsonIds = jsonSceneIds.filter((id, index) => jsonSceneIds.indexOf(id) !== index);
   const groupIds = new Set(groups.map((group) => group.id));
@@ -210,12 +257,33 @@ function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
   const missingFromJson = dropdownPresets.filter((preset) => !jsonSceneIds.includes(preset));
   const orphanJsonScenes = jsonSceneIds.filter((preset) => !dropdownPresets.includes(preset));
   const missingJsonDescriptions = jsonSceneIds.filter((preset) => !String(scenes.find((scene) => scene.id === preset)?.description || "").trim());
+  const mismatchedMetadata = scenes
+    .map((scene) => ({ scene, htmlScene: htmlSceneById.get(scene.id) }))
+    .filter(({ scene, htmlScene }) => {
+      if (!htmlScene) return false;
+      return (
+        String(scene.groupLabel || "") !== htmlScene.groupLabel ||
+        (scene.id !== "empty" && Number(scene.index) !== htmlScene.index) ||
+        String(scene.title || "") !== htmlScene.title
+      );
+    })
+    .map(({ scene, htmlScene }) => `${scene.id}: JSON ${scene.index ?? "-"} / ${scene.title || "-"} / ${scene.groupLabel || "-"} != HTML ${htmlScene.index ?? "-"} / ${htmlScene.title} / ${htmlScene.groupLabel}`);
+  const mismatchedGroupMembership = groups
+    .map((group) => {
+      const htmlIds = htmlPresetData.groups.get(group.label) || [];
+      const jsonIds = Array.isArray(group.sceneIds) ? group.sceneIds : [];
+      return htmlIds.join("|") === jsonIds.join("|") ? "" : `${group.label}: JSON ${jsonIds.length} scene(s), HTML ${htmlIds.length} scene(s)`;
+    })
+    .filter(Boolean);
+  const oversizedGroups = groups
+    .filter((group) => Array.isArray(group.sceneIds) && group.sceneIds.length > 16)
+    .map((group) => `${group.label} (${group.sceneIds.length})`);
+  const staleInlineGuides = scenes.filter((scene) => scene.guide && typeof scene.guide === "object").map((scene) => scene.id);
   const mismatchedDescriptions = jsonSceneIds.filter((preset) => {
     const jsonDescription = String(scenes.find((scene) => scene.id === preset)?.description || "");
     const embeddedDescription = String(sceneDescriptions[preset] || "");
     return embeddedDescription && jsonDescription !== embeddedDescription;
   });
-  const missingGuides = scenes.filter((scene) => !scene.guide || typeof scene.guide !== "object").map((scene) => scene.id);
 
   const failures = [
     ...duplicateJsonIds.map((id) => `duplicate id ${id}`),
@@ -223,7 +291,8 @@ function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
     ...missingFromJson.map((id) => `missing ${id}`),
     ...orphanJsonScenes.map((id) => `orphan ${id}`),
     ...missingJsonDescriptions.map((id) => `empty description for ${id}`),
-    ...missingGuides.map((id) => `missing guide for ${id}`),
+    ...mismatchedMetadata,
+    ...mismatchedGroupMembership,
   ];
   addCheck(
     "scene catalog JSON",
@@ -234,6 +303,16 @@ function validateSceneCatalogJson(dropdownPresets, sceneDescriptions) {
     "scene catalog description parity",
     mismatchedDescriptions.length === 0 ? "PASS" : "WARN",
     mismatchedDescriptions.length === 0 ? "JSON descriptions match embedded catalog" : mismatchedDescriptions.join(", "),
+  );
+  addCheck(
+    "scene catalog group sizes",
+    oversizedGroups.length === 0 ? "PASS" : "WARN",
+    oversizedGroups.length === 0 ? "All scene groups stay below 17 examples" : oversizedGroups.join(", "),
+  );
+  addCheck(
+    "scene catalog dynamic guides",
+    staleInlineGuides.length === 0 ? "PASS" : "WARN",
+    staleInlineGuides.length === 0 ? "Guides are generated from runtime scene metadata" : `Inline guide data present for ${staleInlineGuides.join(", ")}`,
   );
 }
 
@@ -402,6 +481,7 @@ function main() {
     ...jsNextFiles,
     "scripts/serve-static.mjs",
     "scripts/validate-js-next-core.mjs",
+    "scripts/validate-scene-library.mjs",
     "scripts/performance-benchmark.mjs",
   ]);
 
@@ -418,7 +498,7 @@ function main() {
     catalog.sceneDescriptions,
     readActiveScript(activeScripts, "fdtd-presets.js", ["legacy/js/src", "fdtd-presets.js"]),
   );
-  validateSceneCatalogJson(dropdownPresets, catalog.sceneDescriptions);
+  validateSceneCatalogJson(indexHtml, dropdownPresets, catalog.sceneDescriptions);
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);

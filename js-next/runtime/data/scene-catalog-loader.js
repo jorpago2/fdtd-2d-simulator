@@ -1,7 +1,7 @@
 (function initFdtdSceneCatalogLoader(global) {
   "use strict";
 
-  const CATALOG_URL = "js-next/runtime/data/scene-catalog.json?v=20260630-scene-json-1";
+  const CATALOG_URL = "js-next/runtime/data/scene-catalog.json?v=20260702-scene-library-1";
 
   let catalogPromise = null;
 
@@ -10,6 +10,16 @@
       throw new Error(`Scene catalog must provide ${name} as an array.`);
     }
     return value;
+  }
+
+  function parseSceneTitle(value, fallbackTitle = "Untitled scene") {
+    const title = String(value || "").trim();
+    const match = title.match(/^(\d+)\s*[\u00b7.-]\s*(.+)$/);
+    if (!match) return { index: null, title: title || fallbackTitle };
+    return {
+      index: Number(match[1]),
+      title: match[2].trim() || fallbackTitle,
+    };
   }
 
   function normalizeSceneCatalog(rawCatalog) {
@@ -29,11 +39,13 @@
       const group = groupById.get(String(scene.groupId || ""));
       const groupLabel = String(scene.groupLabel || group?.label || "General");
       const groupName = String(scene.groupName || group?.name || groupLabel);
+      const parsedTitle = parseSceneTitle(scene.title);
+      const parsedIndex = Number.isFinite(Number(scene.index)) ? Number(scene.index) : parsedTitle.index;
       return {
         id: String(scene.id || ""),
         value: String(scene.id || ""),
-        index: Number.isFinite(Number(scene.index)) ? Number(scene.index) : null,
-        title: String(scene.title || "Untitled scene"),
+        index: parsedIndex,
+        title: parsedTitle.title,
         groupId: String(scene.groupId || group?.id || "general"),
         groupLabel,
         groupName,

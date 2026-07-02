@@ -9,25 +9,25 @@
   }
 
   function sceneGuideFamily(record) {
-    const haystack = normalizeGuideText(`${record.value} ${record.title} ${record.group} ${record.description}`);
-    if (record.value === "empty") return "empty";
-    if (/(pt-symmetric|exceptional|non-hermitian|skin)/.test(haystack)) return "nonhermitian";
+    const haystack = normalizeGuideText(`${record?.value} ${record?.title} ${record?.description}`);
+    if (record?.value === "empty") return "empty";
+    if (/(pt-symmetric|exceptional|non-hermitian|skin-effect)/.test(haystack)) return "nonhermitian";
     if (/(temporal|modulat|floquet|space-time|traveling|synthetic frequency)/.test(haystack)) return "temporal";
-    if (/(chiral|bianisotropic|gyrotropic|ferrite|tensor|hyperbolic)/.test(haystack)) return "tensor";
+    if (/(kerr|chi2|chi3|nonlinear|vo2|pcm|saturable|switch|limiter)/.test(haystack)) return "nonlinear";
+    if (/(drude|lorentz|debye|plasma|enz|metal|spp|plasmon|negative-index|superlens|hyperlens|metasurface|conductive|conductivity|skin-depth|absorber|metamaterial)/.test(haystack)) {
+      return "dispersive";
+    }
+    if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|bloch|bic|bragg stack)/.test(haystack)) return "periodic";
     if (/(pec cylinder|cylinder scattering|mie|rcs|kerker|dimer|multiple scattering|localization|random medium)/.test(haystack)) {
       return "scattering";
     }
     if (/(interface|refraction|brewster|tir|coating|bragg mirror|lossy interface|anisotropic interface)/.test(haystack)) {
       return "interface";
     }
+    if (/(chiral|bianisotropic|gyrotropic|ferrite|tensor|hyperbolic|anisotropic)/.test(haystack)) return "tensor";
+    if (/(resonator|cavity|ring|fabry|purcell|beta-factor|ringdown|fano)/.test(haystack)) return "resonator";
     if (/(dipole|huygens|array|aperture|radiator|ntff|far-field)/.test(haystack)) return "radiation";
     if (/(waveguide|guide|coupler|mmi|mach|microstrip|stub)/.test(haystack)) return "guided";
-    if (/(resonator|cavity|ring|fabry|purcell|beta-factor|ringdown|fano)/.test(haystack)) return "resonator";
-    if (/(photonic crystal|phc|ssh|valley|topolog|honeycomb|bloch|bic)/.test(haystack)) return "periodic";
-    if (/(drude|lorentz|debye|plasma|enz|metal|spp|plasmon|negative-index|superlens|hyperlens|metasurface)/.test(haystack)) {
-      return "dispersive";
-    }
-    if (/(kerr|chi2|chi3|nonlinear|vo2|pcm|saturable|switch|limiter)/.test(haystack)) return "nonlinear";
     return "propagation";
   }
 
@@ -115,13 +115,13 @@
   const sceneFamilyText = {
     propagation: {
       phenomenon: "Free-space or homogeneous-medium wave propagation",
-      geometry: "Uniform or nearly uniform domain used to isolate wavelength, phase velocity, group delay, interference, diffraction, or PML behavior.",
+      geometry: "Uniform or nearly uniform domain used to isolate wavelength, phase velocity, group delay, interference, diffraction, or CPML behavior.",
       expected: "Planar, Gaussian, evanescent, or diffracted waves with predictable wavelength and phase fronts.",
       explanation: "The simulation makes visible how the Yee update transports energy and how boundary conditions affect finite-domain propagation.",
     },
     interface: {
       phenomenon: "Reflection, transmission, refraction, and impedance matching at material interfaces",
-      geometry: "One or more planar layers placed across the computational domain, usually with PML at the outer edges.",
+      geometry: "One or more planar layers placed across the computational domain, usually with CPML at the outer edges.",
       expected: "Reflected and transmitted beams, Fresnel-angle behavior, critical-angle effects, or standing waves in multilayers.",
       explanation: "Boundary conditions enforce tangential field continuity, producing Fresnel coefficients and phase shifts.",
     },
@@ -187,7 +187,7 @@
     },
     empty: {
       phenomenon: "Blank FDTD sandbox",
-      geometry: "Empty domain with PML boundaries.",
+      geometry: "Empty domain with CPML boundaries.",
       expected: "No field until a source or material is added.",
       explanation: "Use this as a controlled starting point to build custom scenes.",
     },
@@ -201,14 +201,14 @@
     const solver = context.solver || "TMz / Ez";
     const commonErrors = [
       "Too few cells per wavelength, which changes phase velocity and resonance frequency.",
-      "PML too close to the object or source, producing artificial reflections.",
+      "CPML too close to the object or source, producing artificial reflections.",
       "Interpreting early transients as steady-state results before the field has settled.",
     ];
     const base = {
       phenomenon: title,
       description: `Example summary: ${description}`,
-      fdtd: `The scene advances Maxwell's curl equations on a 2D Yee grid using the ${solver} formulation. It is a teaching model, so staircasing, finite domain size, and PML settings should be checked before making quantitative claims.`,
-      geometry: "Finite 2D computational window with PML boundaries and the preset geometry drawn on the grid.",
+      fdtd: `The scene advances Maxwell's curl equations on a 2D Yee grid using the ${solver} formulation. It is a teaching model, so staircasing, finite domain size, and CPML settings should be checked before making quantitative claims.`,
+      geometry: "Finite 2D computational window with CPML boundaries and the preset geometry drawn on the grid.",
       source: `${sourceHint}; phase, amplitude, and position are taken from the preset and can be edited from the source menu.`,
       materials: "Air plus the preset materials; dispersive, lossy, anisotropic, nonlinear, or PEC regions are included when the chosen scene requires them.",
       expected: "Field maps should show the qualitative wave pattern associated with the selected preset: propagation, scattering, confinement, coupling, resonance, absorption, or sideband generation.",
@@ -227,15 +227,15 @@
       ...sceneGuideTemplate(record, context),
       phenomenon: "Scattering of a plane wave by a perfectly conducting cylinder",
       description: "A canonical 2D scattering problem: a metallic cylinder blocks the tangential electric field and re-radiates a scattered wave.",
-      fdtd: "The FDTD grid launches a plane-wave-like excitation toward a PEC inclusion. The PEC condition forces the appropriate tangential field component to vanish at the object boundary, and PML layers absorb outgoing waves.",
-      geometry: "Circular PEC cylinder in a homogeneous air background, surrounded by PML. The circular boundary is represented on a Cartesian grid, so staircasing error depends on resolution.",
+      fdtd: "The FDTD grid launches a plane-wave-like excitation toward a PEC inclusion. The PEC condition forces the appropriate tangential field component to vanish at the object boundary, and CPML layers absorb outgoing waves.",
+      geometry: "Circular PEC cylinder in a homogeneous air background, surrounded by CPML. The circular boundary is represented on a Cartesian grid, so staircasing error depends on resolution.",
       source: "Plane-wave line source incident on the cylinder; use monitors or the color map to separate incident, reflected, and shadow regions qualitatively.",
       materials: "Air plus an ideal PEC obstacle. The PEC model is lossless and perfectly reflecting, so it does not represent finite-conductivity skin depth.",
       expected: "A strong shadow behind the cylinder, interference fringes in front of it, and cylindrical scattered waves propagating outward.",
       explanation: "The incoming wave induces surface currents on the PEC boundary. Those currents radiate the scattered field, which interferes with the incident wave and produces the observed pattern.",
       errors: [
         "Using too coarse a grid, which makes the cylinder look polygonal and shifts the scattering pattern.",
-        "Placing the cylinder or monitors too close to the PML, causing artificial absorption or reflection artifacts.",
+        "Placing the cylinder or monitors too close to the CPML, causing artificial absorption or reflection artifacts.",
         "Comparing directly with 3D Mie scattering; this scene is a 2D cylinder analogue, not a sphere.",
       ],
       enabled: "Radar-cross-section intuition, microwave scattering demos, antenna blockage studies, optical/nanophotonic scattering analogues, and validation of boundary handling in FDTD codes.",

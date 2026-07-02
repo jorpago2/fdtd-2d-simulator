@@ -166,6 +166,11 @@ Object.assign(FDTDSim.prototype, {
     for (const side of BOUNDARY_SIDES) setBoundarySideMode(side, "absorbing");
     this.buildBoundary();
     this.clearMaterials(false);
+    state.sources = [];
+    state.retiringSources = [];
+    state.nextSourceId = 1;
+    state.selectedSourceId = null;
+    state.sourceDefaults = { ...defaultSourceConfig };
 
     state.fieldComponent = "ez";
     state.fieldDisplay = "scalar";
@@ -666,7 +671,9 @@ Object.assign(FDTDSim.prototype, {
       if (strongDefect) ellipseL(midXLambda + 0.15, midYLambda, 0.28, 0.28, mat.pec);
     };
 
-    setSources([{ shape: "point", xLambda: sourceX(1.2), yLambda: sourceY(midYLambda) }]);
+    if (name !== "empty") {
+      setSources([{ shape: "point", xLambda: sourceX(1.2), yLambda: sourceY(midYLambda) }]);
+    }
 
     switch (name) {
       case "planeWaveAir":
