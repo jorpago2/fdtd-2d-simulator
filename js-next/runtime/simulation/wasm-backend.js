@@ -6,6 +6,7 @@ const WASM_FEATURE_SATURABLE_GAIN = 1 << 2;
 const WASM_FEATURE_TENSOR_GYRO = 1 << 3;
 const WASM_FEATURE_TFSF = 1 << 4;
 const WASM_FEATURE_CPML = 1 << 5;
+const WASM_FEATURE_MODE_SOURCE = 1 << 6;
 
 const WASM_STEP_KERR = 1 << 0;
 const WASM_STEP_SATURABLE_GAIN = 1 << 1;
@@ -13,6 +14,8 @@ const WASM_STEP_TENSOR_GYRO = 1 << 2;
 const WASM_MAX_TFSF_SOURCES = 32;
 const WASM_TFSF_STRIDE = 16;
 const WASM_TFSF_SOURCE_TYPE = { sine: 0, gaussian: 1, ricker: 2 };
+const WASM_MAX_MODE_SOURCES = 8;
+const WASM_MODE_SOURCE_STRIDE = 16;
 
 function wasmAlign4(value) {
   return (value + 3) & ~3;
@@ -113,6 +116,10 @@ class WasmFdtdBackend {
     f32("cpmlPsiDualEzX", n);
     f32("cpmlPsiDualEzY", n);
     f32("tfsfSources", WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
+    f32("modeSources", WASM_MAX_MODE_SOURCES * WASM_MODE_SOURCE_STRIDE);
+    f32("modeProfiles", WASM_MAX_MODE_SOURCES * ny);
+    f32("modeEpsilonProfiles", WASM_MAX_MODE_SOURCES * ny);
+    f32("modeMuProfiles", WASM_MAX_MODE_SOURCES * ny);
 
     return {
       offsets,
@@ -196,6 +203,10 @@ class WasmFdtdBackend {
     sim.cpmlPsiDualEzX = new Float32Array(buffer, o.cpmlPsiDualEzX, n);
     sim.cpmlPsiDualEzY = new Float32Array(buffer, o.cpmlPsiDualEzY, n);
     this.tfsfSources = new Float32Array(buffer, o.tfsfSources, WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
+    this.modeSources = new Float32Array(buffer, o.modeSources, WASM_MAX_MODE_SOURCES * WASM_MODE_SOURCE_STRIDE);
+    this.modeProfiles = new Float32Array(buffer, o.modeProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
+    this.modeEpsilonProfiles = new Float32Array(buffer, o.modeEpsilonProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
+    this.modeMuProfiles = new Float32Array(buffer, o.modeMuProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
   }
 
   packTfsfSources(sim) {
@@ -244,11 +255,63 @@ class WasmFdtdBackend {
     return true;
   }
 
+  packModeSources(sim) {
+    if (!this.modeSources || !this.modeProfiles || !this.modeEpsilonProfiles || !this.modeMuProfiles) return 0;
+    this.modeSources.fill(0);
+    let count = 0;
+    const sources = typeof sim.activeSolverSources === "function" ? sim.activeSolverSources() : state.sources;
+    for (const source of sources) {
+      if (count >= WASM_MAX_MODE_SOURCES) break;
+      if (source?.shape !== "modeProfile") continue;
+      const descriptor = sim.modeProfileSourceDescriptor?.(source);
+      const length = Math.min(sim.ny, Math.max(0, Math.trunc(Number(descriptor?.profile?.length) || 0)));
+      if (!descriptor || length <= 0) continue;
+      const descriptorOffset = count * WASM_MODE_SOURCE_STRIDE;
+      const profileOffset = count * sim.ny;
+      const type = WASM_TFSF_SOURCE_TYPE[source.type] ?? WASM_TFSF_SOURCE_TYPE.sine;
+      this.modeSources[descriptorOffset + 0] = type;
+      this.modeSources[descriptorOffset + 1] = descriptor.sx;
+      this.modeSources[descriptorOffset + 2] = descriptor.y0;
+      this.modeSources[descriptorOffset + 3] = length;
+      this.modeSources[descriptorOffset + 4] = descriptor.betaCells;
+      this.modeSources[descriptorOffset + 5] = descriptor.neff;
+      this.modeSources[descriptorOffset + 6] = descriptor.confinementIndexMax || descriptor.neff || 1;
+      this.modeSources[descriptorOffset + 7] = source.frequency;
+      this.modeSources[descriptorOffset + 8] =
+        typeof sim.effectiveSourceAmplitude === "function" ? sim.effectiveSourceAmplitude(source, sim.time) : source.amplitude;
+      this.modeSources[descriptorOffset + 9] = ((Number(source.phaseDeg) || 0) * Math.PI) / 180;
+      this.modeSources[descriptorOffset + 10] = profileOffset;
+      for (let i = 0; i < length; i += 1) {
+        const target = profileOffset + i;
+        this.modeProfiles[target] = Number(descriptor.profile?.[i]) || 0;
+        this.modeEpsilonProfiles[target] = Math.max(1e-6, Number(descriptor.epsilonProfile?.[i]) || 1);
+        this.modeMuProfiles[target] = Math.max(1e-6, Number(descriptor.muProfile?.[i]) || 1);
+      }
+      count += 1;
+    }
+    return count;
+  }
+
+  canPackModeSources(sim) {
+    let count = 0;
+    const sources = typeof sim.activeSolverSources === "function" ? sim.activeSolverSources() : state.sources;
+    for (const source of sources) {
+      if (source?.shape !== "modeProfile") continue;
+      const descriptor = sim.modeProfileSourceDescriptor?.(source);
+      const length = Math.trunc(Number(descriptor?.profile?.length) || 0);
+      if (!descriptor || length <= 0 || length > sim.ny) return false;
+      count += 1;
+      if (count > WASM_MAX_MODE_SOURCES) return false;
+    }
+    return true;
+  }
+
   stepWithOffsets(sim, component, offsets) {
     const o = offsets;
     const stepExport = component === "hz" ? this.exports.step_hz : this.exports.step;
     const runtimeFlags = this.stepRuntimeFlags(component);
     const tfsfCount = this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
+    const modeSourceCount = this.supportsModeSource() ? this.packModeSources(sim) : 0;
     stepExport(
       sim.nx,
       sim.ny,
@@ -303,7 +366,12 @@ class WasmFdtdBackend {
       sim.time,
       Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1,
       o.tfsfSources,
-      tfsfCount
+      tfsfCount,
+      o.modeSources,
+      o.modeProfiles,
+      o.modeEpsilonProfiles,
+      o.modeMuProfiles,
+      modeSourceCount
     );
   }
 
@@ -365,6 +433,10 @@ class WasmFdtdBackend {
 
   supportsCpml() {
     return this.supportsFeature(WASM_FEATURE_CPML);
+  }
+
+  supportsModeSource() {
+    return this.supportsFeature(WASM_FEATURE_MODE_SOURCE);
   }
 
   stepRuntimeFlags(component) {

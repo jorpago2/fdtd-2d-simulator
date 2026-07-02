@@ -14,11 +14,13 @@ static constexpr i32 FEATURE_SATURABLE_GAIN = 1 << 2;
 static constexpr i32 FEATURE_TENSOR_GYRO = 1 << 3;
 static constexpr i32 FEATURE_TFSF = 1 << 4;
 static constexpr i32 FEATURE_CPML = 1 << 5;
+static constexpr i32 FEATURE_MODE_SOURCE = 1 << 6;
 
 static constexpr i32 STEP_KERR = 1 << 0;
 static constexpr i32 STEP_SATURABLE_GAIN = 1 << 1;
 static constexpr i32 STEP_TENSOR_GYRO = 1 << 2;
 static constexpr i32 TFSF_STRIDE = 16;
+static constexpr i32 MODE_SOURCE_STRIDE = 16;
 static constexpr float PI_F = 3.14159265358979323846f;
 static constexpr float TWO_PI_F = 6.28318530717958647692f;
 static constexpr float FOUR_LN2_F = 2.77258872223978123767f;
@@ -75,7 +77,7 @@ static inline float conductivity_damp(float sigma, float materialValue, float co
 }
 
 extern "C" __attribute__((export_name("kernel_features"))) i32 kernel_features() {
-  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML;
+  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML | FEATURE_MODE_SOURCE;
 }
 
 static inline float electric_loss_decay(float loss, float intensity, i32 runtimeFlags, float gainSaturation) {
@@ -378,6 +380,251 @@ static inline float transverse_electric_update_coeff_y(
   return sigmaCb * (s / epsValue) * electric_loss_decay(lossY[i], intensity, runtimeFlags, gainSaturation);
 }
 
+struct ModeProfileIncident {
+  i32 type;
+  i32 x0;
+  i32 y0;
+  i32 length;
+  i32 profileOffset;
+  float betaCells;
+  float neff;
+  float confinementIndexMax;
+  float frequency;
+  float amplitude;
+  float phaseRad;
+};
+
+static inline ModeProfileIncident make_mode_profile_incident(const float* p) {
+  ModeProfileIncident incident = {};
+  incident.type = static_cast<i32>(p[0]);
+  incident.x0 = static_cast<i32>(p[1]);
+  incident.y0 = static_cast<i32>(p[2]);
+  incident.length = static_cast<i32>(p[3]);
+  incident.betaCells = p[4];
+  incident.neff = p[5];
+  incident.confinementIndexMax = p[6];
+  incident.frequency = p[7];
+  incident.amplitude = p[8];
+  incident.phaseRad = p[9];
+  incident.profileOffset = static_cast<i32>(p[10]);
+  return incident;
+}
+
+static inline float mode_source_sample_at_time(const ModeProfileIncident& incident, float t) {
+  if (incident.type == 1) {
+    const float center = 48.0f;
+    const float width = 14.0f;
+    const float dt = t - center;
+    return incident.amplitude * fdtd_expf(-(dt * dt) / (2.0f * width * width));
+  }
+  if (incident.type == 2) {
+    const float center = 48.0f;
+    const float a = PI_F * incident.frequency * (t - center);
+    const float a2 = a * a;
+    return incident.amplitude * (1.0f - 2.0f * a2) * fdtd_expf(-a2);
+  }
+  return incident.amplitude * fdtd_sinf(TWO_PI_F * incident.frequency * t);
+}
+
+static inline float mode_profile_neff(const ModeProfileIncident& incident) {
+  const float maxIndex = incident.confinementIndexMax > 1.0e-6f ? incident.confinementIndexMax : 10.0f;
+  return maxf(1.0e-6f, minf(maxIndex, incident.neff));
+}
+
+static inline float mode_profile_scalar(
+  const ModeProfileIncident& incident,
+  const float* profile,
+  float x,
+  i32 offset,
+  float t,
+  float fieldScale
+) {
+  if (fieldScale == 0.0f) return 0.0f;
+  const float phase = -incident.betaCells * (x - static_cast<float>(incident.x0));
+  const float phaseTimeOffset = incident.frequency > 0.0f ? (phase + incident.phaseRad) / (TWO_PI_F * incident.frequency) : 0.0f;
+  const float value = mode_source_sample_at_time(incident, t + phaseTimeOffset) * profile[incident.profileOffset + offset];
+  return value / fieldScale;
+}
+
+static inline float mode_profile_tm_hy(
+  const ModeProfileIncident& incident,
+  const float* profile,
+  const float* muProfile,
+  float x,
+  i32 offset,
+  float t,
+  float fieldScale
+) {
+  const float scalar = mode_profile_scalar(incident, profile, x, offset, t, fieldScale);
+  const float muValue = maxf(1.0e-6f, muProfile[incident.profileOffset + offset]);
+  return (-mode_profile_neff(incident) / muValue) * scalar;
+}
+
+static inline float mode_profile_te_ey(
+  const ModeProfileIncident& incident,
+  const float* profile,
+  const float* epsilonProfile,
+  float x,
+  i32 offset,
+  float t,
+  float fieldScale
+) {
+  const float scalar = mode_profile_scalar(incident, profile, x, offset, t, fieldScale);
+  const float epsilonValue = maxf(1.0e-6f, epsilonProfile[incident.profileOffset + offset]);
+  return (mode_profile_neff(incident) / epsilonValue) * scalar;
+}
+
+static inline void apply_mode_tm_magnetic(
+  i32 nx,
+  i32 ny,
+  float s,
+  float time,
+  float fieldScale,
+  float* modeSources,
+  float* modeProfiles,
+  i32 modeSourceCount,
+  float* hy,
+  float* muY,
+  float* muLossY,
+  u8* material
+) {
+  for (i32 n = 0; n < modeSourceCount; n += 1) {
+    const ModeProfileIncident incident = make_mode_profile_incident(modeSources + n * MODE_SOURCE_STRIDE);
+    if (incident.x0 < 1 || incident.x0 >= nx - 1 || incident.y0 < 0 || incident.length <= 0) continue;
+    for (i32 offset = 0; offset < incident.length; offset += 1) {
+      if (absf(modeProfiles[incident.profileOffset + offset]) < 1.0e-5f) continue;
+      const i32 y = incident.y0 + offset;
+      if (y < 0 || y >= ny) continue;
+      const i32 leftIdx = cell_id(incident.x0 - 1, y, nx);
+      if (material[leftIdx] == 2) continue;
+      const float ezIncident = mode_profile_scalar(incident, modeProfiles, static_cast<float>(incident.x0), offset, time, fieldScale);
+      hy[leftIdx] -= magnetic_update_coeff_x(leftIdx, s, muY, muLossY) * ezIncident;
+    }
+  }
+}
+
+static inline void apply_mode_tm_electric(
+  i32 nx,
+  i32 ny,
+  float s,
+  float time,
+  float fieldScale,
+  float* modeSources,
+  float* modeProfiles,
+  float* modeMuProfiles,
+  i32 modeSourceCount,
+  float* ez,
+  float* ezx,
+  float* ezy,
+  float* eps,
+  float* loss,
+  float* conductivity,
+  u8* material,
+  i32 runtimeFlags,
+  float gainSaturation
+) {
+  const float t = time + 0.5f;
+  for (i32 n = 0; n < modeSourceCount; n += 1) {
+    const ModeProfileIncident incident = make_mode_profile_incident(modeSources + n * MODE_SOURCE_STRIDE);
+    if (incident.x0 < 1 || incident.x0 >= nx - 1 || incident.y0 < 0 || incident.length <= 0) continue;
+    for (i32 offset = 0; offset < incident.length; offset += 1) {
+      if (absf(modeProfiles[incident.profileOffset + offset]) < 1.0e-5f) continue;
+      const i32 y = incident.y0 + offset;
+      if (y < 0 || y >= ny) continue;
+      const i32 leftIdx = cell_id(incident.x0, y, nx);
+      if (material[leftIdx] == 2) continue;
+      const float hyIncident = mode_profile_tm_hy(
+        incident,
+        modeProfiles,
+        modeMuProfiles,
+        static_cast<float>(incident.x0) - 0.5f,
+        offset,
+        t,
+        fieldScale
+      );
+      const float intensity = physical_intensity(ez[leftIdx] * ez[leftIdx], fieldScale);
+      ezx[leftIdx] -= electric_update_coeff_x(leftIdx, s, intensity, runtimeFlags, gainSaturation, eps, loss, conductivity) * hyIncident;
+      ez[leftIdx] = ezx[leftIdx] + ezy[leftIdx];
+    }
+  }
+}
+
+static inline void apply_mode_te_electric(
+  i32 nx,
+  i32 ny,
+  float s,
+  float time,
+  float fieldScale,
+  float* modeSources,
+  float* modeProfiles,
+  i32 modeSourceCount,
+  float* ex,
+  float* ey,
+  float* epsY,
+  float* lossY,
+  float* conductivityY,
+  u8* material,
+  i32 runtimeFlags,
+  float gainSaturation
+) {
+  for (i32 n = 0; n < modeSourceCount; n += 1) {
+    const ModeProfileIncident incident = make_mode_profile_incident(modeSources + n * MODE_SOURCE_STRIDE);
+    if (incident.x0 < 1 || incident.x0 >= nx - 1 || incident.y0 < 0 || incident.length <= 0) continue;
+    for (i32 offset = 0; offset < incident.length; offset += 1) {
+      if (absf(modeProfiles[incident.profileOffset + offset]) < 1.0e-5f) continue;
+      const i32 y = incident.y0 + offset;
+      if (y < 0 || y >= ny) continue;
+      const i32 leftIdx = cell_id(incident.x0 - 1, y, nx);
+      if (material[leftIdx] == 2) continue;
+      const float hzIncident = mode_profile_scalar(incident, modeProfiles, static_cast<float>(incident.x0), offset, time, fieldScale);
+      const float intensity = physical_intensity(ex[leftIdx] * ex[leftIdx] + ey[leftIdx] * ey[leftIdx], fieldScale);
+      ey[leftIdx] += transverse_electric_update_coeff_y(leftIdx, s, intensity, runtimeFlags, gainSaturation, epsY, lossY, conductivityY) * hzIncident;
+    }
+  }
+}
+
+static inline void apply_mode_te_magnetic(
+  i32 nx,
+  i32 ny,
+  float s,
+  float time,
+  float fieldScale,
+  float* modeSources,
+  float* modeProfiles,
+  float* modeEpsilonProfiles,
+  i32 modeSourceCount,
+  float* hz,
+  float* hzx,
+  float* hzy,
+  float* mu,
+  float* muLoss,
+  u8* material
+) {
+  const float t = time + 0.5f;
+  for (i32 n = 0; n < modeSourceCount; n += 1) {
+    const ModeProfileIncident incident = make_mode_profile_incident(modeSources + n * MODE_SOURCE_STRIDE);
+    if (incident.x0 < 1 || incident.x0 >= nx - 1 || incident.y0 < 0 || incident.length <= 0) continue;
+    for (i32 offset = 0; offset < incident.length; offset += 1) {
+      if (absf(modeProfiles[incident.profileOffset + offset]) < 1.0e-5f) continue;
+      const i32 y = incident.y0 + offset;
+      if (y < 0 || y >= ny) continue;
+      const i32 leftIdx = cell_id(incident.x0, y, nx);
+      if (material[leftIdx] == 2) continue;
+      const float eyIncident = mode_profile_te_ey(
+        incident,
+        modeProfiles,
+        modeEpsilonProfiles,
+        static_cast<float>(incident.x0) - 0.5f,
+        offset,
+        t,
+        fieldScale
+      );
+      hzx[leftIdx] += magnetic_update_coeff_x(leftIdx, s, mu, muLoss) * eyIncident;
+      hz[leftIdx] = hzx[leftIdx] + hzy[leftIdx];
+    }
+  }
+}
+
 static inline void apply_tfsf_tm_magnetic(
   i32 nx,
   i32 ny,
@@ -668,7 +915,12 @@ extern "C" __attribute__((export_name("step"))) void step(
   float time,
   float fieldScale,
   u32 tfsfSourcesOffset,
-  i32 tfsfSourceCount
+  i32 tfsfSourceCount,
+  u32 modeSourcesOffset,
+  u32 modeProfilesOffset,
+  u32 modeEpsilonProfilesOffset,
+  u32 modeMuProfilesOffset,
+  i32 modeSourceCount
 ) {
   float* ez = f32(ezOffset);
   float* ezx = f32(ezxOffset);
@@ -706,6 +958,9 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* cpmlPsiEzX = f32(cpmlPsiEzXOffset);
   float* cpmlPsiEzY = f32(cpmlPsiEzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
+  float* modeSources = f32(modeSourcesOffset);
+  float* modeProfiles = f32(modeProfilesOffset);
+  float* modeMuProfiles = f32(modeMuProfilesOffset);
   const i32 n = nx * ny;
 
   if (runtimeFlags & STEP_KERR) {
@@ -736,6 +991,9 @@ extern "C" __attribute__((export_name("step"))) void step(
 
   if (tfsfSourceCount > 0) {
     apply_tfsf_tm_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hx, hy, mu, muLoss, muY, muLossY, material);
+  }
+  if (modeSourceCount > 0) {
+    apply_mode_tm_magnetic(nx, ny, s, time, fieldScale, modeSources, modeProfiles, modeSourceCount, hy, muY, muLossY, material);
   }
 
   for (i32 y = 1; y < ny - 1; y += 1) {
@@ -785,6 +1043,28 @@ extern "C" __attribute__((export_name("step"))) void step(
       lossY,
       conductivity,
       conductivityY,
+      material,
+      runtimeFlags,
+      gainSaturation
+    );
+  }
+  if (modeSourceCount > 0) {
+    apply_mode_tm_electric(
+      nx,
+      ny,
+      s,
+      time,
+      fieldScale,
+      modeSources,
+      modeProfiles,
+      modeMuProfiles,
+      modeSourceCount,
+      ez,
+      ezx,
+      ezy,
+      eps,
+      loss,
+      conductivity,
       material,
       runtimeFlags,
       gainSaturation
@@ -848,7 +1128,12 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float time,
   float fieldScale,
   u32 tfsfSourcesOffset,
-  i32 tfsfSourceCount
+  i32 tfsfSourceCount,
+  u32 modeSourcesOffset,
+  u32 modeProfilesOffset,
+  u32 modeEpsilonProfilesOffset,
+  u32 modeMuProfilesOffset,
+  i32 modeSourceCount
 ) {
   float* hz = f32(hzOffset);
   float* hzx = f32(hzxOffset);
@@ -890,6 +1175,9 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* cpmlPsiHzX = f32(cpmlPsiHzXOffset);
   float* cpmlPsiHzY = f32(cpmlPsiHzYOffset);
   float* tfsfSources = f32(tfsfSourcesOffset);
+  float* modeSources = f32(modeSourcesOffset);
+  float* modeProfiles = f32(modeProfilesOffset);
+  float* modeEpsilonProfiles = f32(modeEpsilonProfilesOffset);
   const i32 n = nx * ny;
 
   if (runtimeFlags & STEP_KERR) {
@@ -996,6 +1284,26 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
       gainSaturation
     );
   }
+  if (modeSourceCount > 0) {
+    apply_mode_te_electric(
+      nx,
+      ny,
+      s,
+      time,
+      fieldScale,
+      modeSources,
+      modeProfiles,
+      modeSourceCount,
+      ex,
+      ey,
+      epsY,
+      lossY,
+      conductivityY,
+      material,
+      runtimeFlags,
+      gainSaturation
+    );
+  }
 
   for (i32 y = 1; y < ny - 1; y += 1) {
     const i32 row = y * nx;
@@ -1017,6 +1325,25 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
 
   if (tfsfSourceCount > 0) {
     apply_tfsf_te_magnetic(nx, ny, s, time, fieldScale, tfsfSources, tfsfSourceCount, hz, hzx, hzy, mu, muLoss, muY, muLossY, material);
+  }
+  if (modeSourceCount > 0) {
+    apply_mode_te_magnetic(
+      nx,
+      ny,
+      s,
+      time,
+      fieldScale,
+      modeSources,
+      modeProfiles,
+      modeEpsilonProfiles,
+      modeSourceCount,
+      hz,
+      hzx,
+      hzy,
+      mu,
+      muLoss,
+      material
+    );
   }
 
   rebalance_te_split_storage(n, hz, hzx, hzy, ex, ey, mu, muLoss, muY, muLossY, material);

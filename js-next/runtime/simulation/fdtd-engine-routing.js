@@ -39,7 +39,23 @@
     canUseCompiledMaterialStep() {
       if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
       if (!this.canUseCompiledBoundaryStep()) return false;
-      if (this.hasModeProfileSource?.()) return false;
+      const hasModeProfileSource = Boolean(this.hasModeProfileSource?.());
+      if (hasModeProfileSource) {
+        if (!this.wasmBackend.supportsModeSource?.()) return false;
+        if (!this.wasmBackend.canPackModeSources?.(this)) return false;
+        if (
+          state.materialModulationEnabled ||
+          state.materialNonlinearEnabled ||
+          state.materialHarmonicEnabled ||
+          state.materialDispersionEnabled ||
+          state.materialSaturableGainEnabled ||
+          state.materialPhaseChangeEnabled ||
+          state.materialGyrotropyEnabled ||
+          state.materialBianisotropyEnabled
+        ) {
+          return false;
+        }
+      }
       if (this.hasTfsfIncidentSource?.()) {
         if (!this.wasmBackend.supportsTfsf?.()) return false;
         if (!this.wasmBackend.canPackTfsfSources?.(this)) return false;
@@ -76,6 +92,7 @@
       if (state.materialGyrotropyEnabled) labels.push("tensor");
       if (state.materialDispersionEnabled) labels.push("JS ADE");
       if (this.hasTfsfIncidentSource?.()) labels.push("TFSF");
+      if (this.hasModeProfileSource?.()) labels.push("mode");
       return labels.length > 0 ? `WASM ${labels.join("+")}` : "WASM";
     },
 
@@ -107,9 +124,7 @@
         return this.cpmlEngineLabel(state.materialSaturableGainEnabled ? "JS gain" : "JS dynamic");
       }
       if (state.materialConductivityEnabled) {
-        return this.canUseCompiledBoundaryStep() && this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsConductivity()
-          ? "WASM sigma"
-          : this.cpmlEngineLabel("JS sigma");
+        return this.cpmlEngineLabel(this.hasModeProfileSource?.() ? "JS sigma+mode source" : "JS sigma");
       }
       if (this.hasModeProfileSource?.()) return this.cpmlEngineLabel("JS mode source");
       if (this.hasTfsfIncidentSource?.()) {
