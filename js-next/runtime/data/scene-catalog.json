@@ -667,7 +667,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 46: side stub attached to a straight guide."
+      "description": "Atlas 46: side stub attached to a mode-launched straight guide."
     },
     {
       "id": "fabryPerot",
@@ -694,7 +694,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 49: dielectric ring coupled to one bus waveguide."
+      "description": "Atlas 49: dielectric ring coupled to one mode-launched bus waveguide."
     },
     {
       "id": "addDropRing",
@@ -703,7 +703,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 50: dielectric ring coupled to input and drop buses."
+      "description": "Atlas 50: dielectric ring coupled to mode-launched input and drop buses."
     },
     {
       "id": "racetrackResonator",
@@ -712,7 +712,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 51: elongated racetrack resonator side-coupled to a bus waveguide."
+      "description": "Atlas 51: elongated racetrack resonator side-coupled to a mode-launched bus waveguide."
     },
     {
       "id": "dielectricCavity",
@@ -739,7 +739,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 54: shorted quarter-wave stub cavity coupled to a dielectric guide."
+      "description": "Atlas 54: shorted quarter-wave stub cavity coupled to a mode-launched dielectric guide."
     },
     {
       "id": "qRingdown",
@@ -1063,7 +1063,7 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "groupName": "Periodic photonics and BICs",
-      "description": "Atlas 90: straight guide with a side-coupled dielectric resonator."
+      "description": "Atlas 90: mode-launched straight guide with a side-coupled dielectric resonator."
     },
     {
       "id": "sshTrivial",
@@ -1288,7 +1288,7 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 115: driven Kerr ring-cavity proxy for optical bistability with an optional bidirectional amplitude sweep."
+      "description": "Atlas 115: mode-launched Kerr ring-cavity proxy for optical bistability with an optional bidirectional amplitude sweep."
     },
     {
       "id": "vo2SwitchingSlab",
@@ -1306,7 +1306,7 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 117: small phase-change memory cell embedded in a guide; the switched state persists after the field is cleared."
+      "description": "Atlas 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared."
     },
     {
       "id": "saturableAbsorber",
@@ -1324,7 +1324,7 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 119: Mach-Zehnder-like guide with a nonlinear control section for qualitative all-optical switching."
+      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a nonlinear control section for qualitative all-optical switching."
     },
     {
       "id": "nonlinearLimiter",
@@ -1378,7 +1378,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 125: slab waveguide with a finite temporally modulated section and reduced S_m sideband readout."
+      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and reduced S_m sideband readout."
     },
     {
       "id": "travelingModulation",
@@ -1396,7 +1396,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 127: traveling-modulation guide section with approximate isolation and reduced Floquet sideband S_m readout."
+      "description": "Atlas 127: mode-launched traveling-modulation guide section with approximate isolation and reduced Floquet sideband S_m readout."
     },
     {
       "id": "modulatedRing",
@@ -1405,7 +1405,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 128: side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate."
+      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate."
     },
     {
       "id": "floquetResonators",
@@ -1414,7 +1414,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 129: coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis."
+      "description": "Atlas 129: mode-launched coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis."
     },
     {
       "id": "syntheticFrequency",
@@ -1423,7 +1423,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 130: chain of modulated resonators as a synthetic-frequency analogue with reduced sideband S_m analysis."
+      "description": "Atlas 130: mode-launched chain of modulated resonators as a synthetic-frequency analogue with reduced sideband S_m analysis."
     },
     {
       "id": "ptSymmetricCoupler",

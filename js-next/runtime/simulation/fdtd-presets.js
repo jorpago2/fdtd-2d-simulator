@@ -541,7 +541,7 @@ Object.assign(FDTDSim.prototype, {
     const guide = (yL, widthL, params = mat.n34, x0L = 0.4, x1L = domainXLambda - 0.4) => {
       rectL(x0L, yL - widthL / 2, Math.max(0.1, x1L - x0L), widthL, params);
     };
-    const guideSource = (yL, overrides = {}) => {
+    const gaussianGuideSource = (yL, overrides = {}) => {
       setSources([{ shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(yL), widthLambda: 0.35, ...overrides }]);
     };
     const modalGuideSource = (yL, overrides = {}) => {
@@ -1041,20 +1041,20 @@ Object.assign(FDTDSim.prototype, {
       case "ringResonator":
         guide(midYLambda + 1.25, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        guideSource(midYLambda + 1.25, { widthLambda: 0.24 });
+        modalGuideSource(midYLambda + 1.25, { widthLambda: 1.05 });
         break;
       case "addDropRing":
         guide(midYLambda + 1.25, 0.24, mat.n34);
         guide(midYLambda - 1.25, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        guideSource(midYLambda + 1.25, { widthLambda: 0.24 });
+        modalGuideSource(midYLambda + 1.25, { widthLambda: 1.05 });
         break;
       case "racetrackResonator":
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         guide(midYLambda + 1.05, 0.24, mat.n34, 0.6, domainXLambda - 0.6);
         ringL(midXLambda + 0.45, midYLambda, 1.55, 0.82, 1.26, 0.55, mat.n34);
-        guideSource(midYLambda + 1.05, { widthLambda: 0.24 });
+        modalGuideSource(midYLambda + 1.05, { widthLambda: 1.05 });
         break;
       case "dielectricCavity":
         ellipseL(midXLambda, midYLambda, 0.42, 0.42, mat.n34);
@@ -1070,7 +1070,7 @@ Object.assign(FDTDSim.prototype, {
         guide(midYLambda, 0.24, mat.n34, 0.55, domainXLambda - 0.55);
         rectL(midXLambda - 0.1, midYLambda - 0.92, 0.22, 0.92, mat.n34);
         rectL(midXLambda - 0.16, midYLambda - 0.98, 0.34, 0.08, mat.pec);
-        guideSource(midYLambda, { type: "gaussian", widthLambda: 0.24, amplitude: 0.72 });
+        modalGuideSource(midYLambda, { type: "gaussian", widthLambda: 1.05, amplitude: 0.72 });
         break;
       case "qRingdown":
         state.analysisEnabled = true;
@@ -1270,7 +1270,7 @@ Object.assign(FDTDSim.prototype, {
       case "phcWaveguide":
         configureBlochSweep(0, 1, 11, 120);
         phc({ skip: (_ix, iy) => iy === 0 });
-        guideSource(midYLambda, { widthLambda: 0.32 });
+        gaussianGuideSource(midYLambda, { widthLambda: 0.32 });
         break;
       case "phcOptimizedCavity":
         state.analysisEnabled = true;
@@ -1334,7 +1334,7 @@ Object.assign(FDTDSim.prototype, {
       case "fanoResonator":
         guide(midYLambda, 0.25, mat.n34);
         ellipseL(midXLambda + 0.8, midYLambda - 0.62, 0.36, 0.36, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "sshTrivial":
         sshChain(0.42, 0.25);
@@ -1674,7 +1674,7 @@ Object.assign(FDTDSim.prototype, {
           loss: 0.001,
           nonlinear: true,
         });
-        guideSource(midYLambda + 0.55, { type: "sine", widthLambda: 0.28, amplitude: 0.44 });
+        modalGuideSource(midYLambda + 0.55, { type: "sine", widthLambda: 1.25, amplitude: 0.44 });
         break;
       case "vo2SwitchingSlab":
         state.materialPhaseChangeEnabled = true;
@@ -1712,7 +1712,7 @@ Object.assign(FDTDSim.prototype, {
         configureAmplitudeSweep(0.12, 0.85, 9, 1100, true);
         guide(midYLambda, 0.28, mat.n34, 0.6, domainXLambda - 0.6);
         ellipseL(midXLambda + 0.45, midYLambda, 0.28, 0.18, mat.pcmOff);
-        guideSource(midYLambda, { type: "gaussian", widthLambda: 0.32, amplitude: 0.75 });
+        modalGuideSource(midYLambda, { type: "gaussian", widthLambda: 1.05, amplitude: 0.75 });
         break;
       case "saturableAbsorber":
         state.materialPhaseChangeEnabled = true;
@@ -1776,7 +1776,7 @@ Object.assign(FDTDSim.prototype, {
           phaseEpsOn: 4.8,
           phaseLossOn: 0.018,
         });
-        guideSource(midYLambda, { type: "gaussian", widthLambda: 0.24, amplitude: 0.74 });
+        modalGuideSource(midYLambda, { type: "gaussian", widthLambda: 1.25, amplitude: 0.74 });
         break;
       case "nonlinearLimiter":
         state.materialPhaseChangeEnabled = true;
@@ -1873,7 +1873,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         guide(midYLambda, 0.34, mat.n15, 0.6, domainXLambda - 0.6);
         guide(midYLambda, 0.34, uniformTemporalMaterial({ ...mat.n20, loss: 0.001 }), midXLambda - 1.25, midXLambda + 1.25);
-        guideSource(midYLambda, { type: "sine", widthLambda: 0.32, amplitude: 0.42 });
+        modalGuideSource(midYLambda, { type: "sine", widthLambda: 1.3, amplitude: 0.42 });
         break;
       case "travelingModulation":
         state.materialModulationEnabled = true;
@@ -1886,7 +1886,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1000);
         guide(midYLambda, 0.34, { ...mat.n15, modulated: true }, midXLambda - 2.0, midXLambda + 2.0);
-        guideSource(midYLambda, { widthLambda: 0.32, amplitude: 0.4 });
+        gaussianGuideSource(midYLambda, { widthLambda: 0.32, amplitude: 0.4 });
         break;
       case "temporalIsolator":
         state.viewMode = "poynting";
@@ -1903,7 +1903,7 @@ Object.assign(FDTDSim.prototype, {
         guide(midYLambda, 0.32, mat.n15, 0.55, domainXLambda - 0.55);
         guide(midYLambda, 0.32, { ...mat.n20, loss: 0.002, modulated: true }, midXLambda - 1.65, midXLambda + 1.65);
         rectL(midXLambda + 2.1, midYLambda - 0.5, 0.16, 1.0, mat.lossyN15);
-        guideSource(midYLambda, { widthLambda: 0.28, amplitude: 0.38 });
+        modalGuideSource(midYLambda, { widthLambda: 1.3, amplitude: 0.38 });
         break;
       case "modulatedRing":
         state.materialModulationEnabled = true;
@@ -1916,7 +1916,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         guide(midYLambda + 0.54, 0.26, mat.n15, 0.6, domainXLambda - 0.6);
         ringL(midXLambda + 0.2, midYLambda - 0.16, 0.62, 0.62, 0.43, 0.43, uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }));
-        guideSource(midYLambda + 0.54, { type: "sine", widthLambda: 0.28, amplitude: 0.42 });
+        modalGuideSource(midYLambda + 0.54, { type: "sine", widthLambda: 1.25, amplitude: 0.42 });
         break;
       case "floquetResonators":
         state.materialModulationEnabled = true;
@@ -1937,7 +1937,7 @@ Object.assign(FDTDSim.prototype, {
             uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }, ((i + 1) * 2 * Math.PI) / 3),
           );
         }
-        guideSource(midYLambda + 0.42, { type: "sine", widthLambda: 0.26, amplitude: 0.4 });
+        modalGuideSource(midYLambda + 0.42, { type: "sine", widthLambda: 1.25, amplitude: 0.4 });
         break;
       case "syntheticFrequency":
         state.materialModulationEnabled = true;
@@ -1958,7 +1958,7 @@ Object.assign(FDTDSim.prototype, {
             uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }, ((i + 2) * 2 * Math.PI) / 5),
           );
         }
-        guideSource(midYLambda + 0.48, { type: "sine", widthLambda: 0.24, amplitude: 0.38 });
+        modalGuideSource(midYLambda + 0.48, { type: "sine", widthLambda: 1.25, amplitude: 0.38 });
         break;
       case "ptSymmetricCoupler":
         state.materialSaturableGainEnabled = true;
