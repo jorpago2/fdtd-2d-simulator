@@ -1605,7 +1605,6 @@ details[open] > summary::after {
 
   .canvas-toolbar .tool-group.compact {
     flex: 0 0 auto;
-    position: relative;
   }
 
   .canvas-toolbar .interaction-toggle {
@@ -1620,24 +1619,40 @@ details[open] > summary::after {
     display: none;
   }
 
-  .stage.canvas-actions-open #resetBtn,
-  .stage.canvas-actions-open .canvas-action-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    z-index: 75;
+  .stage.canvas-actions-open .canvas-toolbar {
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 5px 8px;
   }
 
-  .stage.canvas-actions-open #resetBtn {
-    right: calc(2 * var(--toolbar) + 16px);
-    box-shadow: var(--shadow-sm);
+  .stage.canvas-actions-open .canvas-toolbar::after {
+    content: "";
+    flex: 0 0 100%;
+    order: 3;
   }
 
-  .stage.canvas-actions-open .canvas-action-menu {
-    right: 0;
+  .stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
+    display: contents;
+  }
+
+  .stage.canvas-actions-open #playPauseBtn {
+    order: 1;
   }
 
   .stage.canvas-actions-open #canvasActionToggle {
-    order: 0;
+    order: 2;
+  }
+
+  .stage.canvas-actions-open .interaction-toggle {
+    order: 3;
+  }
+
+  .stage.canvas-actions-open #resetBtn {
+    order: 4;
+  }
+
+  .stage.canvas-actions-open .canvas-action-menu {
+    order: 5;
   }
 
   .canvas-mode-toggle {
