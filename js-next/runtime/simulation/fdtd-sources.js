@@ -4,6 +4,10 @@ const incidentFieldModule = globalThis.FdtdIncidentField;
 if (!incidentFieldModule) {
   throw new Error("fdtd-incident-field.js must be loaded before fdtd-sources.js");
 }
+const modeSolverModule = globalThis.FdtdModeSolver;
+if (!modeSolverModule) {
+  throw new Error("fdtd-mode-solver.js must be loaded before fdtd-sources.js");
+}
 
 Object.assign(FDTDSim.prototype, {
 sourceShutdownFactor(source, solverTime = this.time) {
@@ -72,6 +76,10 @@ injectSingleSource(source) {
   const sy = this.sourceYCell(source);
   if (source.shape === "evanescentLine") {
     this.injectEvanescentLineIncidentField(source, sx, sy);
+    return;
+  }
+  if (source.shape === "modeProfile") {
+    this.injectModeProfileSource(source, sx, sy);
     return;
   }
   const value = this.sourceSample(source);
@@ -359,6 +367,130 @@ injectEvanescentLineIncidentField(source, sx, sy) {
       } else {
         this.addTransverseIncidentField(idx, invImpedance * kParallelRatio * scalarValue, -invImpedance * alphaRatio * quadratureScalar);
       }
+    }
+  }
+},
+
+modeProfileWindowBounds(source, sy) {
+  const windowLambda = Math.max(0.25, Math.min(3.0, Number(source.modeWindowLambda ?? source.widthLambda) || 1.15));
+  const windowCells = Math.max(9, Math.round(windowLambda * state.cellsPerWavelength));
+  let y0 = Math.max(this.activeInteriorMinY(), sy - Math.floor(windowCells / 2));
+  let y1 = Math.min(this.activeInteriorMaxY(), y0 + windowCells - 1);
+  y0 = Math.max(this.activeInteriorMinY(), y1 - windowCells + 1);
+  return { y0, y1 };
+},
+
+modeProfileCrossSection(sx, y0, y1) {
+  const length = Math.max(0, y1 - y0 + 1);
+  const epsilonProfile = new Float64Array(length);
+  const muProfile = new Float64Array(length);
+  const signatureParts = [];
+  for (let offset = 0; offset < length; offset += 1) {
+    const y = y0 + offset;
+    const idx = this.id(sx, y);
+    const isPec = this.material[idx] === 2;
+    const epsilon = isPec
+      ? 1e-3
+      : Math.max(1e-6, Math.abs(0.5 * (this.safeMaterialDenominator(this.eps[idx]) + this.safeMaterialDenominator(this.epsY[idx]))));
+    const mu = isPec
+      ? 1
+      : Math.max(1e-6, Math.abs(0.5 * (this.safeMaterialDenominator(this.mu[idx]) + this.safeMaterialDenominator(this.muY[idx]))));
+    epsilonProfile[offset] = epsilon;
+    muProfile[offset] = mu;
+    signatureParts.push(`${this.material[idx]}:${Math.round(epsilon * 1000)}:${Math.round(mu * 1000)}`);
+  }
+  return {
+    epsilonProfile,
+    muProfile,
+    signature: signatureParts.join("|"),
+  };
+},
+
+modeProfileDescriptor(source, sx, sy) {
+  if (!this.modeProfileCache) this.modeProfileCache = new WeakMap();
+  const { y0, y1 } = this.modeProfileWindowBounds(source, sy);
+  const crossSection = this.modeProfileCrossSection(sx, y0, y1);
+  const modeOrder = Math.max(0, Math.min(3, Math.round(Number(source.modeOrder) || 0)));
+  const k0Cells = (2 * Math.PI * Math.max(1e-9, Number(source.frequency) || 0)) / Math.max(COURANT, 1e-9);
+  const key = [
+    state.fieldComponent,
+    sx,
+    sy,
+    y0,
+    y1,
+    modeOrder,
+    Math.round(k0Cells * 1e6),
+    crossSection.signature,
+  ].join(";");
+  const cached = this.modeProfileCache.get(source);
+  if (cached?.key === key) return cached.descriptor;
+
+  const modes = modeSolverModule.solveScalarModes({
+    epsilonProfile: crossSection.epsilonProfile,
+    muProfile: crossSection.muProfile,
+    k0Cells,
+    modeCount: modeOrder + 1,
+    centerIndex: sy - y0,
+  });
+  // Reject finite-window box modes when the local cross-section has no bound mode.
+  const guidedModes = modes.filter((mode) => mode.neff > mode.confinementIndexMin + 1e-3);
+  const mode = guidedModes[Math.min(modeOrder, guidedModes.length - 1)] || guidedModes[0] || null;
+  const descriptor = mode
+    ? {
+        ...mode,
+        epsilonProfile: crossSection.epsilonProfile,
+        muProfile: crossSection.muProfile,
+        k0Cells,
+        modeOrder,
+        y0,
+        y1,
+      }
+    : null;
+  this.modeProfileCache.set(source, { key, descriptor });
+  return descriptor;
+},
+
+injectModeProfileFallback(source, sx, sy) {
+  const value = this.sourceSample(source);
+  const fwhm = Math.max(3, Math.round((Number(source.widthLambda) || 0.45) * state.cellsPerWavelength));
+  const sigma = Math.max(1, fwhm / (2 * Math.sqrt(2 * Math.LN2)));
+  const radius = Math.ceil(3 * sigma);
+  const y0 = Math.max(this.activeInteriorMinY(), sy - radius);
+  const y1 = Math.min(this.activeInteriorMaxY(), sy + radius);
+  for (let y = y0; y <= y1; y += 1) {
+    const profile = Math.exp(-0.5 * ((y - sy) / sigma) ** 2);
+    if (profile < 1e-4) continue;
+    const idx = this.id(sx, y);
+    if (this.material[idx] !== 2) this.addScalarCurrentSource(idx, value * profile, sx, y);
+  }
+},
+
+injectModeProfileSource(source, sx, sy) {
+  const descriptor = this.modeProfileDescriptor(source, sx, sy);
+  if (!descriptor) {
+    this.injectModeProfileFallback(source, sx, sy);
+    return;
+  }
+  const scalarSample = this.sourceSample(source);
+  const quadratureSample = this.sourceSample(source, Math.PI / 2);
+  const neff = Math.max(1e-6, Math.min(descriptor.confinementIndexMax || 10, descriptor.neff || 1));
+  const invK0Cells = 1 / Math.max(1e-9, descriptor.k0Cells || 0);
+  for (let offset = 0; offset < descriptor.profile.length; offset += 1) {
+    const profile = descriptor.profile[offset];
+    const profileDerivative = descriptor.profileDerivative?.[offset] || 0;
+    if (Math.max(Math.abs(profile), Math.abs(profileDerivative)) < 1e-4) continue;
+    const y = descriptor.y0 + offset;
+    const idx = this.id(sx, y);
+    if (this.material[idx] === 2) continue;
+    const scalarValue = scalarSample * profile;
+    const derivativeValue = quadratureSample * profileDerivative * invK0Cells;
+    this.addIncidentScalarField(idx, scalarValue);
+    if (state.fieldComponent === "hz") {
+      const epsilon = Math.max(1e-6, descriptor.epsilonProfile[offset] || this.safeMaterialDenominator(this.eps[idx]));
+      this.addTransverseIncidentField(idx, -derivativeValue / epsilon, (neff / epsilon) * scalarValue);
+    } else {
+      const mu = Math.max(1e-6, descriptor.muProfile[offset] || this.safeMaterialDenominator(this.muY[idx]));
+      this.addTransverseIncidentField(idx, derivativeValue / mu, (-neff / mu) * scalarValue);
     }
   }
 },

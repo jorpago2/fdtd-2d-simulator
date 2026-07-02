@@ -534,6 +534,10 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     if (guidedSelection.activeCard !== "slabWaveguide") {
       failures.push(`Slab waveguide card was not marked active; got ${guidedSelection.activeCard || "none"}`);
     }
+    const guidedSourceShape = await page.evaluate(() => state.sources?.[0]?.shape || "");
+    if (guidedSourceShape !== "modeProfile") {
+      failures.push(`Slab waveguide should load a guided mode profile source; got ${guidedSourceShape || "none"}`);
+    }
   } finally {
     await context.close();
   }
@@ -977,7 +981,7 @@ async function runSourceDependentParamsSmoke(page) {
       populateSourceEditor({
         ...sourceTemplate,
         shape,
-        widthLambda: shape === "evanescentLine" ? 1.25 : sourceTemplate.widthLambda,
+        widthLambda: shape === "evanescentLine" ? 1.25 : shape === "modeProfile" ? 1.15 : sourceTemplate.widthLambda,
       });
       const visibleSourceIds = [
         "sourceWidthControl",
@@ -1008,6 +1012,7 @@ async function runSourceDependentParamsSmoke(page) {
       line: shapeControlState("line"),
       gaussianProfile: shapeControlState("gaussianProfile"),
       evanescentLine: shapeControlState("evanescentLine"),
+      modeProfile: shapeControlState("modeProfile"),
       multipole: shapeControlState("multipole"),
     };
   });
@@ -1022,6 +1027,7 @@ async function runSourceDependentParamsSmoke(page) {
     line: ["sourceAngleControl"],
     gaussianProfile: ["sourceAngleControl"],
     evanescentLine: ["sourceWidthControl", "sourceAngleControl"],
+    modeProfile: ["sourceWidthControl"],
     multipole: ["sourceWidthControl", "sourceAngleControl", "sourceOrderControl", "sourcePhaseControl"],
   };
   for (const [shape, expectedIds] of Object.entries(expectations)) {

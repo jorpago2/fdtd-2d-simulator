@@ -39,9 +39,10 @@
           this.drawOverlayArrow(x + 7, y, x + 7 + arrowLength, y, true);
           this.drawOverlayLabel("ev", x + 14 + arrowLength, y, "left", true);
         }
-      } else if (source.shape === "gaussianProfile") {
+      } else if (source.shape === "gaussianProfile" || source.shape === "modeProfile") {
         const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
-        const halfHeight = fwhm * 0.5 * viewport.pixelsPerCell;
+        const modalWindow = Math.max(4, Math.round((Number(source.widthLambda) || 1.15) * state.cellsPerWavelength));
+        const halfHeight = (source.shape === "modeProfile" ? modalWindow : fwhm) * 0.5 * viewport.pixelsPerCell;
         this.ctx.beginPath();
         this.ctx.moveTo(x, y - halfHeight);
         this.ctx.lineTo(x, y + halfHeight);
@@ -49,6 +50,7 @@
         this.ctx.beginPath();
         this.ctx.arc(x, y, 3 * Math.max(1, window.devicePixelRatio || 1), 0, Math.PI * 2);
         this.ctx.stroke();
+        if (source.shape === "modeProfile") this.drawOverlayLabel("mode", x + 12 * dpr, y, "left", true);
       } else if (localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)) {
         this.drawAnalyticSourceGlyph(x, y, source);
       } else {

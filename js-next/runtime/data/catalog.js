@@ -22,7 +22,7 @@ const localizedSourceShapes = new Set([
 const inPlaneElectricCurrentShapes = new Set(["inPlaneElectricDipole"]);
 const currentSourceShapes = new Set(["point", ...localizedSourceShapes]);
 const incidentFieldSourceShapes = new Set(["line", "gaussianProfile", "evanescentLine"]);
-const lineLikeIncidentSourceShapes = new Set(["line", "evanescentLine"]);
+const lineLikeIncidentSourceShapes = new Set(["line", "evanescentLine", "modeProfile"]);
 const circularDipoleSourceShapes = new Set(["circularDipoleCw", "circularDipoleCcw"]);
 
 const sourceShapeLabels = {
@@ -40,6 +40,7 @@ const sourceShapeLabels = {
   multipole: "Jz multipole pattern",
   inPlaneElectricDipole: "In-plane electric dipole",
   evanescentLine: "Evanescent line",
+  modeProfile: "Guided mode profile",
 };
 
 const defaultSourceConfig = {
@@ -93,16 +94,16 @@ const sceneDescriptions = {
   phasedDipoleArray: "Atlas 32: progressive temporal phase per dipole, with phase step derived from a target steering angle.",
   apertureRadiator: "Atlas 33: source behind a PEC slot aperture.",
   nearFarFieldNtff: "Atlas 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
-  slabWaveguide: "Atlas 35: high-index slab guide with a Gaussian line source approximation.",
-  multimodeSlab: "Atlas 36: wider slab guide for multimode beating.",
-  lossyGuide: "Atlas 37: lossy high-index guide.",
-  waveguideBend: "Atlas 38: 90-degree dielectric waveguide bend using a quarter-ring path.",
-  taperWaveguide: "Atlas 39: width taper from narrow to wide guide.",
-  widthStepWaveguide: "Atlas 40: abrupt waveguide width step.",
-  directionalCoupler: "Atlas 41: two parallel guides separated by a small gap.",
-  mmiWaveguide: "Atlas 42: narrow input feeding a wider multimode section.",
-  machZehnder: "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms.",
-  guideScatterer: "Atlas 44: small dielectric scatterer beside a guide.",
+  slabWaveguide: "Atlas 35: high-index slab guide excited by a finite-difference fundamental mode profile.",
+  multimodeSlab: "Atlas 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating.",
+  lossyGuide: "Atlas 37: lossy high-index guide driven by its finite-difference mode profile.",
+  waveguideBend: "Atlas 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path.",
+  taperWaveguide: "Atlas 39: width taper from narrow to wide guide with a modal input field.",
+  widthStepWaveguide: "Atlas 40: abrupt waveguide width step driven by the input-guide mode.",
+  directionalCoupler: "Atlas 41: two parallel guides separated by a small gap, launched from one local guided mode.",
+  mmiWaveguide: "Atlas 42: narrow modal input feeding a wider multimode section.",
+  machZehnder: "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms and a modal input.",
+  guideScatterer: "Atlas 44: small dielectric scatterer beside a mode-launched guide.",
   microstrip: "Atlas 45: qualitative microstrip cross-section with PEC strip, dielectric substrate, and ground plane.",
   stubResonator: "Atlas 46: side stub attached to a straight guide.",
   fabryPerot: "Atlas 47: dielectric cavity placed between two Bragg reflectors.",

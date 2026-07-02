@@ -141,6 +141,7 @@
         quadrupole: `${sourceLetter}z quadrupole pattern`,
         multipole: `2D ${sourceLetter}z multipole pattern`,
         evanescentLine: "Evanescent line",
+        modeProfile: "Guided mode profile",
       }[shape] || "Source";
     }
 
@@ -150,6 +151,7 @@
       if (shape === "janusDipole") return "quadrature Janus pair";
       if (shape === "huygens") return "cardioid Huygens pair";
       if (shape === "evanescentLine") return "evanescent incident field";
+      if (shape === "modeProfile") return "finite-difference guided mode";
       return incidentFieldSourceShapes.has(shape) ? "incident field" : `out-of-plane ${currentSourceLetter()}z`;
     }
 

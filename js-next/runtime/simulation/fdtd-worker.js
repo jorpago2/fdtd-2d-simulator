@@ -128,6 +128,7 @@ importScripts(
   "fdtd-boundaries.js?v=20260630-js-next-cutover-1",
   "fdtd-presets.js?v=20260630-js-next-cutover-1",
   "fdtd-incident-field.js?v=20260630-js-next-cutover-1",
+  "fdtd-mode-solver.js?v=20260702-mode-source-1",
   "fdtd-sources.js?v=20260630-js-next-cutover-1",
   "fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1",
   "fdtd-custom-monitors.js?v=20260630-js-next-cutover-1",

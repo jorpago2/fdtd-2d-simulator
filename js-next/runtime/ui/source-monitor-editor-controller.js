@@ -147,6 +147,13 @@
         el.sourceWidthInput.step = "0.01";
         el.sourceWidthInput.value = normalized.widthLambda.toFixed(2);
         el.sourceWidthOutput.value = normalized.widthLambda.toFixed(2);
+      } else if (normalized.shape === "modeProfile") {
+        if (widthLabel) widthLabel.innerHTML = `mode window / &lambda;<sub>0</sub>`;
+        el.sourceWidthInput.min = "0.25";
+        el.sourceWidthInput.max = "3.00";
+        el.sourceWidthInput.step = "0.05";
+        el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
+        el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
       } else {
         if (widthLabel) widthLabel.innerHTML = `FWHM / &lambda;<sub>0</sub>`;
         el.sourceWidthInput.min = "0.05";

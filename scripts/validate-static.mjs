@@ -114,6 +114,19 @@ function validateJsNextCore() {
   );
 }
 
+function validateModeSolver() {
+  const result = spawnSync(process.execPath, [repoPath("scripts", "validate-mode-solver.mjs")], {
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  const output = `${result.stdout || ""}${result.stderr || ""}`.trim();
+  addCheck(
+    "mode solver",
+    result.status === 0 ? "PASS" : "BLOCK",
+    output || "No output",
+  );
+}
+
 function loadCatalog(constantsJs, catalogJs) {
   const code = [
     constantsJs,
@@ -526,12 +539,14 @@ function main() {
     "scripts/generate-scene-thumbnails.mjs",
     "scripts/serve-static.mjs",
     "scripts/validate-js-next-core.mjs",
+    "scripts/validate-mode-solver.mjs",
     "scripts/validate-scene-library.mjs",
     "scripts/performance-benchmark.mjs",
   ]);
 
   runNodeSyntaxCheck(jsFiles);
   validateJsNextCore();
+  validateModeSolver();
   validateHtmlAssets(indexHtml);
   validateWorkerImports(fdtdWorkerJs, fdtdWorkerFile);
   const { catalog, constants } = loadCatalog(

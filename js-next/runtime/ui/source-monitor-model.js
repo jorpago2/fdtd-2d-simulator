@@ -64,6 +64,10 @@
       );
       source.evanescentKParallelRatio = kParallelRatio;
       source.widthLambda = kParallelRatio;
+    } else if (source.shape === "modeProfile") {
+      source.widthLambda = clampFinite(source.widthLambda, config.widthLambda, 0.25, 3.0);
+      source.modeOrder = clampInt(source.modeOrder, 0, 3);
+      source.modeWindowLambda = clampFinite(source.modeWindowLambda ?? source.widthLambda, source.widthLambda, 0.25, 3.0);
     } else {
       source.widthLambda = clampFinite(source.widthLambda, config.widthLambda, 0.05, 1.5);
     }

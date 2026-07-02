@@ -544,6 +544,19 @@ Object.assign(FDTDSim.prototype, {
     const guideSource = (yL, overrides = {}) => {
       setSources([{ shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(yL), widthLambda: 0.35, ...overrides }]);
     };
+    const modalGuideSource = (yL, overrides = {}) => {
+      setSources([
+        {
+          shape: "modeProfile",
+          xLambda: sourceX(0.9),
+          yLambda: sourceY(yL),
+          widthLambda: 1.15,
+          modeOrder: 0,
+          amplitude: 0.42,
+          ...overrides,
+        },
+      ]);
+    };
     const configureFrequencySweep = (start = 0.018, end = 0.052, samples = 9, steps = 900) => {
       state.sweepMode = "frequency";
       state.sweepStart = clampSweepRangeForMode("frequency", start);
@@ -930,15 +943,18 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "slabWaveguide":
         guide(midYLambda, 0.25, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "multimodeSlab":
         guide(midYLambda, 0.8, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.45 });
+        setSources([
+          { shape: "modeProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 1.65, modeOrder: 0, amplitude: 0.34 },
+          { shape: "modeProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda + 0.12), widthLambda: 1.65, modeOrder: 1, amplitude: 0.24, phaseDeg: 90 },
+        ]);
         break;
       case "lossyGuide":
         guide(midYLambda, 0.32, mat.lossyGuide);
-        guideSource(midYLambda, { widthLambda: 0.32 });
+        modalGuideSource(midYLambda, { widthLambda: 1.1, amplitude: 0.36 });
         break;
       case "waveguideBend": {
         const bendCx = midXLambda - 0.6;
@@ -946,7 +962,7 @@ Object.assign(FDTDSim.prototype, {
         guide(midYLambda, 0.26, mat.n34, 0.55, bendCx);
         rectL(bendCx + 0.55, midYLambda + 0.55, 0.26, Math.max(0.3, domainYLambda - midYLambda - 1.1), mat.n34);
         quarterRingL(bendCx, bendCy, 0.81, 0.55, "ne", mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.24 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       }
       case "taperWaveguide": {
@@ -958,25 +974,25 @@ Object.assign(FDTDSim.prototype, {
           rectL(x0 + t * length, midYLambda - width / 2, length / 80 + 0.02, width, mat.n34);
         }
         guide(midYLambda, 0.4, mat.n34, x0 + length, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.18 });
+        modalGuideSource(midYLambda, { widthLambda: 0.95 });
         break;
       }
       case "widthStepWaveguide":
         guide(midYLambda, 0.25, mat.n34, 0.5, midXLambda);
         guide(midYLambda, 0.5, mat.n34, midXLambda, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "directionalCoupler":
         guide(midYLambda - 0.23, 0.22, mat.n34, 0.6, domainXLambda - 0.6);
         guide(midYLambda + 0.23, 0.22, mat.n34, 1.4, domainXLambda - 0.6);
-        guideSource(midYLambda - 0.23, { widthLambda: 0.22 });
+        modalGuideSource(midYLambda - 0.23, { widthLambda: 0.72 });
         break;
       case "mmiWaveguide":
         guide(midYLambda, 0.24, mat.n34, 0.5, 2.2);
         rectL(2.2, midYLambda - 0.5, 3.5, 1.0, mat.n34);
         guide(midYLambda - 0.25, 0.22, mat.n34, 5.7, domainXLambda - 0.5);
         guide(midYLambda + 0.25, 0.22, mat.n34, 5.7, domainXLambda - 0.5);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "machZehnder":
         guide(midYLambda, 0.22, mat.n34, 0.55, midXLambda - 2.1);
@@ -988,12 +1004,12 @@ Object.assign(FDTDSim.prototype, {
         rotatedRectL(midXLambda + 1.75, midYLambda - 0.34, 1.0, 0.22, 35, mat.n34);
         rotatedRectL(midXLambda + 1.75, midYLambda + 0.34, 1.0, 0.22, -35, mat.n34);
         guide(midYLambda, 0.22, mat.n34, midXLambda + 2.1, domainXLambda - 0.55);
-        guideSource(midYLambda, { widthLambda: 0.22 });
+        modalGuideSource(midYLambda, { widthLambda: 1.0 });
         break;
       case "guideScatterer":
         guide(midYLambda, 0.28, mat.n34);
         ellipseL(midXLambda + 0.9, midYLambda - 0.32, 0.08, 0.08, mat.n20);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "microstrip":
         state.fieldComponent = "hz";
@@ -1006,7 +1022,7 @@ Object.assign(FDTDSim.prototype, {
       case "stubResonator":
         guide(midYLambda, 0.25, mat.n34);
         rectL(midXLambda - 0.12, midYLambda - 1.05, 0.25, 1.05, mat.n34);
-        guideSource(midYLambda, { widthLambda: 0.25 });
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "fabryPerot":
         braggLayers(midXLambda - 2.0, 4, 0, domainYLambda);

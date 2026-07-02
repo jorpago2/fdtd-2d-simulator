@@ -895,7 +895,7 @@ const {
 } = sourceMonitorOperations;
 
 function sourceUsesWidth(shape) {
-  return localizedSourceShapes.has(shape) || inPlaneElectricCurrentShapes.has(shape) || shape === "evanescentLine";
+  return localizedSourceShapes.has(shape) || inPlaneElectricCurrentShapes.has(shape) || shape === "evanescentLine" || shape === "modeProfile";
 }
 
 function sourceUsesAngle(shape) {

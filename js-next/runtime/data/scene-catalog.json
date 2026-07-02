@@ -568,7 +568,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 35: high-index slab guide with a Gaussian line source approximation."
+      "description": "Atlas 35: high-index slab guide excited by a finite-difference fundamental mode profile."
     },
     {
       "id": "multimodeSlab",
@@ -577,7 +577,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 36: wider slab guide for multimode beating."
+      "description": "Atlas 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating."
     },
     {
       "id": "lossyGuide",
@@ -586,7 +586,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 37: lossy high-index guide."
+      "description": "Atlas 37: lossy high-index guide driven by its finite-difference mode profile."
     },
     {
       "id": "waveguideBend",
@@ -595,7 +595,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 38: 90-degree dielectric waveguide bend using a quarter-ring path."
+      "description": "Atlas 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path."
     },
     {
       "id": "taperWaveguide",
@@ -604,7 +604,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 39: width taper from narrow to wide guide."
+      "description": "Atlas 39: width taper from narrow to wide guide with a modal input field."
     },
     {
       "id": "widthStepWaveguide",
@@ -613,7 +613,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 40: abrupt waveguide width step."
+      "description": "Atlas 40: abrupt waveguide width step driven by the input-guide mode."
     },
     {
       "id": "directionalCoupler",
@@ -622,7 +622,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 41: two parallel guides separated by a small gap."
+      "description": "Atlas 41: two parallel guides separated by a small gap, launched from one local guided mode."
     },
     {
       "id": "mmiWaveguide",
@@ -631,7 +631,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 42: narrow input feeding a wider multimode section."
+      "description": "Atlas 42: narrow modal input feeding a wider multimode section."
     },
     {
       "id": "machZehnder",
@@ -640,7 +640,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms."
+      "description": "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms and a modal input."
     },
     {
       "id": "guideScatterer",
@@ -649,7 +649,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 44: small dielectric scatterer beside a guide."
+      "description": "Atlas 44: small dielectric scatterer beside a mode-launched guide."
     },
     {
       "id": "microstrip",
