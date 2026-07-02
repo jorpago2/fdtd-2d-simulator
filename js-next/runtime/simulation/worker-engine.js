@@ -50,7 +50,7 @@ class FdtdWorkerEngine {
   ensureWorker() {
     if (!this.supported()) return false;
     if (this.worker) return true;
-    this.worker = new Worker("js-next/runtime/simulation/fdtd-worker.js?v=20260630-js-next-cutover-1");
+    this.worker = new Worker("js-next/runtime/simulation/fdtd-worker.js?v=20260702-worker-policy-1");
     this.worker.onmessage = (event) => this.handleMessage(event.data || {});
     this.worker.onerror = (event) => {
       this.handleError(event.message || "Worker error");

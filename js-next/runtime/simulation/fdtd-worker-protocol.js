@@ -1,26 +1,36 @@
 "use strict";
 
-const FDTD_WORKER_FRAME_ARRAYS = Object.freeze([
+const FDTD_WORKER_FIELD_FRAME_ARRAYS = Object.freeze([
   "ez",
   "ezx",
   "ezy",
   "hx",
   "hy",
-  "eps",
-  "loss",
-  "epsY",
-  "lossY",
-  "mu",
-  "muLoss",
-  "muY",
-  "muLossY",
+]);
+
+const FDTD_WORKER_DUAL_FIELD_FRAME_ARRAYS = Object.freeze([
   "dualEz",
   "dualEzx",
   "dualEzy",
   "dualHx",
   "dualHy",
+]);
+
+const FDTD_WORKER_DYNAMIC_EPS_FRAME_ARRAYS = Object.freeze([
+  "eps",
+  "epsY",
+]);
+
+const FDTD_WORKER_DYNAMIC_LOSS_FRAME_ARRAYS = Object.freeze([
+  "loss",
+  "lossY",
+]);
+
+const FDTD_WORKER_PHASE_FRAME_ARRAYS = Object.freeze([
   "phaseState",
 ]);
+
+const FDTD_WORKER_FRAME_ARRAYS = Object.freeze([...FDTD_WORKER_FIELD_FRAME_ARRAYS]);
 
 const FDTD_WORKER_FULL_ARRAYS = Object.freeze([
   "ez",
@@ -213,6 +223,20 @@ function fdtdWorkerApplyProps(sim, props = {}) {
   if (props.diagnosticPhasors) sim.diagnosticPhasors = props.diagnosticPhasors;
   if (props.diagnosticDftSummary) sim.diagnosticDftSummary = props.diagnosticDftSummary;
   if (props.analysisMetrics) sim.analysisMetrics = props.analysisMetrics;
+}
+
+function fdtdWorkerFrameArrayNames(sim) {
+  const names = [...FDTD_WORKER_FIELD_FRAME_ARRAYS];
+  if (sim?.fullVectorBianisotropyActive?.()) {
+    names.push(...FDTD_WORKER_DUAL_FIELD_FRAME_ARRAYS);
+  }
+  if (state.materialModulationEnabled || state.materialNonlinearEnabled || state.materialPhaseChangeEnabled) {
+    names.push(...FDTD_WORKER_DYNAMIC_EPS_FRAME_ARRAYS);
+  }
+  if (state.materialPhaseChangeEnabled) {
+    names.push(...FDTD_WORKER_DYNAMIC_LOSS_FRAME_ARRAYS, ...FDTD_WORKER_PHASE_FRAME_ARRAYS);
+  }
+  return names;
 }
 
 function fdtdWorkerCollectArrays(sim, names, options = {}) {

@@ -112,7 +112,7 @@ function setBoundarySideMode(side, mode) {
 }
 
 importScripts(
-  "fdtd-worker-protocol.js?v=20260630-js-next-cutover-1",
+  "fdtd-worker-protocol.js?v=20260702-worker-policy-1",
   "../core/constants.js?v=20260630-js-next-cutover-1",
   "wasm-backend.js?v=20260630-js-next-cutover-1",
   "../core/numerics.js?v=20260630-js-next-cutover-1",
@@ -211,7 +211,7 @@ function stepSimulation(payload) {
   for (let i = 0; i < steps; i += 1) sim.step();
   if (payload.measure) sim.measure();
   const elapsedMs = performance.now() - startedAt;
-  const arrayNames = payload.fullSync ? FDTD_WORKER_FULL_ARRAYS : FDTD_WORKER_FRAME_ARRAYS;
+  const arrayNames = payload.fullSync ? FDTD_WORKER_FULL_ARRAYS : fdtdWorkerFrameArrayNames(sim);
   const arrays = collectArrays(arrayNames);
   return {
     steps,

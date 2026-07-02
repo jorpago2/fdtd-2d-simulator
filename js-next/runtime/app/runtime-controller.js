@@ -19,8 +19,9 @@
     const rawMode = new URLSearchParams(String(search || "")).get("worker");
     const mode = String(rawMode || "").trim().toLowerCase();
     if (["1", "true", "yes", "on", "force"].includes(mode)) return "force";
+    if (["auto"].includes(mode)) return "auto";
     if (["0", "false", "no", "off", "none"].includes(mode)) return "off";
-    return "auto";
+    return "off";
   }
 
   function createRuntimeController(dependencies) {
