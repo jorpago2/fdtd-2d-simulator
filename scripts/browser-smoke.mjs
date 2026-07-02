@@ -371,6 +371,196 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
   }
 }
 
+async function runMobileLayerScrollResetSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  const localErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") localErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    localErrors.push(error.message);
+  });
+
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    await page.locator("#controlDrawerToggle").click();
+    await page.waitForTimeout(80);
+    const layers = ["scenes", "simulation", "results", "config"];
+    const layerStates = [];
+    for (const layer of layers) {
+      await page.locator(".control-tab-panels").evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      await page.locator(`.mobile-layer-button[data-mobile-layer="${layer}"]:visible`).click();
+      await page.waitForTimeout(120);
+      layerStates.push(await page.evaluate((layerName) => {
+        const panel = document.getElementById("controlPanel");
+        const scroller = document.querySelector(".control-tab-panels");
+        const active = document.querySelector(".control-tab-panel.is-active");
+        const header = document.querySelector(".control-panel-header")?.getBoundingClientRect();
+        const nav = document.querySelector(".mobile-layer-nav")?.getBoundingClientRect();
+        return {
+          layer: layerName,
+          activePanel: active?.id || "",
+          panelScrollTop: panel?.scrollTop ?? null,
+          panelsScrollTop: scroller?.scrollTop ?? null,
+          headerTop: header ? Math.round(header.top) : null,
+          navTop: nav ? Math.round(nav.top) : null,
+        };
+      }, layer));
+    }
+    const failures = [...localErrors];
+    for (const state of layerStates) {
+      if (Number(state.panelScrollTop) > 1) failures.push(`${state.layer} left the control panel scrolled (${state.panelScrollTop})`);
+      if (Number(state.panelsScrollTop) > 1) failures.push(`${state.layer} did not reset content scroll (${state.panelsScrollTop})`);
+      if (Number(state.headerTop) < 0 || Number(state.navTop) < 0) failures.push(`${state.layer} header/navigation is above the viewport`);
+    }
+    return {
+      id: "mobile_layer_scroll_reset",
+      preset: "current",
+      priority: "P1",
+      layerStates,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runMobileToolbarHeightSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  const localErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") localErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    localErrors.push(error.message);
+  });
+
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    const status = await page.evaluate(() => {
+      const rect = (selector) => {
+        const node = document.querySelector(selector);
+        if (!node) return null;
+        const bounds = node.getBoundingClientRect();
+        return {
+          top: Math.round(bounds.top),
+          bottom: Math.round(bounds.bottom),
+          height: Math.round(bounds.height),
+          width: Math.round(bounds.width),
+        };
+      };
+      return {
+        topbar: rect(".topbar"),
+        toolbar: rect(".canvas-toolbar"),
+        menuButton: rect("#controlDrawerToggle"),
+        playButton: rect("#playPauseBtn"),
+        interactionToggle: rect(".interaction-toggle"),
+      };
+    });
+    const failures = [...localErrors];
+    if (!status.topbar || !status.toolbar) failures.push("mobile toolbar or menu block was not rendered");
+    if (status.topbar && status.toolbar && Math.abs(status.topbar.height - status.toolbar.height) > 1) {
+      failures.push(`mobile toolbar height ${status.toolbar.height} does not match menu block ${status.topbar.height}`);
+    }
+    if (status.menuButton && status.playButton && Math.abs(status.menuButton.height - status.playButton.height) > 1) {
+      failures.push(`play button height ${status.playButton.height} does not match menu button ${status.menuButton.height}`);
+    }
+    if (status.menuButton && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
+      failures.push(`Select/Draw toggle height ${status.interactionToggle.height} does not match menu button ${status.menuButton.height}`);
+    }
+    return {
+      id: "mobile_toolbar_height",
+      preset: "current",
+      priority: "P1",
+      ...status,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runBrushStrokeContinuitySmoke(page) {
+  await selectPreset(page, "empty");
+  const segment = await page.evaluate(() => {
+    if (typeof closeContextMenus === "function") closeContextMenus();
+    state.canvasMode = "brush";
+    state.brushTool = "paint";
+    state.brush = "pec";
+    state.brushSizeLambda = Math.max(0.05, 1 / Math.max(1, state.cellsPerWavelength || 1));
+    sim.applyPreset("empty");
+    sim.render();
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const y = Math.round((minY + maxY) * 0.5);
+    const x0 = Math.min(maxX - 4, minX + 24);
+    const x1 = Math.max(x0 + 24, Math.min(maxX - 24, x0 + 128));
+    return {
+      x0,
+      x1,
+      y,
+      start: {
+        clientX: sim.gridToCanvasX(x0 + 0.5),
+        clientY: sim.gridToCanvasY(y + 0.5),
+      },
+      end: {
+        clientX: sim.gridToCanvasX(x1 + 0.5),
+        clientY: sim.gridToCanvasY(y + 0.5),
+      },
+    };
+  });
+  await page.mouse.move(segment.start.clientX, segment.start.clientY);
+  await page.mouse.down();
+  await page.mouse.move(segment.end.clientX, segment.end.clientY, { steps: 1 });
+  await page.mouse.up();
+  const status = await page.evaluate(({ x0, x1, y }) => {
+    const missingCells = [];
+    let paintedCells = 0;
+    for (let x = x0; x <= x1; x += 1) {
+      if (sim.material[sim.id(x, y)] === 2) paintedCells += 1;
+      else missingCells.push(x);
+    }
+    return {
+      x0,
+      x1,
+      y,
+      paintedCells,
+      missingCells,
+      spanCells: x1 - x0 + 1,
+    };
+  }, segment);
+  const failures = [];
+  if (status.missingCells.length > 0) {
+    failures.push(`brush stroke has ${status.missingCells.length} gaps along a sparse pointer path`);
+  }
+  return {
+    id: "brush_stroke_continuity",
+    preset: "empty",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
@@ -933,6 +1123,9 @@ async function main() {
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
+      report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
+      report.cases.push(await runMobileToolbarHeightSmoke(browser, url));
+      report.cases.push(await runBrushStrokeContinuitySmoke(page));
       report.cases.push(await runSourceDependentParamsSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));

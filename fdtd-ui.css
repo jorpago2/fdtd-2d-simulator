@@ -1600,7 +1600,7 @@ details[open] > summary::after {
     left: calc(max(var(--edge), env(safe-area-inset-left)) + 58px);
     right: max(var(--edge), env(safe-area-inset-right));
     gap: 5px;
-    padding: 5px;
+    padding: 4px;
   }
 
   .canvas-toolbar .tool-group.compact {
@@ -1610,6 +1610,7 @@ details[open] > summary::after {
   .canvas-toolbar .interaction-toggle {
     flex: 1 1 120px;
     min-width: 112px;
+    padding: 1px;
   }
 
   .stage:not(.canvas-actions-open) #resetBtn,

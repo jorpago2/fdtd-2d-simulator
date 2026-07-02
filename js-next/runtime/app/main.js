@@ -1383,8 +1383,16 @@ function canvasToGrid(event) {
   return canvasEditActions().canvasToGrid(event);
 }
 
+function beginPaintStroke(event) {
+  canvasEditActions().beginPaintStroke(event);
+}
+
 function paintFromEvent(event) {
   canvasEditActions().paintFromEvent(event);
+}
+
+function endPaintStroke(event) {
+  canvasEditActions().endPaintStroke(event);
 }
 
 function insertGeometryFromEvent(event) {
@@ -1722,7 +1730,9 @@ const canvasInteractions = canvasInteractionsModule.createCanvasInteractionsCont
   updateCanvasHover,
   updateCanvasInteractionState,
   insertGeometryFromEvent,
+  beginPaintStroke,
   paintFromEvent,
+  endPaintStroke,
   openBoundaryMenuAt,
   openBrushMenuAt,
   openSourceMenuAt,

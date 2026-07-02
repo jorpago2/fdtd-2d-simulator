@@ -1,5 +1,22 @@
 "use strict";
 
+function pointSegmentDistanceSquared(px, py, x0, y0, x1, y1) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= 0) {
+    const ox = px - x0;
+    const oy = py - y0;
+    return ox * ox + oy * oy;
+  }
+  const t = Math.max(0, Math.min(1, ((px - x0) * dx + (py - y0) * dy) / lengthSquared));
+  const cx = x0 + t * dx;
+  const cy = y0 + t * dy;
+  const ox = px - cx;
+  const oy = py - cy;
+  return ox * ox + oy * oy;
+}
+
 Object.assign(FDTDSim.prototype, {
   paint(x, y, radius, kind) {
     const r2 = radius * radius;
@@ -7,6 +24,27 @@ Object.assign(FDTDSim.prototype, {
       for (let dx = -radius; dx <= radius; dx += 1) {
         if (dx * dx + dy * dy <= r2) {
           this.setMaterial(x + dx, y + dy, kind);
+        }
+      }
+    }
+  },
+
+  paintStrokeSegment(x0, y0, x1, y1, radius, kind) {
+    const ax = Math.round(Number(x0));
+    const ay = Math.round(Number(y0));
+    const bx = Math.round(Number(x1));
+    const by = Math.round(Number(y1));
+    const r = Math.max(1, Math.round(Number(radius) || 1));
+    if (![ax, ay, bx, by].every(Number.isFinite)) return;
+    const r2 = r * r;
+    const minX = Math.max(1, Math.floor(Math.min(ax, bx) - r));
+    const maxX = Math.min(this.nx - 2, Math.ceil(Math.max(ax, bx) + r));
+    const minY = Math.max(1, Math.floor(Math.min(ay, by) - r));
+    const maxY = Math.min(this.ny - 2, Math.ceil(Math.max(ay, by) + r));
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        if (pointSegmentDistanceSquared(x, y, ax, ay, bx, by) <= r2) {
+          this.setMaterial(x, y, kind);
         }
       }
     }

@@ -51,7 +51,9 @@
     const updateCanvasHover = requireFunction(dependencies.updateCanvasHover, "updateCanvasHover");
     const updateCanvasInteractionState = requireFunction(dependencies.updateCanvasInteractionState, "updateCanvasInteractionState");
     const insertGeometryFromEvent = requireFunction(dependencies.insertGeometryFromEvent, "insertGeometryFromEvent");
+    const beginPaintStroke = requireFunction(dependencies.beginPaintStroke, "beginPaintStroke");
     const paintFromEvent = requireFunction(dependencies.paintFromEvent, "paintFromEvent");
+    const endPaintStroke = requireFunction(dependencies.endPaintStroke, "endPaintStroke");
     const openBoundaryMenuAt = requireFunction(dependencies.openBoundaryMenuAt, "openBoundaryMenuAt");
     const openBrushMenuAt = requireFunction(dependencies.openBrushMenuAt, "openBrushMenuAt");
     const openSourceMenuAt = requireFunction(dependencies.openSourceMenuAt, "openSourceMenuAt");
@@ -197,7 +199,7 @@
         return;
       }
       pointerStateController.beginPaint(event.pointerId);
-      paintFromEvent(event);
+      beginPaintStroke(event);
       event.preventDefault();
     }
 
@@ -272,6 +274,7 @@
     }
 
     function handlePointerEnd(event) {
+      const wasPainting = pointerStateController.isPainting(event.pointerId);
       const finishedTouchInteraction =
         pointerState.pendingTouchInteraction?.pointerId === event.pointerId ? pointerState.pendingTouchInteraction : null;
       pointerStateController.deletePointer(event.pointerId);
@@ -286,6 +289,9 @@
       endSourceDrag(event);
       endMonitorDrag(event);
       endMaterialDrag(event);
+      if (wasPainting) {
+        endPaintStroke(event);
+      }
       pointerStateController.endPaint(event.pointerId);
       pointerStateController.endPan(event.pointerId);
       if (pointerState.activePointers.size < 2) {

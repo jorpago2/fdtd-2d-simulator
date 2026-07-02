@@ -16,10 +16,10 @@
   });
 
   const DEFAULT_MOBILE_LAYER_ROUTES = Object.freeze({
-    scenes: Object.freeze({ tab: "scenes", focusSelector: ".scene-section" }),
-    simulation: Object.freeze({ tab: "simulation", focusSelector: ".run-section" }),
-    results: Object.freeze({ tab: "results", focusSelector: ".diagnostics-section" }),
-    config: Object.freeze({ tab: "config", focusSelector: ".scale-section" }),
+    scenes: Object.freeze({ tab: "scenes" }),
+    simulation: Object.freeze({ tab: "simulation" }),
+    results: Object.freeze({ tab: "results" }),
+    config: Object.freeze({ tab: "config" }),
   });
 
   function createMediaMatcher(query) {
@@ -91,11 +91,22 @@
       uiCore.scrollChildIntoView(el.controlPanel, selector);
     }
 
+    function resetControlPanelScroll() {
+      if (el.controlPanel) {
+        el.controlPanel.scrollTop = 0;
+      }
+      const panelScroller = el.controlPanel?.querySelector?.(".control-tab-panels");
+      if (panelScroller) {
+        panelScroller.scrollTop = 0;
+      }
+    }
+
     function activateControlTab(tabName, options = {}) {
       const selected = tabName || "scenes";
       uiCore.setExclusiveButtonState(el.controlTabButtons, "controlTab", selected);
       uiCore.setExclusivePanels(el.controlTabPanels, "controlPanel", selected);
       setMobileLayerActive(options.layer || controlTabLayerName(selected));
+      resetControlPanelScroll();
       if (options.focusSelector) {
         focusControlPanelSection(options.focusSelector);
       }
