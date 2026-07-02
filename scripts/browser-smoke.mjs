@@ -8,7 +8,14 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, "..");
+
+function argumentValue(name) {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? process.argv[index + 1] : "";
+}
+
+const rootArg = argumentValue("--root");
+const rootDir = rootArg ? path.resolve(process.cwd(), rootArg) : path.resolve(__dirname, "..");
 const matrix = JSON.parse(fs.readFileSync(path.join(__dirname, "validation-matrix.json"), "utf8"));
 const mode = process.argv.includes("--physics") ? "physics" : "smoke";
 const smokeCases = matrix.cases.filter(

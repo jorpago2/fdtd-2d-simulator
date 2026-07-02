@@ -13,6 +13,8 @@
     "validate:architecture": "node scripts/validate-architecture.mjs",
     "validate:mode-solver": "node scripts/validate-mode-solver.mjs",
     "validate:scenes": "node scripts/validate-scene-library.mjs",
+    "build:pages": "node scripts/build-pages.mjs",
+    "validate:pages": "npm run build:pages && node scripts/browser-smoke.mjs --root dist",
     "generate:scene-thumbnails": "node scripts/generate-scene-thumbnails.mjs",
     "validate:all": "npm run validate:static && npm run validate:architecture",
     "validate:js-next": "node scripts/validate-js-next-core.mjs",

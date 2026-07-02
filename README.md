@@ -44,6 +44,18 @@ Protocol details are in:
 docs/VALIDATION.md
 ```
 
+## Deployment
+
+The GitHub Pages workflow publishes the generated `dist/` folder, not the full repository. This keeps development-only files such as `legacy/`, `scripts/`, `docs/`, and `wasm-src/` out of the public artifact.
+
+Build the deployable static site locally with:
+
+```powershell
+npm run build:pages
+```
+
+For GitHub Pages, configure the repository source as `GitHub Actions` so `.github/workflows/pages.yml` controls the published artifact.
+
 ## Scope
 
 The simulator includes many qualitative Atlas scenes for propagation, interfaces, radiation, guided optics, resonators, scattering, dispersive media, nonlinear media, temporal modulation, and selected topological/non-Hermitian analogues.
