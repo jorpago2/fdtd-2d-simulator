@@ -341,11 +341,11 @@
       syncSceneBrowserSelection();
     }
 
-    function syncSceneBrowserSelection() {
+    function syncSceneBrowserSelection({ focusCurrent = false } = {}) {
       if (!el.sceneCards) return;
       const currentPreset = el.presetInput?.value || getCurrentPreset?.();
       const currentRecord = sceneRecordByValue(currentPreset);
-      if (currentRecord?.groupLabel && state.filter !== currentRecord.groupLabel) {
+      if (focusCurrent && currentRecord?.groupLabel && state.filter !== currentRecord.groupLabel) {
         state.filter = currentRecord.groupLabel;
         renderSceneFilterBar();
         renderSceneCards();

@@ -444,6 +444,110 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
   };
 }
 
+async function runSceneMenuSelectionSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    deviceScaleFactor: 1,
+  });
+  const page = await context.newPage();
+  const failures = [];
+  const states = [];
+  const snapshotSceneMenu = async (label) => {
+    const state = await page.evaluate((snapshotLabel) => {
+      const visibleCards = Array.from(document.querySelectorAll("#sceneCards [data-scene-card]")).map(
+        (card) => card.dataset.sceneCard || "",
+      );
+      return {
+        label: snapshotLabel,
+        activeFilter: document.querySelector("[data-scene-filter].is-active")?.dataset.sceneFilter || "",
+        activeCard: document.querySelector(".scene-card.is-active")?.dataset.sceneCard || "",
+        preset: document.getElementById("presetInput")?.value || "",
+        spotlightTitle: document.getElementById("sceneSpotlightTitle")?.textContent?.trim() || "",
+        visibleCards,
+      };
+    }, label);
+    states.push(state);
+    return state;
+  };
+  const clickIfPresent = async (selector) =>
+    page.evaluate((targetSelector) => {
+      const target = document.querySelector(targetSelector);
+      if (!target) return false;
+      target.click();
+      return true;
+    }, selector);
+
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    await page.locator("#controlDrawerToggle").click();
+    await page.waitForTimeout(120);
+    await page.evaluate(() => {
+      document.querySelector('[data-control-tab="scenes"]')?.click();
+    });
+    await selectPreset(page, "planeWaveAir");
+    await page.waitForTimeout(120);
+
+    if (!(await clickIfPresent('[data-scene-filter="3. Sources and radiation"]'))) {
+      failures.push("Sources and radiation filter button was not found");
+    }
+    await page.waitForTimeout(80);
+    const sourcesFilter = await snapshotSceneMenu("sources filter");
+    if (sourcesFilter.activeFilter !== "3. Sources and radiation") {
+      failures.push(`Sources filter did not stay active; got ${sourcesFilter.activeFilter || "none"}`);
+    }
+    if (!sourcesFilter.visibleCards.includes("jzDipole")) {
+      failures.push("Sources filter did not reveal the Jz dipole scene card");
+    }
+
+    if (!(await clickIfPresent('[data-scene-card="jzDipole"]'))) {
+      failures.push("Jz dipole scene card was not clickable");
+    }
+    await page.waitForTimeout(160);
+    const sourcesSelection = await snapshotSceneMenu("sources selection");
+    if (sourcesSelection.preset !== "jzDipole") {
+      failures.push(`Jz dipole card did not apply the preset; got ${sourcesSelection.preset || "none"}`);
+    }
+    if (sourcesSelection.activeCard !== "jzDipole") {
+      failures.push(`Jz dipole card was not marked active; got ${sourcesSelection.activeCard || "none"}`);
+    }
+
+    if (!(await clickIfPresent('[data-scene-filter="4. Guided optics"]'))) {
+      failures.push("Guided optics filter button was not found");
+    }
+    await page.waitForTimeout(80);
+    const guidedFilter = await snapshotSceneMenu("guided filter");
+    if (guidedFilter.activeFilter !== "4. Guided optics") {
+      failures.push(`Guided filter did not stay active; got ${guidedFilter.activeFilter || "none"}`);
+    }
+    if (!guidedFilter.visibleCards.includes("slabWaveguide")) {
+      failures.push("Guided filter did not reveal the slab waveguide scene card");
+    }
+
+    if (!(await clickIfPresent('[data-scene-card="slabWaveguide"]'))) {
+      failures.push("Slab waveguide scene card was not clickable");
+    }
+    await page.waitForTimeout(160);
+    const guidedSelection = await snapshotSceneMenu("guided selection");
+    if (guidedSelection.preset !== "slabWaveguide") {
+      failures.push(`Slab waveguide card did not apply the preset; got ${guidedSelection.preset || "none"}`);
+    }
+    if (guidedSelection.activeCard !== "slabWaveguide") {
+      failures.push(`Slab waveguide card was not marked active; got ${guidedSelection.activeCard || "none"}`);
+    }
+  } finally {
+    await context.close();
+  }
+
+  return {
+    id: "scene_menu_selection_interaction",
+    preset: "planeWaveAir",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runMobileSimulatePanelScrollSmoke(browser, url) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -1406,6 +1510,7 @@ async function main() {
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
+      report.cases.push(await runSceneMenuSelectionSmoke(browser, url));
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
       report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
       report.cases.push(await runMobileToolbarHeightSmoke(browser, url));

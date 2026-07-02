@@ -406,8 +406,8 @@ function renderSceneCards() {
   sceneBrowser.renderSceneCards();
 }
 
-function syncSceneBrowserSelection() {
-  sceneBrowser.syncSceneBrowserSelection();
+function syncSceneBrowserSelection(options) {
+  sceneBrowser.syncSceneBrowserSelection(options);
 }
 
 function buildSceneBrowser() {

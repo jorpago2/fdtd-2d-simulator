@@ -123,7 +123,7 @@
       updateControlText();
       updateStats();
       sim.render();
-      syncSceneBrowserSelection();
+      syncSceneBrowserSelection({ focusCurrent: true });
     }
 
     function handleSlabThicknessInput() {
