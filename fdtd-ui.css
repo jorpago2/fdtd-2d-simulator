@@ -1267,8 +1267,16 @@ details[open] > summary::after {
   place-items: center;
   width: 42px;
   height: 42px;
+  overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
+}
+
+.scene-thumb-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .scene-card-header,

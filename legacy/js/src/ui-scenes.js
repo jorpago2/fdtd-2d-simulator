@@ -62,11 +62,32 @@
     return "wave";
   }
 
-  function ensureSceneThumb(thumbnail, documentRef) {
+  function sceneThumbnailSrc(value) {
+    const safeValue = String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
+    return safeValue ? `assets/scene-thumbnails/${safeValue}.svg` : "";
+  }
+
+  function ensureSceneThumb(thumbnail, documentRef, record = null) {
     thumbnail.className = thumbnail.classList?.contains("scene-spotlight-thumb")
       ? "scene-card-thumb scene-spotlight-thumb"
       : "scene-card-thumb";
     thumbnail.setAttribute("aria-hidden", "true");
+    const src = record?.thumbnailSrc || sceneThumbnailSrc(record?.value);
+    if (src) {
+      const existing = thumbnail.querySelector("img.scene-thumb-image");
+      if (existing?.getAttribute("src") === src) return;
+      const image = documentRef.createElement("img");
+      image.className = "scene-thumb-image";
+      image.src = src;
+      image.alt = "";
+      image.width = 96;
+      image.height = 96;
+      image.decoding = "async";
+      image.loading = thumbnail.classList.contains("scene-spotlight-thumb") ? "eager" : "lazy";
+      image.draggable = false;
+      thumbnail.replaceChildren(image);
+      return;
+    }
     if (!thumbnail.childElementCount) {
       thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
     }
@@ -97,10 +118,12 @@
       description: sceneDescriptions[option.value] || "",
       badges: [],
       thumbnail: "wave",
+      thumbnailSrc: "",
       haystack: "",
     };
     record.badges = sceneBadgeLabels(record);
     record.thumbnail = sceneThumbnailKind(record);
+    record.thumbnailSrc = sceneThumbnailSrc(record.value);
     record.haystack = normalizeSceneText(
       `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
     );
@@ -159,6 +182,7 @@
           groupLabel: "General",
           index: null,
           thumbnail: "wave",
+          thumbnailSrc: sceneThumbnailSrc(value),
           title: "Custom scene",
           value,
         };
@@ -175,6 +199,7 @@
       };
       record.badges = sceneBadgeLabels(record);
       record.thumbnail = sceneThumbnailKind(record);
+      record.thumbnailSrc = sceneThumbnailSrc(record.value);
       return record;
     }
 
@@ -184,7 +209,7 @@
       const thumbnailKind = current.thumbnail || sceneThumbnailKind(current);
       el.sceneSpotlight.dataset.sceneThumb = thumbnailKind;
       const thumb = el.sceneSpotlight.querySelector(".scene-spotlight-thumb");
-      if (thumb) ensureSceneThumb(thumb, documentRef);
+      if (thumb) ensureSceneThumb(thumb, documentRef, current);
       if (el.sceneSpotlightNumber) {
         el.sceneSpotlightNumber.textContent = current.index == null ? "Custom" : `Example ${current.index}`;
       }
@@ -279,7 +304,7 @@
         card.setAttribute("aria-pressed", String(record.value === getCurrentPreset?.()));
 
         const thumbnail = documentRef.createElement("span");
-        ensureSceneThumb(thumbnail, documentRef);
+        ensureSceneThumb(thumbnail, documentRef, record);
 
         const header = documentRef.createElement("span");
         header.className = "scene-card-header";
@@ -319,6 +344,13 @@
     function syncSceneBrowserSelection() {
       if (!el.sceneCards) return;
       const currentPreset = el.presetInput?.value || getCurrentPreset?.();
+      const currentRecord = sceneRecordByValue(currentPreset);
+      if (currentRecord?.groupLabel && state.filter !== currentRecord.groupLabel) {
+        state.filter = currentRecord.groupLabel;
+        renderSceneFilterBar();
+        renderSceneCards();
+        return;
+      }
       updateSceneBrowserMeta(visibleSceneRecords());
       el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
         const active = card.dataset.sceneCard === currentPreset;
@@ -364,5 +396,6 @@
     parseSceneOptionLabel,
     sceneBadgeLabels,
     sceneThumbnailKind,
+    sceneThumbnailSrc,
   });
 })(window);

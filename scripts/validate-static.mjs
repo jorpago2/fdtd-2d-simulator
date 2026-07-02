@@ -314,6 +314,50 @@ function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions)
     staleInlineGuides.length === 0 ? "PASS" : "WARN",
     staleInlineGuides.length === 0 ? "Guides are generated from runtime scene metadata" : `Inline guide data present for ${staleInlineGuides.join(", ")}`,
   );
+  validateSceneThumbnails(jsonSceneIds);
+}
+
+function validateSceneThumbnails(sceneIds) {
+  const thumbnailDir = repoPath("assets", "scene-thumbnails");
+  const failures = [];
+  const sizes = [];
+  const sceneIdSet = new Set(sceneIds);
+  if (!fs.existsSync(thumbnailDir)) {
+    addCheck("scene thumbnails", "BLOCK", "Missing assets/scene-thumbnails");
+    return;
+  }
+  for (const id of sceneIds) {
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) {
+      failures.push(`unsafe id ${id}`);
+      continue;
+    }
+    const filePath = path.join(thumbnailDir, `${id}.svg`);
+    if (!fs.existsSync(filePath)) {
+      failures.push(`missing ${id}.svg`);
+      continue;
+    }
+    const source = fs.readFileSync(filePath, "utf8");
+    const size = Buffer.byteLength(source, "utf8");
+    sizes.push(size);
+    if (size > 2048) failures.push(`${id}.svg is ${size} B`);
+    if (!source.startsWith("<svg ") || !/viewBox=['"]0 0 96 96['"]/.test(source)) {
+      failures.push(`${id}.svg is not a square 96x96 SVG`);
+    }
+  }
+  const orphanThumbnails = fs
+    .readdirSync(thumbnailDir)
+    .filter((name) => name.endsWith(".svg"))
+    .filter((name) => !sceneIdSet.has(name.replace(/\.svg$/, "")));
+  failures.push(...orphanThumbnails.map((name) => `orphan ${name}`));
+  const totalBytes = sizes.reduce((sum, size) => sum + size, 0);
+  const maxBytes = sizes.length ? Math.max(...sizes) : 0;
+  addCheck(
+    "scene thumbnails",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0
+      ? `${sceneIds.length} square SVG thumbnails, ${Math.round(totalBytes / 1024)} KB total, max ${maxBytes} B`
+      : failures.join(", "),
+  );
 }
 
 function validateValidationMatrix(dropdownPresets) {
@@ -479,6 +523,7 @@ function main() {
     ...linkedJsFiles,
     ...workerImportFiles,
     ...jsNextFiles,
+    "scripts/generate-scene-thumbnails.mjs",
     "scripts/serve-static.mjs",
     "scripts/validate-js-next-core.mjs",
     "scripts/validate-scene-library.mjs",

@@ -62,6 +62,11 @@
     return "wave";
   }
 
+  function sceneThumbnailSrc(value) {
+    const safeValue = String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
+    return safeValue ? `assets/scene-thumbnails/${safeValue}.svg` : "";
+  }
+
   function createSceneRecordFromOption(option, sceneDescriptions) {
     const rawLabel = option.textContent || option.value;
     const parsed = parseSceneOptionLabel(rawLabel);
@@ -76,10 +81,12 @@
       description: sceneDescriptions[option.value] || "",
       badges: [],
       thumbnail: "wave",
+      thumbnailSrc: "",
       haystack: "",
     };
     record.badges = sceneBadgeLabels(record);
     record.thumbnail = sceneThumbnailKind(record);
+    record.thumbnailSrc = sceneThumbnailSrc(record.value);
     record.haystack = normalizeSceneText(
       `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
     );
@@ -98,10 +105,12 @@
       guide: scene.guide || null,
       badges: [],
       thumbnail: "wave",
+      thumbnailSrc: "",
       haystack: "",
     };
     record.badges = scene.badges?.length ? scene.badges.map(String) : sceneBadgeLabels(record);
     record.thumbnail = scene.thumbnail || sceneThumbnailKind(record);
+    record.thumbnailSrc = scene.thumbnailSrc || scene.image || sceneThumbnailSrc(record.value);
     record.haystack = normalizeSceneText(
       `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
     );
@@ -131,11 +140,27 @@
     return card;
   }
 
-  function ensureSceneThumb(thumbnail, documentRef) {
+  function ensureSceneThumb(thumbnail, documentRef, record = null) {
     thumbnail.className = thumbnail.classList?.contains("scene-spotlight-thumb")
       ? "scene-card-thumb scene-spotlight-thumb"
       : "scene-card-thumb";
     thumbnail.setAttribute("aria-hidden", "true");
+    const src = record?.thumbnailSrc || sceneThumbnailSrc(record?.value);
+    if (src) {
+      const existing = thumbnail.querySelector("img.scene-thumb-image");
+      if (existing?.getAttribute("src") === src) return;
+      const image = documentRef.createElement("img");
+      image.className = "scene-thumb-image";
+      image.src = src;
+      image.alt = "";
+      image.width = 96;
+      image.height = 96;
+      image.decoding = "async";
+      image.loading = thumbnail.classList.contains("scene-spotlight-thumb") ? "eager" : "lazy";
+      image.draggable = false;
+      thumbnail.replaceChildren(image);
+      return;
+    }
     if (!thumbnail.childElementCount) {
       thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
     }
@@ -159,7 +184,7 @@
     card.setAttribute("aria-pressed", String(active));
 
     const thumbnail = card.querySelector(".scene-card-thumb") || documentRef.createElement("span");
-    ensureSceneThumb(thumbnail, documentRef);
+    ensureSceneThumb(thumbnail, documentRef, record);
     if (!thumbnail.parentElement) card.prepend(thumbnail);
 
     const number = card.querySelector(".scene-card-number");
@@ -254,6 +279,7 @@
           groupLabel: "General",
           index: null,
           thumbnail: "wave",
+          thumbnailSrc: sceneThumbnailSrc(value),
           title: "Custom scene",
           value,
         };
@@ -270,6 +296,7 @@
       };
       record.badges = sceneBadgeLabels(record);
       record.thumbnail = sceneThumbnailKind(record);
+      record.thumbnailSrc = sceneThumbnailSrc(record.value);
       return record;
     }
 
@@ -279,7 +306,7 @@
       const thumbnailKind = current.thumbnail || sceneThumbnailKind(current);
       el.sceneSpotlight.dataset.sceneThumb = thumbnailKind;
       const thumb = el.sceneSpotlight.querySelector(".scene-spotlight-thumb");
-      if (thumb) ensureSceneThumb(thumb, documentRef);
+      if (thumb) ensureSceneThumb(thumb, documentRef, current);
       if (el.sceneSpotlightNumber) {
         el.sceneSpotlightNumber.textContent = current.index == null ? "Custom" : `Example ${current.index}`;
       }
@@ -386,7 +413,14 @@
     function syncSceneBrowserSelection() {
       if (!el.sceneCards) return;
       const currentPreset = el.presetInput?.value || getCurrentPreset?.();
+      const currentRecord = sceneRecordByValue(currentPreset);
       if (!state.filter) ensureActiveFilter();
+      if (currentRecord?.groupLabel && state.filter !== currentRecord.groupLabel) {
+        state.filter = currentRecord.groupLabel;
+        renderSceneFilterBar();
+        renderSceneCards();
+        return;
+      }
       updateSceneBrowserMeta(visibleSceneRecords());
       el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
         const active = card.dataset.sceneCard === currentPreset;
@@ -429,6 +463,7 @@
       sceneRecordMatchesSearch,
       sceneSearchTerms,
       sceneThumbnailKind,
+      sceneThumbnailSrc,
       setSceneCatalog,
       syncSceneBrowserSelection,
       updateSceneBrowserMeta,
@@ -446,5 +481,6 @@
     parseSceneOptionLabel,
     sceneBadgeLabels,
     sceneThumbnailKind,
+    sceneThumbnailSrc,
   });
 })(window);

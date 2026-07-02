@@ -36,6 +36,7 @@ function mimeType(filePath) {
     ".json": "application/json; charset=utf-8",
     ".wasm": "application/wasm",
     ".png": "image/png",
+    ".svg": "image/svg+xml; charset=utf-8",
   }[ext] || "application/octet-stream";
 }
 
@@ -354,16 +355,20 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
         const panel = document.getElementById("controlPanel");
         const panelBounds = panel?.getBoundingClientRect();
         const spotlight = document.getElementById("sceneSpotlight");
+        const spotlightImage = document.querySelector("#sceneSpotlight img.scene-thumb-image");
         const title = document.getElementById("sceneSpotlightTitle");
         const description = document.getElementById("sceneSpotlightDescription");
         const search = document.getElementById("sceneSearchInput");
         const fallback = document.querySelector(".scene-select-fallback");
         const cards = document.getElementById("sceneCards");
         const panelOverflow = panel ? panel.scrollWidth - panel.clientWidth : 0;
+        const activeCardImage = document.querySelector('.scene-card.is-active img.scene-thumb-image');
+        const cardImageCount = document.querySelectorAll("#sceneCards img.scene-thumb-image").length;
         return {
           viewport: viewportName,
           activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
           cardCount: cards?.querySelectorAll("[data-scene-card]").length || 0,
+          cardImageCount,
           descriptionText: description?.textContent?.trim() || "",
           documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
           fallbackDisplay: fallback ? getComputedStyle(fallback).display : "",
@@ -378,6 +383,15 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
           panelOverflow,
           search: rect("#sceneSearchInput"),
           spotlight: rect("#sceneSpotlight"),
+          spotlightImage: spotlightImage
+            ? {
+                complete: spotlightImage.complete,
+                naturalHeight: spotlightImage.naturalHeight,
+                naturalWidth: spotlightImage.naturalWidth,
+                src: spotlightImage.getAttribute("src") || "",
+              }
+            : null,
+          activeCardImageSrc: activeCardImage?.getAttribute("src") || "",
           titleText: title?.textContent?.trim() || "",
         };
       }, viewport.name);
@@ -386,7 +400,22 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (status.activePanel !== "tab-scenes") failures.push(`${viewport.name}: Scene panel is not active`);
       if (!status.titleText || !status.descriptionText) failures.push(`${viewport.name}: spotlight title/description is empty`);
       if (!status.family) failures.push(`${viewport.name}: spotlight family is empty`);
+      if (
+        !status.spotlightImage ||
+        !status.spotlightImage.src.endsWith("/topologyTemporalMod.svg") ||
+        !status.spotlightImage.complete ||
+        status.spotlightImage.naturalWidth <= 0 ||
+        status.spotlightImage.naturalHeight <= 0
+      ) {
+        failures.push(`${viewport.name}: spotlight thumbnail image did not load`);
+      }
       if (status.cardCount <= 0) failures.push(`${viewport.name}: scene cards did not render`);
+      if (status.cardImageCount !== status.cardCount) {
+        failures.push(`${viewport.name}: not every visible scene card has a thumbnail image`);
+      }
+      if (!status.activeCardImageSrc.endsWith("/topologyTemporalMod.svg")) {
+        failures.push(`${viewport.name}: active scene card thumbnail does not match the selected scene`);
+      }
       if (status.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);
       if (!status.spotlight || !status.search || status.spotlight.bottom > status.search.top) {
         failures.push(`${viewport.name}: scene spotlight does not lead the scene browser`);
