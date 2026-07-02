@@ -621,6 +621,86 @@ async function runBrushStrokeContinuitySmoke(page) {
   };
 }
 
+async function runDrawPreviewSmoke(page) {
+  await selectPreset(page, "empty");
+  await page.locator("#brushModeBtn").click();
+  const brushPoint = await page.evaluate(() => {
+    if (typeof closeContextMenus === "function") closeContextMenus();
+    state.brushTool = "paint";
+    state.brush = "custom";
+    state.brushSizeLambda = 0.35;
+    state.drawPreviewCell = null;
+    sim.render();
+    const x = Math.round((sim.activeInteriorMinX() + sim.activeInteriorMaxX()) * 0.45);
+    const y = Math.round((sim.activeInteriorMinY() + sim.activeInteriorMaxY()) * 0.45);
+    const rect = sim.canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    return {
+      x,
+      y,
+      baseline: sim.canvas.toDataURL(),
+      clientX: rect.left + sim.gridToCanvasX(x + 0.5) / dpr,
+      clientY: rect.top + sim.gridToCanvasY(y + 0.5) / dpr,
+    };
+  });
+  await page.mouse.move(brushPoint.clientX, brushPoint.clientY);
+  await page.waitForTimeout(60);
+  const brushStatus = await page.evaluate((baseline) => ({
+    cursor: getComputedStyle(sim.canvas).cursor,
+    previewCell: state.drawPreviewCell,
+    changed: sim.canvas.toDataURL() !== baseline,
+  }), brushPoint.baseline);
+
+  const geometryPoint = await page.evaluate(() => {
+    state.brushTool = "geometry";
+    state.brushGeometry = "ring";
+    state.geometryRadiusLambda = 0.55;
+    state.geometryInnerRadiusLambda = 0.28;
+    state.drawPreviewCell = null;
+    sim.render();
+    const x = Math.round((sim.activeInteriorMinX() + sim.activeInteriorMaxX()) * 0.58);
+    const y = Math.round((sim.activeInteriorMinY() + sim.activeInteriorMaxY()) * 0.52);
+    const rect = sim.canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    return {
+      x,
+      y,
+      baseline: sim.canvas.toDataURL(),
+      clientX: rect.left + sim.gridToCanvasX(x + 0.5) / dpr,
+      clientY: rect.top + sim.gridToCanvasY(y + 0.5) / dpr,
+    };
+  });
+  await page.mouse.move(geometryPoint.clientX, geometryPoint.clientY);
+  await page.waitForTimeout(60);
+  const geometryStatus = await page.evaluate((baseline) => ({
+    previewCell: state.drawPreviewCell,
+    changed: sim.canvas.toDataURL() !== baseline,
+  }), geometryPoint.baseline);
+
+  const failures = [];
+  if (brushStatus.cursor === "default" || brushStatus.cursor === "auto") failures.push(`draw mode cursor remained ${brushStatus.cursor}`);
+  if (!brushStatus.previewCell || brushStatus.previewCell.x !== brushPoint.x || brushStatus.previewCell.y !== brushPoint.y) {
+    failures.push("brush preview did not track the hovered grid cell");
+  }
+  if (!brushStatus.changed) failures.push("brush preview did not alter the rendered canvas");
+  if (!geometryStatus.previewCell || geometryStatus.previewCell.x !== geometryPoint.x || geometryStatus.previewCell.y !== geometryPoint.y) {
+    failures.push("geometry preview did not track the hovered grid cell");
+  }
+  if (!geometryStatus.changed) failures.push("geometry preview did not alter the rendered canvas");
+  return {
+    id: "draw_cursor_preview",
+    preset: "empty",
+    priority: "P1",
+    brushCursor: brushStatus.cursor,
+    brushPreviewCell: brushStatus.previewCell,
+    geometryPreviewCell: geometryStatus.previewCell,
+    brushChanged: brushStatus.changed,
+    geometryChanged: geometryStatus.changed,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
@@ -1186,6 +1266,7 @@ async function main() {
       report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
       report.cases.push(await runMobileToolbarHeightSmoke(browser, url));
       report.cases.push(await runBrushStrokeContinuitySmoke(page));
+      report.cases.push(await runDrawPreviewSmoke(page));
       report.cases.push(await runSourceDependentParamsSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));

@@ -488,14 +488,27 @@ function monitorClientPoint(monitor) {
 }
 
 function clearCanvasHover(render = true) {
-  if (state.hoveredSourceId == null && state.hoveredMonitorId == null && !hoveredMaterialRegion) return;
+  if (state.hoveredSourceId == null && state.hoveredMonitorId == null && !hoveredMaterialRegion && !state.drawPreviewCell) return;
   state.hoveredSourceId = null;
   state.hoveredMonitorId = null;
   hoveredMaterialRegion = null;
+  state.drawPreviewCell = null;
   if (render) sim.render();
 }
 
 function updateCanvasHover(event) {
+  if (state.canvasMode === "brush") {
+    state.hoveredSourceId = null;
+    state.hoveredMonitorId = null;
+    hoveredMaterialRegion = null;
+    const point = sim.clientToGridCell(event.clientX, event.clientY);
+    const previous = state.drawPreviewCell;
+    if (!previous || previous.x !== point.x || previous.y !== point.y) {
+      state.drawPreviewCell = point;
+      sim.render();
+    }
+    return;
+  }
   if (
     state.canvasMode !== "select" ||
     pointerState.pointerDown ||

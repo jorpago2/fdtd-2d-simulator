@@ -397,6 +397,7 @@ render() {
   }
   this.drawMaterialHoverOverlay();
   this.drawMaterialSelectionOverlay();
+  this.drawDrawPreviewOverlay();
   this.drawFieldQuiverOverlay();
   this.drawReferenceOverlay();
   if (visualLayerEnabled("sources")) {

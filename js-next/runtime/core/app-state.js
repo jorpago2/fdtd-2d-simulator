@@ -70,6 +70,7 @@
       viewProjection: "2d",
       materialPart: "real",
       canvasMode: "select",
+      drawPreviewCell: null,
       hoveredSourceId: null,
       hoveredMonitorId: null,
       sources: [{ id: 1, ...defaultSourceConfig }],

@@ -173,6 +173,7 @@
       state.brushSizeLambda = Number(el.brushMenuSizeInput.value);
       state.canvasMode = "brush";
       updateControlText();
+      sim.render();
     }
 
     function handleBrushToolButton(button) {
@@ -219,6 +220,7 @@
       state.brush = brush;
       state.canvasMode = "brush";
       updateControlText();
+      sim.render();
     }
 
     function clearMedium() {

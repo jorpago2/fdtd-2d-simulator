@@ -56,6 +56,7 @@
         return false;
       }
       activePaintStroke.lastPoint = point;
+      state.drawPreviewCell = point;
       return true;
     }
 
@@ -104,6 +105,7 @@
       clearMaterialSelection(false);
       normalizeBrushGeometryState();
       const point = canvasToGrid(event);
+      state.drawPreviewCell = point;
       const region = sim.insertBrushGeometry(point.x, point.y, state.brush, {
         geometry: state.brushGeometry,
         widthLambda: state.geometryWidthLambda,
