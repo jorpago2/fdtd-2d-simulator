@@ -51,7 +51,7 @@
 
     source.type = SOURCE_TYPES.includes(source.type) ? source.type : "sine";
     source.shape = Object.prototype.hasOwnProperty.call(shapeLabels, source.shape) ? source.shape : "point";
-    source.frequency = clampFinite(source.frequency, config.frequency, 0.006, 0.095);
+    source.frequency = clampFinite(source.frequency, config.frequency, 0.001, 0.02);
     source.amplitude = clampFinite(source.amplitude, config.amplitude, 0.05, 1.2);
     source.xLambda = clampFinite(source.xLambda, config.xLambda, bounds.minX, bounds.maxX);
     source.yLambda = clampFinite(source.yLambda, config.yLambda, bounds.minY, bounds.maxY);

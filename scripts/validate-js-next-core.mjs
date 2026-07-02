@@ -69,7 +69,7 @@ function sampleStateOptions() {
       angleDeg: 0,
       amplitude: 1,
       direction: "forward",
-      frequency: 0.024,
+      frequency: 0.005,
       id: 1,
       phaseDeg: 0,
       shape: "point",

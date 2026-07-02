@@ -372,7 +372,7 @@ function brushBianisotropyValue() {
 function normalizeSource(source) {
   source.type = ["sine", "gaussian", "ricker"].includes(source.type) ? source.type : "sine";
   source.shape = Object.prototype.hasOwnProperty.call(sourceShapeLabels, source.shape) ? source.shape : "point";
-  source.frequency = clamp(Number(source.frequency) || defaultSourceConfig.frequency, 0.006, 0.095);
+  source.frequency = clamp(Number(source.frequency) || defaultSourceConfig.frequency, 0.001, 0.02);
   source.amplitude = clamp(Number(source.amplitude) || defaultSourceConfig.amplitude, 0.05, 1.2);
   source.xLambda = clamp(Number(source.xLambda) || defaultSourceConfig.xLambda, minSourceXLambda(), maxSourceXLambda());
   source.yLambda = clamp(Number(source.yLambda) || defaultSourceConfig.yLambda, minSourceYLambda(), maxSourceYLambda());
@@ -410,7 +410,7 @@ function clampSweepRangeForMode(mode, value) {
     if (normalizedMode === "gainLoss") return 0.04;
     return 0;
   }
-  if (normalizedMode === "frequency") return clamp(numeric, 0.006, 0.095);
+  if (normalizedMode === "frequency") return clamp(numeric, 0.001, 0.02);
   if (normalizedMode === "amplitude") return clamp(numeric, 0.05, 1.2);
   if (normalizedMode === "gainLoss") return clamp(numeric, 0, 0.1);
   if (normalizedMode === "symmetry") return clamp(numeric, 0, 0.25);

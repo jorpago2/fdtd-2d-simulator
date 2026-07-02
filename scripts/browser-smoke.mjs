@@ -1046,7 +1046,7 @@ async function runSourceDependentParamsSmoke(page) {
     const sourceTemplate = {
       id: 1,
       type: "sine",
-      frequency: 0.024,
+      frequency: 0.005,
       amplitude: 0.55,
       xLambda: 1.2,
       yLambda: 3.0,

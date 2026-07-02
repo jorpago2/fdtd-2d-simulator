@@ -158,7 +158,7 @@
 
     diagnosticFrequency() {
       const sineSource = state.sources.find((source) => source.type === "sine") || this.diagnosticIncidentSource();
-      return clamp(Number(sineSource?.frequency) || defaultSourceConfig.frequency, 0.006, 0.095);
+      return clamp(Number(sineSource?.frequency) || defaultSourceConfig.frequency, 0.001, 0.02);
     },
 
     diagnosticDftOrders() {

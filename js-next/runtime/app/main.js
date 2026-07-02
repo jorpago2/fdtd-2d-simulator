@@ -1464,6 +1464,9 @@ runtimeController = runtimeControllerModule.createRuntimeController({
   updateControlText,
   updateStats,
   getLocationSearch: () => window.location.search,
+  courant: COURANT,
+  visualCourantReference: VISUAL_COURANT_REFERENCE,
+  maxNumericalStepsPerFrame: MAX_NUMERICAL_STEPS_PER_FRAME,
 });
 sweepAnalysisController = sweepAnalysisModule.createSweepAnalysisController({
   state,

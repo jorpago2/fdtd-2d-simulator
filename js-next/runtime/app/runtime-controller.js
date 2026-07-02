@@ -33,6 +33,9 @@
     const finalizeDeferredResults = requireFunction(dependencies.finalizeDeferredResults, "finalizeDeferredResults");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
+    const courant = Number(dependencies.courant);
+    const visualCourantReference = Number(dependencies.visualCourantReference);
+    const maxNumericalStepsPerFrame = Number(dependencies.maxNumericalStepsPerFrame);
     const scheduleFrame = dependencies.scheduleFrame || global.requestAnimationFrame?.bind(global);
     if (typeof scheduleFrame !== "function") {
       throw new Error("Runtime controller requires requestAnimationFrame or a scheduleFrame() dependency.");
@@ -70,6 +73,19 @@
       return workerEngine?.label ? workerEngine.label(baseLabel) : baseLabel;
     }
 
+    function visualStepScale() {
+      if (!Number.isFinite(courant) || courant <= 0) return 1;
+      if (!Number.isFinite(visualCourantReference) || visualCourantReference <= 0) return 1;
+      return visualCourantReference / courant;
+    }
+
+    function effectiveStepsPerFrame() {
+      const requestedVisualSpeed = Math.max(0, Number(state.stepsPerFrame) || 0);
+      const requestedSteps = requestedVisualSpeed * visualStepScale();
+      if (!Number.isFinite(maxNumericalStepsPerFrame) || maxNumericalStepsPerFrame <= 0) return requestedSteps;
+      return Math.min(requestedSteps, maxNumericalStepsPerFrame);
+    }
+
     function toggleRunning() {
       state.running = !state.running;
       if (!state.running) {
@@ -100,7 +116,7 @@
       sim.render();
     }
 
-    function clampStepAccumulator(maxSteps = state.stepsPerFrame) {
+    function clampStepAccumulator(maxSteps = effectiveStepsPerFrame()) {
       const limit = Math.max(0, Number(maxSteps) || 0);
       stepAccumulator = Math.min(stepAccumulator, limit);
       return stepAccumulator;
@@ -109,7 +125,7 @@
     function animationFrame() {
       let advancedSimulation = false;
       if (state.running) {
-        stepAccumulator += state.stepsPerFrame;
+        stepAccumulator += effectiveStepsPerFrame();
         const stepsThisFrame = Math.floor(stepAccumulator);
         stepAccumulator -= stepsThisFrame;
         if (stepsThisFrame > 0) {
@@ -143,6 +159,7 @@
       workerShouldStartForFrame,
       queueWorkerStepsIfUseful,
       runtimeEngineLabel,
+      effectiveStepsPerFrame,
       toggleRunning,
       advanceOneStep,
       resetSimulationFields,

@@ -1,6 +1,8 @@
 "use strict";
 
-const COURANT = 0.48;
+const COURANT = 0.1;
+const VISUAL_COURANT_REFERENCE = 0.48;
+const MAX_NUMERICAL_STEPS_PER_FRAME = 64;
 const DEFAULT_GRID = { nx: 360, ny: 240 };
 const DEFAULT_PORTRAIT_GRID = { nx: DEFAULT_GRID.ny, ny: DEFAULT_GRID.nx };
 const PHONE_PORTRAIT_GRID = { nx: 208, ny: 384 };

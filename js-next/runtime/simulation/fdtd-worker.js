@@ -113,7 +113,7 @@ function setBoundarySideMode(side, mode) {
 
 importScripts(
   "fdtd-worker-protocol.js?v=20260702-worker-policy-1",
-  "../core/constants.js?v=20260630-js-next-cutover-1",
+  "../core/constants.js?v=20260702-courant-visual-1",
   "wasm-backend.js?v=20260630-js-next-cutover-1",
   "../core/numerics.js?v=20260630-js-next-cutover-1",
   "../data/colormaps.js?v=20260630-js-next-cutover-1",
@@ -132,7 +132,7 @@ importScripts(
   "fdtd-sources.js?v=20260630-js-next-cutover-1",
   "fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1",
   "fdtd-custom-monitors.js?v=20260630-js-next-cutover-1",
-  "fdtd-line-diagnostics.js?v=20260630-js-next-cutover-1",
+  "fdtd-line-diagnostics.js?v=20260702-courant-01-1",
   "fdtd-analysis-observables.js?v=20260630-js-next-cutover-1",
   "fdtd-material-diagnostics.js?v=20260630-js-next-cutover-1",
   "fdtd-diagnostics.js?v=20260630-js-next-cutover-1",

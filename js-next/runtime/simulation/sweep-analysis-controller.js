@@ -102,7 +102,7 @@
         if (normalizedMode === "direction") return 0;
         return 0;
       }
-      if (normalizedMode === "frequency") return clamp(numeric, 0.006, 0.095);
+      if (normalizedMode === "frequency") return clamp(numeric, 0.001, 0.02);
       if (normalizedMode === "amplitude") return clamp(numeric, 0.05, 1.2);
       if (normalizedMode === "gainLoss") return clamp(numeric, 0, 0.1);
       if (normalizedMode === "symmetry") return clamp(numeric, 0, 0.25);
@@ -142,7 +142,7 @@
       const directionMode = state.sweepMode === "direction";
       const bidirectionalEnabled = amplitudeMode && state.sweepBidirectional;
       const sweepInputRange = () => {
-        if (frequencyMode) return { min: "0.006", max: "0.095", step: "0.001", decimals: 3 };
+        if (frequencyMode) return { min: "0.001", max: "0.020", step: "0.001", decimals: 3 };
         if (amplitudeMode) return { min: "0.05", max: "1.2", step: "0.05", decimals: 2 };
         if (gainLossMode) return { min: "0", max: "0.1", step: "0.002", decimals: 3 };
         if (symmetryMode) return { min: "0", max: "0.25", step: "0.005", decimals: 3 };

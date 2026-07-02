@@ -262,8 +262,8 @@
                 </label>
                 <label class="control-row">
                   <span><i>f</i></span>
-                  <input id="frequencyInput" type="range" min="6" max="95" step="1" value="24" />
-                  <output id="frequencyOutput" for="frequencyInput">0.024</output>
+                  <input id="frequencyInput" type="range" min="1" max="20" step="1" value="5" />
+                  <output id="frequencyOutput" for="frequencyInput">0.005</output>
                 </label>
                 <label class="control-row">
                   <span id="sourceAmplitudeLabel"><i>J</i><sub>z,0</sub></span>
@@ -1022,7 +1022,7 @@
                 </div>
                 <div class="simulation-guide-card">
                   <span>CFL</span>
-                  <output id="simGuideCfl">S = 0.50</output>
+                  <output id="simGuideCfl">S = 0.10</output>
                 </div>
               </div>
               <p id="simGuideWarning" class="simulation-guide-note">Ready</p>
@@ -1397,7 +1397,7 @@
                 </div>
                 <div class="config-summary-card">
                   <span>CFL</span>
-                  <output id="configCflOutput">S = 0.48</output>
+                  <output id="configCflOutput">S = 0.10</output>
                 </div>
               </div>
             </section>
@@ -1433,7 +1433,7 @@
               <summary>Stability</summary>
               <div class="config-detail-body">
                 <div class="config-status-grid">
-                  <div><span>CFL</span><output id="stabilityCflValue">S = 0.48</output></div>
+                  <div><span>CFL</span><output id="stabilityCflValue">S = 0.10</output></div>
                   <div><span>Resolution</span><output id="stabilityResolutionValue">20 cells / λ₀</output></div>
                   <div><span>Dynamic media</span><output id="stabilityMediaValue">static</output></div>
                   <div><span>Estimate</span><output id="stabilityEstimateValue">stable</output></div>
@@ -1461,7 +1461,7 @@
       </section>
     </main>
 
-    <script src="js-next/runtime/core/constants.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/core/constants.js?v=20260702-courant-visual-1"></script>
     <script src="js-next/runtime/simulation/wasm-backend.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/core/numerics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/colormaps.js?v=20260630-js-next-cutover-1"></script>
@@ -1481,7 +1481,7 @@
     <script src="js-next/runtime/simulation/fdtd-sources.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-analysis-sampling.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-custom-monitors.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/simulation/fdtd-line-diagnostics.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-line-diagnostics.js?v=20260702-courant-01-1"></script>
     <script src="js-next/runtime/simulation/fdtd-analysis-observables.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-material-diagnostics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-diagnostics.js?v=20260630-js-next-cutover-1"></script>
@@ -1493,7 +1493,7 @@
     <script src="js-next/runtime/canvas/canvas-material-overlays.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/canvas/canvas-boundary-overlays.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-worker-protocol.js?v=20260702-worker-policy-1"></script>
-    <script src="js-next/runtime/simulation/worker-engine.js?v=20260702-worker-policy-1"></script>
+    <script src="js-next/runtime/simulation/worker-engine.js?v=20260702-courant-visual-1"></script>
     <script src="js-next/runtime/ui/ui-core.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/ui-dom.js?v=20260702-scene-focus-1"></script>
     <script src="js-next/runtime/ui/ui-drawer.js?v=20260630-js-next-cutover-1"></script>
@@ -1503,7 +1503,7 @@
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/control-sync-ui.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/core/scene-codec.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/ui/source-monitor-model.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/ui/source-monitor-model.js?v=20260702-courant-01-1"></script>
     <script src="js-next/runtime/ui/material-editor-model.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/material-editor-ui.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/material-selection-controller.js?v=20260630-js-next-cutover-1"></script>
@@ -1511,7 +1511,7 @@
     <script src="js-next/runtime/ui/visual-layer-model.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/core/state-normalizer.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/simulation-effects.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/app/runtime-controller.js?v=20260702-worker-policy-1"></script>
+    <script src="js-next/runtime/app/runtime-controller.js?v=20260702-courant-visual-1"></script>
     <script src="js-next/runtime/canvas/canvas-colorbar.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/canvas/canvas-export.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/canvas/canvas-render-controller.js?v=20260630-js-next-cutover-1"></script>
@@ -1540,7 +1540,7 @@
     <script src="js-next/runtime/app/app-bootstrap.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/app-layout.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/app-performance.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/simulation/sweep-analysis-controller.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/sweep-analysis-controller.js?v=20260702-courant-01-1"></script>
     <script src="js-next/runtime/ui/material-stability-controller.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/source-monitor-editor-controller.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/brush-controls-controller.js?v=20260630-js-next-cutover-1"></script>
@@ -1553,6 +1553,6 @@
     <script src="js-next/runtime/core/boundary-state.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/control-ui-state-controller.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/runtime-dependencies.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/app/main.js?v=20260630-scene-json-1"></script>
+    <script src="js-next/runtime/app/main.js?v=20260702-courant-visual-1"></script>
   </body>
 </html>
