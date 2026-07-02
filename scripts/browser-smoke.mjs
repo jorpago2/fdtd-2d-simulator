@@ -528,6 +528,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (status.menuButton && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
       failures.push(`Select/Draw toggle height ${status.interactionToggle.height} does not match menu button ${status.menuButton.height}`);
     }
+    if (status.toolbar && status.openToolbar && Math.abs(status.openToolbar.height - status.toolbar.height) > 1) {
+      failures.push(`open mobile toolbar height ${status.openToolbar.height} should stay on one row like closed height ${status.toolbar.height}`);
+    }
     if (Number(status.openToolbarOverflowX) > 1) {
       failures.push(`open mobile toolbar overflows horizontally by ${status.openToolbarOverflowX}px`);
     }

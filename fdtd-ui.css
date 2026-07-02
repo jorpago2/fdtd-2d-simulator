@@ -1620,19 +1620,27 @@ details[open] > summary::after {
   }
 
   .stage.canvas-actions-open .canvas-toolbar {
-    flex-wrap: wrap;
-    align-content: center;
-    gap: 5px 8px;
-  }
-
-  .stage.canvas-actions-open .canvas-toolbar::after {
-    content: "";
-    flex: 0 0 100%;
-    order: 3;
+    flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .stage.canvas-actions-open .canvas-toolbar .tool-group.compact {
     display: contents;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .icon-button {
+    width: clamp(28px, 8vw, 36px);
+    min-width: clamp(28px, 8vw, 36px);
+  }
+
+  .stage.canvas-actions-open #playPauseBtn,
+  .stage.canvas-actions-open #canvasActionToggle {
+    width: var(--toolbar);
+    min-width: var(--toolbar);
+  }
+
+  .stage.canvas-actions-open .canvas-action-menu {
+    gap: 3px;
   }
 
   .stage.canvas-actions-open #playPauseBtn {
@@ -1643,16 +1651,25 @@ details[open] > summary::after {
     order: 2;
   }
 
-  .stage.canvas-actions-open .interaction-toggle {
+  .stage.canvas-actions-open #resetBtn {
     order: 3;
   }
 
-  .stage.canvas-actions-open #resetBtn {
+  .stage.canvas-actions-open .canvas-action-menu {
     order: 4;
   }
 
-  .stage.canvas-actions-open .canvas-action-menu {
+  .stage.canvas-actions-open .interaction-toggle {
     order: 5;
+    flex: 1 1 0;
+    min-width: 0;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .stage.canvas-actions-open .mode-toggle-button {
+    min-width: 0;
+    padding-inline: 0;
+    font-size: 0.6rem;
   }
 
   .canvas-mode-toggle {
@@ -1767,6 +1784,10 @@ details[open] > summary::after {
 
 /* Very narrow phones: keep toolbar and summary cards from overflowing. */
 @media (max-width: 420px) {
+  :root {
+    --toolbar: 40px;
+  }
+
   .canvas-toolbar {
     gap: 4px;
   }
@@ -1803,6 +1824,42 @@ details[open] > summary::after {
   .diagnostics-grid,
   .performance-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .stage.canvas-actions-open .canvas-toolbar {
+    gap: 4px;
+  }
+
+  .stage.canvas-actions-open .canvas-toolbar .icon-button {
+    width: 26px;
+    min-width: 26px;
+  }
+
+  .stage.canvas-actions-open #playPauseBtn,
+  .stage.canvas-actions-open #canvasActionToggle {
+    width: var(--toolbar);
+    min-width: var(--toolbar);
+  }
+
+  .stage.canvas-actions-open #canvasActionToggle {
+    margin-left: 4px;
+  }
+
+  .stage.canvas-actions-open #selectModeBtn,
+  .stage.canvas-actions-open #brushModeBtn {
+    font-size: 0;
+  }
+
+  .stage.canvas-actions-open #selectModeBtn::after {
+    content: "S";
+    font-size: 0.62rem;
+  }
+
+  .stage.canvas-actions-open #brushModeBtn::after {
+    content: "D";
+    font-size: 0.62rem;
   }
 }
 
