@@ -38,6 +38,7 @@ function mimeType(filePath) {
     ".png": "image/png",
     ".svg": "image/svg+xml; charset=utf-8",
     ".wasm": "application/wasm",
+    ".webp": "image/webp",
   }[ext] || "application/octet-stream";
 }
 

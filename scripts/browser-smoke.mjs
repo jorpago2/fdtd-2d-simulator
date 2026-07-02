@@ -37,6 +37,7 @@ function mimeType(filePath) {
     ".wasm": "application/wasm",
     ".png": "image/png",
     ".svg": "image/svg+xml; charset=utf-8",
+    ".webp": "image/webp",
   }[ext] || "application/octet-stream";
 }
 
@@ -473,7 +474,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (!status.family) failures.push(`${viewport.name}: spotlight family is empty`);
       if (
         !status.spotlightImage ||
-        !status.spotlightImage.src.endsWith("/topologyTemporalMod.svg") ||
+        !status.spotlightImage.src.endsWith("/topologyTemporalMod.webp") ||
         !status.spotlightImage.complete ||
         status.spotlightImage.naturalWidth <= 0 ||
         status.spotlightImage.naturalHeight <= 0
@@ -484,7 +485,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (status.cardImageCount !== status.cardCount) {
         failures.push(`${viewport.name}: not every visible scene card has a thumbnail image`);
       }
-      if (!status.activeCardImageSrc.endsWith("/topologyTemporalMod.svg")) {
+      if (!status.activeCardImageSrc.endsWith("/topologyTemporalMod.webp")) {
         failures.push(`${viewport.name}: active scene card thumbnail does not match the selected scene`);
       }
       if (status.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);

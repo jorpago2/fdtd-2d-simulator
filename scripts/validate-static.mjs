@@ -330,6 +330,62 @@ function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions)
   validateSceneThumbnails(jsonSceneIds);
 }
 
+function readLe24(buffer, offset) {
+  return buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16);
+}
+
+function readWebpDimensions(buffer) {
+  if (
+    buffer.length < 30 ||
+    buffer.toString("ascii", 0, 4) !== "RIFF" ||
+    buffer.toString("ascii", 8, 12) !== "WEBP"
+  ) {
+    return null;
+  }
+
+  let offset = 12;
+  while (offset + 8 <= buffer.length) {
+    const chunk = buffer.toString("ascii", offset, offset + 4);
+    const chunkSize = buffer.readUInt32LE(offset + 4);
+    const dataOffset = offset + 8;
+    if (dataOffset + chunkSize > buffer.length) return null;
+
+    if (chunk === "VP8X" && chunkSize >= 10) {
+      return {
+        width: readLe24(buffer, dataOffset + 4) + 1,
+        height: readLe24(buffer, dataOffset + 7) + 1,
+      };
+    }
+    if (chunk === "VP8L" && chunkSize >= 5 && buffer[dataOffset] === 0x2f) {
+      const bits = (
+        buffer[dataOffset + 1] |
+        (buffer[dataOffset + 2] << 8) |
+        (buffer[dataOffset + 3] << 16) |
+        (buffer[dataOffset + 4] << 24)
+      ) >>> 0;
+      return {
+        width: (bits & 0x3fff) + 1,
+        height: ((bits >>> 14) & 0x3fff) + 1,
+      };
+    }
+    if (
+      chunk === "VP8 " &&
+      chunkSize >= 10 &&
+      buffer[dataOffset + 3] === 0x9d &&
+      buffer[dataOffset + 4] === 0x01 &&
+      buffer[dataOffset + 5] === 0x2a
+    ) {
+      return {
+        width: buffer.readUInt16LE(dataOffset + 6) & 0x3fff,
+        height: buffer.readUInt16LE(dataOffset + 8) & 0x3fff,
+      };
+    }
+
+    offset = dataOffset + chunkSize + (chunkSize % 2);
+  }
+  return null;
+}
+
 function validateSceneThumbnails(sceneIds) {
   const thumbnailDir = repoPath("assets", "scene-thumbnails");
   const failures = [];
@@ -344,31 +400,36 @@ function validateSceneThumbnails(sceneIds) {
       failures.push(`unsafe id ${id}`);
       continue;
     }
-    const filePath = path.join(thumbnailDir, `${id}.svg`);
+    const filePath = path.join(thumbnailDir, `${id}.webp`);
     if (!fs.existsSync(filePath)) {
-      failures.push(`missing ${id}.svg`);
+      failures.push(`missing ${id}.webp`);
       continue;
     }
-    const source = fs.readFileSync(filePath, "utf8");
-    const size = Buffer.byteLength(source, "utf8");
+    const source = fs.readFileSync(filePath);
+    const size = source.length;
     sizes.push(size);
-    if (size > 2048) failures.push(`${id}.svg is ${size} B`);
-    if (!source.startsWith("<svg ") || !/viewBox=['"]0 0 96 96['"]/.test(source)) {
-      failures.push(`${id}.svg is not a square 96x96 SVG`);
+    if (size > 24576) failures.push(`${id}.webp is ${size} B`);
+    const dimensions = readWebpDimensions(source);
+    if (!dimensions || dimensions.width !== dimensions.height || dimensions.width < 96) {
+      failures.push(`${id}.webp is not a square WebP thumbnail`);
     }
   }
   const orphanThumbnails = fs
     .readdirSync(thumbnailDir)
-    .filter((name) => name.endsWith(".svg"))
-    .filter((name) => !sceneIdSet.has(name.replace(/\.svg$/, "")));
+    .filter((name) => name.endsWith(".webp"))
+    .filter((name) => !sceneIdSet.has(name.replace(/\.webp$/, "")));
   failures.push(...orphanThumbnails.map((name) => `orphan ${name}`));
+  const staleSvgThumbnails = fs
+    .readdirSync(thumbnailDir)
+    .filter((name) => name.endsWith(".svg"));
+  failures.push(...staleSvgThumbnails.map((name) => `stale SVG thumbnail ${name}`));
   const totalBytes = sizes.reduce((sum, size) => sum + size, 0);
   const maxBytes = sizes.length ? Math.max(...sizes) : 0;
   addCheck(
     "scene thumbnails",
     failures.length === 0 ? "PASS" : "BLOCK",
     failures.length === 0
-      ? `${sceneIds.length} square SVG thumbnails, ${Math.round(totalBytes / 1024)} KB total, max ${maxBytes} B`
+      ? `${sceneIds.length} square WebP thumbnails, ${Math.round(totalBytes / 1024)} KB total, max ${maxBytes} B`
       : failures.join(", "),
   );
 }

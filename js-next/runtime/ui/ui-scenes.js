@@ -64,7 +64,7 @@
 
   function sceneThumbnailSrc(value) {
     const safeValue = String(value || "").replace(/[^A-Za-z0-9_-]/g, "");
-    return safeValue ? `assets/scene-thumbnails/${safeValue}.svg` : "";
+    return safeValue ? `assets/scene-thumbnails/${safeValue}.webp` : "";
   }
 
   function createSceneRecordFromOption(option, sceneDescriptions) {
