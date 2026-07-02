@@ -118,11 +118,14 @@
       "checks": [
         "finite fields",
         "guided flux is positive",
-        "field energy is concentrated near the guide"
+        "field energy is concentrated near the guide",
+        "modal source launches predominantly forward with low cladding radiation"
       ],
       "acceptance": {
         "guidedFluxPositive": true,
-        "coreEnergyFractionMin": 0.45
+        "coreEnergyFractionMin": 0.45,
+        "backwardEnergyRatioMax": 0.02,
+        "radiationEnergyRatioMax": 0.02
       },
       "rationale": "Core guided-optics workflow for integrated photonics examples."
     },

@@ -164,6 +164,61 @@ async function simulationSnapshot(page) {
   });
 }
 
+async function slabWaveguideLaunchMetrics(page) {
+  return page.evaluate(() => {
+    const source = state.sources?.[0] || null;
+    if (!source || source.shape !== "modeProfile") return null;
+    const sx = sim.sourceXCell(source);
+    const sy = sim.sourceYCell(source);
+    const coreHalfWidth = Math.max(4, Math.round(state.cellsPerWavelength * 0.18));
+    const claddingOffset = Math.max(coreHalfWidth + 8, Math.round(state.cellsPerWavelength * 0.75));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const rightMaxX = Math.min(maxX - 8, sx + Math.round(state.cellsPerWavelength * 6));
+
+    const energyAt = (idx) => {
+      if (sim.material[idx] === 2) return 0;
+      if (state.fieldComponent === "hz") {
+        return (
+          Math.abs(sim.mu[idx]) * sim.ez[idx] * sim.ez[idx] +
+          Math.abs(sim.eps[idx]) * sim.hx[idx] * sim.hx[idx] +
+          Math.abs(sim.epsY[idx]) * sim.hy[idx] * sim.hy[idx]
+        );
+      }
+      return (
+        Math.abs(sim.eps[idx]) * sim.ez[idx] * sim.ez[idx] +
+        Math.abs(sim.mu[idx]) * sim.hx[idx] * sim.hx[idx] +
+        Math.abs(sim.muY[idx]) * sim.hy[idx] * sim.hy[idx]
+      );
+    };
+
+    const sumRegion = (x0, x1, yPredicate) => {
+      let energy = 0;
+      for (let y = minY; y <= maxY; y += 1) {
+        if (!yPredicate(y)) continue;
+        for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 1) {
+          energy += energyAt(sim.id(x, y));
+        }
+      }
+      return energy;
+    };
+
+    const leftGuideEnergy = sumRegion(minX + 4, sx - 8, (y) => Math.abs(y - sy) <= coreHalfWidth);
+    const rightGuideEnergy = sumRegion(sx + 16, rightMaxX, (y) => Math.abs(y - sy) <= coreHalfWidth);
+    const rightCladdingEnergy = sumRegion(sx + 16, rightMaxX, (y) => Math.abs(y - sy) > claddingOffset);
+    return {
+      engine: sim.engineLabel(),
+      leftGuideEnergy,
+      rightGuideEnergy,
+      rightCladdingEnergy,
+      backwardEnergyRatio: leftGuideEnergy / Math.max(1e-30, rightGuideEnergy),
+      radiationEnergyRatio: rightCladdingEnergy / Math.max(1e-30, rightGuideEnergy),
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = matrix.profiles[testCase.profile]?.steps ?? 8;
   const startedAt = Date.now();
@@ -195,6 +250,22 @@ async function runSmokeCase(page, testCase) {
   if (/\b(NaN|Infinity|undefined)\b/.test(bodyText)) status.failures.push("UI contains non-finite or undefined text");
   if (testCase.acceptance?.requiresActiveMediaLabel && !String(stabilityMedia).includes(testCase.acceptance.requiresActiveMediaLabel)) {
     status.failures.push(`stability media does not include ${testCase.acceptance.requiresActiveMediaLabel}`);
+  }
+  if (testCase.id === "slab_waveguide_confinement") {
+    status.modeLaunch = await slabWaveguideLaunchMetrics(page);
+    const backwardLimit = Number(testCase.acceptance?.backwardEnergyRatioMax);
+    const radiationLimit = Number(testCase.acceptance?.radiationEnergyRatioMax);
+    if (!status.modeLaunch) {
+      status.failures.push("slab waveguide did not expose modal launch metrics");
+    } else {
+      if (!(status.modeLaunch.rightGuideEnergy > 1e-12)) status.failures.push("slab waveguide did not launch measurable forward guided energy");
+      if (Number.isFinite(backwardLimit) && status.modeLaunch.backwardEnergyRatio > backwardLimit) {
+        status.failures.push(`backward modal energy ratio ${status.modeLaunch.backwardEnergyRatio} exceeds ${backwardLimit}`);
+      }
+      if (Number.isFinite(radiationLimit) && status.modeLaunch.radiationEnergyRatio > radiationLimit) {
+        status.failures.push(`cladding radiation energy ratio ${status.modeLaunch.radiationEnergyRatio} exceeds ${radiationLimit}`);
+      }
+    }
   }
   const budget = matrix.profiles[testCase.profile]?.maxMsPerStep;
   if (budget && status.msPerStep > budget) status.failures.push(`step cost ${status.msPerStep} ms exceeds budget ${budget} ms`);

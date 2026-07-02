@@ -79,7 +79,6 @@ injectSingleSource(source) {
     return;
   }
   if (source.shape === "modeProfile") {
-    this.injectModeProfileSource(source, sx, sy);
     return;
   }
   const value = this.sourceSample(source);
@@ -100,6 +99,10 @@ isTfsfIncidentSource(source) {
 
 hasTfsfIncidentSource() {
   return this.activeSolverSources().some((source) => this.isTfsfIncidentSource(source));
+},
+
+hasModeProfileSource() {
+  return this.activeSolverSources().some((source) => source?.shape === "modeProfile");
 },
 
 tfsfSourceParams(source) {
@@ -177,6 +180,13 @@ transverseMagneticUpdateCoeffY(idx, y) {
 
 applyTfsfTransverseCorrections() {
   for (const source of this.activeSolverSources()) {
+    if (source.shape === "modeProfile") {
+      const descriptor = this.modeProfileSourceDescriptor(source);
+      if (!descriptor) continue;
+      if (state.fieldComponent === "hz") this.applyModeProfileTeElectricCorrection(source, descriptor);
+      else this.applyModeProfileTmMagneticCorrection(source, descriptor);
+      continue;
+    }
     if (!this.isTfsfIncidentSource(source)) continue;
     const params = this.tfsfSourceParams(source);
     if (!params) continue;
@@ -187,6 +197,13 @@ applyTfsfTransverseCorrections() {
 
 applyTfsfScalarCorrections() {
   for (const source of this.activeSolverSources()) {
+    if (source.shape === "modeProfile") {
+      const descriptor = this.modeProfileSourceDescriptor(source);
+      if (!descriptor) continue;
+      if (state.fieldComponent === "hz") this.applyModeProfileTeMagneticCorrection(source, descriptor);
+      else this.applyModeProfileTmElectricCorrection(source, descriptor);
+      continue;
+    }
     if (!this.isTfsfIncidentSource(source)) continue;
     const params = this.tfsfSourceParams(source);
     if (!params) continue;
@@ -442,6 +459,8 @@ modeProfileDescriptor(source, sx, sy) {
         muProfile: crossSection.muProfile,
         k0Cells,
         modeOrder,
+        sx,
+        sy,
         y0,
         y1,
       }
@@ -450,48 +469,85 @@ modeProfileDescriptor(source, sx, sy) {
   return descriptor;
 },
 
-injectModeProfileFallback(source, sx, sy) {
-  const value = this.sourceSample(source);
-  const fwhm = Math.max(3, Math.round((Number(source.widthLambda) || 0.45) * state.cellsPerWavelength));
-  const sigma = Math.max(1, fwhm / (2 * Math.sqrt(2 * Math.LN2)));
-  const radius = Math.ceil(3 * sigma);
-  const y0 = Math.max(this.activeInteriorMinY(), sy - radius);
-  const y1 = Math.min(this.activeInteriorMaxY(), sy + radius);
-  for (let y = y0; y <= y1; y += 1) {
-    const profile = Math.exp(-0.5 * ((y - sy) / sigma) ** 2);
-    if (profile < 1e-4) continue;
-    const idx = this.id(sx, y);
-    if (this.material[idx] !== 2) this.addScalarCurrentSource(idx, value * profile, sx, y);
+modeProfileSourceDescriptor(source) {
+  const sx = clampInt(this.sourceXCell(source), this.activeInteriorMinX() + 1, this.activeInteriorMaxX() - 1);
+  const sy = this.sourceYCell(source);
+  return this.modeProfileDescriptor(source, sx, sy);
+},
+
+modeProfileScalarAt(source, descriptor, x, offset, solverTime) {
+  const phase = -descriptor.betaCells * (x - descriptor.sx);
+  const sample = this.sourceSampleAtPhaseTime(source, solverTime, phase);
+  const profile = descriptor.profile[offset] || 0;
+  const value = sample * profile;
+  return Number.isFinite(this.fieldScale) && this.fieldScale !== 0 ? value / this.fieldScale : 0;
+},
+
+modeProfileTeEyAt(source, descriptor, x, offset, solverTime) {
+  const scalar = this.modeProfileScalarAt(source, descriptor, x, offset, solverTime);
+  const epsilon = Math.max(1e-6, descriptor.epsilonProfile[offset] || 1);
+  const neff = Math.max(1e-6, Math.min(descriptor.confinementIndexMax || 10, descriptor.neff || 1));
+  return (neff / epsilon) * scalar;
+},
+
+modeProfileTmHyAt(source, descriptor, x, offset, solverTime) {
+  const scalar = this.modeProfileScalarAt(source, descriptor, x, offset, solverTime);
+  const mu = Math.max(1e-6, descriptor.muProfile[offset] || 1);
+  const neff = Math.max(1e-6, Math.min(descriptor.confinementIndexMax || 10, descriptor.neff || 1));
+  return (-neff / mu) * scalar;
+},
+
+applyModeProfileTmMagneticCorrection(source, descriptor) {
+  const x0 = descriptor.sx;
+  const t = this.time;
+  for (let offset = 0; offset < descriptor.profile.length; offset += 1) {
+    if (Math.abs(descriptor.profile[offset]) < 1e-5) continue;
+    const y = descriptor.y0 + offset;
+    const leftIdx = this.id(x0 - 1, y);
+    if (this.material[leftIdx] === 2) continue;
+    const ezIncident = this.modeProfileScalarAt(source, descriptor, x0, offset, t);
+    this.hy[leftIdx] -= this.transverseMagneticUpdateCoeffX(leftIdx, x0 - 1) * ezIncident;
   }
 },
 
-injectModeProfileSource(source, sx, sy) {
-  const descriptor = this.modeProfileDescriptor(source, sx, sy);
-  if (!descriptor) {
-    this.injectModeProfileFallback(source, sx, sy);
-    return;
-  }
-  const scalarSample = this.sourceSample(source);
-  const quadratureSample = this.sourceSample(source, Math.PI / 2);
-  const neff = Math.max(1e-6, Math.min(descriptor.confinementIndexMax || 10, descriptor.neff || 1));
-  const invK0Cells = 1 / Math.max(1e-9, descriptor.k0Cells || 0);
+applyModeProfileTmElectricCorrection(source, descriptor) {
+  const x0 = descriptor.sx;
+  const t = this.time + 0.5;
   for (let offset = 0; offset < descriptor.profile.length; offset += 1) {
-    const profile = descriptor.profile[offset];
-    const profileDerivative = descriptor.profileDerivative?.[offset] || 0;
-    if (Math.max(Math.abs(profile), Math.abs(profileDerivative)) < 1e-4) continue;
+    if (Math.abs(descriptor.profile[offset]) < 1e-5) continue;
     const y = descriptor.y0 + offset;
-    const idx = this.id(sx, y);
-    if (this.material[idx] === 2) continue;
-    const scalarValue = scalarSample * profile;
-    const derivativeValue = quadratureSample * profileDerivative * invK0Cells;
-    this.addIncidentScalarField(idx, scalarValue);
-    if (state.fieldComponent === "hz") {
-      const epsilon = Math.max(1e-6, descriptor.epsilonProfile[offset] || this.safeMaterialDenominator(this.eps[idx]));
-      this.addTransverseIncidentField(idx, -derivativeValue / epsilon, (neff / epsilon) * scalarValue);
-    } else {
-      const mu = Math.max(1e-6, descriptor.muProfile[offset] || this.safeMaterialDenominator(this.muY[idx]));
-      this.addTransverseIncidentField(idx, derivativeValue / mu, (-neff / mu) * scalarValue);
-    }
+    const leftIdx = this.id(x0, y);
+    if (this.material[leftIdx] === 2) continue;
+    const hyIncident = this.modeProfileTmHyAt(source, descriptor, x0 - 0.5, offset, t);
+    this.ezx[leftIdx] -= this.electricUpdateCoeffX(leftIdx, x0) * hyIncident;
+    this.ez[leftIdx] = this.ezx[leftIdx] + this.ezy[leftIdx];
+  }
+},
+
+applyModeProfileTeElectricCorrection(source, descriptor) {
+  const x0 = descriptor.sx;
+  const t = this.time;
+  for (let offset = 0; offset < descriptor.profile.length; offset += 1) {
+    if (Math.abs(descriptor.profile[offset]) < 1e-5) continue;
+    const y = descriptor.y0 + offset;
+    const leftIdx = this.id(x0 - 1, y);
+    if (this.material[leftIdx] === 2) continue;
+    const hzIncident = this.modeProfileScalarAt(source, descriptor, x0, offset, t);
+    this.hy[leftIdx] += this.transverseElectricUpdateCoeffY(leftIdx, x0 - 1) * hzIncident;
+  }
+},
+
+applyModeProfileTeMagneticCorrection(source, descriptor) {
+  const x0 = descriptor.sx;
+  const t = this.time + 0.5;
+  for (let offset = 0; offset < descriptor.profile.length; offset += 1) {
+    if (Math.abs(descriptor.profile[offset]) < 1e-5) continue;
+    const y = descriptor.y0 + offset;
+    const leftIdx = this.id(x0, y);
+    if (this.material[leftIdx] === 2) continue;
+    const eyIncident = this.modeProfileTeEyAt(source, descriptor, x0 - 0.5, offset, t);
+    this.ezx[leftIdx] += this.magneticUpdateCoeffX(leftIdx, x0) * eyIncident;
+    this.ez[leftIdx] = this.ezx[leftIdx] + this.ezy[leftIdx];
   }
 },
 

@@ -39,6 +39,7 @@
     canUseCompiledMaterialStep() {
       if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
       if (!this.canUseCompiledBoundaryStep()) return false;
+      if (this.hasModeProfileSource?.()) return false;
       if (this.hasTfsfIncidentSource?.()) {
         if (!this.wasmBackend.supportsTfsf?.()) return false;
         if (!this.wasmBackend.canPackTfsfSources?.(this)) return false;
@@ -110,6 +111,7 @@
           ? "WASM sigma"
           : this.cpmlEngineLabel("JS sigma");
       }
+      if (this.hasModeProfileSource?.()) return this.cpmlEngineLabel("JS mode source");
       if (this.hasTfsfIncidentSource?.()) {
         return this.canUseCompiledBoundaryStep() && this.wasmBackend?.canStep(state.fieldComponent) && this.wasmBackend.supportsTfsf?.()
           ? "WASM TFSF"

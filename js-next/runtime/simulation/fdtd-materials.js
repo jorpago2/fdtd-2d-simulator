@@ -1214,6 +1214,7 @@ canUseCompiledFullVectorBianisotropy() {
       this.wasmBackend?.canStep("ez") &&
       (!this.cpmlActive?.() || this.wasmBackend?.supportsCpml?.()) &&
       !this.hasTfsfIncidentSource?.() &&
+      !this.hasModeProfileSource?.() &&
       !state.materialModulationEnabled &&
       !state.materialNonlinearEnabled &&
       !state.materialHarmonicEnabled &&
