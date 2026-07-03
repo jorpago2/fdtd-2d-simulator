@@ -66,6 +66,8 @@
   --switch-w: 42px;
   --switch-h: 24px;
   --switch-thumb: 18px;
+  --switch-border: 1px;
+  --switch-inset: 2px;
 }
 
 html[data-theme="dark"] {
@@ -579,7 +581,7 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   min-width: var(--switch-w);
   height: var(--switch-h);
   margin: 0;
-  border: 1px solid var(--border-strong);
+  border: var(--switch-border) solid var(--border-strong);
   border-radius: var(--pill);
   background: var(--panel-3);
 }
@@ -588,8 +590,8 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 .visual-panel-layer input::before,
 .toggle-row input::before {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: var(--switch-inset);
+  left: var(--switch-inset);
   width: var(--switch-thumb);
   height: var(--switch-thumb);
   border-radius: var(--pill);
@@ -609,7 +611,12 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 .visual-panel-layer input:checked::before,
 .toggle-row input:checked::before {
   background: var(--accent);
-  transform: translateX(calc(var(--switch-w) - var(--switch-thumb) - 4px));
+  transform: translateX(
+    calc(
+      var(--switch-w) - var(--switch-thumb) - var(--switch-inset) - var(--switch-inset) - var(--switch-border) -
+        var(--switch-border)
+    )
+  );
 }
 
 .toolbar-switch span,
