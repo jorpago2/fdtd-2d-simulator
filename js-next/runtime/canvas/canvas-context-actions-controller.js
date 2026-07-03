@@ -179,7 +179,7 @@
       if (!validateNumericInputs(el.sourceMenu)) return;
       const simulationEffects = getSimulationEffects();
       const sim = getSim();
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       const values = readSourceEditorValues();
       const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
       if (componentChanged) {
@@ -200,7 +200,7 @@
       if (componentChanged) {
         sim.resetFields();
       }
-      simulationEffects.commitSourceMutation({ dirty: false, disableResponsiveGrid: false });
+      simulationEffects.commitSourceMutation({ disableResponsiveGrid: false });
     }
 
     function applyMonitorMenu() {

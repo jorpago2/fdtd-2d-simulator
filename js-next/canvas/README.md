@@ -1,8 +1,8 @@
 # canvas
 
-Canvas-facing code for the future `js-next` app.
+Canvas-facing code for the `js-next` app.
 
-This layer should eventually own:
+This layer owns or should own:
 
 - viewport math
 - renderer coordination

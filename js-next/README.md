@@ -1,6 +1,6 @@
 # js-next
 
-This folder is the next JavaScript architecture for the FDTD simulator. The active browser path now runs through `js-next/runtime/`, while cleaner modules are prepared in the domain folders.
+This folder contains the JavaScript architecture for the FDTD simulator. The active browser path runs through `js-next/runtime/`, while domain folders hold small extracted helpers and architecture notes.
 
 ## Rules
 
@@ -15,7 +15,7 @@ This folder is the next JavaScript architecture for the FDTD simulator. The acti
 
 ```text
 core/        State, units, contracts, formatters, scene JSON.
-simulation/  FDTD state, kernels, materials, sources, diagnostics, workers.
+simulation/  FDTD state, kernels, materials, sources, diagnostics.
 canvas/      Viewport, renderer, overlays, colorbar, pointer interactions.
 ui/          DOM collection, controls, drawer, scene/results panels.
 app/         Bootstrap and top-level orchestration.
@@ -23,11 +23,11 @@ app/         Bootstrap and top-level orchestration.
 
 ## Load Pattern
 
-For now these are classic browser scripts, not ES modules, so they remain compatible with the current validator and deployment model. A future switch to `type="module"` should be made only when the whole app is ready for that migration.
+These are classic browser scripts, not ES modules, so they remain compatible with the current validator and deployment model. A future switch to `type="module"` should be made only if the whole app changes together.
 
 ## Active Runtime
 
-`index.html` loads `js-next/runtime/` as the active application path. That folder is a compatibility cutover from the former `src/` and root `app.js` stack, grouped by responsibility so the old active path is no longer mixed into the page.
+`index.html` loads `js-next/runtime/` as the active application path. That folder is grouped by responsibility and is the canonical runtime used by the page.
 
 ## Validated Blocks
 

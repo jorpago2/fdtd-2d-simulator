@@ -82,7 +82,6 @@ let canvasRenderController = null;
 let canvasColorbarController = null;
 let canvasExportController = null;
 let sim = null;
-let workerEngine = null;
 let runtimeController = null;
 let simulationEffects = null;
 let stateNormalizer = null;
@@ -858,14 +857,6 @@ function getPerformanceController() {
   return performanceController;
 }
 
-function performanceNowMs() {
-  return getPerformanceController().now();
-}
-
-function recordPerformanceMetric(name, elapsedMs, sampleCount = 1) {
-  return getPerformanceController().record(name, elapsedMs, sampleCount);
-}
-
 function timeStepBatch(stepCount, runner) {
   return getPerformanceController().timeStepBatch(stepCount, runner);
 }
@@ -1494,31 +1485,13 @@ brushControlsController = brushControlsModule.createBrushControlsController({
   formatLambdaOutput,
   currentBrushLabel,
 });
-workerEngine = window.FdtdWorkerEngine
-  ? new FdtdWorkerEngine(sim, {
-      onStep(message) {
-        recordPerformanceMetric("stepMs", message.elapsedMs, message.steps);
-        updatePerformanceStats();
-        sim.render();
-      },
-      onSync() {
-        finalizeDeferredResults();
-      },
-      onError() {
-        updateStats();
-      },
-    })
-  : null;
 runtimeController = runtimeControllerModule.createRuntimeController({
   state,
   sim,
-  getWorkerEngine: () => workerEngine,
   timeStepBatch,
-  updatePerformanceStats,
   finalizeDeferredResults,
   updateControlText,
   updateStats,
-  getLocationSearch: () => window.location.search,
   courant: COURANT,
   visualCourantReference: VISUAL_COURANT_REFERENCE,
   maxNumericalStepsPerFrame: MAX_NUMERICAL_STEPS_PER_FRAME,
@@ -1589,7 +1562,6 @@ canvasRenderController = canvasRenderControllerModule.createCanvasRenderControll
 });
 simulationEffects = simulationEffectsModule.createSimulationEffectsController({
   sim,
-  markWorkerDirty: () => workerEngine?.markDirty(),
   disableResponsiveGridOrientation,
   updateControlText,
   updateStats,
@@ -1727,7 +1699,6 @@ sceneApplication = sceneApplicationModule.createSceneApplicationController({
   clonePlainData,
   clampInt,
   clampNumber: clamp,
-  markWorkerDirty: () => workerEngine?.markDirty(),
   disableResponsiveGridOrientation,
   normalizeImportedStateValues,
   clearMaterialSelection,
@@ -1948,7 +1919,6 @@ visualControlBindingsModule.bindVisualControls({
   el,
   state,
   sim,
-  markWorkerDirty: () => workerEngine?.markDirty(),
   updateControlText,
   updateStats,
   applyVisualProfile,
@@ -1976,7 +1946,6 @@ function configMaterialHandlers() {
       updateStats,
       disableResponsiveGridOrientation,
       normalizeDispersionModel,
-      markWorkerDirty: () => workerEngine?.markDirty(),
       clearMaterialSelection,
       clearCanvasHover,
       gridSizeIsAutoOrientable,
@@ -2231,7 +2200,6 @@ async function initWasmBackend() {
   try {
     const backend = await WasmFdtdBackend.load(WASM_CORE_URL);
     sim.attachWasmBackend(backend);
-    workerEngine?.markDirty();
     sim.measure();
     updateControlText();
     updateStats();

@@ -1,13 +1,13 @@
 # app
 
-Top-level orchestration for the future `js-next` app.
+Top-level orchestration notes for the `js-next` app.
 
-This layer should eventually own:
+This layer owns or should own:
 
 - module wiring
 - app bootstrap
 - controller lifecycle
 - startup/shutdown order
-- feature flags during migration
+- feature flags for deliberate runtime experiments
 
 It should not own FDTD stepping, canvas drawing internals, or low-level DOM rendering.

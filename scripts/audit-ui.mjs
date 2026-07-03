@@ -112,7 +112,7 @@ function cssMetrics() {
       });
       return {
         file,
-        role: cssFileRoles[file] || "legacy",
+        role: cssFileRoles[file] || "unclassified",
         bytes: Buffer.byteLength(text),
         important: countMatches(text, /!important/g),
         selectors: selectors.length,

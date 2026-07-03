@@ -54,11 +54,11 @@ function stylesheetSources(indexHtml) {
 function validateActiveAssets(indexHtml) {
   const scripts = scriptSources(indexHtml);
   const stylesheets = stylesheetSources(indexHtml);
-  const activeLegacyRefs = [...scripts, ...stylesheets].filter((asset) => asset.startsWith("legacy/") || asset.startsWith("src/"));
+  const retiredAssetRefs = [...scripts, ...stylesheets].filter((asset) => asset.startsWith("legacy/") || asset.startsWith("src/"));
   addCheck(
-    "active assets avoid legacy paths",
-    activeLegacyRefs.length === 0,
-    activeLegacyRefs.length ? activeLegacyRefs.join(", ") : "index.html loads js-next/runtime and fdtd-ui.css",
+    "active assets avoid retired paths",
+    retiredAssetRefs.length === 0,
+    retiredAssetRefs.length ? retiredAssetRefs.join(", ") : "index.html loads js-next/runtime and fdtd-ui.css",
   );
   addCheck(
     "single canonical stylesheet",
@@ -69,11 +69,11 @@ function validateActiveAssets(indexHtml) {
 
 function validatePackageScripts(packageJson) {
   const packageText = JSON.stringify(packageJson.scripts || {});
-  const legacyScriptRefs = [...packageText.matchAll(/\b(?:legacy|src)\//g)].map((match) => match[0]);
+  const retiredScriptRefs = [...packageText.matchAll(/\b(?:legacy|src)\//g)].map((match) => match[0]);
   addCheck(
-    "package scripts avoid legacy active paths",
-    legacyScriptRefs.length === 0,
-    legacyScriptRefs.length ? legacyScriptRefs.join(", ") : "scripts target validators and js-next runtime",
+    "package scripts avoid retired active paths",
+    retiredScriptRefs.length === 0,
+    retiredScriptRefs.length ? retiredScriptRefs.join(", ") : "scripts target validators and js-next runtime",
   );
 }
 
@@ -103,7 +103,6 @@ function validateSimulationDomBoundary() {
   const allowedDomFiles = new Set([
     "js-next/runtime/simulation/fdtd-rendering.js",
     "js-next/runtime/simulation/fdtd-sim.js",
-    "js-next/runtime/simulation/fdtd-worker.js",
     "js-next/runtime/simulation/sweep-analysis-controller.js",
   ]);
   const forbiddenPatterns = [
@@ -129,7 +128,7 @@ function validateSimulationDomBoundary() {
     violations.length === 0,
     violations.length
       ? violations.join(", ")
-      : "DOM exceptions are limited to documented canvas/rendering/worker/sweep integration files",
+      : "DOM exceptions are limited to documented canvas, rendering, and sweep integration files",
   );
 }
 
@@ -146,7 +145,7 @@ function validateCentralFileBudget() {
   addCheck(
     "main.js centrality budget",
     mainLines <= hardBudget,
-    `${mainLines} non-empty lines; hard budget is ${hardBudget} during staged refactor`,
+    `${mainLines} non-empty lines; hard budget is ${hardBudget} for the canonical runtime`,
   );
 }
 

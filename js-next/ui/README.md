@@ -1,8 +1,8 @@
 # ui
 
-DOM and control-panel code for the future `js-next` app.
+DOM and control-panel code for the `js-next` app.
 
-This layer should eventually own:
+This layer owns or should own:
 
 - DOM reference collection
 - accessible control bindings

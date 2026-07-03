@@ -1,8 +1,8 @@
 # simulation
 
-Numerical and physical simulation code for the future `js-next` app.
+Numerical and physical simulation code for the `js-next` app.
 
-This layer should eventually own:
+This layer owns or should own:
 
 - grid and field state
 - FDTD stepping
@@ -10,6 +10,6 @@ This layer should eventually own:
 - sources
 - boundaries
 - diagnostics and observables
-- worker/WASM routing
+- JS/WASM backend routing
 
 It should not read DOM elements or mutate UI controls.

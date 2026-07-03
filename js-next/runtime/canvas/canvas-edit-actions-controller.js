@@ -69,7 +69,7 @@
         painted = applyPaintPoint(sim, canvasToGrid(sample), radius, state.brush) || painted;
       }
       if (!painted) return;
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       clearMaterialSelection(false);
       sim.refreshCpmlMaterialContinuation(false);
       simulationEffects.repaint();
@@ -101,7 +101,7 @@
     function insertGeometryFromEvent(event) {
       const sim = getSim();
       const simulationEffects = getSimulationEffects();
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       clearMaterialSelection(false);
       normalizeBrushGeometryState();
       const point = canvasToGrid(event);

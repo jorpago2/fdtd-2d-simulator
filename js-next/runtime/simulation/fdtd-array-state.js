@@ -124,7 +124,7 @@
     ["harmonicPrevPy", Float32Array, "n"],
   ]);
 
-  const WASM_MIGRATION_ARRAY_NAMES = Object.freeze([
+  const WASM_BACKEND_STATE_ARRAY_NAMES = Object.freeze([
     "ez",
     "ezx",
     "ezy",
@@ -274,16 +274,16 @@
       }
     },
 
-    snapshotWasmMigrationArrays() {
+    snapshotWasmBackendStateArrays() {
       const snapshot = {};
-      for (const name of WASM_MIGRATION_ARRAY_NAMES) {
+      for (const name of WASM_BACKEND_STATE_ARRAY_NAMES) {
         snapshot[name] = cloneArray(this[name]);
       }
       return snapshot;
     },
 
-    restoreWasmMigrationArrays(snapshot = {}) {
-      for (const name of WASM_MIGRATION_ARRAY_NAMES) {
+    restoreWasmBackendStateArrays(snapshot = {}) {
+      for (const name of WASM_BACKEND_STATE_ARRAY_NAMES) {
         if (snapshot[name] && this[name] && typeof this[name].set === "function") {
           this[name].set(snapshot[name]);
         }
@@ -294,6 +294,6 @@
   global.FdtdArrayState = Object.freeze({
     auxiliaryArrayNames: AUXILIARY_ARRAY_SPECS.map(([name]) => name),
     jsCoreArrayNames: JS_CORE_ARRAY_SPECS.map(([name]) => name),
-    wasmMigrationArrayNames: Array.from(WASM_MIGRATION_ARRAY_NAMES),
+    wasmBackendStateArrayNames: Array.from(WASM_BACKEND_STATE_ARRAY_NAMES),
   });
 })(typeof window !== "undefined" ? window : globalThis);

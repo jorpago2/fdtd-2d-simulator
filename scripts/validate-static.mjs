@@ -43,21 +43,19 @@ function assetPath(assetUrl) {
   return pathname.replace(/^\.\//, "").replace(/\\/g, "/");
 }
 
-function resolveRelativeAsset(assetUrl, baseFile) {
-  const cleanAsset = assetPath(assetUrl);
-  if (!baseFile || cleanAsset.startsWith("/")) return cleanAsset.replace(/^\/+/, "");
-  const baseDir = path.posix.dirname(baseFile.replace(/\\/g, "/"));
-  return path.posix.normalize(path.posix.join(baseDir, cleanAsset));
-}
-
 function scriptPathMap(indexHtml) {
   const scripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml).map(assetPath);
   return new Map(scripts.map((scriptPath) => [path.posix.basename(scriptPath), scriptPath]));
 }
 
-function readActiveScript(scriptMap, basename, fallbackParts) {
+function activeScriptPath(scriptMap, basename) {
   const activePath = scriptMap.get(basename);
-  return activePath ? readText(...activePath.split("/")) : readText(...fallbackParts);
+  if (!activePath) throw new Error(`Missing active script ${basename} in index.html`);
+  return activePath;
+}
+
+function readActiveScript(scriptMap, basename) {
+  return readText(...activeScriptPath(scriptMap, basename).split("/"));
 }
 
 function extractAll(pattern, text, group = 1) {
@@ -152,23 +150,6 @@ function validateHtmlAssets(indexHtml) {
     missing.length === 0 ? "PASS" : "BLOCK",
     missing.length === 0 ? `${scripts.length} scripts and ${stylesheets.length} stylesheets found` : `Missing: ${missing.join(", ")}`,
   );
-}
-
-function workerImportAssets(workerJs) {
-  const importBlocks = extractAll(/importScripts\(([\s\S]*?)\);/g, workerJs);
-  return unique(importBlocks.flatMap((block) => extractAll(/["']([^"']+)["']/g, block)));
-}
-
-function validateWorkerImports(workerJs, workerFile) {
-  const imports = workerImportAssets(workerJs);
-  const resolvedImports = imports.map((asset) => resolveRelativeAsset(asset, workerFile));
-  const missing = resolvedImports.filter((asset) => !fs.existsSync(repoPath(asset)));
-  addCheck(
-    "worker importScripts assets",
-    missing.length === 0 ? "PASS" : "BLOCK",
-    missing.length === 0 ? `${imports.length} worker imports found` : `Missing: ${missing.join(", ")}`,
-  );
-  return resolvedImports;
 }
 
 function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
@@ -516,7 +497,7 @@ function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneRep
   );
 }
 
-function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, workerEngineJs, wasmCpp, activeFiles) {
+function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, wasmCpp) {
   const requiredIds = [
     "performanceBackendOutput",
     "performanceGridOutput",
@@ -542,18 +523,14 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
     "supportsTensorGyro",
     "canUseCompiledMaterialStep",
     "canUseCompiledKerrResponse",
-    "FdtdWorkerEngine",
-    "fdtd-worker.js",
     "kernel_features",
   ];
-  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${wasmBackendJs}\n${workerEngineJs}\n${wasmCpp}`;
+  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${wasmBackendJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
     ["wasm-src", "fdtd-core.cpp"],
     ["scripts", "build-wasm-cpp.ps1"],
-    activeFiles.fdtdWorker.split("/"),
-    activeFiles.workerEngine.split("/"),
   ];
   const missingFiles = requiredFiles
     .map((parts) => ({ parts, filePath: repoPath(...parts) }))
@@ -567,35 +544,27 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
   addCheck(
     "performance route",
     failures.length === 0 ? "PASS" : "BLOCK",
-    failures.length === 0 ? "Runtime panel and C++ WASM migration files found" : failures.join(", "),
+    failures.length === 0 ? "Runtime panel and C++ WASM backend files found" : failures.join(", "),
   );
 }
 
 function main() {
   const indexHtml = readText("index.html");
   const activeScripts = scriptPathMap(indexHtml);
-  const appFile = activeScripts.get("main.js") || "legacy/js/app.js";
-  const fdtdWorkerFile = activeScripts.get("fdtd-worker.js") || "js-next/runtime/simulation/fdtd-worker.js";
-  const workerEngineFile = activeScripts.get("worker-engine.js") || "legacy/js/src/worker-engine.js";
+  const appFile = activeScriptPath(activeScripts, "main.js");
   const appJs = readText(...appFile.split("/"));
-  const sceneCodecJs = readActiveScript(activeScripts, "scene-codec.js", ["legacy/js/src", "scene-codec.js"]);
-  const sceneReproJs = readActiveScript(activeScripts, "scene-repro.js", ["legacy/js/src", "scene-repro.js"]);
-  const fdtdSimJs = readActiveScript(activeScripts, "fdtd-sim.js", ["legacy/js/src", "fdtd-sim.js"]);
-  const fdtdEngineRoutingJs = readActiveScript(activeScripts, "fdtd-engine-routing.js", ["legacy/js/src", "fdtd-engine-routing.js"]);
-  const fdtdWorkerJs = readText(...fdtdWorkerFile.split("/"));
-  const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js", ["legacy/js/src", "wasm-backend.js"]);
-  const workerEngineJs = readText(...workerEngineFile.split("/"));
+  const sceneCodecJs = readActiveScript(activeScripts, "scene-codec.js");
+  const sceneReproJs = readActiveScript(activeScripts, "scene-repro.js");
+  const fdtdSimJs = readActiveScript(activeScripts, "fdtd-sim.js");
+  const fdtdEngineRoutingJs = readActiveScript(activeScripts, "fdtd-engine-routing.js");
+  const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js");
   const wasmCpp = readText("wasm-src", "fdtd-core.cpp");
   const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
     .map(assetPath)
     .filter(Boolean);
-  const workerImportFiles = workerImportAssets(fdtdWorkerJs)
-    .map((asset) => resolveRelativeAsset(asset, fdtdWorkerFile))
-    .filter(Boolean);
   const jsNextFiles = listFilesRecursive("js-next", ".js");
   const jsFiles = unique([
     ...linkedJsFiles,
-    ...workerImportFiles,
     ...jsNextFiles,
     "scripts/generate-scene-thumbnails.mjs",
     "scripts/serve-static.mjs",
@@ -609,25 +578,21 @@ function main() {
   validateJsNextCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
-  validateWorkerImports(fdtdWorkerJs, fdtdWorkerFile);
   const { catalog, constants } = loadCatalog(
-    readActiveScript(activeScripts, "constants.js", ["legacy/js/src", "constants.js"]),
-    readActiveScript(activeScripts, "catalog.js", ["legacy/js/src", "catalog.js"]),
+    readActiveScript(activeScripts, "constants.js"),
+    readActiveScript(activeScripts, "catalog.js"),
   );
   const dropdownPresets = validatePresets(
     indexHtml,
     catalog.sceneDescriptions,
-    readActiveScript(activeScripts, "fdtd-presets.js", ["legacy/js/src", "fdtd-presets.js"]),
+    readActiveScript(activeScripts, "fdtd-presets.js"),
   );
   validateSceneCatalogJson(indexHtml, dropdownPresets, catalog.sceneDescriptions);
   validateValidationMatrix(dropdownPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
-  const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js", ["legacy/js/src", "app-performance.js"]);
-  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, workerEngineJs, wasmCpp, {
-    fdtdWorker: fdtdWorkerFile,
-    workerEngine: workerEngineFile,
-  });
+  const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js");
+  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

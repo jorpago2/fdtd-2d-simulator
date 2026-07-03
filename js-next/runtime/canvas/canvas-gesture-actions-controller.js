@@ -421,7 +421,7 @@
       const simulationEffects = getSimulationEffects();
       if (dragState.material.pointerId !== event.pointerId) return;
       dragStateController.clearMaterial();
-      simulationEffects.commit({ dirty: true, measure: true, stats: true });
+      simulationEffects.commit({ measure: true, stats: true });
       updateInspector();
       updateCanvasInteractionState();
       simulationEffects.repaint();

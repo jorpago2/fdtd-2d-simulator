@@ -1,14 +1,13 @@
 # Project Map
 
-This project is in a refactor-in-progress state. Use this map to avoid editing the wrong file.
+Use this map to find the canonical files for UI, runtime, simulation, and validation changes.
 
 ## One-Minute Rule
 
 - New UI/CSS work goes in `fdtd-ui.css`.
 - The active app loads one stylesheet only: `fdtd-ui.css`.
-- Active JavaScript now loads from `js-next/runtime/`.
-- `legacy/js/src/` and `legacy/js/app.js` retain the old code as reference material, not as the active browser path.
-- The cleaner long-term modules live in `js-next/core`, `js-next/ui`, `js-next/canvas`, `js-next/simulation`, and `js-next/app`.
+- Active JavaScript loads from `js-next/runtime/`.
+- Files outside `js-next/runtime/` are supporting helper modules or architecture notes, not the browser load path.
 
 ## Active CSS Ownership
 
@@ -16,21 +15,19 @@ This project is in a refactor-in-progress state. Use this map to avoid editing t
 | --- | --- | --- |
 | `fdtd-ui.css` | Canonical UI layer: tokens, canvas shell, drawer, buttons, menu panels, shared cards, context menus, Visual controls, responsive rules. | Yes. |
 
-Historical CSS files are archived under `legacy/css/`. They are kept only as reference material and are not loaded by the app.
+No historical CSS bundle is part of the active repository path. Keep the app on the single canonical stylesheet unless a deliberate architecture change is made.
 
 ## Active JavaScript Ownership
 
-`index.html` loads `js-next/runtime/` as the active compatibility runtime. The files are grouped by responsibility while preserving the existing public globals during the migration.
+`index.html` loads `js-next/runtime/` as the active runtime. The files are grouped by responsibility while preserving explicit script ordering and browser globals.
 
 | Group | Active path | Purpose |
 | --- | --- | --- |
 | Core/data | `js-next/runtime/core`, `js-next/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
-| Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, worker and WASM route. |
+| Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
 | Canvas | `js-next/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, context menus and inspector. |
 | UI/controllers | `js-next/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |
 | App orchestration | `js-next/runtime/app` | Bootstrap, runtime loop, layout, performance instrumentation and main wiring. |
-
-`js-next/runtime/manifest.json` records the source-to-runtime mapping used for the cutover.
 
 ## Where To Change Common Things
 
@@ -60,9 +57,9 @@ Historical CSS files are archived under `legacy/css/`. They are kept only as ref
 | Responsive canvas/layout behavior | `js-next/runtime/app/app-layout.js` |
 | Performance panel/timing instrumentation | `js-next/runtime/app/app-performance.js` |
 
-## Refactor Direction
+## Maintenance Direction
 
-- Keep `js-next/runtime/` stable until a cleaner module is ready to replace a compatibility file.
-- Replace one block at a time: core/data, UI, canvas, simulation, worker/WASM, then orchestration.
-- After a compatibility file is fully replaced, delete the corresponding legacy reference file from `legacy/js/` in a separate cleanup pass.
+- Keep `js-next/runtime/` as the canonical browser path.
+- Refactor one block at a time: core/data, UI, canvas, simulation, WASM routing, then orchestration.
+- Remove inactive code when a replacement is validated, rather than keeping a second source of truth.
 - Validate with `npm run validate:static` after each replacement block.

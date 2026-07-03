@@ -17,7 +17,6 @@
 
   function createSimulationEffectsController(dependencies) {
     const sim = requireObject(dependencies.sim, "sim");
-    const markWorkerDirty = requireFunction(dependencies.markWorkerDirty, "markWorkerDirty");
     const disableResponsiveGridOrientation = requireFunction(
       dependencies.disableResponsiveGridOrientation,
       "disableResponsiveGridOrientation",
@@ -26,7 +25,6 @@
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
 
     function commit(options = {}) {
-      if (options.dirty) markWorkerDirty();
       if (options.disableResponsiveGrid) disableResponsiveGridOrientation();
       if (options.measure) sim.measure();
       if (options.controls) updateControlText();
@@ -36,7 +34,6 @@
 
     function commitMaterialMutation(options = {}) {
       commit({
-        dirty: options.dirty ?? true,
         disableResponsiveGrid: options.disableResponsiveGrid ?? true,
         measure: options.measure ?? true,
         controls: options.controls ?? true,
@@ -50,7 +47,6 @@
         sim.stabilizeAfterSourceMutation?.();
       }
       commit({
-        dirty: options.dirty ?? true,
         disableResponsiveGrid: options.disableResponsiveGrid ?? true,
         measure: Boolean(options.measure),
         controls: options.controls ?? true,
@@ -61,7 +57,6 @@
 
     function commitMonitorMutation(options = {}) {
       commit({
-        dirty: Boolean(options.dirty),
         disableResponsiveGrid: options.disableResponsiveGrid ?? true,
         measure: Boolean(options.measure),
         controls: options.controls ?? true,

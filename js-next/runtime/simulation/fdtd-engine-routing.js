@@ -4,12 +4,12 @@
   Object.assign(FDTDSim.prototype, {
     attachWasmBackend(backend) {
       if (this.wasmBackend) return;
-      const previous = this.snapshotWasmMigrationArrays();
+      const previous = this.snapshotWasmBackendStateArrays();
 
       this.wasmBackend = backend;
       this.wasmBackend.configure(this);
       this.allocateAuxiliaryArrays({ preserveExisting: true });
-      this.restoreWasmMigrationArrays(previous);
+      this.restoreWasmBackendStateArrays(previous);
       this.buildBoundary(state.boundary);
       this.clearCpmlMaterials();
       this.zeroBoundaryFields();

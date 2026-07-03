@@ -28,7 +28,7 @@ Runs `scripts/validate-static.mjs`. It checks:
 npm run validate:architecture
 ```
 
-Runs refactor guardrails: active assets must not load legacy paths, the app must keep a single canonical stylesheet, runtime dependency checks must stay delegated to `runtime-dependencies.js`, pure simulation files must avoid DOM APIs outside documented integration exceptions, and `main.js` must stay below the staged centrality budget.
+Runs refactor guardrails: active assets must not load retired paths, the app must keep a single canonical stylesheet, runtime dependency checks must stay delegated to `runtime-dependencies.js`, pure simulation files must avoid DOM APIs outside documented integration exceptions, and `main.js` must stay below the current centrality budget.
 
 ```powershell
 npm install

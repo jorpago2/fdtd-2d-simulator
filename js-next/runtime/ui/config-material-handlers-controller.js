@@ -36,7 +36,6 @@
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const disableResponsiveGridOrientation = requireFunction(dependencies.disableResponsiveGridOrientation, "disableResponsiveGridOrientation");
     const normalizeDispersionModel = requireFunction(dependencies.normalizeDispersionModel, "normalizeDispersionModel");
-    const markWorkerDirty = requireFunction(dependencies.markWorkerDirty, "markWorkerDirty");
     const clearMaterialSelection = requireFunction(dependencies.clearMaterialSelection, "clearMaterialSelection");
     const clearCanvasHover = requireFunction(dependencies.clearCanvasHover, "clearCanvasHover");
     const gridSizeIsAutoOrientable = requireFunction(dependencies.gridSizeIsAutoOrientable, "gridSizeIsAutoOrientable");
@@ -93,7 +92,7 @@
 
     function handleCustomMaterialInput() {
       if (!validateNumericInputs(el.brushMenu)) return;
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       const values = materialEditorModel.readCustomMaterialEditorValues(el, normalizeDispersionModel);
       const materialUpdate = materialEditorModel.applyCustomMaterialEditorValues(state, values, {
         normalizeDispersionModel,
@@ -112,7 +111,6 @@
     }
 
     function applySelectedPreset() {
-      markWorkerDirty();
       clearMaterialSelection(false);
       clearCanvasHover(false);
       state.preset = el.presetInput.value;
@@ -142,7 +140,6 @@
     }
 
     function applyBoundaryMode(mode, side = contextMenuState.boundaryMenuSide) {
-      markWorkerDirty();
       disableResponsiveGridOrientation();
       clearMaterialSelection(false);
       clearCanvasHover(false);
@@ -239,7 +236,7 @@
       state.materialGyrotropyEnabled = false;
       state.materialBianisotropyEnabled = false;
       el.presetInput.value = "empty";
-      simulationEffects.commit({ dirty: true, measure: true, controls: true, stats: true, render: true });
+      simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });
     }
 
     function clearField() {

@@ -63,7 +63,7 @@
       if (materialSelection.region) {
         const sim = getSim();
         const simulationEffects = getSimulationEffects();
-        simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+        simulationEffects.commit({ disableResponsiveGrid: true });
         getEntitySelection().replaceMaterial(sim.applyMaterialKindToRegion(materialSelection.region, "erase"));
         callbacks.closeBrushMenu();
         simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });
@@ -97,7 +97,7 @@
       if (!materialSelection.region) return;
       const sim = getSim();
       const simulationEffects = getSimulationEffects();
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       state.brush = kind;
       getEntitySelection().replaceMaterial(sim.applyMaterialKindToRegion(materialSelection.region, kind));
       simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });

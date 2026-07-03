@@ -12,7 +12,6 @@ Open the advanced `Results -> Performance` panel while the simulator is running.
 - Measurement cost, in ms per diagnostic `measure()` call.
 - Estimated solver capacity, in steps per second.
 - Active engine label and grid size.
-- Whether continuous Play is using the browser Worker route.
 
 Interpret these as profiling guides, not publication metrics. Browser scheduling, thermal throttling, device pixel ratio, active overlays, and the selected material model all affect the numbers.
 
@@ -64,15 +63,13 @@ The app currently loads `fdtd-core.wasm` through `js-next/runtime/simulation/was
 
 The compiled kernel includes CPML absorbing boundaries, finite conductivity `J = sigma E`, Kerr permittivity updates, saturable gain/loss decay, TEz tensor/gyrotropic electric updates, and exact rectangular TFSF boundary corrections for line and Gaussian incident fields. Electric ADE Drude/Lorentz/Debye scenes use a conservative hybrid path: the Yee step runs in WASM and the ADE memory-current correction remains in JavaScript to preserve the existing update order; when exact TFSF and ADE would conflict in update order, the app keeps the JavaScript path. Advanced material paths outside this set still fall back to JavaScript. The engine label remains the source of truth exposed by the app.
 
-## Worker Engine
+## Execution Model
 
-Continuous Play can advance FDTD steps in `js-next/runtime/simulation/fdtd-worker.js` when the URL explicitly requests it with `?worker=force` or with the experimental `?worker=auto` mode. The default route keeps stepping on the main runtime because the worker improves isolation/responsiveness in some cases but is usually slower for this simulator's current render loop. The main thread keeps UI, controls, and canvas rendering in one coherent path, while `js-next/runtime/simulation/worker-engine.js` can send step batches to a headless worker-side simulator for profiling. The worker loads the same physics modules as the main app and tries to use the same C++/WASM backend; if Worker or WASM loading fails, the app falls back to the previous main-thread stepping path.
+Continuous Play advances FDTD steps on the main browser runtime. The active engine can still switch between the compiled C++/WASM kernels and JavaScript kernels according to the material, source, and boundary features enabled in the scene. Keeping one interactive execution path avoids cross-thread field copies and keeps UI, controls, diagnostics, and rendering synchronized.
 
-The worker syncs a full simulation snapshot when a run starts, returns the active field arrays needed for rendering after each batch, and performs a full sync when pausing. Time-varying material arrays are only returned during frames for material models that actually mutate them, such as modulation, Kerr, or phase-change media. Geometry, source, material, preset, boundary, grid, import, reset, or backend changes invalidate the worker snapshot so the next run starts from the current main-thread state.
+Large-grid performance work should focus first on reducing render cost, moving additional material kernels into C++/WASM, and limiting diagnostic work to the requested observables. Any future parallel execution design should only be introduced if it uses a validated zero-copy strategy, such as `SharedArrayBuffer` with the required COOP/COEP headers or a renderer that owns its field buffers.
 
-This first worker route targets interactive responsiveness, not zero-copy throughput. Field arrays are copied between threads, so very large grids can still become transfer-bandwidth limited. A future deeper optimization should evaluate `SharedArrayBuffer` with COOP/COEP headers or an OffscreenCanvas/worker-owned renderer.
-
-## C++ Migration Path
+## C++ Backend Path
 
 `wasm-src/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF source parameters into the imported WebAssembly memory before each compiled step.
 
@@ -102,4 +99,4 @@ For scientific confidence, also compare short JS and WASM trajectories on homoge
 1. Use the runtime panel to identify whether the current bottleneck is stepping, rendering, or diagnostics.
 2. Compile and validate the C++ kernel after every numerical change to the Yee/CPML update.
 3. Port dynamic material kernels that currently force JavaScript fallback. CPML, finite conductivity, Kerr, saturable gain, and TEz tensor/gyrotropy are in the C++/WASM kernel; electric ADE uses the compiled Yee + JS memory-response route. Remaining candidates are full ADE memory-current kernels, modulation, phase change, harmonic nonlinear polarization, and broader bianisotropy.
-4. Extend the Worker route to long-running sweeps and consider zero-copy/shared-memory rendering for very large grids.
+4. Reconsider shared-memory execution only after a benchmark shows that synchronization costs are lower than the current single-runtime path.

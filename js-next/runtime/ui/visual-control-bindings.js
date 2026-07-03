@@ -26,7 +26,6 @@
     const el = requireObject(dependencies.el, "el");
     const state = requireObject(dependencies.state, "state");
     const sim = requireObject(dependencies.sim, "sim");
-    const markWorkerDirty = requireFunction(dependencies.markWorkerDirty, "markWorkerDirty");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const applyVisualProfile = requireFunction(dependencies.applyVisualProfile, "applyVisualProfile");
@@ -36,7 +35,6 @@
       button.addEventListener("click", () => {
         const component = button.dataset.fieldComponent === "hz" ? "hz" : "ez";
         if (state.fieldComponent === component) return;
-        markWorkerDirty();
         state.fieldComponent = component;
         sim.resetFields();
         sim.measure();

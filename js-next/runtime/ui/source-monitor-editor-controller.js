@@ -207,7 +207,7 @@
       if (!validateNumericInputs(el.sourceMenu)) return;
       const target = activeSourceEditorTarget();
       if (!target) return;
-      simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
+      simulationEffects.commit({ disableResponsiveGrid: true });
       const values = readSourceEditorValues();
       const componentChanged = inPlaneElectricCurrentShapes.has(values.shape) && state.fieldComponent !== "hz";
       if (componentChanged) {
@@ -224,7 +224,6 @@
       }
       if (contextMenuState.sourceMenuMode === "edit") {
         simulationEffects.commitSourceMutation({
-          dirty: false,
           disableResponsiveGrid: false,
           controls: true,
           render: true,
@@ -290,7 +289,7 @@
         state.monitorDefaults = { ...target };
         delete state.monitorDefaults.id;
       }
-      simulationEffects.commitMonitorMutation({ dirty: false });
+      simulationEffects.commitMonitorMutation();
     }
 
     return Object.freeze({

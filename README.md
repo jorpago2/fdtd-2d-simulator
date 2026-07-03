@@ -46,7 +46,7 @@ docs/VALIDATION.md
 
 ## Deployment
 
-The GitHub Pages workflow publishes the generated `dist/` folder, not the full repository. This keeps development-only files such as `legacy/`, `scripts/`, `docs/`, and `wasm-src/` out of the public artifact.
+The GitHub Pages workflow publishes the generated `dist/` folder, not the full repository. This keeps development-only files such as `scripts/`, `docs/`, and `wasm-src/` out of the public artifact.
 
 Build the deployable static site locally with:
 
@@ -78,4 +78,4 @@ See:
 docs/PROJECT_MAP.md
 ```
 
-The active browser code is loaded from `js-next/runtime/`. The old `src/` tree and root `app.js` are archived under `legacy/js/` as reference material during the migration.
+The active browser code is loaded from `js-next/runtime/`. That tree is the canonical JavaScript implementation used by `index.html`.

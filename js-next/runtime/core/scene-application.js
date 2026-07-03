@@ -75,7 +75,6 @@
     const clonePlainData = requireFunction(dependencies.clonePlainData, "clonePlainData");
     const clampInt = requireFunction(dependencies.clampInt, "clampInt");
     const clampNumber = dependencies.clampNumber || ((value, min, max) => Math.max(min, Math.min(max, value)));
-    const markWorkerDirty = dependencies.markWorkerDirty || (() => {});
     const disableResponsiveGridOrientation = dependencies.disableResponsiveGridOrientation || (() => {});
     const normalizeImportedStateValues = requireFunction(dependencies.normalizeImportedStateValues, "normalizeImportedStateValues");
     const clearMaterialSelection = requireFunction(dependencies.clearMaterialSelection, "clearMaterialSelection");
@@ -92,7 +91,6 @@
         throw new Error("Invalid scene JSON.");
       }
 
-      markWorkerDirty();
       disableResponsiveGridOrientation();
 
       const importedState = isPlainObject(snapshot.state) ? snapshot.state : {};

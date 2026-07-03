@@ -89,21 +89,21 @@ function sampleStateOptions() {
   };
 }
 
-function compareStateModules(src, next) {
-  const srcState = src.FdtdAppState;
+function compareStateModules(runtime, next) {
+  const runtimeState = runtime.FdtdAppState;
   const nextState = next.FdtdNext.core.state;
-  assertEqual(nextState.normalizeTheme("dark"), srcState.normalizeTheme("dark"), "normalizeTheme dark");
-  assertEqual(nextState.normalizeTheme("bad"), srcState.normalizeTheme("bad"), "normalizeTheme fallback");
-  assertEqual(nextState.normalizeUiDepth("teaching"), srcState.normalizeUiDepth("teaching"), "normalizeUiDepth teaching");
-  assertEqual(nextState.normalizeUiDepth("bad"), srcState.normalizeUiDepth("bad"), "normalizeUiDepth fallback");
+  assertEqual(nextState.normalizeTheme("dark"), runtimeState.normalizeTheme("dark"), "normalizeTheme dark");
+  assertEqual(nextState.normalizeTheme("bad"), runtimeState.normalizeTheme("bad"), "normalizeTheme fallback");
+  assertEqual(nextState.normalizeUiDepth("teaching"), runtimeState.normalizeUiDepth("teaching"), "normalizeUiDepth teaching");
+  assertEqual(nextState.normalizeUiDepth("bad"), runtimeState.normalizeUiDepth("bad"), "normalizeUiDepth fallback");
   assertDeepEqual(
     nextState.createInitialAppState(sampleStateOptions()),
-    srcState.createInitialAppState(sampleStateOptions()),
+    runtimeState.createInitialAppState(sampleStateOptions()),
     "createInitialAppState",
   );
 }
 
-function compareFormatterModules(src, next) {
+function compareFormatterModules(runtime, next) {
   const state = {
     fieldComponent: "ez",
     fieldDisplay: "scalar",
@@ -121,7 +121,7 @@ function compareFormatterModules(src, next) {
     circularDipoleSourceShapes: new Set(["circularDipoleCw", "circularDipoleCcw"]),
     incidentFieldSourceShapes: new Set(["line", "gaussianProfile", "evanescentLine"]),
   };
-  const srcFormatters = src.FdtdAppFormatters.createAppFormatters(dependencies);
+  const runtimeFormatters = runtime.FdtdAppFormatters.createAppFormatters(dependencies);
   const nextFormatters = next.FdtdNext.core.formatters.createAppFormatters(dependencies);
   const checks = [
     "simulatedFieldLetter",
@@ -140,16 +140,16 @@ function compareFormatterModules(src, next) {
   ];
   for (const name of checks) {
     const args = name === "formatLambdaOutput" || name === "formatSpeed" || name === "formatScaleBarValue" ? [1.25] : [];
-    assertEqual(nextFormatters[name](...args), srcFormatters[name](...args), `formatter ${name}`);
+    assertEqual(nextFormatters[name](...args), runtimeFormatters[name](...args), `formatter ${name}`);
   }
-  assertDeepEqual(nextFormatters.fieldDisplayConfig("scalar"), srcFormatters.fieldDisplayConfig("scalar"), "fieldDisplayConfig scalar");
-  assertEqual(nextFormatters.sourceShapeLabel("line"), srcFormatters.sourceShapeLabel("line"), "sourceShapeLabel");
-  assertEqual(nextFormatters.sourceCouplingLabel("line"), srcFormatters.sourceCouplingLabel("line"), "sourceCouplingLabel");
-  assertEqual(nextFormatters.monitorQuantityLabel("normalFlux"), srcFormatters.monitorQuantityLabel("normalFlux"), "monitorQuantityLabel");
+  assertDeepEqual(nextFormatters.fieldDisplayConfig("scalar"), runtimeFormatters.fieldDisplayConfig("scalar"), "fieldDisplayConfig scalar");
+  assertEqual(nextFormatters.sourceShapeLabel("line"), runtimeFormatters.sourceShapeLabel("line"), "sourceShapeLabel");
+  assertEqual(nextFormatters.sourceCouplingLabel("line"), runtimeFormatters.sourceCouplingLabel("line"), "sourceCouplingLabel");
+  assertEqual(nextFormatters.monitorQuantityLabel("normalFlux"), runtimeFormatters.monitorQuantityLabel("normalFlux"), "monitorQuantityLabel");
 }
 
-function compareSceneCodecModules(src, next) {
-  const srcCodec = src.FdtdSceneCodec;
+function compareSceneCodecModules(runtime, next) {
+  const runtimeCodec = runtime.FdtdSceneCodec;
   const nextCodec = next.FdtdNext.core.sceneCodec;
   const state = sampleStateOptions();
   const snapshot = {
@@ -159,18 +159,18 @@ function compareSceneCodecModules(src, next) {
     state: { theme: "dark", preset: "empty" },
     materials: [{ x: 2, y: 3, eps: 4 }],
   };
-  assertEqual(nextCodec.SCENE_SNAPSHOT_VERSION, srcCodec.SCENE_SNAPSHOT_VERSION, "SCENE_SNAPSHOT_VERSION");
-  assertEqual(nextCodec.SCENE_SHARE_URL_LIMIT, srcCodec.SCENE_SHARE_URL_LIMIT, "SCENE_SHARE_URL_LIMIT");
-  assertDeepEqual(nextCodec.SERIALIZABLE_STATE_KEYS, srcCodec.SERIALIZABLE_STATE_KEYS, "SERIALIZABLE_STATE_KEYS");
-  assertEqual(nextCodec.safeFilePart("A test scene!"), srcCodec.safeFilePart("A test scene!"), "safeFilePart");
+  assertEqual(nextCodec.SCENE_SNAPSHOT_VERSION, runtimeCodec.SCENE_SNAPSHOT_VERSION, "SCENE_SNAPSHOT_VERSION");
+  assertEqual(nextCodec.SCENE_SHARE_URL_LIMIT, runtimeCodec.SCENE_SHARE_URL_LIMIT, "SCENE_SHARE_URL_LIMIT");
+  assertDeepEqual(nextCodec.SERIALIZABLE_STATE_KEYS, runtimeCodec.SERIALIZABLE_STATE_KEYS, "SERIALIZABLE_STATE_KEYS");
+  assertEqual(nextCodec.safeFilePart("A test scene!"), runtimeCodec.safeFilePart("A test scene!"), "safeFilePart");
   assertDeepEqual(
     nextCodec.serializableStateSnapshot(state, ["themeStorageKey", "defaultGrid"]),
-    srcCodec.serializableStateSnapshot(state, ["themeStorageKey", "defaultGrid"]),
+    runtimeCodec.serializableStateSnapshot(state, ["themeStorageKey", "defaultGrid"]),
     "serializableStateSnapshot",
   );
   assertDeepEqual(
     nextCodec.createSceneSnapshot(snapshot),
-    srcCodec.createSceneSnapshot(snapshot),
+    runtimeCodec.createSceneSnapshot(snapshot),
     "createSceneSnapshot",
   );
   const encoded = nextCodec.encodeSceneSnapshot(snapshot);
@@ -209,32 +209,32 @@ function makeFakeElement(dataset = {}) {
   };
 }
 
-function compareUiCoreModules(src, next) {
-  const srcUi = src.FdtdUiCore;
+function compareUiCoreModules(runtime, next) {
+  const runtimeUi = runtime.FdtdUiCore;
   const nextUi = next.FdtdNext.ui.core;
 
-  const srcButtons = [makeFakeElement({ mode: "select" }), makeFakeElement({ mode: "draw" })];
+  const runtimeButtons = [makeFakeElement({ mode: "select" }), makeFakeElement({ mode: "draw" })];
   const nextButtons = [makeFakeElement({ mode: "select" }), makeFakeElement({ mode: "draw" })];
-  srcUi.setExclusiveButtonState(srcButtons, "mode", "draw", { currentValue: "page" });
+  runtimeUi.setExclusiveButtonState(runtimeButtons, "mode", "draw", { currentValue: "page" });
   nextUi.setExclusiveButtonState(nextButtons, "mode", "draw", { currentValue: "page" });
-  assertDeepEqual(nextButtons.map((button) => button.snapshot()), srcButtons.map((button) => button.snapshot()), "ui setExclusiveButtonState");
-  assertEqual(nextUi.activeDatasetValue(nextButtons, "mode", "fallback"), srcUi.activeDatasetValue(srcButtons, "mode", "fallback"), "ui activeDatasetValue");
+  assertDeepEqual(nextButtons.map((button) => button.snapshot()), runtimeButtons.map((button) => button.snapshot()), "ui setExclusiveButtonState");
+  assertEqual(nextUi.activeDatasetValue(nextButtons, "mode", "fallback"), runtimeUi.activeDatasetValue(runtimeButtons, "mode", "fallback"), "ui activeDatasetValue");
 
-  const srcPanels = [makeFakeElement({ tab: "scene" }), makeFakeElement({ tab: "visual" })];
+  const runtimePanels = [makeFakeElement({ tab: "scene" }), makeFakeElement({ tab: "visual" })];
   const nextPanels = [makeFakeElement({ tab: "scene" }), makeFakeElement({ tab: "visual" })];
-  srcUi.setExclusivePanels(srcPanels, "tab", "visual");
+  runtimeUi.setExclusivePanels(runtimePanels, "tab", "visual");
   nextUi.setExclusivePanels(nextPanels, "tab", "visual");
-  assertDeepEqual(nextPanels.map((panel) => panel.snapshot()), srcPanels.map((panel) => panel.snapshot()), "ui setExclusivePanels");
+  assertDeepEqual(nextPanels.map((panel) => panel.snapshot()), runtimePanels.map((panel) => panel.snapshot()), "ui setExclusivePanels");
 
-  const srcButton = makeFakeElement();
+  const runtimeButton = makeFakeElement();
   const nextButton = makeFakeElement();
-  srcUi.setPressed(srcButton, true);
+  runtimeUi.setPressed(runtimeButton, true);
   nextUi.setPressed(nextButton, true);
-  srcUi.setExpanded(srcButton, true);
+  runtimeUi.setExpanded(runtimeButton, true);
   nextUi.setExpanded(nextButton, true);
-  srcUi.setHidden(srcButton, false);
+  runtimeUi.setHidden(runtimeButton, false);
   nextUi.setHidden(nextButton, false);
-  assertDeepEqual(nextButton.snapshot(), srcButton.snapshot(), "ui simple state setters");
+  assertDeepEqual(nextButton.snapshot(), runtimeButton.snapshot(), "ui simple state setters");
 }
 
 function baseNormalizerState() {
@@ -343,12 +343,12 @@ function makeNormalizerDependencies(state) {
   };
 }
 
-function compareStateNormalizerModules(src, next) {
-  const srcState = baseNormalizerState();
-  const nextState = JSON.parse(JSON.stringify(srcState));
-  src.FdtdStateNormalizer.createStateNormalizer(makeNormalizerDependencies(srcState)).normalizeImportedStateValues();
+function compareStateNormalizerModules(runtime, next) {
+  const runtimeState = baseNormalizerState();
+  const nextState = JSON.parse(JSON.stringify(runtimeState));
+  runtime.FdtdStateNormalizer.createStateNormalizer(makeNormalizerDependencies(runtimeState)).normalizeImportedStateValues();
   next.FdtdNext.core.stateNormalizer.createStateNormalizer(makeNormalizerDependencies(nextState)).normalizeImportedStateValues();
-  assertDeepEqual(nextState, srcState, "state normalizer");
+  assertDeepEqual(nextState, runtimeState, "state normalizer");
 }
 
 function makeViewportSim(Constructor) {
@@ -384,20 +384,20 @@ function snapshotViewportSim(sim) {
   };
 }
 
-function compareViewportModules(src, next) {
+function compareViewportModules(runtime, next) {
   const viewportInput = { canvasWidth: 1200, canvasHeight: 800, gridWidth: 360, gridHeight: 240 };
   assertDeepEqual(
     next.FdtdNext.canvas.viewport.viewportForGridView(viewportInput),
-    src.FdtdCanvasViewport.viewportForGridView(viewportInput),
+    runtime.FdtdCanvasViewport.viewportForGridView(viewportInput),
     "viewportForGridView",
   );
 
   function NextSim() {}
   next.FdtdNext.canvas.viewport.installViewportMethods(NextSim, {
-    clampNumber: src.clamp,
-    clampInt: src.clampInt,
+    clampNumber: runtime.clamp,
+    clampInt: runtime.clampInt,
   });
-  const srcSim = makeViewportSim(src.FDTDSim);
+  const runtimeSim = makeViewportSim(runtime.FDTDSim);
   const nextSim = makeViewportSim(NextSim);
 
   const readChecks = [
@@ -409,33 +409,33 @@ function compareViewportModules(src, next) {
     "clientViewportRect",
   ];
   for (const name of readChecks) {
-    assertDeepEqual(nextSim[name](), srcSim[name](), `viewport method ${name}`);
+    assertDeepEqual(nextSim[name](), runtimeSim[name](), `viewport method ${name}`);
   }
-  assertDeepEqual(nextSim.clientToViewFractions(180, 120), srcSim.clientToViewFractions(180, 120), "clientToViewFractions");
-  assertDeepEqual(nextSim.clientToGridFloat(180, 120), srcSim.clientToGridFloat(180, 120), "clientToGridFloat");
-  assertDeepEqual(nextSim.clientToGridCell(180, 120), srcSim.clientToGridCell(180, 120), "clientToGridCell");
-  assertEqual(nextSim.gridToCanvasX(120), srcSim.gridToCanvasX(120), "gridToCanvasX");
-  assertEqual(nextSim.gridToCanvasY(80), srcSim.gridToCanvasY(80), "gridToCanvasY");
-  assertDeepEqual(nextSim.gridRectToCanvas(10, 20, 140, 160), srcSim.gridRectToCanvas(10, 20, 140, 160), "gridRectToCanvas");
+  assertDeepEqual(nextSim.clientToViewFractions(180, 120), runtimeSim.clientToViewFractions(180, 120), "clientToViewFractions");
+  assertDeepEqual(nextSim.clientToGridFloat(180, 120), runtimeSim.clientToGridFloat(180, 120), "clientToGridFloat");
+  assertDeepEqual(nextSim.clientToGridCell(180, 120), runtimeSim.clientToGridCell(180, 120), "clientToGridCell");
+  assertEqual(nextSim.gridToCanvasX(120), runtimeSim.gridToCanvasX(120), "gridToCanvasX");
+  assertEqual(nextSim.gridToCanvasY(80), runtimeSim.gridToCanvasY(80), "gridToCanvasY");
+  assertDeepEqual(nextSim.gridRectToCanvas(10, 20, 140, 160), runtimeSim.gridRectToCanvas(10, 20, 140, 160), "gridRectToCanvas");
 
   nextSim.zoomAtClientPoint(180, 120, 1.25);
-  srcSim.zoomAtClientPoint(180, 120, 1.25);
+  runtimeSim.zoomAtClientPoint(180, 120, 1.25);
   nextSim.panByClientDelta(24, -12);
-  srcSim.panByClientDelta(24, -12);
+  runtimeSim.panByClientDelta(24, -12);
   nextSim.setZoomFromGesture(220, 160, 90, 70, 2.2);
-  srcSim.setZoomFromGesture(220, 160, 90, 70, 2.2);
+  runtimeSim.setZoomFromGesture(220, 160, 90, 70, 2.2);
   nextSim.fitCanvas();
-  srcSim.fitCanvas();
-  assertDeepEqual(snapshotViewportSim(nextSim), snapshotViewportSim(srcSim), "viewport mutating methods");
+  runtimeSim.fitCanvas();
+  assertDeepEqual(snapshotViewportSim(nextSim), snapshotViewportSim(runtimeSim), "viewport mutating methods");
 }
 
 function main() {
-  const src = createBrowserContext();
-  src.devicePixelRatio = 2;
-  src.FDTDSim = function FDTDSim() {};
-  src.clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  src.clampInt = (value, min, max) => Math.round(src.clamp(Number(value) || 0, min, max));
-  loadScripts(src, [
+  const runtime = createBrowserContext();
+  runtime.devicePixelRatio = 2;
+  runtime.FDTDSim = function FDTDSim() {};
+  runtime.clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  runtime.clampInt = (value, min, max) => Math.round(runtime.clamp(Number(value) || 0, min, max));
+  loadScripts(runtime, [
     ["js-next", "runtime", "core", "app-state.js"],
     ["js-next", "runtime", "core", "app-formatters.js"],
     ["js-next", "runtime", "core", "scene-codec.js"],
@@ -456,12 +456,12 @@ function main() {
     ["js-next", "canvas", "viewport.js"],
   ]);
 
-  compareStateModules(src, next);
-  compareFormatterModules(src, next);
-  compareSceneCodecModules(src, next);
-  compareUiCoreModules(src, next);
-  compareStateNormalizerModules(src, next);
-  compareViewportModules(src, next);
+  compareStateModules(runtime, next);
+  compareFormatterModules(runtime, next);
+  compareSceneCodecModules(runtime, next);
+  compareUiCoreModules(runtime, next);
+  compareStateNormalizerModules(runtime, next);
+  compareViewportModules(runtime, next);
   console.log("JS next core validation: PASS");
 }
 
