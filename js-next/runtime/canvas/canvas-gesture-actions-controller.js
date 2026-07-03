@@ -32,7 +32,6 @@
       "updateCanvasInteractionState",
     );
     const closeContextMenus = requireFunction(dependencies.closeContextMenus, "closeContextMenus");
-    const updateInspector = requireFunction(dependencies.updateInspector, "updateInspector");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const cellsToLambda = requireFunction(dependencies.cellsToLambda, "cellsToLambda");
     const selectMaterialRegion = requireFunction(dependencies.selectMaterialRegion, "selectMaterialRegion");
@@ -245,7 +244,6 @@
       getSimulationEffects().commit({ disableResponsiveGrid: true });
       closeContextMenus();
       getEntitySelection().selectSource(source.id);
-      updateInspector();
       const point = sim.clientToGridFloat(originClientX, originClientY);
       dragStateController.beginSource({
         pointerId: event.pointerId,
@@ -268,7 +266,6 @@
       getSimulationEffects().commit({ disableResponsiveGrid: true });
       closeContextMenus();
       getEntitySelection().selectMonitor(monitor.id);
-      updateInspector();
       const point = sim.clientToGridFloat(originClientX, originClientY);
       dragStateController.beginMonitor({
         pointerId: event.pointerId,
@@ -411,7 +408,6 @@
       dragState.material.dragState.dx = dragDelta.dx;
       dragState.material.dragState.dy = dragDelta.dy;
       simulationEffects.commit({ measure: true, stats: true });
-      updateInspector();
       updateCanvasInteractionState();
       simulationEffects.repaint();
       return true;
@@ -422,7 +418,6 @@
       if (dragState.material.pointerId !== event.pointerId) return;
       dragStateController.clearMaterial();
       simulationEffects.commit({ measure: true, stats: true });
-      updateInspector();
       updateCanvasInteractionState();
       simulationEffects.repaint();
     }

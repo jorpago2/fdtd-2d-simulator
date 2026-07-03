@@ -47,7 +47,6 @@
     const beginMaterialDrag = requireFunction(dependencies.beginMaterialDrag, "beginMaterialDrag");
     const selectMaterialRegionAt = requireFunction(dependencies.selectMaterialRegionAt, "selectMaterialRegionAt");
     const clearMaterialSelection = requireFunction(dependencies.clearMaterialSelection, "clearMaterialSelection");
-    const updateInspector = requireFunction(dependencies.updateInspector, "updateInspector");
     const updateCanvasHover = requireFunction(dependencies.updateCanvasHover, "updateCanvasHover");
     const updateCanvasInteractionState = requireFunction(dependencies.updateCanvasInteractionState, "updateCanvasInteractionState");
     const insertGeometryFromEvent = requireFunction(dependencies.insertGeometryFromEvent, "insertGeometryFromEvent");
@@ -161,7 +160,6 @@
           clearMaterialSelection(false);
           state.selectedSourceId = source.id;
           state.selectedMonitorId = null;
-          updateInspector();
           beginPendingTouchInteraction(event, "source", { sourceId: source.id });
           sim.render();
         } else {
@@ -174,7 +172,6 @@
           clearMaterialSelection(false);
           state.selectedMonitorId = monitor.id;
           state.selectedSourceId = null;
-          updateInspector();
           beginPendingTouchInteraction(event, "monitor", { monitorId: monitor.id });
           sim.render();
         } else {

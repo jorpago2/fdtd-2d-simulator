@@ -57,7 +57,6 @@
     ["materialStabilityModule", "FdtdMaterialStability", "material-stability-controller.js"],
     ["sourceMonitorEditorsModule", "FdtdSourceMonitorEditors", "source-monitor-editor-controller.js"],
     ["brushControlsModule", "FdtdBrushControls", "brush-controls-controller.js"],
-    ["inspectorModule", "FdtdInspectorController", "inspector-controller.js"],
     ["controlTextModule", "FdtdControlTextController", "control-text-controller.js"],
     ["sceneStateControllerModule", "FdtdSceneStateController", "scene-state-controller.js"],
     ["canvasEditActionsModule", "FdtdCanvasEditActions", "canvas-edit-actions-controller.js"],

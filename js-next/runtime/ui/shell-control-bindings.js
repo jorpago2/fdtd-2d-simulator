@@ -45,8 +45,6 @@
     );
     const activateMobileLayer = requireFunction(dependencies.activateMobileLayer, "activateMobileLayer");
     const refreshSceneSearch = requireFunction(dependencies.refreshSceneSearch, "refreshSceneSearch");
-    const editInspectorSelection = requireFunction(dependencies.editInspectorSelection, "editInspectorSelection");
-    const clearInspectorSelection = requireFunction(dependencies.clearInspectorSelection, "clearInspectorSelection");
     const applyTheme = requireFunction(dependencies.applyTheme, "applyTheme");
     const applyUiDepth = requireFunction(dependencies.applyUiDepth, "applyUiDepth");
     const closeCanvasContextMenuAndRender = requireFunction(
@@ -94,8 +92,6 @@
     });
 
     el.sceneSearchInput?.addEventListener("input", refreshSceneSearch);
-    el.inspectorEditBtn?.addEventListener("click", editInspectorSelection);
-    el.inspectorClearBtn?.addEventListener("click", clearInspectorSelection);
 
     forEachNode(el.themeButtons, (button) => {
       button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));

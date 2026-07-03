@@ -25,7 +25,7 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 | --- | --- | --- |
 | Core/data | `js-next/runtime/core`, `js-next/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
 | Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
-| Canvas | `js-next/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, context menus and inspector. |
+| Canvas | `js-next/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |
 | UI/controllers | `js-next/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |
 | App orchestration | `js-next/runtime/app` | Bootstrap, runtime loop, layout, performance instrumentation and main wiring. |
 
@@ -47,7 +47,6 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 | Material selection/apply/delete operations | `js-next/runtime/ui/material-operations.js` |
 | Brush/material editor controls | `js-next/runtime/ui/brush-controls-controller.js`, `js-next/runtime/ui/material-editor-model.js`, `js-next/runtime/ui/material-editor-ui.js` |
 | Wavelength, grid, preset, boundary, material-editor, or brush action handlers | `js-next/runtime/ui/config-material-handlers-controller.js`, `js-next/runtime/ui/config-control-bindings.js`, `js-next/runtime/ui/material-control-bindings.js`, `js-next/runtime/ui/brush-control-bindings.js` |
-| Selection inspector text | `js-next/runtime/canvas/inspector-controller.js` |
 | Cross-panel text/control synchronization | `js-next/runtime/app/control-text-controller.js` |
 | App defaults or UI text formatting | `js-next/runtime/core/app-state.js`, `js-next/runtime/core/app-formatters.js` |
 | Canvas labels, scale, axes, k-vector | `js-next/runtime/canvas/canvas-reference-overlays.js` |

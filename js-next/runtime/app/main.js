@@ -59,7 +59,6 @@ const {
   materialStabilityModule,
   sourceMonitorEditorsModule,
   brushControlsModule,
-  inspectorModule,
   controlTextModule,
   sceneStateControllerModule,
   canvasEditActionsModule,
@@ -123,7 +122,6 @@ const {
   currentSourceLetter,
   sourceShapeLabel,
   sourceCouplingLabel,
-  sourceSummaryLabel,
   currentBrushLabel,
   monitorQuantityLabel,
   niceScaleLength,
@@ -453,50 +451,10 @@ function selectScenePreset(value) {
   applySelectedPreset();
 }
 
-let inspectorController = null;
-function inspector() {
-  if (!inspectorController) {
-    throw new Error("Inspector controller is not initialized.");
-  }
-  return inspectorController;
-}
-
-function updateInspector() {
-  return inspector().updateInspector();
-}
-
 function materialRegionSignature(region) {
   if (!region?.bounds) return "";
   const b = region.bounds;
   return `${region.cells?.length || 0}:${b.minX},${b.minY},${b.maxX},${b.maxY}`;
-}
-
-function sourceClientPoint(source) {
-  const rect = el.canvas.getBoundingClientRect();
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const x = sim.gridToCanvasX(sim.sourceXCell(source) + 0.5) / dpr + rect.left;
-  const y = sim.gridToCanvasY(sim.sourceYCell(source) + 0.5) / dpr + rect.top;
-  return { x, y };
-}
-
-function materialRegionClientPoint(region) {
-  const rect = el.canvas.getBoundingClientRect();
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const b = region.bounds;
-  const centerX = (b.minX + b.maxX + 1) * 0.5;
-  const centerY = (b.minY + b.maxY + 1) * 0.5;
-  return {
-    x: sim.gridToCanvasX(centerX) / dpr + rect.left,
-    y: sim.gridToCanvasY(centerY) / dpr + rect.top,
-  };
-}
-
-function monitorClientPoint(monitor) {
-  const rect = el.canvas.getBoundingClientRect();
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const x = sim.gridToCanvasX(sim.monitorXCell(monitor) + 0.5) / dpr + rect.left;
-  const y = sim.gridToCanvasY(sim.monitorYCell(monitor) + 0.5) / dpr + rect.top;
-  return { x, y };
 }
 
 function clearCanvasHover(render = true) {
@@ -622,7 +580,6 @@ function setControlDrawerOpen(open) {
 
 function refreshControlPanelData() {
   updateControlText();
-  updateInspector();
   updateStats();
 }
 
@@ -741,7 +698,6 @@ function controlUiState() {
       normalizeUiDepth,
       themeStorageKey: THEME_STORAGE_KEY,
       mobileCanvasViewportActive,
-      fieldDisplayConfig,
       clearCanvasHover,
       updateControlText,
       getSim: () => sim,
@@ -981,7 +937,6 @@ const materialOperations = materialOperationsModule.createMaterialOperations({
   selectedSource: explicitlySelectedSource,
   selectedMonitor: explicitlySelectedMonitor,
   callbacks: {
-    updateInspector,
     updateControlText,
     closeMonitorMenu,
     closeSourceMenu,
@@ -1610,28 +1565,6 @@ sourceMonitorEditorController = sourceMonitorEditorsModule.createSourceMonitorEd
   maxMonitorYLambda,
   validateNumericInputs: (scope) => numericInputs.validateScope(scope, { commitActive: false }),
 });
-inspectorController = inspectorModule.createInspectorController({
-  state,
-  sim,
-  el,
-  documentRef: document,
-  materialSelection,
-  explicitlySelectedMonitor,
-  explicitlySelectedSource,
-  dominantMaterialKind,
-  cellsToLambda,
-  formatLambda,
-  formatFieldValue,
-  sourceShapeLabel,
-  sourceTypeLabel,
-  sourceCouplingLabel,
-  sourceUsesWidth,
-  monitorQuantityLabel,
-  formatMonitorAngle,
-  solverModeLabel,
-  boundarySummaryLabel,
-  runtimeEngineLabel,
-});
 controlTextController = controlTextModule.createControlTextController({
   state,
   sim,
@@ -1663,16 +1596,12 @@ controlTextController = controlTextModule.createControlTextController({
   updateBoundaryMenuControls,
   populateSourceEditor,
   populateMonitorEditor,
-  solverModeLabel,
   boundarySummaryLabel,
   cellsToLambda,
   formatCompactLambda,
   formatLambda,
-  currentBrushLabel,
-  sourceSummaryLabel,
   updateMaterialWarning,
   updateStabilitySummary,
-  updateInspector,
   updateAllRangeProgress,
   updateSweepControls,
   updateAnalysisControls,
@@ -1784,7 +1713,6 @@ const canvasInteractions = canvasInteractionsModule.createCanvasInteractionsCont
   beginMaterialDrag,
   selectMaterialRegionAt,
   clearMaterialSelection,
-  updateInspector,
   updateCanvasHover,
   updateCanvasInteractionState,
   insertGeometryFromEvent,
@@ -1816,32 +1744,6 @@ runtimeControlBindingsModule.bindRuntimeControls({
 function refreshSceneSearch() {
   renderSceneFilterBar();
   renderSceneCards();
-}
-
-function editInspectorSelection() {
-  const monitor = explicitlySelectedMonitor();
-  if (monitor) {
-    const point = monitorClientPoint(monitor);
-    openMonitorMenuAt(point.x, point.y, monitor);
-    return;
-  }
-  const source = explicitlySelectedSource();
-  if (materialSelection.region) {
-    const point = materialRegionClientPoint(materialSelection.region);
-    openBrushMenuAt(point.x, point.y, { mode: "region" });
-    return;
-  }
-  if (source) {
-    const point = sourceClientPoint(source);
-    openSourceMenuAt(point.x, point.y, source);
-  }
-}
-
-function clearInspectorSelection() {
-  entitySelection.clearAll();
-  dragStateController.clearMaterial();
-  updateControlText();
-  sim.render();
 }
 
 function closeCanvasContextMenuAndRender() {
@@ -1876,8 +1778,6 @@ shellControlBindingsModule.bindShellControls({
   handleControlTabKeydown,
   activateMobileLayer,
   refreshSceneSearch,
-  editInspectorSelection,
-  clearInspectorSelection,
   applyTheme,
   applyUiDepth,
   closeCanvasContextMenuAndRender,
@@ -2084,7 +1984,6 @@ function canvasGestureActions() {
       updateControlText,
       updateCanvasInteractionState,
       closeContextMenus,
-      updateInspector,
       updateStats,
       cellsToLambda,
       selectMaterialRegion,

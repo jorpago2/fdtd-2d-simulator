@@ -48,16 +48,12 @@
     const updateBoundaryMenuControls = requireFunction(dependencies.updateBoundaryMenuControls, "updateBoundaryMenuControls");
     const populateSourceEditor = requireFunction(dependencies.populateSourceEditor, "populateSourceEditor");
     const populateMonitorEditor = requireFunction(dependencies.populateMonitorEditor, "populateMonitorEditor");
-    const solverModeLabel = requireFunction(dependencies.solverModeLabel, "solverModeLabel");
     const boundarySummaryLabel = requireFunction(dependencies.boundarySummaryLabel, "boundarySummaryLabel");
     const cellsToLambda = requireFunction(dependencies.cellsToLambda, "cellsToLambda");
     const formatCompactLambda = requireFunction(dependencies.formatCompactLambda, "formatCompactLambda");
     const formatLambda = requireFunction(dependencies.formatLambda, "formatLambda");
-    const currentBrushLabel = requireFunction(dependencies.currentBrushLabel, "currentBrushLabel");
-    const sourceSummaryLabel = requireFunction(dependencies.sourceSummaryLabel, "sourceSummaryLabel");
     const updateMaterialWarning = requireFunction(dependencies.updateMaterialWarning, "updateMaterialWarning");
     const updateStabilitySummary = requireFunction(dependencies.updateStabilitySummary, "updateStabilitySummary");
-    const updateInspector = requireFunction(dependencies.updateInspector, "updateInspector");
     const updateAllRangeProgress = requireFunction(dependencies.updateAllRangeProgress, "updateAllRangeProgress");
     const updateSweepControls = requireFunction(dependencies.updateSweepControls, "updateSweepControls");
     const updateAnalysisControls = requireFunction(dependencies.updateAnalysisControls, "updateAnalysisControls");
@@ -96,7 +92,6 @@
       if (editorMonitor) {
         populateMonitorEditor(editorMonitor);
       }
-      const solverSummary = solverModeLabel();
       const boundary = boundarySummaryLabel();
       controlSyncUi.syncConfigSummaryControls({
         boundary,
@@ -109,17 +104,8 @@
         gridNy: sim.ny,
         state,
       });
-      controlSyncUi.syncSimulationGuideControls({
-        boundary,
-        courant: COURANT,
-        el,
-        materialLabel: currentBrushLabel(),
-        solverSummary,
-        sourceLabel: sourceSummaryLabel(),
-      });
       updateMaterialWarning();
       updateStabilitySummary();
-      updateInspector();
       updateAllRangeProgress();
       updateSweepControls();
       updateAnalysisControls();

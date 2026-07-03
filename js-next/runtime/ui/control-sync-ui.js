@@ -71,26 +71,6 @@
     }
   }
 
-  function syncSimulationGuideControls({ boundary, courant, el, materialLabel, solverSummary, sourceLabel }) {
-    requireObject(el, "el");
-    const cflText = `S = ${Number(courant).toFixed(2)}`;
-    if (el.simGuideSolver) {
-      el.simGuideSolver.textContent = solverSummary || "";
-    }
-    if (el.simGuideSource) {
-      el.simGuideSource.textContent = sourceLabel || "";
-    }
-    if (el.simGuideBoundary) {
-      el.simGuideBoundary.textContent = boundary || "";
-    }
-    if (el.simGuideMaterial) {
-      el.simGuideMaterial.textContent = materialLabel || "";
-    }
-    if (el.simGuideCfl) {
-      el.simGuideCfl.textContent = cflText;
-    }
-  }
-
   function syncConfigSummaryControls({
     boundary,
     cellsToLambda,
@@ -135,6 +115,5 @@
     syncConfigSummaryControls,
     syncRuntimeAndViewControls,
     syncSceneAndGridControls,
-    syncSimulationGuideControls,
   });
 })(window);

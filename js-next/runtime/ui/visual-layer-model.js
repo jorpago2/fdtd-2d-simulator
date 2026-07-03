@@ -11,15 +11,6 @@
     sources: "visualLayerSources",
     colorbar: "visualLayerColorbar",
   });
-  const VISUAL_LAYER_LABELS = Object.freeze({
-    boundaries: "CPML/bounds",
-    diagnostics: "k vector",
-    monitors: "line monitors",
-    axes: "axes",
-    scale: "scale",
-    sources: "sources",
-    colorbar: "colorbar",
-  });
   const VISUAL_PROFILE_LAYERS = Object.freeze({
     clean: Object.freeze({
       boundaries: false,
@@ -87,23 +78,6 @@
     return Boolean(snapshot[layer]);
   }
 
-  function visualOverlaySummary(state, options = {}) {
-    const snapshot = options.snapshot || visualLayerSnapshot(state, options);
-    const enabled = Object.entries(snapshot)
-      .filter(([, active]) => active)
-      .map(([layer]) => VISUAL_LAYER_LABELS[layer] || layer);
-    if (enabled.length === 0) return "none";
-    if (enabled.length <= 3) return enabled.join(", ");
-    return `${enabled.slice(0, 3).join(", ")} +${enabled.length - 3}`;
-  }
-
-  function visualGuideNoteText(state, options = {}) {
-    const profile = options.profile || effectiveVisualProfile(state, options);
-    if (profile === "clean") return "Clean view keeps the field readable on compact screens.";
-    if (profile === "analysis") return "Analysis view keeps monitors and scale visible for measurements.";
-    return "Teaching view shows boundaries, axes, scale and source markers.";
-  }
-
   function applyCustomVisualLayer(state, layer, enabled, options = {}) {
     const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
     if (!state || !stateKey) return false;
@@ -119,14 +93,11 @@
   global.FdtdVisualLayerModel = Object.freeze({
     VISUAL_PROFILE_NAMES,
     VISUAL_LAYER_STATE_KEYS,
-    VISUAL_LAYER_LABELS,
     VISUAL_PROFILE_LAYERS,
     normalizedVisualProfile,
     effectiveVisualProfile,
     visualLayerSnapshot,
     visualLayerEnabled,
-    visualOverlaySummary,
-    visualGuideNoteText,
     applyCustomVisualLayer,
   });
 })(window);

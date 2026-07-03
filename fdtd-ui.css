@@ -301,8 +301,7 @@ html[data-theme="dark"] .brand-emblem {
 .sweep-actions,
 .run-actions-row,
 .analysis-panel-header,
-.control-panel-actions,
-.inspector-actions {
+.control-panel-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -893,14 +892,11 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 }
 
 .two-col,
-.inspector-details,
 .config-summary-grid,
 .config-status-grid,
 .results-summary-grid,
 .diagnostics-grid,
 .performance-grid,
-.simulation-guide-grid,
-.visual-summary-grid,
 .analysis-chart-grid,
 .scene-guide-grid,
 .scene-guide-reference-grid,
@@ -1233,7 +1229,6 @@ body.controls-drawer-open {
 
 .panel-section h2,
 .results-panel-head h2,
-.visual-panel-head h2,
 details > summary {
   color: var(--text);
   font-size: 0.96rem;
@@ -1274,10 +1269,7 @@ details[open] > summary::after {
 .config-summary-section,
 .visual-field-section,
 .visual-overlays-section,
-.visual-summary-section,
 .run-section,
-.inspector-section,
-.simulation-guide-section,
 .scale-section,
 .grid-section,
 .stability-section,
@@ -1481,7 +1473,6 @@ label.scene-select-fallback,
 .simulation-guide-note,
 .results-insight-note,
 .sweep-status,
-.inspector-note,
 .brush-material-warning,
 .material-warning {
   color: var(--muted);
@@ -1545,13 +1536,10 @@ label.scene-select-fallback,
 
 /* 08. Results, visual controls, charts, and utilities */
 
-.simulation-guide-card,
-.visual-summary-card,
 .results-summary-card,
 .config-summary-card,
 .diagnostic-metric,
-.config-status-grid > div,
-.inspector-details > div {
+.config-status-grid > div {
   display: grid;
   align-content: center;
   gap: 5px;
@@ -1563,13 +1551,10 @@ label.scene-select-fallback,
   background: var(--panel-2);
 }
 
-.simulation-guide-card span,
-.visual-summary-card span,
 .results-summary-card span,
 .config-summary-card span,
 .diagnostic-metric span,
-.config-status-grid span,
-.inspector-details span {
+.config-status-grid span {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
@@ -1579,13 +1564,10 @@ label.scene-select-fallback,
   white-space: nowrap;
 }
 
-.simulation-guide-card output,
-.visual-summary-card output,
 .results-summary-card output,
 .config-summary-card output,
 .diagnostic-metric output,
-.config-status-grid output,
-.inspector-details output {
+.config-status-grid output {
   min-width: 0;
   overflow: visible;
   color: var(--text);
@@ -1596,9 +1578,7 @@ label.scene-select-fallback,
   white-space: normal;
 }
 
-.results-panel-head,
-.visual-panel-head,
-.inspector-head {
+.results-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1606,9 +1586,7 @@ label.scene-select-fallback,
   min-width: 0;
 }
 
-.results-state-pill,
-.visual-profile-pill,
-.inspector-kind {
+.results-state-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1798,8 +1776,7 @@ label.scene-select-fallback,
   #tab-results .custom-monitor-panel,
   #tab-results .analysis-panel,
   #tab-results .sweep-panel,
-  #tab-config .config-summary-section,
-  #tab-simulation .visual-summary-section {
+  #tab-config .config-summary-section {
     grid-column: 1 / -1;
   }
 }
@@ -2019,16 +1996,12 @@ label.scene-select-fallback,
     order: 1;
   }
 
-  #tab-simulation .simulation-guide-section {
+  #tab-simulation .visual-field-section {
     order: 2;
   }
 
-  #tab-simulation .visual-field-section {
-    order: 3;
-  }
-
   #tab-simulation .visual-overlays-section {
-    order: 4;
+    order: 3;
   }
 
   .panel-section,
@@ -2044,8 +2017,7 @@ label.scene-select-fallback,
 
   .two-col,
   .scene-browser-meta,
-  .analysis-chart-grid,
-  .visual-summary-grid {
+  .analysis-chart-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2067,10 +2039,6 @@ label.scene-select-fallback,
 
   .field-display-toggle {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .visual-summary-section {
-    display: none;
   }
 
   .source-menu {

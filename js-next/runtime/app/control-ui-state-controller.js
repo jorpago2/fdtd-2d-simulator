@@ -28,7 +28,6 @@
       dependencies.mobileCanvasViewportActive,
       "mobileCanvasViewportActive",
     );
-    const fieldDisplayConfig = requireFunction(dependencies.fieldDisplayConfig, "fieldDisplayConfig");
     const clearCanvasHover = requireFunction(dependencies.clearCanvasHover, "clearCanvasHover");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const getSim = requireFunction(dependencies.getSim, "getSim");
@@ -156,31 +155,6 @@
         const layer = input.dataset.visualLayer;
         input.checked = Boolean(visualSnapshot[layer]);
       });
-      if (el.visualGuideProfile) {
-        el.visualGuideProfile.textContent = activeProfile === "auto" ? `Auto (${effectiveProfile})` : effectiveProfile;
-      }
-      if (el.visualGuideProjection) {
-        el.visualGuideProjection.textContent = state.viewProjection === "3d" ? "3D surface" : "2D map";
-      }
-      if (el.visualGuideField) {
-        const fieldLabel = state.viewMode === "field"
-          ? "Field"
-          : state.viewMode === "poynting"
-            ? "Poynting"
-            : state.viewMode === "epsilon"
-              ? "Permittivity"
-              : "Permeability";
-        el.visualGuideField.innerHTML = `${fieldLabel} \u00b7 ${fieldDisplayConfig().labelHtml}`;
-      }
-      if (el.visualGuideScale) {
-        el.visualGuideScale.textContent = `${state.wavelengthUm.toFixed(2)} \u00b5m \u00b7 ${state.cellsPerWavelength}/\u03bb\u2080`;
-      }
-      if (el.visualGuideOverlays) {
-        el.visualGuideOverlays.textContent = visualLayerModel.visualOverlaySummary(state, { snapshot: visualSnapshot });
-      }
-      if (el.visualGuideNote) {
-        el.visualGuideNote.textContent = visualLayerModel.visualGuideNoteText(state, { profile: effectiveProfile });
-      }
       updateColorbarIfAvailable();
     }
 

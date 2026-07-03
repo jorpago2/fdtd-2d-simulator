@@ -1014,51 +1014,8 @@
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
               <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
             </section>
-<section class="panel-section inspector-section" aria-live="polite">
-              <h2>Selection</h2>
-              <div class="inspector-head">
-                <span id="inspectorKind" class="inspector-kind">Scene</span>
-                <strong id="inspectorTitle">No explicit selection</strong>
-              </div>
-              <div id="inspectorDetails" class="inspector-details">
-                <div><span>Preset</span><output>Empty</output></div>
-                <div><span>Sources</span><output>1</output></div>
-                <div><span>Medium</span><output>Air</output></div>
-              </div>
-              <p id="inspectorNote" class="inspector-note">Select a source or material region on the canvas.</p>
-              <div class="inspector-actions">
-                <button id="inspectorEditBtn" class="text-button" type="button" disabled>Edit selected</button>
-                <button id="inspectorClearBtn" class="text-button" type="button" disabled>Clear selection</button>
-              </div>
-            </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
-<section class="panel-section simulation-guide-section">
-              <h2>Setup</h2>
-              <div class="simulation-guide-grid">
-                <div class="simulation-guide-card">
-                  <span>Solver</span>
-                  <output id="simGuideSolver">TMz / Ez</output>
-                </div>
-                <div class="simulation-guide-card">
-                  <span>Source</span>
-                  <output id="simGuideSource">Plane wave</output>
-                </div>
-                <div class="simulation-guide-card">
-                  <span>Boundary</span>
-                  <output id="simGuideBoundary">CPML absorbing</output>
-                </div>
-                <div class="simulation-guide-card">
-                  <span>Medium</span>
-                  <output id="simGuideMaterial">Custom</output>
-                </div>
-                <div class="simulation-guide-card">
-                  <span>CFL</span>
-                  <output id="simGuideCfl">S = 0.10</output>
-                </div>
-              </div>
-              <p id="simGuideWarning" class="simulation-guide-note">Ready</p>
-            </section>
 <section class="panel-section run-section">
               <h2>Run</h2>
               <div class="solver-row">
@@ -1097,34 +1054,6 @@
                 <input id="autoScaleInput" type="checkbox" />
                 <span>Autoscale</span>
               </label>
-            </section>
-<section class="panel-section visual-summary-section">
-              <div class="visual-panel-head">
-                <div>
-                  <p class="panel-kicker">Display</p>
-                  <h2>Visual</h2>
-                </div>
-                <output id="visualGuideProfile" class="visual-profile-pill">Auto</output>
-              </div>
-              <div class="visual-summary-grid" aria-label="Current visual display">
-                <div class="visual-summary-card">
-                  <span>Projection</span>
-                  <output id="visualGuideProjection">2D map</output>
-                </div>
-                <div class="visual-summary-card">
-                  <span>Field</span>
-                  <output id="visualGuideField"><i>E</i><sub>z</sub></output>
-                </div>
-                <div class="visual-summary-card">
-                  <span>Scale</span>
-                  <output id="visualGuideScale">1.00 µm · 20/λ₀</output>
-                </div>
-                <div class="visual-summary-card">
-                  <span>Overlays</span>
-                  <output id="visualGuideOverlays">CPML, k vector, scale</output>
-                </div>
-              </div>
-              <p id="visualGuideNote" class="simulation-guide-note">Use this panel to choose what physical quantity is shown on the canvas.</p>
             </section>
 <section class="panel-section visual-field-section">
               <h2>Field map</h2>
@@ -1577,7 +1506,6 @@
     <script src="js-next/runtime/ui/material-stability-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="js-next/runtime/ui/brush-controls-controller.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/canvas/inspector-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/control-text-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/scene-state-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-edit-actions-controller.js?v=20260703-runtime-cleanup-1"></script>

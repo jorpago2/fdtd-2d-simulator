@@ -155,13 +155,6 @@
       return incidentFieldSourceShapes.has(shape) ? "incident field" : `out-of-plane ${currentSourceLetter()}z`;
     }
 
-    function sourceSummaryLabel() {
-      if (state.sources.length === 1) {
-        return `${sourceShapeLabel(state.sources[0].shape)} \u00b7 ${sourceCouplingLabel(state.sources[0].shape)}`;
-      }
-      return `${state.sources.length} sources`;
-    }
-
     function currentBrushLabel() {
       if (state.brush === "custom" && state.materialBianisotropyEnabled) return "Custom magnetoelectric kappa_n";
       if (state.brush === "custom" && state.materialGyrotropyEnabled) return "Custom gyrotropic epsilon tensor";
@@ -230,7 +223,6 @@
       currentSourceLetter,
       sourceShapeLabel,
       sourceCouplingLabel,
-      sourceSummaryLabel,
       currentBrushLabel,
       monitorQuantityLabel,
       niceScaleLength,

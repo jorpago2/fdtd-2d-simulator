@@ -165,10 +165,6 @@
       const warningText = notes.join(" ");
       el.materialWarning.textContent = warningText;
       el.materialWarning.hidden = !warningText;
-      if (el.simGuideWarning) {
-        el.simGuideWarning.textContent = warningText || `CFL S = ${COURANT.toFixed(2)} < ${VACUUM_2D_CFL_LIMIT.toFixed(2)} vacuum 2D Yee limit.`;
-        el.simGuideWarning.classList.toggle("is-warning", Boolean(warningText));
-      }
     }
     
     function arrayHasNonzero(values) {

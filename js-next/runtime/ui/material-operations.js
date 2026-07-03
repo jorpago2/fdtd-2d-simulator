@@ -39,7 +39,6 @@
     function clearMaterialSelection(render = true) {
       getEntitySelection().clearMaterial();
       getDragStateController().clearMaterial();
-      callbacks.updateInspector();
       if (render) getSim().render();
     }
 
@@ -77,7 +76,6 @@
       if (region) {
         state.brush = dominantMaterialKind(region);
       }
-      callbacks.updateInspector();
       if (render) {
         callbacks.updateControlText();
         getSim().render();
