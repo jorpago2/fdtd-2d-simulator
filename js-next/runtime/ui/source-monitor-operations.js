@@ -142,7 +142,6 @@
       const monitor = makeMonitor(overrides);
       state.monitors.push(monitor);
       getEntitySelection().selectMonitor(monitor.id);
-      state.visualProfile = "custom";
       state.monitorDefaults = { ...monitor };
       delete state.monitorDefaults.id;
       return monitor;

@@ -74,7 +74,6 @@ const {
 } = appStateModule;
 
 const VISUAL_LAYER_STATE_KEYS = visualLayerModel.VISUAL_LAYER_STATE_KEYS;
-const normalizedVisualProfile = visualLayerModel.normalizedVisualProfile;
 
 let canvasRenderController = null;
 let canvasColorbarController = null;
@@ -308,15 +307,8 @@ function viewportPrefersPhonePortraitGrid() {
   return layoutController().viewportPrefersPhonePortraitGrid();
 }
 
-function mobileCanvasViewportActive() {
-  return layoutController().mobileCanvasViewportActive();
-}
-
 function visualLayerEnabled(layer, options = {}) {
-  return visualLayerModel.visualLayerEnabled(state, layer, {
-    mobileCanvasViewportActive: mobileCanvasViewportActive(),
-    ...options,
-  });
+  return visualLayerModel.visualLayerEnabled(state, layer, options);
 }
 
 function responsiveDefaultGrid() {
@@ -697,7 +689,6 @@ function controlUiState() {
       normalizeTheme,
       normalizeUiDepth,
       themeStorageKey: THEME_STORAGE_KEY,
-      mobileCanvasViewportActive,
       clearCanvasHover,
       updateControlText,
       getSim: () => sim,
@@ -740,17 +731,9 @@ function updateFieldDisplayControls() {
   controlUiState().updateFieldDisplayControls();
 }
 
-function effectiveVisualProfileName() {
-  return controlUiState().effectiveVisualProfileName();
-}
-
 function updateVisualControls() {
   controlUiState().updateVisualControls();
   surfaceOrbitController?.sync?.();
-}
-
-function applyVisualProfile(profile) {
-  controlUiState().applyVisualProfile(profile);
 }
 
 function setCustomVisualLayer(layer, enabled) {
@@ -1616,7 +1599,6 @@ stateNormalizer = stateNormalizerModule.createStateNormalizer({
   clampNumber: clamp,
   clampInt,
   normalizeTheme,
-  normalizedVisualProfile,
   normalizeSweepMode,
   normalizeBoundaryMode,
   normalizeBoundarySides,
@@ -1828,7 +1810,6 @@ visualControlBindingsModule.bindVisualControls({
   sim,
   updateControlText,
   updateStats,
-  applyVisualProfile,
   setCustomVisualLayer,
 });
 

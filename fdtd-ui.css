@@ -440,7 +440,6 @@ html[data-theme="dark"] .brand-emblem {
 .canvas-mode-toggle,
 .segmented,
 .theme-toggle,
-.visual-panel-profile,
 .control-tabs,
 .mobile-layer-nav,
 .brush-tool-toggle {
@@ -466,13 +465,8 @@ html[data-theme="dark"] .brand-emblem {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.view-toggle,
-.visual-profile-toggle {
+.view-toggle {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.visual-profile-toggle .mode-toggle-button {
-  font-size: 0.78rem;
 }
 
 .field-display-toggle {
@@ -2032,7 +2026,6 @@ label.scene-select-fallback,
     grid-template-columns: 1fr;
   }
 
-  .visual-panel-profile,
   .view-toggle {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

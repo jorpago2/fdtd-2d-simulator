@@ -41,7 +41,6 @@
     const clampNumber = requireFunction(dependencies.clampNumber, "clampNumber");
     const clampInt = requireFunction(dependencies.clampInt, "clampInt");
     const normalizeTheme = requireFunction(dependencies.normalizeTheme, "normalizeTheme");
-    const normalizedVisualProfile = requireFunction(dependencies.normalizedVisualProfile, "normalizedVisualProfile");
     const normalizeSweepMode = requireFunction(dependencies.normalizeSweepMode, "normalizeSweepMode");
     const normalizeBoundaryMode = requireFunction(dependencies.normalizeBoundaryMode, "normalizeBoundaryMode");
     const normalizeBoundarySides = requireFunction(dependencies.normalizeBoundarySides, "normalizeBoundarySides");
@@ -79,7 +78,7 @@
       state.fieldDisplay = normalizeChoice(state.fieldDisplay, FIELD_DISPLAY_VALUES, "scalar");
       state.fieldQuiver = Boolean(state.fieldQuiver);
       state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
-      state.visualProfile = normalizedVisualProfile(state.visualProfile);
+      delete state.visualProfile;
       normalizeVisualLayerFlags();
       state.analysisEnabled = Boolean(state.analysisEnabled);
       state.analysisSampleEvery = clampInt(state.analysisSampleEvery, 1, 16);

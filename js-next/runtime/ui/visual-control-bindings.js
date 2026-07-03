@@ -28,7 +28,6 @@
     const sim = requireObject(dependencies.sim, "sim");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
-    const applyVisualProfile = requireFunction(dependencies.applyVisualProfile, "applyVisualProfile");
     const setCustomVisualLayer = requireFunction(dependencies.setCustomVisualLayer, "setCustomVisualLayer");
 
     forEachNode(el.fieldComponentButtons, (button) => {
@@ -60,12 +59,6 @@
         state.fieldQuiver = input.checked;
         updateControlText();
         sim.render();
-      });
-    });
-
-    forEachNode(el.visualProfileButtons, (button) => {
-      button.addEventListener("click", () => {
-        applyVisualProfile(button.dataset.visualProfile || "auto");
       });
     });
 

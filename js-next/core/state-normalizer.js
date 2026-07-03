@@ -34,7 +34,6 @@
     const clampNumber = contracts.requireFunction(dependencies.clampNumber, "clampNumber");
     const clampInt = contracts.requireFunction(dependencies.clampInt, "clampInt");
     const normalizeTheme = contracts.requireFunction(dependencies.normalizeTheme, "normalizeTheme");
-    const normalizedVisualProfile = contracts.requireFunction(dependencies.normalizedVisualProfile, "normalizedVisualProfile");
     const normalizeSweepMode = contracts.requireFunction(dependencies.normalizeSweepMode, "normalizeSweepMode");
     const normalizeBoundaryMode = contracts.requireFunction(dependencies.normalizeBoundaryMode, "normalizeBoundaryMode");
     const normalizeBoundarySides = contracts.requireFunction(dependencies.normalizeBoundarySides, "normalizeBoundarySides");
@@ -72,7 +71,7 @@
       state.fieldDisplay = normalizeChoice(state.fieldDisplay, FIELD_DISPLAY_VALUES, "scalar");
       state.fieldQuiver = Boolean(state.fieldQuiver);
       state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
-      state.visualProfile = normalizedVisualProfile(state.visualProfile);
+      delete state.visualProfile;
       normalizeVisualLayerFlags();
       state.analysisEnabled = Boolean(state.analysisEnabled);
       state.analysisSampleEvery = clampInt(state.analysisSampleEvery, 1, 16);

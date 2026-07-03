@@ -24,10 +24,6 @@
     const windowRef = requireObject(dependencies.windowRef || global, "windowRef");
     const normalizeTheme = requireFunction(dependencies.normalizeTheme, "normalizeTheme");
     const normalizeUiDepth = requireFunction(dependencies.normalizeUiDepth, "normalizeUiDepth");
-    const mobileCanvasViewportActive = requireFunction(
-      dependencies.mobileCanvasViewportActive,
-      "mobileCanvasViewportActive",
-    );
     const clearCanvasHover = requireFunction(dependencies.clearCanvasHover, "clearCanvasHover");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const getSim = requireFunction(dependencies.getSim, "getSim");
@@ -134,23 +130,8 @@
       });
     }
 
-    function effectiveVisualProfileName() {
-      return visualLayerModel.effectiveVisualProfile(state, {
-        mobileCanvasViewportActive: mobileCanvasViewportActive(),
-      });
-    }
-
     function updateVisualControls() {
-      const activeProfile = visualLayerModel.normalizedVisualProfile(state.visualProfile);
-      const effectiveProfile = effectiveVisualProfileName();
-      const visualSnapshot = visualLayerModel.visualLayerSnapshot(state, {
-        mobileCanvasViewportActive: mobileCanvasViewportActive(),
-        profile: effectiveProfile,
-      });
-
-      uiCore.setExclusiveButtonState(el.visualProfileButtons, "visualProfile", activeProfile, {
-        selectedAttribute: "aria-pressed",
-      });
+      const visualSnapshot = visualLayerModel.visualLayerSnapshot(state);
       el.visualLayerInputs?.forEach?.((input) => {
         const layer = input.dataset.visualLayer;
         input.checked = Boolean(visualSnapshot[layer]);
@@ -158,16 +139,8 @@
       updateColorbarIfAvailable();
     }
 
-    function applyVisualProfile(profile) {
-      state.visualProfile = visualLayerModel.normalizedVisualProfile(profile);
-      updateVisualControls();
-      renderIfAvailable();
-    }
-
     function setCustomVisualLayer(layer, enabled) {
-      visualLayerModel.applyCustomVisualLayer(state, layer, enabled, {
-        mobileCanvasViewportActive: mobileCanvasViewportActive(),
-      });
+      visualLayerModel.applyCustomVisualLayer(state, layer, enabled);
       updateVisualControls();
       renderIfAvailable();
     }
@@ -175,8 +148,6 @@
     return Object.freeze({
       applyTheme,
       applyUiDepth,
-      applyVisualProfile,
-      effectiveVisualProfileName,
       setCanvasMode,
       setCustomVisualLayer,
       updateCanvasInteractionState,

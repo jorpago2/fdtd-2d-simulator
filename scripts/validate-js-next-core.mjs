@@ -249,9 +249,7 @@ function baseNormalizerState() {
     fieldDisplay: "bad",
     fieldQuiver: 1,
     diagnosticsEnabled: 0,
-    visualProfile: "bad",
     visualLayerBoundaries: null,
-    visualLayerDiagnostics: 1,
     visualLayerMonitors: null,
     visualLayerAxes: 0,
     visualLayerScale: 1,
@@ -318,7 +316,6 @@ function makeNormalizerDependencies(state) {
     maxGrid: { nx: 720, ny: 480 },
     visualLayerStateKeys: {
       boundaries: "visualLayerBoundaries",
-      diagnostics: "visualLayerDiagnostics",
       monitors: "visualLayerMonitors",
       axes: "visualLayerAxes",
       scale: "visualLayerScale",
@@ -330,7 +327,6 @@ function makeNormalizerDependencies(state) {
     clampNumber,
     clampInt,
     normalizeTheme: (value) => (value === "dark" ? "dark" : "light"),
-    normalizedVisualProfile: (value) => (["auto", "clean", "teach", "analysis"].includes(value) ? value : "auto"),
     normalizeSweepMode: (value) => (["angle", "frequency", "thickness"].includes(value) ? value : "angle"),
     normalizeBoundaryMode: (value) => (["absorbing", "periodic", "metal"].includes(value) ? value : "absorbing"),
     normalizeBoundarySides() {

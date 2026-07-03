@@ -1,70 +1,30 @@
 (function initFdtdVisualLayerModel(global) {
   "use strict";
 
-  const VISUAL_PROFILE_NAMES = Object.freeze(["auto", "clean", "teaching", "analysis", "custom"]);
   const VISUAL_LAYER_STATE_KEYS = Object.freeze({
     boundaries: "visualLayerBoundaries",
-    diagnostics: "visualLayerDiagnostics",
     monitors: "visualLayerMonitors",
     axes: "visualLayerAxes",
     scale: "visualLayerScale",
     sources: "visualLayerSources",
     colorbar: "visualLayerColorbar",
   });
-  const VISUAL_PROFILE_LAYERS = Object.freeze({
-    clean: Object.freeze({
-      boundaries: false,
-      diagnostics: false,
-      monitors: false,
-      axes: false,
-      scale: false,
-      sources: true,
-      colorbar: true,
-    }),
-    teaching: Object.freeze({
-      boundaries: true,
-      diagnostics: true,
-      monitors: false,
-      axes: true,
-      scale: true,
-      sources: true,
-      colorbar: true,
-    }),
-    analysis: Object.freeze({
-      boundaries: true,
-      diagnostics: true,
-      monitors: false,
-      axes: false,
-      scale: true,
-      sources: true,
-      colorbar: true,
-    }),
+  const DEFAULT_VISUAL_LAYER_STATE = Object.freeze({
+    boundaries: true,
+    monitors: false,
+    axes: true,
+    scale: true,
+    sources: true,
+    colorbar: true,
   });
 
-  function normalizedVisualProfile(profile) {
-    return VISUAL_PROFILE_NAMES.includes(profile) ? profile : "auto";
-  }
-
-  function effectiveVisualProfile(state, options = {}) {
-    const profile = normalizedVisualProfile(state?.visualProfile);
-    if (profile === "auto") {
-      if (state?.uiDepth === "advanced") return "analysis";
-      return options.mobileCanvasViewportActive ? "clean" : "teaching";
-    }
-    return profile === "custom" ? "custom" : profile;
-  }
-
-  function visualLayerSnapshot(state, options = {}) {
-    const profile = options.profile || effectiveVisualProfile(state, options);
-    if (profile === "custom") {
-      return Object.fromEntries(
-        Object.entries(VISUAL_LAYER_STATE_KEYS).map(([layer, stateKey]) => [
-          layer,
-          state?.[stateKey] == null ? stateKey !== "visualLayerMonitors" : Boolean(state[stateKey]),
-        ]),
-      );
-    }
-    return { ...(VISUAL_PROFILE_LAYERS[profile] || VISUAL_PROFILE_LAYERS.teaching) };
+  function visualLayerSnapshot(state) {
+    return Object.fromEntries(
+      Object.entries(VISUAL_LAYER_STATE_KEYS).map(([layer, stateKey]) => [
+        layer,
+        state?.[stateKey] == null ? DEFAULT_VISUAL_LAYER_STATE[layer] : Boolean(state[stateKey]),
+      ]),
+    );
   }
 
   function visualLayerEnabled(state, layer, options = {}) {
@@ -78,24 +38,16 @@
     return Boolean(snapshot[layer]);
   }
 
-  function applyCustomVisualLayer(state, layer, enabled, options = {}) {
+  function applyCustomVisualLayer(state, layer, enabled) {
     const stateKey = VISUAL_LAYER_STATE_KEYS[layer];
     if (!state || !stateKey) return false;
-    const snapshot = visualLayerSnapshot(state, options);
-    Object.entries(VISUAL_LAYER_STATE_KEYS).forEach(([snapshotLayer, snapshotKey]) => {
-      state[snapshotKey] = Boolean(snapshot[snapshotLayer]);
-    });
-    state.visualProfile = "custom";
     state[stateKey] = Boolean(enabled);
     return true;
   }
 
   global.FdtdVisualLayerModel = Object.freeze({
-    VISUAL_PROFILE_NAMES,
     VISUAL_LAYER_STATE_KEYS,
-    VISUAL_PROFILE_LAYERS,
-    normalizedVisualProfile,
-    effectiveVisualProfile,
+    DEFAULT_VISUAL_LAYER_STATE,
     visualLayerSnapshot,
     visualLayerEnabled,
     applyCustomVisualLayer,
