@@ -381,6 +381,59 @@ async function runControlNavigationSmoke(page) {
   };
 }
 
+async function runPoyntingComponentVisibilitySmoke(page) {
+  const status = await page.evaluate(() => {
+    document.querySelector('[data-control-tab="simulation"]')?.click();
+    const visualPanel = document.querySelector("#tab-simulation .visual-field-section");
+    const componentRow = visualPanel?.querySelector(".visual-component-row");
+    const scalarButton = componentRow?.querySelector('[data-field-display="scalar"]');
+    const transverseButton = componentRow?.querySelector('[data-field-display="transverseX"]');
+    const fieldButton = visualPanel?.querySelector('[data-view-mode="field"]');
+    const poyntingButton = visualPanel?.querySelector('[data-view-mode="poynting"]');
+    transverseButton?.click();
+    const beforePoynting = {
+      componentRowHidden: Boolean(componentRow?.hidden),
+      transverseSelected: transverseButton?.classList.contains("is-active") || false,
+    };
+    poyntingButton?.click();
+    const afterPoynting = {
+      componentRowHidden: Boolean(componentRow?.hidden),
+      scalarSelected: scalarButton?.classList.contains("is-active") || false,
+      poyntingSelected: poyntingButton?.classList.contains("is-active") || false,
+      colorbarTitle: document.getElementById("colorbarTitle")?.textContent.trim() || "",
+    };
+    fieldButton?.click();
+    const afterField = {
+      componentRowHidden: Boolean(componentRow?.hidden),
+      fieldSelected: fieldButton?.classList.contains("is-active") || false,
+    };
+    return {
+      controlsFound: Boolean(visualPanel && componentRow && scalarButton && transverseButton && fieldButton && poyntingButton),
+      beforePoynting,
+      afterPoynting,
+      afterField,
+    };
+  });
+  const failures = [];
+  if (!status.controlsFound) failures.push("visual field-map controls were not found");
+  if (status.beforePoynting.componentRowHidden) failures.push("field component row is hidden before selecting Poynting quantity");
+  if (!status.beforePoynting.transverseSelected) failures.push("field component row did not accept a non-scalar field display before selecting Poynting");
+  if (!status.afterPoynting.componentRowHidden) failures.push("field component row remains visible after selecting Poynting quantity");
+  if (!status.afterPoynting.scalarSelected) failures.push("Poynting quantity did not reset the hidden field display to scalar");
+  if (!status.afterPoynting.poyntingSelected) failures.push("Poynting quantity button is not selected");
+  if (!/S/.test(status.afterPoynting.colorbarTitle || "")) failures.push("Poynting colorbar title does not report S");
+  if (status.afterField.componentRowHidden) failures.push("field component row did not reappear after returning to field quantity");
+  if (!status.afterField.fieldSelected) failures.push("field quantity button is not selected after returning to field mode");
+  return {
+    id: "poynting_component_visibility",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSceneMenuResponsiveSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
@@ -1708,6 +1761,7 @@ async function main() {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
+      report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
       report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
       report.cases.push(await runSceneMenuSelectionSmoke(browser, url));
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));

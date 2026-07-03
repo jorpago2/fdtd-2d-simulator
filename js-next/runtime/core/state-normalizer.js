@@ -87,6 +87,7 @@
       state.sweepSteps = clampInt(state.sweepSteps, 120, 4000);
       state.sweepBidirectional = Boolean(state.sweepBidirectional);
       state.viewMode = normalizeChoice(state.viewMode, VIEW_MODE_VALUES, "field");
+      if (state.viewMode === "poynting") state.fieldDisplay = "scalar";
       state.viewProjection = state.viewProjection === "3d" ? "3d" : "2d";
       state.materialPart = state.materialPart === "imag" ? "imag" : "real";
       state.canvasMode = state.canvasMode === "brush" ? "brush" : "select";

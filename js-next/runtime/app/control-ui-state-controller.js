@@ -115,7 +115,7 @@
       uiCore.setExclusiveButtonState(el.fieldDisplayButtons, "fieldDisplay", state.fieldDisplay, {
         selectedAttribute: "aria-pressed",
       });
-      const fieldDisplayVisible = state.viewMode === "field" || state.viewMode === "poynting";
+      const fieldDisplayVisible = state.viewMode === "field";
       if (el.fieldDisplayControl) el.fieldDisplayControl.hidden = !fieldDisplayVisible;
       el.visualComponentRows?.forEach?.((row) => {
         row.hidden = !fieldDisplayVisible;

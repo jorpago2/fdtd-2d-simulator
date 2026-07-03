@@ -72,6 +72,9 @@
       button.addEventListener("click", () => {
         const mode = button.dataset.viewMode;
         state.viewMode = VIEW_MODE_VALUES.includes(mode) ? mode : "field";
+        if (state.viewMode === "poynting") {
+          state.fieldDisplay = "scalar";
+        }
         sim.measure();
         updateControlText();
         updateStats();
