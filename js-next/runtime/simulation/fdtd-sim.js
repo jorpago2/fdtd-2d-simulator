@@ -42,6 +42,11 @@ class FDTDSim {
     this.offscreen.height = ny;
     this.offscreenCtx = this.offscreen.getContext("2d", { alpha: false });
     this.image = this.offscreenCtx.createImageData(nx, ny);
+    try {
+      this.imagePixels32 = new Uint32Array(this.image.data.buffer, this.image.data.byteOffset, this.image.data.byteLength / 4);
+    } catch {
+      this.imagePixels32 = null;
+    }
     this.clearMaterials(false);
     this.resetFields();
     this.buildBoundary(state.boundary);

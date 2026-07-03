@@ -15,6 +15,7 @@
     ["uiSceneGuideModule", "FdtdUiSceneGuide", "ui-scene-guide.js"],
     ["uiResultsModule", "FdtdUiResults", "ui-results.js"],
     ["uiResultsChartsModule", "FdtdUiResultsCharts", "ui-results-charts.js"],
+    ["numericInputModule", "FdtdNumericInputController", "numeric-input-controller.js"],
     ["controlSyncUi", "FdtdControlSyncUi", "control-sync-ui.js"],
     ["sceneCodec", "FdtdSceneCodec", "scene-codec.js"],
     ["sourceMonitorModel", "FdtdSourceMonitorModel", "source-monitor-model.js"],

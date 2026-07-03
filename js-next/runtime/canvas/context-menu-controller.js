@@ -8,12 +8,19 @@
     return value;
   }
 
+  function optionalFunction(value, fallback) {
+    return typeof value === "function" ? value : fallback;
+  }
+
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
 
   function createContextMenuController(dependencies) {
     const el = requireObject(dependencies.el, "el");
+    const beginEditSession = optionalFunction(dependencies.beginEditSession, () => {});
+    const endEditSession = optionalFunction(dependencies.endEditSession, () => {});
+    const validateEditScope = optionalFunction(dependencies.validateEditScope, () => true);
     const floatingMenuPad = 10;
     const minimumDragRoom = 12;
     let activeMenuDrag = null;
@@ -231,56 +238,62 @@
       global.addEventListener("resize", refreshOpenFloatingMenus);
     }
 
-    function closeCanvasContextMenu() {
-      if (!el.canvasContextMenu) return;
-      el.canvasContextMenu.hidden = true;
+    function closeMenu(menu, cleanup) {
+      if (!menu || menu.hidden) return true;
+      if (!validateEditScope(menu)) return false;
+      menu.hidden = true;
+      cleanup?.();
       state.canvasContextPoint = null;
       restoreFocusIfClosed();
+      endEditSession(menu);
+      return true;
+    }
+
+    function closeCanvasContextMenu() {
+      return closeMenu(el.canvasContextMenu, () => {
+        state.canvasContextPoint = null;
+      });
     }
 
     function closeSourceMenu() {
-      if (!el.sourceMenu) return;
-      el.sourceMenu.hidden = true;
-      state.sourceMenuDraft = null;
-      restoreFocusIfClosed();
+      return closeMenu(el.sourceMenu, () => {
+        state.sourceMenuDraft = null;
+      });
     }
 
     function closeMonitorMenu() {
-      if (!el.monitorMenu) return;
-      el.monitorMenu.hidden = true;
-      state.monitorMenuDraft = null;
-      restoreFocusIfClosed();
+      return closeMenu(el.monitorMenu, () => {
+        state.monitorMenuDraft = null;
+      });
     }
 
     function closeBrushMenu() {
-      if (!el.brushMenu) return;
-      el.brushMenu.hidden = true;
-      state.brushMenuMode = "brush";
-      restoreFocusIfClosed();
+      return closeMenu(el.brushMenu, () => {
+        state.brushMenuMode = "brush";
+      });
     }
 
     function closeBoundaryMenu() {
-      if (!el.boundaryMenu) return;
-      el.boundaryMenu.hidden = true;
-      restoreFocusIfClosed();
+      return closeMenu(el.boundaryMenu);
     }
 
     function closeContextMenus() {
-      closeCanvasContextMenu();
-      closeSourceMenu();
-      closeMonitorMenu();
-      closeBrushMenu();
-      closeBoundaryMenu();
+      const closed = [
+        closeCanvasContextMenu(),
+        closeSourceMenu(),
+        closeMonitorMenu(),
+        closeBrushMenu(),
+        closeBoundaryMenu(),
+      ];
+      return closed.every(Boolean);
     }
 
     function openCanvasContextMenuAt(clientX, clientY, point) {
       if (!el.canvasContextMenu) return;
-      closeSourceMenu();
-      closeMonitorMenu();
-      closeBrushMenu();
-      closeBoundaryMenu();
+      if (!closeSourceMenu() || !closeMonitorMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.canvasContextPoint = point || null;
+      beginEditSession(el.canvasContextMenu);
       el.canvasContextMenu.hidden = false;
       positionFloatingMenu(el.canvasContextMenu, clientX, clientY);
       focusFirstMenuControl(el.canvasContextMenu);
@@ -288,13 +301,11 @@
 
     function openSourceMenuAt(clientX, clientY, options = {}) {
       if (!el.sourceMenu) return;
-      closeCanvasContextMenu();
-      closeMonitorMenu();
-      closeBrushMenu();
-      closeBoundaryMenu();
+      if (!closeCanvasContextMenu() || !closeMonitorMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.sourceMenuMode = options.mode === "edit" ? "edit" : "add";
       state.sourceMenuDraft = options.draft || null;
+      beginEditSession(el.sourceMenu);
       el.sourceMenu.hidden = false;
       positionFloatingMenu(el.sourceMenu, clientX, clientY);
       focusFirstMenuControl(el.sourceMenu);
@@ -302,13 +313,11 @@
 
     function openMonitorMenuAt(clientX, clientY, options = {}) {
       if (!el.monitorMenu) return;
-      closeCanvasContextMenu();
-      closeSourceMenu();
-      closeBrushMenu();
-      closeBoundaryMenu();
+      if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.monitorMenuMode = options.mode === "edit" ? "edit" : "add";
       state.monitorMenuDraft = options.draft || null;
+      beginEditSession(el.monitorMenu);
       el.monitorMenu.hidden = false;
       positionFloatingMenu(el.monitorMenu, clientX, clientY);
       focusFirstMenuControl(el.monitorMenu);
@@ -316,12 +325,10 @@
 
     function openBrushMenuAt(clientX, clientY, options = {}) {
       if (!el.brushMenu) return;
-      closeCanvasContextMenu();
-      closeSourceMenu();
-      closeMonitorMenu();
-      closeBoundaryMenu();
+      if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeMonitorMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.brushMenuMode = options.mode === "region" ? "region" : "brush";
+      beginEditSession(el.brushMenu);
       el.brushMenu.hidden = false;
       positionFloatingMenu(el.brushMenu, clientX, clientY);
       focusFirstMenuControl(el.brushMenu);
@@ -329,12 +336,10 @@
 
     function openBoundaryMenuAt(clientX, clientY, side = state.boundaryMenuSide) {
       if (!el.boundaryMenu) return;
-      closeCanvasContextMenu();
-      closeSourceMenu();
-      closeMonitorMenu();
-      closeBrushMenu();
+      if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeMonitorMenu() || !closeBrushMenu()) return;
       rememberFocusTarget();
       state.boundaryMenuSide = side || state.boundaryMenuSide || "top";
+      beginEditSession(el.boundaryMenu);
       el.boundaryMenu.hidden = false;
       positionFloatingMenu(el.boundaryMenu, clientX, clientY);
       focusFirstMenuControl(el.boundaryMenu);

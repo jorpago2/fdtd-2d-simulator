@@ -47,6 +47,9 @@
     const boundarySideMode = requireFunction(dependencies.boundarySideMode, "boundarySideMode");
     const boundarySideIsAbsorbing = requireFunction(dependencies.boundarySideIsAbsorbing, "boundarySideIsAbsorbing");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
+    const validateNumericInputs = typeof dependencies.validateNumericInputs === "function"
+      ? dependencies.validateNumericInputs
+      : () => true;
 
     function gridPointToSourcePosition(point) {
       const sim = getSim();
@@ -99,7 +102,7 @@
     }
 
     function closeSourceMenu() {
-      contextMenus.closeSourceMenu();
+      return contextMenus.closeSourceMenu();
     }
 
     function openMonitorMenuAt(clientX, clientY, monitor = null) {
@@ -120,11 +123,11 @@
     }
 
     function closeMonitorMenu() {
-      contextMenus.closeMonitorMenu();
+      return contextMenus.closeMonitorMenu();
     }
 
     function closeCanvasContextMenu() {
-      contextMenus.closeCanvasContextMenu();
+      return contextMenus.closeCanvasContextMenu();
     }
 
     function openBrushMenuAt(clientX, clientY, options = {}) {
@@ -140,7 +143,7 @@
     }
 
     function closeBrushMenu() {
-      contextMenus.closeBrushMenu();
+      return contextMenus.closeBrushMenu();
     }
 
     function updateBoundaryMenuControls() {
@@ -165,14 +168,15 @@
     }
 
     function closeBoundaryMenu() {
-      contextMenus.closeBoundaryMenu();
+      return contextMenus.closeBoundaryMenu();
     }
 
     function closeContextMenus() {
-      contextMenus.closeContextMenus();
+      return contextMenus.closeContextMenus();
     }
 
     function applySourceMenu() {
+      if (!validateNumericInputs(el.sourceMenu)) return;
       const simulationEffects = getSimulationEffects();
       const sim = getSim();
       simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
@@ -200,6 +204,7 @@
     }
 
     function applyMonitorMenu() {
+      if (!validateNumericInputs(el.monitorMenu)) return;
       const simulationEffects = getSimulationEffects();
       simulationEffects.commit({ disableResponsiveGrid: true });
       const values = readMonitorEditorValues();

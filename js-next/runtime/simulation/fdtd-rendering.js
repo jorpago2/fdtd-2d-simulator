@@ -5,6 +5,67 @@ const SURFACE_RUNNING_MAX_COLS = 68;
 const SURFACE_RUNNING_MAX_ROWS = 48;
 const SURFACE_STILL_MAX_COLS = 96;
 const SURFACE_STILL_MAX_ROWS = 72;
+const RGBA_PACK_LITTLE_ENDIAN = (() => {
+  const buffer = new ArrayBuffer(4);
+  const u32 = new Uint32Array(buffer);
+  const u8 = new Uint8Array(buffer);
+  u32[0] = 0x0a0b0c0d;
+  return u8[0] === 0x0d;
+})();
+const PACKED_FIELD_LUT_CACHE = new Map();
+const PACKED_MATERIAL_LUT_CACHE = new Map();
+
+function packRgba(r, g, b, a = 255) {
+  const rr = clamp(Math.round(r), 0, 255);
+  const gg = clamp(Math.round(g), 0, 255);
+  const bb = clamp(Math.round(b), 0, 255);
+  const aa = clamp(Math.round(a), 0, 255);
+  return RGBA_PACK_LITTLE_ENDIAN
+    ? ((aa << 24) | (bb << 16) | (gg << 8) | rr) >>> 0
+    : ((rr << 24) | (gg << 16) | (bb << 8) | aa) >>> 0;
+}
+
+function packedBaseColorLut(name, signed = false) {
+  const key = `${name}|${signed ? 1 : 0}|base|${RGBA_PACK_LITTLE_ENDIAN ? "le" : "be"}`;
+  const cached = PACKED_MATERIAL_LUT_CACHE.get(key);
+  if (cached) return cached;
+  const rgb = cmasherColorLut(name, signed);
+  const packed = new Uint32Array(CMASHER_LUT_SIZE);
+  for (let i = 0; i < CMASHER_LUT_SIZE; i += 1) {
+    const p = i * 3;
+    packed[i] = packRgba(rgb[p], rgb[p + 1], rgb[p + 2]);
+  }
+  PACKED_MATERIAL_LUT_CACHE.set(key, packed);
+  return packed;
+}
+
+function packedFieldColorLuts(name, signed = false) {
+  const key = `${name}|${signed ? 1 : 0}|field|${RGBA_PACK_LITTLE_ENDIAN ? "le" : "be"}`;
+  const cached = PACKED_FIELD_LUT_CACHE.get(key);
+  if (cached) return cached;
+  const rgb = cmasherColorLut(name, signed);
+  const luts = {
+    base: new Uint32Array(CMASHER_LUT_SIZE),
+    dielectric: new Uint32Array(CMASHER_LUT_SIZE),
+    lossy: new Uint32Array(CMASHER_LUT_SIZE),
+    custom: new Uint32Array(CMASHER_LUT_SIZE),
+    dispersive: new Uint32Array(CMASHER_LUT_SIZE),
+    pec: packRgba(8, 11, 13),
+  };
+  for (let i = 0; i < CMASHER_LUT_SIZE; i += 1) {
+    const p = i * 3;
+    const r = rgb[p];
+    const g = rgb[p + 1];
+    const b = rgb[p + 2];
+    luts.base[i] = packRgba(r, g, b);
+    luts.dielectric[i] = packRgba(r * 0.78 + 36, g * 0.78 + 62, b * 0.78 + 42);
+    luts.lossy[i] = packRgba(r * 0.72 + 92, g * 0.72 + 48, b * 0.72 + 12);
+    luts.custom[i] = packRgba(r * 0.52 + 18, g * 0.52 + 24, b * 0.52 + 74);
+    luts.dispersive[i] = packRgba(r * 0.84 + 26, g * 0.84 + 42, b * 0.84 + 52);
+  }
+  PACKED_FIELD_LUT_CACHE.set(key, luts);
+  return luts;
+}
 
 Object.assign(FDTDSim.prototype, {
 fieldRenderScale() {
@@ -114,6 +175,56 @@ renderFieldImage(data) {
     data[p + 1] = g;
     data[p + 2] = b;
     data[p + 3] = 255;
+  }
+},
+
+renderFieldImage32(pixels) {
+  const scale = this.fieldRenderScale();
+  const isMagnitude = this.fieldDisplayIsMagnitude();
+  const fieldMapName = currentFieldColormapName(isMagnitude);
+  const colorLuts = packedFieldColorLuts(fieldMapName, !isMagnitude);
+  const baseLut = colorLuts.base;
+  const dielectricLut = colorLuts.dielectric;
+  const lossyLut = colorLuts.lossy;
+  const customLut = colorLuts.custom;
+  const dispersiveLut = colorLuts.dispersive;
+  const pecColor = colorLuts.pec;
+  const useScalarField = state.viewMode !== "poynting" && state.fieldDisplay === "scalar";
+  const scalarField = this.ez;
+  const material = this.material;
+  const n = this.n;
+
+  for (let i = 0; i < n; i += 1) {
+    const value = useScalarField ? scalarField[i] : this.fieldValueAt(i);
+    const rawMapped = Number.isFinite(value) ? value * scale : 0;
+    const mapped = Number.isFinite(rawMapped)
+      ? isMagnitude
+        ? clamp(rawMapped, 0, 1)
+        : clamp(rawMapped, -1, 1)
+      : Math.sign(value || 0);
+    const colorT = isMagnitude ? mapped : 0.5 + 0.5 * mapped;
+    const colorIndex = clamp(Math.round(colorT * CMASHER_LUT_LAST), 0, CMASHER_LUT_LAST);
+
+    switch (material[i]) {
+      case 1:
+        pixels[i] = dielectricLut[colorIndex];
+        break;
+      case 2:
+        pixels[i] = pecColor;
+        break;
+      case 3:
+        pixels[i] = lossyLut[colorIndex];
+        break;
+      case 4:
+        pixels[i] = customLut[colorIndex];
+        break;
+      case 5:
+        pixels[i] = dispersiveLut[colorIndex];
+        break;
+      default:
+        pixels[i] = baseLut[colorIndex];
+        break;
+    }
   }
 },
 
@@ -394,6 +505,31 @@ renderMaterialImage(data) {
   }
 },
 
+renderMaterialImage32(pixels) {
+  const materialContext = this.materialViewContext();
+  const materialMapName = currentMaterialColormapName(materialContext);
+  const materialMapSigned = state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
+  const materialSpan = Math.max(1e-9, materialContext.max - materialContext.min);
+  const colorLut = packedBaseColorLut(materialMapName, materialMapSigned);
+  const pecColor = packRgba(8, 11, 13);
+  const values = materialContext.values;
+  const material = this.material;
+  const n = this.n;
+
+  for (let i = 0; i < n; i += 1) {
+    if (material[i] === 2) {
+      pixels[i] = pecColor;
+      continue;
+    }
+    const value = values[i];
+    const mapped = this.materialMappedValue(value, materialContext);
+    const normalized = (value - materialContext.min) / materialSpan;
+    const colorT = materialMapSigned ? 0.5 + 0.5 * mapped : clamp(normalized, 0, 1);
+    const colorIndex = clamp(Math.round(colorT * CMASHER_LUT_LAST), 0, CMASHER_LUT_LAST);
+    pixels[i] = colorLut[colorIndex];
+  }
+},
+
 render() {
   this.fitCanvas();
   this.clampView();
@@ -434,11 +570,20 @@ render() {
   }
 
   this.setSurfaceCanvasVisible(false);
-  const data = this.image.data;
-  if (state.viewMode === "epsilon" || state.viewMode === "mu") {
-    this.renderMaterialImage(data);
+  const pixels32 = this.imagePixels32;
+  if (pixels32 && pixels32.length === this.n) {
+    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
+      this.renderMaterialImage32(pixels32);
+    } else {
+      this.renderFieldImage32(pixels32);
+    }
   } else {
-    this.renderFieldImage(data);
+    const data = this.image.data;
+    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
+      this.renderMaterialImage(data);
+    } else {
+      this.renderFieldImage(data);
+    }
   }
   if (canRecordRenderBreakdown) {
     perf.record("renderMapMs", perf.now() - renderPhaseStart);

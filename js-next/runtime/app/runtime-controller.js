@@ -86,9 +86,11 @@
       return Math.min(requestedSteps, maxNumericalStepsPerFrame);
     }
 
-    function toggleRunning() {
-      state.running = !state.running;
-      if (!state.running) {
+    function setRunning(nextRunning) {
+      const shouldRun = Boolean(nextRunning);
+      const wasRunning = Boolean(state.running);
+      state.running = shouldRun;
+      if (wasRunning && !shouldRun) {
         const syncRequested = getWorkerEngine()?.requestFullSync?.();
         if (!syncRequested) {
           finalizeDeferredResults();
@@ -96,6 +98,10 @@
       }
       updateControlText();
       return state.running;
+    }
+
+    function toggleRunning() {
+      return setRunning(!state.running);
     }
 
     function advanceOneStep() {
@@ -160,6 +166,7 @@
       queueWorkerStepsIfUseful,
       runtimeEngineLabel,
       effectiveStepsPerFrame,
+      setRunning,
       toggleRunning,
       advanceOneStep,
       resetSimulationFields,

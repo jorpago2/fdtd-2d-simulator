@@ -28,6 +28,9 @@
     const incidentFieldSourceShapes = requireObject(dependencies.incidentFieldSourceShapes, "incidentFieldSourceShapes");
     const circularDipoleSourceShapes = requireObject(dependencies.circularDipoleSourceShapes, "circularDipoleSourceShapes");
     const sourceShapeLabels = requireObject(dependencies.sourceShapeLabels, "sourceShapeLabels");
+    const validateNumericInputs = typeof dependencies.validateNumericInputs === "function"
+      ? dependencies.validateNumericInputs
+      : () => true;
 
     const selectedSource = requireFunction(dependencies.selectedSource, "selectedSource");
     const explicitlySelectedMonitor = requireFunction(dependencies.explicitlySelectedMonitor, "explicitlySelectedMonitor");
@@ -201,6 +204,7 @@
     }
     
     function syncSourceEditorTarget() {
+      if (!validateNumericInputs(el.sourceMenu)) return;
       const target = activeSourceEditorTarget();
       if (!target) return;
       simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
@@ -276,6 +280,7 @@
     }
     
     function syncMonitorEditorTarget() {
+      if (!validateNumericInputs(el.monitorMenu)) return;
       const target = activeMonitorEditorTarget();
       if (!target) return;
       simulationEffects.commit({ disableResponsiveGrid: true });

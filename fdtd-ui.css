@@ -959,6 +959,7 @@ label > span,
 }
 
 input[type="number"],
+input[data-numeric-input="true"],
 input[type="search"],
 select,
 textarea,
@@ -971,6 +972,12 @@ output {
   color: var(--text);
   background: var(--panel-2);
   font-weight: 700;
+}
+
+input[data-numeric-input="true"].is-invalid {
+  border-color: var(--bad);
+  background: rgba(172, 44, 44, 0.1);
+  color: var(--bad);
 }
 
 input[type="range"] {

@@ -50,6 +50,9 @@
     const normalizeBrushGeometryState = requireFunction(dependencies.normalizeBrushGeometryState, "normalizeBrushGeometryState");
     const applyMaterialKindToSelection = requireFunction(dependencies.applyMaterialKindToSelection, "applyMaterialKindToSelection");
     const closeBrushMenu = requireFunction(dependencies.closeBrushMenu, "closeBrushMenu");
+    const validateNumericInputs = typeof dependencies.validateNumericInputs === "function"
+      ? dependencies.validateNumericInputs
+      : () => true;
 
     const MAX_GRID = maxGrid;
 
@@ -89,6 +92,7 @@
     }
 
     function handleCustomMaterialInput() {
+      if (!validateNumericInputs(el.brushMenu)) return;
       simulationEffects.commit({ dirty: true, disableResponsiveGrid: true });
       const values = materialEditorModel.readCustomMaterialEditorValues(el, normalizeDispersionModel);
       const materialUpdate = materialEditorModel.applyCustomMaterialEditorValues(state, values, {

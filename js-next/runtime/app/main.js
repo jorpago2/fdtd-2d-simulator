@@ -17,6 +17,7 @@ const {
   uiSceneGuideModule,
   uiResultsModule,
   uiResultsChartsModule,
+  numericInputModule,
   controlSyncUi,
   sceneCodec,
   sourceMonitorModel,
@@ -218,6 +219,10 @@ function boundarySummaryLabel() {
 const SCENE_SHARE_URL_LIMIT = sceneCodec.SCENE_SHARE_URL_LIMIT;
 const SERIALIZABLE_STATE_KEYS = sceneCodec.SERIALIZABLE_STATE_KEYS;
 const el = uiDom.validateDomRefs(uiDom.collectDomRefs(document));
+const numericInputs = numericInputModule.createNumericInputController({ documentRef: document });
+numericInputs.bind();
+let editSessionDepth = 0;
+let editSessionShouldResume = false;
 materialSelectionController = materialSelectionModule.createMaterialSelectionController();
 materialSelection = materialSelectionController.state;
 entitySelection = entitySelectionModule.createEntitySelectionController({
@@ -616,11 +621,52 @@ function refreshControlPanelData() {
   updateStats();
 }
 
+function setSimulationRunning(running) {
+  if (runtimeController?.setRunning) {
+    runtimeController.setRunning(running);
+    return;
+  }
+  state.running = Boolean(running);
+}
+
+function beginSimulationEditSession() {
+  if (editSessionDepth === 0) {
+    editSessionShouldResume = Boolean(state.running);
+    if (state.running) {
+      setSimulationRunning(false);
+    }
+  }
+  editSessionDepth += 1;
+}
+
+function finishSimulationEditSession(scope = document) {
+  if (scope && !numericInputs.validateScope(scope)) return false;
+  editSessionDepth = Math.max(0, editSessionDepth - 1);
+  if (editSessionDepth === 0) {
+    const shouldResume = editSessionShouldResume;
+    editSessionShouldResume = false;
+    if (shouldResume && !numericInputs.hasInvalidInputs(document)) {
+      setSimulationRunning(true);
+    }
+  }
+  return true;
+}
+
 function closeControlDrawer() {
+  if (controlDrawerOverlayActive() && !finishSimulationEditSession(el.controlPanel)) return;
   uiDrawer.closeControlDrawer();
 }
 
 function toggleControlDrawer() {
+  if (!controlDrawerOverlayActive()) {
+    uiDrawer.toggleControlDrawer();
+    return;
+  }
+  if (el.appShell?.classList.contains("controls-open")) {
+    closeControlDrawer();
+    return;
+  }
+  beginSimulationEditSession();
   uiDrawer.toggleControlDrawer();
 }
 
@@ -1081,6 +1127,7 @@ function canvasContextActions() {
       boundarySideMode,
       boundarySideIsAbsorbing,
       updateControlText,
+      validateNumericInputs: (scope) => numericInputs.validateScope(scope),
     });
   }
   return canvasContextActionsController;
@@ -1427,7 +1474,12 @@ materialStabilityController = materialStabilityModule.createMaterialStabilityCon
   formatFieldValue,
 });
 instrumentSimulationPerformance(sim);
-const contextMenus = contextMenuModule.createContextMenuController({ el });
+const contextMenus = contextMenuModule.createContextMenuController({
+  el,
+  beginEditSession: beginSimulationEditSession,
+  endEditSession: finishSimulationEditSession,
+  validateEditScope: (scope) => numericInputs.validateScope(scope),
+});
 const contextMenuState = contextMenus.state;
 brushControlsController = brushControlsModule.createBrushControlsController({
   state,
@@ -1578,6 +1630,7 @@ sourceMonitorEditorController = sourceMonitorEditorsModule.createSourceMonitorEd
   minMonitorYLambda,
   maxMonitorXLambda,
   maxMonitorYLambda,
+  validateNumericInputs: (scope) => numericInputs.validateScope(scope, { commitActive: false }),
 });
 inspectorController = inspectorModule.createInspectorController({
   state,
@@ -1937,6 +1990,7 @@ function configMaterialHandlers() {
       normalizeBrushGeometryState,
       applyMaterialKindToSelection,
       closeBrushMenu,
+      validateNumericInputs: (scope) => numericInputs.validateScope(scope, { commitActive: false }),
     });
   }
   return configMaterialHandlersController;
