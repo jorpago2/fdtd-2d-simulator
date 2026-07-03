@@ -75,7 +75,6 @@ const {
 } = appStateModule;
 
 const VISUAL_LAYER_STATE_KEYS = visualLayerModel.VISUAL_LAYER_STATE_KEYS;
-const visualLayerEnabled = visualLayerModel.visualLayerEnabled;
 const normalizedVisualProfile = visualLayerModel.normalizedVisualProfile;
 
 let canvasRenderController = null;
@@ -313,6 +312,13 @@ function viewportPrefersPhonePortraitGrid() {
 
 function mobileCanvasViewportActive() {
   return layoutController().mobileCanvasViewportActive();
+}
+
+function visualLayerEnabled(layer, options = {}) {
+  return visualLayerModel.visualLayerEnabled(state, layer, {
+    mobileCanvasViewportActive: mobileCanvasViewportActive(),
+    ...options,
+  });
 }
 
 function responsiveDefaultGrid() {

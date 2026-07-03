@@ -726,9 +726,7 @@ Object.assign(FDTDSim.prototype, {
       if (strongDefect) ellipseL(midXLambda + 0.15, midYLambda, 0.28, 0.28, mat.pec);
     };
 
-    if (name !== "empty") {
-      setSources([{ shape: "point", xLambda: sourceX(1.2), yLambda: sourceY(midYLambda) }]);
-    }
+    setSources([{ shape: "point", xLambda: sourceX(1.2), yLambda: sourceY(midYLambda) }]);
 
     switch (name) {
       case "planeWaveAir":
