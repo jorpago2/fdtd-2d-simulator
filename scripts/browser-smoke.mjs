@@ -417,7 +417,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       });
       await selectPreset(page, "topologyTemporalMod");
       await page.waitForTimeout(120);
-      const status = await page.evaluate((viewportName) => {
+      const currentStatus = await page.evaluate(() => {
         const rect = (selector) => {
           const node = document.querySelector(selector);
           if (!node) return null;
@@ -433,21 +433,16 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
         };
         const panel = document.getElementById("controlPanel");
         const panelBounds = panel?.getBoundingClientRect();
-        const spotlight = document.getElementById("sceneSpotlight");
         const spotlightImage = document.querySelector("#sceneSpotlight img.scene-thumb-image");
         const title = document.getElementById("sceneSpotlightTitle");
         const description = document.getElementById("sceneSpotlightDescription");
-        const search = document.getElementById("sceneSearchInput");
         const fallback = document.querySelector(".scene-select-fallback");
-        const cards = document.getElementById("sceneCards");
         const panelOverflow = panel ? panel.scrollWidth - panel.clientWidth : 0;
-        const activeCardImage = document.querySelector('.scene-card.is-active img.scene-thumb-image');
-        const cardImageCount = document.querySelectorAll("#sceneCards img.scene-thumb-image").length;
         return {
-          viewport: viewportName,
+          activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
           activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
-          cardCount: cards?.querySelectorAll("[data-scene-card]").length || 0,
-          cardImageCount,
+          browsePanelHidden: document.getElementById("sceneBrowsePanel")?.hidden ?? true,
+          currentPanelHidden: document.getElementById("sceneCurrentPanel")?.hidden ?? true,
           descriptionText: description?.textContent?.trim() || "",
           documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
           fallbackDisplay: fallback ? getComputedStyle(fallback).display : "",
@@ -460,7 +455,6 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
               }
             : null,
           panelOverflow,
-          search: rect("#sceneSearchInput"),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
             ? {
@@ -470,43 +464,100 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
                 src: spotlightImage.getAttribute("src") || "",
               }
             : null,
-          activeCardImageSrc: activeCardImage?.getAttribute("src") || "",
           titleText: title?.textContent?.trim() || "",
         };
-      }, viewport.name);
+      });
+      await page.locator('[data-scene-view="browse"]').click();
+      await page.waitForTimeout(120);
+      const browseStatus = await page.evaluate(() => {
+        const rect = (selector) => {
+          const node = document.querySelector(selector);
+          if (!node) return null;
+          const bounds = node.getBoundingClientRect();
+          return {
+            top: Math.round(bounds.top),
+            bottom: Math.round(bounds.bottom),
+            left: Math.round(bounds.left),
+            right: Math.round(bounds.right),
+            width: Math.round(bounds.width),
+            height: Math.round(bounds.height),
+          };
+        };
+        const panel = document.getElementById("controlPanel");
+        const panelBounds = panel?.getBoundingClientRect();
+        const cards = document.getElementById("sceneCards");
+        const activeCardImage = document.querySelector('.scene-card.is-active img.scene-thumb-image');
+        const cardImageCount = document.querySelectorAll("#sceneCards img.scene-thumb-image").length;
+        return {
+          activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
+          browsePanelHidden: document.getElementById("sceneBrowsePanel")?.hidden ?? true,
+          cardCount: cards?.querySelectorAll("[data-scene-card]").length || 0,
+          cardImageCount,
+          currentPanelHidden: document.getElementById("sceneCurrentPanel")?.hidden ?? true,
+          panel: panelBounds
+            ? {
+                left: Math.round(panelBounds.left),
+                right: Math.round(panelBounds.right),
+                width: Math.round(panelBounds.width),
+              }
+            : null,
+          panelOverflow: panel ? panel.scrollWidth - panel.clientWidth : 0,
+          search: rect("#sceneSearchInput"),
+          filterBar: rect("#sceneFilterBar"),
+          cards: rect("#sceneCards"),
+          activeCardImageSrc: activeCardImage?.getAttribute("src") || "",
+        };
+      });
+      const status = { viewport: viewport.name, current: currentStatus, browse: browseStatus };
       states.push(status);
       failures.push(...localErrors.map((error) => `${viewport.name}: ${error}`));
-      if (status.activePanel !== "tab-scenes") failures.push(`${viewport.name}: Scene panel is not active`);
-      if (!status.titleText || !status.descriptionText) failures.push(`${viewport.name}: spotlight title/description is empty`);
-      if (!status.family) failures.push(`${viewport.name}: spotlight family is empty`);
+      if (currentStatus.activePanel !== "tab-scenes") failures.push(`${viewport.name}: Scene panel is not active`);
+      if (currentStatus.activeView !== "current") failures.push(`${viewport.name}: Scene menu did not default to Current view`);
+      if (currentStatus.currentPanelHidden || !currentStatus.browsePanelHidden) {
+        failures.push(`${viewport.name}: Current view visibility state is incorrect`);
+      }
+      if (!currentStatus.titleText || !currentStatus.descriptionText) failures.push(`${viewport.name}: spotlight title/description is empty`);
+      if (!currentStatus.family) failures.push(`${viewport.name}: spotlight family is empty`);
       if (
-        !status.spotlightImage ||
-        !status.spotlightImage.src.endsWith("/topologyTemporalMod.webp") ||
-        !status.spotlightImage.complete ||
-        status.spotlightImage.naturalWidth <= 0 ||
-        status.spotlightImage.naturalHeight <= 0
+        !currentStatus.spotlightImage ||
+        !currentStatus.spotlightImage.src.endsWith("/topologyTemporalMod.webp") ||
+        !currentStatus.spotlightImage.complete ||
+        currentStatus.spotlightImage.naturalWidth <= 0 ||
+        currentStatus.spotlightImage.naturalHeight <= 0
       ) {
         failures.push(`${viewport.name}: spotlight thumbnail image did not load`);
       }
-      if (status.cardCount <= 0) failures.push(`${viewport.name}: scene cards did not render`);
-      if (status.cardImageCount !== status.cardCount) {
+      if (browseStatus.activeView !== "browse") failures.push(`${viewport.name}: Browse view did not activate`);
+      if (!browseStatus.currentPanelHidden || browseStatus.browsePanelHidden) {
+        failures.push(`${viewport.name}: Browse view visibility state is incorrect`);
+      }
+      if (browseStatus.cardCount <= 0) failures.push(`${viewport.name}: scene cards did not render`);
+      if (browseStatus.cardImageCount !== browseStatus.cardCount) {
         failures.push(`${viewport.name}: not every visible scene card has a thumbnail image`);
       }
-      if (!status.activeCardImageSrc.endsWith("/topologyTemporalMod.webp")) {
+      if (!browseStatus.activeCardImageSrc.endsWith("/topologyTemporalMod.webp")) {
         failures.push(`${viewport.name}: active scene card thumbnail does not match the selected scene`);
       }
-      if (status.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);
-      if (!status.spotlight || !status.search || status.spotlight.bottom > status.search.top) {
-        failures.push(`${viewport.name}: scene spotlight does not lead the scene browser`);
-      }
-      if (status.documentOverflow > 1) failures.push(`${viewport.name}: document horizontal overflow ${status.documentOverflow}`);
-      if (status.panelOverflow > 1) failures.push(`${viewport.name}: control panel horizontal overflow ${status.panelOverflow}`);
+      if (currentStatus.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);
+      if (!browseStatus.search || browseStatus.search.height <= 0) failures.push(`${viewport.name}: scene search is not visible in Browse view`);
+      if (!browseStatus.filterBar || browseStatus.filterBar.height <= 0) failures.push(`${viewport.name}: scene groups are not visible in Browse view`);
+      if (!browseStatus.cards || browseStatus.cards.height <= 0) failures.push(`${viewport.name}: scene card scroll area is not visible in Browse view`);
+      if (currentStatus.documentOverflow > 1) failures.push(`${viewport.name}: document horizontal overflow ${currentStatus.documentOverflow}`);
+      if (currentStatus.panelOverflow > 1) failures.push(`${viewport.name}: control panel horizontal overflow ${currentStatus.panelOverflow}`);
+      if (browseStatus.panelOverflow > 1) failures.push(`${viewport.name}: browse panel horizontal overflow ${browseStatus.panelOverflow}`);
       if (
-        status.panel &&
-        status.spotlight &&
-        (status.spotlight.left < status.panel.left - 1 || status.spotlight.right > status.panel.right + 1)
+        currentStatus.panel &&
+        currentStatus.spotlight &&
+        (currentStatus.spotlight.left < currentStatus.panel.left - 1 || currentStatus.spotlight.right > currentStatus.panel.right + 1)
       ) {
         failures.push(`${viewport.name}: spotlight exceeds the control panel bounds`);
+      }
+      if (
+        browseStatus.panel &&
+        browseStatus.cards &&
+        (browseStatus.cards.left < browseStatus.panel.left - 1 || browseStatus.cards.right > browseStatus.panel.right + 1)
+      ) {
+        failures.push(`${viewport.name}: scene cards exceed the control panel bounds`);
       }
     } finally {
       await context.close();
@@ -539,6 +590,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       return {
         label: snapshotLabel,
         activeFilter: document.querySelector("[data-scene-filter].is-active")?.dataset.sceneFilter || "",
+        activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
         activeCard: document.querySelector(".scene-card.is-active")?.dataset.sceneCard || "",
         preset: document.getElementById("presetInput")?.value || "",
         spotlightTitle: document.getElementById("sceneSpotlightTitle")?.textContent?.trim() || "",
@@ -555,6 +607,12 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       target.click();
       return true;
     }, selector);
+  const openBrowseView = async () => {
+    if (!(await clickIfPresent('[data-scene-view="browse"]'))) {
+      failures.push("Browse view button was not found");
+    }
+    await page.waitForTimeout(80);
+  };
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
@@ -565,6 +623,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     });
     await selectPreset(page, "planeWaveAir");
     await page.waitForTimeout(120);
+    await openBrowseView();
 
     if (!(await clickIfPresent('[data-scene-filter="3. Sources and radiation"]'))) {
       failures.push("Sources and radiation filter button was not found");
@@ -576,6 +635,9 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     }
     if (!sourcesFilter.visibleCards.includes("jzDipole")) {
       failures.push("Sources filter did not reveal the Jz dipole scene card");
+    }
+    if (sourcesFilter.activeView !== "browse") {
+      failures.push(`Sources filter should be tested in Browse view; got ${sourcesFilter.activeView || "none"}`);
     }
 
     if (!(await clickIfPresent('[data-scene-card="jzDipole"]'))) {
@@ -589,7 +651,11 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     if (sourcesSelection.activeCard !== "jzDipole") {
       failures.push(`Jz dipole card was not marked active; got ${sourcesSelection.activeCard || "none"}`);
     }
+    if (sourcesSelection.activeView !== "current") {
+      failures.push(`Selecting a scene should return to Current view; got ${sourcesSelection.activeView || "none"}`);
+    }
 
+    await openBrowseView();
     if (!(await clickIfPresent('[data-scene-filter="4. Guided optics"]'))) {
       failures.push("Guided optics filter button was not found");
     }
@@ -600,6 +666,9 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     }
     if (!guidedFilter.visibleCards.includes("slabWaveguide")) {
       failures.push("Guided filter did not reveal the slab waveguide scene card");
+    }
+    if (guidedFilter.activeView !== "browse") {
+      failures.push(`Guided filter should be tested in Browse view; got ${guidedFilter.activeView || "none"}`);
     }
 
     if (!(await clickIfPresent('[data-scene-card="slabWaveguide"]'))) {
@@ -612,6 +681,9 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     }
     if (guidedSelection.activeCard !== "slabWaveguide") {
       failures.push(`Slab waveguide card was not marked active; got ${guidedSelection.activeCard || "none"}`);
+    }
+    if (guidedSelection.activeView !== "current") {
+      failures.push(`Selecting the guided scene should return to Current view; got ${guidedSelection.activeView || "none"}`);
     }
     const guidedSourceShape = await page.evaluate(() => state.sources?.[0]?.shape || "");
     if (guidedSourceShape !== "modeProfile") {

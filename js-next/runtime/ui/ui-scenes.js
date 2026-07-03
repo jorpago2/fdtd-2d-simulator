@@ -224,7 +224,63 @@
       catalog: null,
       filter: "",
       records: [],
+      view: "current",
+      viewControlsBound: false,
     };
+
+    function normalizeSceneView(value) {
+      return value === "browse" ? "browse" : "current";
+    }
+
+    function sceneViewButtons() {
+      return Array.from(el.sceneViewButtons || []);
+    }
+
+    function setSceneView(view, { focusSearch = false } = {}) {
+      const nextView = normalizeSceneView(view);
+      state.view = nextView;
+      sceneViewButtons().forEach((button) => {
+        const active = normalizeSceneView(button.dataset.sceneView) === nextView;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", String(active));
+        button.setAttribute("tabindex", active ? "0" : "-1");
+      });
+      if (el.sceneCurrentPanel) el.sceneCurrentPanel.hidden = nextView !== "current";
+      if (el.sceneBrowsePanel) el.sceneBrowsePanel.hidden = nextView !== "browse";
+      if (nextView === "browse" && focusSearch) {
+        el.sceneSearchInput?.focus?.({ preventScroll: true });
+      }
+    }
+
+    function handleSceneViewKeydown(event) {
+      const buttons = sceneViewButtons();
+      const currentIndex = buttons.indexOf(event.currentTarget);
+      if (currentIndex < 0) return;
+      let nextIndex = currentIndex;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (currentIndex + 1) % buttons.length;
+      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+      else if (event.key === "Home") nextIndex = 0;
+      else if (event.key === "End") nextIndex = buttons.length - 1;
+      else return;
+
+      event.preventDefault();
+      const nextButton = buttons[nextIndex];
+      setSceneView(nextButton.dataset.sceneView, { focusSearch: normalizeSceneView(nextButton.dataset.sceneView) === "browse" });
+      nextButton.focus?.({ preventScroll: true });
+    }
+
+    function bindSceneViewControls() {
+      if (state.viewControlsBound) return;
+      state.viewControlsBound = true;
+      sceneViewButtons().forEach((button) => {
+        button.addEventListener("click", () => {
+          const nextView = normalizeSceneView(button.dataset.sceneView);
+          setSceneView(nextView, { focusSearch: nextView === "browse" });
+        });
+        button.addEventListener("keydown", handleSceneViewKeydown);
+      });
+      setSceneView(state.view);
+    }
 
     function collectSceneRecords() {
       if (state.catalog?.scenes?.length) {
@@ -403,7 +459,16 @@
       }
 
       records.forEach((record) => {
-        const card = fillSceneCard(cloneSceneCardTemplate(documentRef), record, documentRef, onSelectScene, getCurrentPreset);
+        const card = fillSceneCard(
+          cloneSceneCardTemplate(documentRef),
+          record,
+          documentRef,
+          (value) => {
+            onSelectScene?.(value);
+            setSceneView("current");
+          },
+          getCurrentPreset
+        );
         el.sceneCards.appendChild(card);
       });
 
@@ -442,6 +507,7 @@
     }
 
     function buildSceneBrowser() {
+      bindSceneViewControls();
       rebuildSceneBrowser();
     }
 
@@ -452,6 +518,7 @@
 
     return Object.freeze({
       buildSceneBrowser,
+      bindSceneViewControls,
       cleanSceneGroupLabel,
       collectSceneRecords,
       currentSceneRecordFallback,
@@ -465,6 +532,7 @@
       sceneThumbnailKind,
       sceneThumbnailSrc,
       setSceneCatalog,
+      setSceneView,
       syncSceneBrowserSelection,
       updateSceneBrowserMeta,
       visibleSceneRecords,

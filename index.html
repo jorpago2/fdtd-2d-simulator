@@ -956,52 +956,80 @@
                   </optgroup>
                 </select>
               </label>
-              <div class="scene-browser" aria-label="Scene library">
-                <section
-                  id="sceneSpotlight"
-                  class="scene-spotlight"
-                  aria-labelledby="sceneSpotlightTitle"
-                  aria-describedby="sceneSpotlightDescription"
-                  data-scene-thumb="wave"
+              <div class="scene-view-toggle canvas-mode-toggle" role="tablist" aria-label="Scene menu view">
+                <button
+                  id="sceneCurrentViewBtn"
+                  class="mode-toggle-button is-active"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  aria-controls="sceneCurrentPanel"
+                  data-scene-view="current"
                 >
-                  <span class="scene-card-thumb scene-spotlight-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
-                  <div class="scene-spotlight-body">
-                    <span class="scene-spotlight-kicker">
-                      <span id="sceneSpotlightNumber" class="scene-card-number">Example</span>
-                      <span id="sceneSpotlightGroup" class="scene-spotlight-group">General</span>
-                    </span>
-                    <h3 id="sceneSpotlightTitle" class="scene-spotlight-title">Empty</h3>
-                    <span id="sceneSpotlightDescription" class="scene-spotlight-description">
-                      Blank domain with CPML boundaries, ready for a custom source or material layout.
-                    </span>
-                    <span id="sceneSpotlightBadges" class="scene-card-badges scene-spotlight-badges"></span>
-                  </div>
-                </section>
-                <label class="scene-search-label">
-                  <span>Search</span>
-                  <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
-                </label>
-                <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
-                <div class="scene-browser-meta" aria-live="polite">
-                  <output id="sceneBrowserCount">1 scene in General</output>
-                  <output id="sceneBrowserActive">Family: General</output>
+                  Current
+                </button>
+                <button
+                  id="sceneBrowseViewBtn"
+                  class="mode-toggle-button"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  aria-controls="sceneBrowsePanel"
+                  data-scene-view="browse"
+                >
+                  Browse
+                </button>
+              </div>
+              <div class="scene-browser" aria-label="Scene library">
+                <div id="sceneCurrentPanel" class="scene-view-panel scene-current-panel" data-scene-view-panel="current">
+                  <section
+                    id="sceneSpotlight"
+                    class="scene-spotlight"
+                    aria-labelledby="sceneSpotlightTitle"
+                    aria-describedby="sceneSpotlightDescription"
+                    data-scene-thumb="wave"
+                  >
+                    <span class="scene-card-thumb scene-spotlight-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
+                    <div class="scene-spotlight-body">
+                      <span class="scene-spotlight-kicker">
+                        <span id="sceneSpotlightNumber" class="scene-card-number">Example</span>
+                        <span id="sceneSpotlightGroup" class="scene-spotlight-group">General</span>
+                      </span>
+                      <h3 id="sceneSpotlightTitle" class="scene-spotlight-title">Empty</h3>
+                      <span id="sceneSpotlightDescription" class="scene-spotlight-description">
+                        Blank domain with CPML boundaries, ready for a custom source or material layout.
+                      </span>
+                      <span id="sceneSpotlightBadges" class="scene-card-badges scene-spotlight-badges"></span>
+                    </div>
+                  </section>
+                  <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
                 </div>
-                <template id="sceneCardTemplate">
-                  <button class="scene-card" type="button" data-scene-card="">
-                    <span class="scene-card-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
-                    <span class="scene-card-header">
-                      <span class="scene-card-number"></span>
-                      <span class="scene-card-title"></span>
-                    </span>
-                    <span class="scene-card-group"></span>
-                    <span class="scene-card-description"></span>
-                    <span class="scene-card-badges"></span>
-                  </button>
-                </template>
-                <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
+                <div id="sceneBrowsePanel" class="scene-view-panel scene-browse-panel" data-scene-view-panel="browse" hidden>
+                  <label class="scene-search-label">
+                    <span>Search</span>
+                    <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
+                  </label>
+                  <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
+                  <div class="scene-browser-meta" aria-live="polite">
+                    <output id="sceneBrowserCount">1 scene in General</output>
+                    <output id="sceneBrowserActive">Family: General</output>
+                  </div>
+                  <template id="sceneCardTemplate">
+                    <button class="scene-card" type="button" data-scene-card="">
+                      <span class="scene-card-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
+                      <span class="scene-card-header">
+                        <span class="scene-card-number"></span>
+                        <span class="scene-card-title"></span>
+                      </span>
+                      <span class="scene-card-group"></span>
+                      <span class="scene-card-description"></span>
+                      <span class="scene-card-badges"></span>
+                    </button>
+                  </template>
+                  <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
+                </div>
               </div>
               <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
-              <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
             </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
