@@ -2,14 +2,31 @@
 
 Object.assign(FDTDSim.prototype, {
   step() {
-    this.applyPhaseChangeResponse();
     const compiledMaterialStep = this.canUseCompiledMaterialStep();
-    const compiledHandlesKerr = compiledMaterialStep && this.canUseCompiledKerrResponse();
-    if (!compiledHandlesKerr) {
+    const phaseChangeActive = state.materialPhaseChangeEnabled;
+    const compiledHandlesPhaseChange = compiledMaterialStep && this.canUseCompiledPhaseChangeResponse?.();
+    if (phaseChangeActive) {
+      if (compiledHandlesPhaseChange) {
+        this.wasmBackend.applyPhaseChangeResponse(this);
+      } else {
+        this.applyPhaseChangeResponse();
+      }
+    }
+    const dynamicMaterialActive = state.materialModulationEnabled || state.materialNonlinearEnabled;
+    const compiledHandlesDynamicMaterial = compiledMaterialStep && this.canUseCompiledDynamicMaterialResponse?.();
+    if (dynamicMaterialActive && !compiledHandlesDynamicMaterial) {
       this.applyDynamicMaterialResponse();
     }
     if (compiledMaterialStep) {
       this.wasmBackend.step(this);
+      if (state.materialHarmonicEnabled) {
+        if (this.canUseCompiledHarmonicResponse?.()) {
+          this.wasmBackend.applyHarmonicNonlinearResponse(this);
+        } else {
+          this.applyHarmonicNonlinearResponse();
+        }
+      }
+      this.applyBianisotropicResponse();
       this.zeroBoundaryFields();
       this.injectSource();
       this.time += 1;

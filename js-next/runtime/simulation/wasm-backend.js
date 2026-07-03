@@ -8,11 +8,18 @@ const WASM_FEATURE_TFSF = 1 << 4;
 const WASM_FEATURE_CPML = 1 << 5;
 const WASM_FEATURE_MODE_SOURCE = 1 << 6;
 const WASM_FEATURE_ELECTRIC_ADE = 1 << 7;
+const WASM_FEATURE_MAGNETIC_ADE = 1 << 8;
+const WASM_FEATURE_MODULATION = 1 << 9;
+const WASM_FEATURE_HARMONIC = 1 << 10;
+const WASM_FEATURE_PHASE_CHANGE = 1 << 11;
+const WASM_FEATURE_BIANISOTROPY = 1 << 12;
 
 const WASM_STEP_KERR = 1 << 0;
 const WASM_STEP_SATURABLE_GAIN = 1 << 1;
 const WASM_STEP_TENSOR_GYRO = 1 << 2;
 const WASM_STEP_ELECTRIC_ADE = 1 << 3;
+const WASM_STEP_MAGNETIC_ADE = 1 << 4;
+const WASM_STEP_MODULATION = 1 << 5;
 const WASM_MAX_TFSF_SOURCES = 32;
 const WASM_TFSF_STRIDE = 16;
 const WASM_TFSF_SOURCE_TYPE = { sine: 0, gaussian: 1, ricker: 2 };
@@ -41,6 +48,7 @@ class WasmFdtdBackend {
       env: {
         memory,
         fdtd_sinf: Math.sin,
+        fdtd_cosf: Math.cos,
         fdtd_expf: Math.exp,
       },
     });
@@ -81,14 +89,40 @@ class WasmFdtdBackend {
     f32("dualEzy", n);
     f32("dualHx", n);
     f32("dualHy", n);
+    u8("bianisotropicMaterial", n);
+    f32("bianisotropyKappa", n);
+    f32("bianisotropyPrevScalar", n);
+    f32("bianisotropyPrevSplitX", n);
+    f32("bianisotropyPrevSplitY", n);
+    f32("bianisotropyPrevTx", n);
+    f32("bianisotropyPrevTy", n);
+    f32("bianisotropyPrevDualEz", n);
+    f32("bianisotropyPrevDualEzx", n);
+    f32("bianisotropyPrevDualEzy", n);
+    f32("bianisotropyPrevDualHx", n);
+    f32("bianisotropyPrevDualHy", n);
     u8("material", n);
+    u8("modulatedMaterial", n);
+    f32("modulationPhaseOffset", n);
     u8("nonlinearMaterial", n);
     u8("electricTensorMaterial", n);
     u8("gyrotropicMaterial", n);
     u8("dispersiveMaterial", n);
     u8("dispersionAxes", n);
+    f32("dispersionAxisX", n);
+    f32("dispersionAxisY", n);
     f32("modulationBaseEps", n);
     f32("modulationBaseEpsY", n);
+    u8("phaseChangeMaterial", n);
+    f32("phaseState", n);
+    f32("phaseEpsOff", n);
+    f32("phaseLossOff", n);
+    f32("phaseEpsYOff", n);
+    f32("phaseLossYOff", n);
+    f32("phaseEpsOn", n);
+    f32("phaseLossOn", n);
+    f32("phaseEpsYOn", n);
+    f32("phaseLossYOn", n);
     f32("epsilonXY", n);
     f32("gyrotropyG", n);
     f32("dispersionOmegaP", n);
@@ -96,8 +130,28 @@ class WasmFdtdBackend {
     f32("dispersionOmega0", n);
     f32("dispersionDeltaEps", n);
     f32("dispersionTau", n);
+    u8("muDispersiveMaterial", n);
+    u8("muDispersionAxes", n);
+    f32("muDispersionOmegaP", n);
+    f32("muDispersionGamma", n);
+    f32("muDispersionOmega0", n);
+    f32("muDispersionDeltaMu", n);
+    f32("muDispersionTau", n);
     f32("dispPz", n);
     f32("dispJz", n);
+    f32("dispPx", n);
+    f32("dispJx", n);
+    f32("dispPy", n);
+    f32("dispJy", n);
+    f32("magDispMz", n);
+    f32("magDispJz", n);
+    f32("magDispMx", n);
+    f32("magDispJx", n);
+    f32("magDispMy", n);
+    f32("magDispJy", n);
+    f32("harmonicPrevPz", n);
+    f32("harmonicPrevPx", n);
+    f32("harmonicPrevPy", n);
     f32("cpmlKappaEX", nx);
     f32("cpmlKappaHX", nx);
     f32("cpmlKappaEY", ny);
@@ -177,14 +231,40 @@ class WasmFdtdBackend {
     sim.dualEzy = new Float32Array(buffer, o.dualEzy, n);
     sim.dualHx = new Float32Array(buffer, o.dualHx, n);
     sim.dualHy = new Float32Array(buffer, o.dualHy, n);
+    sim.bianisotropicMaterial = new Uint8Array(buffer, o.bianisotropicMaterial, n);
+    sim.bianisotropyKappa = new Float32Array(buffer, o.bianisotropyKappa, n);
+    sim.bianisotropyPrevScalar = new Float32Array(buffer, o.bianisotropyPrevScalar, n);
+    sim.bianisotropyPrevSplitX = new Float32Array(buffer, o.bianisotropyPrevSplitX, n);
+    sim.bianisotropyPrevSplitY = new Float32Array(buffer, o.bianisotropyPrevSplitY, n);
+    sim.bianisotropyPrevTx = new Float32Array(buffer, o.bianisotropyPrevTx, n);
+    sim.bianisotropyPrevTy = new Float32Array(buffer, o.bianisotropyPrevTy, n);
+    sim.bianisotropyPrevDualEz = new Float32Array(buffer, o.bianisotropyPrevDualEz, n);
+    sim.bianisotropyPrevDualEzx = new Float32Array(buffer, o.bianisotropyPrevDualEzx, n);
+    sim.bianisotropyPrevDualEzy = new Float32Array(buffer, o.bianisotropyPrevDualEzy, n);
+    sim.bianisotropyPrevDualHx = new Float32Array(buffer, o.bianisotropyPrevDualHx, n);
+    sim.bianisotropyPrevDualHy = new Float32Array(buffer, o.bianisotropyPrevDualHy, n);
     sim.material = new Uint8Array(buffer, o.material, n);
+    sim.modulatedMaterial = new Uint8Array(buffer, o.modulatedMaterial, n);
+    sim.modulationPhaseOffset = new Float32Array(buffer, o.modulationPhaseOffset, n);
     sim.nonlinearMaterial = new Uint8Array(buffer, o.nonlinearMaterial, n);
     sim.electricTensorMaterial = new Uint8Array(buffer, o.electricTensorMaterial, n);
     sim.gyrotropicMaterial = new Uint8Array(buffer, o.gyrotropicMaterial, n);
     sim.dispersiveMaterial = new Uint8Array(buffer, o.dispersiveMaterial, n);
     sim.dispersionAxes = new Uint8Array(buffer, o.dispersionAxes, n);
+    sim.dispersionAxisX = new Float32Array(buffer, o.dispersionAxisX, n);
+    sim.dispersionAxisY = new Float32Array(buffer, o.dispersionAxisY, n);
     sim.modulationBaseEps = new Float32Array(buffer, o.modulationBaseEps, n);
     sim.modulationBaseEpsY = new Float32Array(buffer, o.modulationBaseEpsY, n);
+    sim.phaseChangeMaterial = new Uint8Array(buffer, o.phaseChangeMaterial, n);
+    sim.phaseState = new Float32Array(buffer, o.phaseState, n);
+    sim.phaseEpsOff = new Float32Array(buffer, o.phaseEpsOff, n);
+    sim.phaseLossOff = new Float32Array(buffer, o.phaseLossOff, n);
+    sim.phaseEpsYOff = new Float32Array(buffer, o.phaseEpsYOff, n);
+    sim.phaseLossYOff = new Float32Array(buffer, o.phaseLossYOff, n);
+    sim.phaseEpsOn = new Float32Array(buffer, o.phaseEpsOn, n);
+    sim.phaseLossOn = new Float32Array(buffer, o.phaseLossOn, n);
+    sim.phaseEpsYOn = new Float32Array(buffer, o.phaseEpsYOn, n);
+    sim.phaseLossYOn = new Float32Array(buffer, o.phaseLossYOn, n);
     sim.epsilonXY = new Float32Array(buffer, o.epsilonXY, n);
     sim.gyrotropyG = new Float32Array(buffer, o.gyrotropyG, n);
     sim.dispersionOmegaP = new Float32Array(buffer, o.dispersionOmegaP, n);
@@ -192,8 +272,28 @@ class WasmFdtdBackend {
     sim.dispersionOmega0 = new Float32Array(buffer, o.dispersionOmega0, n);
     sim.dispersionDeltaEps = new Float32Array(buffer, o.dispersionDeltaEps, n);
     sim.dispersionTau = new Float32Array(buffer, o.dispersionTau, n);
+    sim.muDispersiveMaterial = new Uint8Array(buffer, o.muDispersiveMaterial, n);
+    sim.muDispersionAxes = new Uint8Array(buffer, o.muDispersionAxes, n);
+    sim.muDispersionOmegaP = new Float32Array(buffer, o.muDispersionOmegaP, n);
+    sim.muDispersionGamma = new Float32Array(buffer, o.muDispersionGamma, n);
+    sim.muDispersionOmega0 = new Float32Array(buffer, o.muDispersionOmega0, n);
+    sim.muDispersionDeltaMu = new Float32Array(buffer, o.muDispersionDeltaMu, n);
+    sim.muDispersionTau = new Float32Array(buffer, o.muDispersionTau, n);
     sim.dispPz = new Float32Array(buffer, o.dispPz, n);
     sim.dispJz = new Float32Array(buffer, o.dispJz, n);
+    sim.dispPx = new Float32Array(buffer, o.dispPx, n);
+    sim.dispJx = new Float32Array(buffer, o.dispJx, n);
+    sim.dispPy = new Float32Array(buffer, o.dispPy, n);
+    sim.dispJy = new Float32Array(buffer, o.dispJy, n);
+    sim.magDispMz = new Float32Array(buffer, o.magDispMz, n);
+    sim.magDispJz = new Float32Array(buffer, o.magDispJz, n);
+    sim.magDispMx = new Float32Array(buffer, o.magDispMx, n);
+    sim.magDispJx = new Float32Array(buffer, o.magDispJx, n);
+    sim.magDispMy = new Float32Array(buffer, o.magDispMy, n);
+    sim.magDispJy = new Float32Array(buffer, o.magDispJy, n);
+    sim.harmonicPrevPz = new Float32Array(buffer, o.harmonicPrevPz, n);
+    sim.harmonicPrevPx = new Float32Array(buffer, o.harmonicPrevPx, n);
+    sim.harmonicPrevPy = new Float32Array(buffer, o.harmonicPrevPy, n);
     sim.cpmlKappaEX = new Float32Array(buffer, o.cpmlKappaEX, sim.nx);
     sim.cpmlKappaHX = new Float32Array(buffer, o.cpmlKappaHX, sim.nx);
     sim.cpmlKappaEY = new Float32Array(buffer, o.cpmlKappaEY, sim.ny);
@@ -326,12 +426,17 @@ class WasmFdtdBackend {
     return true;
   }
 
-  stepWithOffsets(sim, component, offsets) {
+  stepWithOffsets(sim, component, offsets, options = {}) {
     const o = offsets;
     const stepExport = component === "hz" ? this.exports.step_hz : this.exports.step;
-    const runtimeFlags = this.stepRuntimeFlags(component);
-    const tfsfCount = this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
-    const modeSourceCount = this.supportsModeSource() ? this.packModeSources(sim) : 0;
+    const runtimeFlags = this.stepRuntimeFlags(component, sim);
+    const modulationDepth = state.materialModulationEnabled ? Math.min(0.95, Math.max(0, Number(state.modulationDepth) || 0)) : 0;
+    const modulationPeriodCells = Math.max(1, Math.round(Math.max(0.1, Number(state.modulationPeriodLambda) || 0.1) * Math.max(1, Number(state.cellsPerWavelength) || 1)));
+    const modulationTheta = ((Number(state.modulationAngleDeg) || 0) * Math.PI) / 180;
+    const modulationPhase = ((Number(state.modulationPhaseDeg) || 0) * Math.PI) / 180;
+    const includeSources = options.includeSources !== false;
+    const tfsfCount = includeSources && this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
+    const modeSourceCount = includeSources && this.supportsModeSource() ? this.packModeSources(sim) : 0;
     stepExport(
       sim.nx,
       sim.ny,
@@ -352,11 +457,15 @@ class WasmFdtdBackend {
       o.muY,
       o.muLossY,
       o.material,
+      o.modulatedMaterial,
+      o.modulationPhaseOffset,
       o.nonlinearMaterial,
       o.electricTensorMaterial,
       o.gyrotropicMaterial,
       o.dispersiveMaterial,
       o.dispersionAxes,
+      o.dispersionAxisX,
+      o.dispersionAxisY,
       o.modulationBaseEps,
       o.modulationBaseEpsY,
       o.epsilonXY,
@@ -366,8 +475,25 @@ class WasmFdtdBackend {
       o.dispersionOmega0,
       o.dispersionDeltaEps,
       o.dispersionTau,
+      o.muDispersiveMaterial,
+      o.muDispersionAxes,
+      o.muDispersionOmegaP,
+      o.muDispersionGamma,
+      o.muDispersionOmega0,
+      o.muDispersionDeltaMu,
+      o.muDispersionTau,
       o.dispPz,
       o.dispJz,
+      o.dispPx,
+      o.dispJx,
+      o.dispPy,
+      o.dispJy,
+      o.magDispMz,
+      o.magDispJz,
+      o.magDispMx,
+      o.magDispJx,
+      o.magDispMy,
+      o.magDispJy,
       o.cpmlKappaEX,
       o.cpmlKappaHX,
       o.cpmlKappaEY,
@@ -392,6 +518,12 @@ class WasmFdtdBackend {
       Number(state.kerrChi3) || 0,
       Math.max(0.05, Number(state.kerrSaturation) || 5),
       Math.max(0.05, Number(state.gainSaturation) || 4),
+      modulationDepth,
+      modulationPeriodCells,
+      Math.cos(modulationTheta),
+      Math.sin(modulationTheta),
+      Number(state.modulationFrequency) || 0,
+      modulationPhase,
       sim.time,
       Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1,
       o.tfsfSources,
@@ -425,7 +557,112 @@ class WasmFdtdBackend {
       cpmlPsiHyX: o.cpmlPsiDualHyX,
       cpmlPsiEzX: o.cpmlPsiDualEzX,
       cpmlPsiEzY: o.cpmlPsiDualEzY,
-    });
+    }, { includeSources: false });
+  }
+
+  applyPhaseChangeResponse(sim) {
+    if (typeof this.exports.apply_phase_change_response !== "function" || !this.layout?.offsets) return false;
+    const o = this.layout.offsets;
+    this.exports.apply_phase_change_response(
+      sim.nx,
+      sim.ny,
+      state.fieldComponent === "hz" ? 1 : 0,
+      o.ez,
+      o.hx,
+      o.hy,
+      o.eps,
+      o.loss,
+      o.epsY,
+      o.lossY,
+      o.material,
+      o.modulatedMaterial,
+      o.nonlinearMaterial,
+      o.modulationBaseEps,
+      o.modulationBaseEpsY,
+      o.phaseChangeMaterial,
+      o.phaseState,
+      o.phaseEpsOff,
+      o.phaseLossOff,
+      o.phaseEpsYOff,
+      o.phaseLossYOff,
+      o.phaseEpsOn,
+      o.phaseLossOn,
+      o.phaseEpsYOn,
+      o.phaseLossYOn,
+      Math.max(0, Number(state.phaseThresholdOn) || 0),
+      Math.max(0, Number(state.phaseThresholdOff) || 0),
+      Math.max(1, Number(state.phaseTauOn) || 18),
+      Math.max(1, Number(state.phaseTauOff) || 180),
+      Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1
+    );
+    return true;
+  }
+
+  applyHarmonicNonlinearResponse(sim) {
+    if (typeof this.exports.apply_harmonic_nonlinear_response !== "function" || !this.layout?.offsets) return false;
+    const o = this.layout.offsets;
+    this.exports.apply_harmonic_nonlinear_response(
+      sim.nx,
+      sim.ny,
+      state.fieldComponent === "hz" ? 1 : 0,
+      sim.courant,
+      o.ez,
+      o.ezx,
+      o.ezy,
+      o.hx,
+      o.hy,
+      o.eps,
+      o.epsY,
+      o.material,
+      o.nonlinearMaterial,
+      o.harmonicPrevPz,
+      o.harmonicPrevPx,
+      o.harmonicPrevPy,
+      Number(state.harmonicChi2) || 0,
+      Number(state.harmonicChi3) || 0,
+      Math.max(0.05, Number(state.harmonicSaturation) || 6),
+      Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1
+    );
+    return true;
+  }
+
+  applyBianisotropicResponse(sim) {
+    if (typeof this.exports.apply_bianisotropic_response !== "function" || !this.layout?.offsets) return false;
+    const o = this.layout.offsets;
+    this.exports.apply_bianisotropic_response(
+      sim.n,
+      state.fieldComponent === "hz" ? 1 : 0,
+      sim.fullVectorBianisotropyActive?.() ? 1 : 0,
+      o.ez,
+      o.ezx,
+      o.ezy,
+      o.hx,
+      o.hy,
+      o.dualEz,
+      o.dualEzx,
+      o.dualEzy,
+      o.dualHx,
+      o.dualHy,
+      o.eps,
+      o.epsY,
+      o.mu,
+      o.muY,
+      o.material,
+      o.bianisotropicMaterial,
+      o.bianisotropyKappa,
+      o.bianisotropyPrevScalar,
+      o.bianisotropyPrevSplitX,
+      o.bianisotropyPrevSplitY,
+      o.bianisotropyPrevTx,
+      o.bianisotropyPrevTy,
+      o.bianisotropyPrevDualEz,
+      o.bianisotropyPrevDualEzx,
+      o.bianisotropyPrevDualEzy,
+      o.bianisotropyPrevDualHx,
+      o.bianisotropyPrevDualHy,
+      Number(BIANISOTROPY_KAPPA_LIMIT) || 0.85
+    );
+    return true;
   }
 
   canStep(component) {
@@ -472,12 +709,36 @@ class WasmFdtdBackend {
     return this.supportsFeature(WASM_FEATURE_ELECTRIC_ADE);
   }
 
-  stepRuntimeFlags(component) {
+  supportsMagneticAde() {
+    return this.supportsFeature(WASM_FEATURE_MAGNETIC_ADE);
+  }
+
+  supportsModulation() {
+    return this.supportsFeature(WASM_FEATURE_MODULATION);
+  }
+
+  supportsHarmonic() {
+    return this.supportsFeature(WASM_FEATURE_HARMONIC) && typeof this.exports.apply_harmonic_nonlinear_response === "function";
+  }
+
+  supportsPhaseChange() {
+    return this.supportsFeature(WASM_FEATURE_PHASE_CHANGE) && typeof this.exports.apply_phase_change_response === "function";
+  }
+
+  supportsBianisotropy() {
+    return this.supportsFeature(WASM_FEATURE_BIANISOTROPY) && typeof this.exports.apply_bianisotropic_response === "function";
+  }
+
+  stepRuntimeFlags(component, sim = null) {
     let flags = 0;
-    if (state.materialNonlinearEnabled && !state.materialModulationEnabled) flags |= WASM_STEP_KERR;
+    if (state.materialNonlinearEnabled) flags |= WASM_STEP_KERR;
+    if (state.materialModulationEnabled) flags |= WASM_STEP_MODULATION;
     if (state.materialSaturableGainEnabled) flags |= WASM_STEP_SATURABLE_GAIN;
     if (component === "hz" && state.materialGyrotropyEnabled) flags |= WASM_STEP_TENSOR_GYRO;
-    if (component === "ez" && state.materialDispersionEnabled) flags |= WASM_STEP_ELECTRIC_ADE;
+    if (state.materialDispersionEnabled) {
+      flags |= WASM_STEP_ELECTRIC_ADE;
+      if (sim?.hasActiveMagneticDispersion?.()) flags |= WASM_STEP_MAGNETIC_ADE;
+    }
     return flags;
   }
 }

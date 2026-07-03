@@ -12,7 +12,7 @@
     getEntitySelection,
     getSim = () => null,
   }) {
-    const sourceRetireCycles = 2.5;
+    const sourceRetireCycles = 2.25;
     const minRetireSteps = 24;
 
     function sourceModelContext() {

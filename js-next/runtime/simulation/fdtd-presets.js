@@ -258,6 +258,12 @@ Object.assign(FDTDSim.prototype, {
     state.modulationPhaseDeg = 0;
     state.sweepBidirectional = false;
 
+    if (name === "empty") {
+      this.refreshCpmlMaterialContinuation(false);
+      this.resetFields();
+      return;
+    }
+
     const minX = this.activeInteriorMinX();
     const maxX = this.activeInteriorMaxX();
     const minY = this.activeInteriorMinY();

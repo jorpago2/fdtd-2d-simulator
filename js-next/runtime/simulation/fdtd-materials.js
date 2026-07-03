@@ -828,6 +828,11 @@ snapshotMaterialArrays() {
     bianisotropyPrevSplitY: new Float32Array(this.bianisotropyPrevSplitY),
     bianisotropyPrevTx: new Float32Array(this.bianisotropyPrevTx),
     bianisotropyPrevTy: new Float32Array(this.bianisotropyPrevTy),
+    bianisotropyPrevDualEz: new Float32Array(this.bianisotropyPrevDualEz),
+    bianisotropyPrevDualEzx: new Float32Array(this.bianisotropyPrevDualEzx),
+    bianisotropyPrevDualEzy: new Float32Array(this.bianisotropyPrevDualEzy),
+    bianisotropyPrevDualHx: new Float32Array(this.bianisotropyPrevDualHx),
+    bianisotropyPrevDualHy: new Float32Array(this.bianisotropyPrevDualHy),
     phaseChangeMaterial: new Uint8Array(this.phaseChangeMaterial),
     phaseState: new Float32Array(this.phaseState),
     phaseEpsOff: new Float32Array(this.phaseEpsOff),
@@ -886,6 +891,16 @@ restoreMaterialArrays(snapshot) {
   this.bianisotropyPrevSplitY.set(snapshot.bianisotropyPrevSplitY);
   this.bianisotropyPrevTx.set(snapshot.bianisotropyPrevTx);
   this.bianisotropyPrevTy.set(snapshot.bianisotropyPrevTy);
+  if (snapshot.bianisotropyPrevDualEz) this.bianisotropyPrevDualEz.set(snapshot.bianisotropyPrevDualEz);
+  else this.bianisotropyPrevDualEz.fill(0);
+  if (snapshot.bianisotropyPrevDualEzx) this.bianisotropyPrevDualEzx.set(snapshot.bianisotropyPrevDualEzx);
+  else this.bianisotropyPrevDualEzx.fill(0);
+  if (snapshot.bianisotropyPrevDualEzy) this.bianisotropyPrevDualEzy.set(snapshot.bianisotropyPrevDualEzy);
+  else this.bianisotropyPrevDualEzy.fill(0);
+  if (snapshot.bianisotropyPrevDualHx) this.bianisotropyPrevDualHx.set(snapshot.bianisotropyPrevDualHx);
+  else this.bianisotropyPrevDualHx.fill(0);
+  if (snapshot.bianisotropyPrevDualHy) this.bianisotropyPrevDualHy.set(snapshot.bianisotropyPrevDualHy);
+  else this.bianisotropyPrevDualHy.fill(0);
   this.phaseChangeMaterial.set(snapshot.phaseChangeMaterial);
   this.phaseState.set(snapshot.phaseState);
   this.phaseEpsOff.set(snapshot.phaseEpsOff);
@@ -952,6 +967,11 @@ snapshotMaterialArraysWithoutRegion(region) {
     snapshot.bianisotropyPrevSplitY[idx] = 0;
     snapshot.bianisotropyPrevTx[idx] = 0;
     snapshot.bianisotropyPrevTy[idx] = 0;
+    snapshot.bianisotropyPrevDualEz[idx] = 0;
+    snapshot.bianisotropyPrevDualEzx[idx] = 0;
+    snapshot.bianisotropyPrevDualEzy[idx] = 0;
+    snapshot.bianisotropyPrevDualHx[idx] = 0;
+    snapshot.bianisotropyPrevDualHy[idx] = 0;
     snapshot.phaseChangeMaterial[idx] = 0;
     snapshot.phaseState[idx] = 0;
     snapshot.phaseEpsOff[idx] = 1;
@@ -1213,7 +1233,8 @@ canUseCompiledFullVectorBianisotropy() {
       this.wasmBackend?.canStep("hz") &&
       this.wasmBackend?.canStep("ez") &&
       (!this.cpmlActive?.() || this.wasmBackend?.supportsCpml?.()) &&
-      !this.hasTfsfIncidentSource?.() &&
+      (!this.hasTfsfIncidentSource?.() ||
+        (this.wasmBackend?.supportsTfsf?.() && this.wasmBackend?.canPackTfsfSources?.(this))) &&
       !this.hasModeProfileSource?.() &&
       !state.materialModulationEnabled &&
       !state.materialNonlinearEnabled &&
@@ -1330,6 +1351,7 @@ solveBianisotropicIncrement(oldElectric, oldMagnetic, nextElectric, nextMagnetic
 
 applyBianisotropicResponse() {
   if (!state.materialBianisotropyEnabled) return;
+  if (this.canUseCompiledBianisotropyResponse?.() && this.wasmBackend?.applyBianisotropicResponse?.(this)) return;
   if (this.fullVectorBianisotropyActive()) {
     this.applyFullVectorBianisotropicResponse();
     return;

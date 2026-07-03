@@ -16,11 +16,18 @@ static constexpr i32 FEATURE_TFSF = 1 << 4;
 static constexpr i32 FEATURE_CPML = 1 << 5;
 static constexpr i32 FEATURE_MODE_SOURCE = 1 << 6;
 static constexpr i32 FEATURE_ELECTRIC_ADE = 1 << 7;
+static constexpr i32 FEATURE_MAGNETIC_ADE = 1 << 8;
+static constexpr i32 FEATURE_MODULATION = 1 << 9;
+static constexpr i32 FEATURE_HARMONIC = 1 << 10;
+static constexpr i32 FEATURE_PHASE_CHANGE = 1 << 11;
+static constexpr i32 FEATURE_BIANISOTROPY = 1 << 12;
 
 static constexpr i32 STEP_KERR = 1 << 0;
 static constexpr i32 STEP_SATURABLE_GAIN = 1 << 1;
 static constexpr i32 STEP_TENSOR_GYRO = 1 << 2;
 static constexpr i32 STEP_ELECTRIC_ADE = 1 << 3;
+static constexpr i32 STEP_MAGNETIC_ADE = 1 << 4;
+static constexpr i32 STEP_MODULATION = 1 << 5;
 static constexpr i32 TFSF_STRIDE = 16;
 static constexpr i32 MODE_SOURCE_STRIDE = 16;
 static constexpr float PI_F = 3.14159265358979323846f;
@@ -28,6 +35,7 @@ static constexpr float TWO_PI_F = 6.28318530717958647692f;
 static constexpr float FOUR_LN2_F = 2.77258872223978123767f;
 
 extern "C" __attribute__((import_module("env"), import_name("fdtd_sinf"))) float fdtd_sinf(float value);
+extern "C" __attribute__((import_module("env"), import_name("fdtd_cosf"))) float fdtd_cosf(float value);
 extern "C" __attribute__((import_module("env"), import_name("fdtd_expf"))) float fdtd_expf(float value);
 
 static inline float* f32(u32 offset) {
@@ -79,7 +87,7 @@ static inline float conductivity_damp(float sigma, float materialValue, float co
 }
 
 extern "C" __attribute__((export_name("kernel_features"))) i32 kernel_features() {
-  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML | FEATURE_MODE_SOURCE | FEATURE_ELECTRIC_ADE;
+  return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML | FEATURE_MODE_SOURCE | FEATURE_ELECTRIC_ADE | FEATURE_MAGNETIC_ADE | FEATURE_MODULATION | FEATURE_HARMONIC | FEATURE_PHASE_CHANGE | FEATURE_BIANISOTROPY;
 }
 
 static inline float electric_loss_decay(float loss, float intensity, i32 runtimeFlags, float gainSaturation) {
@@ -102,34 +110,471 @@ static inline float physical_intensity(float rawIntensity, float fieldScale) {
   return minf(rawIntensity * scale * scale, 1.0e12f);
 }
 
-static inline void apply_kerr_response(
+static inline void apply_dynamic_permittivity_response(
   i32 nx,
   i32 ny,
   i32 hzMode,
+  i32 runtimeFlags,
   float kerrChi3,
   float kerrSaturation,
+  float modulationDepth,
+  float modulationPeriodCells,
+  float modulationCosTheta,
+  float modulationSinTheta,
+  float modulationOmegaCycles,
+  float modulationPhase,
+  float time,
   float* ez,
   float* hx,
   float* hy,
   float* eps,
   float* epsY,
   u8* material,
+  u8* modulatedMaterial,
+  float* modulationPhaseOffset,
   u8* nonlinearMaterial,
   float* modulationBaseEps,
   float* modulationBaseEpsY,
   float fieldScale
 ) {
-  if (kerrChi3 == 0.0f) return;
-  const i32 n = nx * ny;
+  const bool kerrActive = (runtimeFlags & STEP_KERR) && kerrChi3 != 0.0f;
+  const bool modulationActive = (runtimeFlags & STEP_MODULATION) && modulationDepth > 0.0f;
+  if (!kerrActive && !modulationActive) return;
   const float saturation = maxf(0.05f, kerrSaturation);
+  const float periodCells = maxf(1.0f, modulationPeriodCells);
+  const float depth = clampf(modulationDepth, 0.0f, 0.95f);
+  for (i32 y = 0; y < ny; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 0; x < nx; x += 1) {
+      const i32 i = row + x;
+      if (material[i] == 2) continue;
+      if ((!modulationActive || !modulatedMaterial[i]) && (!kerrActive || !nonlinearMaterial[i])) continue;
+      float factor = 1.0f;
+      if (modulationActive && modulatedMaterial[i]) {
+        const float spatialCycles = (static_cast<float>(x) * modulationCosTheta + static_cast<float>(y) * modulationSinTheta) / periodCells;
+        const float argument = TWO_PI_F * (spatialCycles - modulationOmegaCycles * time) + modulationPhase + modulationPhaseOffset[i];
+        factor += depth * fdtd_cosf(argument);
+      }
+      float deltaEps = 0.0f;
+      if (kerrActive && nonlinearMaterial[i]) {
+        const float rawIntensity = hzMode ? hx[i] * hx[i] + hy[i] * hy[i] : ez[i] * ez[i];
+        const float limitedIntensity = minf(physical_intensity(rawIntensity, fieldScale), 1.0e6f);
+        const float saturatedIntensity = limitedIntensity / (1.0f + limitedIntensity / saturation);
+        deltaEps = kerrChi3 * saturatedIntensity;
+      }
+      eps[i] = clampf(modulationBaseEps[i] * factor + deltaEps, -30.0f, 30.0f);
+      epsY[i] = clampf(modulationBaseEpsY[i] * factor + deltaEps, -30.0f, 30.0f);
+    }
+  }
+}
+
+static inline float lerpf(float left, float right, float weight) {
+  return left + (right - left) * weight;
+}
+
+extern "C" __attribute__((export_name("apply_phase_change_response"))) void apply_phase_change_response(
+  i32 nx,
+  i32 ny,
+  i32 hzMode,
+  u32 scalarFieldOffset,
+  u32 fieldXOffset,
+  u32 fieldYOffset,
+  u32 epsOffset,
+  u32 lossOffset,
+  u32 epsYOffset,
+  u32 lossYOffset,
+  u32 materialOffset,
+  u32 modulatedMaterialOffset,
+  u32 nonlinearMaterialOffset,
+  u32 modulationBaseEpsOffset,
+  u32 modulationBaseEpsYOffset,
+  u32 phaseChangeMaterialOffset,
+  u32 phaseStateOffset,
+  u32 phaseEpsOffOffset,
+  u32 phaseLossOffOffset,
+  u32 phaseEpsYOffOffset,
+  u32 phaseLossYOffOffset,
+  u32 phaseEpsOnOffset,
+  u32 phaseLossOnOffset,
+  u32 phaseEpsYOnOffset,
+  u32 phaseLossYOnOffset,
+  float thresholdOnValue,
+  float thresholdOffValue,
+  float tauOnValue,
+  float tauOffValue,
+  float fieldScale
+) {
+  const i32 n = nx * ny;
+  float* scalarField = f32(scalarFieldOffset);
+  float* fieldX = f32(fieldXOffset);
+  float* fieldY = f32(fieldYOffset);
+  float* eps = f32(epsOffset);
+  float* loss = f32(lossOffset);
+  float* epsY = f32(epsYOffset);
+  float* lossY = f32(lossYOffset);
+  u8* material = u8_array(materialOffset);
+  u8* modulatedMaterial = u8_array(modulatedMaterialOffset);
+  u8* nonlinearMaterial = u8_array(nonlinearMaterialOffset);
+  float* modulationBaseEps = f32(modulationBaseEpsOffset);
+  float* modulationBaseEpsY = f32(modulationBaseEpsYOffset);
+  u8* phaseChangeMaterial = u8_array(phaseChangeMaterialOffset);
+  float* phaseState = f32(phaseStateOffset);
+  float* phaseEpsOff = f32(phaseEpsOffOffset);
+  float* phaseLossOff = f32(phaseLossOffOffset);
+  float* phaseEpsYOff = f32(phaseEpsYOffOffset);
+  float* phaseLossYOff = f32(phaseLossYOffOffset);
+  float* phaseEpsOn = f32(phaseEpsOnOffset);
+  float* phaseLossOn = f32(phaseLossOnOffset);
+  float* phaseEpsYOn = f32(phaseEpsYOnOffset);
+  float* phaseLossYOn = f32(phaseLossYOnOffset);
+
+  const float thresholdOn = maxf(0.0f, thresholdOnValue);
+  const float thresholdOff = minf(thresholdOn, maxf(0.0f, thresholdOffValue));
+  const float tauOn = maxf(1.0f, tauOnValue);
+  const float tauOff = maxf(1.0f, tauOffValue);
+  const float alphaOn = 1.0f - fdtd_expf(-1.0f / tauOn);
+  const float alphaOff = 1.0f - fdtd_expf(-1.0f / tauOff);
+
   for (i32 i = 0; i < n; i += 1) {
-    if (!nonlinearMaterial[i] || material[i] == 2) continue;
-    const float rawIntensity = hzMode ? hx[i] * hx[i] + hy[i] * hy[i] : ez[i] * ez[i];
-    const float limitedIntensity = minf(physical_intensity(rawIntensity, fieldScale), 1.0e6f);
-    const float saturatedIntensity = limitedIntensity / (1.0f + limitedIntensity / saturation);
-    const float deltaEps = kerrChi3 * saturatedIntensity;
-    eps[i] = clampf(modulationBaseEps[i] + deltaEps, -30.0f, 30.0f);
-    epsY[i] = clampf(modulationBaseEpsY[i] + deltaEps, -30.0f, 30.0f);
+    if (!phaseChangeMaterial[i] || material[i] == 2) continue;
+    const float rawIntensity = hzMode ? fieldX[i] * fieldX[i] + fieldY[i] * fieldY[i] : scalarField[i] * scalarField[i];
+    const float intensity = physical_intensity(rawIntensity, fieldScale);
+    float stateValue = phaseState[i];
+    if (intensity >= thresholdOn) {
+      stateValue += (1.0f - stateValue) * alphaOn;
+    } else if (intensity <= thresholdOff) {
+      stateValue -= stateValue * alphaOff;
+    }
+    stateValue = clampf(stateValue, 0.0f, 1.0f);
+    phaseState[i] = stateValue;
+    eps[i] = clampf(lerpf(phaseEpsOff[i], phaseEpsOn[i], stateValue), -30.0f, 30.0f);
+    loss[i] = clampf(lerpf(phaseLossOff[i], phaseLossOn[i], stateValue), -30.0f, 30.0f);
+    epsY[i] = clampf(lerpf(phaseEpsYOff[i], phaseEpsYOn[i], stateValue), -30.0f, 30.0f);
+    lossY[i] = clampf(lerpf(phaseLossYOff[i], phaseLossYOn[i], stateValue), -30.0f, 30.0f);
+    if (modulatedMaterial[i] || nonlinearMaterial[i]) {
+      modulationBaseEps[i] = eps[i];
+      modulationBaseEpsY[i] = epsY[i];
+    }
+  }
+}
+
+static inline float harmonic_nonlinear_polarization(
+  float fieldValue,
+  float chi2Value,
+  float chi3Value,
+  float saturationValue
+) {
+  const float chi2 = clampf(chi2Value, -2.0f, 2.0f);
+  const float chi3 = clampf(chi3Value, -2.0f, 2.0f);
+  if (chi2 == 0.0f && chi3 == 0.0f) return 0.0f;
+  const float field = clampf(fieldValue, -1.0e4f, 1.0e4f);
+  const float saturation = maxf(0.05f, saturationValue);
+  const float field2 = field * field;
+  const float limiter = 1.0f / (1.0f + field2 / saturation);
+  return limiter * (chi2 * field2 + chi3 * field2 * field);
+}
+
+extern "C" __attribute__((export_name("apply_harmonic_nonlinear_response"))) void apply_harmonic_nonlinear_response(
+  i32 nx,
+  i32 ny,
+  i32 hzMode,
+  float s,
+  u32 scalarFieldOffset,
+  u32 splitXOffset,
+  u32 splitYOffset,
+  u32 fieldXOffset,
+  u32 fieldYOffset,
+  u32 epsOffset,
+  u32 epsYOffset,
+  u32 materialOffset,
+  u32 nonlinearMaterialOffset,
+  u32 harmonicPrevPzOffset,
+  u32 harmonicPrevPxOffset,
+  u32 harmonicPrevPyOffset,
+  float harmonicChi2,
+  float harmonicChi3,
+  float harmonicSaturation,
+  float fieldScale
+) {
+  const float chi2 = clampf(harmonicChi2, -2.0f, 2.0f);
+  const float chi3 = clampf(harmonicChi3, -2.0f, 2.0f);
+  if (chi2 == 0.0f && chi3 == 0.0f) return;
+  const float scale = fieldScale == 0.0f ? 1.0f : fieldScale;
+  const float rawScale = 1.0f / maxf(1.0e-12f, scale);
+  float* scalarField = f32(scalarFieldOffset);
+  float* splitX = f32(splitXOffset);
+  float* splitY = f32(splitYOffset);
+  float* fieldX = f32(fieldXOffset);
+  float* fieldY = f32(fieldYOffset);
+  float* eps = f32(epsOffset);
+  float* epsY = f32(epsYOffset);
+  u8* material = u8_array(materialOffset);
+  u8* nonlinearMaterial = u8_array(nonlinearMaterialOffset);
+  float* harmonicPrevPz = f32(harmonicPrevPzOffset);
+  float* harmonicPrevPx = f32(harmonicPrevPxOffset);
+  float* harmonicPrevPy = f32(harmonicPrevPyOffset);
+
+  if (hzMode) {
+    for (i32 y = 1; y < ny - 1; y += 1) {
+      const i32 row = y * nx;
+      for (i32 x = 1; x < nx - 1; x += 1) {
+        const i32 i = row + x;
+        if (!nonlinearMaterial[i] || material[i] == 2) continue;
+        const float px = harmonic_nonlinear_polarization(fieldX[i] * scale, chi2, chi3, harmonicSaturation);
+        const float py = harmonic_nonlinear_polarization(fieldY[i] * scale, chi2, chi3, harmonicSaturation);
+        const float jx = clampf((px - harmonicPrevPx[i]) * rawScale, -1.0e4f, 1.0e4f);
+        const float jy = clampf((py - harmonicPrevPy[i]) * rawScale, -1.0e4f, 1.0e4f);
+        harmonicPrevPx[i] = px;
+        harmonicPrevPy[i] = py;
+        fieldX[i] -= (s / safe_material_denominator(eps[i])) * jx;
+        fieldY[i] -= (s / safe_material_denominator(epsY[i])) * jy;
+      }
+    }
+    return;
+  }
+
+  for (i32 y = 1; y < ny - 1; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 1; x < nx - 1; x += 1) {
+      const i32 i = row + x;
+      if (!nonlinearMaterial[i] || material[i] == 2) continue;
+      const float pz = harmonic_nonlinear_polarization(scalarField[i] * scale, chi2, chi3, harmonicSaturation);
+      const float jz = clampf((pz - harmonicPrevPz[i]) * rawScale, -1.0e4f, 1.0e4f);
+      harmonicPrevPz[i] = pz;
+      splitX[i] -= (s / safe_material_denominator(eps[i])) * jz * 0.5f;
+      splitY[i] -= (s / safe_material_denominator(epsY[i])) * jz * 0.5f;
+      scalarField[i] = splitX[i] + splitY[i];
+    }
+  }
+}
+
+struct BianisotropicPair {
+  float electric;
+  float magnetic;
+};
+
+static inline float normalize_bianisotropy_kappa(float value, float limit) {
+  const float finiteLimit = maxf(0.0f, limit);
+  return clampf(value, -finiteLimit, finiteLimit);
+}
+
+static inline BianisotropicPair solve_bianisotropic_increment(
+  float oldElectric,
+  float oldMagnetic,
+  float nextElectric,
+  float nextMagnetic,
+  float epsValue,
+  float muValue,
+  float kappaNorm
+) {
+  const float epsEff = safe_material_denominator(epsValue);
+  const float muEff = safe_material_denominator(muValue);
+  const float kappaScale = sqrtf_local(absf(epsEff * muEff));
+  const float kappa = kappaNorm * kappaScale;
+  const float det = epsEff * muEff - kappa * kappa;
+  if (absf(det) <= 1.0e-9f) {
+    return { nextElectric, nextMagnetic };
+  }
+  const float deltaElectric0 = clampf(nextElectric - oldElectric, -1.0e4f, 1.0e4f);
+  const float deltaMagnetic0 = clampf(nextMagnetic - oldMagnetic, -1.0e4f, 1.0e4f);
+  if (deltaElectric0 == 0.0f && deltaMagnetic0 == 0.0f) {
+    return { oldElectric, oldMagnetic };
+  }
+  const float dDisplacement = epsEff * deltaElectric0;
+  const float dFlux = muEff * deltaMagnetic0;
+  const float deltaElectric = (muEff * dDisplacement - kappa * dFlux) / det;
+  const float deltaMagnetic = (-kappa * dDisplacement + epsEff * dFlux) / det;
+  return {
+    oldElectric + clampf(deltaElectric, -1.0e4f, 1.0e4f),
+    oldMagnetic + clampf(deltaMagnetic, -1.0e4f, 1.0e4f)
+  };
+}
+
+static inline void set_split_field_value(
+  i32 i,
+  float* scalar,
+  float* splitX,
+  float* splitY,
+  float nextValue
+) {
+  const float value = nextValue;
+  const float oldValue = scalar[i];
+  if (absf(oldValue) > 1.0e-12f) {
+    const float scale = value / oldValue;
+    splitX[i] *= scale;
+    splitY[i] *= scale;
+  } else {
+    splitX[i] = value * 0.5f;
+    splitY[i] = value * 0.5f;
+  }
+  scalar[i] = value;
+}
+
+extern "C" __attribute__((export_name("apply_bianisotropic_response"))) void apply_bianisotropic_response(
+  i32 n,
+  i32 hzMode,
+  i32 fullVectorMode,
+  u32 ezOffset,
+  u32 ezxOffset,
+  u32 ezyOffset,
+  u32 hxOffset,
+  u32 hyOffset,
+  u32 dualEzOffset,
+  u32 dualEzxOffset,
+  u32 dualEzyOffset,
+  u32 dualHxOffset,
+  u32 dualHyOffset,
+  u32 epsOffset,
+  u32 epsYOffset,
+  u32 muOffset,
+  u32 muYOffset,
+  u32 materialOffset,
+  u32 bianisotropicMaterialOffset,
+  u32 bianisotropyKappaOffset,
+  u32 bianisotropyPrevScalarOffset,
+  u32 bianisotropyPrevSplitXOffset,
+  u32 bianisotropyPrevSplitYOffset,
+  u32 bianisotropyPrevTxOffset,
+  u32 bianisotropyPrevTyOffset,
+  u32 bianisotropyPrevDualEzOffset,
+  u32 bianisotropyPrevDualEzxOffset,
+  u32 bianisotropyPrevDualEzyOffset,
+  u32 bianisotropyPrevDualHxOffset,
+  u32 bianisotropyPrevDualHyOffset,
+  float kappaLimit
+) {
+  float* ez = f32(ezOffset);
+  float* ezx = f32(ezxOffset);
+  float* ezy = f32(ezyOffset);
+  float* hx = f32(hxOffset);
+  float* hy = f32(hyOffset);
+  float* dualEz = f32(dualEzOffset);
+  float* dualEzx = f32(dualEzxOffset);
+  float* dualEzy = f32(dualEzyOffset);
+  float* dualHx = f32(dualHxOffset);
+  float* dualHy = f32(dualHyOffset);
+  float* eps = f32(epsOffset);
+  float* epsY = f32(epsYOffset);
+  float* mu = f32(muOffset);
+  float* muY = f32(muYOffset);
+  u8* material = u8_array(materialOffset);
+  u8* bianisotropicMaterial = u8_array(bianisotropicMaterialOffset);
+  float* bianisotropyKappa = f32(bianisotropyKappaOffset);
+  float* bianisotropyPrevScalar = f32(bianisotropyPrevScalarOffset);
+  float* bianisotropyPrevSplitX = f32(bianisotropyPrevSplitXOffset);
+  float* bianisotropyPrevSplitY = f32(bianisotropyPrevSplitYOffset);
+  float* bianisotropyPrevTx = f32(bianisotropyPrevTxOffset);
+  float* bianisotropyPrevTy = f32(bianisotropyPrevTyOffset);
+  float* bianisotropyPrevDualEz = f32(bianisotropyPrevDualEzOffset);
+  float* bianisotropyPrevDualEzx = f32(bianisotropyPrevDualEzxOffset);
+  float* bianisotropyPrevDualEzy = f32(bianisotropyPrevDualEzyOffset);
+  float* bianisotropyPrevDualHx = f32(bianisotropyPrevDualHxOffset);
+  float* bianisotropyPrevDualHy = f32(bianisotropyPrevDualHyOffset);
+
+  for (i32 i = 0; i < n; i += 1) {
+    if (!bianisotropicMaterial[i] || material[i] == 2) continue;
+    const float kappa = normalize_bianisotropy_kappa(bianisotropyKappa[i], kappaLimit);
+    if (kappa == 0.0f) continue;
+
+    if (fullVectorMode) {
+      const BianisotropicPair pairX = solve_bianisotropic_increment(
+        bianisotropyPrevTx[i],
+        bianisotropyPrevDualHx[i],
+        hx[i],
+        dualHx[i],
+        eps[i],
+        mu[i],
+        kappa
+      );
+      hx[i] = pairX.electric;
+      dualHx[i] = pairX.magnetic;
+
+      const BianisotropicPair pairY = solve_bianisotropic_increment(
+        bianisotropyPrevTy[i],
+        bianisotropyPrevDualHy[i],
+        hy[i],
+        dualHy[i],
+        epsY[i],
+        muY[i],
+        kappa
+      );
+      hy[i] = pairY.electric;
+      dualHy[i] = pairY.magnetic;
+
+      const float epsZ = 0.5f * (safe_material_denominator(eps[i]) + safe_material_denominator(epsY[i]));
+      const float muZ = 0.5f * (safe_material_denominator(mu[i]) + safe_material_denominator(muY[i]));
+      const BianisotropicPair pairZ = solve_bianisotropic_increment(
+        bianisotropyPrevDualEz[i],
+        bianisotropyPrevScalar[i],
+        dualEz[i],
+        ez[i],
+        epsZ,
+        muZ,
+        kappa
+      );
+      set_split_field_value(i, dualEz, dualEzx, dualEzy, pairZ.electric);
+      set_split_field_value(i, ez, ezx, ezy, pairZ.magnetic);
+
+      bianisotropyPrevDualEz[i] = dualEz[i];
+      bianisotropyPrevDualEzx[i] = dualEzx[i];
+      bianisotropyPrevDualEzy[i] = dualEzy[i];
+      bianisotropyPrevDualHx[i] = dualHx[i];
+      bianisotropyPrevDualHy[i] = dualHy[i];
+    } else if (hzMode) {
+      const BianisotropicPair pairX = solve_bianisotropic_increment(
+        bianisotropyPrevTy[i],
+        bianisotropyPrevSplitX[i],
+        hy[i],
+        ezx[i],
+        epsY[i],
+        mu[i],
+        kappa
+      );
+      const BianisotropicPair pairY = solve_bianisotropic_increment(
+        bianisotropyPrevTx[i],
+        bianisotropyPrevSplitY[i],
+        hx[i],
+        ezy[i],
+        eps[i],
+        muY[i],
+        -kappa
+      );
+      hy[i] = pairX.electric;
+      ezx[i] = pairX.magnetic;
+      hx[i] = pairY.electric;
+      ezy[i] = pairY.magnetic;
+      ez[i] = ezx[i] + ezy[i];
+    } else {
+      const BianisotropicPair pairX = solve_bianisotropic_increment(
+        bianisotropyPrevSplitX[i],
+        bianisotropyPrevTy[i],
+        ezx[i],
+        hy[i],
+        eps[i],
+        muY[i],
+        kappa
+      );
+      const BianisotropicPair pairY = solve_bianisotropic_increment(
+        bianisotropyPrevSplitY[i],
+        bianisotropyPrevTx[i],
+        ezy[i],
+        hx[i],
+        epsY[i],
+        mu[i],
+        -kappa
+      );
+      ezx[i] = pairX.electric;
+      hy[i] = pairX.magnetic;
+      ezy[i] = pairY.electric;
+      hx[i] = pairY.magnetic;
+      ez[i] = ezx[i] + ezy[i];
+    }
+
+    bianisotropyPrevScalar[i] = ez[i];
+    bianisotropyPrevSplitX[i] = ezx[i];
+    bianisotropyPrevSplitY[i] = ezy[i];
+    bianisotropyPrevTx[i] = hx[i];
+    bianisotropyPrevTy[i] = hy[i];
   }
 }
 
@@ -157,41 +602,41 @@ static inline AdeAdvance advance_second_order_polarization(
   return { nextPolarization, nextPolarization - polarizationValue };
 }
 
-static inline float advance_electric_ade_current(
+static inline float advance_ade_current(
   i32 i,
   float fieldValue,
-  u8* dispersiveMaterial,
-  float* dispersionOmegaP,
-  float* dispersionGamma,
-  float* dispersionOmega0,
-  float* dispersionDeltaEps,
-  float* dispersionTau,
+  u8* adeMaterial,
+  float* adeOmegaP,
+  float* adeGamma,
+  float* adeOmega0,
+  float* adeDelta,
+  float* adeTau,
   float* polarization,
   float* current
 ) {
-  const u8 kind = dispersiveMaterial[i];
+  const u8 kind = adeMaterial[i];
   if (!kind) return 0.0f;
 
-  const float gamma = maxf(0.0f, dispersionGamma[i]);
+  const float gamma = maxf(0.0f, adeGamma[i]);
   float p = polarization[i];
   float j = current[i];
 
   if (kind == 1) {
-    const float omegaP = maxf(0.0f, dispersionOmegaP[i]);
+    const float omegaP = maxf(0.0f, adeOmegaP[i]);
     const AdeAdvance next = advance_second_order_polarization(fieldValue, p, j, 0.0f, gamma, omegaP * omegaP);
     p = next.polarization;
     j = next.current;
   } else if (kind == 2) {
-    const float omega0 = maxf(0.0f, dispersionOmega0[i]);
-    const float deltaEps = dispersionDeltaEps[i];
+    const float omega0 = maxf(0.0f, adeOmega0[i]);
+    const float delta = adeDelta[i];
     const AdeAdvance next =
-      advance_second_order_polarization(fieldValue, p, j, omega0, gamma, deltaEps * omega0 * omega0);
+      advance_second_order_polarization(fieldValue, p, j, omega0, gamma, delta * omega0 * omega0);
     p = next.polarization;
     j = next.current;
   } else if (kind == 3) {
-    const float tau = maxf(1.0f, dispersionTau[i]);
+    const float tau = maxf(1.0f, adeTau[i]);
     const float relax = fdtd_expf(-1.0f / tau);
-    const float nextP = relax * p + (1.0f - relax) * dispersionDeltaEps[i] * fieldValue;
+    const float nextP = relax * p + (1.0f - relax) * adeDelta[i] * fieldValue;
     j = nextP - p;
     p = nextP;
   }
@@ -228,7 +673,7 @@ static inline void apply_electric_ade_tm(
       if (!dispersiveMaterial[i] || material[i] == 2) continue;
       const u8 axes = dispersionAxes[i] ? dispersionAxes[i] : 3;
       if (!(axes & 1)) continue;
-      const float jz = advance_electric_ade_current(
+      const float jz = advance_ade_current(
         i,
         ez[i],
         dispersiveMaterial,
@@ -245,6 +690,237 @@ static inline void apply_electric_ade_tm(
       ezx[i] -= (s / epsX) * jz * 0.5f;
       ezy[i] -= (s / epsYi) * jz * 0.5f;
       ez[i] = ezx[i] + ezy[i];
+    }
+  }
+}
+
+static inline void apply_te_electric_current_vector(
+  i32 i,
+  float s,
+  float jx,
+  float jy,
+  float* ex,
+  float* ey,
+  float* eps,
+  float* epsY,
+  float* epsilonXY,
+  float* gyrotropyG
+) {
+  if (jx == 0.0f && jy == 0.0f) return;
+  const float sourceX = -s * jx;
+  const float sourceY = -s * jy;
+  const float epsX = eps[i];
+  const float epsYi = epsY[i];
+  const float k = epsilonXY[i];
+  const float g = gyrotropyG[i];
+  const float upperOffDiagonal = k + g;
+  const float lowerOffDiagonal = k - g;
+  const float det = epsX * epsYi - upperOffDiagonal * lowerOffDiagonal;
+  const float safeDet = absf(det) < 1.0e-6f ? (det < 0.0f ? -1.0e-6f : 1.0e-6f) : det;
+  ex[i] += (epsYi * sourceX - upperOffDiagonal * sourceY) / safeDet;
+  ey[i] += (-lowerOffDiagonal * sourceX + epsX * sourceY) / safeDet;
+}
+
+static inline void apply_electric_ade_te(
+  i32 nx,
+  i32 ny,
+  float s,
+  float* ex,
+  float* ey,
+  float* eps,
+  float* epsY,
+  float* epsilonXY,
+  float* gyrotropyG,
+  u8* material,
+  u8* dispersiveMaterial,
+  u8* dispersionAxes,
+  float* dispersionAxisX,
+  float* dispersionAxisY,
+  float* dispersionOmegaP,
+  float* dispersionGamma,
+  float* dispersionOmega0,
+  float* dispersionDeltaEps,
+  float* dispersionTau,
+  float* dispPx,
+  float* dispJx,
+  float* dispPy,
+  float* dispJy
+) {
+  for (i32 y = 1; y < ny - 1; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 1; x < nx - 1; x += 1) {
+      const i32 i = row + x;
+      if (!dispersiveMaterial[i] || material[i] == 2) continue;
+      const u8 axes = dispersionAxes[i] ? dispersionAxes[i] : 3;
+      float jx = 0.0f;
+      float jy = 0.0f;
+      if (axes == 1) {
+        const float axisX = dispersionAxisX[i];
+        const float axisY = dispersionAxisY[i];
+        const float fieldAlongAxis = axisX * ex[i] + axisY * ey[i];
+        const float jAxis = advance_ade_current(
+          i,
+          fieldAlongAxis,
+          dispersiveMaterial,
+          dispersionOmegaP,
+          dispersionGamma,
+          dispersionOmega0,
+          dispersionDeltaEps,
+          dispersionTau,
+          dispPx,
+          dispJx
+        );
+        jx = axisX * jAxis;
+        jy = axisY * jAxis;
+      } else {
+        if (axes & 1) {
+          jx = advance_ade_current(
+            i,
+            ex[i],
+            dispersiveMaterial,
+            dispersionOmegaP,
+            dispersionGamma,
+            dispersionOmega0,
+            dispersionDeltaEps,
+            dispersionTau,
+            dispPx,
+            dispJx
+          );
+        }
+        if (axes & 2) {
+          jy = advance_ade_current(
+            i,
+            ey[i],
+            dispersiveMaterial,
+            dispersionOmegaP,
+            dispersionGamma,
+            dispersionOmega0,
+            dispersionDeltaEps,
+            dispersionTau,
+            dispPy,
+            dispJy
+          );
+        }
+      }
+      apply_te_electric_current_vector(i, s, jx, jy, ex, ey, eps, epsY, epsilonXY, gyrotropyG);
+    }
+  }
+}
+
+static inline void apply_magnetic_ade_tm(
+  i32 nx,
+  i32 ny,
+  float s,
+  float* hx,
+  float* hy,
+  float* mu,
+  float* muLoss,
+  float* muY,
+  float* muLossY,
+  u8* material,
+  u8* muDispersiveMaterial,
+  u8* muDispersionAxes,
+  float* muDispersionOmegaP,
+  float* muDispersionGamma,
+  float* muDispersionOmega0,
+  float* muDispersionDeltaMu,
+  float* muDispersionTau,
+  float* magDispMx,
+  float* magDispJx,
+  float* magDispMy,
+  float* magDispJy
+) {
+  for (i32 y = 0; y < ny - 1; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 0; x < nx; x += 1) {
+      const i32 i = row + x;
+      if (!muDispersiveMaterial[i] || material[i] == 2) continue;
+      const u8 axes = muDispersionAxes[i] ? muDispersionAxes[i] : 3;
+      if (!(axes & 1)) continue;
+      const float jx = advance_ade_current(
+        i,
+        hx[i],
+        muDispersiveMaterial,
+        muDispersionOmegaP,
+        muDispersionGamma,
+        muDispersionOmega0,
+        muDispersionDeltaMu,
+        muDispersionTau,
+        magDispMx,
+        magDispJx
+      );
+      hx[i] -= (s / safe_material_denominator(mu[i])) * jx * magnetic_loss_decay(muLoss[i]);
+    }
+  }
+
+  for (i32 y = 0; y < ny; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 0; x < nx - 1; x += 1) {
+      const i32 i = row + x;
+      if (!muDispersiveMaterial[i] || material[i] == 2) continue;
+      const u8 axes = muDispersionAxes[i] ? muDispersionAxes[i] : 3;
+      if (!(axes & 2)) continue;
+      const float jy = advance_ade_current(
+        i,
+        hy[i],
+        muDispersiveMaterial,
+        muDispersionOmegaP,
+        muDispersionGamma,
+        muDispersionOmega0,
+        muDispersionDeltaMu,
+        muDispersionTau,
+        magDispMy,
+        magDispJy
+      );
+      hy[i] -= (s / safe_material_denominator(muY[i])) * jy * magnetic_loss_decay(muLossY[i]);
+    }
+  }
+}
+
+static inline void apply_magnetic_ade_te(
+  i32 nx,
+  i32 ny,
+  float s,
+  float* hz,
+  float* hzx,
+  float* hzy,
+  float* mu,
+  float* muLoss,
+  float* muY,
+  float* muLossY,
+  u8* material,
+  u8* muDispersiveMaterial,
+  u8* muDispersionAxes,
+  float* muDispersionOmegaP,
+  float* muDispersionGamma,
+  float* muDispersionOmega0,
+  float* muDispersionDeltaMu,
+  float* muDispersionTau,
+  float* magDispMz,
+  float* magDispJz
+) {
+  for (i32 y = 1; y < ny - 1; y += 1) {
+    const i32 row = y * nx;
+    for (i32 x = 1; x < nx - 1; x += 1) {
+      const i32 i = row + x;
+      if (!muDispersiveMaterial[i] || material[i] == 2) continue;
+      const u8 axes = muDispersionAxes[i] ? muDispersionAxes[i] : 1;
+      if (!(axes & 1)) continue;
+      const float jz = advance_ade_current(
+        i,
+        hz[i],
+        muDispersiveMaterial,
+        muDispersionOmegaP,
+        muDispersionGamma,
+        muDispersionOmega0,
+        muDispersionDeltaMu,
+        muDispersionTau,
+        magDispMz,
+        magDispJz
+      );
+      hzx[i] -= (s / safe_material_denominator(mu[i])) * jz * 0.5f * magnetic_loss_decay(muLoss[i]);
+      hzy[i] -= (s / safe_material_denominator(muY[i])) * jz * 0.5f * magnetic_loss_decay(muLossY[i]);
+      hz[i] = hzx[i] + hzy[i];
     }
   }
 }
@@ -999,11 +1675,15 @@ extern "C" __attribute__((export_name("step"))) void step(
   u32 muYOffset,
   u32 muLossYOffset,
   u32 materialOffset,
+  u32 modulatedMaterialOffset,
+  u32 modulationPhaseOffsetOffset,
   u32 nonlinearMaterialOffset,
   u32 electricTensorMaterialOffset,
   u32 gyrotropicMaterialOffset,
   u32 dispersiveMaterialOffset,
   u32 dispersionAxesOffset,
+  u32 dispersionAxisXOffset,
+  u32 dispersionAxisYOffset,
   u32 modulationBaseEpsOffset,
   u32 modulationBaseEpsYOffset,
   u32 epsilonXYOffset,
@@ -1013,8 +1693,25 @@ extern "C" __attribute__((export_name("step"))) void step(
   u32 dispersionOmega0Offset,
   u32 dispersionDeltaEpsOffset,
   u32 dispersionTauOffset,
+  u32 muDispersiveMaterialOffset,
+  u32 muDispersionAxesOffset,
+  u32 muDispersionOmegaPOffset,
+  u32 muDispersionGammaOffset,
+  u32 muDispersionOmega0Offset,
+  u32 muDispersionDeltaMuOffset,
+  u32 muDispersionTauOffset,
   u32 dispPzOffset,
   u32 dispJzOffset,
+  u32 dispPxOffset,
+  u32 dispJxOffset,
+  u32 dispPyOffset,
+  u32 dispJyOffset,
+  u32 magDispMzOffset,
+  u32 magDispJzOffset,
+  u32 magDispMxOffset,
+  u32 magDispJxOffset,
+  u32 magDispMyOffset,
+  u32 magDispJyOffset,
   u32 cpmlKappaEXOffset,
   u32 cpmlKappaHXOffset,
   u32 cpmlKappaEYOffset,
@@ -1039,6 +1736,12 @@ extern "C" __attribute__((export_name("step"))) void step(
   float kerrChi3,
   float kerrSaturation,
   float gainSaturation,
+  float modulationDepth,
+  float modulationPeriodCells,
+  float modulationCosTheta,
+  float modulationSinTheta,
+  float modulationOmegaCycles,
+  float modulationPhase,
   float time,
   float fieldScale,
   u32 tfsfSourcesOffset,
@@ -1065,6 +1768,8 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* muY = f32(muYOffset);
   float* muLossY = f32(muLossYOffset);
   u8* material = u8_array(materialOffset);
+  u8* modulatedMaterial = u8_array(modulatedMaterialOffset);
+  float* modulationPhaseOffset = f32(modulationPhaseOffsetOffset);
   u8* nonlinearMaterial = u8_array(nonlinearMaterialOffset);
   u8* dispersiveMaterial = u8_array(dispersiveMaterialOffset);
   u8* dispersionAxes = u8_array(dispersionAxesOffset);
@@ -1075,8 +1780,27 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* dispersionOmega0 = f32(dispersionOmega0Offset);
   float* dispersionDeltaEps = f32(dispersionDeltaEpsOffset);
   float* dispersionTau = f32(dispersionTauOffset);
+  float* dispersionAxisX = f32(dispersionAxisXOffset);
+  float* dispersionAxisY = f32(dispersionAxisYOffset);
+  u8* muDispersiveMaterial = u8_array(muDispersiveMaterialOffset);
+  u8* muDispersionAxes = u8_array(muDispersionAxesOffset);
+  float* muDispersionOmegaP = f32(muDispersionOmegaPOffset);
+  float* muDispersionGamma = f32(muDispersionGammaOffset);
+  float* muDispersionOmega0 = f32(muDispersionOmega0Offset);
+  float* muDispersionDeltaMu = f32(muDispersionDeltaMuOffset);
+  float* muDispersionTau = f32(muDispersionTauOffset);
   float* dispPz = f32(dispPzOffset);
   float* dispJz = f32(dispJzOffset);
+  float* dispPx = f32(dispPxOffset);
+  float* dispJx = f32(dispJxOffset);
+  float* dispPy = f32(dispPyOffset);
+  float* dispJy = f32(dispJyOffset);
+  float* magDispMz = f32(magDispMzOffset);
+  float* magDispJz = f32(magDispJzOffset);
+  float* magDispMx = f32(magDispMxOffset);
+  float* magDispJx = f32(magDispJxOffset);
+  float* magDispMy = f32(magDispMyOffset);
+  float* magDispJy = f32(magDispJyOffset);
   float* cpmlKappaEX = f32(cpmlKappaEXOffset);
   float* cpmlKappaHX = f32(cpmlKappaHXOffset);
   float* cpmlKappaEY = f32(cpmlKappaEYOffset);
@@ -1099,8 +1823,34 @@ extern "C" __attribute__((export_name("step"))) void step(
   float* modeMuProfiles = f32(modeMuProfilesOffset);
   const i32 n = nx * ny;
 
-  if (runtimeFlags & STEP_KERR) {
-    apply_kerr_response(nx, ny, 0, kerrChi3, kerrSaturation, ez, hx, hy, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
+  if (runtimeFlags & (STEP_KERR | STEP_MODULATION)) {
+    apply_dynamic_permittivity_response(
+      nx,
+      ny,
+      0,
+      runtimeFlags,
+      kerrChi3,
+      kerrSaturation,
+      modulationDepth,
+      modulationPeriodCells,
+      modulationCosTheta,
+      modulationSinTheta,
+      modulationOmegaCycles,
+      modulationPhase,
+      time,
+      ez,
+      hx,
+      hy,
+      eps,
+      epsY,
+      material,
+      modulatedMaterial,
+      modulationPhaseOffset,
+      nonlinearMaterial,
+      modulationBaseEps,
+      modulationBaseEpsY,
+      fieldScale
+    );
   }
 
   for (i32 y = 0; y < ny - 1; y += 1) {
@@ -1123,6 +1873,32 @@ extern "C" __attribute__((export_name("step"))) void step(
       const float materialScale = s / safe_material_denominator(muY[i]);
       hy[i] = (hy[i] + materialScale * dEzDx) * decay;
     }
+  }
+
+  if (runtimeFlags & STEP_MAGNETIC_ADE) {
+    apply_magnetic_ade_tm(
+      nx,
+      ny,
+      s,
+      hx,
+      hy,
+      mu,
+      muLoss,
+      muY,
+      muLossY,
+      material,
+      muDispersiveMaterial,
+      muDispersionAxes,
+      muDispersionOmegaP,
+      muDispersionGamma,
+      muDispersionOmega0,
+      muDispersionDeltaMu,
+      muDispersionTau,
+      magDispMx,
+      magDispJx,
+      magDispMy,
+      magDispJy
+    );
   }
 
   if (tfsfSourceCount > 0) {
@@ -1253,11 +2029,15 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   u32 muYOffset,
   u32 muLossYOffset,
   u32 materialOffset,
+  u32 modulatedMaterialOffset,
+  u32 modulationPhaseOffsetOffset,
   u32 nonlinearMaterialOffset,
   u32 electricTensorMaterialOffset,
   u32 gyrotropicMaterialOffset,
   u32 dispersiveMaterialOffset,
   u32 dispersionAxesOffset,
+  u32 dispersionAxisXOffset,
+  u32 dispersionAxisYOffset,
   u32 modulationBaseEpsOffset,
   u32 modulationBaseEpsYOffset,
   u32 epsilonXYOffset,
@@ -1267,8 +2047,25 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   u32 dispersionOmega0Offset,
   u32 dispersionDeltaEpsOffset,
   u32 dispersionTauOffset,
+  u32 muDispersiveMaterialOffset,
+  u32 muDispersionAxesOffset,
+  u32 muDispersionOmegaPOffset,
+  u32 muDispersionGammaOffset,
+  u32 muDispersionOmega0Offset,
+  u32 muDispersionDeltaMuOffset,
+  u32 muDispersionTauOffset,
   u32 dispPzOffset,
   u32 dispJzOffset,
+  u32 dispPxOffset,
+  u32 dispJxOffset,
+  u32 dispPyOffset,
+  u32 dispJyOffset,
+  u32 magDispMzOffset,
+  u32 magDispJzOffset,
+  u32 magDispMxOffset,
+  u32 magDispJxOffset,
+  u32 magDispMyOffset,
+  u32 magDispJyOffset,
   u32 cpmlKappaEXOffset,
   u32 cpmlKappaHXOffset,
   u32 cpmlKappaEYOffset,
@@ -1293,6 +2090,12 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float kerrChi3,
   float kerrSaturation,
   float gainSaturation,
+  float modulationDepth,
+  float modulationPeriodCells,
+  float modulationCosTheta,
+  float modulationSinTheta,
+  float modulationOmegaCycles,
+  float modulationPhase,
   float time,
   float fieldScale,
   u32 tfsfSourcesOffset,
@@ -1319,13 +2122,37 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* muY = f32(muYOffset);
   float* muLossY = f32(muLossYOffset);
   u8* material = u8_array(materialOffset);
+  u8* modulatedMaterial = u8_array(modulatedMaterialOffset);
+  float* modulationPhaseOffset = f32(modulationPhaseOffsetOffset);
   u8* nonlinearMaterial = u8_array(nonlinearMaterialOffset);
   u8* electricTensorMaterial = u8_array(electricTensorMaterialOffset);
   u8* gyrotropicMaterial = u8_array(gyrotropicMaterialOffset);
+  u8* dispersiveMaterial = u8_array(dispersiveMaterialOffset);
+  u8* dispersionAxes = u8_array(dispersionAxesOffset);
   float* modulationBaseEps = f32(modulationBaseEpsOffset);
   float* modulationBaseEpsY = f32(modulationBaseEpsYOffset);
   float* epsilonXY = f32(epsilonXYOffset);
   float* gyrotropyG = f32(gyrotropyGOffset);
+  float* dispersionOmegaP = f32(dispersionOmegaPOffset);
+  float* dispersionGamma = f32(dispersionGammaOffset);
+  float* dispersionOmega0 = f32(dispersionOmega0Offset);
+  float* dispersionDeltaEps = f32(dispersionDeltaEpsOffset);
+  float* dispersionTau = f32(dispersionTauOffset);
+  float* dispersionAxisX = f32(dispersionAxisXOffset);
+  float* dispersionAxisY = f32(dispersionAxisYOffset);
+  u8* muDispersiveMaterial = u8_array(muDispersiveMaterialOffset);
+  u8* muDispersionAxes = u8_array(muDispersionAxesOffset);
+  float* muDispersionOmegaP = f32(muDispersionOmegaPOffset);
+  float* muDispersionGamma = f32(muDispersionGammaOffset);
+  float* muDispersionOmega0 = f32(muDispersionOmega0Offset);
+  float* muDispersionDeltaMu = f32(muDispersionDeltaMuOffset);
+  float* muDispersionTau = f32(muDispersionTauOffset);
+  float* dispPx = f32(dispPxOffset);
+  float* dispJx = f32(dispJxOffset);
+  float* dispPy = f32(dispPyOffset);
+  float* dispJy = f32(dispJyOffset);
+  float* magDispMz = f32(magDispMzOffset);
+  float* magDispJz = f32(magDispJzOffset);
   float* cpmlKappaEX = f32(cpmlKappaEXOffset);
   float* cpmlKappaHX = f32(cpmlKappaHXOffset);
   float* cpmlKappaEY = f32(cpmlKappaEYOffset);
@@ -1348,8 +2175,34 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   float* modeEpsilonProfiles = f32(modeEpsilonProfilesOffset);
   const i32 n = nx * ny;
 
-  if (runtimeFlags & STEP_KERR) {
-    apply_kerr_response(nx, ny, 1, kerrChi3, kerrSaturation, hz, ex, ey, eps, epsY, material, nonlinearMaterial, modulationBaseEps, modulationBaseEpsY, fieldScale);
+  if (runtimeFlags & (STEP_KERR | STEP_MODULATION)) {
+    apply_dynamic_permittivity_response(
+      nx,
+      ny,
+      1,
+      runtimeFlags,
+      kerrChi3,
+      kerrSaturation,
+      modulationDepth,
+      modulationPeriodCells,
+      modulationCosTheta,
+      modulationSinTheta,
+      modulationOmegaCycles,
+      modulationPhase,
+      time,
+      hz,
+      ex,
+      ey,
+      eps,
+      epsY,
+      material,
+      modulatedMaterial,
+      modulationPhaseOffset,
+      nonlinearMaterial,
+      modulationBaseEps,
+      modulationBaseEpsY,
+      fieldScale
+    );
   }
 
   for (i32 y = 0; y < ny - 1; y += 1) {
@@ -1430,6 +2283,34 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
     }
   }
 
+  if (runtimeFlags & STEP_ELECTRIC_ADE) {
+    apply_electric_ade_te(
+      nx,
+      ny,
+      s,
+      ex,
+      ey,
+      eps,
+      epsY,
+      epsilonXY,
+      gyrotropyG,
+      material,
+      dispersiveMaterial,
+      dispersionAxes,
+      dispersionAxisX,
+      dispersionAxisY,
+      dispersionOmegaP,
+      dispersionGamma,
+      dispersionOmega0,
+      dispersionDeltaEps,
+      dispersionTau,
+      dispPx,
+      dispJx,
+      dispPy,
+      dispJy
+    );
+  }
+
   if (tfsfSourceCount > 0) {
     apply_tfsf_te_electric(
       nx,
@@ -1489,6 +2370,31 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
       hzy[i] = hzyNew;
       hz[i] = hzxNew + hzyNew;
     }
+  }
+
+  if (runtimeFlags & STEP_MAGNETIC_ADE) {
+    apply_magnetic_ade_te(
+      nx,
+      ny,
+      s,
+      hz,
+      hzx,
+      hzy,
+      mu,
+      muLoss,
+      muY,
+      muLossY,
+      material,
+      muDispersiveMaterial,
+      muDispersionAxes,
+      muDispersionOmegaP,
+      muDispersionGamma,
+      muDispersionOmega0,
+      muDispersionDeltaMu,
+      muDispersionTau,
+      magDispMz,
+      magDispJz
+    );
   }
 
   if (tfsfSourceCount > 0) {
