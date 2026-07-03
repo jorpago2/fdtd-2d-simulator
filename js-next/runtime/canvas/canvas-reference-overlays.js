@@ -106,6 +106,7 @@
     },
 
     overlayReferenceColor() {
+      if (state.viewProjection === "3d") return "rgba(255, 255, 255, 0.94)";
       return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
     },
 

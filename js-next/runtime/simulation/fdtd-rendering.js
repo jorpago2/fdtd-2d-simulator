@@ -211,6 +211,40 @@ surfaceColor(mapped, shade, context) {
   return context.kind === "material" ? this.materialSurfaceColor(mapped, shade, context.material) : this.surfaceFieldColor(mapped, shade);
 },
 
+surfaceGpuRenderer() {
+  if (this.surfaceThreeRendererFailed) return null;
+  const rendererModule = window.FdtdCanvasSurfaceThreeRenderer;
+  if (!rendererModule?.createRenderer) return null;
+  if (!this.surfaceThreeRenderer) {
+    this.surfaceThreeRenderer = rendererModule.createRenderer();
+  }
+  return this.surfaceThreeRenderer;
+},
+
+renderSurfaceFieldGpu() {
+  const renderer = this.surfaceGpuRenderer();
+  if (!renderer) return false;
+  try {
+    return renderer.render(this) === true;
+  } catch (error) {
+    if (!this.surfaceThreeRendererFailed) {
+      console.warn("Falling back to the 2D canvas surface renderer.", error);
+    }
+    this.surfaceThreeRendererFailed = true;
+    return false;
+  }
+},
+
+reuseSurfaceFieldGpuFrame() {
+  const renderer = this.surfaceGpuRenderer();
+  return renderer?.reuseFrame?.(this) === true;
+},
+
+setSurfaceCanvasVisible(visible) {
+  if (!this.surfaceCanvas) return;
+  this.surfaceCanvas.hidden = !visible;
+},
+
 projectSurfacePoint(x, y, mapped, dims) {
   const invViewW = Number.isFinite(dims.invViewW) ? dims.invViewW : 1 / this.visibleGridWidth();
   const invViewH = Number.isFinite(dims.invViewH) ? dims.invViewH : 1 / this.visibleGridHeight();
@@ -368,13 +402,29 @@ render() {
   const canRecordRenderBreakdown = typeof perf?.record === "function" && typeof perf?.now === "function";
   let renderPhaseStart = canRecordRenderBreakdown ? perf.now() : 0;
   if (state.viewProjection === "3d") {
+    const reusedGpuFrame = this.reuseSurfaceFieldGpuFrame();
+    let renderedWithGpu = reusedGpuFrame;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.renderSurfaceField();
+    if (!reusedGpuFrame) {
+      renderedWithGpu = this.renderSurfaceFieldGpu();
+      if (!renderedWithGpu) {
+        this.setSurfaceCanvasVisible(false);
+        this.renderSurfaceField();
+      } else {
+        this.setSurfaceCanvasVisible(true);
+      }
+    } else {
+      this.setSurfaceCanvasVisible(true);
+    }
     if (canRecordRenderBreakdown) {
       perf.record("renderMapMs", perf.now() - renderPhaseStart);
+      renderPhaseStart = perf.now();
     }
     if (visualLayerEnabled("scale")) {
       this.drawScaleBarOverlay();
+    }
+    if (canRecordRenderBreakdown) {
+      perf.record("renderOverlayMs", perf.now() - renderPhaseStart);
     }
     updateColorbar();
     if (!state.running) {
@@ -383,6 +433,7 @@ render() {
     return;
   }
 
+  this.setSurfaceCanvasVisible(false);
   const data = this.image.data;
   if (state.viewMode === "epsilon" || state.viewMode === "mu") {
     this.renderMaterialImage(data);

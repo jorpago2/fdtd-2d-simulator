@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260702-scene-thumbs-webp-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260703-three-surface-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -166,6 +166,14 @@
           </div>
 
           <div class="canvas-frame">
+            <canvas
+              id="surfaceCanvas"
+              class="surface-canvas"
+              width="900"
+              height="600"
+              aria-hidden="true"
+              hidden
+            ></canvas>
             <canvas
               id="simCanvas"
               width="900"
@@ -1467,7 +1475,7 @@
     <script src="js-next/runtime/data/colormaps.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/catalog.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/data/scene-catalog-loader.js?v=20260702-scene-library-1"></script>
-    <script src="js-next/runtime/simulation/fdtd-sim.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/simulation/fdtd-sim.js?v=20260703-three-surface-1"></script>
     <script src="js-next/runtime/simulation/fdtd-array-state.js?v=20260702-electric-ade-1"></script>
     <script src="js-next/runtime/simulation/fdtd-engine-routing.js?v=20260702-electric-ade-1"></script>
     <script src="js-next/runtime/canvas/canvas-viewport.js?v=20260630-js-next-cutover-1"></script>
@@ -1486,8 +1494,9 @@
     <script src="js-next/runtime/simulation/fdtd-material-diagnostics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-diagnostics.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/simulation/fdtd-yee.js?v=20260702-electric-ade-1"></script>
-    <script src="js-next/runtime/simulation/fdtd-rendering.js?v=20260703-surface-render-1"></script>
-    <script src="js-next/runtime/canvas/canvas-reference-overlays.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-three-surface-2"></script>
+    <script src="js-next/runtime/simulation/fdtd-rendering.js?v=20260703-three-surface-2"></script>
+    <script src="js-next/runtime/canvas/canvas-reference-overlays.js?v=20260703-three-surface-1"></script>
     <script src="js-next/runtime/canvas/canvas-source-overlays.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/canvas/canvas-monitor-overlays.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/canvas/canvas-material-overlays.js?v=20260630-js-next-cutover-1"></script>
@@ -1513,7 +1522,7 @@
     <script src="js-next/runtime/app/simulation-effects.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/app/runtime-controller.js?v=20260702-courant-visual-1"></script>
     <script src="js-next/runtime/canvas/canvas-colorbar.js?v=20260630-js-next-cutover-1"></script>
-    <script src="js-next/runtime/canvas/canvas-export.js?v=20260630-js-next-cutover-1"></script>
+    <script src="js-next/runtime/canvas/canvas-export.js?v=20260703-three-surface-1"></script>
     <script src="js-next/runtime/canvas/canvas-render-controller.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/runtime-control-bindings.js?v=20260630-js-next-cutover-1"></script>
     <script src="js-next/runtime/ui/visual-control-bindings.js?v=20260630-js-next-cutover-1"></script>
