@@ -42,7 +42,7 @@
       uiDepth: initialUiDepth(),
       stepsPerFrame: 1,
       gain: 1,
-      autoScale: true,
+      autoScale: false,
       fieldComponent: "ez",
       fieldDisplay: "scalar",
       fieldQuiver: false,

@@ -66,6 +66,19 @@
     const deleteSelectedElement = requireFunction(dependencies.deleteSelectedElement, "deleteSelectedElement");
     const touchDragStartPx = dependencies.touchDragStartPx ?? 8;
 
+    function isDeleteShortcut(event) {
+      return event.key === "Delete" || event.key === "Backspace" || event.code === "Delete" || event.code === "Backspace";
+    }
+
+    function focusCanvasForKeyboard(event) {
+      if (event.pointerType === "touch") return;
+      try {
+        el.canvas.focus?.({ preventScroll: true });
+      } catch {
+        el.canvas.focus?.();
+      }
+    }
+
     function clearEntityDragState() {
       dragStateController.clearEntityDrags();
     }
@@ -205,6 +218,7 @@
 
     function handlePointerDown(event) {
       clearCanvasHover(false);
+      focusCanvasForKeyboard(event);
       pointerStateController.storePointer(event);
       capturePointer(event);
       if (pointerState.activePointers.size >= 2) {
@@ -353,7 +367,7 @@
         sim.render();
         return;
       }
-      if ((event.key === "Delete" || event.key === "Backspace") && !isEditableKeyTarget(event.target)) {
+      if (isDeleteShortcut(event) && !isEditableKeyTarget(event.target)) {
         if (deleteSelectedElement()) {
           event.preventDefault();
         }

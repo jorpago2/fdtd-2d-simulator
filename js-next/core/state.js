@@ -46,7 +46,7 @@
       uiDepth: config.uiDepth == null ? "teaching" : normalizeUiDepth(config.uiDepth),
       stepsPerFrame: 1,
       gain: 1,
-      autoScale: true,
+      autoScale: false,
       fieldComponent: "ez",
       fieldDisplay: "scalar",
       fieldQuiver: false,
