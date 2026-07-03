@@ -9,9 +9,6 @@
       if (visualLayerEnabled("axes")) {
         this.drawAxisGlyphOverlay();
       }
-      if (visualLayerEnabled("diagnostics")) {
-        this.drawWaveVectorGlyphOverlay();
-      }
     },
 
     drawScaleBarOverlay() {
@@ -63,24 +60,6 @@
       ctx.restore();
     },
 
-    drawWaveVectorGlyphOverlay() {
-      if (state.viewProjection !== "2d") return;
-      const ctx = this.ctx;
-      const { dpr, kOriginX, kOriginY, kLength } = this.referenceGlyphLayout();
-      const direction = this.diagnosticDirection();
-      const endX = kOriginX + kLength * direction.cos;
-      const endY = kOriginY + kLength * direction.sin;
-      const labelX = endX + 12 * dpr * Math.sign(direction.cos || 1);
-      const labelY = endY + 8 * dpr * Math.sign(direction.sin || 0);
-
-      ctx.save();
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      this.drawOverlayArrow(kOriginX, kOriginY, endX, endY, true);
-      this.drawOverlayLabel("k", labelX, labelY, "center", true);
-      ctx.restore();
-    },
-
     referenceGlyphLayout() {
       const viewport = this.renderViewport();
       const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -93,15 +72,11 @@
       const centerY = viewport.bottom - cpmlHeight + cpmlHeight * 0.52;
       const size = clamp(Math.min(cpmlWidth, cpmlHeight) * 0.34, 24 * dpr, 44 * dpr);
       const gap = clamp(cpmlHeight * 0.18, 15 * dpr, 24 * dpr);
-      const kLength = clamp(size * 0.76, 22 * dpr, 36 * dpr);
       return {
         dpr,
         axesSize: size,
         axesOriginX: centerX - size * 0.52,
         axesOriginY: centerY + gap * 0.55,
-        kLength,
-        kOriginX: centerX - kLength * 0.56,
-        kOriginY: centerY - size * 0.68,
       };
     },
 

@@ -24,6 +24,11 @@
       renderOverlaySamples: 0,
       measureSamples: 0,
       lastUiUpdateMs: 0,
+      liveStepRate: 0,
+      liveRenderFps: 0,
+      liveStepCount: 0,
+      liveRenderCount: 0,
+      lastLiveRateUpdateMs: 0,
     };
 
     function now() {
@@ -49,6 +54,7 @@
         return runner();
       } finally {
         record("stepMs", now() - startMs, count);
+        performanceStats.liveStepCount += count;
       }
     }
 
@@ -60,6 +66,7 @@
           return rawRender(...args);
         } finally {
           record("renderMs", now() - startMs);
+          performanceStats.liveRenderCount += 1;
         }
       };
 
@@ -86,10 +93,21 @@
     function formatRate(stepMs, samples) {
       if (!samples || !Number.isFinite(stepMs) || stepMs <= 0) return "-";
       const rate = 1000 / stepMs;
+      return formatStepRate(rate);
+    }
+
+    function formatStepRate(rate) {
+      if (!Number.isFinite(rate) || rate <= 0) return "-";
       if (rate >= 100000) return `${(rate / 1000).toFixed(0)}k step/s`;
       if (rate >= 1000) return `${(rate / 1000).toFixed(1)}k step/s`;
       if (rate >= 10) return `${rate.toFixed(0)} step/s`;
       return `${rate.toFixed(1)} step/s`;
+    }
+
+    function formatFps(rate) {
+      if (!Number.isFinite(rate) || rate <= 0) return "-";
+      if (rate >= 10) return `${rate.toFixed(0)} FPS`;
+      return `${rate.toFixed(1)} FPS`;
     }
 
     function runtimeEngineLabel() {
@@ -97,8 +115,24 @@
       return getRuntimeController()?.runtimeEngineLabel() || sim?.engineLabel?.() || "JS";
     }
 
+    function updateLiveRates(nowMs, force = false) {
+      if (!performanceStats.lastLiveRateUpdateMs) {
+        performanceStats.lastLiveRateUpdateMs = nowMs;
+        return;
+      }
+      const elapsedSeconds = (nowMs - performanceStats.lastLiveRateUpdateMs) / 1000;
+      if (!force && elapsedSeconds < PERF_UI_INTERVAL_MS / 1000) return;
+      if (elapsedSeconds <= 0) return;
+      performanceStats.liveStepRate = performanceStats.liveStepCount / elapsedSeconds;
+      performanceStats.liveRenderFps = performanceStats.liveRenderCount / elapsedSeconds;
+      performanceStats.liveStepCount = 0;
+      performanceStats.liveRenderCount = 0;
+      performanceStats.lastLiveRateUpdateMs = nowMs;
+    }
+
     function update(force = false) {
       const nowMs = now();
+      updateLiveRates(nowMs, force);
       if (!force && nowMs - performanceStats.lastUiUpdateMs < PERF_UI_INTERVAL_MS) return;
       performanceStats.lastUiUpdateMs = nowMs;
 
@@ -114,6 +148,10 @@
       const renderOverlayText = formatMs(performanceStats.renderOverlayMs, performanceStats.renderOverlaySamples);
       const measureText = formatMs(performanceStats.measureMs, performanceStats.measureSamples);
       const throughputText = formatRate(performanceStats.stepMs, performanceStats.stepSamples);
+      const runtimeController = getRuntimeController();
+      const targetStepsText = formatStepRate(runtimeController?.targetStepsPerSecond?.() || 0);
+      const liveStepsText = formatStepRate(performanceStats.liveStepRate);
+      const fpsText = formatFps(performanceStats.liveRenderFps);
       const compiledActive = /^WASM/.test(engineText);
       const materialPath = sim.canUseCompiledMaterialStep?.()
         ? state.materialDispersionEnabled
@@ -137,6 +175,9 @@
       if (el.performanceRenderOverlayOutput) el.performanceRenderOverlayOutput.textContent = renderOverlayText;
       if (el.performanceMeasureOutput) el.performanceMeasureOutput.textContent = measureText;
       if (el.performanceThroughputOutput) el.performanceThroughputOutput.textContent = throughputText;
+      if (el.performanceTargetStepsOutput) el.performanceTargetStepsOutput.textContent = targetStepsText;
+      if (el.performanceLiveStepsOutput) el.performanceLiveStepsOutput.textContent = liveStepsText;
+      if (el.performanceFpsOutput) el.performanceFpsOutput.textContent = fpsText;
       if (el.performanceStatus) el.performanceStatus.textContent = statusText;
     }
 
@@ -154,6 +195,11 @@
       performanceStats.renderOverlaySamples = 0;
       performanceStats.measureSamples = 0;
       performanceStats.lastUiUpdateMs = 0;
+      performanceStats.liveStepRate = 0;
+      performanceStats.liveRenderFps = 0;
+      performanceStats.liveStepCount = 0;
+      performanceStats.liveRenderCount = 0;
+      performanceStats.lastLiveRateUpdateMs = 0;
       update(true);
     }
 
@@ -166,6 +212,8 @@
       reset,
       formatMs,
       formatRate,
+      formatStepRate,
+      formatFps,
       runtimeEngineLabel,
       update,
     };

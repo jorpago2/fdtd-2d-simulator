@@ -15,14 +15,16 @@
     return value;
   }
 
-  function syncRuntimeAndViewControls({ el, formatSpeed, state, uiCore }) {
+  function syncRuntimeAndViewControls({ el, formatTimeRate, state, uiCore }) {
     requireObject(el, "el");
     requireObject(state, "state");
     const core = requireObject(uiCore, "uiCore");
-    const speedFormatter = requireFunction(formatSpeed, "formatSpeed");
+    const timeRateFormatter = requireFunction(formatTimeRate, "formatTimeRate");
 
-    if (el.speedInput) el.speedInput.value = String(state.stepsPerFrame);
-    if (el.speedOutput) el.speedOutput.value = speedFormatter(state.stepsPerFrame);
+    if (el.speedInput) el.speedInput.value = String(state.timeRate);
+    if (el.speedOutput) el.speedOutput.value = timeRateFormatter(state.timeRate);
+    if (el.renderFpsInput) el.renderFpsInput.value = String(state.renderFps || 0);
+    if (el.renderFpsOutput) el.renderFpsOutput.value = state.renderFps > 0 ? `${state.renderFps} FPS` : "Auto";
     if (el.gainOutput) el.gainOutput.value = state.gain.toFixed(2);
     if (el.diagnosticsInput) {
       el.diagnosticsInput.checked = state.diagnosticsEnabled;

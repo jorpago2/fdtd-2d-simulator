@@ -33,7 +33,7 @@
     const activeSourceEditorTarget = requireFunction(dependencies.activeSourceEditorTarget, "activeSourceEditorTarget");
     const selectedSource = requireFunction(dependencies.selectedSource, "selectedSource");
     const activeMonitorEditorTarget = requireFunction(dependencies.activeMonitorEditorTarget, "activeMonitorEditorTarget");
-    const formatSpeed = requireFunction(dependencies.formatSpeed, "formatSpeed");
+    const formatTimeRate = requireFunction(dependencies.formatTimeRate, "formatTimeRate");
     const updateSourceShapeOptionLabels = requireFunction(dependencies.updateSourceShapeOptionLabels, "updateSourceShapeOptionLabels");
     const updateFieldDisplayControls = requireFunction(dependencies.updateFieldDisplayControls, "updateFieldDisplayControls");
     const normalizeDispersionModel = requireFunction(dependencies.normalizeDispersionModel, "normalizeDispersionModel");
@@ -65,7 +65,7 @@
       updateThemeControls();
       const editorSource = activeSourceEditorTarget() || selectedSource();
       const editorMonitor = activeMonitorEditorTarget();
-      controlSyncUi.syncRuntimeAndViewControls({ el, formatSpeed, state, uiCore });
+      controlSyncUi.syncRuntimeAndViewControls({ el, formatTimeRate, state, uiCore });
       updateSourceShapeOptionLabels();
       updateFieldDisplayControls();
       el.wavelengthInput.value = state.wavelengthUm.toFixed(2);

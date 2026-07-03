@@ -12,7 +12,8 @@
   const SCENE_SHARE_URL_LIMIT = 7600;
   const SERIALIZABLE_STATE_KEYS = Object.freeze([
     "theme",
-    "stepsPerFrame",
+    "timeRate",
+    "renderFps",
     "gain",
     "autoScale",
     "fieldComponent",

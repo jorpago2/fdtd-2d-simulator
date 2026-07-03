@@ -11,6 +11,9 @@
     "selectedMonitorId",
     "nextMonitorId",
   ]));
+  const LEGACY_IMPORTED_STATE_KEYS = Object.freeze({
+    stepsPerFrame: "timeRate",
+  });
 
   function isPlainObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -40,6 +43,12 @@
       if (SOURCE_MONITOR_STATE_KEYS.has(key)) continue;
       if (Object.prototype.hasOwnProperty.call(importedState, key)) {
         state[key] = clonePlainData(importedState[key]);
+      }
+    }
+    for (const [legacyKey, stateKey] of Object.entries(LEGACY_IMPORTED_STATE_KEYS)) {
+      if (Object.prototype.hasOwnProperty.call(importedState, stateKey)) continue;
+      if (Object.prototype.hasOwnProperty.call(importedState, legacyKey)) {
+        state[stateKey] = clonePlainData(importedState[legacyKey]);
       }
     }
   }

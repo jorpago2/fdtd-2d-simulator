@@ -24,8 +24,12 @@
     return `${formatLambda(value)} \u03bb\u2080`;
   }
 
+  function formatTimeRate(value) {
+    return `${Number(value).toFixed(1).replace(/\.0$/, "")}x`;
+  }
+
   function formatSpeed(value) {
-    return Number(value).toFixed(1).replace(/\.0$/, "");
+    return formatTimeRate(value);
   }
 
   function formatScaleBarValue(value) {
@@ -258,6 +262,7 @@
       formatLambda,
       formatLambdaOutput,
       formatScaleBarValue,
+      formatTimeRate,
       formatSpeed,
       monitorQuantityLabel,
       niceScaleLength,
@@ -273,6 +278,7 @@
     formatLambda,
     formatLambdaOutput,
     formatScaleBarValue,
+    formatTimeRate,
     formatSpeed,
     niceScaleLength,
     trimFixed,

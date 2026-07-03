@@ -191,8 +191,12 @@
       return `${formatLambda(value)} \u03bb\u2080`;
     }
 
+    function formatTimeRate(value) {
+      return `${Number(value).toFixed(1).replace(/\.0$/, "")}x`;
+    }
+
     function formatSpeed(value) {
-      return Number(value).toFixed(1).replace(/\.0$/, "");
+      return formatTimeRate(value);
     }
 
     function trimFixed(value, digits) {
@@ -239,6 +243,7 @@
       formatLambda,
       formatCompactLambda,
       formatLambdaOutput,
+      formatTimeRate,
       formatSpeed,
     };
   }

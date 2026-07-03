@@ -1041,9 +1041,19 @@
                 </button>
               </div>
               <label class="control-row">
-                <span>Speed</span>
+                <span>Time rate</span>
                 <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
-                <output id="speedOutput" for="speedInput">1</output>
+                <output id="speedOutput" for="speedInput">1x</output>
+              </label>
+              <label class="control-row">
+                <span>Render FPS</span>
+                <select id="renderFpsInput">
+                  <option value="0">Auto</option>
+                  <option value="60">60</option>
+                  <option value="30">30</option>
+                  <option value="15">15</option>
+                </select>
+                <output id="renderFpsOutput" for="renderFpsInput">Auto</output>
               </label>
               <label class="control-row">
                 <span>Gain</span>
@@ -1245,6 +1255,18 @@
                     <div class="diagnostic-metric">
                       <span>Capacity</span>
                       <output id="performanceThroughputOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Target</span>
+                      <output id="performanceTargetStepsOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Live steps</span>
+                      <output id="performanceLiveStepsOutput">-</output>
+                    </div>
+                    <div class="diagnostic-metric">
+                      <span>Live FPS</span>
+                      <output id="performanceFpsOutput">-</output>
                     </div>
                   </div>
                   <div class="performance-actions">
@@ -1449,34 +1471,34 @@
     <script src="js-next/runtime/simulation/fdtd-yee.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="js-next/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-surface-orbit-1"></script>
     <script src="js-next/runtime/simulation/fdtd-rendering.js?v=20260703-2d-render-1"></script>
-    <script src="js-next/runtime/canvas/canvas-reference-overlays.js?v=20260703-three-surface-1"></script>
-    <script src="js-next/runtime/canvas/canvas-source-overlays.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/canvas/canvas-reference-overlays.js?v=20260703-source-k-arrow-1"></script>
+    <script src="js-next/runtime/canvas/canvas-source-overlays.js?v=20260703-source-k-arrow-1"></script>
     <script src="js-next/runtime/canvas/canvas-monitor-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/ui/ui-dom.js?v=20260703-surface-orbit-1"></script>
+    <script src="js-next/runtime/ui/ui-dom.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/ui/ui-drawer.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-scenes.js?v=20260702-scene-thumbs-webp-1"></script>
     <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260702-scene-library-1"></script>
     <script src="js-next/runtime/ui/ui-results.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>
-    <script src="js-next/runtime/ui/control-sync-ui.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/core/scene-codec.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/ui/control-sync-ui.js?v=20260703-time-rate-fps-1"></script>
+    <script src="js-next/runtime/core/scene-codec.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/ui/source-monitor-model.js?v=20260702-courant-01-1"></script>
     <script src="js-next/runtime/ui/material-editor-model.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/material-editor-ui.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/material-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/entity-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/visual-layer-model.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/core/state-normalizer.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/core/state-normalizer.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/app/simulation-effects.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/app/runtime-controller.js?v=20260703-numeric-inputs-1"></script>
+    <script src="js-next/runtime/app/runtime-controller.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/canvas/canvas-colorbar.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-export.js?v=20260703-three-surface-1"></script>
     <script src="js-next/runtime/canvas/canvas-render-controller.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/ui/runtime-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/ui/runtime-control-bindings.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/ui/visual-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/results-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/source-monitor-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
@@ -1485,7 +1507,7 @@
     <script src="js-next/runtime/ui/brush-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/shell-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/layout-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/core/scene-application.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/core/scene-application.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/core/scene-repro.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-interaction-model.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-pointer-state.js?v=20260703-runtime-cleanup-1"></script>
@@ -1495,18 +1517,18 @@
     <script src="js-next/runtime/canvas/canvas-interactions.js?v=20260703-delete-key-1"></script>
     <script src="js-next/runtime/canvas/canvas-surface-orbit-controller.js?v=20260703-surface-orbit-1"></script>
     <script src="js-next/runtime/canvas/canvas-draw-preview-overlay.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/core/app-state.js?v=20260703-empty-scene-1"></script>
-    <script src="js-next/runtime/core/app-formatters.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/core/app-state.js?v=20260703-time-rate-fps-1"></script>
+    <script src="js-next/runtime/core/app-formatters.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/ui/source-monitor-operations.js?v=20260703-source-retire-1"></script>
     <script src="js-next/runtime/ui/material-operations.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/app-bootstrap.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/app-layout.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/app/app-performance.js?v=20260702-electric-ade-1"></script>
+    <script src="js-next/runtime/app/app-performance.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/simulation/sweep-analysis-controller.js?v=20260702-courant-01-1"></script>
     <script src="js-next/runtime/ui/material-stability-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="js-next/runtime/ui/brush-controls-controller.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="js-next/runtime/app/control-text-controller.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/app/control-text-controller.js?v=20260703-time-rate-fps-1"></script>
     <script src="js-next/runtime/app/scene-state-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-edit-actions-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/canvas/canvas-gesture-actions-controller.js?v=20260703-runtime-cleanup-1"></script>
@@ -1514,6 +1536,6 @@
     <script src="js-next/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/control-ui-state-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
-    <script src="js-next/runtime/app/main.js?v=20260703-mobile-source-1"></script>
+    <script src="js-next/runtime/app/main.js?v=20260703-time-rate-fps-1"></script>
   </body>
 </html>

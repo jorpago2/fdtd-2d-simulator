@@ -28,16 +28,21 @@
         this.drawSourceHoverHalo(x, y, source);
       }
       if (source.shape === "line" || source.shape === "evanescentLine") {
+        const markerMarginY = Math.min(36 * dpr, Math.max(0, viewport.height * 0.36));
+        const markerY = clamp(y, viewport.top + markerMarginY, viewport.bottom - markerMarginY);
         this.ctx.beginPath();
         this.ctx.moveTo(x, viewport.top + 8 * dpr);
         this.ctx.lineTo(x, viewport.bottom - 8 * dpr);
         this.ctx.stroke();
+        if (source.shape === "line") {
+          this.drawSourceWaveVectorArrow(x, markerY, source);
+        }
         if (source.shape === "evanescentLine") {
           const { alpha } = this.evanescentWaveNumbers(source);
           const decayPixels = (1 / Math.max(alpha, 1e-9)) * viewport.pixelsPerCell;
           const arrowLength = Math.max(18 * dpr, Math.min(70 * dpr, decayPixels * 2.5));
-          this.drawOverlayArrow(x + 7, y, x + 7 + arrowLength, y, true);
-          this.drawOverlayLabel("ev", x + 14 + arrowLength, y, "left", true);
+          this.drawOverlayArrow(x + 7 * dpr, markerY, x + 7 * dpr + arrowLength, markerY, true);
+          this.drawOverlayLabel("ev", x + 14 * dpr + arrowLength, markerY, "left", true);
         }
       } else if (source.shape === "gaussianProfile" || source.shape === "modeProfile") {
         const fwhm = state.preset === "customSlab" ? this.slabCoreThicknessCells() : Math.max(4, Math.round(this.ny * 0.09));
@@ -50,6 +55,11 @@
         this.ctx.beginPath();
         this.ctx.arc(x, y, 3 * Math.max(1, window.devicePixelRatio || 1), 0, Math.PI * 2);
         this.ctx.stroke();
+        if (source.shape === "gaussianProfile") {
+          this.drawSourceWaveVectorArrow(x, y, source, {
+            startPad: Math.max(8 * dpr, Math.min(18 * dpr, halfHeight * 0.14)),
+          });
+        }
         if (source.shape === "modeProfile") this.drawOverlayLabel("mode", x + 12 * dpr, y, "left", true);
       } else if (localizedSourceShapes.has(source.shape) || inPlaneElectricCurrentShapes.has(source.shape)) {
         this.drawAnalyticSourceGlyph(x, y, source);
@@ -57,6 +67,34 @@
         this.drawPointSourceGlyph(x, y);
       }
       this.ctx.restore();
+    },
+
+    drawSourceWaveVectorArrow(x, y, source, options = {}) {
+      if (state.viewProjection !== "2d" || !this.isTfsfIncidentSource?.(source)) return;
+
+      const ctx = this.ctx;
+      const viewport = this.renderViewport();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const theta = ((Number(source.angleDeg) || 0) * Math.PI) / 180;
+      const ux = Math.cos(theta);
+      const uy = -Math.sin(theta);
+      const length = Number.isFinite(Number(options.length)) ? Number(options.length) : 38 * dpr;
+      const startPad = Number.isFinite(Number(options.startPad)) ? Number(options.startPad) : 8 * dpr;
+      const x0 = x + ux * startPad;
+      const y0 = y + uy * startPad;
+      const x1 = x + ux * (startPad + length);
+      const y1 = y + uy * (startPad + length);
+      const labelMarginX = Math.min(16 * dpr, Math.max(0, viewport.width * 0.45));
+      const labelMarginY = Math.min(16 * dpr, Math.max(0, viewport.height * 0.45));
+      const labelX = clamp(x1 + ux * 12 * dpr, viewport.left + labelMarginX, viewport.right - labelMarginX);
+      const labelY = clamp(y1 + uy * 12 * dpr, viewport.top + labelMarginY, viewport.bottom - labelMarginY);
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      this.drawOverlayArrow(x0, y0, x1, y1, true);
+      this.drawOverlayLabel("k", labelX, labelY, "center", true);
+      ctx.restore();
     },
 
     drawSourceSelectionHalo(x, y, source) {

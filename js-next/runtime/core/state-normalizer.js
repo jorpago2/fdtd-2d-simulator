@@ -3,6 +3,7 @@
 
   const FIELD_DISPLAY_VALUES = Object.freeze(["scalar", "transverseX", "transverseY", "electricMag", "magneticMag"]);
   const VIEW_MODE_VALUES = Object.freeze(["field", "epsilon", "mu", "poynting"]);
+  const RENDER_FPS_VALUES = Object.freeze([0, 15, 30, 60]);
 
   function requireFunction(value, name) {
     if (typeof value !== "function") {
@@ -24,6 +25,11 @@
 
   function normalizeChoice(value, allowedValues, fallback) {
     return allowedValues.includes(value) ? value : fallback;
+  }
+
+  function normalizeRenderFps(value) {
+    const fps = Number(value);
+    return RENDER_FPS_VALUES.includes(fps) ? fps : 0;
   }
 
   function createStateNormalizer(dependencies) {
@@ -64,7 +70,9 @@
 
     function normalizeImportedStateValues() {
       state.theme = normalizeTheme(state.theme);
-      state.stepsPerFrame = clampNumber(Number(state.stepsPerFrame) || 1, 0.2, 12);
+      state.timeRate = clampNumber(Number(state.timeRate ?? state.stepsPerFrame) || 1, 0.1, 10);
+      state.renderFps = normalizeRenderFps(state.renderFps);
+      delete state.stepsPerFrame;
       state.gain = clampNumber(Number(state.gain) || 1, 0.1, 10);
       state.autoScale = Boolean(state.autoScale);
       state.fieldComponent = state.fieldComponent === "hz" ? "hz" : "ez";

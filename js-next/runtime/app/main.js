@@ -130,7 +130,7 @@ const {
   formatLambda,
   formatCompactLambda,
   formatLambdaOutput,
-  formatSpeed,
+  formatTimeRate,
 } = appFormatters;
 
 let materialSelectionController = null;
@@ -1453,6 +1453,7 @@ runtimeController = runtimeControllerModule.createRuntimeController({
   finalizeDeferredResults,
   updateControlText,
   updateStats,
+  updatePerformanceStats,
   courant: COURANT,
   visualCourantReference: VISUAL_COURANT_REFERENCE,
   maxNumericalStepsPerFrame: MAX_NUMERICAL_STEPS_PER_FRAME,
@@ -1581,7 +1582,7 @@ controlTextController = controlTextModule.createControlTextController({
   activeSourceEditorTarget,
   selectedSource,
   activeMonitorEditorTarget,
-  formatSpeed,
+  formatTimeRate,
   updateSourceShapeOptionLabels,
   updateFieldDisplayControls,
   normalizeDispersionModel,

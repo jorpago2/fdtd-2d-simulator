@@ -16,12 +16,17 @@
   }
 
   function createRuntimeController(dependencies) {
+    const DEFAULT_VISUAL_REFRESH_HZ = 60;
+    const MAX_FRAME_DELTA_SECONDS = 0.25;
+
     const state = requireObject(dependencies.state, "state");
     const sim = requireObject(dependencies.sim, "sim");
     const timeStepBatch = requireFunction(dependencies.timeStepBatch, "timeStepBatch");
     const finalizeDeferredResults = requireFunction(dependencies.finalizeDeferredResults, "finalizeDeferredResults");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
+    const updatePerformanceStats =
+      typeof dependencies.updatePerformanceStats === "function" ? dependencies.updatePerformanceStats : () => {};
     const courant = Number(dependencies.courant);
     const visualCourantReference = Number(dependencies.visualCourantReference);
     const maxNumericalStepsPerFrame = Number(dependencies.maxNumericalStepsPerFrame);
@@ -32,6 +37,8 @@
 
     let stepAccumulator = 0;
     let animationStarted = false;
+    let previousFrameTimeMs = null;
+    let lastRenderTimeMs = -Infinity;
 
     function runtimeEngineLabel() {
       return sim.engineLabel();
@@ -43,11 +50,40 @@
       return visualCourantReference / courant;
     }
 
+    function maxStepsPerAnimationFrame() {
+      if (!Number.isFinite(maxNumericalStepsPerFrame) || maxNumericalStepsPerFrame <= 0) return Infinity;
+      return Math.max(1, Math.floor(maxNumericalStepsPerFrame));
+    }
+
+    function targetStepsPerSecond() {
+      const requestedTimeRate = Math.max(0, Number(state.timeRate) || 0);
+      const requestedSteps = requestedTimeRate * visualStepScale() * DEFAULT_VISUAL_REFRESH_HZ;
+      const stepCap = maxStepsPerAnimationFrame();
+      if (!Number.isFinite(stepCap)) return requestedSteps;
+      return Math.min(requestedSteps, stepCap * DEFAULT_VISUAL_REFRESH_HZ);
+    }
+
     function effectiveStepsPerFrame() {
-      const requestedVisualSpeed = Math.max(0, Number(state.stepsPerFrame) || 0);
-      const requestedSteps = requestedVisualSpeed * visualStepScale();
-      if (!Number.isFinite(maxNumericalStepsPerFrame) || maxNumericalStepsPerFrame <= 0) return requestedSteps;
-      return Math.min(requestedSteps, maxNumericalStepsPerFrame);
+      return targetStepsPerSecond() / DEFAULT_VISUAL_REFRESH_HZ;
+    }
+
+    function targetRenderFps() {
+      const fps = Number(state.renderFps) || 0;
+      return [15, 30, 60].includes(fps) ? fps : 0;
+    }
+
+    function shouldRenderFrame(nowMs) {
+      const fps = targetRenderFps();
+      if (fps <= 0) {
+        lastRenderTimeMs = nowMs;
+        return true;
+      }
+      const minIntervalMs = 1000 / fps;
+      if (!Number.isFinite(lastRenderTimeMs) || nowMs - lastRenderTimeMs >= minIntervalMs - 1) {
+        lastRenderTimeMs = nowMs;
+        return true;
+      }
+      return false;
     }
 
     function setRunning(nextRunning) {
@@ -87,12 +123,23 @@
       return stepAccumulator;
     }
 
-    function animationFrame() {
+    function animationFrame(frameTimeMs) {
+      const nowMs = Number.isFinite(Number(frameTimeMs)) ? Number(frameTimeMs) : global.performance?.now?.() || Date.now();
+      const elapsedSeconds =
+        previousFrameTimeMs == null
+          ? 1 / DEFAULT_VISUAL_REFRESH_HZ
+          : Math.min(MAX_FRAME_DELTA_SECONDS, Math.max(0, (nowMs - previousFrameTimeMs) / 1000));
+      previousFrameTimeMs = nowMs;
+
       let advancedSimulation = false;
       if (state.running) {
-        stepAccumulator += effectiveStepsPerFrame();
-        const stepsThisFrame = Math.floor(stepAccumulator);
+        const frameStepCap = maxStepsPerAnimationFrame();
+        stepAccumulator += targetStepsPerSecond() * elapsedSeconds;
+        const stepsThisFrame = Math.min(Math.floor(stepAccumulator), frameStepCap);
         stepAccumulator -= stepsThisFrame;
+        if (Number.isFinite(frameStepCap)) {
+          stepAccumulator = Math.min(stepAccumulator, frameStepCap);
+        }
         if (stepsThisFrame > 0) {
           timeStepBatch(stepsThisFrame, () => {
             for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
@@ -102,9 +149,10 @@
           advancedSimulation = true;
         }
       }
-      if (advancedSimulation) {
+      if (advancedSimulation && shouldRenderFrame(nowMs)) {
         sim.render();
       }
+      updatePerformanceStats();
       scheduleFrame(animationFrame);
     }
 
@@ -117,6 +165,8 @@
     return Object.freeze({
       runtimeEngineLabel,
       effectiveStepsPerFrame,
+      targetStepsPerSecond,
+      targetRenderFps,
       setRunning,
       toggleRunning,
       advanceOneStep,

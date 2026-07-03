@@ -135,11 +135,12 @@ function compareFormatterModules(runtime, next) {
     "sourceSummaryLabel",
     "currentBrushLabel",
     "formatLambdaOutput",
+    "formatTimeRate",
     "formatSpeed",
     "formatScaleBarValue",
   ];
   for (const name of checks) {
-    const args = name === "formatLambdaOutput" || name === "formatSpeed" || name === "formatScaleBarValue" ? [1.25] : [];
+    const args = name === "formatLambdaOutput" || name === "formatTimeRate" || name === "formatSpeed" || name === "formatScaleBarValue" ? [1.25] : [];
     assertEqual(nextFormatters[name](...args), runtimeFormatters[name](...args), `formatter ${name}`);
   }
   assertDeepEqual(nextFormatters.fieldDisplayConfig("scalar"), runtimeFormatters.fieldDisplayConfig("scalar"), "fieldDisplayConfig scalar");
@@ -240,7 +241,8 @@ function compareUiCoreModules(runtime, next) {
 function baseNormalizerState() {
   return {
     theme: "invalid",
-    stepsPerFrame: 99,
+    timeRate: 99,
+    renderFps: 999,
     gain: 0,
     autoScale: 0,
     fieldComponent: "hz",
