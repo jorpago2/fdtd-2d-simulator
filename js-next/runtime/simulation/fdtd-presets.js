@@ -161,19 +161,23 @@ Object.assign(FDTDSim.prototype, {
   },
 
   activeInteriorMinX() {
-    return this.activeInteriorBoundaryLayer("left") + 1;
+    const layer = this.activeInteriorBoundaryLayer("left");
+    return layer + (boundarySideIsAbsorbing("left") ? 0 : 1);
   },
 
   activeInteriorMaxX() {
-    return this.nx - this.activeInteriorBoundaryLayer("right") - 2;
+    const layer = this.activeInteriorBoundaryLayer("right");
+    return this.nx - layer - (boundarySideIsAbsorbing("right") ? 1 : 2);
   },
 
   activeInteriorMinY() {
-    return this.activeInteriorBoundaryLayer("top") + 1;
+    const layer = this.activeInteriorBoundaryLayer("top");
+    return layer + (boundarySideIsAbsorbing("top") ? 0 : 1);
   },
 
   activeInteriorMaxY() {
-    return this.ny - this.activeInteriorBoundaryLayer("bottom") - 2;
+    const layer = this.activeInteriorBoundaryLayer("bottom");
+    return this.ny - layer - (boundarySideIsAbsorbing("bottom") ? 1 : 2);
   },
 
   sourceGuardMarginCells(side) {

@@ -185,6 +185,19 @@ async function slabWaveguideLaunchMetrics(page) {
     const minY = sim.activeInteriorMinY();
     const maxY = sim.activeInteriorMaxY();
     const rightMaxX = Math.min(maxX - 8, sx + Math.round(state.cellsPerWavelength * 6));
+    const rightCpmlStart = sim.nx - sim.cpmlLayer;
+    const rightBeforeCpmlIdx = sim.id(Math.max(0, rightCpmlStart - 1), sy);
+    const rightCpmlStartIdx = sim.id(Math.min(sim.nx - 1, rightCpmlStart), sy);
+    const rightBoundaryBeforeCpml = {
+      material: sim.material[rightBeforeCpmlIdx],
+      eps: sim.eps[rightBeforeCpmlIdx],
+      inCpml: sim.isInCpml(rightCpmlStart - 1, sy),
+    };
+    const rightBoundaryAtCpml = {
+      material: sim.material[rightCpmlStartIdx],
+      eps: sim.eps[rightCpmlStartIdx],
+      inCpml: sim.isInCpml(rightCpmlStart, sy),
+    };
 
     const energyAt = (idx) => {
       if (sim.material[idx] === 2) return 0;
@@ -221,6 +234,11 @@ async function slabWaveguideLaunchMetrics(page) {
       leftGuideEnergy,
       rightGuideEnergy,
       rightCladdingEnergy,
+      rightBoundaryBeforeCpml,
+      rightBoundaryAtCpml,
+      rightBoundaryMaterialContinuous:
+        rightBoundaryBeforeCpml.material === rightBoundaryAtCpml.material &&
+        Math.abs(rightBoundaryBeforeCpml.eps - rightBoundaryAtCpml.eps) < 1e-6,
       backwardEnergyRatio: leftGuideEnergy / Math.max(1e-30, rightGuideEnergy),
       radiationEnergyRatio: rightCladdingEnergy / Math.max(1e-30, rightGuideEnergy),
     };
@@ -267,6 +285,9 @@ async function runSmokeCase(page, testCase) {
       status.failures.push("slab waveguide did not expose modal launch metrics");
     } else {
       if (!(status.modeLaunch.rightGuideEnergy > 1e-12)) status.failures.push("slab waveguide did not launch measurable forward guided energy");
+      if (!status.modeLaunch.rightBoundaryMaterialContinuous) {
+        status.failures.push("slab waveguide has a material discontinuity at the right CPML entrance");
+      }
       if (Number.isFinite(backwardLimit) && status.modeLaunch.backwardEnergyRatio > backwardLimit) {
         status.failures.push(`backward modal energy ratio ${status.modeLaunch.backwardEnergyRatio} exceeds ${backwardLimit}`);
       }
