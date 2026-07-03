@@ -901,12 +901,22 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 .analysis-chart-grid,
 .scene-guide-grid,
 .scene-guide-reference-grid,
-.context-choice-grid,
-.visual-layer-grid {
+.context-choice-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 10px;
   min-width: 0;
+}
+
+.visual-layer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.canvas-overlay-grid {
+  width: 100%;
 }
 
 /* 05. Forms and compact data rows */

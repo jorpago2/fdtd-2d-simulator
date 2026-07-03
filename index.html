@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260704-scene-views-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260704-overlay-grid-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -127,30 +127,32 @@
                 <button class="mode-toggle-button" type="button" role="radio" data-material-part="imag" aria-checked="false">Im</button>
               </fieldset>
               <span class="visual-options-divider" aria-hidden="true"></span>
-              <label class="toolbar-switch visual-layer-switch" title="Show CPML and reflective boundary overlays">
-                <input type="checkbox" data-visual-layer="boundaries" checked />
-                <span>CPML/bounds</span>
-              </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show fixed L/R line-monitor markers">
-                <input type="checkbox" data-visual-layer="monitors" />
-                <span>line monitors</span>
-              </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show x and y axis glyph">
-                <input type="checkbox" data-visual-layer="axes" checked />
-                <span>axes</span>
-              </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show wavelength scale bar">
-                <input type="checkbox" data-visual-layer="scale" checked />
-                <span>scale</span>
-              </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show source markers">
-                <input type="checkbox" data-visual-layer="sources" checked />
-                <span>sources</span>
-              </label>
-              <label class="toolbar-switch visual-layer-switch" title="Show color scale">
-                <input type="checkbox" data-visual-layer="colorbar" checked />
-                <span>colorbar</span>
-              </label>
+              <div class="visual-layer-grid canvas-overlay-grid" aria-label="Canvas overlay layers">
+                <label class="toolbar-switch visual-layer-switch" title="Show CPML and reflective boundary overlays">
+                  <input type="checkbox" data-visual-layer="boundaries" checked />
+                  <span>CPML/bounds</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch" title="Show fixed L/R line-monitor markers">
+                  <input type="checkbox" data-visual-layer="monitors" />
+                  <span>line monitors</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch" title="Show x and y axis glyph">
+                  <input type="checkbox" data-visual-layer="axes" checked />
+                  <span>axes</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch" title="Show wavelength scale bar">
+                  <input type="checkbox" data-visual-layer="scale" checked />
+                  <span>scale</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch" title="Show source markers">
+                  <input type="checkbox" data-visual-layer="sources" checked />
+                  <span>sources</span>
+                </label>
+                <label class="toolbar-switch visual-layer-switch" title="Show color scale">
+                  <input type="checkbox" data-visual-layer="colorbar" checked />
+                  <span>colorbar</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -1120,7 +1122,7 @@
                 </label>
               </div>
             </section>
-<section class="panel-section visual-overlays-section">
+            <section class="panel-section visual-overlays-section">
               <h2>Overlays</h2>
               <div class="visual-layer-grid" aria-label="Canvas overlay layers">
                 <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show CPML and reflective boundary overlays">
