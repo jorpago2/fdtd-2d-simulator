@@ -1,6 +1,10 @@
 "use strict";
 
 const LIVE_RENDER_SCALE_INTERVAL_FRAMES = 6;
+const SURFACE_RUNNING_MAX_COLS = 68;
+const SURFACE_RUNNING_MAX_ROWS = 48;
+const SURFACE_STILL_MAX_COLS = 96;
+const SURFACE_STILL_MAX_ROWS = 72;
 
 Object.assign(FDTDSim.prototype, {
 fieldRenderScale() {
@@ -208,8 +212,10 @@ surfaceColor(mapped, shade, context) {
 },
 
 projectSurfacePoint(x, y, mapped, dims) {
-  const u = (x - this.viewX) / this.visibleGridWidth() - 0.5;
-  const v = (y - this.viewY) / this.visibleGridHeight() - 0.5;
+  const invViewW = Number.isFinite(dims.invViewW) ? dims.invViewW : 1 / this.visibleGridWidth();
+  const invViewH = Number.isFinite(dims.invViewH) ? dims.invViewH : 1 / this.visibleGridHeight();
+  const u = (x - this.viewX) * invViewW - 0.5;
+  const v = (y - this.viewY) * invViewH - 0.5;
   return {
     x: dims.cx + u * dims.planeW + v * dims.skewW,
     y: dims.cy + v * dims.planeH - mapped * dims.heightScale,
@@ -231,8 +237,17 @@ renderSurfaceField() {
 
   const viewW = this.visibleGridWidth();
   const viewH = this.visibleGridHeight();
-  const targetCols = clampInt(w / (13 * dpr), 42, 96);
-  const targetRows = clampInt(h / (12 * dpr), 32, 72);
+  const runningSurface = Boolean(state.running);
+  const targetCols = clampInt(
+    w / ((runningSurface ? 20 : 13) * dpr),
+    runningSurface ? 30 : 42,
+    runningSurface ? SURFACE_RUNNING_MAX_COLS : SURFACE_STILL_MAX_COLS,
+  );
+  const targetRows = clampInt(
+    h / ((runningSurface ? 19 : 12) * dpr),
+    runningSurface ? 24 : 32,
+    runningSurface ? SURFACE_RUNNING_MAX_ROWS : SURFACE_STILL_MAX_ROWS,
+  );
   const stepX = Math.max(1, Math.ceil(viewW / targetCols));
   const stepY = Math.max(1, Math.ceil(viewH / targetRows));
   const x0 = this.viewX;
@@ -254,7 +269,14 @@ renderSurfaceField() {
     planeH: h * 0.5,
     skewW: w * 0.18,
     heightScale: clamp(Math.min(w, h) * 0.2, 28 * dpr, 116 * dpr),
+    invViewW: 1 / Math.max(1e-9, viewW),
+    invViewH: 1 / Math.max(1e-9, viewH),
   };
+  const sampleRows = ys.map((y) => xs.map((x) => this.surfaceSample(x, y, surfaceContext)));
+  const projectedRows = sampleRows.map((samples, row) =>
+    samples.map((sample, col) => this.projectSurfacePoint(xs[col], ys[row], sample.mapped, dims)),
+  );
+  const drawMeshStroke = !runningSurface;
 
   ctx.save();
   ctx.lineJoin = "round";
@@ -262,20 +284,20 @@ renderSurfaceField() {
   for (let row = 0; row < ys.length - 1; row += 1) {
     const rowLight = 0.86 + (row / Math.max(1, ys.length - 2)) * 0.12;
     for (let col = 0; col < xs.length - 1; col += 1) {
-      const p00 = this.surfaceSample(xs[col], ys[row], surfaceContext);
-      const p10 = this.surfaceSample(xs[col + 1], ys[row], surfaceContext);
-      const p11 = this.surfaceSample(xs[col + 1], ys[row + 1], surfaceContext);
-      const p01 = this.surfaceSample(xs[col], ys[row + 1], surfaceContext);
+      const p00 = sampleRows[row][col];
+      const p10 = sampleRows[row][col + 1];
+      const p11 = sampleRows[row + 1][col + 1];
+      const p01 = sampleRows[row + 1][col];
       const avg = (p00.mapped + p10.mapped + p11.mapped + p01.mapped) * 0.25;
       const slope =
         Math.abs((p10.mapped + p11.mapped - p00.mapped - p01.mapped) * 0.5) +
         Math.abs((p01.mapped + p11.mapped - p00.mapped - p10.mapped) * 0.5);
       const shade = clamp(rowLight - slope * 0.12 + Math.max(0, avg) * 0.08, 0.62, 1.08);
       const allPec = p00.material === 2 && p10.material === 2 && p11.material === 2 && p01.material === 2;
-      const q00 = this.projectSurfacePoint(xs[col], ys[row], p00.mapped, dims);
-      const q10 = this.projectSurfacePoint(xs[col + 1], ys[row], p10.mapped, dims);
-      const q11 = this.projectSurfacePoint(xs[col + 1], ys[row + 1], p11.mapped, dims);
-      const q01 = this.projectSurfacePoint(xs[col], ys[row + 1], p01.mapped, dims);
+      const q00 = projectedRows[row][col];
+      const q10 = projectedRows[row][col + 1];
+      const q11 = projectedRows[row + 1][col + 1];
+      const q01 = projectedRows[row + 1][col];
 
       ctx.beginPath();
       ctx.moveTo(q00.x, q00.y);
@@ -285,8 +307,10 @@ renderSurfaceField() {
       ctx.closePath();
       ctx.fillStyle = allPec ? "rgb(7, 8, 11)" : this.surfaceColor(avg, shade, surfaceContext);
       ctx.fill();
-      ctx.strokeStyle = `rgba(255, 244, 170, ${0.035 + Math.abs(avg) * 0.04})`;
-      ctx.stroke();
+      if (drawMeshStroke) {
+        ctx.strokeStyle = `rgba(255, 244, 170, ${0.035 + Math.abs(avg) * 0.04})`;
+        ctx.stroke();
+      }
     }
   }
 
