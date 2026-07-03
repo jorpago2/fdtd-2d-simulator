@@ -25,6 +25,7 @@
     "src/canvas-reference-overlays.js": "js-next/runtime/canvas/canvas-reference-overlays.js",
     "src/canvas-render-controller.js": "js-next/runtime/canvas/canvas-render-controller.js",
     "src/canvas-source-overlays.js": "js-next/runtime/canvas/canvas-source-overlays.js",
+    "src/canvas-surface-orbit-controller.js": "js-next/runtime/canvas/canvas-surface-orbit-controller.js",
     "src/canvas-viewport.js": "js-next/runtime/canvas/canvas-viewport.js",
     "src/catalog.js": "js-next/runtime/data/catalog.js",
     "src/colormaps.js": "js-next/runtime/data/colormaps.js",

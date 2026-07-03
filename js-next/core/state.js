@@ -72,6 +72,8 @@
       sweepResults: [],
       viewMode: "field",
       viewProjection: "2d",
+      surfaceOrbitYawDeg: 0,
+      surfaceOrbitPitchDeg: 0,
       materialPart: "real",
       canvasMode: "select",
       drawPreviewCell: null,

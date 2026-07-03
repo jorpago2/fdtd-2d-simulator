@@ -47,6 +47,7 @@ const {
   canvasPointerStateModule,
   canvasDragStateModule,
   canvasInteractionsModule,
+  canvasSurfaceOrbitControllerModule,
   contextMenuModule,
   canvasContextActionsModule,
   appBootstrapModule,
@@ -90,6 +91,7 @@ let sceneStateController = null;
 let canvasEditActionsController = null;
 let canvasGestureActionsController = null;
 let canvasContextActionsController = null;
+let surfaceOrbitController = null;
 let boundaryStateController = null;
 
 const state = createInitialAppState({
@@ -737,6 +739,7 @@ function effectiveVisualProfileName() {
 
 function updateVisualControls() {
   controlUiState().updateVisualControls();
+  surfaceOrbitController?.sync?.();
 }
 
 function applyVisualProfile(profile) {
@@ -1706,6 +1709,15 @@ const dragStateController = canvasDragStateModule.createCanvasDragState({
   cancelAnimationFrame: (frameId) => cancelAnimationFrame(frameId),
 });
 const dragState = dragStateController.state;
+surfaceOrbitController = canvasSurfaceOrbitControllerModule.createCanvasSurfaceOrbitController({
+  documentRef: document,
+  windowRef: window,
+  el,
+  state,
+  sim,
+  closeContextMenus,
+});
+surfaceOrbitController.bind();
 const TOUCH_DRAG_START_PX = 8;
 const TOUCH_TAP_MAX_DISTANCE_PX = 10;
 const TOUCH_DOUBLE_TAP_MS = 320;

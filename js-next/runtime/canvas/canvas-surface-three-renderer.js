@@ -10,6 +10,7 @@
   const SURFACE_Z_SCALE = 0.52;
   const SURFACE_HEIGHT_SCALE = 0.34;
   const RUNNING_FRAME_REUSE_INTERVAL = 2;
+  const SURFACE_ORBIT_PITCH_LIMIT_DEG = 62;
 
   let threeModulePromise = null;
   const rendererStats = {
@@ -35,6 +36,21 @@
 
   function finitePositive(value, fallback) {
     return Number.isFinite(value) && value > 0 ? value : fallback;
+  }
+
+  function wrapAngleDeg(value) {
+    const angle = Number(value) || 0;
+    return ((((angle + 180) % 360) + 360) % 360) - 180;
+  }
+
+  function surfaceOrbitFromState() {
+    const yawDeg = wrapAngleDeg(state.surfaceOrbitYawDeg);
+    const pitchDeg = clamp(Number(state.surfaceOrbitPitchDeg) || 0, -SURFACE_ORBIT_PITCH_LIMIT_DEG, SURFACE_ORBIT_PITCH_LIMIT_DEG);
+    return {
+      yawRad: (yawDeg * Math.PI) / 180,
+      pitchRad: (pitchDeg * Math.PI) / 180,
+      key: `${yawDeg.toFixed(2)}|${pitchDeg.toFixed(2)}`,
+    };
   }
 
   function sampledAxis(start, end, step, upperBound) {
@@ -197,6 +213,7 @@
         state.fieldDisplay,
         state.fieldComponent,
         state.materialPart,
+        surfaceOrbitFromState().key,
       ].join("|");
     }
 
@@ -346,6 +363,8 @@
       if (!renderingToDisplayCanvas) {
         this.drawBackground(sim);
       }
+      const orbit = surfaceOrbitFromState();
+      this.mesh.rotation.set(orbit.pitchRad, orbit.yawRad, 0);
       this.renderer.render(this.scene, this.camera);
       if (!renderingToDisplayCanvas) {
         sim.ctx.drawImage(this.canvas, 0, 0, width, height);

@@ -45,6 +45,7 @@
     ["canvasPointerStateModule", "FdtdCanvasPointerState", "canvas-pointer-state.js"],
     ["canvasDragStateModule", "FdtdCanvasDragState", "canvas-drag-state.js"],
     ["canvasInteractionsModule", "FdtdCanvasInteractions", "canvas-interactions.js"],
+    ["canvasSurfaceOrbitControllerModule", "FdtdCanvasSurfaceOrbitController", "canvas-surface-orbit-controller.js"],
     ["contextMenuModule", "FdtdContextMenuController", "context-menu-controller.js"],
     ["canvasContextActionsModule", "FdtdCanvasContextActions", "canvas-context-actions-controller.js"],
     ["appBootstrapModule", "FdtdAppBootstrap", "app-bootstrap.js"],
