@@ -75,9 +75,7 @@
       const ctx = this.ctx;
       const viewport = this.renderViewport();
       const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const theta = ((Number(source.angleDeg) || 0) * Math.PI) / 180;
-      const ux = Math.cos(theta);
-      const uy = -Math.sin(theta);
+      const { x: ux, y: uy } = this.sourceIncidentCanvasDirection(source);
       const length = Number.isFinite(Number(options.length)) ? Number(options.length) : 38 * dpr;
       const startPad = Number.isFinite(Number(options.startPad)) ? Number(options.startPad) : 8 * dpr;
       const x0 = x + ux * startPad;
@@ -95,6 +93,15 @@
       this.drawOverlayArrow(x0, y0, x1, y1, true);
       this.drawOverlayLabel("k", labelX, labelY, "center", true);
       ctx.restore();
+    },
+
+    sourceIncidentCanvasDirection(source) {
+      const theta = ((Number(source?.angleDeg) || 0) * Math.PI) / 180;
+      return {
+        x: Math.cos(theta),
+        // Incident-field phases use grid y, which maps to positive canvas y.
+        y: Math.sin(theta),
+      };
     },
 
     drawSourceSelectionHalo(x, y, source) {

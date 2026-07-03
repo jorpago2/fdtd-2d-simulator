@@ -1103,6 +1103,48 @@ async function runDrawPreviewSmoke(page) {
   };
 }
 
+async function runSourceWaveVectorOverlaySmoke(page) {
+  await selectPreset(page, "poyntingPlaneWave");
+  const status = await page.evaluate(() => {
+    const source = state.sources?.[0] || null;
+    const direction = source ? sim.sourceIncidentCanvasDirection(source) : null;
+    const descriptor = source ? sim.tfsfSourceParams(source) : null;
+    return {
+      angleDeg: source?.angleDeg ?? null,
+      direction,
+      descriptor: descriptor
+        ? {
+            cosTheta: descriptor.cosTheta,
+            sinTheta: descriptor.sinTheta,
+          }
+        : null,
+    };
+  });
+  const failures = [];
+  const tolerance = 1e-9;
+  if (!status.direction || !status.descriptor) {
+    failures.push("incident source direction or TFSF descriptor was unavailable");
+  } else {
+    if (Math.abs(status.direction.x - status.descriptor.cosTheta) > tolerance) {
+      failures.push(`k arrow x direction ${status.direction.x} does not match incident cos ${status.descriptor.cosTheta}`);
+    }
+    if (Math.abs(status.direction.y - status.descriptor.sinTheta) > tolerance) {
+      failures.push(`k arrow y direction ${status.direction.y} does not match incident sin ${status.descriptor.sinTheta}`);
+    }
+    if (status.angleDeg > 0 && status.angleDeg < 90 && !(status.direction.x > 0 && status.direction.y > 0)) {
+      failures.push(`positive oblique incidence should draw k down-right in canvas coordinates; got (${status.direction.x}, ${status.direction.y})`);
+    }
+  }
+  return {
+    id: "source_wave_vector_overlay_direction",
+    preset: "poyntingPlaneWave",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
@@ -1673,6 +1715,7 @@ async function main() {
       report.cases.push(await runMobileToolbarHeightSmoke(browser, url));
       report.cases.push(await runBrushStrokeContinuitySmoke(page));
       report.cases.push(await runDrawPreviewSmoke(page));
+      report.cases.push(await runSourceWaveVectorOverlaySmoke(page));
       report.cases.push(await runSourceDependentParamsSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));
