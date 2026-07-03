@@ -10,9 +10,6 @@ Object.assign(FDTDSim.prototype, {
     }
     if (compiledMaterialStep) {
       this.wasmBackend.step(this);
-      if (state.materialDispersionEnabled && state.fieldComponent === "ez") {
-        this.applyDispersiveElectricResponse();
-      }
       this.zeroBoundaryFields();
       this.injectSource();
       this.time += 1;

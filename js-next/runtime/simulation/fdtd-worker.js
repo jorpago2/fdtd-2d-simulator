@@ -113,14 +113,14 @@ function setBoundarySideMode(side, mode) {
 
 importScripts(
   "fdtd-worker-protocol.js?v=20260702-worker-policy-1",
-  "../core/constants.js?v=20260702-courant-visual-1",
-  "wasm-backend.js?v=20260630-js-next-cutover-1",
+  "../core/constants.js?v=20260702-electric-ade-1",
+  "wasm-backend.js?v=20260702-electric-ade-1",
   "../core/numerics.js?v=20260630-js-next-cutover-1",
   "../data/colormaps.js?v=20260630-js-next-cutover-1",
   "../data/catalog.js?v=20260630-js-next-cutover-1",
   "fdtd-sim.js?v=20260630-js-next-cutover-1",
-  "fdtd-array-state.js?v=20260630-js-next-cutover-1",
-  "fdtd-engine-routing.js?v=20260630-js-next-cutover-1",
+  "fdtd-array-state.js?v=20260702-electric-ade-1",
+  "fdtd-engine-routing.js?v=20260702-electric-ade-1",
   "../canvas/canvas-viewport.js?v=20260630-js-next-cutover-1",
   "fdtd-field-state.js?v=20260630-js-next-cutover-1",
   "fdtd-materials.js?v=20260630-js-next-cutover-1",
@@ -136,7 +136,7 @@ importScripts(
   "fdtd-analysis-observables.js?v=20260630-js-next-cutover-1",
   "fdtd-material-diagnostics.js?v=20260630-js-next-cutover-1",
   "fdtd-diagnostics.js?v=20260630-js-next-cutover-1",
-  "fdtd-yee.js?v=20260630-js-next-cutover-1"
+  "fdtd-yee.js?v=20260702-electric-ade-1"
 );
 
 let sim = null;

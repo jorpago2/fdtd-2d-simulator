@@ -8,7 +8,7 @@
 
       this.wasmBackend = backend;
       this.wasmBackend.configure(this);
-      this.allocateAuxiliaryArrays();
+      this.allocateAuxiliaryArrays({ preserveExisting: true });
       this.restoreWasmMigrationArrays(previous);
       this.buildBoundary(state.boundary);
       this.clearCpmlMaterials();
@@ -78,6 +78,7 @@
       if (state.materialDispersionEnabled) {
         if (state.fieldComponent !== "ez") return false;
         if (this.hasActiveMagneticDispersion()) return false;
+        if (!this.wasmBackend.supportsElectricAde?.()) return false;
       }
       return true;
     },
@@ -90,7 +91,7 @@
       if (state.materialNonlinearEnabled) labels.push("Kerr");
       if (state.materialSaturableGainEnabled) labels.push("gain");
       if (state.materialGyrotropyEnabled) labels.push("tensor");
-      if (state.materialDispersionEnabled) labels.push("JS ADE");
+      if (state.materialDispersionEnabled) labels.push("ADE");
       if (this.hasTfsfIncidentSource?.()) labels.push("TFSF");
       if (this.hasModeProfileSource?.()) labels.push("mode");
       return labels.length > 0 ? `WASM ${labels.join("+")}` : "WASM";

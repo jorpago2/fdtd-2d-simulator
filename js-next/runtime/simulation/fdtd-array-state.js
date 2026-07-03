@@ -238,9 +238,14 @@
     return Math.max(0, Math.floor(Number(length) || 0));
   }
 
-  function allocateArraySpecs(sim, specs) {
+  function allocateArraySpecs(sim, specs, options = {}) {
+    const preserveExisting = Boolean(options.preserveExisting);
     for (const [name, ArrayType, axis] of specs) {
-      sim[name] = new ArrayType(arrayLength(sim, axis));
+      const length = arrayLength(sim, axis);
+      if (preserveExisting && sim[name] instanceof ArrayType && sim[name].length === length) {
+        continue;
+      }
+      sim[name] = new ArrayType(length);
     }
   }
 
@@ -255,17 +260,18 @@
       allocateArraySpecs(this, JS_CORE_ARRAY_SPECS);
     },
 
-    allocateAuxiliaryArrays() {
-      allocateArraySpecs(this, AUXILIARY_ARRAY_SPECS);
+    allocateAuxiliaryArrays(options = {}) {
+      allocateArraySpecs(this, AUXILIARY_ARRAY_SPECS, options);
     },
 
     allocateArrays() {
       if (this.wasmBackend) {
         this.wasmBackend.configure(this);
+        this.allocateAuxiliaryArrays({ preserveExisting: true });
       } else {
         this.allocateJsCoreArrays();
+        this.allocateAuxiliaryArrays();
       }
-      this.allocateAuxiliaryArrays();
     },
 
     snapshotWasmMigrationArrays() {

@@ -7,10 +7,12 @@ const WASM_FEATURE_TENSOR_GYRO = 1 << 3;
 const WASM_FEATURE_TFSF = 1 << 4;
 const WASM_FEATURE_CPML = 1 << 5;
 const WASM_FEATURE_MODE_SOURCE = 1 << 6;
+const WASM_FEATURE_ELECTRIC_ADE = 1 << 7;
 
 const WASM_STEP_KERR = 1 << 0;
 const WASM_STEP_SATURABLE_GAIN = 1 << 1;
 const WASM_STEP_TENSOR_GYRO = 1 << 2;
+const WASM_STEP_ELECTRIC_ADE = 1 << 3;
 const WASM_MAX_TFSF_SOURCES = 32;
 const WASM_TFSF_STRIDE = 16;
 const WASM_TFSF_SOURCE_TYPE = { sine: 0, gaussian: 1, ricker: 2 };
@@ -83,10 +85,19 @@ class WasmFdtdBackend {
     u8("nonlinearMaterial", n);
     u8("electricTensorMaterial", n);
     u8("gyrotropicMaterial", n);
+    u8("dispersiveMaterial", n);
+    u8("dispersionAxes", n);
     f32("modulationBaseEps", n);
     f32("modulationBaseEpsY", n);
     f32("epsilonXY", n);
     f32("gyrotropyG", n);
+    f32("dispersionOmegaP", n);
+    f32("dispersionGamma", n);
+    f32("dispersionOmega0", n);
+    f32("dispersionDeltaEps", n);
+    f32("dispersionTau", n);
+    f32("dispPz", n);
+    f32("dispJz", n);
     f32("cpmlKappaEX", nx);
     f32("cpmlKappaHX", nx);
     f32("cpmlKappaEY", ny);
@@ -170,10 +181,19 @@ class WasmFdtdBackend {
     sim.nonlinearMaterial = new Uint8Array(buffer, o.nonlinearMaterial, n);
     sim.electricTensorMaterial = new Uint8Array(buffer, o.electricTensorMaterial, n);
     sim.gyrotropicMaterial = new Uint8Array(buffer, o.gyrotropicMaterial, n);
+    sim.dispersiveMaterial = new Uint8Array(buffer, o.dispersiveMaterial, n);
+    sim.dispersionAxes = new Uint8Array(buffer, o.dispersionAxes, n);
     sim.modulationBaseEps = new Float32Array(buffer, o.modulationBaseEps, n);
     sim.modulationBaseEpsY = new Float32Array(buffer, o.modulationBaseEpsY, n);
     sim.epsilonXY = new Float32Array(buffer, o.epsilonXY, n);
     sim.gyrotropyG = new Float32Array(buffer, o.gyrotropyG, n);
+    sim.dispersionOmegaP = new Float32Array(buffer, o.dispersionOmegaP, n);
+    sim.dispersionGamma = new Float32Array(buffer, o.dispersionGamma, n);
+    sim.dispersionOmega0 = new Float32Array(buffer, o.dispersionOmega0, n);
+    sim.dispersionDeltaEps = new Float32Array(buffer, o.dispersionDeltaEps, n);
+    sim.dispersionTau = new Float32Array(buffer, o.dispersionTau, n);
+    sim.dispPz = new Float32Array(buffer, o.dispPz, n);
+    sim.dispJz = new Float32Array(buffer, o.dispJz, n);
     sim.cpmlKappaEX = new Float32Array(buffer, o.cpmlKappaEX, sim.nx);
     sim.cpmlKappaHX = new Float32Array(buffer, o.cpmlKappaHX, sim.nx);
     sim.cpmlKappaEY = new Float32Array(buffer, o.cpmlKappaEY, sim.ny);
@@ -335,10 +355,19 @@ class WasmFdtdBackend {
       o.nonlinearMaterial,
       o.electricTensorMaterial,
       o.gyrotropicMaterial,
+      o.dispersiveMaterial,
+      o.dispersionAxes,
       o.modulationBaseEps,
       o.modulationBaseEpsY,
       o.epsilonXY,
       o.gyrotropyG,
+      o.dispersionOmegaP,
+      o.dispersionGamma,
+      o.dispersionOmega0,
+      o.dispersionDeltaEps,
+      o.dispersionTau,
+      o.dispPz,
+      o.dispJz,
       o.cpmlKappaEX,
       o.cpmlKappaHX,
       o.cpmlKappaEY,
@@ -439,11 +468,16 @@ class WasmFdtdBackend {
     return this.supportsFeature(WASM_FEATURE_MODE_SOURCE);
   }
 
+  supportsElectricAde() {
+    return this.supportsFeature(WASM_FEATURE_ELECTRIC_ADE);
+  }
+
   stepRuntimeFlags(component) {
     let flags = 0;
     if (state.materialNonlinearEnabled && !state.materialModulationEnabled) flags |= WASM_STEP_KERR;
     if (state.materialSaturableGainEnabled) flags |= WASM_STEP_SATURABLE_GAIN;
     if (component === "hz" && state.materialGyrotropyEnabled) flags |= WASM_STEP_TENSOR_GYRO;
+    if (component === "ez" && state.materialDispersionEnabled) flags |= WASM_STEP_ELECTRIC_ADE;
     return flags;
   }
 }

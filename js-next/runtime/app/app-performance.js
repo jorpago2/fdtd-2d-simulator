@@ -117,7 +117,7 @@
       const compiledActive = /^WASM/.test(engineText);
       const materialPath = sim.canUseCompiledMaterialStep?.()
         ? state.materialDispersionEnabled
-          ? "compiled Yee + JS ADE path"
+          ? "compiled Yee + ADE path"
           : "compiled material path"
         : sim.hasDynamicMaterialResponse?.()
         ? "dynamic material path"
