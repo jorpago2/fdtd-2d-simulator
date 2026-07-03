@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -66,6 +67,29 @@ function copyEntry(relativePath) {
   });
 }
 
+function buildAssetVersion() {
+  const sha = String(process.env.GITHUB_SHA || "").trim();
+  if (/^[0-9a-f]{7,40}$/i.test(sha)) return `sha-${sha.slice(0, 12)}`;
+
+  const result = spawnSync("git", ["rev-parse", "--short=12", "HEAD"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  const localSha = String(result.stdout || "").trim();
+  return /^[0-9a-f]{7,12}$/i.test(localSha) ? `sha-${localSha}` : `build-${Date.now()}`;
+}
+
+function stampLinkedAssetVersions(version) {
+  const indexPath = path.join(distDir, "index.html");
+  const html = fs.readFileSync(indexPath, "utf8");
+  const stamped = html.replace(
+    /(<(?:link|script)\b[^>]+(?:href|src)="[^"]+\?v=)[^"]+(")/g,
+    `$1${version}$2`,
+  );
+  fs.writeFileSync(indexPath, stamped);
+}
+
 function walkFiles(dir) {
   const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -105,8 +129,10 @@ function validateDist() {
 
 removeDist();
 for (const entry of publicEntries) copyEntry(entry);
+const assetVersion = buildAssetVersion();
+stampLinkedAssetVersions(assetVersion);
 
 const summary = validateDist();
 console.log(
-  `Pages build ready: dist/ contains ${summary.files} files, ${summary.thumbnails} thumbnails, ${summary.bytes} bytes.`,
+  `Pages build ready: dist/ contains ${summary.files} files, ${summary.thumbnails} thumbnails, ${summary.bytes} bytes; asset version ${assetVersion}.`,
 );

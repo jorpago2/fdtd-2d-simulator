@@ -145,10 +145,16 @@ function validateHtmlAssets(indexHtml) {
   const scripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml);
   const stylesheets = extractAll(/<link\s+[^>]*rel="stylesheet"\s+href="([^"]+)"/g, indexHtml);
   const missing = [...scripts, ...stylesheets].filter((asset) => !fileExistsFromUrl(asset));
+  const unversioned = [...scripts, ...stylesheets].filter((asset) => !String(asset).includes("?v="));
   addCheck(
     "html linked assets",
     missing.length === 0 ? "PASS" : "BLOCK",
     missing.length === 0 ? `${scripts.length} scripts and ${stylesheets.length} stylesheets found` : `Missing: ${missing.join(", ")}`,
+  );
+  addCheck(
+    "html cache-busted assets",
+    unversioned.length === 0 ? "PASS" : "BLOCK",
+    unversioned.length === 0 ? `${scripts.length + stylesheets.length} linked scripts/styles include ?v tokens` : unversioned.join(", "),
   );
 }
 
