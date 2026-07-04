@@ -1180,7 +1180,7 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
-              <details class="monitor-panel results-detail-panel" open>
+              <details class="monitor-panel results-detail-panel">
                 <summary>Line monitors</summary>
                 <div class="results-detail-body">
                   <label class="toggle-row">
@@ -1216,7 +1216,7 @@
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
               </details>
-              <details class="custom-monitor-panel results-detail-panel" open>
+              <details class="custom-monitor-panel results-detail-panel">
                 <summary>Custom monitors</summary>
                 <div class="results-detail-body">
                   <div id="customMonitorResults" class="custom-monitor-results" aria-live="polite">
@@ -1224,7 +1224,7 @@
                   </div>
                 </div>
               </details>
-              <details class="sweep-panel results-detail-panel" open>
+              <details class="sweep-panel results-detail-panel">
                 <summary>Parameter sweep</summary>
                 <div class="results-detail-body">
                   <div class="two-col">
@@ -1279,7 +1279,7 @@
                   </div>
                 </div>
               </details>
-              <details class="analysis-panel results-detail-panel" open>
+              <details class="analysis-panel results-detail-panel">
                 <summary>Spectral / NTFF</summary>
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
@@ -1329,7 +1329,35 @@
                 </div>
               </div>
             </section>
-            <details class="panel-section performance-panel config-detail-panel" open>
+            <details class="panel-section grid-section config-detail-panel" open>
+              <summary>Grid</summary>
+              <div class="config-detail-body">
+                <div class="two-col">
+                  <label>
+                    <span><i>N</i><sub>x</sub> cells</span>
+                    <input id="gridNxInput" type="number" inputmode="decimal" autocomplete="off" min="80" max="1200" step="10" value="360" />
+                  </label>
+                  <label>
+                    <span><i>N</i><sub>y</sub> cells</span>
+                    <input id="gridNyInput" type="number" inputmode="decimal" autocomplete="off" min="60" max="800" step="10" value="240" />
+                  </label>
+                </div>
+              </div>
+            </details>
+            <details class="panel-section reproducibility-section config-detail-panel" open>
+              <summary>Reproducibility</summary>
+              <div class="config-detail-body">
+                <div class="button-row">
+                  <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
+                  <button id="importSceneBtn" class="text-button" type="button">Import JSON</button>
+                  <button id="copySceneUrlBtn" class="text-button" type="button">Copy URL</button>
+                </div>
+                <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
+                <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
+                <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
+              </div>
+            </details>
+            <details class="panel-section performance-panel config-detail-panel">
               <summary>Performance</summary>
               <div class="config-detail-body">
                 <div class="performance-grid" aria-label="Performance summary">
@@ -1388,34 +1416,6 @@
                 <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
               </div>
             </details>
-            <details class="panel-section grid-section config-detail-panel" open>
-              <summary>Grid</summary>
-              <div class="config-detail-body">
-                <div class="two-col">
-                  <label>
-                    <span><i>N</i><sub>x</sub> cells</span>
-                    <input id="gridNxInput" type="number" inputmode="decimal" autocomplete="off" min="80" max="1200" step="10" value="360" />
-                  </label>
-                  <label>
-                    <span><i>N</i><sub>y</sub> cells</span>
-                    <input id="gridNyInput" type="number" inputmode="decimal" autocomplete="off" min="60" max="800" step="10" value="240" />
-                  </label>
-                </div>
-              </div>
-            </details>
-            <details class="panel-section reproducibility-section config-detail-panel" open>
-              <summary>Reproducibility</summary>
-              <div class="config-detail-body">
-                <div class="button-row">
-                  <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
-                  <button id="importSceneBtn" class="text-button" type="button">Import JSON</button>
-                  <button id="copySceneUrlBtn" class="text-button" type="button">Copy URL</button>
-                </div>
-                <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
-                <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
-                <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
-              </div>
-            </details>
             </div>
           </div>
         </aside>
@@ -1457,9 +1457,9 @@
     <script src="js-next/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-dom.js?v=20260704-scene-views-1"></script>
-    <script src="js-next/runtime/ui/ui-drawer.js?v=20260704-open-menu-cards-1"></script>
+    <script src="js-next/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="js-next/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
-    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260704-open-menu-cards-1"></script>
+    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="js-next/runtime/ui/ui-results.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>

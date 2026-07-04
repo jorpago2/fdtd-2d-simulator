@@ -120,7 +120,7 @@
 
     function syncResultsDetailPanels() {
       el.resultsDetailPanels?.forEach((panel) => {
-        panel.open = true;
+        panel.open = false;
       });
     }
 

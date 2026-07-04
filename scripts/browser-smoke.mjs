@@ -387,12 +387,13 @@ async function runControlNavigationSmoke(page) {
         performanceInNumerics: Boolean(document.querySelector("#tab-config .performance-panel")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
-        closedResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
-          .filter((panel) => !panel.open)
+        openResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
+          .filter((panel) => panel.open)
           .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
-        closedNumericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel"))
-          .filter((panel) => !panel.open)
-          .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
+        numericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel")).map((panel) => ({
+          title: panel.querySelector("summary")?.textContent?.trim() || panel.className,
+          open: panel.open,
+        })),
       };
     };
     const simulateState = clickTab("simulation");
@@ -419,8 +420,8 @@ async function runControlNavigationSmoke(page) {
   if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
     failures.push("Simulate tab does not contain both run and visual controls");
   }
-  if (status.resultsState?.closedResultCards?.length) {
-    failures.push(`Results has collapsed cards: ${status.resultsState.closedResultCards.join(", ")}`);
+  if (status.resultsState?.openResultCards?.length) {
+    failures.push(`Results has open cards by default: ${status.resultsState.openResultCards.join(", ")}`);
   }
   if (status.resultsState?.performanceInResults) failures.push("Performance panel is still under Results");
   if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerics") {
@@ -429,8 +430,21 @@ async function runControlNavigationSmoke(page) {
   if (!status.numericsState?.performanceInNumerics) failures.push("Performance panel is missing from Numerics");
   if (status.numericsState?.scaleSectionVisible) failures.push("Numerics still shows the Scale section");
   if (status.numericsState?.stabilitySectionVisible) failures.push("Numerics still shows the Stability section");
-  if (status.numericsState?.closedNumericsCards?.length) {
-    failures.push(`Numerics has collapsed cards: ${status.numericsState.closedNumericsCards.join(", ")}`);
+  const numericsCards = status.numericsState?.numericsCards || [];
+  const numericsOrder = numericsCards.map((card) => card.title).join("|");
+  if (numericsOrder !== "Grid|Reproducibility|Performance") {
+    failures.push(`Numerics card order is ${numericsOrder || "empty"}`);
+  }
+  const unexpectedNumericsState = numericsCards.filter((card) => {
+    if (card.title === "Grid" || card.title === "Reproducibility") return !card.open;
+    return card.open;
+  });
+  if (unexpectedNumericsState.length) {
+    failures.push(
+      `Numerics card open state is wrong: ${unexpectedNumericsState
+        .map((card) => `${card.title}:${card.open ? "open" : "closed"}`)
+        .join(", ")}`,
+    );
   }
   return {
     id: "control_navigation_four_sections",
@@ -570,8 +584,8 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
             : null,
           panelOverflow,
           guide: rect("#sceneGuidePanel"),
-          closedGuideCards: Array.from(document.querySelectorAll("#sceneGuidePanel .scene-guide-details"))
-            .filter((panel) => !panel.open)
+          openGuideCards: Array.from(document.querySelectorAll("#sceneGuidePanel .scene-guide-details"))
+            .filter((panel) => panel.open)
             .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
@@ -677,8 +691,8 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       ) {
         failures.push(`${viewport.name}: Current scene guide should be stacked below the scene card`);
       }
-      if (currentStatus.closedGuideCards?.length) {
-        failures.push(`${viewport.name}: Scene guide has collapsed cards: ${currentStatus.closedGuideCards.join(", ")}`);
+      if (currentStatus.openGuideCards?.length) {
+        failures.push(`${viewport.name}: Scene guide has open cards by default: ${currentStatus.openGuideCards.join(", ")}`);
       }
       if (
         browseStatus.panel &&
