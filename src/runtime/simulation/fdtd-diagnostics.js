@@ -916,7 +916,11 @@ measure() {
 
   let maxAbs = 0;
   let energy = 0;
-  if (state.viewMode !== "poynting" && state.fieldDisplay === "scalar") {
+  const compiledMeasure = this.wasmBackend?.measureField?.(this);
+  if (compiledMeasure) {
+    maxAbs = compiledMeasure.maxAbs;
+    energy = compiledMeasure.energy;
+  } else if (state.viewMode !== "poynting" && state.fieldDisplay === "scalar") {
     const scalarField = this.ez;
     for (let i = 0; i < this.n; i += 1) {
       const value = scalarField[i];

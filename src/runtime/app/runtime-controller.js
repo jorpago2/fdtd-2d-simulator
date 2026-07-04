@@ -18,6 +18,7 @@
   function createRuntimeController(dependencies) {
     const DEFAULT_VISUAL_REFRESH_HZ = 60;
     const MAX_VISUAL_CATCH_UP_FRAMES = 2;
+    const MAX_SOLVER_CATCH_UP_FRAMES = 4;
     // Keep visual pacing smooth after expensive renders or WASM warm-up; FDTD dt is still fixed per step.
     const MAX_FRAME_DELTA_SECONDS = MAX_VISUAL_CATCH_UP_FRAMES / DEFAULT_VISUAL_REFRESH_HZ;
 
@@ -79,18 +80,36 @@
       return [15, 30, 60].includes(fps) ? fps : 0;
     }
 
-    function shouldRenderFrame(nowMs) {
+    function renderIntervalFrames() {
       const fps = targetRenderFps();
-      if (fps <= 0) {
-        lastRenderTimeMs = nowMs;
-        return true;
-      }
+      if (fps <= 0) return 1;
+      return Math.max(1, Math.round(DEFAULT_VISUAL_REFRESH_HZ / fps));
+    }
+
+    function maxAccumulatedSteps() {
+      const baseCap = maxStepsPerAnimationFrame();
+      if (!Number.isFinite(baseCap)) return Infinity;
+      return baseCap * Math.min(MAX_SOLVER_CATCH_UP_FRAMES, renderIntervalFrames());
+    }
+
+    function renderFrameDue(nowMs) {
+      const fps = targetRenderFps();
+      if (fps <= 0) return true;
       const minIntervalMs = 1000 / fps;
-      if (!Number.isFinite(lastRenderTimeMs) || nowMs - lastRenderTimeMs >= minIntervalMs - 1) {
-        lastRenderTimeMs = nowMs;
-        return true;
-      }
-      return false;
+      return !Number.isFinite(lastRenderTimeMs) || nowMs - lastRenderTimeMs >= minIntervalMs - 1;
+    }
+
+    function shouldRenderFrame(nowMs) {
+      if (!renderFrameDue(nowMs)) return false;
+      lastRenderTimeMs = nowMs;
+      return true;
+    }
+
+    function numericalStepBudget(renderDue) {
+      const baseCap = maxStepsPerAnimationFrame();
+      if (!Number.isFinite(baseCap)) return Infinity;
+      if (renderDue) return baseCap;
+      return Math.min(maxAccumulatedSteps(), baseCap * renderIntervalFrames());
     }
 
     function resetRuntimePacing() {
@@ -151,12 +170,14 @@
 
       let advancedSimulation = false;
       if (state.running) {
-        const frameStepCap = maxStepsPerAnimationFrame();
+        const renderDue = renderFrameDue(nowMs);
+        const frameStepCap = numericalStepBudget(renderDue);
         stepAccumulator += targetStepsPerSecond() * elapsedSeconds;
         const stepsThisFrame = Math.min(Math.floor(stepAccumulator), frameStepCap);
         stepAccumulator -= stepsThisFrame;
-        if (Number.isFinite(frameStepCap)) {
-          stepAccumulator = Math.min(stepAccumulator, frameStepCap);
+        const accumulatorLimit = maxAccumulatedSteps();
+        if (Number.isFinite(accumulatorLimit)) {
+          stepAccumulator = Math.min(stepAccumulator, accumulatorLimit);
         }
         if (stepsThisFrame > 0) {
           timeStepBatch(stepsThisFrame, () => {

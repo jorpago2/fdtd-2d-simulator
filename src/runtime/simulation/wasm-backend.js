@@ -30,6 +30,10 @@ function wasmAlign4(value) {
   return (value + 3) & ~3;
 }
 
+function wasmAlign8(value) {
+  return (value + 7) & ~7;
+}
+
 class WasmFdtdBackend {
   constructor(memory, exports) {
     this.memory = memory;
@@ -62,6 +66,11 @@ class WasmFdtdBackend {
       cursor = wasmAlign4(cursor);
       offsets[name] = cursor;
       cursor += length * Float32Array.BYTES_PER_ELEMENT;
+    };
+    const f64 = (name, length) => {
+      cursor = wasmAlign8(cursor);
+      offsets[name] = cursor;
+      cursor += length * Float64Array.BYTES_PER_ELEMENT;
     };
     const u8 = (name, length) => {
       offsets[name] = cursor;
@@ -185,6 +194,7 @@ class WasmFdtdBackend {
     f32("modeProfiles", WASM_MAX_MODE_SOURCES * ny);
     f32("modeEpsilonProfiles", WASM_MAX_MODE_SOURCES * ny);
     f32("modeMuProfiles", WASM_MAX_MODE_SOURCES * ny);
+    f64("measureStats", 2);
 
     return {
       offsets,
@@ -327,6 +337,42 @@ class WasmFdtdBackend {
     this.modeProfiles = new Float32Array(buffer, o.modeProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
     this.modeEpsilonProfiles = new Float32Array(buffer, o.modeEpsilonProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
     this.modeMuProfiles = new Float32Array(buffer, o.modeMuProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
+    this.measureStats = new Float64Array(buffer, o.measureStats, 2);
+  }
+
+  measureMode() {
+    if (state.viewMode === "poynting") {
+      if (state.fieldDisplay === "transverseX") return 6;
+      if (state.fieldDisplay === "transverseY") return 7;
+      return 5;
+    }
+    if (state.fieldDisplay === "transverseX") return 1;
+    if (state.fieldDisplay === "transverseY") return 2;
+    if (state.fieldDisplay === "electricMag") return 3;
+    if (state.fieldDisplay === "magneticMag") return 4;
+    return 0;
+  }
+
+  measureField(sim) {
+    if (typeof this.exports.measure_field !== "function" || !this.layout?.offsets || !this.measureStats) return null;
+    const o = this.layout.offsets;
+    this.exports.measure_field(
+      sim.n,
+      this.measureMode(),
+      state.fieldComponent === "hz" ? 1 : 0,
+      sim.fullVectorBianisotropyActive?.() ? 1 : 0,
+      o.ez,
+      o.hx,
+      o.hy,
+      o.dualEz,
+      o.dualHx,
+      o.dualHy,
+      o.measureStats
+    );
+    return {
+      maxAbs: this.measureStats[0],
+      energy: this.measureStats[1],
+    };
   }
 
   packTfsfSources(sim) {

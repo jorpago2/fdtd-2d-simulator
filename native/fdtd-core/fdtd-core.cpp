@@ -90,6 +90,105 @@ extern "C" __attribute__((export_name("kernel_features"))) i32 kernel_features()
   return FEATURE_CONDUCTIVITY | FEATURE_KERR | FEATURE_SATURABLE_GAIN | FEATURE_TENSOR_GYRO | FEATURE_TFSF | FEATURE_CPML | FEATURE_MODE_SOURCE | FEATURE_ELECTRIC_ADE | FEATURE_MAGNETIC_ADE | FEATURE_MODULATION | FEATURE_HARMONIC | FEATURE_PHASE_CHANGE | FEATURE_BIANISOTROPY;
 }
 
+static inline double measure_poynting_value(
+  i32 mode,
+  bool hzMode,
+  bool fullVector,
+  float ez,
+  float hx,
+  float hy,
+  float dualEz,
+  float dualHx,
+  float dualHy
+) {
+  float sx = 0.0f;
+  float sy = 0.0f;
+  if (hzMode) {
+    if (fullVector) {
+      sx = hy * ez - dualEz * dualHy;
+      sy = dualEz * dualHx - hx * ez;
+    } else {
+      sx = hy * ez;
+      sy = -hx * ez;
+    }
+  } else {
+    sx = -ez * hy;
+    sy = ez * hx;
+  }
+  if (mode == 6) return static_cast<double>(sx);
+  if (mode == 7) return static_cast<double>(sy);
+  return static_cast<double>(sqrtf_local(sx * sx + sy * sy));
+}
+
+static inline double measure_field_value(
+  i32 mode,
+  bool hzMode,
+  bool fullVector,
+  float ez,
+  float hx,
+  float hy,
+  float dualEz,
+  float dualHx,
+  float dualHy
+) {
+  if (mode >= 5) return measure_poynting_value(mode, hzMode, fullVector, ez, hx, hy, dualEz, dualHx, dualHy);
+  if (mode == 1) return static_cast<double>(hx);
+  if (mode == 2) return static_cast<double>(hy);
+  if (mode == 3) {
+    if (hzMode) {
+      return fullVector
+        ? static_cast<double>(sqrtf_local(hx * hx + hy * hy + dualEz * dualEz))
+        : static_cast<double>(sqrtf_local(hx * hx + hy * hy));
+    }
+    return static_cast<double>(absf(ez));
+  }
+  if (mode == 4) {
+    if (hzMode) {
+      return fullVector
+        ? static_cast<double>(sqrtf_local(ez * ez + dualHx * dualHx + dualHy * dualHy))
+        : static_cast<double>(absf(ez));
+    }
+    return static_cast<double>(sqrtf_local(hx * hx + hy * hy));
+  }
+  return static_cast<double>(ez);
+}
+
+extern "C" __attribute__((export_name("measure_field"))) void measure_field(
+  i32 n,
+  i32 mode,
+  i32 hzModeValue,
+  i32 fullVectorValue,
+  u32 ezOffset,
+  u32 hxOffset,
+  u32 hyOffset,
+  u32 dualEzOffset,
+  u32 dualHxOffset,
+  u32 dualHyOffset,
+  u32 outputOffset
+) {
+  float* ez = f32(ezOffset);
+  float* hx = f32(hxOffset);
+  float* hy = f32(hyOffset);
+  float* dualEz = f32(dualEzOffset);
+  float* dualHx = f32(dualHxOffset);
+  float* dualHy = f32(dualHyOffset);
+  double* output = reinterpret_cast<double*>(outputOffset);
+  const bool hzMode = hzModeValue != 0;
+  const bool fullVector = fullVectorValue != 0;
+  double maxAbs = 0.0;
+  double energy = 0.0;
+
+  for (i32 i = 0; i < n; i += 1) {
+    const double value = measure_field_value(mode, hzMode, fullVector, ez[i], hx[i], hy[i], dualEz[i], dualHx[i], dualHy[i]);
+    const double absValue = value < 0.0 ? -value : value;
+    if (absValue > maxAbs) maxAbs = absValue;
+    energy += value * value;
+  }
+
+  output[0] = maxAbs;
+  output[1] = energy;
+}
+
 static inline float electric_loss_decay(float loss, float intensity, i32 runtimeFlags, float gainSaturation) {
   float value = loss;
   if ((runtimeFlags & STEP_SATURABLE_GAIN) && value < 0.0f) {

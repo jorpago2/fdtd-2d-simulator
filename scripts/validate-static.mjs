@@ -529,6 +529,8 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
     "canUseCompiledMaterialStep",
     "canUseCompiledKerrResponse",
     "kernel_features",
+    "measure_field",
+    "measureField",
   ];
   const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${wasmBackendJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
