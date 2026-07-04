@@ -1,8 +1,20 @@
 "use strict";
 
+function fdtdSolverPhaseStart() {
+  const perf = typeof window !== "undefined" ? window.fdtdPerformance : null;
+  return perf?.now ? perf.now() : null;
+}
+
+function fdtdRecordSolverPhase(name, startedAt) {
+  const perf = typeof window !== "undefined" ? window.fdtdPerformance : null;
+  if (!perf?.record || !perf?.now || startedAt == null) return;
+  perf.record(name, perf.now() - startedAt);
+}
+
 Object.assign(FDTDSim.prototype, {
   step() {
     const compiledMaterialStep = this.canUseCompiledMaterialStep();
+    let phaseStartedAt = fdtdSolverPhaseStart();
     const phaseChangeActive = state.materialPhaseChangeEnabled;
     const compiledHandlesPhaseChange = compiledMaterialStep && this.canUseCompiledPhaseChangeResponse?.();
     if (phaseChangeActive) {
@@ -17,8 +29,10 @@ Object.assign(FDTDSim.prototype, {
     if (dynamicMaterialActive && !compiledHandlesDynamicMaterial) {
       this.applyDynamicMaterialResponse();
     }
+    fdtdRecordSolverPhase("solverAuxMaterialMs", phaseStartedAt);
     if (compiledMaterialStep) {
       this.wasmBackend.step(this);
+      phaseStartedAt = fdtdSolverPhaseStart();
       if (state.materialHarmonicEnabled) {
         if (this.canUseCompiledHarmonicResponse?.()) {
           this.wasmBackend.applyHarmonicNonlinearResponse(this);
@@ -27,14 +41,22 @@ Object.assign(FDTDSim.prototype, {
         }
       }
       this.applyBianisotropicResponse();
+      fdtdRecordSolverPhase("solverAuxMaterialMs", phaseStartedAt);
+      phaseStartedAt = fdtdSolverPhaseStart();
       this.zeroBoundaryFields();
       this.injectSource();
+      fdtdRecordSolverPhase("solverBoundarySourceMs", phaseStartedAt);
       this.time += 1;
       this.markFieldsChanged?.();
-      if (!state.running) this.updateDiagnostics();
+      if (!state.running) {
+        phaseStartedAt = fdtdSolverPhaseStart();
+        this.updateDiagnostics();
+        fdtdRecordSolverPhase("solverDiagnosticsMs", phaseStartedAt);
+      }
       return;
     }
 
+    phaseStartedAt = fdtdSolverPhaseStart();
     if (state.fieldComponent === "hz") {
       if (this.canUseCompiledFullVectorBianisotropy()) {
         this.wasmBackend.stepComponent(this, "hz");
@@ -47,15 +69,24 @@ Object.assign(FDTDSim.prototype, {
       this.applyDispersiveElectricResponse();
       this.applyTfsfScalarCorrections();
     }
+    fdtdRecordSolverPhase("solverJsKernelMs", phaseStartedAt);
+    phaseStartedAt = fdtdSolverPhaseStart();
     this.applyHarmonicNonlinearResponse();
     this.applyBianisotropicResponse();
+    fdtdRecordSolverPhase("solverAuxMaterialMs", phaseStartedAt);
 
+    phaseStartedAt = fdtdSolverPhaseStart();
     this.zeroBoundaryFields();
     this.injectSource();
     this.reconcileSplitScalarState({ isotropicOnly: true });
+    fdtdRecordSolverPhase("solverBoundarySourceMs", phaseStartedAt);
     this.time += 1;
     this.markFieldsChanged?.();
-    if (!state.running) this.updateDiagnostics();
+    if (!state.running) {
+      phaseStartedAt = fdtdSolverPhaseStart();
+      this.updateDiagnostics();
+      fdtdRecordSolverPhase("solverDiagnosticsMs", phaseStartedAt);
+    }
   },
 
   stepEzMode() {

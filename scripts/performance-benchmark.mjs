@@ -191,12 +191,30 @@ async function runBenchmarkCase(page, grid, backend, options) {
       }
 
       for (let i = 0; i < warmupSteps; i += 1) sim.step();
+      if (typeof resetPerformanceStats === "function") resetPerformanceStats();
       const stepStart = performance.now();
       for (let i = 0; i < steps; i += 1) sim.step();
       const stepMs = (performance.now() - stepStart) / steps;
+      const performanceStats = window.fdtdPerformance?.performanceStats || {};
+      const solverBreakdown = {
+        wasmKernelMs: performanceStats.solverWasmKernelSamples ? performanceStats.solverWasmKernelMs : null,
+        jsKernelMs: performanceStats.solverJsKernelSamples ? performanceStats.solverJsKernelMs : null,
+        sourcePackMs: performanceStats.solverSourcePackSamples ? performanceStats.solverSourcePackMs : null,
+        auxMaterialMs: performanceStats.solverAuxMaterialSamples ? performanceStats.solverAuxMaterialMs : null,
+        boundarySourceMs: performanceStats.solverBoundarySourceSamples ? performanceStats.solverBoundarySourceMs : null,
+        diagnosticsMs: performanceStats.solverDiagnosticsSamples ? performanceStats.solverDiagnosticsMs : null,
+      };
+
+      sim.measure();
+      const measureCachedStart = performance.now();
+      for (let i = 0; i < measureSamples; i += 1) sim.measure();
+      const measureCachedMs = (performance.now() - measureCachedStart) / measureSamples;
 
       const measureStart = performance.now();
-      for (let i = 0; i < measureSamples; i += 1) sim.measure();
+      for (let i = 0; i < measureSamples; i += 1) {
+        sim.markFieldsChanged?.();
+        sim.measure();
+      }
       const measureMs = (performance.now() - measureStart) / measureSamples;
 
       const renderStart = performance.now();
@@ -228,7 +246,9 @@ async function runBenchmarkCase(page, grid, backend, options) {
         warmupSteps,
         stepMs,
         measureMs,
+        measureCachedMs,
         renderMs,
+        solverBreakdown,
         stepsPerSecond: 1000 / stepMs,
         maxField,
         energy,
@@ -256,7 +276,11 @@ function summarizeResult(result) {
     ...result,
     stepMs: round(result.stepMs, 4),
     measureMs: round(result.measureMs, 4),
+    measureCachedMs: round(result.measureCachedMs, 4),
     renderMs: round(result.renderMs, 4),
+    solverBreakdown: Object.fromEntries(
+      Object.entries(result.solverBreakdown || {}).map(([key, value]) => [key, round(value, 4)]),
+    ),
     stepsPerSecond: round(result.stepsPerSecond, 1),
     maxField: round(result.maxField, 6),
     energy: round(result.energy, 6),
@@ -265,7 +289,7 @@ function summarizeResult(result) {
 
 function formatTable(results) {
   const rows = [
-    ["grid", "backend", "engine", "step ms", "step/s", "render ms", "measure ms"],
+    ["grid", "backend", "engine", "step ms", "step/s", "render ms", "measure ms", "cached ms"],
     ...results.map((item) => [
       `${item.nx}x${item.ny}`,
       item.backend.toUpperCase(),
@@ -274,6 +298,7 @@ function formatTable(results) {
       item.stepsPerSecond.toFixed(1),
       item.renderMs.toFixed(4),
       item.measureMs.toFixed(4),
+      item.measureCachedMs.toFixed(4),
     ]),
   ];
   const widths = rows[0].map((_, col) => Math.max(...rows.map((row) => String(row[col]).length)));

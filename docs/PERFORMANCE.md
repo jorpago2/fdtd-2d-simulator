@@ -10,6 +10,7 @@ Open the advanced `Results -> Performance` panel while the simulator is running.
 - Render cost, in ms per canvas redraw.
 - Render sub-costs for field/material pixel mapping, canvas presentation, and overlays.
 - Measurement cost, in ms per diagnostic `measure()` call.
+- Solver sub-costs for WASM kernel time, JavaScript kernel time, source packing, auxiliary material updates, boundary/source cleanup, and diagnostics.
 - Estimated solver capacity, in steps per second.
 - Active engine label and grid size.
 
@@ -26,8 +27,10 @@ npm run benchmark:perf -- --browser-channel=msedge
 The benchmark opens the app in a browser, tests the default static TMz path on several grids, and reports separate costs for:
 
 - `sim.step()`, including source injection, boundary cleanup, and diagnostics updates.
+- Solver subphase timings sampled inside `sim.step()`, when available.
 - `sim.render()`, including field-to-pixel mapping and overlays.
-- `sim.measure()`, for the diagnostic pass.
+- `sim.measure()`, for a forced full-field measurement.
+- Cached `sim.measure()` calls, which should be close to zero when no field, view, scale, or projection state changed.
 
 Use custom grids when profiling a target device:
 
@@ -42,6 +45,8 @@ npm run benchmark:perf -- --browser-channel=msedge --preset=finiteConductivity
 ```
 
 The reported WASM/JS speedup is meaningful for the static Yee update only. Dynamic materials that force the JavaScript path must be benchmarked separately before moving them to C++/WASM.
+
+`measure()` is revision-cached. The first call after a field update still scans the full field, but repeated calls with the same field revision and visual measurement mode reuse the measured max/energy values. This avoids duplicate work in UI update paths without changing the rendered field or the FDTD update.
 
 Reference run on this Windows/Edge workstation after limiting renormalization to active fields:
 
@@ -71,7 +76,7 @@ Large-grid performance work should focus first on reducing render cost, moving a
 
 ## C++ Backend Path
 
-`native/fdtd-core/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF source parameters into the imported WebAssembly memory before each compiled step.
+`native/fdtd-core/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF/source-mode parameters into the imported WebAssembly memory before each compiled step. The ordered JS argument schema is checked by `npm test` against the exported `step` and `step_hz` C++ signatures so positional drift is caught before deployment.
 
 Build it with a clang toolchain that supports `wasm32`:
 

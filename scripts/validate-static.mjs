@@ -509,6 +509,12 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
     "performanceRenderPresentOutput",
     "performanceRenderOverlayOutput",
     "performanceMeasureOutput",
+    "performanceSolverWasmOutput",
+    "performanceSolverJsOutput",
+    "performanceSourcePackOutput",
+    "performanceAuxMaterialOutput",
+    "performanceBoundarySourceOutput",
+    "performanceDiagnosticsOutput",
     "performanceThroughputOutput",
     "performanceTargetStepsOutput",
     "performanceLiveStepsOutput",
@@ -519,9 +525,19 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
   const missingIds = requiredIds.filter((id) => !indexHtml.includes(`id="${id}"`));
   const requiredSymbols = [
     "performanceStats",
+    "solverWasmKernelMs",
+    "solverJsKernelMs",
+    "solverSourcePackMs",
+    "solverAuxMaterialMs",
+    "solverBoundarySourceMs",
+    "solverDiagnosticsMs",
     "timeStepBatch",
     "instrumentSimulationPerformance",
     "updatePerformanceStats",
+    "WASM_STEP_ARGUMENT_NAMES",
+    "WASM_STEP_FIELD_OFFSET_NAMES",
+    "buildStepKernelArguments",
+    "validateStepKernelOffsets",
     "supportsConductivity",
     "supportsKerr",
     "supportsSaturableGain",
@@ -557,6 +573,89 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
   );
 }
 
+function extractFrozenStringArray(source, constName) {
+  const pattern = new RegExp(`const\\s+${constName}\\s*=\\s*Object\\.freeze\\(\\[([\\s\\S]*?)\\]\\);`);
+  const match = source.match(pattern);
+  return match ? extractAll(/"([^"]+)"/g, match[1]) : [];
+}
+
+function wasmExportParams(wasmCpp, exportName) {
+  const pattern = new RegExp(`export_name\\("${exportName}"\\)[\\s\\S]*?void\\s+\\w+\\s*\\(([\\s\\S]*?)\\)\\s*\\{`);
+  const match = wasmCpp.match(pattern);
+  if (!match) return null;
+  return match[1]
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => item.match(/([A-Za-z_]\w*)$/)?.[1] || "");
+}
+
+function normalizeWasmStepParamName(name, exportName) {
+  let normalized = String(name || "");
+  if (normalized === "s") return "courant";
+  normalized = normalized.replace(/Offset$/, "");
+  if (exportName === "step_hz") {
+    const hzAliases = {
+      hz: "ez",
+      hzx: "ezx",
+      hzy: "ezy",
+      ex: "hx",
+      ey: "hy",
+    };
+    return hzAliases[normalized] || normalized;
+  }
+  return normalized;
+}
+
+function wasmStepContractFailures(argumentNames, cxxParams, exportName) {
+  if (!Array.isArray(cxxParams)) return [`missing C++ ${exportName} export`];
+  const normalizedParams = cxxParams.map((name) => normalizeWasmStepParamName(name, exportName));
+  const failures = [];
+  if (argumentNames.length !== normalizedParams.length) {
+    failures.push(`${exportName} expects ${normalizedParams.length} args, JS schema has ${argumentNames.length}`);
+  }
+  const limit = Math.min(argumentNames.length, normalizedParams.length);
+  for (let index = 0; index < limit; index += 1) {
+    if (argumentNames[index] !== normalizedParams[index]) {
+      failures.push(`${exportName} arg ${index + 1} is ${normalizedParams[index]}, expected ${argumentNames[index]}`);
+      break;
+    }
+  }
+  return failures;
+}
+
+function validateWasmStepContract(wasmBackendJs, wasmCpp) {
+  const fieldOffsetNames = extractFrozenStringArray(wasmBackendJs, "WASM_STEP_FIELD_OFFSET_NAMES");
+  const runtimeParameterNames = extractFrozenStringArray(wasmBackendJs, "WASM_STEP_RUNTIME_PARAMETER_NAMES");
+  const argumentNames = [
+    "nx",
+    "ny",
+    "courant",
+    ...fieldOffsetNames,
+    ...runtimeParameterNames,
+    "tfsfSources",
+    "tfsfSourceCount",
+    "modeSources",
+    "modeProfiles",
+    "modeEpsilonProfiles",
+    "modeMuProfiles",
+    "modeSourceCount",
+  ];
+  const stepParams = wasmExportParams(wasmCpp, "step");
+  const stepHzParams = wasmExportParams(wasmCpp, "step_hz");
+  const failures = [];
+  if (!wasmBackendJs.includes("WASM_STEP_ARGUMENT_NAMES")) failures.push("missing WASM_STEP_ARGUMENT_NAMES");
+  if (fieldOffsetNames.length === 0) failures.push("missing WASM_STEP_FIELD_OFFSET_NAMES");
+  if (runtimeParameterNames.length === 0) failures.push("missing WASM_STEP_RUNTIME_PARAMETER_NAMES");
+  failures.push(...wasmStepContractFailures(argumentNames, stepParams, "step"));
+  failures.push(...wasmStepContractFailures(argumentNames, stepHzParams, "step_hz"));
+  addCheck(
+    "WASM step JS/C++ contract",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0 ? `${argumentNames.length} ordered arguments match step and step_hz` : failures.join(", "),
+  );
+}
+
 function main() {
   const indexHtml = readText("index.html");
   const activeScripts = scriptPathMap(indexHtml);
@@ -582,6 +681,8 @@ function main() {
     "scripts/validate-runtime-core.mjs",
     "scripts/validate-mode-solver.mjs",
     "scripts/validate-scene-library.mjs",
+    "scripts/browser-smoke.mjs",
+    "scripts/browser-physics.mjs",
     "scripts/performance-benchmark.mjs",
   ]);
 
@@ -604,6 +705,7 @@ function main() {
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
   const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js");
   validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, wasmCpp);
+  validateWasmStepContract(wasmBackendJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";
   else if (report.warnings.length > 0) report.status = "WARN";

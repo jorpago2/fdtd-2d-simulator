@@ -1402,6 +1402,30 @@
                     <output id="performanceMeasureOutput">-</output>
                   </div>
                   <div class="diagnostic-metric">
+                    <span>WASM kernel</span>
+                    <output id="performanceSolverWasmOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>JS kernel</span>
+                    <output id="performanceSolverJsOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Sources</span>
+                    <output id="performanceSourcePackOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Aux materials</span>
+                    <output id="performanceAuxMaterialOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Boundary/source</span>
+                    <output id="performanceBoundarySourceOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Diagnostics</span>
+                    <output id="performanceDiagnosticsOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
                     <span>Capacity</span>
                     <output id="performanceThroughputOutput">-</output>
                   </div>
@@ -1432,7 +1456,7 @@
     </main>
 
     <script src="src/runtime/core/constants.js?v=20260703-mode-dynamic-wasm-1"></script>
-    <script src="src/runtime/simulation/wasm-backend.js?v=20260703-mode-dynamic-wasm-1"></script>
+    <script src="src/runtime/simulation/wasm-backend.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/core/numerics.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/data/colormaps.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/data/catalog.js?v=20260703-runtime-cleanup-1"></script>
@@ -1441,7 +1465,7 @@
     <script src="src/runtime/simulation/fdtd-array-state.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="src/runtime/simulation/fdtd-engine-routing.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="src/runtime/canvas/canvas-viewport.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-field-state.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/simulation/fdtd-field-state.js?v=20260704-measure-cache-1"></script>
     <script src="src/runtime/simulation/fdtd-materials.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="src/runtime/simulation/fdtd-field-observables.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-boundaries.js?v=20260703-runtime-cleanup-1"></script>
@@ -1454,8 +1478,8 @@
     <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260702-courant-01-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-observables.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-material-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-yee.js?v=20260703-mode-dynamic-wasm-1"></script>
+    <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260704-measure-cache-1"></script>
+    <script src="src/runtime/simulation/fdtd-yee.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-surface-orbit-1"></script>
     <script src="src/runtime/canvas/canvas-field-webgl-renderer.js?v=20260704-field-webgl-1"></script>
     <script src="src/runtime/simulation/fdtd-rendering.js?v=20260703-2d-render-1"></script>
@@ -1465,7 +1489,7 @@
     <script src="src/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-dom.js?v=20260704-scene-views-1"></script>
+    <script src="src/runtime/ui/ui-dom.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
     <script src="src/runtime/ui/ui-scene-guide.js?v=20260704-collapsed-menu-cards-1"></script>
@@ -1511,7 +1535,7 @@
     <script src="src/runtime/ui/material-operations.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/app-bootstrap.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/app-layout.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/app/app-performance.js?v=20260703-time-rate-fps-1"></script>
+    <script src="src/runtime/app/app-performance.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260702-courant-01-1"></script>
     <script src="src/runtime/ui/material-stability-controller.js?v=20260704-numerics-simplify-1"></script>
     <script src="src/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
@@ -1524,6 +1548,6 @@
     <script src="src/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/control-ui-state-controller.js?v=20260704-poynting-components-1"></script>
     <script src="src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
-    <script src="src/runtime/app/main.js?v=20260703-overlay-modes-1"></script>
+    <script src="src/runtime/app/main.js?v=20260704-validation-profile-1"></script>
   </body>
 </html>

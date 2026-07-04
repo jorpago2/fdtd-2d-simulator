@@ -17,12 +17,24 @@
       renderPresentMs: 0,
       renderOverlayMs: 0,
       measureMs: 0,
+      solverWasmKernelMs: 0,
+      solverJsKernelMs: 0,
+      solverSourcePackMs: 0,
+      solverAuxMaterialMs: 0,
+      solverBoundarySourceMs: 0,
+      solverDiagnosticsMs: 0,
       stepSamples: 0,
       renderSamples: 0,
       renderMapSamples: 0,
       renderPresentSamples: 0,
       renderOverlaySamples: 0,
       measureSamples: 0,
+      solverWasmKernelSamples: 0,
+      solverJsKernelSamples: 0,
+      solverSourcePackSamples: 0,
+      solverAuxMaterialSamples: 0,
+      solverBoundarySourceSamples: 0,
+      solverDiagnosticsSamples: 0,
       lastUiUpdateMs: 0,
       liveStepRate: 0,
       liveRenderFps: 0,
@@ -147,6 +159,12 @@
       const renderPresentText = formatMs(performanceStats.renderPresentMs, performanceStats.renderPresentSamples);
       const renderOverlayText = formatMs(performanceStats.renderOverlayMs, performanceStats.renderOverlaySamples);
       const measureText = formatMs(performanceStats.measureMs, performanceStats.measureSamples);
+      const solverWasmKernelText = formatMs(performanceStats.solverWasmKernelMs, performanceStats.solverWasmKernelSamples);
+      const solverJsKernelText = formatMs(performanceStats.solverJsKernelMs, performanceStats.solverJsKernelSamples);
+      const solverSourcePackText = formatMs(performanceStats.solverSourcePackMs, performanceStats.solverSourcePackSamples);
+      const solverAuxMaterialText = formatMs(performanceStats.solverAuxMaterialMs, performanceStats.solverAuxMaterialSamples);
+      const solverBoundarySourceText = formatMs(performanceStats.solverBoundarySourceMs, performanceStats.solverBoundarySourceSamples);
+      const solverDiagnosticsText = formatMs(performanceStats.solverDiagnosticsMs, performanceStats.solverDiagnosticsSamples);
       const throughputText = formatRate(performanceStats.stepMs, performanceStats.stepSamples);
       const runtimeController = getRuntimeController();
       const targetStepsText = formatStepRate(runtimeController?.targetStepsPerSecond?.() || 0);
@@ -176,6 +194,12 @@
       if (el.performanceRenderPresentOutput) el.performanceRenderPresentOutput.textContent = renderPresentText;
       if (el.performanceRenderOverlayOutput) el.performanceRenderOverlayOutput.textContent = renderOverlayText;
       if (el.performanceMeasureOutput) el.performanceMeasureOutput.textContent = measureText;
+      if (el.performanceSolverWasmOutput) el.performanceSolverWasmOutput.textContent = solverWasmKernelText;
+      if (el.performanceSolverJsOutput) el.performanceSolverJsOutput.textContent = solverJsKernelText;
+      if (el.performanceSourcePackOutput) el.performanceSourcePackOutput.textContent = solverSourcePackText;
+      if (el.performanceAuxMaterialOutput) el.performanceAuxMaterialOutput.textContent = solverAuxMaterialText;
+      if (el.performanceBoundarySourceOutput) el.performanceBoundarySourceOutput.textContent = solverBoundarySourceText;
+      if (el.performanceDiagnosticsOutput) el.performanceDiagnosticsOutput.textContent = solverDiagnosticsText;
       if (el.performanceThroughputOutput) el.performanceThroughputOutput.textContent = throughputText;
       if (el.performanceTargetStepsOutput) el.performanceTargetStepsOutput.textContent = targetStepsText;
       if (el.performanceLiveStepsOutput) el.performanceLiveStepsOutput.textContent = liveStepsText;
@@ -190,12 +214,24 @@
       performanceStats.renderPresentMs = 0;
       performanceStats.renderOverlayMs = 0;
       performanceStats.measureMs = 0;
+      performanceStats.solverWasmKernelMs = 0;
+      performanceStats.solverJsKernelMs = 0;
+      performanceStats.solverSourcePackMs = 0;
+      performanceStats.solverAuxMaterialMs = 0;
+      performanceStats.solverBoundarySourceMs = 0;
+      performanceStats.solverDiagnosticsMs = 0;
       performanceStats.stepSamples = 0;
       performanceStats.renderSamples = 0;
       performanceStats.renderMapSamples = 0;
       performanceStats.renderPresentSamples = 0;
       performanceStats.renderOverlaySamples = 0;
       performanceStats.measureSamples = 0;
+      performanceStats.solverWasmKernelSamples = 0;
+      performanceStats.solverJsKernelSamples = 0;
+      performanceStats.solverSourcePackSamples = 0;
+      performanceStats.solverAuxMaterialSamples = 0;
+      performanceStats.solverBoundarySourceSamples = 0;
+      performanceStats.solverDiagnosticsSamples = 0;
       performanceStats.lastUiUpdateMs = 0;
       performanceStats.liveStepRate = 0;
       performanceStats.liveRenderFps = 0;

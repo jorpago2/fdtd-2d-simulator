@@ -29,6 +29,7 @@
   Object.assign(FDTDSim.prototype, {
     markFieldsChanged() {
       this.fieldTextureRevision = (Number(this.fieldTextureRevision) || 0) + 1;
+      this.measureCache = null;
     },
 
     resetFields() {

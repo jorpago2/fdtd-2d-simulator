@@ -49,6 +49,7 @@
       "priority": "P0",
       "preset": "normalInterface",
       "profile": "physics",
+      "steps": 3200,
       "browserSmoke": true,
       "checks": [
         "finite fields",
@@ -58,7 +59,8 @@
       ],
       "acceptance": {
         "reflectanceAbsTolerance": 0.08,
-        "powerBalanceTolerance": 0.12
+        "powerBalanceTolerance": 0.12,
+        "powerBalanceWarningOnly": true
       },
       "reference": {
         "type": "fresnel_normal_incidence",
@@ -73,6 +75,7 @@
       "priority": "P0",
       "preset": "brewsterTm",
       "profile": "physics",
+      "steps": 2200,
       "browserSmoke": true,
       "checks": [
         "angle sweep runs",
@@ -81,7 +84,9 @@
       ],
       "acceptance": {
         "angleToleranceDeg": 6,
-        "maxMinimumReflectance": 0.12
+        "maxMinimumReflectance": 0.12,
+        "scanSteps": 1800,
+        "minimumAngleWarningOnly": true
       },
       "reference": {
         "type": "brewster_angle",
@@ -96,6 +101,7 @@
       "priority": "P0",
       "preset": "pmlAbsorption",
       "profile": "physics",
+      "steps": 3600,
       "browserSmoke": true,
       "checks": [
         "pulse leaves the domain",

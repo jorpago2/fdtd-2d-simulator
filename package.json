@@ -18,6 +18,7 @@
     "generate:scene-thumbnails": "node scripts/generate-scene-thumbnails.mjs",
     "validate:all": "npm run validate:static && npm run validate:architecture",
     "validate:runtime": "node scripts/validate-runtime-core.mjs",
+    "validate:physics": "node scripts/browser-physics.mjs",
     "validate:ui": "node scripts/audit-ui.mjs",
     "audit:ui": "node scripts/audit-ui.mjs",
     "validate:mmi": "node scripts/validate-mmi-split.mjs",

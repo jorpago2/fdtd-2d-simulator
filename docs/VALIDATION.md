@@ -23,6 +23,7 @@ Runs `scripts/validate-static.mjs`. It checks:
 - Validation matrix presets.
 - 2D Yee CFL condition, `S < 1 / sqrt(2)`.
 - Reproducibility UI and scene snapshot functions.
+- JS/WASM FDTD step argument count parity against the exported C++ kernels.
 
 ```powershell
 npm run validate:architecture
@@ -42,7 +43,16 @@ Runs the fast smoke subset in `scripts/browser-smoke.mjs`. It starts a local sta
 npm run test:browser:physics
 ```
 
-Runs the heavier P0 browser cases whose profile is `physics`. These scenarios use longer runs and should be treated as validation/diagnostic checks, not as a quick pre-commit smoke test.
+Runs the heavier P0 browser cases whose profile is `physics`. These scenarios use direct in-browser stepping with quantitative diagnostics and should be treated as validation checks, not as a quick pre-commit smoke test.
+
+Current quantitative checks include:
+
+- Normal-incidence Fresnel reflectance, with line-monitor power-balance residual reported as a warning until a reference-normalized transmission check is added.
+- TM Brewster reflectance at the analytical angle, with the compact angle-scan minimum reported as a diagnostic warning until oblique monitor regression is reference-normalized.
+- CPML late-time residual-energy proxy after a Gaussian pulse leaves the active domain.
+- Slab-waveguide modal launch metrics: forward guided energy, backward ratio, cladding radiation ratio, and core energy fraction.
+- Ringdown analysis sample count and finite positive Q proxy.
+- Source deletion / retirement stability after a running source is removed.
 
 ## Matrix
 
@@ -87,6 +97,7 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 - Some Atlas scenes are qualitative demonstrations by design.
 - The first-pass source-physics scenes still need analytic source-pattern regression tests for phase, envelope, and steering-angle sign.
 - The first-pass monitor/observable scenes now use separated forward/backward power estimates for R/T, but still need analytic angular-sweep regression and grid convergence before quantitative claims.
+- The browser physics runner treats unnormalized transmission balance and oblique Brewster-minimum localization as warnings rather than blockers; Fresnel R, low Brewster-angle R, PML residual energy, slab modal launch, ringdown Q, and source-retirement stability remain blocking checks.
 - The first-pass nonlinear material scenes now use physical field-scale-corrected Kerr, harmonic, phase-change, and saturable-gain responses, but nonlinear transfer curves still need calibrated references and convergence workflows.
 - Temporal/Floquet scenes now distinguish uniform temporal modulation from traveling or staggered phase modulation through local phase offsets and a modulation-phase coherence proxy, but calibrated de-embedded multi-incidence scattering matrices still need dedicated validation.
 - Coupled workflow scenes now expose reduced localization, guide/cavity/source-overlap, active-material, and modulation-coherence proxies; these are comparative diagnostics, not substitutes for full eigenmode, non-Bloch, or device-level validation.

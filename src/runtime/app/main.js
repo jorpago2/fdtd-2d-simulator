@@ -797,6 +797,7 @@ function getPerformanceController() {
     window.fdtdPerformance = {
       now: performanceController.now,
       record: performanceController.record,
+      performanceStats: performanceController.performanceStats,
     };
   }
   return performanceController;

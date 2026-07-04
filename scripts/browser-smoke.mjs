@@ -149,6 +149,52 @@ async function stepSimulation(page, steps) {
   return elapsed;
 }
 
+async function preparePhysicsCase(page, testCase) {
+  await page.evaluate((caseId) => {
+    state.running = false;
+    state.diagnosticsEnabled = true;
+    state.analysisEnabled = caseId === "resonator_ringdown_q";
+    sim.resetFields();
+    sim.resetDiagnostics();
+    sim.measure();
+  }, testCase.id);
+}
+
+async function stepPhysicsSimulation(page, steps) {
+  return page.evaluate(async (stepCount) => {
+    const sampleStride = Math.max(1, Math.floor(stepCount / 60));
+    const lateStart = Math.max(0, Math.floor(stepCount * 0.78));
+    let energyPeak = 0;
+    let lateEnergySum = 0;
+    let lateEnergySamples = 0;
+    const t0 = performance.now();
+    for (let step = 0; step < stepCount; step += 1) {
+      sim.step();
+      if (step % sampleStride === 0 || step === stepCount - 1) {
+        sim.measure();
+        const energy = Number(sim.lastEnergy) || 0;
+        energyPeak = Math.max(energyPeak, energy);
+        if (step >= lateStart) {
+          lateEnergySum += energy;
+          lateEnergySamples += 1;
+        }
+      }
+      if ((step + 1) % 180 === 0) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+    }
+    sim.measure();
+    return {
+      elapsedMs: performance.now() - t0,
+      energyPeak,
+      lateEnergyAverage: lateEnergySamples > 0 ? lateEnergySum / lateEnergySamples : 0,
+      lateEnergyRatio: lateEnergySamples > 0 ? lateEnergySum / lateEnergySamples / Math.max(1e-30, energyPeak) : 0,
+      diagnosticSamples: sim.diagnosticSamples || 0,
+      analysisSamples: sim.analysisSamples || 0,
+    };
+  }, steps);
+}
+
 function parseFiniteUiNumber(text) {
   const normalized = String(text || "").trim();
   if (normalized === "overflow") return false;
@@ -170,6 +216,69 @@ async function simulationSnapshot(page) {
       energy: Number.isFinite(runtime?.lastEnergy) ? runtime.lastEnergy : readNumber("energyValue"),
     };
   });
+}
+
+async function diagnosticMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled ? sim.analysisMetricEstimate() : null;
+    return {
+      samples: sim.diagnosticSamples || 0,
+      reflectance: sim.diagnosticReflectance || 0,
+      transmittance: sim.diagnosticTransmittance || 0,
+      powerBalanceResidual:
+        sim.diagnosticSamples > 0 ? 1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0) : null,
+      incidentPower: sim.diagnosticIncidentPower || 0,
+      reflectedPower: sim.diagnosticReflectedPower || 0,
+      transmittedPower: sim.diagnosticTransmittedPower || 0,
+      angleDeg: sim.diagnosticAngleDeg || 0,
+      analysisSamples: sim.analysisSamples || 0,
+      ringdownQ: analysis?.ringdown?.q ?? null,
+      leakageRate: analysis?.leakageRate ?? null,
+    };
+  });
+}
+
+function recordAcceptanceIssue(status, message, warningOnly = false) {
+  if (warningOnly) status.warnings.push(message);
+  else status.failures.push(message);
+}
+
+async function brewsterScanMetrics(page, testCase) {
+  const expectedAngle = Number(testCase.reference?.expectedAngleDeg) || 56.31;
+  const scanSteps = Math.max(720, Math.trunc(Number(testCase.acceptance?.scanSteps) || 1800));
+  return page.evaluate(async ({ expectedAngle, scanSteps }) => {
+    const source = state.sources?.[0];
+    if (!source) return null;
+    const savedSource = { ...source };
+    const savedDiagnostics = state.diagnosticsEnabled;
+    const angles = [-10, -5, 0, 5, 10].map((delta) => expectedAngle + delta);
+    const results = [];
+    state.running = false;
+    state.diagnosticsEnabled = true;
+    for (const angle of angles) {
+      Object.assign(source, savedSource, { type: "sine", angleDeg: angle });
+      if (typeof normalizeSource === "function") normalizeSource(source);
+      sim.resetFields();
+      sim.resetDiagnostics();
+      for (let step = 0; step < scanSteps; step += 1) {
+        sim.step();
+        if ((step + 1) % 180 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+      sim.measure();
+      results.push({
+        angleDeg: angle,
+        reflectance: sim.diagnosticReflectance || 0,
+        transmittance: sim.diagnosticTransmittance || 0,
+        samples: sim.diagnosticSamples || 0,
+      });
+    }
+    Object.assign(source, savedSource);
+    if (typeof normalizeSource === "function") normalizeSource(source);
+    state.diagnosticsEnabled = savedDiagnostics;
+    const minimum = results.reduce((best, item) => (item.reflectance < best.reflectance ? item : best), results[0]);
+    return { expectedAngleDeg: expectedAngle, scanSteps, minimum, results };
+  }, { expectedAngle, scanSteps });
 }
 
 async function slabWaveguideLaunchMetrics(page) {
@@ -229,11 +338,14 @@ async function slabWaveguideLaunchMetrics(page) {
     const leftGuideEnergy = sumRegion(minX + 4, sx - 8, (y) => Math.abs(y - sy) <= coreHalfWidth);
     const rightGuideEnergy = sumRegion(sx + 16, rightMaxX, (y) => Math.abs(y - sy) <= coreHalfWidth);
     const rightCladdingEnergy = sumRegion(sx + 16, rightMaxX, (y) => Math.abs(y - sy) > claddingOffset);
+    const totalRightEnergy = sumRegion(sx + 16, rightMaxX, () => true);
     return {
       engine: sim.engineLabel(),
       leftGuideEnergy,
       rightGuideEnergy,
       rightCladdingEnergy,
+      totalRightEnergy,
+      coreEnergyFraction: rightGuideEnergy / Math.max(1e-30, totalRightEnergy),
       rightBoundaryBeforeCpml,
       rightBoundaryAtCpml,
       rightBoundaryMaterialContinuous:
@@ -246,11 +358,15 @@ async function slabWaveguideLaunchMetrics(page) {
 }
 
 async function runSmokeCase(page, testCase) {
-  const steps = matrix.profiles[testCase.profile]?.steps ?? 8;
+  const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
   const startedAt = Date.now();
   await selectPreset(page, testCase.preset);
+  if (mode === "physics") await preparePhysicsCase(page, testCase);
   const before = await simulationSnapshot(page);
-  const elapsedMs = await stepSimulation(page, steps);
+  const stepResult = mode === "physics"
+    ? await stepPhysicsSimulation(page, steps)
+    : { elapsedMs: await stepSimulation(page, steps) };
+  const elapsedMs = stepResult.elapsedMs;
   const after = await simulationSnapshot(page);
   const bodyText = await page.locator("body").innerText();
   const activeMedia = await page.evaluate(() => {
@@ -278,9 +394,11 @@ async function runSmokeCase(page, testCase) {
     afterStep: after.time,
     maxField: after.maxField,
     energy: after.energy,
+    physicsTrace: mode === "physics" ? stepResult : undefined,
     stabilityMedia,
     passed: true,
     failures: [],
+    warnings: [],
   };
 
   if (Number(after.time) <= Number(before.time)) status.failures.push("step counter did not advance");
@@ -290,14 +408,86 @@ async function runSmokeCase(page, testCase) {
   if (testCase.acceptance?.requiresActiveMediaLabel && !String(stabilityMedia).includes(testCase.acceptance.requiresActiveMediaLabel)) {
     status.failures.push(`stability media does not include ${testCase.acceptance.requiresActiveMediaLabel}`);
   }
+  if (testCase.id === "normal_interface_fresnel") {
+    status.diagnostics = await diagnosticMetrics(page);
+    const expectedR = Number(testCase.reference?.expectedR);
+    const rTolerance = Number(testCase.acceptance?.reflectanceAbsTolerance);
+    const balanceTolerance = Number(testCase.acceptance?.powerBalanceTolerance);
+    if (!(status.diagnostics.samples > 12)) status.failures.push("Fresnel diagnostics did not collect enough line-monitor samples");
+    if (Number.isFinite(expectedR) && Number.isFinite(rTolerance)) {
+      const error = Math.abs(status.diagnostics.reflectance - expectedR);
+      status.diagnostics.reflectanceAbsError = error;
+      if (error > rTolerance) {
+        status.failures.push(`Fresnel R error ${error} exceeds ${rTolerance}`);
+      }
+    }
+    if (Number.isFinite(balanceTolerance)) {
+      const residual = Math.abs(Number(status.diagnostics.powerBalanceResidual));
+      if (!Number.isFinite(residual) || residual > balanceTolerance) {
+        recordAcceptanceIssue(
+          status,
+          `Fresnel power-balance residual ${residual} exceeds ${balanceTolerance}; line-monitor T still needs reference normalization`,
+          Boolean(testCase.acceptance?.powerBalanceWarningOnly),
+        );
+      }
+    }
+  }
+  if (testCase.id === "brewster_tm_minimum") {
+    status.brewsterScan = await brewsterScanMetrics(page, testCase);
+    const angleTolerance = Number(testCase.acceptance?.angleToleranceDeg);
+    const reflectanceLimit = Number(testCase.acceptance?.maxMinimumReflectance);
+    if (!status.brewsterScan?.minimum) {
+      status.failures.push("Brewster scan did not produce a minimum");
+    } else {
+      const angleError = Math.abs(status.brewsterScan.minimum.angleDeg - status.brewsterScan.expectedAngleDeg);
+      status.brewsterScan.angleErrorDeg = angleError;
+      if (Number.isFinite(angleTolerance) && angleError > angleTolerance) {
+        recordAcceptanceIssue(
+          status,
+          `Brewster scan minimum angle error ${angleError} deg exceeds ${angleTolerance} deg; oblique monitor regression is diagnostic-only`,
+          Boolean(testCase.acceptance?.minimumAngleWarningOnly),
+        );
+      }
+      const expectedPoint = status.brewsterScan.results.reduce((best, item) => {
+        const error = Math.abs(item.angleDeg - status.brewsterScan.expectedAngleDeg);
+        return error < best.error ? { item, error } : best;
+      }, { item: null, error: Infinity }).item;
+      status.brewsterScan.expectedPoint = expectedPoint;
+      const expectedReflectance = expectedPoint?.reflectance;
+      if (Number.isFinite(reflectanceLimit) && !(Number.isFinite(expectedReflectance) && expectedReflectance <= reflectanceLimit)) {
+        status.failures.push(`Brewster-angle R ${expectedReflectance} exceeds ${reflectanceLimit}`);
+      }
+    }
+  }
+  if (testCase.id === "pml_reflection") {
+    const lateEnergyLimit = Number(testCase.acceptance?.lateEnergyRatioMax);
+    const reflectionLimit = Number(testCase.acceptance?.reflectionMax);
+    status.pml = {
+      lateEnergyRatio: stepResult.lateEnergyRatio,
+      residualReflectionProxy: stepResult.lateEnergyRatio,
+      energyPeak: stepResult.energyPeak,
+      lateEnergyAverage: stepResult.lateEnergyAverage,
+    };
+    if (!(stepResult.energyPeak > 1e-12)) status.failures.push("PML pulse did not build measurable field energy");
+    if (Number.isFinite(lateEnergyLimit) && stepResult.lateEnergyRatio > lateEnergyLimit) {
+      status.failures.push(`late PML energy ratio ${stepResult.lateEnergyRatio} exceeds ${lateEnergyLimit}`);
+    }
+    if (Number.isFinite(reflectionLimit) && status.pml.residualReflectionProxy > reflectionLimit) {
+      status.failures.push(`PML residual reflection proxy ${status.pml.residualReflectionProxy} exceeds ${reflectionLimit}`);
+    }
+  }
   if (testCase.id === "slab_waveguide_confinement") {
     status.modeLaunch = await slabWaveguideLaunchMetrics(page);
     const backwardLimit = Number(testCase.acceptance?.backwardEnergyRatioMax);
     const radiationLimit = Number(testCase.acceptance?.radiationEnergyRatioMax);
+    const coreFractionLimit = Number(testCase.acceptance?.coreEnergyFractionMin);
     if (!status.modeLaunch) {
       status.failures.push("slab waveguide did not expose modal launch metrics");
     } else {
       if (!(status.modeLaunch.rightGuideEnergy > 1e-12)) status.failures.push("slab waveguide did not launch measurable forward guided energy");
+      if (Number.isFinite(coreFractionLimit) && status.modeLaunch.coreEnergyFraction < coreFractionLimit) {
+        status.failures.push(`slab guide core energy fraction ${status.modeLaunch.coreEnergyFraction} is below ${coreFractionLimit}`);
+      }
       if (!status.modeLaunch.rightBoundaryMaterialContinuous) {
         status.failures.push("slab waveguide has a material discontinuity at the right CPML entrance");
       }
@@ -307,6 +497,16 @@ async function runSmokeCase(page, testCase) {
       if (Number.isFinite(radiationLimit) && status.modeLaunch.radiationEnergyRatio > radiationLimit) {
         status.failures.push(`cladding radiation energy ratio ${status.modeLaunch.radiationEnergyRatio} exceeds ${radiationLimit}`);
       }
+    }
+  }
+  if (testCase.id === "resonator_ringdown_q") {
+    status.analysis = await diagnosticMetrics(page);
+    const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    if (Number.isFinite(minSamples) && status.analysis.analysisSamples < minSamples) {
+      status.failures.push(`ringdown analysis has ${status.analysis.analysisSamples} samples, expected at least ${minSamples}`);
+    }
+    if (testCase.acceptance?.qProxyFinite && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ > 0)) {
+      status.failures.push(`ringdown Q proxy is not finite and positive: ${status.analysis.ringdownQ}`);
     }
   }
   const budget = matrix.profiles[testCase.profile]?.maxMsPerStep;
@@ -1769,6 +1969,12 @@ async function splitStorageSnapshot(page) {
 
 async function runSourceMutationStability(page) {
   await selectPreset(page, "poyntingPlaneWave");
+  await page.evaluate(() => {
+    state.running = false;
+    state.diagnosticsEnabled = false;
+    state.analysisEnabled = false;
+    sim.resetDiagnostics();
+  });
   await page.evaluate((steps) => {
     for (let i = 0; i < steps; i += 1) sim.step();
     sim.measure();

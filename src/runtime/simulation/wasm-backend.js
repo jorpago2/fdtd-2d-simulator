@@ -34,6 +34,121 @@ const WASM_LAYOUT_GROUP_HARMONIC = "harmonic";
 const WASM_LAYOUT_GROUP_BIANISOTROPY = "bianisotropy";
 const WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY = "fullVectorBianisotropy";
 
+const WASM_STEP_FIELD_OFFSET_NAMES = Object.freeze([
+  "ez",
+  "ezx",
+  "ezy",
+  "hx",
+  "hy",
+  "eps",
+  "loss",
+  "epsY",
+  "lossY",
+  "conductivity",
+  "conductivityY",
+  "mu",
+  "muLoss",
+  "muY",
+  "muLossY",
+  "material",
+  "modulatedMaterial",
+  "modulationPhaseOffset",
+  "nonlinearMaterial",
+  "electricTensorMaterial",
+  "gyrotropicMaterial",
+  "dispersiveMaterial",
+  "dispersionAxes",
+  "dispersionAxisX",
+  "dispersionAxisY",
+  "modulationBaseEps",
+  "modulationBaseEpsY",
+  "epsilonXY",
+  "gyrotropyG",
+  "dispersionOmegaP",
+  "dispersionGamma",
+  "dispersionOmega0",
+  "dispersionDeltaEps",
+  "dispersionTau",
+  "muDispersiveMaterial",
+  "muDispersionAxes",
+  "muDispersionOmegaP",
+  "muDispersionGamma",
+  "muDispersionOmega0",
+  "muDispersionDeltaMu",
+  "muDispersionTau",
+  "dispPz",
+  "dispJz",
+  "dispPx",
+  "dispJx",
+  "dispPy",
+  "dispJy",
+  "magDispMz",
+  "magDispJz",
+  "magDispMx",
+  "magDispJx",
+  "magDispMy",
+  "magDispJy",
+  "cpmlKappaEX",
+  "cpmlKappaHX",
+  "cpmlKappaEY",
+  "cpmlKappaHY",
+  "cpmlAEX",
+  "cpmlAHX",
+  "cpmlAEY",
+  "cpmlAHY",
+  "cpmlBEX",
+  "cpmlBHX",
+  "cpmlBEY",
+  "cpmlBHY",
+  "cpmlPsiHxY",
+  "cpmlPsiHyX",
+  "cpmlPsiEzX",
+  "cpmlPsiEzY",
+  "cpmlPsiExY",
+  "cpmlPsiEyX",
+  "cpmlPsiHzX",
+  "cpmlPsiHzY",
+]);
+
+const WASM_STEP_RUNTIME_PARAMETER_NAMES = Object.freeze([
+  "cpmlLayer",
+  "runtimeFlags",
+  "kerrChi3",
+  "kerrSaturation",
+  "gainSaturation",
+  "modulationDepth",
+  "modulationPeriodCells",
+  "modulationCosTheta",
+  "modulationSinTheta",
+  "modulationOmegaCycles",
+  "modulationPhase",
+  "time",
+  "fieldScale",
+]);
+
+const WASM_STEP_SOURCE_OFFSET_NAMES = Object.freeze([
+  "tfsfSources",
+  "modeSources",
+  "modeProfiles",
+  "modeEpsilonProfiles",
+  "modeMuProfiles",
+]);
+
+const WASM_STEP_ARGUMENT_NAMES = Object.freeze([
+  "nx",
+  "ny",
+  "courant",
+  ...WASM_STEP_FIELD_OFFSET_NAMES,
+  ...WASM_STEP_RUNTIME_PARAMETER_NAMES,
+  "tfsfSources",
+  "tfsfSourceCount",
+  "modeSources",
+  "modeProfiles",
+  "modeEpsilonProfiles",
+  "modeMuProfiles",
+  "modeSourceCount",
+]);
+
 const WASM_LAYOUT_GROUP_LABELS = Object.freeze({
   [WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL]: "dynamic material",
   [WASM_LAYOUT_GROUP_TENSOR_GYRO]: "tensor/gyrotropic material",
@@ -683,6 +798,72 @@ class WasmFdtdBackend {
     return true;
   }
 
+  solverPhaseStart() {
+    const perf = typeof window !== "undefined" ? window.fdtdPerformance : null;
+    return perf?.now ? perf.now() : null;
+  }
+
+  recordSolverPhase(name, startedAt) {
+    const perf = typeof window !== "undefined" ? window.fdtdPerformance : null;
+    if (!perf?.record || !perf?.now || startedAt == null) return;
+    perf.record(name, perf.now() - startedAt);
+  }
+
+  validateStepKernelOffsets(offsets) {
+    const requiredNames = [...WASM_STEP_FIELD_OFFSET_NAMES, ...WASM_STEP_SOURCE_OFFSET_NAMES];
+    const missing = requiredNames.filter((name) => {
+      const value = offsets?.[name];
+      return !Number.isFinite(value) || value < 0;
+    });
+    if (missing.length > 0) {
+      throw new Error(`WASM step layout is missing offset(s): ${missing.join(", ")}`);
+    }
+  }
+
+  validateStepKernelArguments(args) {
+    if (args.length !== WASM_STEP_ARGUMENT_NAMES.length) {
+      throw new Error(`WASM step argument count mismatch: JS has ${args.length}, schema has ${WASM_STEP_ARGUMENT_NAMES.length}.`);
+    }
+    const invalid = [];
+    args.forEach((value, index) => {
+      if (!Number.isFinite(value)) invalid.push(WASM_STEP_ARGUMENT_NAMES[index] || `arg${index}`);
+    });
+    if (invalid.length > 0) {
+      throw new Error(`WASM step argument(s) are not finite: ${invalid.join(", ")}`);
+    }
+  }
+
+  buildStepKernelArguments(sim, offsets, parameters) {
+    const args = [
+      sim.nx,
+      sim.ny,
+      sim.courant,
+      ...WASM_STEP_FIELD_OFFSET_NAMES.map((name) => offsets[name]),
+      parameters.cpmlLayer,
+      parameters.runtimeFlags,
+      parameters.kerrChi3,
+      parameters.kerrSaturation,
+      parameters.gainSaturation,
+      parameters.modulationDepth,
+      parameters.modulationPeriodCells,
+      parameters.modulationCosTheta,
+      parameters.modulationSinTheta,
+      parameters.modulationOmegaCycles,
+      parameters.modulationPhase,
+      parameters.time,
+      parameters.fieldScale,
+      offsets.tfsfSources,
+      parameters.tfsfSourceCount,
+      offsets.modeSources,
+      offsets.modeProfiles,
+      offsets.modeEpsilonProfiles,
+      offsets.modeMuProfiles,
+      parameters.modeSourceCount,
+    ];
+    this.validateStepKernelArguments(args);
+    return args;
+  }
+
   stepWithOffsets(sim, component, offsets, options = {}) {
     const o = offsets;
     const stepExport = component === "hz" ? this.exports.step_hz : this.exports.step;
@@ -692,106 +873,34 @@ class WasmFdtdBackend {
     const modulationTheta = ((Number(state.modulationAngleDeg) || 0) * Math.PI) / 180;
     const modulationPhase = ((Number(state.modulationPhaseDeg) || 0) * Math.PI) / 180;
     const includeSources = options.includeSources !== false;
-    const tfsfCount = includeSources && this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
+    this.validateStepKernelOffsets(o);
+    let phaseStartedAt = this.solverPhaseStart();
+    const tfsfSourceCount = includeSources && this.supportsTfsf() ? this.packTfsfSources(sim) : 0;
     const modeSourceCount = includeSources && this.supportsModeSource() ? this.packModeSources(sim) : 0;
-    stepExport(
-      sim.nx,
-      sim.ny,
-      sim.courant,
-      o.ez,
-      o.ezx,
-      o.ezy,
-      o.hx,
-      o.hy,
-      o.eps,
-      o.loss,
-      o.epsY,
-      o.lossY,
-      o.conductivity,
-      o.conductivityY,
-      o.mu,
-      o.muLoss,
-      o.muY,
-      o.muLossY,
-      o.material,
-      o.modulatedMaterial,
-      o.modulationPhaseOffset,
-      o.nonlinearMaterial,
-      o.electricTensorMaterial,
-      o.gyrotropicMaterial,
-      o.dispersiveMaterial,
-      o.dispersionAxes,
-      o.dispersionAxisX,
-      o.dispersionAxisY,
-      o.modulationBaseEps,
-      o.modulationBaseEpsY,
-      o.epsilonXY,
-      o.gyrotropyG,
-      o.dispersionOmegaP,
-      o.dispersionGamma,
-      o.dispersionOmega0,
-      o.dispersionDeltaEps,
-      o.dispersionTau,
-      o.muDispersiveMaterial,
-      o.muDispersionAxes,
-      o.muDispersionOmegaP,
-      o.muDispersionGamma,
-      o.muDispersionOmega0,
-      o.muDispersionDeltaMu,
-      o.muDispersionTau,
-      o.dispPz,
-      o.dispJz,
-      o.dispPx,
-      o.dispJx,
-      o.dispPy,
-      o.dispJy,
-      o.magDispMz,
-      o.magDispJz,
-      o.magDispMx,
-      o.magDispJx,
-      o.magDispMy,
-      o.magDispJy,
-      o.cpmlKappaEX,
-      o.cpmlKappaHX,
-      o.cpmlKappaEY,
-      o.cpmlKappaHY,
-      o.cpmlAEX,
-      o.cpmlAHX,
-      o.cpmlAEY,
-      o.cpmlAHY,
-      o.cpmlBEX,
-      o.cpmlBHX,
-      o.cpmlBEY,
-      o.cpmlBHY,
-      o.cpmlPsiHxY,
-      o.cpmlPsiHyX,
-      o.cpmlPsiEzX,
-      o.cpmlPsiEzY,
-      o.cpmlPsiExY,
-      o.cpmlPsiEyX,
-      o.cpmlPsiHzX,
-      o.cpmlPsiHzY,
-      Math.max(0, Math.trunc(Number(sim.cpmlLayer) || 0)),
+    this.recordSolverPhase("solverSourcePackMs", phaseStartedAt);
+    const args = this.buildStepKernelArguments(sim, o, {
+      cpmlLayer: Math.max(0, Math.trunc(Number(sim.cpmlLayer) || 0)),
       runtimeFlags,
-      Number(state.kerrChi3) || 0,
-      Math.max(0.05, Number(state.kerrSaturation) || 5),
-      Math.max(0.05, Number(state.gainSaturation) || 4),
+      kerrChi3: Number(state.kerrChi3) || 0,
+      kerrSaturation: Math.max(0.05, Number(state.kerrSaturation) || 5),
+      gainSaturation: Math.max(0.05, Number(state.gainSaturation) || 4),
       modulationDepth,
       modulationPeriodCells,
-      Math.cos(modulationTheta),
-      Math.sin(modulationTheta),
-      Number(state.modulationFrequency) || 0,
+      modulationCosTheta: Math.cos(modulationTheta),
+      modulationSinTheta: Math.sin(modulationTheta),
+      modulationOmegaCycles: Number(state.modulationFrequency) || 0,
       modulationPhase,
-      sim.time,
-      Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1,
-      o.tfsfSources,
-      tfsfCount,
-      o.modeSources,
-      o.modeProfiles,
-      o.modeEpsilonProfiles,
-      o.modeMuProfiles,
-      modeSourceCount
-    );
+      time: sim.time,
+      fieldScale: Number.isFinite(sim.fieldScale) ? sim.fieldScale : 1,
+      tfsfSourceCount,
+      modeSourceCount,
+    });
+    phaseStartedAt = this.solverPhaseStart();
+    try {
+      stepExport(...args);
+    } finally {
+      this.recordSolverPhase("solverWasmKernelMs", phaseStartedAt);
+    }
   }
 
   step(sim) {

@@ -904,13 +904,60 @@ updateDiagnostics({ forceAnalysis = false } = {}) {
   this.updateLineDiagnostics();
 },
 
+measureCacheKey() {
+  return [
+    Number(this.fieldTextureRevision) || 0,
+    state.viewMode,
+    state.fieldDisplay,
+    state.fieldComponent,
+    this.fullVectorBianisotropyActive?.() ? 1 : 0,
+    Number(this.fieldLog10Scale) || 0,
+    Number(this.renormalizedCount) || 0,
+  ].join("|");
+},
+
+restoreMeasuredFieldStats(cache) {
+  this.lastMax = cache.lastMax;
+  this.lastMaxLog10 = cache.lastMaxLog10;
+  this.lastEnergy = cache.lastEnergy;
+  this.lastEnergyLog10 = cache.lastEnergyLog10;
+},
+
+storeMeasuredFieldStats(key, maxAbs, energy) {
+  const physicalLogScale = this.fieldPhysicalLogScale();
+  this.lastMaxLog10 = maxAbs === 0 ? -Infinity : Math.log10(maxAbs) + physicalLogScale;
+  this.lastEnergyLog10 = energy === 0 ? -Infinity : Math.log10(energy / this.n) + 2 * physicalLogScale;
+  this.lastMax = this.lastMaxLog10 < 300 ? Math.pow(10, this.lastMaxLog10) : Infinity;
+  this.lastEnergy = this.lastEnergyLog10 < 300 ? Math.pow(10, this.lastEnergyLog10) : Infinity;
+  this.measureCache = {
+    key,
+    lastMax: this.lastMax,
+    lastMaxLog10: this.lastMaxLog10,
+    lastEnergy: this.lastEnergy,
+    lastEnergyLog10: this.lastEnergyLog10,
+  };
+},
+
 measure() {
+  const initialCacheKey = this.measureCacheKey();
+  if (!this.lastDiverged && this.measureCache?.key === initialCacheKey) {
+    this.restoreMeasuredFieldStats(this.measureCache);
+    return;
+  }
+
   this.renormalizeFields();
   if (this.lastDiverged) {
     this.lastMax = 0;
     this.lastMaxLog10 = -Infinity;
     this.lastEnergy = 0;
     this.lastEnergyLog10 = -Infinity;
+    this.measureCache = {
+      key: this.measureCacheKey(),
+      lastMax: this.lastMax,
+      lastMaxLog10: this.lastMaxLog10,
+      lastEnergy: this.lastEnergy,
+      lastEnergyLog10: this.lastEnergyLog10,
+    };
     return;
   }
 
@@ -936,10 +983,6 @@ measure() {
       energy += value * value;
     }
   }
-  const physicalLogScale = this.fieldPhysicalLogScale();
-  this.lastMaxLog10 = maxAbs === 0 ? -Infinity : Math.log10(maxAbs) + physicalLogScale;
-  this.lastEnergyLog10 = energy === 0 ? -Infinity : Math.log10(energy / this.n) + 2 * physicalLogScale;
-  this.lastMax = this.lastMaxLog10 < 300 ? Math.pow(10, this.lastMaxLog10) : Infinity;
-  this.lastEnergy = this.lastEnergyLog10 < 300 ? Math.pow(10, this.lastEnergyLog10) : Infinity;
+  this.storeMeasuredFieldStats(this.measureCacheKey(), maxAbs, energy);
 }
 });
