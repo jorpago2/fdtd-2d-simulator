@@ -223,6 +223,15 @@ Object.assign(FDTDSim.prototype, {
     state.fieldQuiver = false;
     state.viewMode = "field";
     state.materialPart = "real";
+    state.analysisEnabled = true;
+    state.analysisSampleEvery = 4;
+    state.sweepMode = "angle";
+    state.sweepStart = 0;
+    state.sweepEnd = 70;
+    state.sweepSamples = 9;
+    state.sweepSteps = 720;
+    state.sweepBidirectional = false;
+    state.sweepResults = [];
     state.materialModulationEnabled = false;
     state.materialNonlinearEnabled = false;
     state.materialHarmonicEnabled = false;
@@ -260,7 +269,6 @@ Object.assign(FDTDSim.prototype, {
     state.modulationPeriodLambda = 2;
     state.modulationAngleDeg = 0;
     state.modulationPhaseDeg = 0;
-    state.sweepBidirectional = false;
 
     if (name === "empty") {
       this.refreshCpmlMaterialContinuation(false);
@@ -1413,6 +1421,9 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.62 }]);
         break;
       case "sppInterface": {
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "scalar";
+        state.viewMode = "poynting";
         state.materialDispersionEnabled = true;
         state.dispersionModel = "drude";
         state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
@@ -1431,19 +1442,22 @@ Object.assign(FDTDSim.prototype, {
         break;
       }
       case "sppGrating": {
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "scalar";
+        state.viewMode = "poynting";
         state.materialDispersionEnabled = true;
         state.dispersionModel = "drude";
         state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
         state.dispersionGamma = mat.plasmonicMetal.gamma;
         const interfaceY = midYLambda + 0.55;
         rectL(0, interfaceY, domainXLambda, Math.max(0.1, domainYLambda - interfaceY), mat.plasmonicMetal);
-        const pitch = 0.42;
-        const start = Math.max(1.2, midXLambda - 2.2);
-        for (let i = 0; i < 11; i += 1) {
+        const pitch = 1.42;
+        const start = Math.max(1.2, midXLambda - 4.25);
+        for (let i = 0; i < 7; i += 1) {
           const x = start + i * pitch;
-          rectL(x, interfaceY - 0.13, 0.16, 0.13, mat.plasmonicMetal);
+          rectL(x, interfaceY - 0.13, 0.22, 0.13, mat.plasmonicMetal);
           if (i % 2 === 0) {
-            rectL(x + 0.16, interfaceY, 0.10, 0.11, mat.air);
+            rectL(x + 0.22, interfaceY, 0.12, 0.11, mat.air);
           }
         }
         setSources([
@@ -1514,6 +1528,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionModel = "drude";
         state.dispersionOmegaP = mat.negativeDispersive.omegaP;
         state.dispersionGamma = mat.negativeDispersive.gamma;
+        configureFrequencySweep(sourceFrequency * 0.75, sourceFrequency * 1.25, 9, 1200);
         rectL(midXLambda - 0.45, 0.5, 0.9, domainYLambda - 1.0, mat.negativeDispersive);
         setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 28, amplitude: 0.26 }]);
         break;
@@ -1522,6 +1537,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionModel = "drude";
         state.dispersionOmegaP = mat.negativeDispersive.omegaP;
         state.dispersionGamma = mat.negativeDispersive.gamma;
+        configureFrequencySweep(sourceFrequency * 0.75, sourceFrequency * 1.25, 9, 1200);
         rectL(midXLambda - 0.25, 0.6, 0.5, domainYLambda - 1.2, mat.negativeDispersive);
         setSources([{ shape: "point", xLambda: sourceX(midXLambda - 1.0), yLambda: sourceY(midYLambda), amplitude: 0.22 }]);
         break;
@@ -1630,6 +1646,7 @@ Object.assign(FDTDSim.prototype, {
         state.harmonicChi2 = 0.12;
         state.harmonicChi3 = 0;
         state.harmonicSaturation = 5.5;
+        configureAmplitudeSweep(0.18, 0.9, 9, 900);
         rectL(midXLambda - 0.9, 0.75, 1.8, domainYLambda - 1.5, { ...mat.n15, nonlinear: true });
         setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.72, amplitude: 0.62 }]);
         break;
@@ -1638,6 +1655,7 @@ Object.assign(FDTDSim.prototype, {
         state.harmonicChi2 = 0;
         state.harmonicChi3 = 0.055;
         state.harmonicSaturation = 5.5;
+        configureAmplitudeSweep(0.18, 0.9, 9, 900);
         rectL(midXLambda - 0.9, 0.75, 1.8, domainYLambda - 1.5, { ...mat.n15, nonlinear: true });
         setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.72, amplitude: 0.68 }]);
         break;
