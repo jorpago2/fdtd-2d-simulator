@@ -2,7 +2,7 @@
 
 const runtimeDependenciesModule = window.FdtdRuntimeDependencies;
 if (!runtimeDependenciesModule) {
-  throw new Error("js-next runtime module runtime-dependencies.js must be loaded before js-next/runtime/app/main.js");
+  throw new Error("src runtime module runtime-dependencies.js must be loaded before src/runtime/app/main.js");
 }
 
 const {

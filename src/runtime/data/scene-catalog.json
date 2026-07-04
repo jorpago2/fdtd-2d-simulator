@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "generatedFrom": [
     "index.html#presetInput",
-    "js-next/runtime/data/catalog.js#sceneDescriptions"
+    "src/runtime/data/catalog.js#sceneDescriptions"
   ],
   "groups": [
     {

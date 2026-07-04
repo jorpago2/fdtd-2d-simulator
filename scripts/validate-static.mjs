@@ -99,14 +99,14 @@ function runNodeSyntaxCheck(files) {
   );
 }
 
-function validateJsNextCore() {
-  const result = spawnSync(process.execPath, [repoPath("scripts", "validate-js-next-core.mjs")], {
+function validateRuntimeCore() {
+  const result = spawnSync(process.execPath, [repoPath("scripts", "validate-runtime-core.mjs")], {
     encoding: "utf8",
     windowsHide: true,
   });
   const output = `${result.stdout || ""}${result.stderr || ""}`.trim();
   addCheck(
-    "js-next core equivalence",
+    "src core equivalence",
     result.status === 0 ? "PASS" : "BLOCK",
     output || "No output",
   );
@@ -232,9 +232,9 @@ function parsePresetSelect(indexHtml) {
 }
 
 function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions) {
-  const catalogPath = repoPath("js-next", "runtime", "data", "scene-catalog.json");
+  const catalogPath = repoPath("src", "runtime", "data", "scene-catalog.json");
   if (!fs.existsSync(catalogPath)) {
-    addCheck("scene catalog JSON", "BLOCK", "Missing js-next/runtime/data/scene-catalog.json");
+    addCheck("scene catalog JSON", "BLOCK", "Missing src/runtime/data/scene-catalog.json");
     return;
   }
 
@@ -534,7 +534,7 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
-    ["wasm-src", "fdtd-core.cpp"],
+    ["native/fdtd-core", "fdtd-core.cpp"],
     ["scripts", "build-wasm-cpp.ps1"],
   ];
   const missingFiles = requiredFiles
@@ -563,24 +563,26 @@ function main() {
   const fdtdSimJs = readActiveScript(activeScripts, "fdtd-sim.js");
   const fdtdEngineRoutingJs = readActiveScript(activeScripts, "fdtd-engine-routing.js");
   const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js");
-  const wasmCpp = readText("wasm-src", "fdtd-core.cpp");
+  const wasmCpp = readText("native/fdtd-core", "fdtd-core.cpp");
   const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
     .map(assetPath)
     .filter(Boolean);
-  const jsNextFiles = listFilesRecursive("js-next", ".js");
+  const srcFiles = listFilesRecursive("src", ".js");
+  const referenceFiles = listFilesRecursive("tests/reference-modules", ".js");
   const jsFiles = unique([
     ...linkedJsFiles,
-    ...jsNextFiles,
+    ...srcFiles,
+    ...referenceFiles,
     "scripts/generate-scene-thumbnails.mjs",
     "scripts/serve-static.mjs",
-    "scripts/validate-js-next-core.mjs",
+    "scripts/validate-runtime-core.mjs",
     "scripts/validate-mode-solver.mjs",
     "scripts/validate-scene-library.mjs",
     "scripts/performance-benchmark.mjs",
   ]);
 
   runNodeSyntaxCheck(jsFiles);
-  validateJsNextCore();
+  validateRuntimeCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
   const { catalog, constants } = loadCatalog(

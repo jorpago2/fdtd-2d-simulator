@@ -19,7 +19,7 @@ function loadModeSolver() {
   context.self = context;
   context.globalThis = context;
   vm.createContext(context);
-  vm.runInContext(fs.readFileSync(repoPath("js-next", "runtime", "simulation", "fdtd-mode-solver.js"), "utf8"), context, {
+  vm.runInContext(fs.readFileSync(repoPath("src", "runtime", "simulation", "fdtd-mode-solver.js"), "utf8"), context, {
     filename: "fdtd-mode-solver.js",
   });
   return context.FdtdModeSolver;

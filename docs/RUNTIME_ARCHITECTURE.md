@@ -1,6 +1,6 @@
-# JS Next Plan
+# Runtime Architecture
 
-`js-next/` contains the JavaScript architecture for the simulator. The active app loads through `js-next/runtime/`; domain folders outside `runtime/` hold small extracted helpers and architecture notes.
+`src/` contains the active browser assets for the simulator. The active app loads through `src/runtime/`; reference modules used by validators live under `tests/reference-modules/` so they are not confused with a second runtime.
 
 ## Goals
 
@@ -13,24 +13,29 @@
 ## Directory Shape
 
 ```text
-js-next/
-  core/
-    contracts.js
-    state.js
-    formatters.js
-    scene-codec.js
-  simulation/
-  canvas/
-  ui/
-  app/
+src/
+  runtime/
+    app/
+    canvas/
+    core/
+    data/
+    simulation/
+    ui/
+  styles/
+    fdtd-ui.css
   README.md
+tests/
+  reference-modules/
+    core/
+    canvas/
+    ui/
 ```
 
 ## Refactor Rules
 
-1. `js-next/runtime/` is the active, stable browser implementation.
-2. Each `js-next` file owns one clear responsibility and exposes it under `window.FdtdNext`.
-3. Do not duplicate active files wholesale. Rebuild small modules from the current behavior, with clearer names and dependency checks.
+1. `src/runtime/` is the active, stable browser implementation.
+2. Each runtime file owns one clear responsibility and exposes it under `window.FdtdNext`.
+3. Do not duplicate active files wholesale. Reference modules belong in `tests/reference-modules/` and must be covered by `validate-runtime-core.mjs`.
 4. Keep load order explicit. No hidden side effects beyond registering a module on `window.FdtdNext`.
 5. After a module is wired into `index.html`, run the project static validator before continuing.
 6. Delete inactive code after the replacement is verified.
@@ -50,19 +55,19 @@ js-next/
 
 ## Current Status
 
-- `js-next/runtime/` is the canonical browser runtime.
-- `index.html` now loads the active simulator from `js-next/runtime/`.
-- Extracted helper modules with comparison coverage:
-  - `core/contracts.js`
-  - `core/state.js`
-  - `core/formatters.js`
-  - `core/scene-codec.js`
-  - `core/state-normalizer.js`
-  - `ui/core.js`
-  - `canvas/viewport.js`
+- `src/runtime/` is the canonical browser runtime.
+- `index.html` now loads the active simulator from `src/runtime/`.
+- Reference modules with comparison coverage:
+  - `tests/reference-modules/core/contracts.js`
+  - `tests/reference-modules/core/state.js`
+  - `tests/reference-modules/core/formatters.js`
+  - `tests/reference-modules/core/scene-codec.js`
+  - `tests/reference-modules/core/state-normalizer.js`
+  - `tests/reference-modules/ui/core.js`
+  - `tests/reference-modules/canvas/viewport.js`
 
 ## Runtime Ownership
 
-- `js-next/runtime/` preserves explicit public globals required by the ordered classic-script app.
+- `src/runtime/` preserves explicit public globals required by the ordered classic-script app.
 - New runtime changes should keep dependency checks local and update `runtime-dependencies.js` when a new controller module is required before `main.js`.
 - The simulator advances on the main browser runtime, using the C++/WASM backend when the active material/source configuration supports it.

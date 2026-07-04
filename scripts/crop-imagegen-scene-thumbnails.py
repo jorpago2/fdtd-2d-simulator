@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def catalog_scene_ids() -> list[str]:
-    catalog_path = ROOT / "js-next" / "runtime" / "data" / "scene-catalog.json"
+    catalog_path = ROOT / "src" / "runtime" / "data" / "scene-catalog.json"
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     scene_ids = [str(scene["id"]) for scene in catalog.get("scenes", []) if scene.get("id")]
     invalid = [scene_id for scene_id in scene_ids if not scene_id.replace("_", "").replace("-", "").isalnum()]

@@ -17,7 +17,7 @@
     "validate:pages": "npm run build:pages && node scripts/browser-smoke.mjs --root dist",
     "generate:scene-thumbnails": "node scripts/generate-scene-thumbnails.mjs",
     "validate:all": "npm run validate:static && npm run validate:architecture",
-    "validate:js-next": "node scripts/validate-js-next-core.mjs",
+    "validate:runtime": "node scripts/validate-runtime-core.mjs",
     "validate:ui": "node scripts/audit-ui.mjs",
     "audit:ui": "node scripts/audit-ui.mjs",
     "validate:mmi": "node scripts/validate-mmi-split.mjs",

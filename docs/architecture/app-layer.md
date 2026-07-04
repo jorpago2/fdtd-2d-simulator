@@ -1,6 +1,6 @@
-# app
+# App Layer
 
-Top-level orchestration notes for the `js-next` app.
+Top-level orchestration notes for `src/runtime/app/`.
 
 This layer owns or should own:
 

@@ -1,6 +1,6 @@
 // Minimal C++ source for the browser WASM FDTD kernel.
 //
-// The exported signatures intentionally match js-next/runtime/simulation/wasm-backend.js:
+// The exported signatures intentionally match src/runtime/simulation/wasm-backend.js:
 // array arguments are byte offsets into the imported
 // WebAssembly linear memory owned by JavaScript.
 

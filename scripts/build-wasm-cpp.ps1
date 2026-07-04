@@ -1,6 +1,6 @@
 param(
-  [string]$SourcePath = "wasm-src/fdtd-core.cpp",
-  [string]$WasmPath = "fdtd-core.wasm",
+  [string]$SourcePath = "native/fdtd-core/fdtd-core.cpp",
+  [string]$WasmPath = "assets/wasm/fdtd-core.wasm",
   [string]$Compiler = "clang++"
 )
 

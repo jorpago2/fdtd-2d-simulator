@@ -434,24 +434,24 @@ function main() {
   runtime.clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   runtime.clampInt = (value, min, max) => Math.round(runtime.clamp(Number(value) || 0, min, max));
   loadScripts(runtime, [
-    ["js-next", "runtime", "core", "app-state.js"],
-    ["js-next", "runtime", "core", "app-formatters.js"],
-    ["js-next", "runtime", "core", "scene-codec.js"],
-    ["js-next", "runtime", "ui", "ui-core.js"],
-    ["js-next", "runtime", "core", "state-normalizer.js"],
-    ["js-next", "runtime", "canvas", "canvas-viewport.js"],
+    ["src", "runtime", "core", "app-state.js"],
+    ["src", "runtime", "core", "app-formatters.js"],
+    ["src", "runtime", "core", "scene-codec.js"],
+    ["src", "runtime", "ui", "ui-core.js"],
+    ["src", "runtime", "core", "state-normalizer.js"],
+    ["src", "runtime", "canvas", "canvas-viewport.js"],
   ]);
 
   const next = createBrowserContext();
   next.devicePixelRatio = 2;
   loadScripts(next, [
-    ["js-next", "core", "contracts.js"],
-    ["js-next", "core", "state.js"],
-    ["js-next", "core", "formatters.js"],
-    ["js-next", "core", "scene-codec.js"],
-    ["js-next", "core", "state-normalizer.js"],
-    ["js-next", "ui", "core.js"],
-    ["js-next", "canvas", "viewport.js"],
+    ["tests", "reference-modules", "core", "contracts.js"],
+    ["tests", "reference-modules", "core", "state.js"],
+    ["tests", "reference-modules", "core", "formatters.js"],
+    ["tests", "reference-modules", "core", "scene-codec.js"],
+    ["tests", "reference-modules", "core", "state-normalizer.js"],
+    ["tests", "reference-modules", "ui", "core.js"],
+    ["tests", "reference-modules", "canvas", "viewport.js"],
   ]);
 
   compareStateModules(runtime, next);
@@ -460,7 +460,7 @@ function main() {
   compareUiCoreModules(runtime, next);
   compareStateNormalizerModules(runtime, next);
   compareViewportModules(runtime, next);
-  console.log("JS next core validation: PASS");
+  console.log("Runtime core validation: PASS");
 }
 
 main();

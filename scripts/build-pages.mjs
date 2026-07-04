@@ -13,10 +13,9 @@ const distDir = path.join(rootDir, "dist");
 const publicEntries = [
   ".nojekyll",
   "index.html",
-  "fdtd-ui.css",
-  "fdtd-core.wasm",
+  "src/styles/fdtd-ui.css",
   "assets",
-  path.join("js-next", "runtime"),
+  path.join("src", "runtime"),
 ];
 
 const blockedEntries = [
@@ -29,7 +28,7 @@ const blockedEntries = [
   "node_modules",
   "scripts",
   "tmp",
-  "wasm-src",
+  "native/fdtd-core",
   "AGENTS.md",
   "ATLAS_SCENES_NOT_IMPLEMENTED.md",
   "package.json",

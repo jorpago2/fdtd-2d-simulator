@@ -1,7 +1,7 @@
 (function initFdtdSceneCatalogLoader(global) {
   "use strict";
 
-  const CATALOG_URL = "js-next/runtime/data/scene-catalog.json?v=20260702-scene-library-1";
+  const CATALOG_URL = "src/runtime/data/scene-catalog.json?v=20260702-scene-library-1";
 
   let catalogPromise = null;
 

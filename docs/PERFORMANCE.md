@@ -55,7 +55,7 @@ These values are hardware- and browser-dependent. They are useful as a local reg
 
 ## Current Backend
 
-The app currently loads `fdtd-core.wasm` through `js-next/runtime/simulation/wasm-backend.js`. The active kernel is now built from `wasm-src/fdtd-core.cpp`, which exports:
+The app currently loads `assets/wasm/fdtd-core.wasm` through `src/runtime/simulation/wasm-backend.js`. The active kernel is now built from `native/fdtd-core/fdtd-core.cpp`, which exports:
 
 - `step`: TMz-style `Ez, Hx, Hy` Yee update.
 - `step_hz`: TEz-style `Hz, Ex, Ey` Yee update.
@@ -71,7 +71,7 @@ Large-grid performance work should focus first on reducing render cost, moving a
 
 ## C++ Backend Path
 
-`wasm-src/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF source parameters into the imported WebAssembly memory before each compiled step.
+`native/fdtd-core/fdtd-core.cpp` is the maintainable source for the compiled backend. The JavaScript wrapper owns the byte-offset memory layout and packs auxiliary TFSF source parameters into the imported WebAssembly memory before each compiled step.
 
 Build it with a clang toolchain that supports `wasm32`:
 
@@ -85,7 +85,7 @@ The script can auto-detect a WASI SDK installed under `%USERPROFILE%\.cache\fdtd
 .\scripts\build-wasm-cpp.ps1 -Compiler "C:\path\to\clang++.exe"
 ```
 
-After replacing `fdtd-core.wasm`, run:
+After replacing `assets/wasm/fdtd-core.wasm`, run:
 
 ```powershell
 npm test

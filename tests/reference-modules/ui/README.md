@@ -1,6 +1,6 @@
-# ui
+# UI Reference Modules
 
-DOM and control-panel code for the `js-next` app.
+DOM and control-panel reference modules used by `scripts/validate-runtime-core.mjs`.
 
 This layer owns or should own:
 

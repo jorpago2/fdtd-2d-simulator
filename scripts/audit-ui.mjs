@@ -4,20 +4,20 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cssFiles = [
-  "fdtd-ui.css",
+  "src/styles/fdtd-ui.css",
 ];
 const cssFileRoles = {
-  "fdtd-ui.css": "canonical",
+  "src/styles/fdtd-ui.css": "canonical",
 };
 const jsFiles = [
-  "js-next/runtime/app/main.js",
-  "js-next/runtime/ui/ui-core.js",
-  "js-next/runtime/ui/ui-dom.js",
-  "js-next/runtime/ui/ui-drawer.js",
-  "js-next/runtime/ui/ui-scenes.js",
-  "js-next/runtime/ui/ui-scene-guide.js",
-  "js-next/runtime/ui/ui-results.js",
-  "js-next/runtime/ui/ui-results-charts.js",
+  "src/runtime/app/main.js",
+  "src/runtime/ui/ui-core.js",
+  "src/runtime/ui/ui-dom.js",
+  "src/runtime/ui/ui-drawer.js",
+  "src/runtime/ui/ui-scenes.js",
+  "src/runtime/ui/ui-scene-guide.js",
+  "src/runtime/ui/ui-results.js",
+  "src/runtime/ui/ui-results-charts.js",
 ];
 
 const cssDomains = {

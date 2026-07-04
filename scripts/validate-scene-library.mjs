@@ -12,7 +12,7 @@ const rootDir = path.resolve(__dirname, "..");
 const stepsPerScene = Math.max(1, Number(process.env.SCENE_STEPS || 24));
 const jsonMode = process.argv.includes("--json");
 
-const catalog = JSON.parse(fs.readFileSync(path.join(rootDir, "js-next", "runtime", "data", "scene-catalog.json"), "utf8"));
+const catalog = JSON.parse(fs.readFileSync(path.join(rootDir, "src", "runtime", "data", "scene-catalog.json"), "utf8"));
 
 const report = {
   status: "PASS",

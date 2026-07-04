@@ -1,6 +1,6 @@
-# canvas
+# Canvas Reference Modules
 
-Canvas-facing code for the `js-next` app.
+Canvas-facing reference modules used by `scripts/validate-runtime-core.mjs`.
 
 This layer owns or should own:
 

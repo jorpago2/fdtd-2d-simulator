@@ -5,7 +5,7 @@
   const core = root.core || (root.core = {});
   const contracts = core.contracts;
   if (!contracts) {
-    throw new Error("js-next/core/contracts.js must be loaded before js-next/core/scene-codec.js");
+    throw new Error("tests/reference-modules/core/contracts.js must be loaded before tests/reference-modules/core/scene-codec.js");
   }
 
   const SCENE_SNAPSHOT_VERSION = 1;

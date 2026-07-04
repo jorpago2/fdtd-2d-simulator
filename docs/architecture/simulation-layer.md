@@ -1,6 +1,6 @@
-# simulation
+# Simulation Layer
 
-Numerical and physical simulation code for the `js-next` app.
+Numerical and physical simulation code for `src/runtime/simulation/`.
 
 This layer owns or should own:
 

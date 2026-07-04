@@ -1,4 +1,4 @@
-# js-next runtime
+# src runtime
 
 This folder is the active runtime for the simulator.
 

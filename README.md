@@ -46,7 +46,7 @@ docs/VALIDATION.md
 
 ## Deployment
 
-The GitHub Pages workflow publishes the generated `dist/` folder, not the full repository. This keeps development-only files such as `scripts/`, `docs/`, and `wasm-src/` out of the public artifact.
+The GitHub Pages workflow publishes the generated `dist/` folder, not the full repository. This keeps development-only files such as `scripts/`, `docs/`, and `native/fdtd-core/` out of the public artifact.
 
 Build the deployable static site locally with:
 
@@ -78,4 +78,4 @@ See:
 docs/PROJECT_MAP.md
 ```
 
-The active browser code is loaded from `js-next/runtime/`. That tree is the canonical JavaScript implementation used by `index.html`.
+The active browser code is loaded from `src/runtime/`, the stylesheet from `src/styles/`, and the compiled WebAssembly backend from `assets/wasm/`. C++ source for the backend lives in `native/fdtd-core/`; reference modules used by validators live in `tests/reference-modules/`.

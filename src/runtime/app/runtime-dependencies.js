@@ -1,7 +1,7 @@
 (function initFdtdRuntimeDependencies(global) {
   "use strict";
 
-  const MAIN_SCRIPT = "js-next/runtime/app/main.js";
+  const MAIN_SCRIPT = "src/runtime/app/main.js";
 
   const REQUIRED_MODULES = Object.freeze([
     ["appStateModule", "FdtdAppState", "app-state.js"],
@@ -69,7 +69,7 @@
     for (const [key, globalName, fileName] of REQUIRED_MODULES) {
       const moduleValue = windowRef[globalName];
       if (!moduleValue) {
-        throw new Error(`js-next runtime module ${fileName} must be loaded before ${MAIN_SCRIPT}`);
+        throw new Error(`src runtime module ${fileName} must be loaded before ${MAIN_SCRIPT}`);
       }
       dependencies[key] = moduleValue;
     }

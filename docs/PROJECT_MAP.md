@@ -4,61 +4,62 @@ Use this map to find the canonical files for UI, runtime, simulation, and valida
 
 ## One-Minute Rule
 
-- New UI/CSS work goes in `fdtd-ui.css`.
-- The active app loads one stylesheet only: `fdtd-ui.css`.
-- Active JavaScript loads from `js-next/runtime/`.
-- Files outside `js-next/runtime/` are supporting helper modules or architecture notes, not the browser load path.
+- New UI/CSS work goes in `src/styles/fdtd-ui.css`.
+- The active app loads one stylesheet only: `src/styles/fdtd-ui.css`.
+- Active JavaScript loads from `src/runtime/`.
+- Reference modules used by validators live in `tests/reference-modules/`; they are not browser load path.
 
 ## Active CSS Ownership
 
 | File | Current role | Add new rules here? |
 | --- | --- | --- |
-| `fdtd-ui.css` | Canonical UI layer: tokens, canvas shell, drawer, buttons, menu panels, shared cards, context menus, Visual controls, responsive rules. | Yes. |
+| `src/styles/fdtd-ui.css` | Canonical UI layer: tokens, canvas shell, drawer, buttons, menu panels, shared cards, context menus, Visual controls, responsive rules. | Yes. |
 
 No historical CSS bundle is part of the active repository path. Keep the app on the single canonical stylesheet unless a deliberate architecture change is made.
 
 ## Active JavaScript Ownership
 
-`index.html` loads `js-next/runtime/` as the active runtime. The files are grouped by responsibility while preserving explicit script ordering and browser globals.
+`index.html` loads `src/runtime/` as the active runtime. The files are grouped by responsibility while preserving explicit script ordering and browser globals.
 
 | Group | Active path | Purpose |
 | --- | --- | --- |
-| Core/data | `js-next/runtime/core`, `js-next/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
-| Simulation | `js-next/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
-| Canvas | `js-next/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |
-| UI/controllers | `js-next/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |
-| App orchestration | `js-next/runtime/app` | Bootstrap, runtime loop, layout, performance instrumentation and main wiring. |
+| Core/data | `src/runtime/core`, `src/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
+| Simulation | `src/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
+| Canvas | `src/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |
+| UI/controllers | `src/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |
+| App orchestration | `src/runtime/app` | Bootstrap, runtime loop, layout, performance instrumentation and main wiring. |
 
 ## Where To Change Common Things
 
 | Task | Start here |
 | --- | --- |
-| Button/toggle/menu visual issue | `fdtd-ui.css` |
-| Drawer open/close or selected menu section | `js-next/runtime/ui/ui-drawer.js` |
-| Scene list, filters, educational guide text | `js-next/runtime/ui/ui-scenes.js`, `js-next/runtime/ui/ui-scene-guide.js`, `js-next/runtime/data/catalog.js` |
-| Scene JSON export/import/share behavior | `js-next/runtime/app/scene-state-controller.js`, `js-next/runtime/core/scene-codec.js`, `js-next/runtime/core/scene-application.js`, `js-next/runtime/core/scene-repro.js` |
-| Results panel display | `js-next/runtime/ui/ui-results.js`, `js-next/runtime/ui/results-control-bindings.js` |
-| Sweep analysis, charts, and CSV | `js-next/runtime/simulation/sweep-analysis-controller.js`, `js-next/runtime/ui/ui-results-charts.js` |
-| Metric calculation | `js-next/runtime/simulation/fdtd-analysis-observables.js`, `js-next/runtime/simulation/fdtd-line-diagnostics.js`, `js-next/runtime/simulation/fdtd-diagnostics.js` |
-| Custom monitor geometry or measurement | `js-next/runtime/simulation/fdtd-custom-monitors.js`, `js-next/runtime/canvas/canvas-monitor-overlays.js`, `js-next/runtime/ui/source-monitor-control-bindings.js` |
-| Canvas paint or brush geometry insertion | `js-next/runtime/canvas/canvas-edit-actions-controller.js`, `js-next/runtime/canvas/canvas-interactions.js` |
-| Canvas keyboard, pinch/pan, touch, or drag behavior | `js-next/runtime/canvas/canvas-gesture-actions-controller.js`, `js-next/runtime/canvas/canvas-interactions.js`, `js-next/runtime/canvas/canvas-pointer-state.js`, `js-next/runtime/canvas/canvas-drag-state.js` |
-| Source editor or source behavior | `js-next/runtime/ui/source-monitor-editor-controller.js`, `js-next/runtime/ui/source-monitor-model.js`, `js-next/runtime/ui/source-monitor-control-bindings.js`, `js-next/runtime/simulation/fdtd-sources.js` |
-| Material selection/apply/delete operations | `js-next/runtime/ui/material-operations.js` |
-| Brush/material editor controls | `js-next/runtime/ui/brush-controls-controller.js`, `js-next/runtime/ui/material-editor-model.js`, `js-next/runtime/ui/material-editor-ui.js` |
-| Wavelength, grid, preset, boundary, material-editor, or brush action handlers | `js-next/runtime/ui/config-material-handlers-controller.js`, `js-next/runtime/ui/config-control-bindings.js`, `js-next/runtime/ui/material-control-bindings.js`, `js-next/runtime/ui/brush-control-bindings.js` |
-| Cross-panel text/control synchronization | `js-next/runtime/app/control-text-controller.js` |
-| App defaults or UI text formatting | `js-next/runtime/core/app-state.js`, `js-next/runtime/core/app-formatters.js` |
-| Canvas labels, scale, axes, k-vector | `js-next/runtime/canvas/canvas-reference-overlays.js` |
-| Colorbar or PNG export | `js-next/runtime/canvas/canvas-colorbar.js`, `js-next/runtime/canvas/canvas-export.js` |
-| Grid, CFL, default resolution | `js-next/runtime/core/constants.js`, `js-next/runtime/simulation/fdtd-sim.js`, `js-next/runtime/ui/config-control-bindings.js` |
-| Material warnings and numerical health text | `js-next/runtime/ui/material-stability-controller.js` |
-| Responsive canvas/layout behavior | `js-next/runtime/app/app-layout.js` |
-| Performance panel/timing instrumentation | `js-next/runtime/app/app-performance.js` |
+| Button/toggle/menu visual issue | `src/styles/fdtd-ui.css` |
+| Drawer open/close or selected menu section | `src/runtime/ui/ui-drawer.js` |
+| Scene list, filters, educational guide text | `src/runtime/ui/ui-scenes.js`, `src/runtime/ui/ui-scene-guide.js`, `src/runtime/data/catalog.js` |
+| Scene JSON export/import/share behavior | `src/runtime/app/scene-state-controller.js`, `src/runtime/core/scene-codec.js`, `src/runtime/core/scene-application.js`, `src/runtime/core/scene-repro.js` |
+| Results panel display | `src/runtime/ui/ui-results.js`, `src/runtime/ui/results-control-bindings.js` |
+| Sweep analysis, charts, and CSV | `src/runtime/simulation/sweep-analysis-controller.js`, `src/runtime/ui/ui-results-charts.js` |
+| Metric calculation | `src/runtime/simulation/fdtd-analysis-observables.js`, `src/runtime/simulation/fdtd-line-diagnostics.js`, `src/runtime/simulation/fdtd-diagnostics.js` |
+| Custom monitor geometry or measurement | `src/runtime/simulation/fdtd-custom-monitors.js`, `src/runtime/canvas/canvas-monitor-overlays.js`, `src/runtime/ui/source-monitor-control-bindings.js` |
+| Canvas paint or brush geometry insertion | `src/runtime/canvas/canvas-edit-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js` |
+| Canvas keyboard, pinch/pan, touch, or drag behavior | `src/runtime/canvas/canvas-gesture-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js`, `src/runtime/canvas/canvas-pointer-state.js`, `src/runtime/canvas/canvas-drag-state.js` |
+| Source editor or source behavior | `src/runtime/ui/source-monitor-editor-controller.js`, `src/runtime/ui/source-monitor-model.js`, `src/runtime/ui/source-monitor-control-bindings.js`, `src/runtime/simulation/fdtd-sources.js` |
+| Material selection/apply/delete operations | `src/runtime/ui/material-operations.js` |
+| Brush/material editor controls | `src/runtime/ui/brush-controls-controller.js`, `src/runtime/ui/material-editor-model.js`, `src/runtime/ui/material-editor-ui.js` |
+| Wavelength, grid, preset, boundary, material-editor, or brush action handlers | `src/runtime/ui/config-material-handlers-controller.js`, `src/runtime/ui/config-control-bindings.js`, `src/runtime/ui/material-control-bindings.js`, `src/runtime/ui/brush-control-bindings.js` |
+| Cross-panel text/control synchronization | `src/runtime/app/control-text-controller.js` |
+| App defaults or UI text formatting | `src/runtime/core/app-state.js`, `src/runtime/core/app-formatters.js` |
+| Canvas labels, scale, axes, k-vector | `src/runtime/canvas/canvas-reference-overlays.js` |
+| Colorbar or PNG export | `src/runtime/canvas/canvas-colorbar.js`, `src/runtime/canvas/canvas-export.js` |
+| Grid, CFL, default resolution | `src/runtime/core/constants.js`, `src/runtime/simulation/fdtd-sim.js`, `src/runtime/ui/config-control-bindings.js` |
+| Material warnings and numerical health text | `src/runtime/ui/material-stability-controller.js` |
+| Responsive canvas/layout behavior | `src/runtime/app/app-layout.js` |
+| Performance panel/timing instrumentation | `src/runtime/app/app-performance.js` |
 
 ## Maintenance Direction
 
-- Keep `js-next/runtime/` as the canonical browser path.
+- Keep `src/runtime/` as the canonical browser path.
+- Keep `src/` limited to `runtime/`, `styles/`, and its README so public repository structure stays unambiguous.
 - Refactor one block at a time: core/data, UI, canvas, simulation, WASM routing, then orchestration.
 - Remove inactive code when a replacement is validated, rather than keeping a second source of truth.
 - Validate with `npm run validate:static` after each replacement block.

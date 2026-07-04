@@ -54,33 +54,50 @@ function stylesheetSources(indexHtml) {
 function validateActiveAssets(indexHtml) {
   const scripts = scriptSources(indexHtml);
   const stylesheets = stylesheetSources(indexHtml);
-  const retiredAssetRefs = [...scripts, ...stylesheets].filter((asset) => asset.startsWith("legacy/") || asset.startsWith("src/"));
+  const retiredAssetRefs = [...scripts, ...stylesheets].filter((asset) => asset.startsWith("legacy/") || asset.startsWith("js-next/"));
+  const nonRuntimeScripts = scripts.filter((asset) => !asset.startsWith("src/runtime/") && !asset.startsWith("assets/vendor/"));
   addCheck(
     "active assets avoid retired paths",
     retiredAssetRefs.length === 0,
-    retiredAssetRefs.length ? retiredAssetRefs.join(", ") : "index.html loads js-next/runtime and fdtd-ui.css",
+    retiredAssetRefs.length ? retiredAssetRefs.join(", ") : "index.html loads src/runtime and src/styles/fdtd-ui.css",
+  );
+  addCheck(
+    "active scripts stay in canonical runtime",
+    nonRuntimeScripts.length === 0,
+    nonRuntimeScripts.length ? nonRuntimeScripts.join(", ") : "all active scripts load from src/runtime",
   );
   addCheck(
     "single canonical stylesheet",
-    stylesheets.length === 1 && stylesheets[0] === "fdtd-ui.css",
+    stylesheets.length === 1 && stylesheets[0] === "src/styles/fdtd-ui.css",
     stylesheets.length ? stylesheets.join(", ") : "no stylesheet linked",
   );
 }
 
 function validatePackageScripts(packageJson) {
   const packageText = JSON.stringify(packageJson.scripts || {});
-  const retiredScriptRefs = [...packageText.matchAll(/\b(?:legacy|src)\//g)].map((match) => match[0]);
+  const retiredScriptRefs = [...packageText.matchAll(/\b(?:legacy|js-next)\//g)].map((match) => match[0]);
   addCheck(
     "package scripts avoid retired active paths",
     retiredScriptRefs.length === 0,
-    retiredScriptRefs.length ? retiredScriptRefs.join(", ") : "scripts target validators and js-next runtime",
+    retiredScriptRefs.length ? retiredScriptRefs.join(", ") : "scripts target validators and src runtime",
+  );
+}
+
+function validateSourceRootShape() {
+  const allowedEntries = new Set(["README.md", "runtime", "styles"]);
+  const srcEntries = fs.readdirSync(repoPath("src"), { withFileTypes: true }).map((entry) => entry.name);
+  const unexpectedEntries = srcEntries.filter((entry) => !allowedEntries.has(entry));
+  addCheck(
+    "src contains only active browser assets",
+    unexpectedEntries.length === 0,
+    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains runtime, styles, and README only",
   );
 }
 
 function validateRuntimeDependencyInventory(indexHtml) {
   const scripts = scriptSources(indexHtml);
-  const dependencyIndex = scripts.indexOf("js-next/runtime/app/runtime-dependencies.js");
-  const mainIndex = scripts.indexOf("js-next/runtime/app/main.js");
+  const dependencyIndex = scripts.indexOf("src/runtime/app/runtime-dependencies.js");
+  const mainIndex = scripts.indexOf("src/runtime/app/main.js");
   addCheck(
     "runtime dependency inventory loads before main.js",
     dependencyIndex >= 0 && mainIndex >= 0 && dependencyIndex < mainIndex,
@@ -89,8 +106,8 @@ function validateRuntimeDependencyInventory(indexHtml) {
       : "runtime-dependencies.js or main.js missing from index.html",
   );
 
-  const mainText = readText("js-next", "runtime", "app", "main.js");
-  const repeatedLoadChecks = [...mainText.matchAll(/must be loaded before js-next\/runtime\/app\/main\.js/g)].length;
+  const mainText = readText("src", "runtime", "app", "main.js");
+  const repeatedLoadChecks = [...mainText.matchAll(/must be loaded before src\/runtime\/app\/main\.js/g)].length;
   addCheck(
     "main.js delegates runtime dependency checks",
     repeatedLoadChecks <= 1 && mainText.includes("runtimeDependenciesModule.resolveRuntimeDependencies"),
@@ -99,11 +116,11 @@ function validateRuntimeDependencyInventory(indexHtml) {
 }
 
 function validateSimulationDomBoundary() {
-  const simulationFiles = listFilesRecursive("js-next/runtime/simulation", ".js");
+  const simulationFiles = listFilesRecursive("src/runtime/simulation", ".js");
   const allowedDomFiles = new Set([
-    "js-next/runtime/simulation/fdtd-rendering.js",
-    "js-next/runtime/simulation/fdtd-sim.js",
-    "js-next/runtime/simulation/sweep-analysis-controller.js",
+    "src/runtime/simulation/fdtd-rendering.js",
+    "src/runtime/simulation/fdtd-sim.js",
+    "src/runtime/simulation/sweep-analysis-controller.js",
   ]);
   const forbiddenPatterns = [
     /\bdocument\b/,
@@ -139,7 +156,7 @@ function validateUiCssBoundary(cssText) {
 
 function validateCentralFileBudget() {
   const hardBudget = 2000;
-  const mainLines = readText("js-next", "runtime", "app", "main.js")
+  const mainLines = readText("src", "runtime", "app", "main.js")
     .split(/\r?\n/)
     .filter((line) => line.trim()).length;
   addCheck(
@@ -152,9 +169,10 @@ function validateCentralFileBudget() {
 const indexHtml = readText("index.html");
 validateActiveAssets(indexHtml);
 validatePackageScripts(JSON.parse(readText("package.json")));
+validateSourceRootShape();
 validateRuntimeDependencyInventory(indexHtml);
 validateSimulationDomBoundary();
-validateUiCssBoundary(readText("fdtd-ui.css"));
+validateUiCssBoundary(readText("src/styles/fdtd-ui.css"));
 validateCentralFileBudget();
 
 if (process.argv.includes("--json")) {
