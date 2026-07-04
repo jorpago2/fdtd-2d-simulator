@@ -196,6 +196,7 @@ Object.assign(FDTDSim.prototype, {
     const maxX = this.activeInteriorMaxX();
     const maxY = this.activeInteriorMaxY();
     if (maxX < minX || maxY < minY) return;
+    let copiedMaterial = false;
 
     for (let y = 0; y < this.ny; y += 1) {
       const sourceY = Math.max(minY, Math.min(maxY, y));
@@ -204,6 +205,7 @@ Object.assign(FDTDSim.prototype, {
         const sourceX = Math.max(minX, Math.min(maxX, x));
         const idx = this.id(x, y);
         this.copyPassiveCpmlMaterialCellByIndex(idx, this.id(sourceX, sourceY));
+        copiedMaterial = true;
         if (resetCpmlFields || this.material[idx] === 2) {
           this.zeroElectricCell(idx);
           this.hx[idx] = 0;
@@ -211,6 +213,7 @@ Object.assign(FDTDSim.prototype, {
         }
       }
     }
+    if (copiedMaterial) this.markMaterialChanged();
   },
 
   clearCpmlMaterials() {

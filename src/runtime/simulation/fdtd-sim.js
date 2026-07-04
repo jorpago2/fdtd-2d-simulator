@@ -7,6 +7,8 @@ class FDTDSim {
     this.ctx = canvas.getContext("2d", { alpha: true });
     this.courant = COURANT;
     this.wasmBackend = null;
+    this.materialTextureRevision = 0;
+    this.materialValueRevision = 0;
     this.viewX = 0;
     this.viewY = 0;
     this.viewZoom = 1;

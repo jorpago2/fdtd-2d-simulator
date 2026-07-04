@@ -240,6 +240,28 @@ void main() {
     return Boolean(sim.fullVectorBianisotropyActive?.());
   }
 
+  function materialValuesChangeWithTime() {
+    return Boolean(state.materialModulationEnabled || state.materialNonlinearEnabled || state.materialPhaseChangeEnabled);
+  }
+
+  function materialContextArrayKey(sim, materialContext) {
+    const values = materialContext?.values;
+    if (values === sim.eps) return "eps";
+    if (values === sim.loss) return "loss";
+    if (values === sim.mu) return "mu";
+    if (values === sim.muLoss) return "muLoss";
+    return "unknown";
+  }
+
+  function materialTextureCacheKey(sim) {
+    return `material|${sim.nx}x${sim.ny}|${Number(sim.materialTextureRevision) || 0}`;
+  }
+
+  function materialValueTextureCacheKey(sim, materialContext) {
+    if (materialValuesChangeWithTime()) return null;
+    return `materialValue|${materialContextArrayKey(sim, materialContext)}|${sim.nx}x${sim.ny}|${Number(sim.materialValueRevision) || 0}`;
+  }
+
   function fieldQuantityDescriptor(sim) {
     const fieldComponentHz = state.fieldComponent === "hz";
     const fullVector = hasFullVectorBianisotropy(sim);
@@ -345,6 +367,7 @@ void main() {
         lut: createTexture(gl),
       };
       this.textureSizes = new Map();
+      this.textureUploadKeys = new Map();
       this.lutKey = "";
       this.lastRenderMode = "none";
       this.installGeometry();
@@ -424,27 +447,41 @@ void main() {
       this.textureSizes.set(texture, { width, height });
     }
 
-    uploadFloatTexture(texture, textureUnit, width, height, values) {
+    textureCacheKeyMatches(texture, cacheKey) {
+      return cacheKey != null && this.textureUploadKeys.get(texture) === cacheKey;
+    }
+
+    rememberTextureUpload(texture, cacheKey) {
+      if (cacheKey == null) this.textureUploadKeys.delete(texture);
+      else this.textureUploadKeys.set(texture, cacheKey);
+    }
+
+    uploadFloatTexture(texture, textureUnit, width, height, values, cacheKey = null) {
       const gl = this.gl;
       this.bindTexture(texture, textureUnit);
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       if (!this.textureHasSize(texture, width, height)) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, width, height, 0, gl.RED, gl.FLOAT, values);
         this.rememberTextureSize(texture, width, height);
-      } else {
+        this.rememberTextureUpload(texture, cacheKey);
+      } else if (!this.textureCacheKeyMatches(texture, cacheKey)) {
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, gl.RED, gl.FLOAT, values);
+        this.rememberTextureUpload(texture, cacheKey);
       }
     }
 
     uploadMaterialTexture(sim) {
       const gl = this.gl;
+      const cacheKey = materialTextureCacheKey(sim);
       this.bindTexture(this.textures.material, MATERIAL_TEXTURE_UNIT);
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       if (!this.textureHasSize(this.textures.material, sim.nx, sim.ny)) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, sim.nx, sim.ny, 0, gl.RED, gl.UNSIGNED_BYTE, sim.material);
         this.rememberTextureSize(this.textures.material, sim.nx, sim.ny);
-      } else {
+        this.rememberTextureUpload(this.textures.material, cacheKey);
+      } else if (!this.textureCacheKeyMatches(this.textures.material, cacheKey)) {
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, sim.nx, sim.ny, gl.RED, gl.UNSIGNED_BYTE, sim.material);
+        this.rememberTextureUpload(this.textures.material, cacheKey);
       }
     }
 
@@ -527,7 +564,14 @@ void main() {
       const materialMapSigned =
         state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
       this.uploadLut(materialMapName, materialMapSigned);
-      this.uploadFloatTexture(this.textures.ez, FIELD_TEXTURE_UNITS.ez, sim.nx, sim.ny, materialContext.values);
+      this.uploadFloatTexture(
+        this.textures.ez,
+        FIELD_TEXTURE_UNITS.ez,
+        sim.nx,
+        sim.ny,
+        materialContext.values,
+        materialValueTextureCacheKey(sim, materialContext)
+      );
       for (const key of FIELD_TEXTURE_KEYS) {
         if (key !== "ez") this.bindTexture(this.textures.ez, FIELD_TEXTURE_UNITS[key]);
       }

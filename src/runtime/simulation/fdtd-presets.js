@@ -264,6 +264,7 @@ Object.assign(FDTDSim.prototype, {
 
     if (name === "empty") {
       this.refreshCpmlMaterialContinuation(false);
+      this.markMaterialChanged();
       this.resetFields();
       return;
     }
@@ -2141,6 +2142,7 @@ Object.assign(FDTDSim.prototype, {
         break;
     }
     this.refreshCpmlMaterialContinuation(false);
+    this.markMaterialChanged();
     this.resetFields();
   }
 });

@@ -27,6 +27,7 @@
     "test:physics": "node scripts/browser-physics.mjs",
     "benchmark": "node scripts/performance-benchmark.mjs",
     "benchmark:perf": "node scripts/performance-benchmark.mjs",
+    "benchmark:render": "node scripts/render-backend-benchmark.mjs",
     "build:wasm:cpp": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm-cpp.ps1"
   },
   "devDependencies": {

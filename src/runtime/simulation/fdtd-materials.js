@@ -1,6 +1,12 @@
 "use strict";
 
 Object.assign(FDTDSim.prototype, {
+markMaterialChanged({ texture = true, values = true } = {}) {
+  if (texture) this.materialTextureRevision = (Number(this.materialTextureRevision) || 0) + 1;
+  if (values) this.materialValueRevision = (Number(this.materialValueRevision) || 0) + 1;
+  this.materialTensorDiagnosticsCache = null;
+},
+
 clearMaterials(resetFields = true) {
   this.material.fill(0);
   this.eps.fill(1);
@@ -91,6 +97,7 @@ clearMaterials(resetFields = true) {
   this.harmonicPrevPx.fill(0);
   this.harmonicPrevPy.fill(0);
   this.refreshCpmlMaterialContinuation(false);
+  this.markMaterialChanged();
   if (resetFields) {
     this.resetFields();
   }
@@ -510,6 +517,7 @@ setMaterial(x, y, kind) {
     this.setCellBianisotropy(idx, 0);
     this.setCellPhaseChange(idx, null);
   }
+  this.markMaterialChanged();
 },
 
 snapshotMaterialCell(x, y) {
@@ -659,6 +667,7 @@ writeMaterialCell(x, y, cell) {
     this.zeroElectricCell(idx);
     this.zeroDualFieldCell(idx);
   }
+  this.markMaterialChanged();
   return true;
 },
 
@@ -741,6 +750,7 @@ writeAirCellAtIndex(idx) {
   this.harmonicPrevPz[idx] = 0;
   this.harmonicPrevPx[idx] = 0;
   this.harmonicPrevPy[idx] = 0;
+  this.markMaterialChanged();
 },
 
 selectableMaterialAt(x, y) {
@@ -927,6 +937,7 @@ restoreMaterialArrays(snapshot) {
   this.muDispersionOmega0.set(snapshot.muDispersionOmega0);
   this.muDispersionDeltaMu.set(snapshot.muDispersionDeltaMu);
   this.muDispersionTau.set(snapshot.muDispersionTau);
+  this.markMaterialChanged();
 },
 
 snapshotMaterialArraysWithoutRegion(region) {
@@ -1072,17 +1083,21 @@ updateCustomMaterialCells(resetFields = true) {
     this.muLossY[i] = state.customAnisotropic ? state.customMuYImag : state.customMuImag;
   }
   this.refreshCpmlMaterialContinuation(false);
+  this.markMaterialChanged({ texture: false, values: true });
   if (resetFields) {
     this.resetFields();
   }
 },
 
 restoreDynamicMaterialsToBase() {
+  let changed = false;
   for (let i = 0; i < this.n; i += 1) {
     if (!this.modulatedMaterial[i] && !this.nonlinearMaterial[i]) continue;
     this.eps[i] = this.modulationBaseEps[i];
     this.epsY[i] = this.modulationBaseEpsY[i];
+    changed = true;
   }
+  if (changed) this.markMaterialChanged({ texture: false, values: true });
 },
 
 restoreModulatedMaterialsToBase() {
