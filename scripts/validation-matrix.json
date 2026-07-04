@@ -191,6 +191,294 @@
       "rationale": "Fast guard for dispersive material state arrays and diagnostics."
     },
     {
+      "id": "plane_wave_dielectric_material_route",
+      "priority": "P1",
+      "preset": "planeWaveDielectric",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "homogeneous dielectric fills the active domain",
+        "single line source is present",
+        "finite field energy is injected in the source neighborhood"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "materialCellsMin": 45000,
+        "sourceNeighborhoodEnergyFractionMin": 1e-12
+      },
+      "rationale": "Checks the dielectric plane-wave example as a homogeneous-medium Maxwell route rather than only a preset label."
+    },
+    {
+      "id": "gaussian_pulse_air_temporal_source",
+      "priority": "P1",
+      "preset": "gaussianPulseAir",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Gaussian temporal source type is selected",
+        "single line source is present",
+        "fields remain finite after pulse launch"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "sourceType": "gaussian",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1
+      },
+      "rationale": "Checks that the Gaussian-pulse scene exercises the broadband source path, not the continuous-wave default."
+    },
+    {
+      "id": "two_source_interference_pair",
+      "priority": "P1",
+      "preset": "twoSourceInterference",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "two point sources are present",
+        "sources are vertically separated by about one wavelength or more",
+        "source-neighborhood energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "point",
+        "fieldComponent": "ez",
+        "sourceCountMin": 2,
+        "sourceCountMax": 2,
+        "sourceYSpanLambdaMin": 1.2,
+        "sourceNeighborhoodEnergyFractionMin": 1e-12
+      },
+      "rationale": "Checks the interference example as a genuine two-source coherent geometry."
+    },
+    {
+      "id": "frequency_beat_dual_frequency_sources",
+      "priority": "P1",
+      "preset": "frequencyBeat",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "two point sources are present",
+        "source frequencies are deliberately detuned",
+        "source-neighborhood energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "point",
+        "fieldComponent": "ez",
+        "sourceCountMin": 2,
+        "sourceCountMax": 2,
+        "sourceYSpanLambdaMin": 0.7,
+        "sourceFrequencyRatioMin": 1.1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-12
+      },
+      "rationale": "Checks the beating example as two coherent emitters with distinct temporal frequencies."
+    },
+    {
+      "id": "circular_aperture_screen_geometry",
+      "priority": "P1",
+      "preset": "circularAperture",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "PEC screen is present",
+        "finite circular aperture remains open around the optical axis",
+        "incident line source is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "pecCellsMin": 150,
+        "apertureGapCellsMin": 20
+      },
+      "rationale": "Checks the circular-aperture diffraction scene as a real PEC screen with an open aperture."
+    },
+    {
+      "id": "te_tm_comparison_angle_sweep",
+      "priority": "P1",
+      "preset": "teTmComparison",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Hz-polarized solver route is selected",
+        "angle sweep metadata is configured",
+        "dielectric half-space is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "hz",
+        "sweepMode": "angle",
+        "sweepSamplesMin": 15,
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceAngleMeanAbsDegMin": 30,
+        "sourceAngleMeanAbsDegMax": 40,
+        "materialCellsMin": 22000
+      },
+      "rationale": "Checks the TE/TM comparison scene as an oblique-interface sweep with explicit polarization metadata."
+    },
+    {
+      "id": "poynting_plane_wave_oblique_flux_view",
+      "priority": "P1",
+      "preset": "poyntingPlaneWave",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Poynting-vector view is selected",
+        "field quiver overlay is enabled",
+        "oblique line source is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "fieldQuiver": true,
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceAngleMeanAbsDegMin": 20,
+        "sourceAngleMeanAbsDegMax": 30
+      },
+      "rationale": "Checks that the Poynting example actually selects a flux-oriented visualization and oblique propagation."
+    },
+    {
+      "id": "evanescent_wave_source_metadata",
+      "priority": "P1",
+      "preset": "evanescentWave",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "evanescent line source route is selected",
+        "configured k_parallel/k0 is greater than unity",
+        "fields remain finite near the evanescent source"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "evanescentLine",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "evanescentKParallelRatioMin": 1.1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-12
+      },
+      "rationale": "Checks the evanescent-wave scene as an explicit supercritical tangential-wavenumber source."
+    },
+    {
+      "id": "oblique_refraction_gaussian_interface",
+      "priority": "P1",
+      "preset": "obliqueRefraction",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Gaussian-profile beam source is obliquely incident",
+        "dielectric half-space is present",
+        "field energy remains finite after launch"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "gaussianProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceAngleMeanAbsDegMin": 22,
+        "sourceAngleMeanAbsDegMax": 34,
+        "materialCellsMin": 22000,
+        "sourceNeighborhoodEnergyFractionMin": 1e-12
+      },
+      "rationale": "Checks the oblique-refraction scene as a finite-width beam incident on a dielectric interface."
+    },
+    {
+      "id": "brewster_te_tm_angle_sweep",
+      "priority": "P1",
+      "preset": "brewsterTeTm",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Hz-polarized solver route is selected",
+        "Brewster-angle source and angle sweep are configured",
+        "dielectric half-space is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "hz",
+        "sweepMode": "angle",
+        "sweepSamplesMin": 17,
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceAngleMeanAbsDegMin": 50,
+        "sourceAngleMeanAbsDegMax": 62,
+        "materialCellsMin": 22000
+      },
+      "rationale": "Checks the Brewster TE/TM scene as an angle-sweep interface example with the source near the analytical Brewster angle."
+    },
+    {
+      "id": "lossy_interface_material_route",
+      "priority": "P1",
+      "preset": "lossyInterface",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "dielectric half-space is present",
+        "loss coefficient is nonzero in the transmitted medium",
+        "incident line source is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "materialCellsMin": 22000,
+        "lossyCellsMin": 22000
+      },
+      "rationale": "Checks the lossy-interface scene as an absorptive dielectric interface, not merely a refractive-index step."
+    },
+    {
+      "id": "anisotropic_interface_tensor_route",
+      "priority": "P1",
+      "preset": "anisotropicInterface",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "anisotropic dielectric half-space is present",
+        "epsilon tensor components differ in the material region",
+        "oblique Gaussian-profile source is present"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "gaussianProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceAngleMeanAbsDegMin": 18,
+        "sourceAngleMeanAbsDegMax": 30,
+        "materialCellsMin": 22000,
+        "anisotropicCellsMin": 22000
+      },
+      "rationale": "Checks the anisotropic-interface scene as a tensor-material route with oblique excitation."
+    },
+    {
       "id": "single_slit_diffraction_symmetry",
       "priority": "P1",
       "preset": "singleSlit",
@@ -1182,6 +1470,358 @@
         "dropToBusRatioMin": 0.001
       },
       "rationale": "Checks that the add-drop ring example includes both ports and produces a finite coupled-field proxy."
+    },
+    {
+      "id": "multimode_slab_two_mode_launch",
+      "priority": "P1",
+      "preset": "multimodeSlab",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "wide slab core is present",
+        "two mode-profile sources are configured",
+        "the second source has a higher transverse mode order"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 2,
+        "sourceCountMax": 2,
+        "sourceModeOrderMaxMin": 1,
+        "highIndexCellsMin": 2500,
+        "maxColumnSpanLambdaMin": 0.7,
+        "sourceOverlapEnergyFractionMin": 1e-10
+      },
+      "rationale": "Checks the multimode slab as a deliberately wider guide with two modal excitations, not as a copy of the single-mode guide."
+    },
+    {
+      "id": "lossy_guide_absorptive_core",
+      "priority": "P1",
+      "preset": "lossyGuide",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "single mode-profile source is present",
+        "guide core has nonzero loss",
+        "finite guided-band energy is present"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 900,
+        "lossyCellsMin": 900,
+        "guideBandHighIndexCellsMin": 900,
+        "sourceOverlapEnergyFractionMin": 1e-10
+      },
+      "rationale": "Checks that the lossy-guide scene exercises an absorptive guided-core route."
+    },
+    {
+      "id": "waveguide_bend_l_route",
+      "priority": "P1",
+      "preset": "waveguideBend",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "mode-profile source launches into the horizontal guide",
+        "high-index guide centroid shifts into the bend",
+        "off-axis guide section is present"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 700,
+        "guideBandHighIndexCellsMin": 400,
+        "lowerOffAxisHighIndexCellsMin": 80,
+        "centroidShiftRangeLambdaMin": 0.45,
+        "materialBoundsHeightLambdaMin": 1.2
+      },
+      "rationale": "Checks the bend scene as an L-shaped high-index route rather than a straight guide."
+    },
+    {
+      "id": "taper_waveguide_width_ramp",
+      "priority": "P1",
+      "preset": "taperWaveguide",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "mode-profile source is present",
+        "guide width changes across the device",
+        "adjacent-column width changes remain gradual"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 1000,
+        "widthRangeLambdaMin": 0.22,
+        "maxAdjacentWidthJumpLambdaMax": 0.16,
+        "maxColumnSpanLambdaMin": 0.34
+      },
+      "rationale": "Checks the taper as a gradual width-transition example."
+    },
+    {
+      "id": "width_step_waveguide_abrupt_step",
+      "priority": "P1",
+      "preset": "widthStepWaveguide",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "mode-profile source is present",
+        "narrow and wide guide sections are present",
+        "the width transition is abrupt"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 1200,
+        "widthRangeLambdaMin": 0.2,
+        "maxAdjacentWidthJumpLambdaMin": 0.16,
+        "maxColumnSpanLambdaMin": 0.45
+      },
+      "rationale": "Checks the width-step scene as an abrupt discontinuity, distinct from the taper."
+    },
+    {
+      "id": "directional_coupler_two_parallel_guides",
+      "priority": "P1",
+      "preset": "directionalCoupler",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "two separated high-index guides are present",
+        "mode-profile source excites one guide",
+        "many columns contain two guide segments"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 1200,
+        "maxSegmentsPerColumnMin": 2,
+        "columnsWithMultipleSegmentsMin": 80,
+        "maxSegmentSeparationLambdaMin": 0.35
+      },
+      "rationale": "Checks the directional coupler as two parallel guides with finite separation."
+    },
+    {
+      "id": "guide_scatterer_off_axis_defect",
+      "priority": "P1",
+      "preset": "guideScatterer",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "straight guide is present",
+        "small off-axis dielectric perturbation is present",
+        "mode-profile source is present"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 900,
+        "guideBandHighIndexCellsMin": 900,
+        "offsetScattererHighIndexCellsMin": 8
+      },
+      "rationale": "Checks the guide-scatterer scene as a finite perturbation coupled to a guided mode."
+    },
+    {
+      "id": "stub_resonator_side_branch",
+      "priority": "P1",
+      "preset": "stubResonator",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "straight bus guide is present",
+        "side stub high-index branch is present",
+        "stub has no PEC short at its end"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "guideBandHighIndexCellsMin": 900,
+        "stubHighIndexCellsMin": 80,
+        "stubPecCellsMax": 0
+      },
+      "rationale": "Checks the stub resonator as a side-coupled dielectric branch rather than a straight guide."
+    },
+    {
+      "id": "racetrack_resonator_bus_coupling",
+      "priority": "P1",
+      "preset": "racetrackResonator",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "bus guide is present",
+        "racetrack annulus cells are present",
+        "analysis trace fills during modal excitation"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "requiresAnalysis": true,
+        "sourceShape": "modeProfile",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "racetrackRingCellsMin": 180,
+        "busHighIndexCellsMin": 80,
+        "minAnalysisSamples": 64
+      },
+      "rationale": "Checks the racetrack example as an elongated side-coupled resonator with analysis enabled."
+    },
+    {
+      "id": "dielectric_cavity_disk_dipole",
+      "priority": "P1",
+      "preset": "dielectricCavity",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "central high-index disk is present",
+        "single point-dipole source is inside the cavity",
+        "source-overlap energy remains finite"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "centralDiskHighIndexCellsMin": 180,
+        "sourceOverlapEnergyFractionMin": 1e-10
+      },
+      "rationale": "Checks the dielectric cavity as a localized high-index disk driven by an internal dipole."
+    },
+    {
+      "id": "pec_cavity_frame_source",
+      "priority": "P1",
+      "preset": "pecCavity",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "central PEC frame is present",
+        "single Gaussian point source is inside the frame",
+        "source-overlap energy remains finite"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "sourceShape": "point",
+        "sourceType": "gaussian",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "centralPecCellsMin": 80,
+        "sourceOverlapEnergyFractionMin": 1e-10
+      },
+      "rationale": "Checks the PEC cavity as a finite conducting frame excited by a localized source."
+    },
+    {
+      "id": "quarter_wave_cavity_short_stub",
+      "priority": "P1",
+      "preset": "quarterWaveCavity",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "bus guide is present",
+        "quarter-wave dielectric stub is present",
+        "stub terminates in a PEC short"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "requiresAnalysis": true,
+        "sourceShape": "modeProfile",
+        "sourceType": "gaussian",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "guideBandHighIndexCellsMin": 900,
+        "stubHighIndexCellsMin": 60,
+        "stubPecCellsMin": 4,
+        "minAnalysisSamples": 64
+      },
+      "rationale": "Checks the quarter-wave cavity as a side stub with a shorted end, distinct from the open dielectric stub."
+    },
+    {
+      "id": "beta_factor_guided_flux_proxy",
+      "priority": "P1",
+      "preset": "betaFactor",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "slab guide is present",
+        "single dipole source is coupled to the guide",
+        "analysis reports a finite guided-flux beta proxy"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "requiresAnalysis": true,
+        "sourceShape": "pointDipole",
+        "sourceType": "gaussian",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "guideBandHighIndexCellsMin": 1000,
+        "sourceOverlapEnergyFractionMin": 1e-10,
+        "betaMin": 1e-6,
+        "minAnalysisSamples": 64
+      },
+      "rationale": "Checks the beta-factor example as a dipole-to-guide coupling proxy, not an absolute calibrated beta-factor measurement."
+    },
+    {
+      "id": "degenerate_modes_dual_dipole_split",
+      "priority": "P1",
+      "preset": "degenerateModes",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "central high-index disk is present",
+        "two off-center dipole sources are present",
+        "analysis reports a finite modal/spectral split proxy"
+      ],
+      "acceptance": {
+        "guidedDeviceCheck": true,
+        "requiresAnalysis": true,
+        "sourceShape": "pointDipole",
+        "sourceType": "gaussian",
+        "fieldComponent": "ez",
+        "sourceCountMin": 2,
+        "sourceCountMax": 2,
+        "sourceSeparationLambdaMin": 0.2,
+        "centralDiskHighIndexCellsMin": 250,
+        "splitMin": 1e-7,
+        "minAnalysisSamples": 64
+      },
+      "rationale": "Checks the degenerate-mode scene as a symmetric disk with two perturbative dipole drives and a finite spectral splitting proxy."
     },
     {
       "id": "pec_cylinder_scattering_shadow",

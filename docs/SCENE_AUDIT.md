@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T19:30:43.380Z
-Git commit: 1590ce2+working-tree
+Generated: 2026-07-04T20:30:44.995Z
+Git commit: 7050331+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 87 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 26 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 113 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -24,27 +24,27 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | ---: | --- | --- | --- | --- | --- | --- | --- |
 |  | `empty` Empty | General | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=0.00e+0 | none | OK |
 | 1 | `planeWaveAir` Plane wave in air | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | air_propagation:P0/smoke | OK |
-| 2 | `planeWaveDielectric` Plane wave in dielectric | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.79e-8 | none | no validation-matrix case covers this preset |
-| 3 | `gaussianPulseAir` Gaussian pulse in free space | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 4 | `twoSourceInterference` Two-source interference | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.03e-6 | none | no validation-matrix case covers this preset |
-| 5 | `frequencyBeat` Two-frequency beat | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.26e-6 | none | no validation-matrix case covers this preset |
+| 2 | `planeWaveDielectric` Plane wave in dielectric | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.79e-8 | plane_wave_dielectric_material_route:P1/physics | OK |
+| 3 | `gaussianPulseAir` Gaussian pulse in free space | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | gaussian_pulse_air_temporal_source:P1/physics | OK |
+| 4 | `twoSourceInterference` Two-source interference | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.03e-6 | two_source_interference_pair:P1/physics | OK |
+| 5 | `frequencyBeat` Two-frequency beat | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.26e-6 | frequency_beat_dual_frequency_sources:P1/physics | OK |
 | 6 | `singleSlit` Single slit diffraction | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=9.72e-8 | single_slit_diffraction_symmetry:P1/physics | OK |
 | 7 | `doubleSlit` Double slit | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=9.72e-8 | double_slit_interference_profile:P1/physics | OK |
-| 8 | `circularAperture` Circular aperture | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 9 | `teTmComparison` TEz/TMz comparison | 1. Maxwell and propagation | VALIDATION_GAP | HZ polarization | WASM CPML+TFSF, 24 steps, E=2.41e-4 | none | no validation-matrix case covers this preset |
-| 10 | `poyntingPlaneWave` Poynting vector | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=3.67e-5 | none | no validation-matrix case covers this preset |
-| 11 | `evanescentWave` Evanescent isolated wave | 1. Maxwell and propagation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.07e-2 | source_physics_first_pass:P1/physics | validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
+| 8 | `circularAperture` Circular aperture | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | circular_aperture_screen_geometry:P1/physics | OK |
+| 9 | `teTmComparison` TEz/TMz comparison | 1. Maxwell and propagation | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=2.41e-4 | te_tm_comparison_angle_sweep:P1/physics | OK |
+| 10 | `poyntingPlaneWave` Poynting vector | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=3.67e-5 | poynting_plane_wave_oblique_flux_view:P1/physics | OK |
+| 11 | `evanescentWave` Evanescent isolated wave | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.07e-2 | evanescent_wave_source_metadata:P1/physics, source_physics_first_pass:P1/physics | OK |
 | 12 | `pmlAbsorption` CPML absorption check | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.98e-6 | pml_reflection:P0/physics | OK |
 | 13 | `normalInterface` Normal air-dielectric interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | normal_interface_fresnel:P0/physics, json_reproducibility:P1/smoke | OK |
-| 14 | `obliqueRefraction` Oblique refraction | 2. Interfaces and multilayers | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.73e-7 | none | no validation-matrix case covers this preset |
+| 14 | `obliqueRefraction` Oblique refraction | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.73e-7 | oblique_refraction_gaussian_interface:P1/physics | OK |
 | 15 | `brewsterTm` Brewster TM minimum | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_tm_minimum:P0/physics | OK |
-| 16 | `brewsterTeTm` TE/TM Brewster comparison | 2. Interfaces and multilayers | VALIDATION_GAP | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | monitor_observable_first_pass:P1/physics | validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
+| 16 | `brewsterTeTm` TE/TM Brewster comparison | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_te_tm_angle_sweep:P1/physics, monitor_observable_first_pass:P1/physics | OK |
 | 17 | `totalInternalReflection` Total internal reflection | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | total_internal_reflection_evanescent:P1/physics | OK |
 | 18 | `frustratedTir` Frustrated TIR | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | frustrated_tir_tunneling:P1/physics | OK |
 | 19 | `quarterWaveCoating` Quarter-wave coating | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | quarter_wave_coating_low_reflection:P1/physics | OK |
 | 20 | `braggMirror` 1D Bragg mirror | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | bragg_mirror_stopband_reflection:P1/physics | OK |
-| 21 | `lossyInterface` Lossy interface | 2. Interfaces and multilayers | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 22 | `anisotropicInterface` Anisotropic interface | 2. Interfaces and multilayers | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.07e-7 | none | no validation-matrix case covers this preset |
+| 21 | `lossyInterface` Lossy interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | lossy_interface_material_route:P1/physics | OK |
+| 22 | `anisotropicInterface` Anisotropic interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.07e-7 | anisotropic_interface_tensor_route:P1/physics | OK |
 | 23 | `jzDipole` Point electric dipole Jz | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.41e-5 | jz_dipole_localized_source:P1/physics | OK |
 | 24 | `inPlaneDipole` In-plane electric dipole Jx/Jy | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=1.86e-6 | in_plane_dipole_hz_source:P1/physics | OK |
 | 25 | `mzDipole` Effective magnetic dipole Mz | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=7.41e-5 | mz_dipole_hz_source:P1/physics | OK |
@@ -58,29 +58,29 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 33 | `apertureRadiator` Slot aperture radiator | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=6.96e-6 | aperture_radiator_slot_geometry:P1/physics | OK |
 | 34 | `nearFarFieldNtff` Near-field / far-field NTFF | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=4.96e-5 | near_far_field_ntff_proxy:P1/physics | OK |
 | 35 | `slabWaveguide` Single-mode slab waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | slab_waveguide_confinement:P0/physics | OK |
-| 36 | `multimodeSlab` Multimode slab waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.19e-6 | none | no validation-matrix case covers this preset |
-| 37 | `lossyGuide` Lossy waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.52e-6 | none | no validation-matrix case covers this preset |
-| 38 | `waveguideBend` Waveguide bend | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | none | no validation-matrix case covers this preset |
-| 39 | `taperWaveguide` Tapered waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | none | no validation-matrix case covers this preset |
-| 40 | `widthStepWaveguide` Width step waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | none | no validation-matrix case covers this preset |
-| 41 | `directionalCoupler` Directional coupler | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.57e-6 | none | no validation-matrix case covers this preset |
+| 36 | `multimodeSlab` Multimode slab waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.19e-6 | multimode_slab_two_mode_launch:P1/physics | OK |
+| 37 | `lossyGuide` Lossy waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.52e-6 | lossy_guide_absorptive_core:P1/physics | OK |
+| 38 | `waveguideBend` Waveguide bend | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | waveguide_bend_l_route:P1/physics | OK |
+| 39 | `taperWaveguide` Tapered waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | taper_waveguide_width_ramp:P1/physics | OK |
+| 40 | `widthStepWaveguide` Width step waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | width_step_waveguide_abrupt_step:P1/physics | OK |
+| 41 | `directionalCoupler` Directional coupler | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.57e-6 | directional_coupler_two_parallel_guides:P1/physics | OK |
 | 42 | `mmiWaveguide` MMI section | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.79e-6 | mmi_50_50_split:P1/physics | OK |
 | 43 | `machZehnder` Mach-Zehnder interferometer | 4. Guided optics | WARN | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 44 | `guideScatterer` Waveguide with scatterer | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.77e-6 | none | no validation-matrix case covers this preset |
+| 44 | `guideScatterer` Waveguide with scatterer | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.77e-6 | guide_scatterer_off_axis_defect:P1/physics | OK |
 | 45 | `microstrip` Microstrip line | 4. Guided optics | WARN | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.04e-6 | none | 2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model.; no validation-matrix case covers this preset |
-| 46 | `stubResonator` Stub resonator | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | none | no validation-matrix case covers this preset |
+| 46 | `stubResonator` Stub resonator | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | stub_resonator_side_branch:P1/physics | OK |
 | 47 | `fabryPerot` Fabry-Perot cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | fabry_perot_cavity_localization:P1/physics | OK |
 | 48 | `fabryPerotStanding` Fabry-Perot standing field | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.06e-8 | fabry_perot_standing_wave:P1/physics | OK |
 | 49 | `ringResonator` Ring resonator | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.33e-6 | ring_resonator_coupling:P1/physics | OK |
 | 50 | `addDropRing` Add-drop ring | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.33e-6 | add_drop_ring_coupling:P1/physics | OK |
-| 51 | `racetrackResonator` Racetrack resonator | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | none | no validation-matrix case covers this preset |
-| 52 | `dielectricCavity` Dielectric defect cavity | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.41e-7 | none | no validation-matrix case covers this preset |
-| 53 | `pecCavity` PEC half-wave cavity | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.23e-7 | none | no validation-matrix case covers this preset |
-| 54 | `quarterWaveCavity` Quarter-wave cavity | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | none | no validation-matrix case covers this preset |
+| 51 | `racetrackResonator` Racetrack resonator | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | racetrack_resonator_bus_coupling:P1/physics | OK |
+| 52 | `dielectricCavity` Dielectric defect cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.41e-7 | dielectric_cavity_disk_dipole:P1/physics | OK |
+| 53 | `pecCavity` PEC half-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.23e-7 | pec_cavity_frame_source:P1/physics | OK |
+| 54 | `quarterWaveCavity` Quarter-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | quarter_wave_cavity_short_stub:P1/physics | OK |
 | 55 | `qRingdown` Q by ringdown | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.46e-8 | resonator_ringdown_q:P0/physics | OK |
 | 56 | `purcell2d` Purcell 2D proxy | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-8 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 57 | `betaFactor` beta-factor guide coupling | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | none | no validation-matrix case covers this preset |
-| 58 | `degenerateModes` Degenerate cavity modes | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | none | no validation-matrix case covers this preset |
+| 57 | `betaFactor` beta-factor guide coupling | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | beta_factor_guided_flux_proxy:P1/physics | OK |
+| 58 | `degenerateModes` Degenerate cavity modes | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | degenerate_modes_dual_dipole_split:P1/physics | OK |
 | 59 | `pecCylinder` PEC cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | pec_cylinder_scattering_shadow:P1/physics | OK |
 | 60 | `dielectricCylinder` Dielectric cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_cylinder_scattering_presence:P1/physics | OK |
 | 61 | `mieCylinder` High-index Mie cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | mie_cylinder_high_index_response:P1/physics | OK |
@@ -167,6 +167,6 @@ No `FIX_REQUIRED` scenes were found in this pass.
 ## Interpretation
 
 - This audit checks whether each example is educationally coherent and runnable, not whether it is publication-grade.
-- `VALIDATION_GAP` is expected for many qualitative examples; it marks where an executable targeted metric should be added before stronger claims.
+- `VALIDATION_GAP` marks a scene that still needs an executable targeted metric before stronger claims are made.
 - Use `scripts/audit-scene-contracts.mjs --write` to regenerate this report after preset changes.
 

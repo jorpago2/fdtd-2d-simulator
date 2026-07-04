@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T19:30:43.380Z",
-  "gitCommit": "1590ce2+working-tree",
+  "generatedAt": "2026-07-04T20:30:44.995Z",
+  "gitCommit": "7050331+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 87,
-    "VALIDATION_GAP": 26,
+    "PASS": 113,
+    "VALIDATION_GAP": 0,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -83,16 +83,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 2: full dielectric domain, n = 1.5, to show shorter wavelength and slower phase velocity.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "plane_wave_dielectric_material_route:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -116,16 +116,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 3: Gaussian pulse in free space with absorbing boundaries.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "gaussian_pulse_air_temporal_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -149,16 +149,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 4: two coherent point Jz sources separated by about 1.5 lambda0.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "two_source_interference_pair:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -182,16 +182,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 5: two nearby CW frequencies to reveal a beat envelope.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "frequency_beat_dual_frequency_sources:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -281,16 +281,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 8: 2D circular aperture cut into a PEC screen.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "circular_aperture_screen_geometry:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -314,16 +314,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 9: TEz/TMz comparison on the same air-dielectric interface, using a dual-polarization angular sweep.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "te_tm_comparison_angle_sweep:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -347,16 +347,16 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 10: oblique plane wave shown as Poynting flux with vector arrows.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "poynting_plane_wave_oblique_flux_view:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -380,18 +380,17 @@
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
       "description": "Atlas 11: isolated evanescent wave with explicit k_parallel/k0 > 1 and exponential decay away from the source line.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
+        "evanescent_wave_source_metadata:P1/physics",
         "source_physics_first_pass:P1/physics"
       ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -482,16 +481,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 14: oblique Gaussian beam on an air-dielectric interface.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "oblique_refraction_gaussian_interface:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -548,18 +547,17 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 16: TE/TM Brewster comparison with dual numerical angular sweeps and analytic Fresnel references.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
       "validationCases": [
+        "brewster_te_tm_angle_sweep:P1/physics",
         "monitor_observable_first_pass:P1/physics"
       ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -715,16 +713,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 21: air to n = 1.5 + 0.1i interface.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "lossy_interface_material_route:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -748,16 +746,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 22: right-hand medium with eps_x != eps_y.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "anisotropic_interface_tensor_route:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1210,16 +1208,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "multimode_slab_two_mode_launch:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1243,16 +1241,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 37: lossy high-index guide driven by its finite-difference mode profile.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "lossy_guide_absorptive_core:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1276,16 +1274,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "waveguide_bend_l_route:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1309,16 +1307,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 39: width taper from narrow to wide guide with a modal input field.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "taper_waveguide_width_ramp:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1342,16 +1340,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 40: abrupt waveguide width step driven by the input-guide mode.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "width_step_waveguide_abrupt_step:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1375,16 +1373,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 41: two parallel guides separated by a small gap, launched from one local guided mode.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "directional_coupler_two_parallel_guides:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1476,16 +1474,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 44: small dielectric scatterer beside a mode-launched guide.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "guide_scatterer_off_axis_defect:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1544,16 +1542,16 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "description": "Atlas 46: side stub attached to a mode-launched straight guide.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "stub_resonator_side_branch:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1709,16 +1707,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 51: elongated racetrack resonator side-coupled to a mode-launched bus waveguide.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "racetrack_resonator_bus_coupling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1742,16 +1740,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 52: high-index disk with an internal dipole source.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dielectric_cavity_disk_dipole:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1775,16 +1773,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 53: PEC half-wave box cavity with a point source.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "pec_cavity_frame_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1808,16 +1806,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 54: shorted quarter-wave stub cavity coupled to a mode-launched dielectric guide.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "quarter_wave_cavity_short_stub:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1909,16 +1907,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 57: dipole coupled to a slab guide with an estimated guided-flux beta factor.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "beta_factor_guided_flux_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1942,16 +1940,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 58: symmetric disk cavity excited off-center to reveal near-degenerate spectral peaks.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "degenerate_modes_dual_dipole_split:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

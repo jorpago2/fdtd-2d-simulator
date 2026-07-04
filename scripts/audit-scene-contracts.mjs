@@ -565,7 +565,7 @@ function renderMarkdown(report) {
   lines.push("## Interpretation");
   lines.push("");
   lines.push("- This audit checks whether each example is educationally coherent and runnable, not whether it is publication-grade.");
-  lines.push("- `VALIDATION_GAP` is expected for many qualitative examples; it marks where an executable targeted metric should be added before stronger claims.");
+  lines.push("- `VALIDATION_GAP` marks a scene that still needs an executable targeted metric before stronger claims are made.");
   lines.push("- Use `scripts/audit-scene-contracts.mjs --write` to regenerate this report after preset changes.");
   lines.push("");
   return `${lines.join("\n")}\n`;
