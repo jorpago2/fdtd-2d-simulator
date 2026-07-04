@@ -1478,6 +1478,188 @@ async function periodicPhotonicsMetrics(page) {
   });
 }
 
+async function topologicalPhotonicsMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const sshBloch = typeof sim.sshBlochEstimate === "function" ? sim.sshBlochEstimate() : analysis?.sshBloch ?? null;
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const cornerX = midX + Math.round(0.7 * cpw);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const highIndexAt = (idx) => sim.material[idx] !== 0 && sim.material[idx] !== 2 && Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0;
+    const xProfile = Array.from({ length: maxX - minX + 1 }, () => 0);
+    const honeycombCells = new Set();
+    const honeycombSubBins = new Set();
+    const sublattice = {
+      top: { a: 0, b: 0 },
+      bottom: { a: 0, b: 0 },
+      leftTop: { a: 0, b: 0 },
+      leftBottom: { a: 0, b: 0 },
+      rightTop: { a: 0, b: 0 },
+      rightBottom: { a: 0, b: 0 },
+    };
+    const pitchX = 0.56 * cpw;
+    const pitchY = 0.48 * cpw;
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let pecCells = 0;
+    let modulatedCells = 0;
+    let gainCells = 0;
+    let lossyCells = 0;
+    let totalEnergy = 0;
+    let highIndexEnergy = 0;
+    let interfaceEnergy = 0;
+    let bendChannelEnergy = 0;
+    let defectHighIndexCells = 0;
+    let defectPecCells = 0;
+    let defectEnergy = 0;
+    let yWeightedHighIndex = 0;
+    let highIndexWeight = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        const inStraightInterface = Math.abs(y - midY) <= Math.round(0.34 * cpw);
+        const inBendChannel =
+          (x <= cornerX && Math.abs(y - midY) <= Math.round(0.34 * cpw)) ||
+          (x >= cornerX - Math.round(0.14 * cpw) && Math.abs(x - cornerX) <= Math.round(0.34 * cpw));
+        const inDefect = Math.hypot(x - (midX + Math.round(0.15 * cpw)), y - midY) <= Math.round(0.44 * cpw);
+        totalEnergy += energy;
+        if (inStraightInterface) interfaceEnergy += energy;
+        if (inBendChannel) bendChannelEnergy += energy;
+        if (inDefect) defectEnergy += energy;
+        if (sim.material[idx] !== 0) materialCells += 1;
+        if (sim.material[idx] === 2) {
+          pecCells += 1;
+          if (inDefect) defectPecCells += 1;
+        }
+        if (sim.modulatedMaterial?.[idx]) modulatedCells += 1;
+        const loss = Number(sim.loss?.[idx]) || 0;
+        if (loss < -1e-9) gainCells += 1;
+        if (loss > 1e-9) lossyCells += 1;
+        if (!highIndexAt(idx)) continue;
+
+        highIndexCells += 1;
+        highIndexEnergy += energy;
+        yWeightedHighIndex += y;
+        highIndexWeight += 1;
+        if (Math.abs(y - midY) <= Math.round(0.38 * cpw)) xProfile[x - minX] += 1;
+        if (inDefect) defectHighIndexCells += 1;
+
+        const iy = Math.round((y - midY) / pitchY);
+        const rowOffset = Math.abs(iy % 2) === 1 ? 0.5 * pitchX : 0;
+        const ix = Math.round((x - midX - rowOffset) / pitchX);
+        const cellCenterX = midX + ix * pitchX + rowOffset;
+        const sub = x < cellCenterX ? "a" : "b";
+        honeycombCells.add(`${ix},${iy}`);
+        honeycombSubBins.add(`${ix},${iy},${sub}`);
+        const vertical = y < midY ? "top" : "bottom";
+        const horizontal = x < cornerX ? "left" : "right";
+        sublattice[vertical][sub] += 1;
+        sublattice[`${horizontal}${vertical === "top" ? "Top" : "Bottom"}`][sub] += 1;
+      }
+    }
+
+    const smooth = xProfile.map((value, index) => {
+      const left = index > 0 ? xProfile[index - 1] : value;
+      const right = index < xProfile.length - 1 ? xProfile[index + 1] : value;
+      return 0.25 * left + 0.5 * value + 0.25 * right;
+    });
+    const maxProfile = smooth.reduce((max, value) => Math.max(max, value), 0);
+    const peakThreshold = Math.max(1, 0.28 * maxProfile);
+    const minPeakSeparation = Math.max(2, Math.round(0.16 * cpw));
+    const sitePeaks = [];
+    for (let index = 1; index < smooth.length - 1; index += 1) {
+      if (smooth[index] < peakThreshold || smooth[index] < smooth[index - 1] || smooth[index] < smooth[index + 1]) continue;
+      const x = minX + index;
+      const last = sitePeaks[sitePeaks.length - 1];
+      if (last && x - last.x < minPeakSeparation) {
+        if (smooth[index] > last.weight) {
+          last.x = x;
+          last.weight = smooth[index];
+        }
+      } else {
+        sitePeaks.push({ x, weight: smooth[index] });
+      }
+    }
+    const gaps = [];
+    for (let i = 1; i < sitePeaks.length; i += 1) gaps.push((sitePeaks[i].x - sitePeaks[i - 1].x) / cpw);
+    const evenGaps = gaps.filter((_gap, index) => index % 2 === 0);
+    const oddGaps = gaps.filter((_gap, index) => index % 2 === 1);
+    const mean = (values) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
+    const bias = (bucket) => (bucket.a + bucket.b > 0 ? (bucket.a - bucket.b) / (bucket.a + bucket.b) : 0);
+    const source = state.sources?.[0] || null;
+    const sourceX = source && typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : minX;
+    const sourceY = source && typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : midY;
+    const sourceRadius = Math.max(2, Math.round(0.4 * cpw));
+    let sourceEnergy = 0;
+    for (let y = Math.max(minY, sourceY - sourceRadius); y <= Math.min(maxY, sourceY + sourceRadius); y += 1) {
+      for (let x = Math.max(minX, sourceX - sourceRadius); x <= Math.min(maxX, sourceX + sourceRadius); x += 1) {
+        if (Math.hypot(x - sourceX, y - sourceY) <= sourceRadius) sourceEnergy += energyAt(sim.id(x, y));
+      }
+    }
+
+    return {
+      preset: state.preset,
+      fieldComponent: state.fieldComponent,
+      viewMode: state.viewMode,
+      analysisSamples: sim.analysisSamples || 0,
+      materialSaturableGainEnabled: Boolean(state.materialSaturableGainEnabled),
+      materialModulationEnabled: Boolean(state.materialModulationEnabled),
+      modulationDepth: Number(state.modulationDepth) || 0,
+      modulationFrequency: Number(state.modulationFrequency) || 0,
+      sshBloch,
+      materialCells,
+      highIndexCells,
+      pecCells,
+      modulatedCells,
+      gainCells,
+      lossyCells,
+      siteCountProxy: sitePeaks.length,
+      sitePeaksLambda: sitePeaks.map((peak) => Number((peak.x / cpw).toFixed(3))),
+      firstGapLambda: gaps[0] ?? null,
+      secondGapLambda: gaps[1] ?? null,
+      evenGapMeanLambda: mean(evenGaps),
+      oddGapMeanLambda: mean(oddGaps),
+      gapContrastLambda: Math.abs(mean(evenGaps) - mean(oddGaps)),
+      verticalSpanLambda:
+        highIndexWeight > 0 ? Math.abs(yWeightedHighIndex / highIndexWeight - midY) / cpw : 0,
+      honeycombCellProxy: honeycombCells.size,
+      honeycombSubBinProxy: honeycombSubBins.size,
+      topSublatticeBias: bias(sublattice.top),
+      bottomSublatticeBias: bias(sublattice.bottom),
+      leftTopSublatticeBias: bias(sublattice.leftTop),
+      leftBottomSublatticeBias: bias(sublattice.leftBottom),
+      rightTopSublatticeBias: bias(sublattice.rightTop),
+      rightBottomSublatticeBias: bias(sublattice.rightBottom),
+      totalEnergy,
+      highIndexEnergy,
+      highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      sourceEnergy,
+      sourceEnergyFraction: sourceEnergy / Math.max(1e-30, totalEnergy),
+      interfaceEnergy,
+      interfaceEnergyFraction: interfaceEnergy / Math.max(1e-30, totalEnergy),
+      bendChannelEnergy,
+      bendChannelEnergyFraction: bendChannelEnergy / Math.max(1e-30, totalEnergy),
+      defectHighIndexCells,
+      defectPecCells,
+      defectEnergy,
+      defectEnergyFraction: defectEnergy / Math.max(1e-30, totalEnergy),
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
   const startedAt = Date.now();
@@ -2034,6 +2216,149 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minFanoResonatorFraction) && metrics.fanoResonatorEnergyFraction < minFanoResonatorFraction) {
       status.failures.push(`Fano side-resonator energy fraction ${metrics.fanoResonatorEnergyFraction} below ${minFanoResonatorFraction}`);
+    }
+  }
+  if (testCase.acceptance?.topologicalPhotonicsCheck) {
+    status.topologicalPhotonics = await topologicalPhotonicsMetrics(page);
+    const metrics = status.topologicalPhotonics;
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minSiteCount = Number(testCase.acceptance?.siteCountProxyMin);
+    const maxSiteCount = Number(testCase.acceptance?.siteCountProxyMax);
+    const minGapContrast = Number(testCase.acceptance?.gapContrastLambdaMin);
+    const firstGapMin = Number(testCase.acceptance?.firstGapLambdaMin);
+    const firstGapMax = Number(testCase.acceptance?.firstGapLambdaMax);
+    const secondGapMin = Number(testCase.acceptance?.secondGapLambdaMin);
+    const secondGapMax = Number(testCase.acceptance?.secondGapLambdaMax);
+    const expectedWinding = Number(testCase.acceptance?.sshWinding);
+    const minBandGap = Number(testCase.acceptance?.sshBandGapMin);
+    const minNhGap = Number(testCase.acceptance?.sshNonHermitianGapMin);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minGainCells = Number(testCase.acceptance?.gainCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minModulatedCells = Number(testCase.acceptance?.modulatedCellsMin);
+    const minModulationDepth = Number(testCase.acceptance?.modulationDepthMin);
+    const minHoneycombCells = Number(testCase.acceptance?.honeycombCellProxyMin);
+    const minHoneycombSubBins = Number(testCase.acceptance?.honeycombSubBinProxyMin);
+    const minTopBias = Number(testCase.acceptance?.topSublatticeBiasMin);
+    const maxTopBias = Number(testCase.acceptance?.topSublatticeBiasMax);
+    const minBottomBias = Number(testCase.acceptance?.bottomSublatticeBiasMin);
+    const maxBottomBias = Number(testCase.acceptance?.bottomSublatticeBiasMax);
+    const minLeftTopBias = Number(testCase.acceptance?.leftTopSublatticeBiasMin);
+    const maxLeftBottomBias = Number(testCase.acceptance?.leftBottomSublatticeBiasMax);
+    const minRightTopBias = Number(testCase.acceptance?.rightTopSublatticeBiasMin);
+    const maxRightTopBias = Number(testCase.acceptance?.rightTopSublatticeBiasMax);
+    const maxRightBottomBias = Number(testCase.acceptance?.rightBottomSublatticeBiasMax);
+    const minInterfaceFraction = Number(testCase.acceptance?.interfaceEnergyFractionMin);
+    const minBendFraction = Number(testCase.acceptance?.bendChannelEnergyFractionMin);
+    const minDefectPecCells = Number(testCase.acceptance?.defectPecCellsMin);
+    const maxDefectHighIndexCells = Number(testCase.acceptance?.defectHighIndexCellsMax);
+    const minSourceFraction = Number(testCase.acceptance?.sourceEnergyFractionMin);
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
+      status.failures.push(`topological high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minSiteCount) && metrics.siteCountProxy < minSiteCount) {
+      status.failures.push(`SSH site-count proxy ${metrics.siteCountProxy} below ${minSiteCount}`);
+    }
+    if (Number.isFinite(maxSiteCount) && metrics.siteCountProxy > maxSiteCount) {
+      status.failures.push(`SSH site-count proxy ${metrics.siteCountProxy} exceeds ${maxSiteCount}`);
+    }
+    if (Number.isFinite(minGapContrast) && metrics.gapContrastLambda < minGapContrast) {
+      status.failures.push(`SSH alternating-gap contrast ${metrics.gapContrastLambda} below ${minGapContrast}`);
+    }
+    if (Number.isFinite(firstGapMin) && !(metrics.firstGapLambda >= firstGapMin)) {
+      status.failures.push(`first SSH gap ${metrics.firstGapLambda} below ${firstGapMin}`);
+    }
+    if (Number.isFinite(firstGapMax) && !(metrics.firstGapLambda <= firstGapMax)) {
+      status.failures.push(`first SSH gap ${metrics.firstGapLambda} exceeds ${firstGapMax}`);
+    }
+    if (Number.isFinite(secondGapMin) && !(metrics.secondGapLambda >= secondGapMin)) {
+      status.failures.push(`second SSH gap ${metrics.secondGapLambda} below ${secondGapMin}`);
+    }
+    if (Number.isFinite(secondGapMax) && !(metrics.secondGapLambda <= secondGapMax)) {
+      status.failures.push(`second SSH gap ${metrics.secondGapLambda} exceeds ${secondGapMax}`);
+    }
+    if (testCase.acceptance?.sshBlochRequired && !metrics.sshBloch) {
+      status.failures.push("SSH Bloch reduced estimate is missing");
+    }
+    if (metrics.sshBloch) {
+      if (Number.isFinite(expectedWinding) && metrics.sshBloch.winding !== expectedWinding) {
+        status.failures.push(`SSH winding ${metrics.sshBloch.winding} differs from expected ${expectedWinding}`);
+      }
+      if (testCase.acceptance?.sshEdgeExpected === true && !metrics.sshBloch.edgeExpected) {
+        status.failures.push("SSH edge-state proxy is not enabled for an interface scene");
+      }
+      if (testCase.acceptance?.sshEdgeExpected === false && metrics.sshBloch.edgeExpected) {
+        status.failures.push("SSH edge-state proxy is unexpectedly enabled");
+      }
+      if (Number.isFinite(minBandGap) && metrics.sshBloch.bandGap < minBandGap) {
+        status.failures.push(`SSH band-gap proxy ${metrics.sshBloch.bandGap} below ${minBandGap}`);
+      }
+      if (Number.isFinite(minNhGap) && metrics.sshBloch.nonHermitianGap < minNhGap) {
+        status.failures.push(`non-Hermitian SSH gap proxy ${metrics.sshBloch.nonHermitianGap} below ${minNhGap}`);
+      }
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`topological analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (Number.isFinite(minGainCells) && metrics.gainCells < minGainCells) {
+      status.failures.push(`gain cells ${metrics.gainCells} below ${minGainCells}`);
+    }
+    if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) {
+      status.failures.push(`loss cells ${metrics.lossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(minModulatedCells) && metrics.modulatedCells < minModulatedCells) {
+      status.failures.push(`modulated cells ${metrics.modulatedCells} below ${minModulatedCells}`);
+    }
+    if (Number.isFinite(minModulationDepth) && metrics.modulationDepth < minModulationDepth) {
+      status.failures.push(`modulation depth ${metrics.modulationDepth} below ${minModulationDepth}`);
+    }
+    if (Number.isFinite(minHoneycombCells) && metrics.honeycombCellProxy < minHoneycombCells) {
+      status.failures.push(`honeycomb cell proxy ${metrics.honeycombCellProxy} below ${minHoneycombCells}`);
+    }
+    if (Number.isFinite(minHoneycombSubBins) && metrics.honeycombSubBinProxy < minHoneycombSubBins) {
+      status.failures.push(`honeycomb sublattice-bin proxy ${metrics.honeycombSubBinProxy} below ${minHoneycombSubBins}`);
+    }
+    if (Number.isFinite(minTopBias) && metrics.topSublatticeBias < minTopBias) {
+      status.failures.push(`top sublattice bias ${metrics.topSublatticeBias} below ${minTopBias}`);
+    }
+    if (Number.isFinite(maxTopBias) && metrics.topSublatticeBias > maxTopBias) {
+      status.failures.push(`top sublattice bias ${metrics.topSublatticeBias} exceeds ${maxTopBias}`);
+    }
+    if (Number.isFinite(minBottomBias) && metrics.bottomSublatticeBias < minBottomBias) {
+      status.failures.push(`bottom sublattice bias ${metrics.bottomSublatticeBias} below ${minBottomBias}`);
+    }
+    if (Number.isFinite(maxBottomBias) && metrics.bottomSublatticeBias > maxBottomBias) {
+      status.failures.push(`bottom sublattice bias ${metrics.bottomSublatticeBias} exceeds ${maxBottomBias}`);
+    }
+    if (Number.isFinite(minLeftTopBias) && metrics.leftTopSublatticeBias < minLeftTopBias) {
+      status.failures.push(`left-top sublattice bias ${metrics.leftTopSublatticeBias} below ${minLeftTopBias}`);
+    }
+    if (Number.isFinite(maxLeftBottomBias) && metrics.leftBottomSublatticeBias > maxLeftBottomBias) {
+      status.failures.push(`left-bottom sublattice bias ${metrics.leftBottomSublatticeBias} exceeds ${maxLeftBottomBias}`);
+    }
+    if (Number.isFinite(minRightTopBias) && metrics.rightTopSublatticeBias < minRightTopBias) {
+      status.failures.push(`right-top sublattice bias ${metrics.rightTopSublatticeBias} below ${minRightTopBias}`);
+    }
+    if (Number.isFinite(maxRightTopBias) && metrics.rightTopSublatticeBias > maxRightTopBias) {
+      status.failures.push(`right-top sublattice bias ${metrics.rightTopSublatticeBias} exceeds ${maxRightTopBias}`);
+    }
+    if (Number.isFinite(maxRightBottomBias) && metrics.rightBottomSublatticeBias > maxRightBottomBias) {
+      status.failures.push(`right-bottom sublattice bias ${metrics.rightBottomSublatticeBias} exceeds ${maxRightBottomBias}`);
+    }
+    if (Number.isFinite(minInterfaceFraction) && metrics.interfaceEnergyFraction < minInterfaceFraction) {
+      status.failures.push(`interface-channel energy fraction ${metrics.interfaceEnergyFraction} below ${minInterfaceFraction}`);
+    }
+    if (Number.isFinite(minBendFraction) && metrics.bendChannelEnergyFraction < minBendFraction) {
+      status.failures.push(`bend-channel energy fraction ${metrics.bendChannelEnergyFraction} below ${minBendFraction}`);
+    }
+    if (Number.isFinite(minDefectPecCells) && metrics.defectPecCells < minDefectPecCells) {
+      status.failures.push(`topological defect PEC cells ${metrics.defectPecCells} below ${minDefectPecCells}`);
+    }
+    if (Number.isFinite(maxDefectHighIndexCells) && metrics.defectHighIndexCells > maxDefectHighIndexCells) {
+      status.failures.push(`topological defect high-index cells ${metrics.defectHighIndexCells} exceeds ${maxDefectHighIndexCells}`);
+    }
+    if (Number.isFinite(minSourceFraction) && metrics.sourceEnergyFraction < minSourceFraction) {
+      status.failures.push(`source-region energy fraction ${metrics.sourceEnergyFraction} below ${minSourceFraction}`);
     }
   }
   if (

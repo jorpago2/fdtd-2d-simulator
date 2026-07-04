@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T17:10:47.078Z
-Git commit: 0ad6308+working-tree
+Generated: 2026-07-04T17:28:45.943Z
+Git commit: 3116682+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 45 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 68 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 53 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 60 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -113,16 +113,16 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 88 | `quasiBic` Quasi-BIC cavity | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=1.08e-5 | quasi_bic_asymmetry_proxy:P1/physics | OK |
 | 89 | `symmetryProtectedBic` Symmetry-protected BIC | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.12e-5 | symmetry_protected_bic_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 90 | `fanoResonator` Fano side resonator | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | fano_side_resonator_coupling:P1/physics | OK |
-| 91 | `sshTrivial` SSH chain, trivial | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.77e-6 | none | no validation-matrix case covers this preset |
-| 92 | `sshTopological` SSH chain, topological | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.34e-6 | none | no validation-matrix case covers this preset |
-| 93 | `sshInterface` SSH interface | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.33e-6 | none | no validation-matrix case covers this preset |
-| 94 | `sshDisorder` SSH with disorder | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.72e-7 | none | no validation-matrix case covers this preset |
-| 95 | `nonHermitianSsh` Non-Hermitian SSH | 9. Topological photonics | WARN | nonlinear material, gain/loss | WASM CPML+gain, 24 steps, E=3.40e-7 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 96 | `honeycombLattice` Honeycomb lattice | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.60e-6 | none | no validation-matrix case covers this preset |
-| 97 | `valleyHall` Valley Hall interface | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | none | no validation-matrix case covers this preset |
-| 98 | `valleyHallBend` Valley Hall bend | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | none | no validation-matrix case covers this preset |
-| 99 | `topologicalPumping` Topological pumping | 9. Topological photonics | WARN | time modulation | WASM CPML+mod, 24 steps, E=1.44e-7 | none | Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass.; no validation-matrix case covers this preset |
-| 100 | `topologyDefect` Topology with strong defect | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.39e-8 | none | no validation-matrix case covers this preset |
+| 91 | `sshTrivial` SSH chain, trivial | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.77e-6 | ssh_trivial_bloch_reference:P1/physics | OK |
+| 92 | `sshTopological` SSH chain, topological | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.34e-6 | ssh_topological_bloch_reference:P1/physics | OK |
+| 93 | `sshInterface` SSH interface | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.33e-6 | ssh_interface_edge_proxy:P1/physics | OK |
+| 94 | `sshDisorder` SSH with disorder | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.72e-7 | ssh_disorder_edge_proxy:P1/physics | OK |
+| 95 | `nonHermitianSsh` Non-Hermitian SSH | 9. Topological photonics | WARN | nonlinear material, gain/loss | WASM CPML+gain, 24 steps, E=3.40e-7 | nonhermitian_ssh_gain_loss_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 96 | `honeycombLattice` Honeycomb lattice | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.60e-6 | honeycomb_lattice_sublattice_geometry:P1/physics | OK |
+| 97 | `valleyHall` Valley Hall interface | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_domain_wall:P1/physics | OK |
+| 98 | `valleyHallBend` Valley Hall bend | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_bend_domain_wall:P1/physics | OK |
+| 99 | `topologicalPumping` Topological pumping | 9. Topological photonics | WARN | time modulation | WASM CPML+mod, 24 steps, E=1.44e-7 | topological_pumping_modulated_ssh:P1/physics | Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass. |
+| 100 | `topologyDefect` Topology with strong defect | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.39e-8 | topology_defect_valley_channel:P1/physics | OK |
 | 101 | `sppInterface` SPP metal-dielectric interface | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material | WASM CPML+ADE, 24 steps, E=3.61e-8 | spp_interface_surface_localization:P1/physics | OK |
 | 102 | `sppGrating` SPP grating coupler | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=1.19e-11 | spp_grating_surface_coupling:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 103 | `localizedPlasmon` Localized plasmon disk | 10. Plasmonics and metamaterials | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | none | no validation-matrix case covers this preset |

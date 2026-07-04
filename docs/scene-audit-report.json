@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T17:10:47.078Z",
-  "gitCommit": "0ad6308+working-tree",
+  "generatedAt": "2026-07-04T17:28:45.943Z",
+  "gitCommit": "3116682+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 45,
-    "VALIDATION_GAP": 68,
+    "PASS": 53,
+    "VALIDATION_GAP": 60,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -3050,16 +3050,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 91: SSH chain with d1 > d2 and analytic Bloch winding/gap reference.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "ssh_trivial_bloch_reference:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3083,16 +3083,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 92: SSH chain with d1 < d2 and analytic Bloch winding/gap reference.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "ssh_topological_bloch_reference:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3116,16 +3116,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 93: interface between two SSH dimerizations with expected edge-state reference.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "ssh_interface_edge_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3149,16 +3149,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 94: SSH interface with deterministic positional disorder and analytic clean-limit Bloch reference.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "ssh_disorder_edge_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3187,14 +3187,14 @@
         "nonlinear material",
         "gain/loss"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "nonhermitian_ssh_gain_loss_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3218,16 +3218,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 96: honeycomb-like dimer lattice for valley-photonic demonstrations.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "honeycomb_lattice_sublattice_geometry:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3251,16 +3251,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 97: two inverted honeycomb domains forming a straight Valley-Hall interface.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "valley_hall_domain_wall:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -3284,16 +3284,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 98: Valley-Hall interface with a 90-degree bend.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "valley_hall_bend_domain_wall:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -3321,14 +3321,14 @@
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "topological_pumping_modulated_ssh:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3352,16 +3352,16 @@
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "description": "Atlas 100: Valley-Hall interface with a strong defect placed on the channel.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "topology_defect_valley_channel:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",

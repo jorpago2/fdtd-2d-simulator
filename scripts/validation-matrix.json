@@ -767,6 +767,265 @@
       "rationale": "Guards the Fano resonator scene as an actual bus-plus-side-resonator coupling example rather than a disconnected geometry sketch."
     },
     {
+      "id": "ssh_trivial_bloch_reference",
+      "priority": "P1",
+      "preset": "sshTrivial",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "the SSH chain contains the expected number of high-index sites",
+        "the first two gaps follow the trivial d1 > d2 dimerization",
+        "the analytic SSH Bloch reference reports winding zero and a finite gap"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 150,
+        "siteCountProxyMin": 14,
+        "siteCountProxyMax": 16,
+        "firstGapLambdaMin": 0.35,
+        "secondGapLambdaMax": 0.32,
+        "gapContrastLambdaMin": 0.08,
+        "sshBlochRequired": true,
+        "sshWinding": 0,
+        "sshEdgeExpected": false,
+        "sshBandGapMin": 0.25,
+        "sourceEnergyFractionMin": 0.001
+      },
+      "rationale": "Guards the trivial SSH scene against inverted dimerization or loss of the analytic Bloch reference."
+    },
+    {
+      "id": "ssh_topological_bloch_reference",
+      "priority": "P1",
+      "preset": "sshTopological",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "the SSH chain contains the expected number of high-index sites",
+        "the first two gaps follow the topological d1 < d2 dimerization",
+        "the analytic SSH Bloch reference reports winding one and a finite gap"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 150,
+        "siteCountProxyMin": 14,
+        "siteCountProxyMax": 16,
+        "firstGapLambdaMax": 0.32,
+        "secondGapLambdaMin": 0.35,
+        "gapContrastLambdaMin": 0.08,
+        "sshBlochRequired": true,
+        "sshWinding": 1,
+        "sshEdgeExpected": false,
+        "sshBandGapMin": 0.25,
+        "sourceEnergyFractionMin": 0.001
+      },
+      "rationale": "Checks that the topological SSH scene is not accidentally identical to the trivial dimerization."
+    },
+    {
+      "id": "ssh_interface_edge_proxy",
+      "priority": "P1",
+      "preset": "sshInterface",
+      "profile": "physics",
+      "steps": 1100,
+      "browserSmoke": true,
+      "checks": [
+        "the interface chain keeps the high-index SSH site pattern",
+        "the analytic reduced model marks an edge-state interface",
+        "a central dipole deposits measurable energy near the interface"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 150,
+        "siteCountProxyMin": 14,
+        "siteCountProxyMax": 16,
+        "sshBlochRequired": true,
+        "sshWinding": 1,
+        "sshEdgeExpected": true,
+        "sshBandGapMin": 0.25,
+        "sourceEnergyFractionMin": 0.01
+      },
+      "rationale": "Turns the SSH interface into an executable edge-proxy check without claiming a full eigenmode solve."
+    },
+    {
+      "id": "ssh_disorder_edge_proxy",
+      "priority": "P1",
+      "preset": "sshDisorder",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the disordered SSH interface keeps a finite high-index site chain",
+        "analysis samples and clean-limit SSH Bloch reference remain available",
+        "the reduced model still marks the edge-state proxy"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "highIndexCellsMin": 170,
+        "siteCountProxyMin": 15,
+        "siteCountProxyMax": 18,
+        "minAnalysisSamples": 8,
+        "sshBlochRequired": true,
+        "sshWinding": 1,
+        "sshEdgeExpected": true,
+        "sshBandGapMin": 0.25,
+        "sourceEnergyFractionMin": 0.01
+      },
+      "rationale": "Checks the disordered SSH scene as a robust qualitative edge-interface example with an explicit clean-limit reference."
+    },
+    {
+      "id": "nonhermitian_ssh_gain_loss_proxy",
+      "priority": "P1",
+      "preset": "nonHermitianSsh",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the non-Hermitian SSH chain has alternating gain/loss material cells",
+        "saturable gain stabilization is active",
+        "the reduced non-Hermitian SSH gap proxy remains finite"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "requiresActiveMediaLabel": "gain-limited",
+        "highIndexCellsMin": 170,
+        "siteCountProxyMin": 15,
+        "siteCountProxyMax": 18,
+        "gainCellsMin": 70,
+        "lossyCellsMin": 70,
+        "minAnalysisSamples": 8,
+        "sshBlochRequired": true,
+        "sshWinding": 1,
+        "sshEdgeExpected": true,
+        "sshNonHermitianGapMin": 0.05
+      },
+      "rationale": "Guards the non-Hermitian SSH scene as a balanced gain/loss proxy with finite reduced topology metrics."
+    },
+    {
+      "id": "honeycomb_lattice_sublattice_geometry",
+      "priority": "P1",
+      "preset": "honeycombLattice",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "the honeycomb-like dimer lattice has many high-index sublattice rods",
+        "both upper and lower halves share the same sublattice mass bias",
+        "finite field energy overlaps the lattice"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 1400,
+        "honeycombCellProxyMin": 90,
+        "honeycombSubBinProxyMin": 150,
+        "topSublatticeBiasMin": 0.1,
+        "bottomSublatticeBiasMin": 0.1,
+        "sourceEnergyFractionMin": 0.001
+      },
+      "rationale": "Checks the baseline honeycomb geometry before validating domain-wall variants."
+    },
+    {
+      "id": "valley_hall_domain_wall",
+      "priority": "P1",
+      "preset": "valleyHall",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "upper and lower honeycomb domains have inverted sublattice bias",
+        "the poynting/scalar view used for the teaching scene remains active",
+        "field energy is present along the straight interface channel"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 1500,
+        "honeycombCellProxyMin": 110,
+        "honeycombSubBinProxyMin": 180,
+        "topSublatticeBiasMin": 0.1,
+        "bottomSublatticeBiasMax": -0.1,
+        "interfaceEnergyFractionMin": 0.005
+      },
+      "rationale": "Validates the Valley-Hall scene as an inverted-domain interface, not merely a generic honeycomb array."
+    },
+    {
+      "id": "valley_hall_bend_domain_wall",
+      "priority": "P1",
+      "preset": "valleyHallBend",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the left side retains a horizontal Valley-Hall domain wall",
+        "the right side turns into a vertical-domain segment",
+        "the bent channel carries finite field energy in the reduced check"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 1500,
+        "honeycombCellProxyMin": 110,
+        "honeycombSubBinProxyMin": 180,
+        "leftTopSublatticeBiasMin": 0.1,
+        "leftBottomSublatticeBiasMax": -0.1,
+        "rightTopSublatticeBiasMax": -0.05,
+        "rightBottomSublatticeBiasMax": -0.05,
+        "bendChannelEnergyFractionMin": 0.005
+      },
+      "rationale": "Checks that the bend example changes the domain-wall geometry rather than reusing the straight interface."
+    },
+    {
+      "id": "topological_pumping_modulated_ssh",
+      "priority": "P1",
+      "preset": "topologicalPumping",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the SSH chain is materially modulated",
+        "analysis samples are collected for the qualitative pumping proxy",
+        "finite field energy is present near the launched excitation"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "requiresActiveMediaLabel": "modulated",
+        "highIndexCellsMin": 170,
+        "siteCountProxyMin": 15,
+        "siteCountProxyMax": 18,
+        "modulatedCellsMin": 170,
+        "modulationDepthMin": 0.1,
+        "minAnalysisSamples": 8,
+        "sourceEnergyFractionMin": 0.005
+      },
+      "rationale": "Keeps the Thouless-pump-like scene honest as a modulated qualitative proxy rather than an unmodulated SSH chain."
+    },
+    {
+      "id": "topology_defect_valley_channel",
+      "priority": "P1",
+      "preset": "topologyDefect",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the Valley-Hall inverted-domain geometry remains present",
+        "a strong PEC defect occupies the channel region",
+        "finite field energy reaches the defect/channel region"
+      ],
+      "acceptance": {
+        "topologicalPhotonicsCheck": true,
+        "highIndexCellsMin": 1450,
+        "honeycombCellProxyMin": 105,
+        "honeycombSubBinProxyMin": 170,
+        "topSublatticeBiasMin": 0.1,
+        "bottomSublatticeBiasMax": -0.1,
+        "defectPecCellsMin": 80,
+        "defectHighIndexCellsMax": 260,
+        "interfaceEnergyFractionMin": 0.005
+      },
+      "rationale": "Checks that the topology-with-defect scene contains both the domain wall and the intended strong scatterer."
+    },
+    {
       "id": "quarter_wave_coating_low_reflection",
       "priority": "P1",
       "preset": "quarterWaveCoating",
