@@ -308,6 +308,7 @@ async function runRenderBenchmarkCase(page, grid, renderCase, backend, options) 
             sim.muLoss[i] = 0.001 + yf * 0.006;
           }
         }
+        sim.markFieldsChanged?.();
 
         sim.fieldScale = 1;
         sim.fieldLog10Scale = 0;

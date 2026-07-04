@@ -25,6 +25,25 @@ const WASM_TFSF_STRIDE = 16;
 const WASM_TFSF_SOURCE_TYPE = { sine: 0, gaussian: 1, ricker: 2 };
 const WASM_MAX_MODE_SOURCES = 8;
 const WASM_MODE_SOURCE_STRIDE = 16;
+const WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL = "dynamicMaterial";
+const WASM_LAYOUT_GROUP_TENSOR_GYRO = "tensorGyro";
+const WASM_LAYOUT_GROUP_ELECTRIC_ADE = "electricAde";
+const WASM_LAYOUT_GROUP_MAGNETIC_ADE = "magneticAde";
+const WASM_LAYOUT_GROUP_PHASE_CHANGE = "phaseChange";
+const WASM_LAYOUT_GROUP_HARMONIC = "harmonic";
+const WASM_LAYOUT_GROUP_BIANISOTROPY = "bianisotropy";
+const WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY = "fullVectorBianisotropy";
+
+const WASM_LAYOUT_GROUP_LABELS = Object.freeze({
+  [WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL]: "dynamic material",
+  [WASM_LAYOUT_GROUP_TENSOR_GYRO]: "tensor/gyrotropic material",
+  [WASM_LAYOUT_GROUP_ELECTRIC_ADE]: "electric ADE",
+  [WASM_LAYOUT_GROUP_MAGNETIC_ADE]: "magnetic ADE",
+  [WASM_LAYOUT_GROUP_PHASE_CHANGE]: "phase change",
+  [WASM_LAYOUT_GROUP_HARMONIC]: "harmonic nonlinear",
+  [WASM_LAYOUT_GROUP_BIANISOTROPY]: "bianisotropy",
+  [WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY]: "full-vector bianisotropy",
+});
 
 function wasmAlign4(value) {
   return (value + 3) & ~3;
@@ -59,25 +78,134 @@ class WasmFdtdBackend {
     return new WasmFdtdBackend(memory, instance.exports);
   }
 
-  createLayout(nx, ny) {
+  normalizeLayoutGroups(groups) {
+    return groups instanceof Set ? new Set(groups) : new Set(Array.isArray(groups) ? groups : []);
+  }
+
+  requiredLayoutGroups(sim) {
+    const groups = new Set();
+    if (
+      state.materialModulationEnabled ||
+      state.materialNonlinearEnabled ||
+      state.materialHarmonicEnabled ||
+      state.materialPhaseChangeEnabled
+    ) {
+      groups.add(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL);
+    }
+    if (state.materialGyrotropyEnabled) {
+      groups.add(WASM_LAYOUT_GROUP_TENSOR_GYRO);
+    }
+    if (state.materialDispersionEnabled) {
+      groups.add(WASM_LAYOUT_GROUP_ELECTRIC_ADE);
+      if (sim?.hasActiveMagneticDispersion?.()) groups.add(WASM_LAYOUT_GROUP_MAGNETIC_ADE);
+    }
+    if (state.materialPhaseChangeEnabled) {
+      groups.add(WASM_LAYOUT_GROUP_PHASE_CHANGE);
+    }
+    if (state.materialHarmonicEnabled) {
+      groups.add(WASM_LAYOUT_GROUP_HARMONIC);
+    }
+    if (state.materialBianisotropyEnabled) {
+      groups.add(WASM_LAYOUT_GROUP_BIANISOTROPY);
+      if (sim?.fullVectorBianisotropyActive?.()) groups.add(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY);
+    }
+    return groups;
+  }
+
+  layoutHasGroups(groups) {
+    if (!this.layout?.groups) return false;
+    for (const group of groups) {
+      if (!this.layout.groups.has(group)) return false;
+    }
+    return true;
+  }
+
+  ensureLayoutForCurrentFeatures(sim) {
+    const groups = this.requiredLayoutGroups(sim);
+    if (this.layoutHasGroups(groups)) return true;
+    const previous = sim.snapshotWasmBackendStateArrays?.() || {};
+    try {
+      this.configure(sim, { groups });
+      sim.allocateAuxiliaryArrays?.({ preserveExisting: true });
+      sim.restoreWasmBackendStateArrays?.(previous);
+      return true;
+    } catch (error) {
+      const profile = Array.from(groups).map((group) => WASM_LAYOUT_GROUP_LABELS[group] || group).join(", ") || "base";
+      console.warn(`WASM FDTD memory profile could not be expanded (${profile}); using JavaScript fallback.`, error);
+      return false;
+    }
+  }
+
+  hasLayoutGroup(group) {
+    return Boolean(this.layout?.groups?.has(group));
+  }
+
+  hasDynamicMaterialLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL);
+  }
+
+  hasTensorGyroLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_TENSOR_GYRO);
+  }
+
+  hasElectricAdeLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_ELECTRIC_ADE);
+  }
+
+  hasMagneticAdeLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_MAGNETIC_ADE);
+  }
+
+  hasPhaseChangeLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_PHASE_CHANGE);
+  }
+
+  hasHarmonicLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_HARMONIC);
+  }
+
+  hasBianisotropyLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_BIANISOTROPY);
+  }
+
+  hasFullVectorBianisotropyLayout() {
+    return this.hasLayoutGroup(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY);
+  }
+
+  createLayout(nx, ny, options = {}) {
+    const groups = this.normalizeLayoutGroups(options.groups);
     const offsets = {};
+    const allocated = {};
     let cursor = 0;
     const f32 = (name, length) => {
       cursor = wasmAlign4(cursor);
       offsets[name] = cursor;
+      allocated[name] = true;
       cursor += length * Float32Array.BYTES_PER_ELEMENT;
     };
     const f64 = (name, length) => {
       cursor = wasmAlign8(cursor);
       offsets[name] = cursor;
+      allocated[name] = true;
       cursor += length * Float64Array.BYTES_PER_ELEMENT;
     };
     const u8 = (name, length) => {
       offsets[name] = cursor;
+      allocated[name] = true;
       cursor += length;
+    };
+    const optionalF32 = (group, name, length) => {
+      if (groups.has(group)) f32(name, length);
+      else offsets[name] = offsets.__dummyF32;
+    };
+    const optionalU8 = (group, name, length) => {
+      if (groups.has(group)) u8(name, length);
+      else offsets[name] = offsets.__dummyU8;
     };
 
     const n = nx * ny;
+    f32("__dummyF32", n);
+    u8("__dummyU8", n);
     f32("ez", n);
     f32("ezx", n);
     f32("ezy", n);
@@ -93,74 +221,74 @@ class WasmFdtdBackend {
     f32("muLoss", n);
     f32("muY", n);
     f32("muLossY", n);
-    f32("dualEz", n);
-    f32("dualEzx", n);
-    f32("dualEzy", n);
-    f32("dualHx", n);
-    f32("dualHy", n);
-    u8("bianisotropicMaterial", n);
-    f32("bianisotropyKappa", n);
-    f32("bianisotropyPrevScalar", n);
-    f32("bianisotropyPrevSplitX", n);
-    f32("bianisotropyPrevSplitY", n);
-    f32("bianisotropyPrevTx", n);
-    f32("bianisotropyPrevTy", n);
-    f32("bianisotropyPrevDualEz", n);
-    f32("bianisotropyPrevDualEzx", n);
-    f32("bianisotropyPrevDualEzy", n);
-    f32("bianisotropyPrevDualHx", n);
-    f32("bianisotropyPrevDualHy", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "dualEz", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "dualEzx", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "dualEzy", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "dualHx", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "dualHy", n);
+    optionalU8(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropicMaterial", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyKappa", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyPrevScalar", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyPrevSplitX", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyPrevSplitY", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyPrevTx", n);
+    optionalF32(WASM_LAYOUT_GROUP_BIANISOTROPY, "bianisotropyPrevTy", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "bianisotropyPrevDualEz", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "bianisotropyPrevDualEzx", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "bianisotropyPrevDualEzy", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "bianisotropyPrevDualHx", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "bianisotropyPrevDualHy", n);
     u8("material", n);
-    u8("modulatedMaterial", n);
-    f32("modulationPhaseOffset", n);
-    u8("nonlinearMaterial", n);
-    u8("electricTensorMaterial", n);
-    u8("gyrotropicMaterial", n);
-    u8("dispersiveMaterial", n);
-    u8("dispersionAxes", n);
-    f32("dispersionAxisX", n);
-    f32("dispersionAxisY", n);
-    f32("modulationBaseEps", n);
-    f32("modulationBaseEpsY", n);
-    u8("phaseChangeMaterial", n);
-    f32("phaseState", n);
-    f32("phaseEpsOff", n);
-    f32("phaseLossOff", n);
-    f32("phaseEpsYOff", n);
-    f32("phaseLossYOff", n);
-    f32("phaseEpsOn", n);
-    f32("phaseLossOn", n);
-    f32("phaseEpsYOn", n);
-    f32("phaseLossYOn", n);
-    f32("epsilonXY", n);
-    f32("gyrotropyG", n);
-    f32("dispersionOmegaP", n);
-    f32("dispersionGamma", n);
-    f32("dispersionOmega0", n);
-    f32("dispersionDeltaEps", n);
-    f32("dispersionTau", n);
-    u8("muDispersiveMaterial", n);
-    u8("muDispersionAxes", n);
-    f32("muDispersionOmegaP", n);
-    f32("muDispersionGamma", n);
-    f32("muDispersionOmega0", n);
-    f32("muDispersionDeltaMu", n);
-    f32("muDispersionTau", n);
-    f32("dispPz", n);
-    f32("dispJz", n);
-    f32("dispPx", n);
-    f32("dispJx", n);
-    f32("dispPy", n);
-    f32("dispJy", n);
-    f32("magDispMz", n);
-    f32("magDispJz", n);
-    f32("magDispMx", n);
-    f32("magDispJx", n);
-    f32("magDispMy", n);
-    f32("magDispJy", n);
-    f32("harmonicPrevPz", n);
-    f32("harmonicPrevPx", n);
-    f32("harmonicPrevPy", n);
+    optionalU8(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL, "modulatedMaterial", n);
+    optionalF32(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL, "modulationPhaseOffset", n);
+    optionalU8(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL, "nonlinearMaterial", n);
+    optionalU8(WASM_LAYOUT_GROUP_TENSOR_GYRO, "electricTensorMaterial", n);
+    optionalU8(WASM_LAYOUT_GROUP_TENSOR_GYRO, "gyrotropicMaterial", n);
+    optionalU8(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersiveMaterial", n);
+    optionalU8(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionAxes", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionAxisX", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionAxisY", n);
+    optionalF32(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL, "modulationBaseEps", n);
+    optionalF32(WASM_LAYOUT_GROUP_DYNAMIC_MATERIAL, "modulationBaseEpsY", n);
+    optionalU8(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseChangeMaterial", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseState", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseEpsOff", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseLossOff", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseEpsYOff", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseLossYOff", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseEpsOn", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseLossOn", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseEpsYOn", n);
+    optionalF32(WASM_LAYOUT_GROUP_PHASE_CHANGE, "phaseLossYOn", n);
+    optionalF32(WASM_LAYOUT_GROUP_TENSOR_GYRO, "epsilonXY", n);
+    optionalF32(WASM_LAYOUT_GROUP_TENSOR_GYRO, "gyrotropyG", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionOmegaP", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionGamma", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionOmega0", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionDeltaEps", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispersionTau", n);
+    optionalU8(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersiveMaterial", n);
+    optionalU8(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionAxes", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionOmegaP", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionGamma", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionOmega0", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionDeltaMu", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "muDispersionTau", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispPz", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispJz", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispPx", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispJx", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispPy", n);
+    optionalF32(WASM_LAYOUT_GROUP_ELECTRIC_ADE, "dispJy", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispMz", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispJz", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispMx", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispJx", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispMy", n);
+    optionalF32(WASM_LAYOUT_GROUP_MAGNETIC_ADE, "magDispJy", n);
+    optionalF32(WASM_LAYOUT_GROUP_HARMONIC, "harmonicPrevPz", n);
+    optionalF32(WASM_LAYOUT_GROUP_HARMONIC, "harmonicPrevPx", n);
+    optionalF32(WASM_LAYOUT_GROUP_HARMONIC, "harmonicPrevPy", n);
     f32("cpmlKappaEX", nx);
     f32("cpmlKappaHX", nx);
     f32("cpmlKappaEY", ny);
@@ -185,10 +313,10 @@ class WasmFdtdBackend {
     f32("cpmlPsiEyX", n);
     f32("cpmlPsiHzX", n);
     f32("cpmlPsiHzY", n);
-    f32("cpmlPsiDualHxY", n);
-    f32("cpmlPsiDualHyX", n);
-    f32("cpmlPsiDualEzX", n);
-    f32("cpmlPsiDualEzY", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "cpmlPsiDualHxY", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "cpmlPsiDualHyX", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "cpmlPsiDualEzX", n);
+    optionalF32(WASM_LAYOUT_GROUP_FULL_VECTOR_BIANISOTROPY, "cpmlPsiDualEzY", n);
     f32("tfsfSources", WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
     f32("modeSources", WASM_MAX_MODE_SOURCES * WASM_MODE_SOURCE_STRIDE);
     f32("modeProfiles", WASM_MAX_MODE_SOURCES * ny);
@@ -198,6 +326,8 @@ class WasmFdtdBackend {
 
     return {
       offsets,
+      allocated,
+      groups,
       totalBytes: wasmAlign4(cursor),
     };
   }
@@ -213,97 +343,113 @@ class WasmFdtdBackend {
     }
   }
 
-  configure(sim) {
-    const layout = this.createLayout(sim.nx, sim.ny);
+  configure(sim, options = {}) {
+    const groups = options.groups ? this.normalizeLayoutGroups(options.groups) : this.requiredLayoutGroups(sim);
+    const layout = this.createLayout(sim.nx, sim.ny, { groups });
     this.ensureCapacity(layout.totalBytes);
     this.layout = layout;
     const buffer = this.memory.buffer;
     const n = sim.n;
     const o = layout.offsets;
+    const allocated = layout.allocated;
+    const bindF32 = (name, length = n) => {
+      if (allocated[name]) {
+        sim[name] = new Float32Array(buffer, o[name], length);
+      } else if (!(sim[name] instanceof Float32Array) || sim[name].length !== length || sim[name].buffer === buffer) {
+        sim[name] = new Float32Array(length);
+      }
+    };
+    const bindU8 = (name, length = n) => {
+      if (allocated[name]) {
+        sim[name] = new Uint8Array(buffer, o[name], length);
+      } else if (!(sim[name] instanceof Uint8Array) || sim[name].length !== length || sim[name].buffer === buffer) {
+        sim[name] = new Uint8Array(length);
+      }
+    };
 
-    sim.ez = new Float32Array(buffer, o.ez, n);
-    sim.ezx = new Float32Array(buffer, o.ezx, n);
-    sim.ezy = new Float32Array(buffer, o.ezy, n);
-    sim.hx = new Float32Array(buffer, o.hx, n);
-    sim.hy = new Float32Array(buffer, o.hy, n);
-    sim.eps = new Float32Array(buffer, o.eps, n);
-    sim.loss = new Float32Array(buffer, o.loss, n);
-    sim.epsY = new Float32Array(buffer, o.epsY, n);
-    sim.lossY = new Float32Array(buffer, o.lossY, n);
-    sim.conductivity = new Float32Array(buffer, o.conductivity, n);
-    sim.conductivityY = new Float32Array(buffer, o.conductivityY, n);
-    sim.mu = new Float32Array(buffer, o.mu, n);
-    sim.muLoss = new Float32Array(buffer, o.muLoss, n);
-    sim.muY = new Float32Array(buffer, o.muY, n);
-    sim.muLossY = new Float32Array(buffer, o.muLossY, n);
-    sim.dualEz = new Float32Array(buffer, o.dualEz, n);
-    sim.dualEzx = new Float32Array(buffer, o.dualEzx, n);
-    sim.dualEzy = new Float32Array(buffer, o.dualEzy, n);
-    sim.dualHx = new Float32Array(buffer, o.dualHx, n);
-    sim.dualHy = new Float32Array(buffer, o.dualHy, n);
-    sim.bianisotropicMaterial = new Uint8Array(buffer, o.bianisotropicMaterial, n);
-    sim.bianisotropyKappa = new Float32Array(buffer, o.bianisotropyKappa, n);
-    sim.bianisotropyPrevScalar = new Float32Array(buffer, o.bianisotropyPrevScalar, n);
-    sim.bianisotropyPrevSplitX = new Float32Array(buffer, o.bianisotropyPrevSplitX, n);
-    sim.bianisotropyPrevSplitY = new Float32Array(buffer, o.bianisotropyPrevSplitY, n);
-    sim.bianisotropyPrevTx = new Float32Array(buffer, o.bianisotropyPrevTx, n);
-    sim.bianisotropyPrevTy = new Float32Array(buffer, o.bianisotropyPrevTy, n);
-    sim.bianisotropyPrevDualEz = new Float32Array(buffer, o.bianisotropyPrevDualEz, n);
-    sim.bianisotropyPrevDualEzx = new Float32Array(buffer, o.bianisotropyPrevDualEzx, n);
-    sim.bianisotropyPrevDualEzy = new Float32Array(buffer, o.bianisotropyPrevDualEzy, n);
-    sim.bianisotropyPrevDualHx = new Float32Array(buffer, o.bianisotropyPrevDualHx, n);
-    sim.bianisotropyPrevDualHy = new Float32Array(buffer, o.bianisotropyPrevDualHy, n);
-    sim.material = new Uint8Array(buffer, o.material, n);
-    sim.modulatedMaterial = new Uint8Array(buffer, o.modulatedMaterial, n);
-    sim.modulationPhaseOffset = new Float32Array(buffer, o.modulationPhaseOffset, n);
-    sim.nonlinearMaterial = new Uint8Array(buffer, o.nonlinearMaterial, n);
-    sim.electricTensorMaterial = new Uint8Array(buffer, o.electricTensorMaterial, n);
-    sim.gyrotropicMaterial = new Uint8Array(buffer, o.gyrotropicMaterial, n);
-    sim.dispersiveMaterial = new Uint8Array(buffer, o.dispersiveMaterial, n);
-    sim.dispersionAxes = new Uint8Array(buffer, o.dispersionAxes, n);
-    sim.dispersionAxisX = new Float32Array(buffer, o.dispersionAxisX, n);
-    sim.dispersionAxisY = new Float32Array(buffer, o.dispersionAxisY, n);
-    sim.modulationBaseEps = new Float32Array(buffer, o.modulationBaseEps, n);
-    sim.modulationBaseEpsY = new Float32Array(buffer, o.modulationBaseEpsY, n);
-    sim.phaseChangeMaterial = new Uint8Array(buffer, o.phaseChangeMaterial, n);
-    sim.phaseState = new Float32Array(buffer, o.phaseState, n);
-    sim.phaseEpsOff = new Float32Array(buffer, o.phaseEpsOff, n);
-    sim.phaseLossOff = new Float32Array(buffer, o.phaseLossOff, n);
-    sim.phaseEpsYOff = new Float32Array(buffer, o.phaseEpsYOff, n);
-    sim.phaseLossYOff = new Float32Array(buffer, o.phaseLossYOff, n);
-    sim.phaseEpsOn = new Float32Array(buffer, o.phaseEpsOn, n);
-    sim.phaseLossOn = new Float32Array(buffer, o.phaseLossOn, n);
-    sim.phaseEpsYOn = new Float32Array(buffer, o.phaseEpsYOn, n);
-    sim.phaseLossYOn = new Float32Array(buffer, o.phaseLossYOn, n);
-    sim.epsilonXY = new Float32Array(buffer, o.epsilonXY, n);
-    sim.gyrotropyG = new Float32Array(buffer, o.gyrotropyG, n);
-    sim.dispersionOmegaP = new Float32Array(buffer, o.dispersionOmegaP, n);
-    sim.dispersionGamma = new Float32Array(buffer, o.dispersionGamma, n);
-    sim.dispersionOmega0 = new Float32Array(buffer, o.dispersionOmega0, n);
-    sim.dispersionDeltaEps = new Float32Array(buffer, o.dispersionDeltaEps, n);
-    sim.dispersionTau = new Float32Array(buffer, o.dispersionTau, n);
-    sim.muDispersiveMaterial = new Uint8Array(buffer, o.muDispersiveMaterial, n);
-    sim.muDispersionAxes = new Uint8Array(buffer, o.muDispersionAxes, n);
-    sim.muDispersionOmegaP = new Float32Array(buffer, o.muDispersionOmegaP, n);
-    sim.muDispersionGamma = new Float32Array(buffer, o.muDispersionGamma, n);
-    sim.muDispersionOmega0 = new Float32Array(buffer, o.muDispersionOmega0, n);
-    sim.muDispersionDeltaMu = new Float32Array(buffer, o.muDispersionDeltaMu, n);
-    sim.muDispersionTau = new Float32Array(buffer, o.muDispersionTau, n);
-    sim.dispPz = new Float32Array(buffer, o.dispPz, n);
-    sim.dispJz = new Float32Array(buffer, o.dispJz, n);
-    sim.dispPx = new Float32Array(buffer, o.dispPx, n);
-    sim.dispJx = new Float32Array(buffer, o.dispJx, n);
-    sim.dispPy = new Float32Array(buffer, o.dispPy, n);
-    sim.dispJy = new Float32Array(buffer, o.dispJy, n);
-    sim.magDispMz = new Float32Array(buffer, o.magDispMz, n);
-    sim.magDispJz = new Float32Array(buffer, o.magDispJz, n);
-    sim.magDispMx = new Float32Array(buffer, o.magDispMx, n);
-    sim.magDispJx = new Float32Array(buffer, o.magDispJx, n);
-    sim.magDispMy = new Float32Array(buffer, o.magDispMy, n);
-    sim.magDispJy = new Float32Array(buffer, o.magDispJy, n);
-    sim.harmonicPrevPz = new Float32Array(buffer, o.harmonicPrevPz, n);
-    sim.harmonicPrevPx = new Float32Array(buffer, o.harmonicPrevPx, n);
-    sim.harmonicPrevPy = new Float32Array(buffer, o.harmonicPrevPy, n);
+    bindF32("ez");
+    bindF32("ezx");
+    bindF32("ezy");
+    bindF32("hx");
+    bindF32("hy");
+    bindF32("eps");
+    bindF32("loss");
+    bindF32("epsY");
+    bindF32("lossY");
+    bindF32("conductivity");
+    bindF32("conductivityY");
+    bindF32("mu");
+    bindF32("muLoss");
+    bindF32("muY");
+    bindF32("muLossY");
+    bindF32("dualEz");
+    bindF32("dualEzx");
+    bindF32("dualEzy");
+    bindF32("dualHx");
+    bindF32("dualHy");
+    bindU8("bianisotropicMaterial");
+    bindF32("bianisotropyKappa");
+    bindF32("bianisotropyPrevScalar");
+    bindF32("bianisotropyPrevSplitX");
+    bindF32("bianisotropyPrevSplitY");
+    bindF32("bianisotropyPrevTx");
+    bindF32("bianisotropyPrevTy");
+    bindF32("bianisotropyPrevDualEz");
+    bindF32("bianisotropyPrevDualEzx");
+    bindF32("bianisotropyPrevDualEzy");
+    bindF32("bianisotropyPrevDualHx");
+    bindF32("bianisotropyPrevDualHy");
+    bindU8("material");
+    bindU8("modulatedMaterial");
+    bindF32("modulationPhaseOffset");
+    bindU8("nonlinearMaterial");
+    bindU8("electricTensorMaterial");
+    bindU8("gyrotropicMaterial");
+    bindU8("dispersiveMaterial");
+    bindU8("dispersionAxes");
+    bindF32("dispersionAxisX");
+    bindF32("dispersionAxisY");
+    bindF32("modulationBaseEps");
+    bindF32("modulationBaseEpsY");
+    bindU8("phaseChangeMaterial");
+    bindF32("phaseState");
+    bindF32("phaseEpsOff");
+    bindF32("phaseLossOff");
+    bindF32("phaseEpsYOff");
+    bindF32("phaseLossYOff");
+    bindF32("phaseEpsOn");
+    bindF32("phaseLossOn");
+    bindF32("phaseEpsYOn");
+    bindF32("phaseLossYOn");
+    bindF32("epsilonXY");
+    bindF32("gyrotropyG");
+    bindF32("dispersionOmegaP");
+    bindF32("dispersionGamma");
+    bindF32("dispersionOmega0");
+    bindF32("dispersionDeltaEps");
+    bindF32("dispersionTau");
+    bindU8("muDispersiveMaterial");
+    bindU8("muDispersionAxes");
+    bindF32("muDispersionOmegaP");
+    bindF32("muDispersionGamma");
+    bindF32("muDispersionOmega0");
+    bindF32("muDispersionDeltaMu");
+    bindF32("muDispersionTau");
+    bindF32("dispPz");
+    bindF32("dispJz");
+    bindF32("dispPx");
+    bindF32("dispJx");
+    bindF32("dispPy");
+    bindF32("dispJy");
+    bindF32("magDispMz");
+    bindF32("magDispJz");
+    bindF32("magDispMx");
+    bindF32("magDispJx");
+    bindF32("magDispMy");
+    bindF32("magDispJy");
+    bindF32("harmonicPrevPz");
+    bindF32("harmonicPrevPx");
+    bindF32("harmonicPrevPy");
     sim.cpmlKappaEX = new Float32Array(buffer, o.cpmlKappaEX, sim.nx);
     sim.cpmlKappaHX = new Float32Array(buffer, o.cpmlKappaHX, sim.nx);
     sim.cpmlKappaEY = new Float32Array(buffer, o.cpmlKappaEY, sim.ny);
@@ -328,10 +474,10 @@ class WasmFdtdBackend {
     sim.cpmlPsiEyX = new Float32Array(buffer, o.cpmlPsiEyX, n);
     sim.cpmlPsiHzX = new Float32Array(buffer, o.cpmlPsiHzX, n);
     sim.cpmlPsiHzY = new Float32Array(buffer, o.cpmlPsiHzY, n);
-    sim.cpmlPsiDualHxY = new Float32Array(buffer, o.cpmlPsiDualHxY, n);
-    sim.cpmlPsiDualHyX = new Float32Array(buffer, o.cpmlPsiDualHyX, n);
-    sim.cpmlPsiDualEzX = new Float32Array(buffer, o.cpmlPsiDualEzX, n);
-    sim.cpmlPsiDualEzY = new Float32Array(buffer, o.cpmlPsiDualEzY, n);
+    bindF32("cpmlPsiDualHxY");
+    bindF32("cpmlPsiDualHyX");
+    bindF32("cpmlPsiDualEzX");
+    bindF32("cpmlPsiDualEzY");
     this.tfsfSources = new Float32Array(buffer, o.tfsfSources, WASM_MAX_TFSF_SOURCES * WASM_TFSF_STRIDE);
     this.modeSources = new Float32Array(buffer, o.modeSources, WASM_MAX_MODE_SOURCES * WASM_MODE_SOURCE_STRIDE);
     this.modeProfiles = new Float32Array(buffer, o.modeProfiles, WASM_MAX_MODE_SOURCES * sim.ny);
@@ -355,12 +501,14 @@ class WasmFdtdBackend {
 
   measureField(sim) {
     if (typeof this.exports.measure_field !== "function" || !this.layout?.offsets || !this.measureStats) return null;
+    const fullVector = Boolean(sim.fullVectorBianisotropyActive?.());
+    if (fullVector && !this.hasFullVectorBianisotropyLayout()) return null;
     const o = this.layout.offsets;
     this.exports.measure_field(
       sim.n,
       this.measureMode(),
       state.fieldComponent === "hz" ? 1 : 0,
-      sim.fullVectorBianisotropyActive?.() ? 1 : 0,
+      fullVector ? 1 : 0,
       o.ez,
       o.hx,
       o.hy,
@@ -373,6 +521,69 @@ class WasmFdtdBackend {
       maxAbs: this.measureStats[0],
       energy: this.measureStats[1],
     };
+  }
+
+  renormalizeFields(sim) {
+    if (typeof this.exports.renormalize_fields !== "function" || !this.layout?.offsets || !this.measureStats) return false;
+    const includeBianisotropy = Boolean(state.materialBianisotropyEnabled);
+    const includeFullVector = Boolean(sim.fullVectorBianisotropyActive?.());
+    if (includeBianisotropy && !this.hasBianisotropyLayout()) return false;
+    if (includeFullVector && !this.hasFullVectorBianisotropyLayout()) return false;
+    const o = this.layout.offsets;
+    this.exports.renormalize_fields(
+      sim.n,
+      includeBianisotropy ? 1 : 0,
+      includeFullVector ? 1 : 0,
+      o.ez,
+      o.ezx,
+      o.ezy,
+      o.hx,
+      o.hy,
+      o.cpmlPsiHxY,
+      o.cpmlPsiHyX,
+      o.cpmlPsiEzX,
+      o.cpmlPsiEzY,
+      o.cpmlPsiExY,
+      o.cpmlPsiEyX,
+      o.cpmlPsiHzX,
+      o.cpmlPsiHzY,
+      o.cpmlPsiDualHxY,
+      o.cpmlPsiDualHyX,
+      o.cpmlPsiDualEzX,
+      o.cpmlPsiDualEzY,
+      o.dualEz,
+      o.dualEzx,
+      o.dualEzy,
+      o.dualHx,
+      o.dualHy,
+      o.bianisotropyPrevScalar,
+      o.bianisotropyPrevSplitX,
+      o.bianisotropyPrevSplitY,
+      o.bianisotropyPrevTx,
+      o.bianisotropyPrevTy,
+      o.bianisotropyPrevDualEz,
+      o.bianisotropyPrevDualEzx,
+      o.bianisotropyPrevDualEzy,
+      o.bianisotropyPrevDualHx,
+      o.bianisotropyPrevDualHy,
+      FIELD_RENORMALIZE_HIGH,
+      FIELD_RENORMALIZE_TARGET,
+      o.measureStats
+    );
+    const factor = Number(this.measureStats[0]) || 0;
+    if (factor < 0) {
+      sim.resetFields();
+      sim.lastDiverged = true;
+      return true;
+    }
+    if (factor > 0) {
+      sim.setFieldLog10Scale(sim.fieldLog10Scale + Math.log10(factor));
+      sim.renormalizedCount += 1;
+      sim.lastRenormalized = true;
+      return true;
+    }
+    sim.lastRenormalized = false;
+    return true;
   }
 
   packTfsfSources(sim) {
@@ -560,6 +771,7 @@ class WasmFdtdBackend {
       o.cpmlPsiEyX,
       o.cpmlPsiHzX,
       o.cpmlPsiHzY,
+      Math.max(0, Math.trunc(Number(sim.cpmlLayer) || 0)),
       runtimeFlags,
       Number(state.kerrChi3) || 0,
       Math.max(0.05, Number(state.kerrSaturation) || 5),

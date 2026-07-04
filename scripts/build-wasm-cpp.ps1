@@ -54,6 +54,7 @@ $args = @(
   "-Wl,--export=apply_harmonic_nonlinear_response",
   "-Wl,--export=apply_bianisotropic_response",
   "-Wl,--export=measure_field",
+  "-Wl,--export=renormalize_fields",
   "-Wl,--allow-undefined",
   "-o",
   $wasm,

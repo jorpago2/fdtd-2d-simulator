@@ -58,6 +58,7 @@
       return Boolean(
         state.materialNonlinearEnabled &&
           this.wasmBackend?.supportsKerr() &&
+          this.wasmBackend?.hasDynamicMaterialLayout?.() &&
           (!state.materialModulationEnabled || this.wasmBackend?.supportsModulation?.())
       );
     },
@@ -65,7 +66,8 @@
     canUseCompiledModulationResponse() {
       return Boolean(
         state.materialModulationEnabled &&
-          this.wasmBackend?.supportsModulation?.()
+          this.wasmBackend?.supportsModulation?.() &&
+          this.wasmBackend?.hasDynamicMaterialLayout?.()
       );
     },
 
@@ -78,19 +80,29 @@
     canUseCompiledHarmonicResponse() {
       return Boolean(
         state.materialHarmonicEnabled &&
-          this.wasmBackend?.supportsHarmonic?.()
+          this.wasmBackend?.supportsHarmonic?.() &&
+          this.wasmBackend?.hasDynamicMaterialLayout?.() &&
+          this.wasmBackend?.hasHarmonicLayout?.()
       );
     },
 
     canUseCompiledPhaseChangeResponse() {
       return Boolean(
         state.materialPhaseChangeEnabled &&
-          this.wasmBackend?.supportsPhaseChange?.()
+          this.wasmBackend?.supportsPhaseChange?.() &&
+          this.wasmBackend?.hasDynamicMaterialLayout?.() &&
+          this.wasmBackend?.hasPhaseChangeLayout?.()
       );
     },
 
     canUseCompiledBianisotropyResponse() {
-      if (!state.materialBianisotropyEnabled || !this.wasmBackend?.supportsBianisotropy?.()) return false;
+      if (
+        !state.materialBianisotropyEnabled ||
+        !this.wasmBackend?.supportsBianisotropy?.() ||
+        !this.wasmBackend?.hasBianisotropyLayout?.()
+      ) {
+        return false;
+      }
       if (this.fullVectorBianisotropyActive?.()) return Boolean(this.canUseCompiledFullVectorBianisotropy?.());
       return true;
     },
@@ -102,6 +114,7 @@
     canUseCompiledMaterialStep() {
       if (!this.wasmBackend?.canStep(state.fieldComponent)) return false;
       if (!this.canUseCompiledBoundaryStep()) return false;
+      if (!this.wasmBackend.ensureLayoutForCurrentFeatures?.(this)) return false;
       const hasModeProfileSource = Boolean(this.hasModeProfileSource?.());
       if (hasModeProfileSource) {
         if (!this.wasmBackend.supportsModeSource?.()) return false;
@@ -129,11 +142,16 @@
       if (state.materialNonlinearEnabled && !this.canUseCompiledKerrResponse()) return false;
       if (state.materialSaturableGainEnabled && !this.wasmBackend.supportsSaturableGain()) return false;
       if (state.materialGyrotropyEnabled) {
-        if (state.fieldComponent !== "hz" || !this.wasmBackend.supportsTensorGyro()) return false;
+        if (state.fieldComponent !== "hz" || !this.wasmBackend.supportsTensorGyro() || !this.wasmBackend.hasTensorGyroLayout?.()) return false;
       }
       if (state.materialDispersionEnabled) {
-        if (!this.wasmBackend.supportsElectricAde?.()) return false;
-        if (this.hasActiveMagneticDispersion() && !this.wasmBackend.supportsMagneticAde?.()) return false;
+        if (!this.wasmBackend.supportsElectricAde?.() || !this.wasmBackend.hasElectricAdeLayout?.()) return false;
+        if (
+          this.hasActiveMagneticDispersion() &&
+          (!this.wasmBackend.supportsMagneticAde?.() || !this.wasmBackend.hasMagneticAdeLayout?.())
+        ) {
+          return false;
+        }
       }
       return true;
     },

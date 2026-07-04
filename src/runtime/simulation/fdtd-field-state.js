@@ -27,6 +27,10 @@
   }
 
   Object.assign(FDTDSim.prototype, {
+    markFieldsChanged() {
+      this.fieldTextureRevision = (Number(this.fieldTextureRevision) || 0) + 1;
+    },
+
     resetFields() {
       this.ez.fill(0);
       this.ezx.fill(0);
@@ -77,6 +81,7 @@
       this.fieldLog10Scale = 0;
       this.lastRenormalized = false;
       this.lastDiverged = false;
+      this.markFieldsChanged();
     },
 
     splitScalarStorageIsIsotropic(i) {
@@ -113,6 +118,7 @@
       this.lastRenormalized = false;
       this.lastDiverged = false;
       this.resetDiagnostics();
+      this.markFieldsChanged();
     },
 
     setFieldLog10Scale(value) {
@@ -135,24 +141,30 @@
         this.cpmlPsiEyX,
         this.cpmlPsiHzX,
         this.cpmlPsiHzY,
-        this.cpmlPsiDualHxY,
-        this.cpmlPsiDualHyX,
-        this.cpmlPsiDualEzX,
-        this.cpmlPsiDualEzY,
       ].filter(Boolean);
+      const fullVector = Boolean(this.fullVectorBianisotropyActive?.());
 
       if (state.materialBianisotropyEnabled) {
+        arrays.push(
+          this.bianisotropyPrevScalar,
+          this.bianisotropyPrevSplitX,
+          this.bianisotropyPrevSplitY,
+          this.bianisotropyPrevTx,
+          this.bianisotropyPrevTy,
+        );
+      }
+
+      if (fullVector) {
         arrays.push(
           this.dualEz,
           this.dualEzx,
           this.dualEzy,
           this.dualHx,
           this.dualHy,
-          this.bianisotropyPrevScalar,
-          this.bianisotropyPrevSplitX,
-          this.bianisotropyPrevSplitY,
-          this.bianisotropyPrevTx,
-          this.bianisotropyPrevTy,
+          this.cpmlPsiDualHxY,
+          this.cpmlPsiDualHyX,
+          this.cpmlPsiDualEzX,
+          this.cpmlPsiDualEzY,
           this.bianisotropyPrevDualEz,
           this.bianisotropyPrevDualEzx,
           this.bianisotropyPrevDualEzy,
@@ -165,6 +177,7 @@
     },
 
     renormalizeFields() {
+      if (this.wasmBackend?.renormalizeFields?.(this) === true) return;
       const arrays = this.renormalizationArrays();
       let maxAbs = 0;
 

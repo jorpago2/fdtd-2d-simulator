@@ -1243,10 +1243,13 @@ fullVectorBianisotropyActive() {
 },
 
 canUseCompiledFullVectorBianisotropy() {
+  if (!this.fullVectorBianisotropyActive()) return false;
+  if (!this.wasmBackend?.ensureLayoutForCurrentFeatures?.(this)) return false;
   return Boolean(
-    this.fullVectorBianisotropyActive() &&
-      this.wasmBackend?.canStep("hz") &&
+    this.wasmBackend?.canStep("hz") &&
       this.wasmBackend?.canStep("ez") &&
+      this.wasmBackend?.hasBianisotropyLayout?.() &&
+      this.wasmBackend?.hasFullVectorBianisotropyLayout?.() &&
       (!this.cpmlActive?.() || this.wasmBackend?.supportsCpml?.()) &&
       (!this.hasTfsfIncidentSource?.() ||
         (this.wasmBackend?.supportsTfsf?.() && this.wasmBackend?.canPackTfsfSources?.(this))) &&

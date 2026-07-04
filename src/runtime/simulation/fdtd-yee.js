@@ -30,6 +30,7 @@ Object.assign(FDTDSim.prototype, {
       this.zeroBoundaryFields();
       this.injectSource();
       this.time += 1;
+      this.markFieldsChanged?.();
       if (!state.running) this.updateDiagnostics();
       return;
     }
@@ -53,6 +54,7 @@ Object.assign(FDTDSim.prototype, {
     this.injectSource();
     this.reconcileSplitScalarState({ isotropicOnly: true });
     this.time += 1;
+    this.markFieldsChanged?.();
     if (!state.running) this.updateDiagnostics();
   },
 

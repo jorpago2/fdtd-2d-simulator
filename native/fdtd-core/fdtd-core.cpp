@@ -175,11 +175,15 @@ extern "C" __attribute__((export_name("measure_field"))) void measure_field(
   double* output = reinterpret_cast<double*>(outputOffset);
   const bool hzMode = hzModeValue != 0;
   const bool fullVector = fullVectorValue != 0;
+  const bool needsDual = fullVector && (mode >= 3);
   double maxAbs = 0.0;
   double energy = 0.0;
 
   for (i32 i = 0; i < n; i += 1) {
-    const double value = measure_field_value(mode, hzMode, fullVector, ez[i], hx[i], hy[i], dualEz[i], dualHx[i], dualHy[i]);
+    const float dualEzValue = needsDual ? dualEz[i] : 0.0f;
+    const float dualHxValue = needsDual ? dualHx[i] : 0.0f;
+    const float dualHyValue = needsDual ? dualHy[i] : 0.0f;
+    const double value = measure_field_value(mode, hzMode, fullVector, ez[i], hx[i], hy[i], dualEzValue, dualHxValue, dualHyValue);
     const double absValue = value < 0.0 ? -value : value;
     if (absValue > maxAbs) maxAbs = absValue;
     energy += value * value;
@@ -187,6 +191,197 @@ extern "C" __attribute__((export_name("measure_field"))) void measure_field(
 
   output[0] = maxAbs;
   output[1] = energy;
+}
+
+static inline bool finite_float(float value) {
+  return value == value && (value - value) == 0.0f;
+}
+
+static inline bool scan_renormalization_array(i32 n, float* values, float* maxAbs) {
+  for (i32 i = 0; i < n; i += 1) {
+    const float value = values[i];
+    if (!finite_float(value)) return false;
+    const float absValue = absf(value);
+    if (absValue > *maxAbs) *maxAbs = absValue;
+  }
+  return true;
+}
+
+static inline void scale_renormalization_array(i32 n, float* values, float factor) {
+  for (i32 i = 0; i < n; i += 1) {
+    values[i] /= factor;
+  }
+}
+
+extern "C" __attribute__((export_name("renormalize_fields"))) void renormalize_fields(
+  i32 n,
+  i32 includeBianisotropyValue,
+  i32 includeFullVectorValue,
+  u32 ezOffset,
+  u32 ezxOffset,
+  u32 ezyOffset,
+  u32 hxOffset,
+  u32 hyOffset,
+  u32 cpmlPsiHxYOffset,
+  u32 cpmlPsiHyXOffset,
+  u32 cpmlPsiEzXOffset,
+  u32 cpmlPsiEzYOffset,
+  u32 cpmlPsiExYOffset,
+  u32 cpmlPsiEyXOffset,
+  u32 cpmlPsiHzXOffset,
+  u32 cpmlPsiHzYOffset,
+  u32 cpmlPsiDualHxYOffset,
+  u32 cpmlPsiDualHyXOffset,
+  u32 cpmlPsiDualEzXOffset,
+  u32 cpmlPsiDualEzYOffset,
+  u32 dualEzOffset,
+  u32 dualEzxOffset,
+  u32 dualEzyOffset,
+  u32 dualHxOffset,
+  u32 dualHyOffset,
+  u32 bianisotropyPrevScalarOffset,
+  u32 bianisotropyPrevSplitXOffset,
+  u32 bianisotropyPrevSplitYOffset,
+  u32 bianisotropyPrevTxOffset,
+  u32 bianisotropyPrevTyOffset,
+  u32 bianisotropyPrevDualEzOffset,
+  u32 bianisotropyPrevDualEzxOffset,
+  u32 bianisotropyPrevDualEzyOffset,
+  u32 bianisotropyPrevDualHxOffset,
+  u32 bianisotropyPrevDualHyOffset,
+  float high,
+  float target,
+  u32 outputOffset
+) {
+  float* ez = f32(ezOffset);
+  float* ezx = f32(ezxOffset);
+  float* ezy = f32(ezyOffset);
+  float* hx = f32(hxOffset);
+  float* hy = f32(hyOffset);
+  float* cpmlPsiHxY = f32(cpmlPsiHxYOffset);
+  float* cpmlPsiHyX = f32(cpmlPsiHyXOffset);
+  float* cpmlPsiEzX = f32(cpmlPsiEzXOffset);
+  float* cpmlPsiEzY = f32(cpmlPsiEzYOffset);
+  float* cpmlPsiExY = f32(cpmlPsiExYOffset);
+  float* cpmlPsiEyX = f32(cpmlPsiEyXOffset);
+  float* cpmlPsiHzX = f32(cpmlPsiHzXOffset);
+  float* cpmlPsiHzY = f32(cpmlPsiHzYOffset);
+  float* cpmlPsiDualHxY = f32(cpmlPsiDualHxYOffset);
+  float* cpmlPsiDualHyX = f32(cpmlPsiDualHyXOffset);
+  float* cpmlPsiDualEzX = f32(cpmlPsiDualEzXOffset);
+  float* cpmlPsiDualEzY = f32(cpmlPsiDualEzYOffset);
+  float* dualEz = f32(dualEzOffset);
+  float* dualEzx = f32(dualEzxOffset);
+  float* dualEzy = f32(dualEzyOffset);
+  float* dualHx = f32(dualHxOffset);
+  float* dualHy = f32(dualHyOffset);
+  float* bianisotropyPrevScalar = f32(bianisotropyPrevScalarOffset);
+  float* bianisotropyPrevSplitX = f32(bianisotropyPrevSplitXOffset);
+  float* bianisotropyPrevSplitY = f32(bianisotropyPrevSplitYOffset);
+  float* bianisotropyPrevTx = f32(bianisotropyPrevTxOffset);
+  float* bianisotropyPrevTy = f32(bianisotropyPrevTyOffset);
+  float* bianisotropyPrevDualEz = f32(bianisotropyPrevDualEzOffset);
+  float* bianisotropyPrevDualEzx = f32(bianisotropyPrevDualEzxOffset);
+  float* bianisotropyPrevDualEzy = f32(bianisotropyPrevDualEzyOffset);
+  float* bianisotropyPrevDualHx = f32(bianisotropyPrevDualHxOffset);
+  float* bianisotropyPrevDualHy = f32(bianisotropyPrevDualHyOffset);
+  double* output = reinterpret_cast<double*>(outputOffset);
+  const bool includeBianisotropy = includeBianisotropyValue != 0;
+  const bool includeFullVector = includeFullVectorValue != 0;
+  float maxAbs = 0.0f;
+  bool finite =
+    scan_renormalization_array(n, ez, &maxAbs) &&
+    scan_renormalization_array(n, ezx, &maxAbs) &&
+    scan_renormalization_array(n, ezy, &maxAbs) &&
+    scan_renormalization_array(n, hx, &maxAbs) &&
+    scan_renormalization_array(n, hy, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiHxY, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiHyX, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiEzX, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiEzY, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiExY, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiEyX, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiHzX, &maxAbs) &&
+    scan_renormalization_array(n, cpmlPsiHzY, &maxAbs);
+
+  if (finite && includeBianisotropy) {
+    finite =
+      scan_renormalization_array(n, bianisotropyPrevScalar, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevSplitX, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevSplitY, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevTx, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevTy, &maxAbs);
+  }
+
+  if (finite && includeFullVector) {
+    finite =
+      scan_renormalization_array(n, dualEz, &maxAbs) &&
+      scan_renormalization_array(n, dualEzx, &maxAbs) &&
+      scan_renormalization_array(n, dualEzy, &maxAbs) &&
+      scan_renormalization_array(n, dualHx, &maxAbs) &&
+      scan_renormalization_array(n, dualHy, &maxAbs) &&
+      scan_renormalization_array(n, cpmlPsiDualHxY, &maxAbs) &&
+      scan_renormalization_array(n, cpmlPsiDualHyX, &maxAbs) &&
+      scan_renormalization_array(n, cpmlPsiDualEzX, &maxAbs) &&
+      scan_renormalization_array(n, cpmlPsiDualEzY, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevDualEz, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevDualEzx, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevDualEzy, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevDualHx, &maxAbs) &&
+      scan_renormalization_array(n, bianisotropyPrevDualHy, &maxAbs);
+  }
+
+  output[1] = static_cast<double>(maxAbs);
+  if (!finite) {
+    output[0] = -1.0;
+    return;
+  }
+  if (maxAbs <= high || target <= 0.0f) {
+    output[0] = 0.0;
+    return;
+  }
+
+  const float factor = maxAbs / target;
+  scale_renormalization_array(n, ez, factor);
+  scale_renormalization_array(n, ezx, factor);
+  scale_renormalization_array(n, ezy, factor);
+  scale_renormalization_array(n, hx, factor);
+  scale_renormalization_array(n, hy, factor);
+  scale_renormalization_array(n, cpmlPsiHxY, factor);
+  scale_renormalization_array(n, cpmlPsiHyX, factor);
+  scale_renormalization_array(n, cpmlPsiEzX, factor);
+  scale_renormalization_array(n, cpmlPsiEzY, factor);
+  scale_renormalization_array(n, cpmlPsiExY, factor);
+  scale_renormalization_array(n, cpmlPsiEyX, factor);
+  scale_renormalization_array(n, cpmlPsiHzX, factor);
+  scale_renormalization_array(n, cpmlPsiHzY, factor);
+
+  if (includeBianisotropy) {
+    scale_renormalization_array(n, bianisotropyPrevScalar, factor);
+    scale_renormalization_array(n, bianisotropyPrevSplitX, factor);
+    scale_renormalization_array(n, bianisotropyPrevSplitY, factor);
+    scale_renormalization_array(n, bianisotropyPrevTx, factor);
+    scale_renormalization_array(n, bianisotropyPrevTy, factor);
+  }
+
+  if (includeFullVector) {
+    scale_renormalization_array(n, dualEz, factor);
+    scale_renormalization_array(n, dualEzx, factor);
+    scale_renormalization_array(n, dualEzy, factor);
+    scale_renormalization_array(n, dualHx, factor);
+    scale_renormalization_array(n, dualHy, factor);
+    scale_renormalization_array(n, cpmlPsiDualHxY, factor);
+    scale_renormalization_array(n, cpmlPsiDualHyX, factor);
+    scale_renormalization_array(n, cpmlPsiDualEzX, factor);
+    scale_renormalization_array(n, cpmlPsiDualEzY, factor);
+    scale_renormalization_array(n, bianisotropyPrevDualEz, factor);
+    scale_renormalization_array(n, bianisotropyPrevDualEzx, factor);
+    scale_renormalization_array(n, bianisotropyPrevDualEzy, factor);
+    scale_renormalization_array(n, bianisotropyPrevDualHx, factor);
+    scale_renormalization_array(n, bianisotropyPrevDualHy, factor);
+  }
+
+  output[0] = static_cast<double>(factor);
 }
 
 static inline float electric_loss_decay(float loss, float intensity, i32 runtimeFlags, float gainSaturation) {
@@ -1201,6 +1396,28 @@ static inline float cpml_derivative(float rawDerivative, float* memory, i32 i, i
   return rawDerivative / kappaValue;
 }
 
+static inline bool cpml_axis_active(i32 axis, i32 length, i32 layer) {
+  if (layer <= 0 || length <= 0) return false;
+  const i32 activeLayer = layer < length ? layer : length;
+  const i32 maxSideStart = length - activeLayer - 1;
+  return axis < activeLayer || axis >= maxSideStart;
+}
+
+static inline float cpml_derivative_guarded(
+  float rawDerivative,
+  float* memory,
+  i32 i,
+  i32 axis,
+  i32 axisLength,
+  i32 cpmlLayer,
+  float* kappa,
+  float* a,
+  float* b
+) {
+  if (!cpml_axis_active(axis, axisLength, cpmlLayer)) return rawDerivative;
+  return cpml_derivative(rawDerivative, memory, i, axis, kappa, a, b);
+}
+
 static inline float magnetic_update_coeff_x(i32 i, float s, float* mu, float* muLoss) {
   return (s / safe_material_denominator(mu[i])) * magnetic_loss_decay(muLoss[i]);
 }
@@ -1831,6 +2048,7 @@ extern "C" __attribute__((export_name("step"))) void step(
   u32 cpmlPsiEyXOffset,
   u32 cpmlPsiHzXOffset,
   u32 cpmlPsiHzYOffset,
+  i32 cpmlLayer,
   i32 runtimeFlags,
   float kerrChi3,
   float kerrSaturation,
@@ -1956,7 +2174,7 @@ extern "C" __attribute__((export_name("step"))) void step(
     const i32 row = y * nx;
     for (i32 x = 0; x < nx; x += 1) {
       const i32 i = row + x;
-      const float dEzDy = cpml_derivative(ez[i + nx] - ez[i], cpmlPsiHxY, i, y, cpmlKappaHY, cpmlAHY, cpmlBHY);
+      const float dEzDy = cpml_derivative_guarded(ez[i + nx] - ez[i], cpmlPsiHxY, i, y, ny, cpmlLayer, cpmlKappaHY, cpmlAHY, cpmlBHY);
       const float decay = magnetic_loss_decay(muLoss[i]);
       const float materialScale = s / safe_material_denominator(mu[i]);
       hx[i] = (hx[i] - materialScale * dEzDy) * decay;
@@ -1967,7 +2185,7 @@ extern "C" __attribute__((export_name("step"))) void step(
     const i32 row = y * nx;
     for (i32 x = 0; x < nx - 1; x += 1) {
       const i32 i = row + x;
-      const float dEzDx = cpml_derivative(ez[i + 1] - ez[i], cpmlPsiHyX, i, x, cpmlKappaHX, cpmlAHX, cpmlBHX);
+      const float dEzDx = cpml_derivative_guarded(ez[i + 1] - ez[i], cpmlPsiHyX, i, x, nx, cpmlLayer, cpmlKappaHX, cpmlAHX, cpmlBHX);
       const float decay = magnetic_loss_decay(muLossY[i]);
       const float materialScale = s / safe_material_denominator(muY[i]);
       hy[i] = (hy[i] + materialScale * dEzDx) * decay;
@@ -2015,8 +2233,8 @@ extern "C" __attribute__((export_name("step"))) void step(
         zero_tm_cell(ez, ezx, ezy, i);
         continue;
       }
-      const float dHyDx = cpml_derivative(hy[i] - hy[i - 1], cpmlPsiEzX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
-      const float dHxDy = cpml_derivative(hx[i] - hx[i - nx], cpmlPsiEzY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
+      const float dHyDx = cpml_derivative_guarded(hy[i] - hy[i - 1], cpmlPsiEzX, i, x, nx, cpmlLayer, cpmlKappaEX, cpmlAEX, cpmlBEX);
+      const float dHxDy = cpml_derivative_guarded(hx[i] - hx[i - nx], cpmlPsiEzY, i, y, ny, cpmlLayer, cpmlKappaEY, cpmlAEY, cpmlBEY);
       const float sigmaDampX = conductivity_damp(conductivity[i], eps[i], s);
       const float sigmaDampY = conductivity_damp(conductivityY[i], epsY[i], s);
       const float sigmaCaX = (1.0f - sigmaDampX) / (1.0f + sigmaDampX);
@@ -2185,6 +2403,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
   u32 cpmlPsiEyXOffset,
   u32 cpmlPsiHzXOffset,
   u32 cpmlPsiHzYOffset,
+  i32 cpmlLayer,
   i32 runtimeFlags,
   float kerrChi3,
   float kerrSaturation,
@@ -2313,7 +2532,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         continue;
       }
       if ((runtimeFlags & STEP_TENSOR_GYRO) && (gyrotropicMaterial[i] || electricTensorMaterial[i])) continue;
-      const float dHzDy = cpml_derivative(hz[i + nx] - hz[i], cpmlPsiExY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
+      const float dHzDy = cpml_derivative_guarded(hz[i + nx] - hz[i], cpmlPsiExY, i, y, ny, cpmlLayer, cpmlKappaEY, cpmlAEY, cpmlBEY);
       const float sigmaDamp = conductivity_damp(conductivity[i], eps[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
@@ -2332,7 +2551,7 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         continue;
       }
       if ((runtimeFlags & STEP_TENSOR_GYRO) && (gyrotropicMaterial[i] || electricTensorMaterial[i])) continue;
-      const float dHzDx = cpml_derivative(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
+      const float dHzDx = cpml_derivative_guarded(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, nx, cpmlLayer, cpmlKappaEX, cpmlAEX, cpmlBEX);
       const float sigmaDamp = conductivity_damp(conductivityY[i], epsY[i], s);
       const float sigmaCa = (1.0f - sigmaDamp) / (1.0f + sigmaDamp);
       const float sigmaCb = 1.0f / (1.0f + sigmaDamp);
@@ -2367,8 +2586,8 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         const float sigmaCaY = (1.0f - sigmaDampY) / (1.0f + sigmaDampY);
         const float sigmaCbX = 1.0f / (1.0f + sigmaDampX);
         const float sigmaCbY = 1.0f / (1.0f + sigmaDampY);
-        const float dHzDy = cpml_derivative(hz[i + nx] - hz[i], cpmlPsiExY, i, y, cpmlKappaEY, cpmlAEY, cpmlBEY);
-        const float dHzDx = cpml_derivative(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, cpmlKappaEX, cpmlAEX, cpmlBEX);
+        const float dHzDy = cpml_derivative_guarded(hz[i + nx] - hz[i], cpmlPsiExY, i, y, ny, cpmlLayer, cpmlKappaEY, cpmlAEY, cpmlBEY);
+        const float dHzDx = cpml_derivative_guarded(hz[i + 1] - hz[i], cpmlPsiEyX, i, x, nx, cpmlLayer, cpmlKappaEX, cpmlAEX, cpmlBEX);
         const float sourceX = sigmaCbX * s * dHzDy;
         const float sourceY = -sigmaCbY * s * dHzDx;
         const float coupledX = (epsYi * sourceX - upperOffDiagonal * sourceY) / safeDet;
@@ -2461,8 +2680,8 @@ extern "C" __attribute__((export_name("step_hz"))) void step_hz(
         zero_te_cell(hz, hzx, hzy, ex, ey, i);
         continue;
       }
-      const float dEyDx = cpml_derivative(ey[i] - ey[i - 1], cpmlPsiHzX, i, x, cpmlKappaHX, cpmlAHX, cpmlBHX);
-      const float dExDy = cpml_derivative(ex[i] - ex[i - nx], cpmlPsiHzY, i, y, cpmlKappaHY, cpmlAHY, cpmlBHY);
+      const float dEyDx = cpml_derivative_guarded(ey[i] - ey[i - 1], cpmlPsiHzX, i, x, nx, cpmlLayer, cpmlKappaHX, cpmlAHX, cpmlBHX);
+      const float dExDy = cpml_derivative_guarded(ex[i] - ex[i - nx], cpmlPsiHzY, i, y, ny, cpmlLayer, cpmlKappaHY, cpmlAHY, cpmlBHY);
       const float hzxNew = (hzx[i] - (s / safe_material_denominator(mu[i])) * dEyDx) * magnetic_loss_decay(muLoss[i]);
       const float hzyNew = (hzy[i] + (s / safe_material_denominator(muY[i])) * dExDy) * magnetic_loss_decay(muLossY[i]);
       hzx[i] = hzxNew;

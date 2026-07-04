@@ -12,7 +12,7 @@ const MAX_CANVAS_DISPLAY_ASPECT = 6;
 const MIN_CANVAS_DISPLAY_HEIGHT = 220;
 const MAX_CANVAS_DISPLAY_HEIGHT = 1500;
 const CANVAS_DISPLAY_VIEWPORT_FRACTION = 0.68;
-const WASM_CORE_URL = "assets/wasm/fdtd-core.wasm?v=20260704-measure-wasm-1";
+const WASM_CORE_URL = "assets/wasm/fdtd-core.wasm?v=20260704-cpml-interior-fastpath-1";
 const WASM_PAGE_BYTES = 65536;
 const WASM_MAX_PAGES = 4096;
 const FIELD_RENORMALIZE_HIGH = 1e12;

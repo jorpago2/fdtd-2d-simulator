@@ -25,6 +25,8 @@
     poyntingY: 7,
   });
   const FIELD_TEXTURE_KEYS = Object.freeze(["ez", "hx", "hy", "dualEz", "dualHx", "dualHy"]);
+  const FIELD_ARRAY_IDS = new WeakMap();
+  let nextFieldArrayId = 1;
 
   const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 a_position;
@@ -236,6 +238,30 @@ void main() {
 
   function fieldArray(sim, key) {
     return sim[key] || sim.ez;
+  }
+
+  function fieldArrayId(values) {
+    if (!values || (typeof values !== "object" && typeof values !== "function")) return "none";
+    let id = FIELD_ARRAY_IDS.get(values);
+    if (!id) {
+      id = nextFieldArrayId;
+      nextFieldArrayId += 1;
+      FIELD_ARRAY_IDS.set(values, id);
+    }
+    return id;
+  }
+
+  function fieldTextureCacheKey(sim, key, values) {
+    return [
+      "field",
+      key,
+      fieldArrayId(values),
+      `${sim.nx}x${sim.ny}`,
+      Number(sim.time) || 0,
+      Number(sim.fieldTextureRevision) || 0,
+      Number(sim.renormalizedCount) || 0,
+      Number(sim.fieldLog10Scale) || 0,
+    ].join("|");
   }
 
   function hasFullVectorBianisotropy(sim) {
@@ -550,7 +576,15 @@ void main() {
       const required = new Set(requiredTextureKeys);
       const primaryKey = requiredTextureKeys[0] || "ez";
       for (const key of required) {
-        this.uploadFloatTexture(this.textures[key], FIELD_TEXTURE_UNITS[key], sim.nx, sim.ny, fieldArray(sim, key));
+        const values = fieldArray(sim, key);
+        this.uploadFloatTexture(
+          this.textures[key],
+          FIELD_TEXTURE_UNITS[key],
+          sim.nx,
+          sim.ny,
+          values,
+          fieldTextureCacheKey(sim, key, values)
+        );
       }
       const primaryTexture = this.textures[primaryKey] || this.textures.ez;
       for (const key of FIELD_TEXTURE_KEYS) {
