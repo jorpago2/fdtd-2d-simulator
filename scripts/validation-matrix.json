@@ -2278,6 +2278,293 @@
       "rationale": "Checks the synthetic-frequency analogue as a multi-resonator modulated chain with finite reduced sideband diagnostics."
     },
     {
+      "id": "pt_symmetric_coupler_modal_proxy",
+      "priority": "P1",
+      "preset": "ptSymmetricCoupler",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "balanced gain and loss guide masks are present",
+        "PT modal reduced estimate reports an unbroken-phase proxy",
+        "field energy overlaps the gain/loss guide pair"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "gainEnabled": true,
+        "ptModalRequired": true,
+        "gainCellsMin": 1000,
+        "lossyCellsMin": 1000,
+        "highIndexCellsMin": 2500,
+        "minAnalysisSamples": 48,
+        "ptNormalizedGammaMin": 0.5,
+        "ptNormalizedGammaMax": 0.95,
+        "ptRealSplitMin": 0.01,
+        "ptPhase": "unbroken",
+        "guideEnergyFractionMin": 0.05,
+        "materialEnergyFractionMin": 0.05
+      },
+      "rationale": "Checks the PT coupler as a real gain/loss guided system with a finite reduced modal proxy."
+    },
+    {
+      "id": "exceptional_point_coupler_modal_proxy",
+      "priority": "P1",
+      "preset": "exceptionalPointCoupler",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "balanced gain and loss guides are present",
+        "the reduced PT modal proxy is close to the exceptional-point condition",
+        "field energy overlaps the coupled guide region"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "gainEnabled": true,
+        "ptModalRequired": true,
+        "gainCellsMin": 1000,
+        "lossyCellsMin": 1000,
+        "highIndexCellsMin": 2000,
+        "minAnalysisSamples": 48,
+        "ptNormalizedGammaMin": 0.9,
+        "ptNormalizedGammaMax": 1.1,
+        "ptEpDistanceMax": 0.12,
+        "ptCoalescenceMin": 0.25,
+        "ptPhase": "near-EP",
+        "guideEnergyFractionMin": 0.05,
+        "materialEnergyFractionMin": 0.05
+      },
+      "rationale": "Checks the exceptional-point coupler as a near-balanced gain/loss teaching proxy, without claiming eigenvalue coalescence validation."
+    },
+    {
+      "id": "non_hermitian_skin_edge_proxy",
+      "priority": "P1",
+      "preset": "nonHermitianSkin",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "the non-Hermitian lattice contains both gain and loss cells",
+        "the coupled-workflow estimate reports edge and gain/loss localization proxies",
+        "field energy remains finite around the launched lattice"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "gainEnabled": true,
+        "coupledWorkflowRequired": true,
+        "gainCellsMin": 100,
+        "lossyCellsMin": 100,
+        "highIndexCellsMin": 300,
+        "minAnalysisSamples": 48,
+        "coupledMaterialEnergyFractionMin": 0.01,
+        "coupledSkinEdgeFractionMin": 0.000001,
+        "sourceOverlapFractionMin": 1e-8,
+        "skinEdgeFractionMin": 0.000001
+      },
+      "rationale": "Checks the non-Hermitian skin analogue as an active/lossy lattice with finite reduced localization proxies."
+    },
+    {
+      "id": "bic_kerr_active_phc_proxy",
+      "priority": "P1",
+      "preset": "bicKerr",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "the photonic-crystal cavity contains a Kerr active defect",
+        "anti-phase point dipoles excite the BIC-like defect region",
+        "Bloch/leakage and coupled active-material proxies are finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "nonlinearEnabled": true,
+        "phcBlochRequired": true,
+        "coupledWorkflowRequired": true,
+        "nonlinearCellsMin": 40,
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "sourcePhaseDifferenceDegMin": 170,
+        "sourcePhaseDifferenceDegMax": 190,
+        "phcQProxyMin": 1,
+        "coupledActiveMaterialFractionMin": 1e-8,
+        "coupledCavityEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks BIC + Kerr as a nonlinear-defect photonic-crystal scene with finite reduced leakage/active-overlap observables."
+    },
+    {
+      "id": "bic_enz_dispersive_phc_proxy",
+      "priority": "P1",
+      "preset": "bicEnz",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "the photonic-crystal cavity contains an ENZ dispersive defect",
+        "anti-phase point dipoles excite the BIC-like defect region",
+        "Bloch/leakage and dispersive active-material proxies are finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "dispersionEnabled": true,
+        "phcBlochRequired": true,
+        "coupledWorkflowRequired": true,
+        "dispersiveCellsMin": 20,
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "sourcePhaseDifferenceDegMin": 170,
+        "sourcePhaseDifferenceDegMax": 190,
+        "phcQProxyMin": 1,
+        "coupledActiveMaterialFractionMin": 1e-8,
+        "coupledCavityEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks BIC + ENZ as a dispersive-defect photonic-crystal scene with finite reduced leakage/active-overlap observables."
+    },
+    {
+      "id": "janus_topological_guide_source_proxy",
+      "priority": "P1",
+      "preset": "janusTopologicalGuide",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "the Valley-Hall-like guide geometry is present",
+        "the source uses the Janus dipole route",
+        "coupled-workflow material and source-overlap proxies are finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "coupledWorkflowRequired": true,
+        "sourceShape": "janusDipole",
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "coupledMaterialEnergyFractionMin": 0.01,
+        "coupledHighIndexEnergyFractionMin": 1e-8,
+        "coupledSourceOverlapFractionMin": 1e-8
+      },
+      "rationale": "Checks the Janus/topological guide workflow as a real directional-source plus structured-guide scene."
+    },
+    {
+      "id": "huygens_cavity_source_proxy",
+      "priority": "P1",
+      "preset": "huygensCavity",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "the source uses the Huygens route",
+        "a side-coupled high-index cavity is present",
+        "guide/cavity/source-overlap proxies are finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "coupledWorkflowRequired": true,
+        "sourceShape": "huygens",
+        "highIndexCellsMin": 100,
+        "minAnalysisSamples": 48,
+        "coupledGuideEnergyFractionMin": 0.01,
+        "coupledCavityEnergyFractionMin": 1e-8,
+        "coupledSourceOverlapFractionMin": 1e-8
+      },
+      "rationale": "Checks the Huygens + cavity workflow as a real source/cavity/guide scene with finite overlap proxies."
+    },
+    {
+      "id": "topology_temporal_mod_coupled_proxy",
+      "priority": "P1",
+      "preset": "topologyTemporalMod",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a Valley-Hall-like lattice contains a uniform temporally modulated segment",
+        "the coupled-workflow and Floquet reduced estimates are finite",
+        "the modulation phase is spatially coherent after local compensation"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "coupledWorkflowRequired": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 100,
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "floquetSidebandPowerMin": 0,
+        "coupledActiveMaterialFractionMin": 1e-9,
+        "coupledMaterialEnergyFractionMin": 0.01
+      },
+      "rationale": "Checks the topology + temporal-modulation workflow as a structured guide with a real uniform modulated section."
+    },
+    {
+      "id": "nonreciprocal_valley_hall_traveling_proxy",
+      "priority": "P1",
+      "preset": "nonreciprocalValleyHall",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a Valley-Hall-like lattice contains a traveling-modulated segment",
+        "the modulation phase has low spatial coherence and finite phase velocity",
+        "coupled-workflow and reduced Floquet proxies remain finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "coupledWorkflowRequired": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 200,
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.6,
+        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseVelocityMin": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "coupledActiveMaterialFractionMin": 1e-8,
+        "coupledMaterialEnergyFractionMin": 0.01
+      },
+      "rationale": "Checks the nonreciprocal Valley-Hall example as a traveling-modulation proxy without claiming calibrated isolation."
+    },
+    {
+      "id": "space_time_crystal_traveling_proxy",
+      "priority": "P1",
+      "preset": "spaceTimeCrystal",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "the space-time crystal contains many modulated dielectric stripes",
+        "the modulation phase is traveling rather than uniform",
+        "reduced Floquet sideband and coupled active-material proxies are finite"
+      ],
+      "acceptance": {
+        "coupledWorkflowCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 4000,
+        "materialCellsMin": 4000,
+        "highIndexCellsMin": 1000,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.6,
+        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseVelocityMin": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "modulatedEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the space-time crystal analogue as a real traveling-modulated stripe lattice with finite reduced sideband diagnostics."
+    },
+    {
       "id": "coupled_workflow_first_pass",
       "priority": "P1",
       "preset": "nonHermitianSkin",

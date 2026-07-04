@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T18:36:46.459Z",
-  "gitCommit": "7219e82+working-tree",
+  "generatedAt": "2026-07-04T19:04:46.777Z",
+  "gitCommit": "8068654+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 71,
-    "VALIDATION_GAP": 42,
+    "PASS": 75,
+    "VALIDATION_GAP": 38,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -4418,18 +4418,18 @@
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "description": "Atlas 131: PT-symmetric coupled guides with balanced gain/loss, saturable gain, gamma sweep, and reduced modal EP estimate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "gain/loss",
         "gainLoss sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "pt_symmetric_coupler_modal_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4458,14 +4458,14 @@
         "gain/loss",
         "gainLoss sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "exceptional_point_coupler_modal_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4494,15 +4494,14 @@
         "gain/loss"
       ],
       "validationCases": [
+        "non_hermitian_skin_edge_proxy:P1/physics",
         "coupled_workflow_first_pass:P1/physics"
       ],
       "blockers": [],
       "warnings": [
         "Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation."
       ],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4526,17 +4525,17 @@
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "description": "Atlas 134: symmetry-protected BIC-style PhC cavity with a Kerr nonlinear defect region, Bloch-k leakage, and active-material overlap proxies.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "bic_kerr_active_phc_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4560,17 +4559,17 @@
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "description": "Atlas 135: BIC-style PhC cavity side-coupled to a passive Drude ENZ inclusion with Bloch-k leakage and active-material overlap proxies.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material",
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "bic_enz_dispersive_phc_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4598,14 +4597,14 @@
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "janus_topological_guide_source_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -4633,14 +4632,14 @@
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "huygens_cavity_source_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4664,17 +4663,17 @@
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "description": "Atlas 138: Valley-Hall channel with a temporally modulated segment, reduced Floquet sideband readout, and coupled-workflow proxies.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "topology_temporal_mod_coupled_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -4703,14 +4702,14 @@
         "time modulation",
         "direction sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "nonreciprocal_valley_hall_traveling_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -4739,14 +4738,14 @@
         "time modulation",
         "direction sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "space_time_crystal_traveling_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

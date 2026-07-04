@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T18:36:46.459Z
-Git commit: 7219e82+working-tree
+Generated: 2026-07-04T19:04:46.777Z
+Git commit: 8068654+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 71 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 42 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 75 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 38 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -153,16 +153,16 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 128 | `modulatedRing` Modulated ring | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=7.49e-6 | modulated_ring_resonator_proxy:P1/physics | OK |
 | 129 | `floquetResonators` Floquet resonators | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=6.79e-6 | floquet_resonators_staggered_phase_proxy:P1/physics | OK |
 | 130 | `syntheticFrequency` Synthetic frequency dimension | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=6.31e-6 | synthetic_frequency_chain_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
-| 131 | `ptSymmetricCoupler` PT-symmetric gain/loss guides | 13. Coupled and non-Hermitian workflows | VALIDATION_GAP | nonlinear material, gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=2.09e-5 | none | no validation-matrix case covers this preset |
-| 132 | `exceptionalPointCoupler` Exceptional point proxy | 13. Coupled and non-Hermitian workflows | WARN | gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=1.72e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 133 | `nonHermitianSkin` Non-Hermitian skin analogue | 13. Coupled and non-Hermitian workflows | WARN | gain/loss | WASM CPML+gain, 24 steps, E=5.46e-8 | coupled_workflow_first_pass:P1/physics | Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation.; validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
-| 134 | `bicKerr` BIC + Kerr | 13. Coupled and non-Hermitian workflows | VALIDATION_GAP | nonlinear material, blochK sweep | WASM CPML+Kerr, 24 steps, E=3.18e-6 | none | no validation-matrix case covers this preset |
-| 135 | `bicEnz` BIC + ENZ | 13. Coupled and non-Hermitian workflows | VALIDATION_GAP | dispersive material, blochK sweep | WASM CPML+ADE, 24 steps, E=6.79e-6 | none | no validation-matrix case covers this preset |
-| 136 | `janusTopologicalGuide` Janus + topological guide | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.93e-7 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 137 | `huygensCavity` Huygens + cavity | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.32e-7 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 138 | `topologyTemporalMod` Topology + temporal modulation | 13. Coupled and non-Hermitian workflows | VALIDATION_GAP | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.07e-14 | none | no validation-matrix case covers this preset |
-| 139 | `nonreciprocalValleyHall` Nonreciprocity + Valley Hall | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=2.63e-14 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 140 | `spaceTimeCrystal` Space-time crystal | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.32e-8 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
+| 131 | `ptSymmetricCoupler` PT-symmetric gain/loss guides | 13. Coupled and non-Hermitian workflows | PASS | nonlinear material, gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=2.09e-5 | pt_symmetric_coupler_modal_proxy:P1/physics | OK |
+| 132 | `exceptionalPointCoupler` Exceptional point proxy | 13. Coupled and non-Hermitian workflows | WARN | gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=1.72e-5 | exceptional_point_coupler_modal_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 133 | `nonHermitianSkin` Non-Hermitian skin analogue | 13. Coupled and non-Hermitian workflows | WARN | gain/loss | WASM CPML+gain, 24 steps, E=5.46e-8 | non_hermitian_skin_edge_proxy:P1/physics, coupled_workflow_first_pass:P1/physics | Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation. |
+| 134 | `bicKerr` BIC + Kerr | 13. Coupled and non-Hermitian workflows | PASS | nonlinear material, blochK sweep | WASM CPML+Kerr, 24 steps, E=3.18e-6 | bic_kerr_active_phc_proxy:P1/physics | OK |
+| 135 | `bicEnz` BIC + ENZ | 13. Coupled and non-Hermitian workflows | PASS | dispersive material, blochK sweep | WASM CPML+ADE, 24 steps, E=6.79e-6 | bic_enz_dispersive_phc_proxy:P1/physics | OK |
+| 136 | `janusTopologicalGuide` Janus + topological guide | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.93e-7 | janus_topological_guide_source_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 137 | `huygensCavity` Huygens + cavity | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.32e-7 | huygens_cavity_source_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 138 | `topologyTemporalMod` Topology + temporal modulation | 13. Coupled and non-Hermitian workflows | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.07e-14 | topology_temporal_mod_coupled_proxy:P1/physics | OK |
+| 139 | `nonreciprocalValleyHall` Nonreciprocity + Valley Hall | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=2.63e-14 | nonreciprocal_valley_hall_traveling_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 140 | `spaceTimeCrystal` Space-time crystal | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.32e-8 | space_time_crystal_traveling_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 
 ## Interpretation
 

@@ -1343,6 +1343,190 @@ async function temporalMediaMetrics(page) {
   });
 }
 
+async function coupledWorkflowMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const coupled = analysis?.coupledWorkflow ?? null;
+    const ptModal = analysis?.ptModal ?? null;
+    const phcBloch = analysis?.phcBloch ?? null;
+    const floquet = analysis?.floquet ?? null;
+    const phase = floquet?.modulationPhase ?? coupled?.modulationPhase ?? (typeof sim.modulationPhaseCoherenceEstimate === "function" ? sim.modulationPhaseCoherenceEstimate() : null);
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const source = state.sources?.[0] || null;
+    const sourceX = source && typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : minX;
+    const sourceY = source && typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : midY;
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const finiteOrNull = (value) => (Number.isFinite(Number(value)) ? Number(value) : null);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const sourcePhaseDifferenceDeg = (() => {
+      const sources = state.sources || [];
+      if (sources.length < 2) return null;
+      const phase0 = Number(sources[0].phaseDeg || 0);
+      const phase1 = Number(sources[1].phaseDeg || 0);
+      return Math.abs((((phase1 - phase0 + 180) % 360) + 360) % 360 - 180);
+    })();
+    const guideHalfWidth = Math.max(3, Math.round(0.38 * cpw));
+    const cavityRadius = Math.max(4, Math.round(0.85 * cpw));
+    const sourceRadius = Math.max(3, Math.round(0.5 * cpw));
+    const edgeWidth = Math.max(3, Math.round(0.45 * cpw));
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let gainCells = 0;
+    let lossyCells = 0;
+    let nonlinearCells = 0;
+    let dispersiveCells = 0;
+    let modulatedCells = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let highIndexEnergy = 0;
+    let gainEnergy = 0;
+    let lossEnergy = 0;
+    let nonlinearEnergy = 0;
+    let dispersiveEnergy = 0;
+    let modulatedEnergy = 0;
+    let guideEnergy = 0;
+    let cavityEnergy = 0;
+    let sourceOverlapEnergy = 0;
+    let edgeEnergy = 0;
+    let leftEdgeEnergy = 0;
+    let rightEdgeEnergy = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        const isMaterial = sim.material[idx] !== 0 && sim.material[idx] !== 2;
+        const isHighIndex = isMaterial && Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0;
+        const loss = Math.max(finite(sim.loss?.[idx]), finite(sim.lossY?.[idx]));
+        const isGain = Math.min(finite(sim.loss?.[idx]), finite(sim.lossY?.[idx])) < -1e-9;
+        const isLossy = loss > 1e-9;
+        const isNonlinear = Boolean(sim.nonlinearMaterial?.[idx]);
+        const isDispersive = Boolean(sim.dispersiveMaterial?.[idx] || sim.muDispersiveMaterial?.[idx]);
+        const isModulated = Boolean(sim.modulatedMaterial?.[idx]);
+        totalEnergy += energy;
+        if (isMaterial) {
+          materialCells += 1;
+          materialEnergy += energy;
+        }
+        if (isHighIndex) {
+          highIndexCells += 1;
+          highIndexEnergy += energy;
+        }
+        if (isGain) {
+          gainCells += 1;
+          gainEnergy += energy;
+        }
+        if (isLossy) {
+          lossyCells += 1;
+          lossEnergy += energy;
+        }
+        if (isNonlinear) {
+          nonlinearCells += 1;
+          nonlinearEnergy += energy;
+        }
+        if (isDispersive) {
+          dispersiveCells += 1;
+          dispersiveEnergy += energy;
+        }
+        if (isModulated) {
+          modulatedCells += 1;
+          modulatedEnergy += energy;
+        }
+        if (Math.abs(y - sourceY) <= guideHalfWidth) guideEnergy += energy;
+        if (Math.hypot(x - midX, y - midY) <= cavityRadius) cavityEnergy += energy;
+        if (Math.hypot(x - sourceX, y - sourceY) <= sourceRadius) sourceOverlapEnergy += energy;
+        if (x <= minX + edgeWidth) {
+          edgeEnergy += energy;
+          leftEdgeEnergy += energy;
+        }
+        if (x >= maxX - edgeWidth) {
+          edgeEnergy += energy;
+          rightEdgeEnergy += energy;
+        }
+      }
+    }
+
+    const sourceShapes = (state.sources || []).map((item) => item.shape || "");
+    const sourceTypes = (state.sources || []).map((item) => item.type || "");
+    return {
+      preset: state.preset,
+      analysisSamples: sim.analysisSamples || 0,
+      diagnosticDftSamples: sim.diagnosticDftSampleCount || 0,
+      materialSaturableGainEnabled: Boolean(state.materialSaturableGainEnabled),
+      materialNonlinearEnabled: Boolean(state.materialNonlinearEnabled),
+      materialDispersionEnabled: Boolean(state.materialDispersionEnabled),
+      materialModulationEnabled: Boolean(state.materialModulationEnabled),
+      gainSaturation: Number(state.gainSaturation) || 0,
+      modulationDepth: Number(state.modulationDepth) || 0,
+      modulationFrequency: Number(state.modulationFrequency) || 0,
+      sourceShapes,
+      sourceTypes,
+      sourcePhaseDifferenceDeg,
+      materialCells,
+      highIndexCells,
+      gainCells,
+      lossyCells,
+      nonlinearCells,
+      dispersiveCells,
+      modulatedCells,
+      totalEnergy,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      gainEnergyFraction: gainEnergy / Math.max(1e-30, totalEnergy),
+      lossEnergyFraction: lossEnergy / Math.max(1e-30, totalEnergy),
+      nonlinearEnergyFraction: nonlinearEnergy / Math.max(1e-30, totalEnergy),
+      dispersiveEnergyFraction: dispersiveEnergy / Math.max(1e-30, totalEnergy),
+      modulatedEnergyFraction: modulatedEnergy / Math.max(1e-30, totalEnergy),
+      guideEnergyFraction: guideEnergy / Math.max(1e-30, totalEnergy),
+      cavityEnergyFraction: cavityEnergy / Math.max(1e-30, totalEnergy),
+      sourceOverlapFraction: sourceOverlapEnergy / Math.max(1e-30, totalEnergy),
+      skinEdgeFraction: edgeEnergy / Math.max(1e-30, totalEnergy),
+      skinBias: edgeEnergy > 1e-30 ? (rightEdgeEnergy - leftEdgeEnergy) / Math.max(1e-30, edgeEnergy) : 0,
+      ptModalRequiredData: Boolean(ptModal),
+      ptGamma: finiteOrNull(ptModal?.gamma),
+      ptCoupling: finiteOrNull(ptModal?.coupling),
+      ptNormalizedGamma: finiteOrNull(ptModal?.normalizedGamma),
+      ptRealSplit: finiteOrNull(ptModal?.realSplit),
+      ptImagSplit: finiteOrNull(ptModal?.imagSplit),
+      ptEpDistance: finiteOrNull(ptModal?.epDistance),
+      ptCoalescence: finiteOrNull(ptModal?.coalescence),
+      ptPhase: ptModal?.phase ?? null,
+      phcBlochRequiredData: Boolean(phcBloch),
+      phcQProxy: finiteOrNull(phcBloch?.qProxy),
+      phcLeakage: finiteOrNull(phcBloch?.leakage),
+      coupledWorkflowRequiredData: Boolean(coupled),
+      coupledCentroidXNorm: finiteOrNull(coupled?.centroidXNorm),
+      coupledCentroidYNorm: finiteOrNull(coupled?.centroidYNorm),
+      coupledSkinEdgeFraction: finiteOrNull(coupled?.skinEdgeFraction),
+      coupledSkinBias: finiteOrNull(coupled?.skinBias),
+      coupledGuideEnergyFraction: finiteOrNull(coupled?.guideEnergyFraction),
+      coupledCavityEnergyFraction: finiteOrNull(coupled?.cavityEnergyFraction),
+      coupledMaterialEnergyFraction: finiteOrNull(coupled?.materialEnergyFraction),
+      coupledHighIndexEnergyFraction: finiteOrNull(coupled?.highIndexEnergyFraction),
+      coupledActiveMaterialFraction: finiteOrNull(coupled?.activeMaterialFraction),
+      coupledSourceOverlapFraction: finiteOrNull(coupled?.sourceOverlapFraction),
+      coupledGainLossBias: finiteOrNull(coupled?.gainLossBias),
+      floquetRequiredData: Boolean(floquet),
+      floquetSidebandPower: finiteOrNull(floquet?.sidebandPower),
+      floquetMaxSidebandRatio: finiteOrNull(floquet?.maxSidebandRatio),
+      modulationPhaseSpatialCoherence: finiteOrNull(phase?.spatialCoherence),
+      modulationPhaseSpreadRad: finiteOrNull(phase?.phaseSpreadRad),
+      modulationPhaseVelocityLambdaPerStep: finiteOrNull(phase?.phaseVelocityLambdaPerStep),
+    };
+  });
+}
+
 async function layeredOpticsMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
@@ -2912,6 +3096,136 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(maxResonatorPeaks) && metrics.resonatorPeakCount > maxResonatorPeaks) {
       status.failures.push(`resonator peak count ${metrics.resonatorPeakCount} exceeds ${maxResonatorPeaks}`);
     }
+  }
+  if (testCase.acceptance?.coupledWorkflowCheck) {
+    status.coupledWorkflow = await coupledWorkflowMetrics(page);
+    const metrics = status.coupledWorkflow;
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minDftSamples = Number(testCase.acceptance?.minDiagnosticDftSamples);
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minGainCells = Number(testCase.acceptance?.gainCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minNonlinearCells = Number(testCase.acceptance?.nonlinearCellsMin);
+    const minDispersiveCells = Number(testCase.acceptance?.dispersiveCellsMin);
+    const minModulatedCells = Number(testCase.acceptance?.modulatedCellsMin);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minHighIndexFraction = Number(testCase.acceptance?.highIndexEnergyFractionMin);
+    const minGainFraction = Number(testCase.acceptance?.gainEnergyFractionMin);
+    const minLossFraction = Number(testCase.acceptance?.lossEnergyFractionMin);
+    const minNonlinearFraction = Number(testCase.acceptance?.nonlinearEnergyFractionMin);
+    const minDispersiveFraction = Number(testCase.acceptance?.dispersiveEnergyFractionMin);
+    const minModulatedFraction = Number(testCase.acceptance?.modulatedEnergyFractionMin);
+    const minGuideFraction = Number(testCase.acceptance?.guideEnergyFractionMin);
+    const minCavityFraction = Number(testCase.acceptance?.cavityEnergyFractionMin);
+    const minSourceFraction = Number(testCase.acceptance?.sourceOverlapFractionMin);
+    const minSkinEdgeFraction = Number(testCase.acceptance?.skinEdgeFractionMin);
+    const minAbsSkinBias = Number(testCase.acceptance?.absSkinBiasMin);
+    const minPtNormalizedGamma = Number(testCase.acceptance?.ptNormalizedGammaMin);
+    const maxPtNormalizedGamma = Number(testCase.acceptance?.ptNormalizedGammaMax);
+    const maxPtEpDistance = Number(testCase.acceptance?.ptEpDistanceMax);
+    const minPtCoalescence = Number(testCase.acceptance?.ptCoalescenceMin);
+    const minPtRealSplit = Number(testCase.acceptance?.ptRealSplitMin);
+    const minPtImagSplit = Number(testCase.acceptance?.ptImagSplitMin);
+    const minPhcQ = Number(testCase.acceptance?.phcQProxyMin);
+    const minPhcLeakage = Number(testCase.acceptance?.phcLeakageMin);
+    const maxPhcLeakage = Number(testCase.acceptance?.phcLeakageMax);
+    const minCoupledActive = Number(testCase.acceptance?.coupledActiveMaterialFractionMin);
+    const minCoupledGuide = Number(testCase.acceptance?.coupledGuideEnergyFractionMin);
+    const minCoupledCavity = Number(testCase.acceptance?.coupledCavityEnergyFractionMin);
+    const minCoupledMaterial = Number(testCase.acceptance?.coupledMaterialEnergyFractionMin);
+    const minCoupledHighIndex = Number(testCase.acceptance?.coupledHighIndexEnergyFractionMin);
+    const minCoupledSource = Number(testCase.acceptance?.coupledSourceOverlapFractionMin);
+    const minCoupledSkin = Number(testCase.acceptance?.coupledSkinEdgeFractionMin);
+    const minAbsCoupledSkinBias = Number(testCase.acceptance?.absCoupledSkinBiasMin);
+    const minAbsGainLossBias = Number(testCase.acceptance?.absCoupledGainLossBiasMin);
+    const minSidebandPower = Number(testCase.acceptance?.floquetSidebandPowerMin);
+    const minMaxSidebandRatio = Number(testCase.acceptance?.floquetMaxSidebandRatioMin);
+    const minPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMin);
+    const maxPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMax);
+    const minPhaseSpread = Number(testCase.acceptance?.modulationPhaseSpreadRadMin);
+    const minPhaseVelocity = Number(testCase.acceptance?.modulationPhaseVelocityMin);
+    const minSourcePhaseDifference = Number(testCase.acceptance?.sourcePhaseDifferenceDegMin);
+    const maxSourcePhaseDifference = Number(testCase.acceptance?.sourcePhaseDifferenceDegMax);
+    if (testCase.acceptance?.gainEnabled && !metrics.materialSaturableGainEnabled) {
+      status.failures.push("saturable gain/loss flag is not enabled");
+    }
+    if (testCase.acceptance?.nonlinearEnabled && !metrics.materialNonlinearEnabled) {
+      status.failures.push("nonlinear flag is not enabled");
+    }
+    if (testCase.acceptance?.dispersionEnabled && !metrics.materialDispersionEnabled) {
+      status.failures.push("dispersion flag is not enabled");
+    }
+    if (testCase.acceptance?.temporalModulationEnabled && !metrics.materialModulationEnabled) {
+      status.failures.push("temporal modulation flag is not enabled");
+    }
+    if (testCase.acceptance?.ptModalRequired && !metrics.ptModalRequiredData) {
+      status.failures.push("PT modal reduced estimate is missing");
+    }
+    if (testCase.acceptance?.phcBlochRequired && !metrics.phcBlochRequiredData) {
+      status.failures.push("photonic-crystal Bloch reduced estimate is missing");
+    }
+    if (testCase.acceptance?.coupledWorkflowRequired && !metrics.coupledWorkflowRequiredData) {
+      status.failures.push("coupled-workflow reduced estimate is missing");
+    }
+    if (testCase.acceptance?.floquetRequired && !metrics.floquetRequiredData) {
+      status.failures.push("Floquet reduced estimate is missing");
+    }
+    if (testCase.acceptance?.sourceShape && !metrics.sourceShapes.includes(testCase.acceptance.sourceShape)) {
+      status.failures.push(`expected source shape ${testCase.acceptance.sourceShape}, got ${metrics.sourceShapes.join(",") || "none"}`);
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`coupled workflow analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (Number.isFinite(minDftSamples) && metrics.diagnosticDftSamples < minDftSamples) {
+      status.failures.push(`coupled workflow DFT has ${metrics.diagnosticDftSamples} samples, expected at least ${minDftSamples}`);
+    }
+    if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) status.failures.push(`coupled material cells ${metrics.materialCells} below ${minMaterialCells}`);
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) status.failures.push(`coupled high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    if (Number.isFinite(minGainCells) && metrics.gainCells < minGainCells) status.failures.push(`coupled gain cells ${metrics.gainCells} below ${minGainCells}`);
+    if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) status.failures.push(`coupled lossy cells ${metrics.lossyCells} below ${minLossyCells}`);
+    if (Number.isFinite(minNonlinearCells) && metrics.nonlinearCells < minNonlinearCells) status.failures.push(`coupled nonlinear cells ${metrics.nonlinearCells} below ${minNonlinearCells}`);
+    if (Number.isFinite(minDispersiveCells) && metrics.dispersiveCells < minDispersiveCells) status.failures.push(`coupled dispersive cells ${metrics.dispersiveCells} below ${minDispersiveCells}`);
+    if (Number.isFinite(minModulatedCells) && metrics.modulatedCells < minModulatedCells) status.failures.push(`coupled modulated cells ${metrics.modulatedCells} below ${minModulatedCells}`);
+    if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) status.failures.push(`coupled material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
+    if (Number.isFinite(minHighIndexFraction) && metrics.highIndexEnergyFraction < minHighIndexFraction) status.failures.push(`coupled high-index energy fraction ${metrics.highIndexEnergyFraction} below ${minHighIndexFraction}`);
+    if (Number.isFinite(minGainFraction) && metrics.gainEnergyFraction < minGainFraction) status.failures.push(`gain energy fraction ${metrics.gainEnergyFraction} below ${minGainFraction}`);
+    if (Number.isFinite(minLossFraction) && metrics.lossEnergyFraction < minLossFraction) status.failures.push(`loss energy fraction ${metrics.lossEnergyFraction} below ${minLossFraction}`);
+    if (Number.isFinite(minNonlinearFraction) && metrics.nonlinearEnergyFraction < minNonlinearFraction) status.failures.push(`coupled nonlinear energy fraction ${metrics.nonlinearEnergyFraction} below ${minNonlinearFraction}`);
+    if (Number.isFinite(minDispersiveFraction) && metrics.dispersiveEnergyFraction < minDispersiveFraction) status.failures.push(`coupled dispersive energy fraction ${metrics.dispersiveEnergyFraction} below ${minDispersiveFraction}`);
+    if (Number.isFinite(minModulatedFraction) && metrics.modulatedEnergyFraction < minModulatedFraction) status.failures.push(`coupled modulated energy fraction ${metrics.modulatedEnergyFraction} below ${minModulatedFraction}`);
+    if (Number.isFinite(minGuideFraction) && metrics.guideEnergyFraction < minGuideFraction) status.failures.push(`coupled guide energy fraction ${metrics.guideEnergyFraction} below ${minGuideFraction}`);
+    if (Number.isFinite(minCavityFraction) && metrics.cavityEnergyFraction < minCavityFraction) status.failures.push(`coupled cavity energy fraction ${metrics.cavityEnergyFraction} below ${minCavityFraction}`);
+    if (Number.isFinite(minSourceFraction) && metrics.sourceOverlapFraction < minSourceFraction) status.failures.push(`source-overlap energy fraction ${metrics.sourceOverlapFraction} below ${minSourceFraction}`);
+    if (Number.isFinite(minSkinEdgeFraction) && metrics.skinEdgeFraction < minSkinEdgeFraction) status.failures.push(`skin edge energy fraction ${metrics.skinEdgeFraction} below ${minSkinEdgeFraction}`);
+    if (Number.isFinite(minAbsSkinBias) && Math.abs(metrics.skinBias) < minAbsSkinBias) status.failures.push(`skin-bias magnitude ${metrics.skinBias} below ${minAbsSkinBias}`);
+    if (Number.isFinite(minPtNormalizedGamma) && !(Number.isFinite(metrics.ptNormalizedGamma) && metrics.ptNormalizedGamma >= minPtNormalizedGamma)) status.failures.push(`PT gamma/kappa ${metrics.ptNormalizedGamma} below ${minPtNormalizedGamma}`);
+    if (Number.isFinite(maxPtNormalizedGamma) && !(Number.isFinite(metrics.ptNormalizedGamma) && metrics.ptNormalizedGamma <= maxPtNormalizedGamma)) status.failures.push(`PT gamma/kappa ${metrics.ptNormalizedGamma} exceeds ${maxPtNormalizedGamma}`);
+    if (Number.isFinite(maxPtEpDistance) && !(Number.isFinite(metrics.ptEpDistance) && metrics.ptEpDistance <= maxPtEpDistance)) status.failures.push(`PT EP distance ${metrics.ptEpDistance} exceeds ${maxPtEpDistance}`);
+    if (Number.isFinite(minPtCoalescence) && !(Number.isFinite(metrics.ptCoalescence) && metrics.ptCoalescence >= minPtCoalescence)) status.failures.push(`PT coalescence proxy ${metrics.ptCoalescence} below ${minPtCoalescence}`);
+    if (Number.isFinite(minPtRealSplit) && !(Number.isFinite(metrics.ptRealSplit) && metrics.ptRealSplit >= minPtRealSplit)) status.failures.push(`PT real split ${metrics.ptRealSplit} below ${minPtRealSplit}`);
+    if (Number.isFinite(minPtImagSplit) && !(Number.isFinite(metrics.ptImagSplit) && metrics.ptImagSplit >= minPtImagSplit)) status.failures.push(`PT imaginary split ${metrics.ptImagSplit} below ${minPtImagSplit}`);
+    if (testCase.acceptance?.ptPhase && metrics.ptPhase !== testCase.acceptance.ptPhase) status.failures.push(`PT phase ${metrics.ptPhase} differs from expected ${testCase.acceptance.ptPhase}`);
+    if (Number.isFinite(minPhcQ) && !(Number.isFinite(metrics.phcQProxy) && metrics.phcQProxy >= minPhcQ)) status.failures.push(`PHC Q proxy ${metrics.phcQProxy} below ${minPhcQ}`);
+    if (Number.isFinite(minPhcLeakage) && !(Number.isFinite(metrics.phcLeakage) && metrics.phcLeakage >= minPhcLeakage)) status.failures.push(`PHC leakage ${metrics.phcLeakage} below ${minPhcLeakage}`);
+    if (Number.isFinite(maxPhcLeakage) && !(Number.isFinite(metrics.phcLeakage) && metrics.phcLeakage <= maxPhcLeakage)) status.failures.push(`PHC leakage ${metrics.phcLeakage} exceeds ${maxPhcLeakage}`);
+    if (Number.isFinite(minCoupledActive) && !(Number.isFinite(metrics.coupledActiveMaterialFraction) && metrics.coupledActiveMaterialFraction >= minCoupledActive)) status.failures.push(`coupled active-material fraction ${metrics.coupledActiveMaterialFraction} below ${minCoupledActive}`);
+    if (Number.isFinite(minCoupledGuide) && !(Number.isFinite(metrics.coupledGuideEnergyFraction) && metrics.coupledGuideEnergyFraction >= minCoupledGuide)) status.failures.push(`coupled guide fraction ${metrics.coupledGuideEnergyFraction} below ${minCoupledGuide}`);
+    if (Number.isFinite(minCoupledCavity) && !(Number.isFinite(metrics.coupledCavityEnergyFraction) && metrics.coupledCavityEnergyFraction >= minCoupledCavity)) status.failures.push(`coupled cavity fraction ${metrics.coupledCavityEnergyFraction} below ${minCoupledCavity}`);
+    if (Number.isFinite(minCoupledMaterial) && !(Number.isFinite(metrics.coupledMaterialEnergyFraction) && metrics.coupledMaterialEnergyFraction >= minCoupledMaterial)) status.failures.push(`coupled material fraction ${metrics.coupledMaterialEnergyFraction} below ${minCoupledMaterial}`);
+    if (Number.isFinite(minCoupledHighIndex) && !(Number.isFinite(metrics.coupledHighIndexEnergyFraction) && metrics.coupledHighIndexEnergyFraction >= minCoupledHighIndex)) status.failures.push(`coupled high-index fraction ${metrics.coupledHighIndexEnergyFraction} below ${minCoupledHighIndex}`);
+    if (Number.isFinite(minCoupledSource) && !(Number.isFinite(metrics.coupledSourceOverlapFraction) && metrics.coupledSourceOverlapFraction >= minCoupledSource)) status.failures.push(`coupled source-overlap fraction ${metrics.coupledSourceOverlapFraction} below ${minCoupledSource}`);
+    if (Number.isFinite(minCoupledSkin) && !(Number.isFinite(metrics.coupledSkinEdgeFraction) && metrics.coupledSkinEdgeFraction >= minCoupledSkin)) status.failures.push(`coupled skin edge fraction ${metrics.coupledSkinEdgeFraction} below ${minCoupledSkin}`);
+    if (Number.isFinite(minAbsCoupledSkinBias) && !(Number.isFinite(metrics.coupledSkinBias) && Math.abs(metrics.coupledSkinBias) >= minAbsCoupledSkinBias)) status.failures.push(`coupled skin-bias magnitude ${metrics.coupledSkinBias} below ${minAbsCoupledSkinBias}`);
+    if (Number.isFinite(minAbsGainLossBias) && !(Number.isFinite(metrics.coupledGainLossBias) && Math.abs(metrics.coupledGainLossBias) >= minAbsGainLossBias)) status.failures.push(`coupled gain/loss-bias magnitude ${metrics.coupledGainLossBias} below ${minAbsGainLossBias}`);
+    if (Number.isFinite(minSidebandPower) && !(Number.isFinite(metrics.floquetSidebandPower) && metrics.floquetSidebandPower >= minSidebandPower)) status.failures.push(`coupled Floquet sideband power ${metrics.floquetSidebandPower} below ${minSidebandPower}`);
+    if (Number.isFinite(minMaxSidebandRatio) && !(Number.isFinite(metrics.floquetMaxSidebandRatio) && metrics.floquetMaxSidebandRatio >= minMaxSidebandRatio)) status.failures.push(`coupled Floquet sideband ratio ${metrics.floquetMaxSidebandRatio} below ${minMaxSidebandRatio}`);
+    if (Number.isFinite(minPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence >= minPhaseCoherence)) status.failures.push(`coupled modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} below ${minPhaseCoherence}`);
+    if (Number.isFinite(maxPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence <= maxPhaseCoherence)) status.failures.push(`coupled modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} exceeds ${maxPhaseCoherence}`);
+    if (Number.isFinite(minPhaseSpread) && !(Number.isFinite(metrics.modulationPhaseSpreadRad) && metrics.modulationPhaseSpreadRad >= minPhaseSpread)) status.failures.push(`coupled modulation phase spread ${metrics.modulationPhaseSpreadRad} below ${minPhaseSpread}`);
+    if (Number.isFinite(minPhaseVelocity) && !(Number.isFinite(metrics.modulationPhaseVelocityLambdaPerStep) && Math.abs(metrics.modulationPhaseVelocityLambdaPerStep) >= minPhaseVelocity)) status.failures.push(`coupled modulation phase velocity ${metrics.modulationPhaseVelocityLambdaPerStep} below ${minPhaseVelocity}`);
+    if (Number.isFinite(minSourcePhaseDifference) && !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg >= minSourcePhaseDifference)) status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} below ${minSourcePhaseDifference} deg`);
+    if (Number.isFinite(maxSourcePhaseDifference) && !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg <= maxSourcePhaseDifference)) status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} exceeds ${maxSourcePhaseDifference} deg`);
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {
     status.periodicPhotonics = await periodicPhotonicsMetrics(page);
