@@ -47,13 +47,14 @@
 
     el.speedInput?.addEventListener("input", () => {
       state.timeRate = clamp(Number(el.speedInput.value), 0.1, 10);
-      runtimeController.clampStepAccumulator();
+      runtimeController.resetRuntimePacing();
       updateControlText();
     });
 
     el.renderFpsInput?.addEventListener("change", () => {
       const fps = Number(el.renderFpsInput.value);
       state.renderFps = [15, 30, 60].includes(fps) ? fps : 0;
+      runtimeController.resetRuntimePacing();
       updateControlText();
     });
 

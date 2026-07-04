@@ -17,7 +17,9 @@
 
   function createRuntimeController(dependencies) {
     const DEFAULT_VISUAL_REFRESH_HZ = 60;
-    const MAX_FRAME_DELTA_SECONDS = 0.25;
+    const MAX_VISUAL_CATCH_UP_FRAMES = 2;
+    // Keep visual pacing smooth after expensive renders or WASM warm-up; FDTD dt is still fixed per step.
+    const MAX_FRAME_DELTA_SECONDS = MAX_VISUAL_CATCH_UP_FRAMES / DEFAULT_VISUAL_REFRESH_HZ;
 
     const state = requireObject(dependencies.state, "state");
     const sim = requireObject(dependencies.sim, "sim");
@@ -39,6 +41,11 @@
     let animationStarted = false;
     let previousFrameTimeMs = null;
     let lastRenderTimeMs = -Infinity;
+
+    function currentTimeMs() {
+      const now = global.performance?.now;
+      return typeof now === "function" ? now.call(global.performance) : Date.now();
+    }
 
     function runtimeEngineLabel() {
       return sim.engineLabel();
@@ -86,10 +93,20 @@
       return false;
     }
 
+    function resetRuntimePacing() {
+      const nowMs = currentTimeMs();
+      stepAccumulator = 0;
+      previousFrameTimeMs = nowMs;
+      lastRenderTimeMs = -Infinity;
+    }
+
     function setRunning(nextRunning) {
       const shouldRun = Boolean(nextRunning);
       const wasRunning = Boolean(state.running);
       state.running = shouldRun;
+      if (!wasRunning && shouldRun) {
+        resetRuntimePacing();
+      }
       if (wasRunning && !shouldRun) {
         finalizeDeferredResults();
       }
@@ -111,6 +128,7 @@
     }
 
     function resetSimulationFields() {
+      resetRuntimePacing();
       sim.resetFields();
       sim.measure();
       updateStats();
@@ -124,7 +142,7 @@
     }
 
     function animationFrame(frameTimeMs) {
-      const nowMs = Number.isFinite(Number(frameTimeMs)) ? Number(frameTimeMs) : global.performance?.now?.() || Date.now();
+      const nowMs = Number.isFinite(Number(frameTimeMs)) ? Number(frameTimeMs) : currentTimeMs();
       const elapsedSeconds =
         previousFrameTimeMs == null
           ? 1 / DEFAULT_VISUAL_REFRESH_HZ
@@ -167,6 +185,7 @@
       effectiveStepsPerFrame,
       targetStepsPerSecond,
       targetRenderFps,
+      resetRuntimePacing,
       setRunning,
       toggleRunning,
       advanceOneStep,
