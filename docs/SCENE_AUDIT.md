@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T19:04:46.777Z
-Git commit: 8068654+working-tree
+Generated: 2026-07-04T19:30:43.380Z
+Git commit: 1590ce2+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 75 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 38 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 87 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 26 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -45,18 +45,18 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 20 | `braggMirror` 1D Bragg mirror | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | bragg_mirror_stopband_reflection:P1/physics | OK |
 | 21 | `lossyInterface` Lossy interface | 2. Interfaces and multilayers | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
 | 22 | `anisotropicInterface` Anisotropic interface | 2. Interfaces and multilayers | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.07e-7 | none | no validation-matrix case covers this preset |
-| 23 | `jzDipole` Point electric dipole Jz | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.41e-5 | none | no validation-matrix case covers this preset |
-| 24 | `inPlaneDipole` In-plane electric dipole Jx/Jy | 3. Sources and radiation | VALIDATION_GAP | HZ polarization | WASM CPML, 24 steps, E=1.86e-6 | none | no validation-matrix case covers this preset |
-| 25 | `mzDipole` Effective magnetic dipole Mz | 3. Sources and radiation | VALIDATION_GAP | HZ polarization | WASM CPML, 24 steps, E=7.41e-5 | none | no validation-matrix case covers this preset |
-| 26 | `dipoleSubstrate` Dipole over substrate | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.03e-5 | none | no validation-matrix case covers this preset |
-| 27 | `dipoleNearPec` Dipole near PEC mirror | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.08e-5 | none | no validation-matrix case covers this preset |
-| 28 | `huygensRadiator` Huygens source | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.40e-5 | none | no validation-matrix case covers this preset |
-| 29 | `circularDipole` Circular dipole | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-4 | none | no validation-matrix case covers this preset |
-| 30 | `janusDipole` Janus dipole | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.95e-4 | none | no validation-matrix case covers this preset |
-| 31 | `dipoleArray` Equal-phase dipole array | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.74e-5 | none | no validation-matrix case covers this preset |
-| 32 | `phasedDipoleArray` Progressive-phase dipole array | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.76e-4 | none | no validation-matrix case covers this preset |
-| 33 | `apertureRadiator` Slot aperture radiator | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=6.96e-6 | none | no validation-matrix case covers this preset |
-| 34 | `nearFarFieldNtff` Near-field / far-field NTFF | 3. Sources and radiation | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=4.96e-5 | none | no validation-matrix case covers this preset |
+| 23 | `jzDipole` Point electric dipole Jz | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.41e-5 | jz_dipole_localized_source:P1/physics | OK |
+| 24 | `inPlaneDipole` In-plane electric dipole Jx/Jy | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=1.86e-6 | in_plane_dipole_hz_source:P1/physics | OK |
+| 25 | `mzDipole` Effective magnetic dipole Mz | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=7.41e-5 | mz_dipole_hz_source:P1/physics | OK |
+| 26 | `dipoleSubstrate` Dipole over substrate | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.03e-5 | dipole_substrate_material_overlap:P1/physics | OK |
+| 27 | `dipoleNearPec` Dipole near PEC mirror | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.08e-5 | dipole_near_pec_mirror:P1/physics | OK |
+| 28 | `huygensRadiator` Huygens source | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.40e-5 | huygens_radiator_directional_source:P1/physics | OK |
+| 29 | `circularDipole` Circular dipole | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-4 | circular_dipole_quadrature_source:P1/physics | OK |
+| 30 | `janusDipole` Janus dipole | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.95e-4 | janus_dipole_guide_directional_source:P1/physics | OK |
+| 31 | `dipoleArray` Equal-phase dipole array | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.74e-5 | dipole_array_equal_phase_geometry:P1/physics | OK |
+| 32 | `phasedDipoleArray` Progressive-phase dipole array | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.76e-4 | phased_dipole_array_progressive_phase:P1/physics | OK |
+| 33 | `apertureRadiator` Slot aperture radiator | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=6.96e-6 | aperture_radiator_slot_geometry:P1/physics | OK |
+| 34 | `nearFarFieldNtff` Near-field / far-field NTFF | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=4.96e-5 | near_far_field_ntff_proxy:P1/physics | OK |
 | 35 | `slabWaveguide` Single-mode slab waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | slab_waveguide_confinement:P0/physics | OK |
 | 36 | `multimodeSlab` Multimode slab waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.19e-6 | none | no validation-matrix case covers this preset |
 | 37 | `lossyGuide` Lossy waveguide | 4. Guided optics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.52e-6 | none | no validation-matrix case covers this preset |

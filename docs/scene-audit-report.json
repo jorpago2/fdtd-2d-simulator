@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T19:04:46.777Z",
-  "gitCommit": "8068654+working-tree",
+  "generatedAt": "2026-07-04T19:30:43.380Z",
+  "gitCommit": "1590ce2+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 75,
-    "VALIDATION_GAP": 38,
+    "PASS": 87,
+    "VALIDATION_GAP": 26,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -781,16 +781,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 23: localized electric Jz dipole in air.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "jz_dipole_localized_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -814,16 +814,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 24: localized in-plane electric-current dipole Jx/Jy using the Hz solver.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "in_plane_dipole_hz_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -847,16 +847,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 25: localized magnetic Mz dipole using the Hz solver.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "mz_dipole_hz_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -880,16 +880,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 26: Jz dipole close to a dielectric substrate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dipole_substrate_material_overlap:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -913,16 +913,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 27: Jz dipole close to a PEC mirror.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dipole_near_pec_mirror:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -946,16 +946,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 28: analytic Huygens-like source for directional radiation.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "huygens_radiator_directional_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -979,16 +979,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 29: quadrature circular dipole source.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "circular_dipole_quadrature_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1012,16 +1012,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 30: Janus source near a dielectric waveguide.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "janus_dipole_guide_directional_source:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1045,16 +1045,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 31: equal-phase dipole array.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dipole_array_equal_phase_geometry:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1078,16 +1078,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 32: progressive temporal phase per dipole, with phase step derived from a target steering angle.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phased_dipole_array_progressive_phase:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1111,16 +1111,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 33: source behind a PEC slot aperture.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "aperture_radiator_slot_geometry:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1144,16 +1144,16 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "near_far_field_ntff_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

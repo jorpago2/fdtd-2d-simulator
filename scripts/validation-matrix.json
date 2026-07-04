@@ -1894,6 +1894,287 @@
       "rationale": "Tracks Atlas 11, 24, and 32 after replacing ambiguous source parameters with explicit physics metadata."
     },
     {
+      "id": "jz_dipole_localized_source",
+      "priority": "P1",
+      "preset": "jzDipole",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "single Ez point-dipole source is present",
+        "field energy remains finite around the localized source"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the Jz dipole scene as a real localized Ez-source route."
+    },
+    {
+      "id": "in_plane_dipole_hz_source",
+      "priority": "P1",
+      "preset": "inPlaneDipole",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "Hz solver is selected",
+        "in-plane electric-current dipole source is present",
+        "field energy remains finite around the localized source"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "inPlaneElectricDipole",
+        "fieldComponent": "hz",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the in-plane dipole scene as a distinct Hz-polarized source route."
+    },
+    {
+      "id": "mz_dipole_hz_source",
+      "priority": "P1",
+      "preset": "mzDipole",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "Hz solver is selected",
+        "localized magnetic-dipole analogue source is present",
+        "field energy remains finite around the source"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "hz",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the Mz dipole analogue as the localized Hz-source route."
+    },
+    {
+      "id": "dipole_substrate_material_overlap",
+      "priority": "P1",
+      "preset": "dipoleSubstrate",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "single point dipole is present above a dielectric substrate",
+        "the substrate occupies a finite material region",
+        "source-neighborhood field energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "materialCellsMin": 10000,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the dipole-substrate example as a localized source coupled to a finite dielectric half-space."
+    },
+    {
+      "id": "dipole_near_pec_mirror",
+      "priority": "P1",
+      "preset": "dipoleNearPec",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "single point dipole is present",
+        "a finite PEC mirror is present near the source",
+        "source-neighborhood field energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "pecCellsMin": 250,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the dipole-near-PEC scene as a real source plus mirror geometry."
+    },
+    {
+      "id": "huygens_radiator_directional_source",
+      "priority": "P1",
+      "preset": "huygensRadiator",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "Huygens source route is selected",
+        "field energy is biased toward the forward side",
+        "source-neighborhood field energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "huygens",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "rightToLeftEnergyRatioMin": 1.05,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the Huygens radiator as a directional source route rather than an ordinary point source."
+    },
+    {
+      "id": "circular_dipole_quadrature_source",
+      "priority": "P1",
+      "preset": "circularDipole",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "circular quadrature dipole source route is selected",
+        "localized source energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "circularDipoleCw",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the circular dipole scene as the quadrature localized-source route."
+    },
+    {
+      "id": "janus_dipole_guide_directional_source",
+      "priority": "P1",
+      "preset": "janusDipole",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "Janus source route is selected",
+        "a high-index guide is present near the source",
+        "directional guide-side energy is finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "janusDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "highIndexCellsMin": 500,
+        "highIndexEnergyFractionMin": 1e-8,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the Janus dipole scene as a directional source coupled to a high-index guide."
+    },
+    {
+      "id": "dipole_array_equal_phase_geometry",
+      "priority": "P1",
+      "preset": "dipoleArray",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "eight equal-phase point dipoles are present",
+        "the array spans multiple wavelengths in y",
+        "phase-step proxy remains near zero"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 8,
+        "sourceCountMax": 8,
+        "sourceYSpanLambdaMin": 3,
+        "sourcePhaseStepMeanAbsDegMax": 1,
+        "sourcePhaseStepStdDegMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the equal-phase dipole array geometry and phase contract."
+    },
+    {
+      "id": "phased_dipole_array_progressive_phase",
+      "priority": "P1",
+      "preset": "phasedDipoleArray",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "eight point dipoles are present",
+        "the array spans multiple wavelengths in y",
+        "a nonzero progressive phase step is applied consistently"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 8,
+        "sourceCountMax": 8,
+        "sourceYSpanLambdaMin": 3,
+        "sourcePhaseStepMeanAbsDegMin": 20,
+        "sourcePhaseStepMeanAbsDegMax": 60,
+        "sourcePhaseStepStdDegMax": 1,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the phased dipole array as a progressive-phase steering example."
+    },
+    {
+      "id": "aperture_radiator_slot_geometry",
+      "priority": "P1",
+      "preset": "apertureRadiator",
+      "profile": "physics",
+      "steps": 1000,
+      "browserSmoke": true,
+      "checks": [
+        "a point source is placed behind a PEC screen",
+        "a finite slot remains open in the screen",
+        "source-neighborhood field energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "sourceShape": "point",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "pecCellsMin": 250,
+        "apertureGapCellsMin": 20,
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the aperture radiator as a source plus slotted PEC-screen geometry."
+    },
+    {
+      "id": "near_far_field_ntff_proxy",
+      "priority": "P1",
+      "preset": "nearFarFieldNtff",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "NTFF analysis samples accumulate",
+        "far-field angular samples are generated",
+        "localized source energy remains finite"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "requiresAnalysis": true,
+        "sourceShape": "pointDipole",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "minAnalysisSamples": 48,
+        "farFieldSamplesMin": 48,
+        "farFieldPeakMin": 1e-30,
+        "farFieldMode": "ntff",
+        "sourceNeighborhoodEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the NTFF scene as a finite near-to-far angular-pattern workflow, not a calibrated antenna pattern."
+    },
+    {
       "id": "monitor_observable_first_pass",
       "priority": "P1",
       "preset": "brewsterTeTm",

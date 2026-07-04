@@ -1527,6 +1527,124 @@ async function coupledWorkflowMetrics(page) {
   });
 }
 
+async function sourceRadiationMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const sources = state.sources || [];
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const sourceCells = sources.map((source) => ({
+      x: typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : Math.round(finite(source.xLambda) * cpw),
+      y: typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : Math.round(finite(source.yLambda) * cpw),
+      width: typeof sim.sourceEnvelopeFwhmCells === "function" ? sim.sourceEnvelopeFwhmCells(source) : Math.max(2, Math.round(finite(source.widthLambda, 0.35) * cpw)),
+      phaseDeg: finite(source.phaseDeg),
+      arrayPhaseStepDeg: Number.isFinite(Number(source.arrayPhaseStepDeg)) ? Number(source.arrayPhaseStepDeg) : null,
+    }));
+    const sourceShapes = sources.map((source) => source.shape || "");
+    const sourceTypes = sources.map((source) => source.type || "");
+    const sourcePhases = sourceCells.map((source) => source.phaseDeg);
+    const phaseSteps = [];
+    for (let i = 1; i < sourcePhases.length; i += 1) {
+      phaseSteps.push((((sourcePhases[i] - sourcePhases[i - 1] + 180) % 360) + 360) % 360 - 180);
+    }
+    const mean = (values) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
+    const phaseStepMean = mean(phaseSteps);
+    const phaseStepStd =
+      phaseSteps.length > 0 ? Math.sqrt(mean(phaseSteps.map((value) => (value - phaseStepMean) * (value - phaseStepMean)))) : 0;
+    const xs = sourceCells.map((source) => source.x);
+    const ys = sourceCells.map((source) => source.y);
+    const sourceXMin = xs.length ? Math.min(...xs) : minX;
+    const sourceXMax = xs.length ? Math.max(...xs) : minX;
+    const sourceYMin = ys.length ? Math.min(...ys) : minY;
+    const sourceYMax = ys.length ? Math.max(...ys) : minY;
+    const sourceXCenter = xs.length ? mean(xs) : Math.round(0.5 * (minX + maxX));
+    const sourceYCenter = ys.length ? mean(ys) : Math.round(0.5 * (minY + maxY));
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let pecCells = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let highIndexEnergy = 0;
+    let sourceNeighborhoodEnergy = 0;
+    let leftEnergy = 0;
+    let rightEnergy = 0;
+    let upperEnergy = 0;
+    let lowerEnergy = 0;
+    let apertureGapCells = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        const isMaterial = sim.material[idx] !== 0 && sim.material[idx] !== 2;
+        const isHighIndex = isMaterial && Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0;
+        totalEnergy += energy;
+        if (isMaterial) {
+          materialCells += 1;
+          materialEnergy += energy;
+        }
+        if (isHighIndex) {
+          highIndexCells += 1;
+          highIndexEnergy += energy;
+        }
+        if (sim.material[idx] === 2) pecCells += 1;
+        if (sim.material[idx] === 0 && Math.abs(x - Math.round(0.5 * (minX + maxX))) <= Math.round(0.08 * cpw) && Math.abs(y - sourceYCenter) <= Math.round(0.38 * cpw)) {
+          apertureGapCells += 1;
+        }
+        for (const source of sourceCells) {
+          const radius = Math.max(3, Math.round(source.width * 0.85));
+          if (Math.hypot(x - source.x, y - source.y) <= radius) {
+            sourceNeighborhoodEnergy += energy;
+            break;
+          }
+        }
+        if (x < sourceXCenter - Math.round(0.45 * cpw)) leftEnergy += energy;
+        if (x > sourceXCenter + Math.round(0.45 * cpw)) rightEnergy += energy;
+        if (y < sourceYCenter - Math.round(0.45 * cpw)) upperEnergy += energy;
+        if (y > sourceYCenter + Math.round(0.45 * cpw)) lowerEnergy += energy;
+      }
+    }
+
+    const farField = state.analysisEnabled && typeof sim.analysisFarFieldEstimate === "function" ? sim.analysisFarFieldEstimate(96) : [];
+    return {
+      preset: state.preset,
+      fieldComponent: state.fieldComponent,
+      analysisSamples: sim.analysisSamples || 0,
+      sourceCount: sources.length,
+      sourceShapes,
+      sourceTypes,
+      sourceXSpanLambda: (sourceXMax - sourceXMin) / cpw,
+      sourceYSpanLambda: (sourceYMax - sourceYMin) / cpw,
+      sourcePhaseStepMeanDeg: phaseStepMean,
+      sourcePhaseStepMeanAbsDeg: Math.abs(phaseStepMean),
+      sourcePhaseStepStdDeg: phaseStepStd,
+      configuredArrayPhaseStepDeg: sourceCells.find((source) => source.arrayPhaseStepDeg != null)?.arrayPhaseStepDeg ?? null,
+      materialCells,
+      highIndexCells,
+      pecCells,
+      apertureGapCells,
+      totalEnergy,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      sourceNeighborhoodEnergyFraction: sourceNeighborhoodEnergy / Math.max(1e-30, totalEnergy),
+      rightToLeftEnergyRatio: rightEnergy / Math.max(1e-30, leftEnergy),
+      lowerToUpperEnergyRatio: lowerEnergy / Math.max(1e-30, upperEnergy),
+      farFieldSamples: farField.length || 0,
+      farFieldMode: sim.analysisFarFieldMode || "",
+      farFieldPeak: Number(sim.analysisFarFieldPeak) || 0,
+    };
+  });
+}
+
 async function layeredOpticsMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
@@ -3226,6 +3344,59 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minPhaseVelocity) && !(Number.isFinite(metrics.modulationPhaseVelocityLambdaPerStep) && Math.abs(metrics.modulationPhaseVelocityLambdaPerStep) >= minPhaseVelocity)) status.failures.push(`coupled modulation phase velocity ${metrics.modulationPhaseVelocityLambdaPerStep} below ${minPhaseVelocity}`);
     if (Number.isFinite(minSourcePhaseDifference) && !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg >= minSourcePhaseDifference)) status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} below ${minSourcePhaseDifference} deg`);
     if (Number.isFinite(maxSourcePhaseDifference) && !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg <= maxSourcePhaseDifference)) status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} exceeds ${maxSourcePhaseDifference} deg`);
+  }
+  if (testCase.acceptance?.sourceRadiationCheck) {
+    status.sourceRadiation = await sourceRadiationMetrics(page);
+    const metrics = status.sourceRadiation;
+    const minSourceCount = Number(testCase.acceptance?.sourceCountMin);
+    const maxSourceCount = Number(testCase.acceptance?.sourceCountMax);
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minPecCells = Number(testCase.acceptance?.pecCellsMin);
+    const minApertureGapCells = Number(testCase.acceptance?.apertureGapCellsMin);
+    const minSourceYSpan = Number(testCase.acceptance?.sourceYSpanLambdaMin);
+    const minSourceXSpan = Number(testCase.acceptance?.sourceXSpanLambdaMin);
+    const minPhaseStep = Number(testCase.acceptance?.sourcePhaseStepMeanAbsDegMin);
+    const maxPhaseStep = Number(testCase.acceptance?.sourcePhaseStepMeanAbsDegMax);
+    const maxPhaseStepStd = Number(testCase.acceptance?.sourcePhaseStepStdDegMax);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minHighIndexFraction = Number(testCase.acceptance?.highIndexEnergyFractionMin);
+    const minSourceFraction = Number(testCase.acceptance?.sourceNeighborhoodEnergyFractionMin);
+    const minRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMin);
+    const maxRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMax);
+    const minLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMin);
+    const minFarFieldSamples = Number(testCase.acceptance?.farFieldSamplesMin);
+    const minFarFieldPeak = Number(testCase.acceptance?.farFieldPeakMin);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    if (testCase.acceptance?.fieldComponent && metrics.fieldComponent !== testCase.acceptance.fieldComponent) {
+      status.failures.push(`field component ${metrics.fieldComponent} differs from expected ${testCase.acceptance.fieldComponent}`);
+    }
+    if (testCase.acceptance?.sourceShape && !metrics.sourceShapes.includes(testCase.acceptance.sourceShape)) {
+      status.failures.push(`expected source shape ${testCase.acceptance.sourceShape}, got ${metrics.sourceShapes.join(",") || "none"}`);
+    }
+    if (Number.isFinite(minSourceCount) && metrics.sourceCount < minSourceCount) status.failures.push(`source count ${metrics.sourceCount} below ${minSourceCount}`);
+    if (Number.isFinite(maxSourceCount) && metrics.sourceCount > maxSourceCount) status.failures.push(`source count ${metrics.sourceCount} exceeds ${maxSourceCount}`);
+    if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) status.failures.push(`source-scene material cells ${metrics.materialCells} below ${minMaterialCells}`);
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) status.failures.push(`source-scene high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    if (Number.isFinite(minPecCells) && metrics.pecCells < minPecCells) status.failures.push(`source-scene PEC cells ${metrics.pecCells} below ${minPecCells}`);
+    if (Number.isFinite(minApertureGapCells) && metrics.apertureGapCells < minApertureGapCells) status.failures.push(`aperture gap cells ${metrics.apertureGapCells} below ${minApertureGapCells}`);
+    if (Number.isFinite(minSourceYSpan) && metrics.sourceYSpanLambda < minSourceYSpan) status.failures.push(`source Y span ${metrics.sourceYSpanLambda} below ${minSourceYSpan}`);
+    if (Number.isFinite(minSourceXSpan) && metrics.sourceXSpanLambda < minSourceXSpan) status.failures.push(`source X span ${metrics.sourceXSpanLambda} below ${minSourceXSpan}`);
+    if (Number.isFinite(minPhaseStep) && metrics.sourcePhaseStepMeanAbsDeg < minPhaseStep) status.failures.push(`source phase-step magnitude ${metrics.sourcePhaseStepMeanAbsDeg} below ${minPhaseStep}`);
+    if (Number.isFinite(maxPhaseStep) && metrics.sourcePhaseStepMeanAbsDeg > maxPhaseStep) status.failures.push(`source phase-step magnitude ${metrics.sourcePhaseStepMeanAbsDeg} exceeds ${maxPhaseStep}`);
+    if (Number.isFinite(maxPhaseStepStd) && metrics.sourcePhaseStepStdDeg > maxPhaseStepStd) status.failures.push(`source phase-step std ${metrics.sourcePhaseStepStdDeg} exceeds ${maxPhaseStepStd}`);
+    if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) status.failures.push(`source-scene material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
+    if (Number.isFinite(minHighIndexFraction) && metrics.highIndexEnergyFraction < minHighIndexFraction) status.failures.push(`source-scene high-index energy fraction ${metrics.highIndexEnergyFraction} below ${minHighIndexFraction}`);
+    if (Number.isFinite(minSourceFraction) && metrics.sourceNeighborhoodEnergyFraction < minSourceFraction) status.failures.push(`source-neighborhood energy fraction ${metrics.sourceNeighborhoodEnergyFraction} below ${minSourceFraction}`);
+    if (Number.isFinite(minRightLeft) && metrics.rightToLeftEnergyRatio < minRightLeft) status.failures.push(`right/left source energy ratio ${metrics.rightToLeftEnergyRatio} below ${minRightLeft}`);
+    if (Number.isFinite(maxRightLeft) && metrics.rightToLeftEnergyRatio > maxRightLeft) status.failures.push(`right/left source energy ratio ${metrics.rightToLeftEnergyRatio} exceeds ${maxRightLeft}`);
+    if (Number.isFinite(minLowerUpper) && metrics.lowerToUpperEnergyRatio < minLowerUpper) status.failures.push(`lower/upper source energy ratio ${metrics.lowerToUpperEnergyRatio} below ${minLowerUpper}`);
+    if (Number.isFinite(minFarFieldSamples) && metrics.farFieldSamples < minFarFieldSamples) status.failures.push(`far-field samples ${metrics.farFieldSamples} below ${minFarFieldSamples}`);
+    if (Number.isFinite(minFarFieldPeak) && metrics.farFieldPeak < minFarFieldPeak) status.failures.push(`far-field peak ${metrics.farFieldPeak} below ${minFarFieldPeak}`);
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) status.failures.push(`source analysis samples ${metrics.analysisSamples} below ${minAnalysisSamples}`);
+    if (testCase.acceptance?.farFieldMode && metrics.farFieldMode !== testCase.acceptance.farFieldMode) {
+      status.failures.push(`far-field mode ${metrics.farFieldMode} differs from expected ${testCase.acceptance.farFieldMode}`);
+    }
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {
     status.periodicPhotonics = await periodicPhotonicsMetrics(page);
