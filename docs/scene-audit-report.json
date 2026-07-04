@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T16:46:53.312Z",
-  "gitCommit": "bb07462+working-tree",
+  "generatedAt": "2026-07-04T17:10:47.078Z",
+  "gitCommit": "0ad6308+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 39,
-    "VALIDATION_GAP": 74,
+    "PASS": 45,
+    "VALIDATION_GAP": 68,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -2712,16 +2712,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 81: 1D periodic Bragg stack.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "bragg_stack_periodic_layers:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2745,16 +2745,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 82: square lattice of high-index rods with a reduced plane-wave Bloch-k band estimate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "photonic_crystal_bloch_geometry:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2782,14 +2782,14 @@
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phc_point_defect_cavity_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2813,16 +2813,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 84: photonic crystal line-defect waveguide with reduced plane-wave Bloch-k reference.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phc_waveguide_line_defect:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2850,14 +2850,14 @@
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phc_optimized_cavity_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2881,16 +2881,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 86: photonic crystal with deterministic positional disorder.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phc_disorder_lattice_jitter:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2918,14 +2918,14 @@
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "phc_dark_mode_symmetry_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2949,16 +2949,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 88: weakly symmetry-broken PhC defect showing quasi-BIC leakage with reduced Bloch bands and local asymmetry proxies.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "quasi_bic_asymmetry_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2986,14 +2986,14 @@
       "contractTags": [
         "blochK sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "symmetry_protected_bic_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3017,16 +3017,16 @@
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
       "description": "Atlas 90: mode-launched straight guide with a side-coupled dielectric resonator.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "fano_side_resonator_coupling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

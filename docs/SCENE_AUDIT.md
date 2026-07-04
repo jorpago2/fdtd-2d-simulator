@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T16:46:53.312Z
-Git commit: bb07462+working-tree
+Generated: 2026-07-04T17:10:47.078Z
+Git commit: 0ad6308+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 39 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 74 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 45 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 68 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -103,16 +103,16 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 78 | `chiralMedium` 6-field chiral medium | 7. Material models and tensors | WARN | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | chiral_six_field_bianisotropy_response:P1/physics, bianisotropy_quantitative_gap:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 79 | `bianisotropicMedium` 6-field bianisotropic medium | 7. Material models and tensors | PASS | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=8.91e-7 | bianisotropic_six_field_response:P1/physics | OK |
 | 80 | `gyrotropicMedium` Gyrotropic medium | 7. Material models and tensors | WARN | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | gyrotropic_tensor_response:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
-| 81 | `braggStack` 1D Bragg stack | 8. Periodic photonics and BICs | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 82 | `photonicCrystal` 2D photonic crystal | 8. Periodic photonics and BICs | VALIDATION_GAP | blochK sweep | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 83 | `phcPointDefect` PhC point defect | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=3.17e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 84 | `phcWaveguide` PhC line-defect waveguide | 8. Periodic photonics and BICs | VALIDATION_GAP | blochK sweep | WASM CPML+TFSF, 24 steps, E=7.01e-9 | none | no validation-matrix case covers this preset |
-| 85 | `phcOptimizedCavity` Optimized PhC cavity | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=9.40e-7 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 86 | `phcDisorder` Disordered photonic crystal | 8. Periodic photonics and BICs | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 87 | `phcDarkMode` Symmetry-dark mode | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.50e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 88 | `quasiBic` Quasi-BIC cavity | 8. Periodic photonics and BICs | VALIDATION_GAP | blochK sweep | WASM CPML, 24 steps, E=1.08e-5 | none | no validation-matrix case covers this preset |
-| 89 | `symmetryProtectedBic` Symmetry-protected BIC | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.12e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 90 | `fanoResonator` Fano side resonator | 8. Periodic photonics and BICs | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | none | no validation-matrix case covers this preset |
+| 81 | `braggStack` 1D Bragg stack | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | bragg_stack_periodic_layers:P1/physics | OK |
+| 82 | `photonicCrystal` 2D photonic crystal | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML+TFSF, 24 steps, E=8.70e-5 | photonic_crystal_bloch_geometry:P1/physics | OK |
+| 83 | `phcPointDefect` PhC point defect | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=3.17e-5 | phc_point_defect_cavity_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 84 | `phcWaveguide` PhC line-defect waveguide | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML+TFSF, 24 steps, E=7.01e-9 | phc_waveguide_line_defect:P1/physics | OK |
+| 85 | `phcOptimizedCavity` Optimized PhC cavity | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=9.40e-7 | phc_optimized_cavity_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 86 | `phcDisorder` Disordered photonic crystal | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | phc_disorder_lattice_jitter:P1/physics | OK |
+| 87 | `phcDarkMode` Symmetry-dark mode | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.50e-5 | phc_dark_mode_symmetry_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 88 | `quasiBic` Quasi-BIC cavity | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=1.08e-5 | quasi_bic_asymmetry_proxy:P1/physics | OK |
+| 89 | `symmetryProtectedBic` Symmetry-protected BIC | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.12e-5 | symmetry_protected_bic_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 90 | `fanoResonator` Fano side resonator | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | fano_side_resonator_coupling:P1/physics | OK |
 | 91 | `sshTrivial` SSH chain, trivial | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.77e-6 | none | no validation-matrix case covers this preset |
 | 92 | `sshTopological` SSH chain, topological | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.34e-6 | none | no validation-matrix case covers this preset |
 | 93 | `sshInterface` SSH interface | 9. Topological photonics | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.33e-6 | none | no validation-matrix case covers this preset |

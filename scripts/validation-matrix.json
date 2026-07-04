@@ -489,6 +489,284 @@
       "rationale": "Guards the qualitative gyrotropic scene as an actual tensor-route example with finite field interaction."
     },
     {
+      "id": "bragg_stack_periodic_layers",
+      "priority": "P1",
+      "preset": "braggStack",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "the stack contains many alternating quarter-wave material segments",
+        "line-monitor reflectance is measurably above a weak-interface baseline",
+        "transmitted-side field energy is not dominant over the multilayer stack"
+      ],
+      "acceptance": {
+        "minDiagnosticSamples": 24,
+        "layerCountMin": 10,
+        "reflectanceMin": 0.1,
+        "rightToStackEnergyRatioMax": 1.6
+      },
+      "rationale": "Covers the Bragg-stack teaching scene as a periodic dielectric mirror rather than only validating the earlier Bragg-mirror alias."
+    },
+    {
+      "id": "photonic_crystal_bloch_geometry",
+      "priority": "P1",
+      "preset": "photonicCrystal",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the scene builds a two-dimensional high-index rod lattice",
+        "the Bloch-k sweep and reduced plane-wave estimate are active",
+        "the reduced band estimate reports finite bands and a nonzero gap proxy"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1700,
+        "rodCountProxyMin": 120,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 14,
+        "centerBinHighIndexCellsMin": 12,
+        "phcBlochRequired": true,
+        "phcBlochCellsMin": 1700,
+        "structureFactorMin": 0.95,
+        "phcAsymmetryMax": 0.08,
+        "bandGapMin": 0.001,
+        "blochPathPointsMin": 13
+      },
+      "rationale": "Checks that the photonic-crystal example is an actual periodic lattice with an executable Bloch/PWE teaching observable."
+    },
+    {
+      "id": "phc_point_defect_cavity_proxy",
+      "priority": "P1",
+      "preset": "phcPointDefect",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "the central rod is removed from an otherwise periodic lattice",
+        "a point dipole excites the defect region",
+        "the Bloch-k reduced estimate remains available for the surrounding lattice"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1650,
+        "rodCountProxyMin": 115,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 14,
+        "centerBinHighIndexCellsMax": 2,
+        "centralVacancyBins3Min": 1,
+        "cavityEnergyFractionMin": 0.001,
+        "phcBlochRequired": true,
+        "phcBlochCellsMin": 1650,
+        "blochPathPointsMin": 13
+      },
+      "rationale": "Turns the point-defect PhC scene into a runnable defect-cavity sanity check while keeping the observable at teaching-proxy level."
+    },
+    {
+      "id": "phc_waveguide_line_defect",
+      "priority": "P1",
+      "preset": "phcWaveguide",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "the central lattice row is removed to create a line defect",
+        "adjacent PhC rows remain populated",
+        "finite field energy propagates in the line-defect channel"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1500,
+        "rodCountProxyMin": 100,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 14,
+        "lineRowBinCountMax": 1,
+        "centralLineHighIndexCellsMax": 8,
+        "adjacentRowHighIndexCellsMin": 180,
+        "lineDefectEnergyFractionMin": 0.01,
+        "phcBlochRequired": true,
+        "phcBlochCellsMin": 1500,
+        "blochPathPointsMin": 13
+      },
+      "rationale": "Checks that the PhC waveguide is a real line-defect guide, not a full lattice or an empty channel without excitation."
+    },
+    {
+      "id": "phc_optimized_cavity_proxy",
+      "priority": "P1",
+      "preset": "phcOptimizedCavity",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "an L3-like central defect is present",
+        "nearby holes are shifted or resized through the optimized-cavity geometry",
+        "analysis and Bloch/PWE proxies remain finite"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1850,
+        "rodCountProxyMin": 130,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 16,
+        "centralVacancyBins3Min": 3,
+        "cavityHighIndexCellsMax": 2,
+        "cavityEnergyFractionMin": 0.001,
+        "minAnalysisSamples": 8,
+        "phcBlochRequired": true,
+        "phcBlochCellsMin": 1850,
+        "qProxyMin": 4,
+        "blochPathPointsMin": 13
+      },
+      "rationale": "Guards the optimized PhC cavity as a geometry-plus-analysis proxy without implying publication-grade Q extraction."
+    },
+    {
+      "id": "phc_disorder_lattice_jitter",
+      "priority": "P1",
+      "preset": "phcDisorder",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "a high-index PhC rod lattice is present",
+        "rod centroids are measurably displaced from the ideal lattice",
+        "finite field energy overlaps the disordered lattice"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "highIndexCellsMin": 1700,
+        "rodCountProxyMin": 115,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 14,
+        "latticeOffsetMeanLambdaMin": 0.003,
+        "latticeOffsetMeanLambdaMax": 0.04
+      },
+      "rationale": "Checks that the disorder example is not a perfect PhC clone and keeps the validation to geometry and finite interaction."
+    },
+    {
+      "id": "phc_dark_mode_symmetry_proxy",
+      "priority": "P1",
+      "preset": "phcDarkMode",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "the central defect is excited by two opposite-phase dipoles",
+        "the lattice remains nearly mirror symmetric",
+        "analysis produces a finite reduced leakage/Q proxy"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1650,
+        "rodCountProxyMin": 115,
+        "centerBinHighIndexCellsMax": 2,
+        "centralVacancyBins3Min": 1,
+        "sourceCountMin": 2,
+        "sourcePhaseDifferenceDegMin": 175,
+        "sourceAmplitudeRatioMin": 0.95,
+        "minAnalysisSamples": 8,
+        "phcBlochRequired": true,
+        "phcAsymmetryMax": 0.08,
+        "qProxyMin": 4
+      },
+      "rationale": "Validates the dark-mode scene as a symmetry-controlled defect proxy rather than a generic two-source animation."
+    },
+    {
+      "id": "quasi_bic_asymmetry_proxy",
+      "priority": "P1",
+      "preset": "quasiBic",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "the central defect is retained",
+        "source amplitudes/phases deliberately break perfect dark-mode symmetry",
+        "the reduced PhC estimate reports finite asymmetry and Q/leakage proxies"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1650,
+        "rodCountProxyMin": 115,
+        "centerBinHighIndexCellsMax": 2,
+        "centralVacancyBins3Min": 1,
+        "sourceCountMin": 2,
+        "sourcePhaseDifferenceDegMin": 165,
+        "sourcePhaseDifferenceDegMax": 175,
+        "sourceAmplitudeRatioMin": 0.85,
+        "sourceAmplitudeRatioMax": 0.95,
+        "minAnalysisSamples": 8,
+        "phcBlochRequired": true,
+        "phcAsymmetryMin": 0.005,
+        "qProxyMin": 3
+      },
+      "rationale": "Ensures the quasi-BIC is intentionally perturbed from the symmetry-protected case while staying numerically finite."
+    },
+    {
+      "id": "symmetry_protected_bic_proxy",
+      "priority": "P1",
+      "preset": "symmetryProtectedBic",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "an L3-like PhC defect is driven with opposite-phase symmetric dipoles",
+        "the Bloch-k sweep and reduced PWE path are active",
+        "the reduced Q/leakage proxy remains finite under short browser execution"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "requiresAnalysis": true,
+        "sweepMode": "blochK",
+        "highIndexCellsMin": 1850,
+        "rodCountProxyMin": 130,
+        "rowsProxyMin": 8,
+        "colsProxyMin": 16,
+        "centralVacancyBins3Min": 3,
+        "cavityHighIndexCellsMax": 2,
+        "sourceCountMin": 2,
+        "sourcePhaseDifferenceDegMin": 175,
+        "sourceAmplitudeRatioMin": 0.95,
+        "minAnalysisSamples": 8,
+        "phcBlochRequired": true,
+        "phcAsymmetryMax": 0.08,
+        "qProxyMin": 4,
+        "blochPathPointsMin": 13
+      },
+      "rationale": "Checks the symmetry-protected BIC as a reduced PhC-cavity workflow with explicit symmetry and analysis observables."
+    },
+    {
+      "id": "fano_side_resonator_coupling",
+      "priority": "P1",
+      "preset": "fanoResonator",
+      "profile": "physics",
+      "steps": 2200,
+      "browserSmoke": true,
+      "checks": [
+        "a high-index bus waveguide is present",
+        "a side-coupled resonator is separated by an air gap",
+        "finite field energy reaches the resonator region during the run"
+      ],
+      "acceptance": {
+        "periodicPhotonicsCheck": true,
+        "highIndexCellsMin": 1200,
+        "fanoBusHighIndexCellsMin": 700,
+        "fanoResonatorHighIndexCellsMin": 120,
+        "fanoGapHighIndexCellsMax": 2,
+        "fanoResonatorEnergyMin": 1e-16,
+        "fanoResonatorEnergyFractionMin": 1e-6
+      },
+      "rationale": "Guards the Fano resonator scene as an actual bus-plus-side-resonator coupling example rather than a disconnected geometry sketch."
+    },
+    {
       "id": "quarter_wave_coating_low_reflection",
       "priority": "P1",
       "preset": "quarterWaveCoating",

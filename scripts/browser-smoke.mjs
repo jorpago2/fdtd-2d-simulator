@@ -1275,6 +1275,209 @@ async function randomScatteringMetrics(page) {
   });
 }
 
+async function periodicPhotonicsMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const phcBloch =
+      typeof sim.phcBlochEstimate === "function" ? sim.phcBlochEstimate(0) : analysis?.phcBloch ?? null;
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const aCells = Math.max(2, Math.round(0.45 * cpw));
+    const sourceList = Array.isArray(state.sources) ? state.sources : [];
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const isHighIndex = (idx) => sim.material[idx] !== 0 && Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0;
+    const fanoCx = midX + Math.round(0.8 * cpw);
+    const fanoCy = midY - Math.round(0.62 * cpw);
+    const fanoRx = Math.max(2, Math.round(0.42 * cpw));
+    const fanoRy = Math.max(2, Math.round(0.42 * cpw));
+    const box = (x, y, halfXLambda, halfYLambda, cx = midX, cy = midY) =>
+      Math.abs(x - cx) <= Math.round(halfXLambda * cpw) && Math.abs(y - cy) <= Math.round(halfYLambda * cpw);
+    const ellipse = (x, y, cx, cy, rx, ry) => {
+      const dx = (x - cx) / Math.max(1, rx);
+      const dy = (y - cy) / Math.max(1, ry);
+      return dx * dx + dy * dy <= 1;
+    };
+
+    const bins = new Map();
+    const rowBins = new Map();
+    const colBins = new Map();
+    const materialBounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let totalEnergy = 0;
+    let highIndexEnergy = 0;
+    let centerDefectEnergy = 0;
+    let lineDefectEnergy = 0;
+    let adjacentRowEnergy = 0;
+    let cavityEnergy = 0;
+    let fanoBusEnergy = 0;
+    let fanoResonatorEnergy = 0;
+    let fanoGapEnergy = 0;
+    let centerHighIndexCells = 0;
+    let centralLineHighIndexCells = 0;
+    let adjacentRowHighIndexCells = 0;
+    let cavityHighIndexCells = 0;
+    let fanoBusHighIndexCells = 0;
+    let fanoResonatorHighIndexCells = 0;
+    let fanoGapHighIndexCells = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        totalEnergy += energy;
+
+        const inCenterDefect = box(x, y, 0.24, 0.24);
+        const inLineDefect = box(x, y, 3.4, 0.16);
+        const inAdjacentRows =
+          Math.abs(Math.abs(y - midY) - aCells) <= Math.round(0.15 * cpw) && Math.abs(x - midX) <= Math.round(3.4 * cpw);
+        const inCavity = box(x, y, 0.76, 0.2);
+        const inFanoBus = Math.abs(y - midY) <= Math.round(0.18 * cpw);
+        const inFanoResonator = ellipse(x, y, fanoCx, fanoCy, fanoRx, fanoRy);
+        const inFanoGap =
+          Math.abs(x - fanoCx) <= Math.round(0.22 * cpw) &&
+          y > fanoCy + Math.round(0.34 * cpw) &&
+          y < midY - Math.round(0.12 * cpw);
+
+        if (inCenterDefect) centerDefectEnergy += energy;
+        if (inLineDefect) lineDefectEnergy += energy;
+        if (inAdjacentRows) adjacentRowEnergy += energy;
+        if (inCavity) cavityEnergy += energy;
+        if (inFanoBus) fanoBusEnergy += energy;
+        if (inFanoResonator) fanoResonatorEnergy += energy;
+        if (inFanoGap) fanoGapEnergy += energy;
+
+        if (sim.material[idx] !== 0) {
+          materialCells += 1;
+          materialBounds.minX = Math.min(materialBounds.minX, x);
+          materialBounds.maxX = Math.max(materialBounds.maxX, x);
+          materialBounds.minY = Math.min(materialBounds.minY, y);
+          materialBounds.maxY = Math.max(materialBounds.maxY, y);
+        }
+
+        if (!isHighIndex(idx)) continue;
+        highIndexCells += 1;
+        highIndexEnergy += energy;
+        if (inCenterDefect) centerHighIndexCells += 1;
+        if (inLineDefect) centralLineHighIndexCells += 1;
+        if (inAdjacentRows) adjacentRowHighIndexCells += 1;
+        if (inCavity) cavityHighIndexCells += 1;
+        if (inFanoBus) fanoBusHighIndexCells += 1;
+        if (inFanoResonator) fanoResonatorHighIndexCells += 1;
+        if (inFanoGap) fanoGapHighIndexCells += 1;
+
+        const ix = Math.round((x - midX) / aCells);
+        const iy = Math.round((y - midY) / aCells);
+        const key = `${ix},${iy}`;
+        const bin = bins.get(key) || { ix, iy, cells: 0, xSum: 0, ySum: 0 };
+        bin.cells += 1;
+        bin.xSum += x;
+        bin.ySum += y;
+        bins.set(key, bin);
+        if (!rowBins.has(iy)) rowBins.set(iy, new Set());
+        if (!colBins.has(ix)) colBins.set(ix, new Set());
+        rowBins.get(iy).add(ix);
+        colBins.get(ix).add(iy);
+      }
+    }
+
+    let latticeOffsetSum = 0;
+    let latticeOffsetMax = 0;
+    for (const bin of bins.values()) {
+      const cx = bin.xSum / Math.max(1, bin.cells);
+      const cy = bin.ySum / Math.max(1, bin.cells);
+      const offset = Math.hypot(cx - (midX + bin.ix * aCells), cy - (midY + bin.iy * aCells)) / cpw;
+      latticeOffsetSum += offset;
+      latticeOffsetMax = Math.max(latticeOffsetMax, offset);
+    }
+
+    const hasBin = (ix, iy) => bins.has(`${ix},${iy}`);
+    const centralVacancyBins3 = [-1, 0, 1].filter((ix) => !hasBin(ix, 0)).length;
+    const lineRowBinCount = rowBins.get(0)?.size || 0;
+    const centerBinHighIndexCells = bins.get("0,0")?.cells || 0;
+    let sourcePhaseDifferenceDeg = null;
+    let sourceAmplitudeRatio = null;
+    let sourceSeparationLambda = null;
+    if (sourceList.length >= 2) {
+      const phase0 = Number(sourceList[0].phaseDeg || 0);
+      const phase1 = Number(sourceList[1].phaseDeg || 0);
+      sourcePhaseDifferenceDeg = Math.abs((((phase1 - phase0 + 180) % 360) + 360) % 360 - 180);
+      const amp0 = Math.abs(Number(sourceList[0].amplitude ?? 1));
+      const amp1 = Math.abs(Number(sourceList[1].amplitude ?? 1));
+      sourceAmplitudeRatio = Math.min(amp0, amp1) / Math.max(1e-30, Math.max(amp0, amp1));
+      const x0 = typeof sim.sourceXCell === "function" ? sim.sourceXCell(sourceList[0]) : Number(sourceList[0].xLambda || 0) * cpw;
+      const y0 = typeof sim.sourceYCell === "function" ? sim.sourceYCell(sourceList[0]) : Number(sourceList[0].yLambda || 0) * cpw;
+      const x1 = typeof sim.sourceXCell === "function" ? sim.sourceXCell(sourceList[1]) : Number(sourceList[1].xLambda || 0) * cpw;
+      const y1 = typeof sim.sourceYCell === "function" ? sim.sourceYCell(sourceList[1]) : Number(sourceList[1].yLambda || 0) * cpw;
+      sourceSeparationLambda = Math.hypot(x1 - x0, y1 - y0) / cpw;
+    }
+
+    return {
+      preset: state.preset,
+      sweepMode: state.sweepMode,
+      fieldComponent: state.fieldComponent,
+      analysisSamples: sim.analysisSamples || 0,
+      leakageRate: analysis?.leakageRate ?? null,
+      phcBloch,
+      sourceCount: sourceList.length,
+      sourcePhaseDifferenceDeg,
+      sourceAmplitudeRatio,
+      sourceSeparationLambda,
+      materialCells,
+      highIndexCells,
+      materialBounds: Number.isFinite(materialBounds.minX)
+        ? {
+            minXLambda: materialBounds.minX / cpw,
+            maxXLambda: materialBounds.maxX / cpw,
+            minYLambda: materialBounds.minY / cpw,
+            maxYLambda: materialBounds.maxY / cpw,
+          }
+        : null,
+      rodCountProxy: bins.size,
+      rowsProxy: rowBins.size,
+      colsProxy: colBins.size,
+      centerBinHighIndexCells,
+      centerHighIndexCells,
+      centralVacancyBins3,
+      lineRowBinCount,
+      centralLineHighIndexCells,
+      adjacentRowHighIndexCells,
+      cavityHighIndexCells,
+      latticeOffsetMeanLambda: bins.size > 0 ? latticeOffsetSum / bins.size : 0,
+      latticeOffsetMaxLambda: latticeOffsetMax,
+      totalEnergy,
+      highIndexEnergy,
+      highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      centerDefectEnergy,
+      lineDefectEnergy,
+      adjacentRowEnergy,
+      cavityEnergy,
+      centerDefectEnergyFraction: centerDefectEnergy / Math.max(1e-30, totalEnergy),
+      lineDefectEnergyFraction: lineDefectEnergy / Math.max(1e-30, totalEnergy),
+      cavityEnergyFraction: cavityEnergy / Math.max(1e-30, totalEnergy),
+      adjacentToLineEnergyRatio: adjacentRowEnergy / Math.max(1e-30, lineDefectEnergy),
+      fanoBusHighIndexCells,
+      fanoResonatorHighIndexCells,
+      fanoGapHighIndexCells,
+      fanoBusEnergy,
+      fanoResonatorEnergy,
+      fanoGapEnergy,
+      fanoResonatorEnergyFraction: fanoResonatorEnergy / Math.max(1e-30, totalEnergy),
+      fanoResonatorToBusRatio: fanoResonatorEnergy / Math.max(1e-30, fanoBusEnergy),
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
   const startedAt = Date.now();
@@ -1656,7 +1859,188 @@ async function runSmokeCase(page, testCase) {
       }
     }
   }
-  if (testCase.id === "quarter_wave_coating_low_reflection" || testCase.id === "bragg_mirror_stopband_reflection") {
+  if (testCase.acceptance?.periodicPhotonicsCheck) {
+    status.periodicPhotonics = await periodicPhotonicsMetrics(page);
+    const metrics = status.periodicPhotonics;
+    const expectedSweepMode = testCase.acceptance?.sweepMode;
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minRodCount = Number(testCase.acceptance?.rodCountProxyMin);
+    const maxRodCount = Number(testCase.acceptance?.rodCountProxyMax);
+    const minRows = Number(testCase.acceptance?.rowsProxyMin);
+    const minCols = Number(testCase.acceptance?.colsProxyMin);
+    const maxCenterBinCells = Number(testCase.acceptance?.centerBinHighIndexCellsMax);
+    const minCenterBinCells = Number(testCase.acceptance?.centerBinHighIndexCellsMin);
+    const minCentralVacancies = Number(testCase.acceptance?.centralVacancyBins3Min);
+    const maxLineRowBins = Number(testCase.acceptance?.lineRowBinCountMax);
+    const minLineRowBins = Number(testCase.acceptance?.lineRowBinCountMin);
+    const maxCentralLineCells = Number(testCase.acceptance?.centralLineHighIndexCellsMax);
+    const minAdjacentLineCells = Number(testCase.acceptance?.adjacentRowHighIndexCellsMin);
+    const maxCavityHighIndexCells = Number(testCase.acceptance?.cavityHighIndexCellsMax);
+    const minCavityFraction = Number(testCase.acceptance?.cavityEnergyFractionMin);
+    const minLineFraction = Number(testCase.acceptance?.lineDefectEnergyFractionMin);
+    const minOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMin);
+    const maxOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMax);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const maxLeakageRate = Number(testCase.acceptance?.leakageRateMax);
+    const minSourceCount = Number(testCase.acceptance?.sourceCountMin);
+    const minSourcePhaseDifference = Number(testCase.acceptance?.sourcePhaseDifferenceDegMin);
+    const maxSourcePhaseDifference = Number(testCase.acceptance?.sourcePhaseDifferenceDegMax);
+    const minSourceAmplitudeRatio = Number(testCase.acceptance?.sourceAmplitudeRatioMin);
+    const maxSourceAmplitudeRatio = Number(testCase.acceptance?.sourceAmplitudeRatioMax);
+    const minFanoBusCells = Number(testCase.acceptance?.fanoBusHighIndexCellsMin);
+    const minFanoResonatorCells = Number(testCase.acceptance?.fanoResonatorHighIndexCellsMin);
+    const maxFanoGapCells = Number(testCase.acceptance?.fanoGapHighIndexCellsMax);
+    const minFanoResonatorEnergy = Number(testCase.acceptance?.fanoResonatorEnergyMin);
+    const minFanoResonatorFraction = Number(testCase.acceptance?.fanoResonatorEnergyFractionMin);
+    if (expectedSweepMode && metrics.sweepMode !== expectedSweepMode) {
+      status.failures.push(`expected ${expectedSweepMode} sweep, got ${metrics.sweepMode}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
+      status.failures.push(`periodic high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minRodCount) && metrics.rodCountProxy < minRodCount) {
+      status.failures.push(`periodic rod-count proxy ${metrics.rodCountProxy} below ${minRodCount}`);
+    }
+    if (Number.isFinite(maxRodCount) && metrics.rodCountProxy > maxRodCount) {
+      status.failures.push(`periodic rod-count proxy ${metrics.rodCountProxy} exceeds ${maxRodCount}`);
+    }
+    if (Number.isFinite(minRows) && metrics.rowsProxy < minRows) {
+      status.failures.push(`periodic row-count proxy ${metrics.rowsProxy} below ${minRows}`);
+    }
+    if (Number.isFinite(minCols) && metrics.colsProxy < minCols) {
+      status.failures.push(`periodic column-count proxy ${metrics.colsProxy} below ${minCols}`);
+    }
+    if (Number.isFinite(maxCenterBinCells) && metrics.centerBinHighIndexCells > maxCenterBinCells) {
+      status.failures.push(`central high-index bin has ${metrics.centerBinHighIndexCells} cells, expected at most ${maxCenterBinCells}`);
+    }
+    if (Number.isFinite(minCenterBinCells) && metrics.centerBinHighIndexCells < minCenterBinCells) {
+      status.failures.push(`central high-index bin has ${metrics.centerBinHighIndexCells} cells, expected at least ${minCenterBinCells}`);
+    }
+    if (Number.isFinite(minCentralVacancies) && metrics.centralVacancyBins3 < minCentralVacancies) {
+      status.failures.push(`central-line vacancy count ${metrics.centralVacancyBins3} below ${minCentralVacancies}`);
+    }
+    if (Number.isFinite(maxLineRowBins) && metrics.lineRowBinCount > maxLineRowBins) {
+      status.failures.push(`line-defect row has ${metrics.lineRowBinCount} high-index bins, expected at most ${maxLineRowBins}`);
+    }
+    if (Number.isFinite(minLineRowBins) && metrics.lineRowBinCount < minLineRowBins) {
+      status.failures.push(`line-defect row has ${metrics.lineRowBinCount} high-index bins, expected at least ${minLineRowBins}`);
+    }
+    if (Number.isFinite(maxCentralLineCells) && metrics.centralLineHighIndexCells > maxCentralLineCells) {
+      status.failures.push(`central line has ${metrics.centralLineHighIndexCells} high-index cells, expected at most ${maxCentralLineCells}`);
+    }
+    if (Number.isFinite(minAdjacentLineCells) && metrics.adjacentRowHighIndexCells < minAdjacentLineCells) {
+      status.failures.push(`adjacent PhC rows have ${metrics.adjacentRowHighIndexCells} high-index cells, expected at least ${minAdjacentLineCells}`);
+    }
+    if (Number.isFinite(maxCavityHighIndexCells) && metrics.cavityHighIndexCells > maxCavityHighIndexCells) {
+      status.failures.push(`PhC cavity window has ${metrics.cavityHighIndexCells} high-index cells, expected at most ${maxCavityHighIndexCells}`);
+    }
+    if (Number.isFinite(minCavityFraction) && metrics.cavityEnergyFraction < minCavityFraction) {
+      status.failures.push(`PhC cavity energy fraction ${metrics.cavityEnergyFraction} below ${minCavityFraction}`);
+    }
+    if (Number.isFinite(minLineFraction) && metrics.lineDefectEnergyFraction < minLineFraction) {
+      status.failures.push(`line-defect energy fraction ${metrics.lineDefectEnergyFraction} below ${minLineFraction}`);
+    }
+    if (Number.isFinite(minOffsetMean) && metrics.latticeOffsetMeanLambda < minOffsetMean) {
+      status.failures.push(`lattice offset mean ${metrics.latticeOffsetMeanLambda} below ${minOffsetMean}`);
+    }
+    if (Number.isFinite(maxOffsetMean) && metrics.latticeOffsetMeanLambda > maxOffsetMean) {
+      status.failures.push(`lattice offset mean ${metrics.latticeOffsetMeanLambda} exceeds ${maxOffsetMean}`);
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`periodic/BIC analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (Number.isFinite(maxLeakageRate) && !(Number.isFinite(metrics.leakageRate) && metrics.leakageRate <= maxLeakageRate)) {
+      status.failures.push(`BIC leakage rate ${metrics.leakageRate} exceeds ${maxLeakageRate}`);
+    }
+    if (Number.isFinite(minSourceCount) && metrics.sourceCount < minSourceCount) {
+      status.failures.push(`source count ${metrics.sourceCount} below ${minSourceCount}`);
+    }
+    if (
+      Number.isFinite(minSourcePhaseDifference) &&
+      !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg >= minSourcePhaseDifference)
+    ) {
+      status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} below ${minSourcePhaseDifference} deg`);
+    }
+    if (
+      Number.isFinite(maxSourcePhaseDifference) &&
+      !(Number.isFinite(metrics.sourcePhaseDifferenceDeg) && metrics.sourcePhaseDifferenceDeg <= maxSourcePhaseDifference)
+    ) {
+      status.failures.push(`source phase difference ${metrics.sourcePhaseDifferenceDeg} exceeds ${maxSourcePhaseDifference} deg`);
+    }
+    if (
+      Number.isFinite(minSourceAmplitudeRatio) &&
+      !(Number.isFinite(metrics.sourceAmplitudeRatio) && metrics.sourceAmplitudeRatio >= minSourceAmplitudeRatio)
+    ) {
+      status.failures.push(`source amplitude ratio ${metrics.sourceAmplitudeRatio} below ${minSourceAmplitudeRatio}`);
+    }
+    if (
+      Number.isFinite(maxSourceAmplitudeRatio) &&
+      !(Number.isFinite(metrics.sourceAmplitudeRatio) && metrics.sourceAmplitudeRatio <= maxSourceAmplitudeRatio)
+    ) {
+      status.failures.push(`source amplitude ratio ${metrics.sourceAmplitudeRatio} exceeds ${maxSourceAmplitudeRatio}`);
+    }
+    if (testCase.acceptance?.phcBlochRequired && !metrics.phcBloch) {
+      status.failures.push("PhC Bloch reduced estimate is missing");
+    }
+    if (metrics.phcBloch) {
+      const minBlochCells = Number(testCase.acceptance?.phcBlochCellsMin);
+      const minStructureFactor = Number(testCase.acceptance?.structureFactorMin);
+      const maxAsymmetry = Number(testCase.acceptance?.phcAsymmetryMax);
+      const minAsymmetry = Number(testCase.acceptance?.phcAsymmetryMin);
+      const minQProxy = Number(testCase.acceptance?.qProxyMin);
+      const maxQProxy = Number(testCase.acceptance?.qProxyMax);
+      const minBandGap = Number(testCase.acceptance?.bandGapMin);
+      const minGapRatio = Number(testCase.acceptance?.gapRatioMin);
+      const minPathPoints = Number(testCase.acceptance?.blochPathPointsMin);
+      if (Number.isFinite(minBlochCells) && metrics.phcBloch.cells < minBlochCells) {
+        status.failures.push(`PhC Bloch cell count ${metrics.phcBloch.cells} below ${minBlochCells}`);
+      }
+      if (Number.isFinite(minStructureFactor) && metrics.phcBloch.structureFactor < minStructureFactor) {
+        status.failures.push(`PhC structure factor ${metrics.phcBloch.structureFactor} below ${minStructureFactor}`);
+      }
+      if (Number.isFinite(maxAsymmetry) && metrics.phcBloch.asymmetry > maxAsymmetry) {
+        status.failures.push(`PhC asymmetry ${metrics.phcBloch.asymmetry} exceeds ${maxAsymmetry}`);
+      }
+      if (Number.isFinite(minAsymmetry) && metrics.phcBloch.asymmetry < minAsymmetry) {
+        status.failures.push(`PhC asymmetry ${metrics.phcBloch.asymmetry} below ${minAsymmetry}`);
+      }
+      if (Number.isFinite(minQProxy) && metrics.phcBloch.qProxy < minQProxy) {
+        status.failures.push(`PhC Q proxy ${metrics.phcBloch.qProxy} below ${minQProxy}`);
+      }
+      if (Number.isFinite(maxQProxy) && metrics.phcBloch.qProxy > maxQProxy) {
+        status.failures.push(`PhC Q proxy ${metrics.phcBloch.qProxy} exceeds ${maxQProxy}`);
+      }
+      if (Number.isFinite(minBandGap) && !(metrics.phcBloch.modal?.bandGap > minBandGap)) {
+        status.failures.push(`PhC PWE band gap ${metrics.phcBloch.modal?.bandGap} below ${minBandGap}`);
+      }
+      if (Number.isFinite(minGapRatio) && !(metrics.phcBloch.modal?.gapRatio > minGapRatio)) {
+        status.failures.push(`PhC PWE gap ratio ${metrics.phcBloch.modal?.gapRatio} below ${minGapRatio}`);
+      }
+      if (Number.isFinite(minPathPoints) && !(metrics.phcBloch.modal?.path?.pointCount >= minPathPoints)) {
+        status.failures.push(`PhC Bloch path has ${metrics.phcBloch.modal?.path?.pointCount} points, expected at least ${minPathPoints}`);
+      }
+    }
+    if (Number.isFinite(minFanoBusCells) && metrics.fanoBusHighIndexCells < minFanoBusCells) {
+      status.failures.push(`Fano bus cells ${metrics.fanoBusHighIndexCells} below ${minFanoBusCells}`);
+    }
+    if (Number.isFinite(minFanoResonatorCells) && metrics.fanoResonatorHighIndexCells < minFanoResonatorCells) {
+      status.failures.push(`Fano side-resonator cells ${metrics.fanoResonatorHighIndexCells} below ${minFanoResonatorCells}`);
+    }
+    if (Number.isFinite(maxFanoGapCells) && metrics.fanoGapHighIndexCells > maxFanoGapCells) {
+      status.failures.push(`Fano bus-resonator gap has ${metrics.fanoGapHighIndexCells} high-index cells, expected at most ${maxFanoGapCells}`);
+    }
+    if (Number.isFinite(minFanoResonatorEnergy) && metrics.fanoResonatorEnergy < minFanoResonatorEnergy) {
+      status.failures.push(`Fano side-resonator energy ${metrics.fanoResonatorEnergy} below ${minFanoResonatorEnergy}`);
+    }
+    if (Number.isFinite(minFanoResonatorFraction) && metrics.fanoResonatorEnergyFraction < minFanoResonatorFraction) {
+      status.failures.push(`Fano side-resonator energy fraction ${metrics.fanoResonatorEnergyFraction} below ${minFanoResonatorFraction}`);
+    }
+  }
+  if (
+    testCase.id === "quarter_wave_coating_low_reflection" ||
+    testCase.id === "bragg_mirror_stopband_reflection" ||
+    testCase.id === "bragg_stack_periodic_layers"
+  ) {
     status.layeredOptics = await layeredOpticsMetrics(page);
     const minSamples = Number(testCase.acceptance?.minDiagnosticSamples);
     const minLayers = Number(testCase.acceptance?.layerCountMin);
