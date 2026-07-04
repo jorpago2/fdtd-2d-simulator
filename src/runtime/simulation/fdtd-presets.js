@@ -1056,15 +1056,15 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
         break;
       case "ringResonator":
-        guide(midYLambda + 1.25, 0.24, mat.n34);
+        guide(midYLambda + 1.2, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        modalGuideSource(midYLambda + 1.25, { widthLambda: 1.05 });
+        modalGuideSource(midYLambda + 1.2, { widthLambda: 1.05, frequency: 0.013 });
         break;
       case "addDropRing":
-        guide(midYLambda + 1.25, 0.24, mat.n34);
-        guide(midYLambda - 1.25, 0.24, mat.n34);
+        guide(midYLambda + 1.2, 0.24, mat.n34);
+        guide(midYLambda - 1.2, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        modalGuideSource(midYLambda + 1.25, { widthLambda: 1.05 });
+        modalGuideSource(midYLambda + 1.2, { widthLambda: 1.05, frequency: 0.013 });
         break;
       case "racetrackResonator":
         state.analysisEnabled = true;

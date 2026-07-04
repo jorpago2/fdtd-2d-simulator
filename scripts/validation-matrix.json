@@ -248,6 +248,164 @@
       "rationale": "Adds a dynamic ADE-state validation beyond the fast active-media smoke label."
     },
     {
+      "id": "quarter_wave_coating_low_reflection",
+      "priority": "P1",
+      "preset": "quarterWaveCoating",
+      "profile": "physics",
+      "steps": 3200,
+      "browserSmoke": true,
+      "checks": [
+        "coating and substrate material segments are present",
+        "line-monitor reflectance remains bounded for the coated interface",
+        "field energy overlaps the multilayer region during the run"
+      ],
+      "acceptance": {
+        "minDiagnosticSamples": 24,
+        "layerCountMin": 2,
+        "reflectanceMax": 0.12,
+        "stackEnergyFractionMin": 0.05
+      },
+      "rationale": "Provides an executable sanity check that the quarter-wave coating scene is a multilayer antireflection example, not just a bare interface."
+    },
+    {
+      "id": "bragg_mirror_stopband_reflection",
+      "priority": "P1",
+      "preset": "braggMirror",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "many alternating material segments are present",
+        "line-monitor reflectance is measurably above a weak-interface baseline",
+        "transmitted-side field energy is not dominant over the stack energy"
+      ],
+      "acceptance": {
+        "minDiagnosticSamples": 24,
+        "layerCountMin": 10,
+        "reflectanceMin": 0.1,
+        "rightToStackEnergyRatioMax": 1.6
+      },
+      "rationale": "Checks that the Bragg mirror behaves as a reflective periodic stack at the teaching level."
+    },
+    {
+      "id": "total_internal_reflection_evanescent",
+      "priority": "P1",
+      "preset": "totalInternalReflection",
+      "profile": "physics",
+      "steps": 2800,
+      "browserSmoke": true,
+      "checks": [
+        "high-index incident medium terminates at an air interface",
+        "interface band stores measurable evanescent/near-field energy",
+        "far-side air energy remains bounded relative to interface energy"
+      ],
+      "acceptance": {
+        "interfaceEnergyMin": 1e-8,
+        "transmittedFarRatioMax": 1.0,
+        "rightHighIndexCellsMax": 0
+      },
+      "rationale": "Turns total internal reflection into a measurable evanescent-field scene instead of relying only on the field snapshot."
+    },
+    {
+      "id": "frustrated_tir_tunneling",
+      "priority": "P1",
+      "preset": "frustratedTir",
+      "profile": "physics",
+      "steps": 2800,
+      "browserSmoke": true,
+      "checks": [
+        "second high-index medium is present beyond the air gap",
+        "interface/gap band stores measurable evanescent energy",
+        "far-side high-index region receives finite tunneled field energy"
+      ],
+      "acceptance": {
+        "interfaceEnergyMin": 1e-8,
+        "rightHighIndexCellsMin": 100,
+        "transmittedFarRatioMin": 0.01
+      },
+      "rationale": "Checks the qualitative tunneling contrast expected from the frustrated-TIR example."
+    },
+    {
+      "id": "fabry_perot_cavity_localization",
+      "priority": "P1",
+      "preset": "fabryPerot",
+      "profile": "physics",
+      "steps": 3200,
+      "browserSmoke": true,
+      "checks": [
+        "two Bragg mirrors and central cavity material are present",
+        "cavity stores a measurable fraction of the field energy",
+        "mirror regions carry finite energy during excitation"
+      ],
+      "acceptance": {
+        "mirrorMaterialCellsMin": 1000,
+        "cavityEnergyFractionMin": 0.01
+      },
+      "rationale": "Adds a cavity-localization guard for the Fabry-Perot example without claiming a calibrated Q or linewidth."
+    },
+    {
+      "id": "fabry_perot_standing_wave",
+      "priority": "P1",
+      "preset": "fabryPerotStanding",
+      "profile": "physics",
+      "steps": 2600,
+      "browserSmoke": true,
+      "checks": [
+        "analysis trace fills for the driven cavity",
+        "central cavity line shows standing-wave contrast",
+        "Bragg mirror material cells are present"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 64,
+        "mirrorMaterialCellsMin": 1000,
+        "standingContrastMin": 1.2,
+        "standingVisibilityMin": 0.2
+      },
+      "rationale": "Checks that the standing-wave Fabry-Perot scene produces a measurable intracavity pattern."
+    },
+    {
+      "id": "ring_resonator_coupling",
+      "priority": "P1",
+      "preset": "ringResonator",
+      "profile": "physics",
+      "steps": 6000,
+      "browserSmoke": true,
+      "checks": [
+        "ring and bus waveguide high-index cells are present",
+        "ring stores measurable field energy",
+        "ring/bus energy ratio is finite during modal excitation"
+      ],
+      "acceptance": {
+        "ringCellsMin": 80,
+        "busCellsMin": 80,
+        "ringEnergyFractionMin": 0.005,
+        "ringToBusRatioMin": 0.005
+      },
+      "rationale": "Adds a minimal ring-coupling observable before more rigorous resonance-spectrum validation."
+    },
+    {
+      "id": "add_drop_ring_coupling",
+      "priority": "P1",
+      "preset": "addDropRing",
+      "profile": "physics",
+      "steps": 7200,
+      "browserSmoke": true,
+      "checks": [
+        "ring, bus, and drop waveguide cells are present",
+        "ring stores measurable field energy",
+        "drop bus receives finite coupled energy"
+      ],
+      "acceptance": {
+        "ringCellsMin": 80,
+        "busCellsMin": 80,
+        "dropBusCellsMin": 80,
+        "ringEnergyFractionMin": 0.003,
+        "dropToBusRatioMin": 0.001
+      },
+      "rationale": "Checks that the add-drop ring example includes both ports and produces a finite coupled-field proxy."
+    },
+    {
       "id": "spp_interface_surface_localization",
       "priority": "P1",
       "preset": "sppInterface",

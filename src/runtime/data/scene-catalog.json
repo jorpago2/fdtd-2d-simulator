@@ -694,7 +694,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 49: dielectric ring coupled to one mode-launched bus waveguide."
+      "description": "Atlas 49: dielectric ring side-coupled to one bus and driven by a near-resonant modal source."
     },
     {
       "id": "addDropRing",
@@ -703,7 +703,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 50: dielectric ring coupled to mode-launched input and drop buses."
+      "description": "Atlas 50: dielectric ring side-coupled to input/drop buses and driven by a near-resonant modal source."
     },
     {
       "id": "racetrackResonator",

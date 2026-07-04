@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T15:38:26.261Z",
-  "gitCommit": "4002cd1+working-tree",
+  "generatedAt": "2026-07-04T16:10:57.228Z",
+  "gitCommit": "d6cb067+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 13,
-    "VALIDATION_GAP": 100,
+    "PASS": 21,
+    "VALIDATION_GAP": 92,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -583,16 +583,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 17: beam incident from n = 1.5 toward air above the critical angle.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "total_internal_reflection_evanescent:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -616,16 +616,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 18: two high-index regions separated by a narrow air gap.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "frustrated_tir_tunneling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -649,16 +649,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 19: air, quarter-wave coating, and n = 1.5 substrate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "quarter_wave_coating_low_reflection:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -682,16 +682,16 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 20: six-pair n = 1.5 / n = 2.5 Bragg mirror.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "bragg_mirror_stopband_reflection:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1577,16 +1577,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 47: dielectric cavity placed between two Bragg reflectors.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "fabry_perot_cavity_localization:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1610,16 +1610,16 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 48: Fabry-Perot resonator driven near a standing-wave condition.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "fabry_perot_standing_wave:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1642,17 +1642,17 @@
       "title": "Ring resonator",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 49: dielectric ring coupled to one mode-launched bus waveguide.",
-      "status": "VALIDATION_GAP",
+      "description": "Atlas 49: dielectric ring side-coupled to one bus and driven by a near-resonant modal source.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "ring_resonator_coupling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1660,9 +1660,9 @@
         "engine": "WASM CPML+mode",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 0.000002519421416242709,
+        "energy": 0.0000013273814063969985,
         "analysisSamples": 0,
-        "materialCells": 2428,
+        "materialCells": 2427,
         "dispersiveCells": 0,
         "modulatedCells": 0,
         "nonlinearCells": 0,
@@ -1675,17 +1675,17 @@
       "title": "Add-drop ring",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 50: dielectric ring coupled to mode-launched input and drop buses.",
-      "status": "VALIDATION_GAP",
+      "description": "Atlas 50: dielectric ring side-coupled to input/drop buses and driven by a near-resonant modal source.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "add_drop_ring_coupling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -1693,9 +1693,9 @@
         "engine": "WASM CPML+mode",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 0.000002519421416242709,
+        "energy": 0.0000013273814063969985,
         "analysisSamples": 0,
-        "materialCells": 4228,
+        "materialCells": 4226,
         "dispersiveCells": 0,
         "modulatedCells": 0,
         "nonlinearCells": 0,
