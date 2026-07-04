@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T16:10:57.228Z
-Git commit: d6cb067+working-tree
+Generated: 2026-07-04T16:24:15.179Z
+Git commit: 238273a+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 21 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 92 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 32 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 81 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -81,17 +81,17 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 56 | `purcell2d` Purcell 2D proxy | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-8 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
 | 57 | `betaFactor` beta-factor guide coupling | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | none | no validation-matrix case covers this preset |
 | 58 | `degenerateModes` Degenerate cavity modes | 5. Resonators and cavities | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | none | no validation-matrix case covers this preset |
-| 59 | `pecCylinder` PEC cylinder scattering | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 60 | `dielectricCylinder` Dielectric cylinder scattering | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 61 | `mieCylinder` High-index Mie cylinder | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 62 | `rcsCylinder` RCS 2D cylinder | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.66e-8 | none | no validation-matrix case covers this preset |
-| 63 | `lossyCylinder` Lossy cylinder | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 64 | `dielectricDimer` Dielectric dimer | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 65 | `kerker2d` Kerker-like 2D scattering | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=7.59e-8 | none | no validation-matrix case covers this preset |
-| 66 | `multipleScattering` Multiple scattering | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 67 | `weakLocalization` Weak-localization disorder | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
-| 68 | `andersonLocalization` Anderson-localization disorder | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.41e-6 | none | no validation-matrix case covers this preset |
-| 69 | `diffusiveRandomMedium` Diffusive random medium | 6. Scattering and disorder | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.58e-6 | none | no validation-matrix case covers this preset |
+| 59 | `pecCylinder` PEC cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | pec_cylinder_scattering_shadow:P1/physics | OK |
+| 60 | `dielectricCylinder` Dielectric cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_cylinder_scattering_presence:P1/physics | OK |
+| 61 | `mieCylinder` High-index Mie cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | mie_cylinder_high_index_response:P1/physics | OK |
+| 62 | `rcsCylinder` RCS 2D cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.66e-8 | rcs_cylinder_ntff_finite:P1/physics | OK |
+| 63 | `lossyCylinder` Lossy cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | lossy_cylinder_absorption_proxy:P1/physics | OK |
+| 64 | `dielectricDimer` Dielectric dimer | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_dimer_gap_coupling:P1/physics | OK |
+| 65 | `kerker2d` Kerker-like 2D scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=7.59e-8 | kerker_forward_backward_contrast:P1/physics | OK |
+| 66 | `multipleScattering` Multiple scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | multiple_scattering_cluster_spread:P1/physics | OK |
+| 67 | `weakLocalization` Weak-localization disorder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | weak_localization_disorder_spread:P1/physics | OK |
+| 68 | `andersonLocalization` Anderson-localization disorder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.41e-6 | anderson_localization_trapping_proxy:P1/physics | OK |
+| 69 | `diffusiveRandomMedium` Diffusive random medium | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.58e-6 | diffusive_random_medium_transport:P1/physics | OK |
 | 70 | `finiteConductivity` Finite-conductivity skin depth | 7. Material models and tensors | VALIDATION_GAP | conductive material | WASM CPML+sigma+TFSF, 24 steps, E=4.54e-5 | none | no validation-matrix case covers this preset |
 | 71 | `drudeMetal` Drude metal | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | advanced_material_smoke:P0/smoke, drude_ade_response:P1/physics | OK |
 | 72 | `lorentzMedium` Lorentz resonant medium | 7. Material models and tensors | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | none | no validation-matrix case covers this preset |

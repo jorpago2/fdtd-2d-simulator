@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T16:10:57.228Z",
-  "gitCommit": "d6cb067+working-tree",
+  "generatedAt": "2026-07-04T16:24:15.179Z",
+  "gitCommit": "238273a+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 21,
-    "VALIDATION_GAP": 92,
+    "PASS": 32,
+    "VALIDATION_GAP": 81,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -1975,16 +1975,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 59: PEC cylinder under plane-wave illumination.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "pec_cylinder_scattering_shadow:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2008,16 +2008,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 60: n = 2 cylinder scattering.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dielectric_cylinder_scattering_presence:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2041,16 +2041,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 61: high-index cylinder for Mie-like resonances.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "mie_cylinder_high_index_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2074,16 +2074,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 62: PEC cylinder with incident-background subtraction and estimated 2D scattering width.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "rcs_cylinder_ntff_finite:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2107,16 +2107,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 63: absorbing dielectric cylinder.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "lossy_cylinder_absorption_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2140,16 +2140,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 64: two high-index cylinders with a narrow gap.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "dielectric_dimer_gap_coupling:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2173,16 +2173,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 65: high-index cylinder showing forward/backward scattering contrast with the 2D NTFF observable.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "kerker_forward_backward_contrast:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -2206,16 +2206,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 66: deterministic random cluster of cylinders.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "multiple_scattering_cluster_spread:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2239,16 +2239,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 67: many weak inclusions for multiple scattering.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "weak_localization_disorder_spread:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2272,16 +2272,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 68: dense deterministic high-contrast disorder for Anderson-localization-like field trapping.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "anderson_localization_trapping_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2305,16 +2305,16 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 69: extended weak random medium for diffusive transport and speckle-like field structure.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "diffusive_random_medium_transport:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

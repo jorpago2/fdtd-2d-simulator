@@ -406,6 +406,233 @@
       "rationale": "Checks that the add-drop ring example includes both ports and produces a finite coupled-field proxy."
     },
     {
+      "id": "pec_cylinder_scattering_shadow",
+      "priority": "P1",
+      "preset": "pecCylinder",
+      "profile": "physics",
+      "steps": 2600,
+      "browserSmoke": true,
+      "checks": [
+        "PEC cylinder cells are present",
+        "the incident field reaches the scatterer region",
+        "central downstream energy is bounded relative to the upstream incident band"
+      ],
+      "acceptance": {
+        "materialCellsMin": 100,
+        "pecCellsMin": 100,
+        "shadowToUpstreamRatioMax": 1.5
+      },
+      "rationale": "Guards the PEC-cylinder scene as a real obstacle/scatterer instead of an empty plane-wave case."
+    },
+    {
+      "id": "dielectric_cylinder_scattering_presence",
+      "priority": "P1",
+      "preset": "dielectricCylinder",
+      "profile": "physics",
+      "steps": 2600,
+      "browserSmoke": true,
+      "checks": [
+        "dielectric cylinder cells are present",
+        "field energy overlaps the cylinder",
+        "off-axis scattered energy is finite"
+      ],
+      "acceptance": {
+        "materialCellsMin": 100,
+        "highIndexCellsMin": 100,
+        "objectEnergyMin": 1e-10,
+        "sideToBackRatioMin": 0.005
+      },
+      "rationale": "Checks that the dielectric-cylinder scattering example has both geometry and a measurable scattered-field proxy."
+    },
+    {
+      "id": "mie_cylinder_high_index_response",
+      "priority": "P1",
+      "preset": "mieCylinder",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "high-index cylinder cells are present",
+        "the broadband pulse excites energy in the scatterer region",
+        "near-field scattering outside the forward channel is finite"
+      ],
+      "acceptance": {
+        "materialCellsMin": 70,
+        "highIndexCellsMin": 70,
+        "objectEnergyMin": 1e-10,
+        "sideToBackRatioMin": 0.005
+      },
+      "rationale": "Provides a first executable guard for the Mie-like high-index cylinder without claiming a calibrated 2D Mie spectrum."
+    },
+    {
+      "id": "rcs_cylinder_ntff_finite",
+      "priority": "P1",
+      "preset": "rcsCylinder",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "PEC cylinder cells are present",
+        "analysis samples accumulate",
+        "the scattering-width/NTFF proxy is finite and nonzero"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 64,
+        "pecCellsMin": 100,
+        "scatteringTotalMin": 1e-12,
+        "backwardForwardRatioMin": 0.001
+      },
+      "rationale": "Turns the RCS cylinder into an executable NTFF/scattering-width sanity check."
+    },
+    {
+      "id": "lossy_cylinder_absorption_proxy",
+      "priority": "P1",
+      "preset": "lossyCylinder",
+      "profile": "physics",
+      "steps": 2600,
+      "browserSmoke": true,
+      "checks": [
+        "lossy cylinder cells are present",
+        "field energy reaches the lossy region",
+        "downstream channel energy is bounded by absorption and scattering"
+      ],
+      "acceptance": {
+        "materialCellsMin": 100,
+        "lossyCellsMin": 100,
+        "objectEnergyMin": 1e-10,
+        "shadowToUpstreamRatioMax": 1.8
+      },
+      "rationale": "Checks that the lossy-cylinder scene actually contains a lossy absorber interacting with the field."
+    },
+    {
+      "id": "dielectric_dimer_gap_coupling",
+      "priority": "P1",
+      "preset": "dielectricDimer",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "two high-index scatterers are present as a dimer",
+        "the gap carries finite near-field energy",
+        "off-axis scattering remains finite"
+      ],
+      "acceptance": {
+        "materialCellsMin": 120,
+        "highIndexCellsMin": 120,
+        "objectCountProxyMin": 16,
+        "dimerGapEnergyMin": 1e-12,
+        "sideToBackRatioMin": 0.005
+      },
+      "rationale": "Guards the dielectric dimer as a coupled near-field example rather than two inert visual disks."
+    },
+    {
+      "id": "kerker_forward_backward_contrast",
+      "priority": "P1",
+      "preset": "kerker2d",
+      "profile": "physics",
+      "steps": 3600,
+      "browserSmoke": true,
+      "checks": [
+        "Hz polarization is active for the Kerker-like example",
+        "analysis samples accumulate",
+        "forward/backward scattering proxy is finite and asymmetric"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 64,
+        "highIndexCellsMin": 100,
+        "scatteringTotalMin": 1e-12,
+        "forwardBackwardRatioMin": 0.01
+      },
+      "rationale": "Checks the reduced forward/backward scattering observable used by the Kerker-like teaching scene."
+    },
+    {
+      "id": "multiple_scattering_cluster_spread",
+      "priority": "P1",
+      "preset": "multipleScattering",
+      "profile": "physics",
+      "steps": 3000,
+      "browserSmoke": true,
+      "checks": [
+        "deterministic scatterer cluster is present",
+        "field energy spreads outside the central incident channel",
+        "transmitted channel remains finite"
+      ],
+      "acceptance": {
+        "materialCellsMin": 300,
+        "scattererCountProxyMin": 18,
+        "lateralFractionMin": 0.005,
+        "rightToLeftChannelRatioMin": 1e-5
+      },
+      "rationale": "Adds an executable multiple-scattering spread check without claiming a diffusion coefficient."
+    },
+    {
+      "id": "weak_localization_disorder_spread",
+      "priority": "P1",
+      "preset": "weakLocalization",
+      "profile": "physics",
+      "steps": 3200,
+      "browserSmoke": true,
+      "checks": [
+        "many weak disorder inclusions are present",
+        "lateral speckle-like energy is finite",
+        "forward channel is not empty"
+      ],
+      "acceptance": {
+        "materialCellsMin": 180,
+        "scattererCountProxyMin": 28,
+        "lateralFractionMin": 0.003,
+        "rightToLeftChannelRatioMin": 1e-6
+      },
+      "rationale": "Guards the weak-localization scene as a disorder/spread example, not a calibrated coherent-backscattering validation."
+    },
+    {
+      "id": "anderson_localization_trapping_proxy",
+      "priority": "P1",
+      "preset": "andersonLocalization",
+      "profile": "physics",
+      "steps": 3600,
+      "browserSmoke": true,
+      "checks": [
+        "dense high-contrast disorder is present",
+        "analysis samples accumulate",
+        "energy remains trapped/scattered before the right boundary"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 64,
+        "materialCellsMin": 500,
+        "highIndexCellsMin": 500,
+        "scattererCountProxyMin": 45,
+        "lateralFractionMin": 0.003,
+        "rightToLeftChannelRatioMax": 25
+      },
+      "rationale": "Adds a conservative localization/trapping proxy for the dense-disorder example; calibrated localization length remains future work."
+    },
+    {
+      "id": "diffusive_random_medium_transport",
+      "priority": "P1",
+      "preset": "diffusiveRandomMedium",
+      "profile": "physics",
+      "steps": 3600,
+      "browserSmoke": true,
+      "checks": [
+        "extended weak random medium is present",
+        "analysis samples accumulate",
+        "lateral spread and finite forward transport are measurable"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 64,
+        "materialCellsMin": 350,
+        "scattererCountProxyMin": 55,
+        "lateralFractionMin": 0.003,
+        "rightToLeftChannelRatioMin": 1e-6
+      },
+      "rationale": "Checks the diffusive-random-medium example for finite spread and transport without claiming a fitted mean free path."
+    },
+    {
       "id": "spp_interface_surface_localization",
       "priority": "P1",
       "preset": "sppInterface",

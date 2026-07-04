@@ -869,6 +869,194 @@ async function ringResonatorMetrics(page) {
   });
 }
 
+async function scatteringCylinderMetrics(page) {
+  return page.evaluate(() => {
+    if (state.analysisEnabled) {
+      sim.measure();
+      sim.analysisFarFieldEstimate?.(96);
+    }
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const cx = midX + Math.round(0.7 * cpw);
+    const cy = midY;
+    const source = state.sources?.[0] || null;
+    const sourceX = source ? sim.sourceXCell(source) : minX;
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const sumBox = (x0, x1, y0, y1) => {
+      let energy = 0;
+      let materialCells = 0;
+      let pecCells = 0;
+      let lossyCells = 0;
+      let highIndexCells = 0;
+      for (let y = Math.max(minY, y0); y <= Math.min(maxY, y1); y += 1) {
+        for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 1) {
+          const idx = sim.id(x, y);
+          energy += energyAt(idx);
+          if (sim.material[idx] !== 0) materialCells += 1;
+          if (sim.material[idx] === 2) pecCells += 1;
+          if ((Number(sim.loss?.[idx]) || 0) > 0.02 || (Number(sim.lossY?.[idx]) || 0) > 0.02) lossyCells += 1;
+          if (Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0) highIndexCells += 1;
+        }
+      }
+      return { energy, materialCells, pecCells, lossyCells, highIndexCells };
+    };
+    const radius = Math.round(0.38 * cpw);
+    let objectEnergy = 0;
+    let objectMaterialCells = 0;
+    let objectPecCells = 0;
+    let objectLossyCells = 0;
+    let objectHighIndexCells = 0;
+    let objectCountProxy = 0;
+    const visitedBins = new Set();
+    for (let y = Math.max(minY, cy - radius); y <= Math.min(maxY, cy + radius); y += 1) {
+      for (let x = Math.max(minX, cx - radius); x <= Math.min(maxX, cx + radius); x += 1) {
+        const idx = sim.id(x, y);
+        if (sim.material[idx] === 0) continue;
+        objectEnergy += energyAt(idx);
+        objectMaterialCells += 1;
+        if (sim.material[idx] === 2) objectPecCells += 1;
+        if ((Number(sim.loss?.[idx]) || 0) > 0.02 || (Number(sim.lossY?.[idx]) || 0) > 0.02) objectLossyCells += 1;
+        if (Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0) objectHighIndexCells += 1;
+        visitedBins.add(`${Math.round((x - cx) / Math.max(2, Math.round(0.12 * cpw)))},${Math.round((y - cy) / Math.max(2, Math.round(0.12 * cpw)))}`);
+      }
+    }
+    objectCountProxy = visitedBins.size;
+    const front = sumBox(cx - Math.round(1.55 * cpw), cx - Math.round(0.52 * cpw), midY - Math.round(1.0 * cpw), midY + Math.round(1.0 * cpw));
+    const back = sumBox(cx + Math.round(0.55 * cpw), cx + Math.round(1.85 * cpw), midY - Math.round(1.0 * cpw), midY + Math.round(1.0 * cpw));
+    const side = {
+      energy:
+        sumBox(cx - Math.round(0.35 * cpw), cx + Math.round(1.4 * cpw), midY - Math.round(2.4 * cpw), midY - Math.round(1.05 * cpw)).energy +
+        sumBox(cx - Math.round(0.35 * cpw), cx + Math.round(1.4 * cpw), midY + Math.round(1.05 * cpw), midY + Math.round(2.4 * cpw)).energy,
+    };
+    const upstream = sumBox(sourceX + Math.round(0.45 * cpw), cx - Math.round(0.75 * cpw), midY - Math.round(0.55 * cpw), midY + Math.round(0.55 * cpw));
+    const shadow = sumBox(cx + Math.round(0.72 * cpw), cx + Math.round(2.2 * cpw), midY - Math.round(0.42 * cpw), midY + Math.round(0.42 * cpw));
+    const dimerGap = sumBox(
+      midX + Math.round(0.69 * cpw),
+      midX + Math.round(0.81 * cpw),
+      midY - Math.round(0.2 * cpw),
+      midY + Math.round(0.2 * cpw),
+    );
+    return {
+      fieldComponent: state.fieldComponent,
+      analysisSamples: sim.analysisSamples || 0,
+      farFieldMode: sim.analysisFarFieldMode || "",
+      scatteringTotal: sim.analysisScatteringTotal || 0,
+      scatteringForward: sim.analysisScatteringForward || 0,
+      scatteringBackward: sim.analysisScatteringBackward || 0,
+      forwardBackwardRatio: (sim.analysisScatteringForward || 0) / Math.max(1e-30, sim.analysisScatteringBackward || 0),
+      backwardForwardRatio: (sim.analysisScatteringBackward || 0) / Math.max(1e-30, sim.analysisScatteringForward || 0),
+      objectEnergy,
+      objectMaterialCells,
+      objectPecCells,
+      objectLossyCells,
+      objectHighIndexCells,
+      objectCountProxy,
+      frontEnergy: front.energy,
+      backEnergy: back.energy,
+      sideEnergy: side.energy,
+      upstreamEnergy: upstream.energy,
+      shadowEnergy: shadow.energy,
+      dimerGapEnergy: dimerGap.energy,
+      sideToBackRatio: side.energy / Math.max(1e-30, back.energy),
+      shadowToUpstreamRatio: shadow.energy / Math.max(1e-30, upstream.energy),
+      backToFrontRatio: back.energy / Math.max(1e-30, front.energy),
+      dimerGapToObjectRatio: dimerGap.energy / Math.max(1e-30, objectEnergy),
+    };
+  });
+}
+
+async function randomScatteringMetrics(page) {
+  return page.evaluate(() => {
+    if (state.analysisEnabled) {
+      sim.measure();
+      sim.analysisFarFieldEstimate?.(96);
+    }
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midY = Math.round(0.5 * (minY + maxY));
+    const source = state.sources?.[0] || null;
+    const sourceX = source ? sim.sourceXCell(source) : minX;
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const sumBox = (x0, x1, y0, y1) => {
+      let energy = 0;
+      let materialCells = 0;
+      let highIndexCells = 0;
+      for (let y = Math.max(minY, y0); y <= Math.min(maxY, y1); y += 1) {
+        for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 1) {
+          const idx = sim.id(x, y);
+          energy += energyAt(idx);
+          if (sim.material[idx] !== 0) materialCells += 1;
+          if (Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0) highIndexCells += 1;
+        }
+      }
+      return { energy, materialCells, highIndexCells };
+    };
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let xWeighted = 0;
+    let yWeighted = 0;
+    let energyTotal = 0;
+    const occupiedBins = new Set();
+    const bin = Math.max(2, Math.round(0.16 * cpw));
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        energyTotal += energy;
+        xWeighted += x * energy;
+        yWeighted += y * energy;
+        if (sim.material[idx] !== 0) {
+          materialCells += 1;
+          occupiedBins.add(`${Math.round(x / bin)},${Math.round(y / bin)}`);
+        }
+        if (Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0) highIndexCells += 1;
+      }
+    }
+    const left = sumBox(sourceX + Math.round(0.4 * cpw), sourceX + Math.round(2.4 * cpw), midY - Math.round(0.55 * cpw), midY + Math.round(0.55 * cpw));
+    const center = sumBox(sourceX + Math.round(2.5 * cpw), sourceX + Math.round(5.6 * cpw), midY - Math.round(0.75 * cpw), midY + Math.round(0.75 * cpw));
+    const right = sumBox(maxX - Math.round(2.7 * cpw), maxX - Math.round(0.75 * cpw), midY - Math.round(0.55 * cpw), midY + Math.round(0.55 * cpw));
+    const lateral = {
+      energy:
+        sumBox(sourceX + Math.round(1.6 * cpw), maxX - Math.round(0.8 * cpw), minY, midY - Math.round(1.0 * cpw)).energy +
+        sumBox(sourceX + Math.round(1.6 * cpw), maxX - Math.round(0.8 * cpw), midY + Math.round(1.0 * cpw), maxY).energy,
+    };
+    return {
+      analysisSamples: sim.analysisSamples || 0,
+      farFieldMode: sim.analysisFarFieldMode || "",
+      scatteringTotal: sim.analysisScatteringTotal || 0,
+      materialCells,
+      highIndexCells,
+      scattererCountProxy: occupiedBins.size,
+      totalEnergy: energyTotal,
+      centroidXLambda: energyTotal > 1e-30 ? xWeighted / energyTotal / cpw : 0,
+      centroidYLambda: energyTotal > 1e-30 ? yWeighted / energyTotal / cpw : 0,
+      leftChannelEnergy: left.energy,
+      centerChannelEnergy: center.energy,
+      rightChannelEnergy: right.energy,
+      lateralEnergy: lateral.energy,
+      lateralFraction: lateral.energy / Math.max(1e-30, energyTotal),
+      rightToLeftChannelRatio: right.energy / Math.max(1e-30, left.energy),
+      centerToLeftChannelRatio: center.energy / Math.max(1e-30, left.energy),
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
   const startedAt = Date.now();
@@ -1212,6 +1400,117 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minDropToBus) && status.ring.dropToBusRatio < minDropToBus) {
       status.failures.push(`drop/bus energy ratio ${status.ring.dropToBusRatio} below ${minDropToBus}`);
+    }
+  }
+  if (
+    testCase.id === "pec_cylinder_scattering_shadow" ||
+    testCase.id === "dielectric_cylinder_scattering_presence" ||
+    testCase.id === "mie_cylinder_high_index_response" ||
+    testCase.id === "rcs_cylinder_ntff_finite" ||
+    testCase.id === "lossy_cylinder_absorption_proxy" ||
+    testCase.id === "dielectric_dimer_gap_coupling" ||
+    testCase.id === "kerker_forward_backward_contrast"
+  ) {
+    status.scattering = await scatteringCylinderMetrics(page);
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minPecCells = Number(testCase.acceptance?.pecCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minObjectEnergy = Number(testCase.acceptance?.objectEnergyMin);
+    const maxShadowRatio = Number(testCase.acceptance?.shadowToUpstreamRatioMax);
+    const minSideToBack = Number(testCase.acceptance?.sideToBackRatioMin);
+    const minBackToFront = Number(testCase.acceptance?.backToFrontRatioMin);
+    const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minScatteringTotal = Number(testCase.acceptance?.scatteringTotalMin);
+    const minForwardBackward = Number(testCase.acceptance?.forwardBackwardRatioMin);
+    const minBackwardForward = Number(testCase.acceptance?.backwardForwardRatioMin);
+    const minObjectCount = Number(testCase.acceptance?.objectCountProxyMin);
+    const minGapEnergy = Number(testCase.acceptance?.dimerGapEnergyMin);
+    const minGapToObject = Number(testCase.acceptance?.dimerGapToObjectRatioMin);
+    if (Number.isFinite(minMaterialCells) && status.scattering.objectMaterialCells < minMaterialCells) {
+      status.failures.push(`scatterer material cells ${status.scattering.objectMaterialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minPecCells) && status.scattering.objectPecCells < minPecCells) {
+      status.failures.push(`PEC scatterer cells ${status.scattering.objectPecCells} below ${minPecCells}`);
+    }
+    if (Number.isFinite(minLossyCells) && status.scattering.objectLossyCells < minLossyCells) {
+      status.failures.push(`lossy scatterer cells ${status.scattering.objectLossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && status.scattering.objectHighIndexCells < minHighIndexCells) {
+      status.failures.push(`high-index scatterer cells ${status.scattering.objectHighIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minObjectEnergy) && status.scattering.objectEnergy < minObjectEnergy) {
+      status.failures.push(`scatterer-region energy ${status.scattering.objectEnergy} below ${minObjectEnergy}`);
+    }
+    if (Number.isFinite(maxShadowRatio) && status.scattering.shadowToUpstreamRatio > maxShadowRatio) {
+      status.failures.push(`shadow/upstream energy ratio ${status.scattering.shadowToUpstreamRatio} exceeds ${maxShadowRatio}`);
+    }
+    if (Number.isFinite(minSideToBack) && status.scattering.sideToBackRatio < minSideToBack) {
+      status.failures.push(`side/back scattering energy ratio ${status.scattering.sideToBackRatio} below ${minSideToBack}`);
+    }
+    if (Number.isFinite(minBackToFront) && status.scattering.backToFrontRatio < minBackToFront) {
+      status.failures.push(`back/front energy ratio ${status.scattering.backToFrontRatio} below ${minBackToFront}`);
+    }
+    if (Number.isFinite(minSamples) && status.scattering.analysisSamples < minSamples) {
+      status.failures.push(`scattering analysis has ${status.scattering.analysisSamples} samples, expected at least ${minSamples}`);
+    }
+    if (Number.isFinite(minScatteringTotal) && status.scattering.scatteringTotal < minScatteringTotal) {
+      status.failures.push(`scattering total ${status.scattering.scatteringTotal} below ${minScatteringTotal}`);
+    }
+    if (Number.isFinite(minForwardBackward) && status.scattering.forwardBackwardRatio < minForwardBackward) {
+      status.failures.push(`forward/backward scattering ratio ${status.scattering.forwardBackwardRatio} below ${minForwardBackward}`);
+    }
+    if (Number.isFinite(minBackwardForward) && status.scattering.backwardForwardRatio < minBackwardForward) {
+      status.failures.push(`backward/forward scattering ratio ${status.scattering.backwardForwardRatio} below ${minBackwardForward}`);
+    }
+    if (Number.isFinite(minObjectCount) && status.scattering.objectCountProxy < minObjectCount) {
+      status.failures.push(`scatterer count proxy ${status.scattering.objectCountProxy} below ${minObjectCount}`);
+    }
+    if (Number.isFinite(minGapEnergy) && status.scattering.dimerGapEnergy < minGapEnergy) {
+      status.failures.push(`dimer-gap energy ${status.scattering.dimerGapEnergy} below ${minGapEnergy}`);
+    }
+    if (Number.isFinite(minGapToObject) && status.scattering.dimerGapToObjectRatio < minGapToObject) {
+      status.failures.push(`dimer gap/object energy ratio ${status.scattering.dimerGapToObjectRatio} below ${minGapToObject}`);
+    }
+  }
+  if (
+    testCase.id === "multiple_scattering_cluster_spread" ||
+    testCase.id === "weak_localization_disorder_spread" ||
+    testCase.id === "anderson_localization_trapping_proxy" ||
+    testCase.id === "diffusive_random_medium_transport"
+  ) {
+    status.randomScattering = await randomScatteringMetrics(page);
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minScatterers = Number(testCase.acceptance?.scattererCountProxyMin);
+    const minLateralFraction = Number(testCase.acceptance?.lateralFractionMin);
+    const maxRightToLeft = Number(testCase.acceptance?.rightToLeftChannelRatioMax);
+    const minRightToLeft = Number(testCase.acceptance?.rightToLeftChannelRatioMin);
+    const minCenterToLeft = Number(testCase.acceptance?.centerToLeftChannelRatioMin);
+    const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    if (Number.isFinite(minMaterialCells) && status.randomScattering.materialCells < minMaterialCells) {
+      status.failures.push(`random-scattering material cells ${status.randomScattering.materialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && status.randomScattering.highIndexCells < minHighIndexCells) {
+      status.failures.push(`random-scattering high-index cells ${status.randomScattering.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minScatterers) && status.randomScattering.scattererCountProxy < minScatterers) {
+      status.failures.push(`random-scattering count proxy ${status.randomScattering.scattererCountProxy} below ${minScatterers}`);
+    }
+    if (Number.isFinite(minLateralFraction) && status.randomScattering.lateralFraction < minLateralFraction) {
+      status.failures.push(`lateral scattered-energy fraction ${status.randomScattering.lateralFraction} below ${minLateralFraction}`);
+    }
+    if (Number.isFinite(maxRightToLeft) && status.randomScattering.rightToLeftChannelRatio > maxRightToLeft) {
+      status.failures.push(`right/left channel energy ratio ${status.randomScattering.rightToLeftChannelRatio} exceeds ${maxRightToLeft}`);
+    }
+    if (Number.isFinite(minRightToLeft) && status.randomScattering.rightToLeftChannelRatio < minRightToLeft) {
+      status.failures.push(`right/left channel energy ratio ${status.randomScattering.rightToLeftChannelRatio} below ${minRightToLeft}`);
+    }
+    if (Number.isFinite(minCenterToLeft) && status.randomScattering.centerToLeftChannelRatio < minCenterToLeft) {
+      status.failures.push(`center/left channel energy ratio ${status.randomScattering.centerToLeftChannelRatio} below ${minCenterToLeft}`);
+    }
+    if (Number.isFinite(minSamples) && status.randomScattering.analysisSamples < minSamples) {
+      status.failures.push(`random-scattering analysis has ${status.randomScattering.analysisSamples} samples, expected at least ${minSamples}`);
     }
   }
   const budget = matrix.profiles[testCase.profile]?.maxMsPerStep;
