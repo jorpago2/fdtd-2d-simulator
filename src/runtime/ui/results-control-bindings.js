@@ -72,17 +72,22 @@
     const sweepModeLabel = requireFunction(dependencies.sweepModeLabel, "sweepModeLabel");
     const formatSweepValue = requireFunction(dependencies.formatSweepValue, "formatSweepValue");
 
+    function measureResultsUi() {
+      if (typeof sim.measureForUi === "function") sim.measureForUi();
+      else sim.measure();
+    }
+
     el.diagnosticsInput?.addEventListener("change", () => {
       state.diagnosticsEnabled = el.diagnosticsInput.checked;
       sim.resetDiagnostics();
-      sim.measure();
+      measureResultsUi();
       updateStats();
       sim.render();
     });
 
     el.diagnosticsResetBtn?.addEventListener("click", () => {
       sim.resetDiagnostics();
-      sim.measure();
+      measureResultsUi();
       updateStats();
       sim.render();
     });

@@ -499,7 +499,7 @@ function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneRep
   );
 }
 
-function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, wasmCpp) {
+function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, fdtdDiagnosticsJs, wasmBackendJs, wasmCpp) {
   const requiredIds = [
     "performanceBackendOutput",
     "performanceGridOutput",
@@ -547,10 +547,11 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
     "kernel_features",
     "measure_field",
     "measureField",
+    "measureForUi",
     "renormalize_fields",
     "renormalizeFields",
   ];
-  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${wasmBackendJs}\n${wasmCpp}`;
+  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${fdtdDiagnosticsJs}\n${wasmBackendJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
@@ -665,6 +666,7 @@ function main() {
   const sceneReproJs = readActiveScript(activeScripts, "scene-repro.js");
   const fdtdSimJs = readActiveScript(activeScripts, "fdtd-sim.js");
   const fdtdEngineRoutingJs = readActiveScript(activeScripts, "fdtd-engine-routing.js");
+  const fdtdDiagnosticsJs = readActiveScript(activeScripts, "fdtd-diagnostics.js");
   const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js");
   const wasmCpp = readText("native/fdtd-core", "fdtd-core.cpp");
   const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
@@ -704,7 +706,7 @@ function main() {
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
   const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js");
-  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, wasmBackendJs, wasmCpp);
+  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, fdtdDiagnosticsJs, wasmBackendJs, wasmCpp);
   validateWasmStepContract(wasmBackendJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";

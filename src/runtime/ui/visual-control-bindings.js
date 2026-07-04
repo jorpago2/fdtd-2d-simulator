@@ -30,13 +30,18 @@
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const setCustomVisualLayer = requireFunction(dependencies.setCustomVisualLayer, "setCustomVisualLayer");
 
+    function measureVisualState() {
+      if (typeof sim.measureForUi === "function") sim.measureForUi();
+      else sim.measure();
+    }
+
     forEachNode(el.fieldComponentButtons, (button) => {
       button.addEventListener("click", () => {
         const component = button.dataset.fieldComponent === "hz" ? "hz" : "ez";
         if (state.fieldComponent === component) return;
         state.fieldComponent = component;
         sim.resetFields();
-        sim.measure();
+        measureVisualState();
         updateControlText();
         updateStats();
         sim.render();
@@ -47,7 +52,7 @@
       button.addEventListener("click", () => {
         const display = button.dataset.fieldDisplay || "scalar";
         state.fieldDisplay = FIELD_DISPLAY_VALUES.includes(display) ? display : "scalar";
-        sim.measure();
+        measureVisualState();
         updateControlText();
         updateStats();
         sim.render();
@@ -75,7 +80,7 @@
         if (state.viewMode === "poynting") {
           state.fieldDisplay = "scalar";
         }
-        sim.measure();
+        measureVisualState();
         updateControlText();
         updateStats();
         sim.render();

@@ -991,7 +991,8 @@
               }
             });
             stepsDone += chunk;
-            sim.measure();
+            if (typeof sim.measureForUi === "function") sim.measureForUi();
+            else sim.measure();
             const steadyMetrics = state.analysisEnabled ? sim.analysisMetricEstimate() : null;
             steadyHistory.push(sweepSteadyObservation(steadyMetrics));
             updateStats();

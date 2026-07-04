@@ -29,7 +29,6 @@
   Object.assign(FDTDSim.prototype, {
     markFieldsChanged() {
       this.fieldTextureRevision = (Number(this.fieldTextureRevision) || 0) + 1;
-      this.measureCache = null;
     },
 
     resetFields() {
@@ -75,6 +74,8 @@
       this.lastMaxLog10 = -Infinity;
       this.lastEnergy = 0;
       this.lastEnergyLog10 = -Infinity;
+      this.measureCache = null;
+      this.lastMeasureTimeMs = 0;
       this.lastViewRange = 1;
       this.lastViewRangeLog10 = 0;
       this.resetDiagnostics();

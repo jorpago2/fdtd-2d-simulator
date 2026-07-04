@@ -210,6 +210,14 @@ async function runBenchmarkCase(page, grid, backend, options) {
       for (let i = 0; i < measureSamples; i += 1) sim.measure();
       const measureCachedMs = (performance.now() - measureCachedStart) / measureSamples;
 
+      const measureUiStart = performance.now();
+      for (let i = 0; i < measureSamples; i += 1) {
+        sim.markFieldsChanged?.();
+        if (typeof sim.measureForUi === "function") sim.measureForUi({ minIntervalMs: 1000 });
+        else sim.measure();
+      }
+      const measureUiMs = (performance.now() - measureUiStart) / measureSamples;
+
       const measureStart = performance.now();
       for (let i = 0; i < measureSamples; i += 1) {
         sim.markFieldsChanged?.();
@@ -247,6 +255,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
         stepMs,
         measureMs,
         measureCachedMs,
+        measureUiMs,
         renderMs,
         solverBreakdown,
         stepsPerSecond: 1000 / stepMs,
@@ -277,6 +286,7 @@ function summarizeResult(result) {
     stepMs: round(result.stepMs, 4),
     measureMs: round(result.measureMs, 4),
     measureCachedMs: round(result.measureCachedMs, 4),
+    measureUiMs: round(result.measureUiMs, 4),
     renderMs: round(result.renderMs, 4),
     solverBreakdown: Object.fromEntries(
       Object.entries(result.solverBreakdown || {}).map(([key, value]) => [key, round(value, 4)]),
@@ -289,7 +299,7 @@ function summarizeResult(result) {
 
 function formatTable(results) {
   const rows = [
-    ["grid", "backend", "engine", "step ms", "step/s", "render ms", "measure ms", "cached ms"],
+    ["grid", "backend", "engine", "step ms", "step/s", "render ms", "measure ms", "cached ms", "ui ms"],
     ...results.map((item) => [
       `${item.nx}x${item.ny}`,
       item.backend.toUpperCase(),
@@ -299,6 +309,7 @@ function formatTable(results) {
       item.renderMs.toFixed(4),
       item.measureMs.toFixed(4),
       item.measureCachedMs.toFixed(4),
+      item.measureUiMs.toFixed(4),
     ]),
   ];
   const widths = rows[0].map((_, col) => Math.max(...rows.map((row) => String(row[col]).length)));

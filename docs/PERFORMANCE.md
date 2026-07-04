@@ -31,6 +31,7 @@ The benchmark opens the app in a browser, tests the default static TMz path on s
 - `sim.render()`, including field-to-pixel mapping and overlays.
 - `sim.measure()`, for a forced full-field measurement.
 - Cached `sim.measure()` calls, which should be close to zero when no field, view, scale, or projection state changed.
+- UI `measureForUi()` refreshes, which may reuse the previous diagnostic value briefly after field changes when exact physics diagnostics are not being requested.
 
 Use custom grids when profiling a target device:
 
@@ -47,6 +48,8 @@ npm run benchmark:perf -- --browser-channel=msedge --preset=finiteConductivity
 The reported WASM/JS speedup is meaningful for the static Yee update only. Dynamic materials that force the JavaScript path must be benchmarked separately before moving them to C++/WASM.
 
 `measure()` is revision-cached. The first call after a field update still scans the full field, but repeated calls with the same field revision and visual measurement mode reuse the measured max/energy values. This avoids duplicate work in UI update paths without changing the rendered field or the FDTD update.
+
+UI-driven refreshes use `measureForUi()` where an exact new diagnostic value is not required. It can reuse the last measured max/energy for a short interval after field changes, while explicit validation, final sweep points, manual step/reset actions, and divergence handling still call full `measure()`. This separates physical diagnostics from routine control-panel refreshes.
 
 Reference run on this Windows/Edge workstation after limiting renormalization to active fields:
 

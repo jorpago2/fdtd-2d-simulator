@@ -1,5 +1,7 @@
 "use strict";
 
+const UI_MEASURE_MIN_INTERVAL_MS = 250;
+
 Object.assign(FDTDSim.prototype, {
 resetDiagnostics() {
   this.resetLineDiagnostics();
@@ -905,8 +907,11 @@ updateDiagnostics({ forceAnalysis = false } = {}) {
 },
 
 measureCacheKey() {
+  return `${Number(this.fieldTextureRevision) || 0}|${this.measureCacheProjectionKey()}`;
+},
+
+measureCacheProjectionKey() {
   return [
-    Number(this.fieldTextureRevision) || 0,
     state.viewMode,
     state.fieldDisplay,
     state.fieldComponent,
@@ -923,19 +928,54 @@ restoreMeasuredFieldStats(cache) {
   this.lastEnergyLog10 = cache.lastEnergyLog10;
 },
 
+measurementNowMs() {
+  return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
+},
+
 storeMeasuredFieldStats(key, maxAbs, energy) {
   const physicalLogScale = this.fieldPhysicalLogScale();
   this.lastMaxLog10 = maxAbs === 0 ? -Infinity : Math.log10(maxAbs) + physicalLogScale;
   this.lastEnergyLog10 = energy === 0 ? -Infinity : Math.log10(energy / this.n) + 2 * physicalLogScale;
   this.lastMax = this.lastMaxLog10 < 300 ? Math.pow(10, this.lastMaxLog10) : Infinity;
   this.lastEnergy = this.lastEnergyLog10 < 300 ? Math.pow(10, this.lastEnergyLog10) : Infinity;
+  this.lastMeasureTimeMs = this.measurementNowMs();
   this.measureCache = {
     key,
+    projectionKey: this.measureCacheProjectionKey(),
     lastMax: this.lastMax,
     lastMaxLog10: this.lastMaxLog10,
     lastEnergy: this.lastEnergy,
     lastEnergyLog10: this.lastEnergyLog10,
   };
+},
+
+measureForUi({ force = false, minIntervalMs = UI_MEASURE_MIN_INTERVAL_MS } = {}) {
+  if (force || this.lastDiverged || !this.measureCache) {
+    this.measure();
+    return true;
+  }
+
+  const initialCacheKey = this.measureCacheKey();
+  if (this.measureCache.key === initialCacheKey) {
+    this.restoreMeasuredFieldStats(this.measureCache);
+    return false;
+  }
+
+  const projectionKey = this.measureCacheProjectionKey();
+  if (this.measureCache.projectionKey !== projectionKey) {
+    this.measure();
+    return true;
+  }
+
+  const intervalMs = Math.max(0, Number(minIntervalMs) || 0);
+  const ageMs = this.measurementNowMs() - (Number(this.lastMeasureTimeMs) || 0);
+  if (intervalMs > 0 && ageMs < intervalMs) {
+    this.restoreMeasuredFieldStats(this.measureCache);
+    return false;
+  }
+
+  this.measure();
+  return true;
 },
 
 measure() {
@@ -951,8 +991,10 @@ measure() {
     this.lastMaxLog10 = -Infinity;
     this.lastEnergy = 0;
     this.lastEnergyLog10 = -Infinity;
+    this.lastMeasureTimeMs = this.measurementNowMs();
     this.measureCache = {
       key: this.measureCacheKey(),
+      projectionKey: this.measureCacheProjectionKey(),
       lastMax: this.lastMax,
       lastMaxLog10: this.lastMaxLog10,
       lastEnergy: this.lastEnergy,

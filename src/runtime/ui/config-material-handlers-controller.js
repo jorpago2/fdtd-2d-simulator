@@ -238,7 +238,7 @@
       state.materialGyrotropyEnabled = false;
       state.materialBianisotropyEnabled = false;
       el.presetInput.value = "empty";
-      simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });
+      simulationEffects.commit({ measure: "ui", controls: true, stats: true, render: true });
     }
 
     function clearField() {

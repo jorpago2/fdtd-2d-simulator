@@ -24,9 +24,15 @@
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
 
+    function measureForUi() {
+      if (typeof sim.measureForUi === "function") sim.measureForUi();
+      else sim.measure();
+    }
+
     function commit(options = {}) {
       if (options.disableResponsiveGrid) disableResponsiveGridOrientation();
-      if (options.measure) sim.measure();
+      if (options.measure === "ui") measureForUi();
+      else if (options.measure) sim.measure();
       if (options.controls) updateControlText();
       if (options.stats) updateStats();
       if (options.render) sim.render();
@@ -35,7 +41,7 @@
     function commitMaterialMutation(options = {}) {
       commit({
         disableResponsiveGrid: options.disableResponsiveGrid ?? true,
-        measure: options.measure ?? true,
+        measure: options.measure ?? "ui",
         controls: options.controls ?? true,
         stats: options.stats ?? true,
         render: options.render ?? true,
