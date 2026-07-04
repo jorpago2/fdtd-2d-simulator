@@ -34,6 +34,7 @@ class FDTDSim {
     this.lastEnergy = 0;
     this.lastEnergyLog10 = -Infinity;
     this.measureCache = null;
+    this.uiMeasureCache = null;
     this.lastMeasureTimeMs = 0;
     this.lastViewRange = 1;
     this.lastViewRangeLog10 = 0;
