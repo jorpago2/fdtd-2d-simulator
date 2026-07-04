@@ -1281,9 +1281,7 @@ details[open] > summary::after {
 .visual-field-section,
 .visual-overlays-section,
 .run-section,
-.scale-section,
 .grid-section,
-.stability-section,
 .reproducibility-section {
   display: grid;
   gap: 10px;
@@ -1807,12 +1805,12 @@ label.scene-select-fallback,
   }
 
   #tab-scenes .scene-current-panel {
-    grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
 
   #tab-scenes .scene-current-panel .scene-guide-panel {
-    grid-column: 2;
+    grid-column: 1;
     max-height: calc(100dvh - 350px);
     overflow: auto;
   }

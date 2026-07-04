@@ -68,8 +68,8 @@
       controlSyncUi.syncRuntimeAndViewControls({ el, formatTimeRate, state, uiCore });
       updateSourceShapeOptionLabels();
       updateFieldDisplayControls();
-      el.wavelengthInput.value = state.wavelengthUm.toFixed(2);
-      el.cellsPerWavelengthInput.value = String(state.cellsPerWavelength);
+      if (el.wavelengthInput) el.wavelengthInput.value = state.wavelengthUm.toFixed(2);
+      if (el.cellsPerWavelengthInput) el.cellsPerWavelengthInput.value = String(state.cellsPerWavelength);
       el.customAnisotropyInput.checked = state.customAnisotropic;
       el.customEpsRealLabel.innerHTML = state.customAnisotropic ? "ε<sub>x</sub>′" : "ε′";
       el.customEpsImagLabel.innerHTML = state.customAnisotropic ? "ε<sub>x</sub>″" : "ε″";

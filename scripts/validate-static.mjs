@@ -472,10 +472,6 @@ function validateNumerics(constants) {
 
 function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneReproJs = "") {
   const requiredIds = [
-    "stabilityCflValue",
-    "stabilityResolutionValue",
-    "stabilityMediaValue",
-    "stabilityEstimateValue",
     "exportSceneBtn",
     "importSceneBtn",
     "copySceneUrlBtn",

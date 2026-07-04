@@ -253,7 +253,20 @@ async function runSmokeCase(page, testCase) {
   const elapsedMs = await stepSimulation(page, steps);
   const after = await simulationSnapshot(page);
   const bodyText = await page.locator("body").innerText();
-  const stabilityMedia = await page.textContent("#stabilityMediaValue");
+  const activeMedia = await page.evaluate(() => {
+    const hasNonzero = (values) => Boolean(values?.some?.((value) => value !== 0));
+    const labels = [];
+    if (state.materialModulationEnabled || hasNonzero(sim.modulatedMaterial)) labels.push("modulated");
+    if (state.materialNonlinearEnabled || state.materialHarmonicEnabled || hasNonzero(sim.nonlinearMaterial)) labels.push("nonlinear");
+    if (state.materialPhaseChangeEnabled || hasNonzero(sim.phaseChangeMaterial)) labels.push("phase-change");
+    if (state.materialDispersionEnabled || hasNonzero(sim.dispersiveMaterial) || hasNonzero(sim.muDispersiveMaterial)) labels.push("ADE");
+    if (state.materialGyrotropyEnabled || hasNonzero(sim.gyrotropicMaterial)) labels.push("gyrotropic");
+    if (state.materialBianisotropyEnabled || hasNonzero(sim.bianisotropicMaterial)) labels.push("bianisotropic");
+    if (state.materialConductivityEnabled || hasNonzero(sim.conductivity) || hasNonzero(sim.conductivityY)) labels.push("conductive");
+    if (state.materialSaturableGainEnabled) labels.push("gain-limited");
+    return labels.length > 0 ? labels : ["static"];
+  });
+  const stabilityMedia = activeMedia.join(", ");
   const status = {
     id: testCase.id,
     preset: testCase.preset,
@@ -365,6 +378,8 @@ async function runControlNavigationSmoke(page) {
       return {
         activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
         runVisible: Boolean(document.querySelector("#tab-simulation .run-section")),
+        scaleSectionVisible: Boolean(document.querySelector("#tab-config .scale-section")),
+        stabilitySectionVisible: Boolean(document.querySelector("#tab-config .stability-section")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
       };
@@ -392,6 +407,8 @@ async function runControlNavigationSmoke(page) {
   if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerics") {
     failures.push("Numerics tab did not activate the numerical setup panel");
   }
+  if (status.numericsState?.scaleSectionVisible) failures.push("Numerics still shows the Scale section");
+  if (status.numericsState?.stabilitySectionVisible) failures.push("Numerics still shows the Stability section");
   return {
     id: "control_navigation_four_sections",
     preset: "current",
@@ -529,6 +546,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
               }
             : null,
           panelOverflow,
+          guide: rect("#sceneGuidePanel"),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
             ? {
@@ -625,6 +643,13 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
         (currentStatus.spotlight.left < currentStatus.panel.left - 1 || currentStatus.spotlight.right > currentStatus.panel.right + 1)
       ) {
         failures.push(`${viewport.name}: spotlight exceeds the control panel bounds`);
+      }
+      if (
+        currentStatus.spotlight &&
+        currentStatus.guide &&
+        currentStatus.guide.top < currentStatus.spotlight.bottom - 1
+      ) {
+        failures.push(`${viewport.name}: Current scene guide should be stacked below the scene card`);
       }
       if (
         browseStatus.panel &&

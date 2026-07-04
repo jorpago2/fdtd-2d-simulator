@@ -56,6 +56,7 @@
     const MAX_GRID = maxGrid;
 
     function handleWavelengthInput() {
+      if (!el.wavelengthInput) return;
       const value = Number(el.wavelengthInput.value);
       if (!Number.isFinite(value)) return;
       state.wavelengthUm = clamp(value, 0.1, 10);
@@ -63,6 +64,7 @@
     }
 
     function handleCellsPerWavelengthInput() {
+      if (!el.cellsPerWavelengthInput) return;
       disableResponsiveGridOrientation();
       const value = Number(el.cellsPerWavelengthInput.value);
       if (!Number.isFinite(value)) return;
@@ -72,7 +74,7 @@
       state.sources.forEach((source) => {
         source.frequency = nextFrequency;
       });
-      el.frequencyInput.value = String(Math.round(nextFrequency * 1000));
+      if (el.frequencyInput) el.frequencyInput.value = String(Math.round(nextFrequency * 1000));
       sim.buildBoundary(state.boundary);
       if (state.preset !== "empty") {
         sim.applyPreset(state.preset);

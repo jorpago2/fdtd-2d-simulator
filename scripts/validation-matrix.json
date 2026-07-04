@@ -176,7 +176,7 @@
       "checks": [
         "ADE material loads",
         "finite fields after several steps",
-        "stability panel reports active media"
+        "active media diagnostics report ADE"
       ],
       "acceptance": {
         "maxFieldFinite": true,

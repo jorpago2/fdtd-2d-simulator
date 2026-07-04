@@ -289,7 +289,6 @@
     }
     
     function updateStabilitySummary() {
-      if (!el.stabilityCflValue) return;
       const cflEstimate = materialCflEstimate();
       const limit = cflEstimate.materialLimit;
       const media = activeMediaLabels();
@@ -297,10 +296,16 @@
       const cflStable = COURANT < limit;
       const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
       const healthReason = healthStatusReason(cflStable, flags, cflEstimate);
-      el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
-      el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / λ₀`;
-      el.stabilityMediaValue.textContent = media.join(", ");
       updateHealthStatusOutputs(level, healthReason);
+      if (el.stabilityCflValue) {
+        el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
+      }
+      if (el.stabilityResolutionValue) {
+        el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / λ₀`;
+      }
+      if (el.stabilityMediaValue) {
+        el.stabilityMediaValue.textContent = media.join(", ");
+      }
       if (el.stabilityNote) {
         const base = `Explicit 2D Yee check: S must stay below min(1/sqrt(2), n_min/sqrt(2)). Current material estimate=${limit.toFixed(2)}.`;
         el.stabilityNote.textContent =
