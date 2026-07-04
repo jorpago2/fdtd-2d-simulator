@@ -1494,6 +1494,7 @@ canvasColorbarController = canvasColorbarModule.createCanvasColorbarController({
 });
 canvasExportController = canvasExportModule.createCanvasExportController({
   canvas: el.canvas,
+  fieldCanvas: el.fieldCanvas,
   documentRef: document,
   drawExportOverlays: (ctx, width, height) => {
     canvasColorbarController.drawExport(ctx, width, height);

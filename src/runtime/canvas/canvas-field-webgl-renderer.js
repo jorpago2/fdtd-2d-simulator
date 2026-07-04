@@ -29,11 +29,13 @@
   const VERTEX_SHADER_SOURCE = `#version 300 es
 in vec2 a_position;
 in vec2 a_texCoord;
+uniform vec2 u_texOrigin;
+uniform vec2 u_texSpan;
 out vec2 v_texCoord;
 
 void main() {
   gl_Position = vec4(a_position, 0.0, 1.0);
-  v_texCoord = a_texCoord;
+  v_texCoord = u_texOrigin + a_texCoord * u_texSpan;
 }`;
 
   const FRAGMENT_SHADER_SOURCE = `#version 300 es
@@ -337,9 +339,13 @@ void main() {
     return sim.materialViewContext();
   }
 
+  function backgroundColor() {
+    return state.theme === "dark" ? [3 / 255, 8 / 255, 12 / 255, 1] : [235 / 255, 244 / 255, 248 / 255, 1];
+  }
+
   class FieldWebglRenderer {
-    constructor(documentRef = global.document) {
-      this.canvas = documentRef.createElement("canvas");
+    constructor(documentRef = global.document, options = {}) {
+      this.canvas = options.canvas || documentRef.createElement("canvas");
       this.gl = this.canvas.getContext("webgl2", {
         alpha: false,
         antialias: false,
@@ -421,15 +427,59 @@ void main() {
         materialMax: uniform("u_materialMax"),
         materialSpan: uniform("u_materialSpan"),
         lutSize: uniform("u_lutSize"),
+        texOrigin: uniform("u_texOrigin"),
+        texSpan: uniform("u_texSpan"),
       };
     }
 
-    ensureSize(nx, ny) {
-      const width = Math.max(1, Math.floor(nx));
-      const height = Math.max(1, Math.floor(ny));
+    ensureSize(width, height) {
+      width = Math.max(1, Math.floor(width));
+      height = Math.max(1, Math.floor(height));
       if (this.canvas.width !== width) this.canvas.width = width;
       if (this.canvas.height !== height) this.canvas.height = height;
-      this.gl.viewport(0, 0, width, height);
+    }
+
+    prepareRenderTarget(sim, options = {}) {
+      const targetWidth = options.targetWidth || this.canvas.width || sim.nx;
+      const targetHeight = options.targetHeight || this.canvas.height || sim.ny;
+      this.ensureSize(targetWidth, targetHeight);
+
+      const gl = this.gl;
+      const [r, g, b, a] = backgroundColor();
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      gl.clearColor(r, g, b, a);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      const viewport = options.viewport || {
+        left: 0,
+        top: 0,
+        width: this.canvas.width,
+        height: this.canvas.height,
+      };
+      const viewportX = Math.max(0, Math.round(viewport.left));
+      const viewportY = Math.max(0, Math.round(this.canvas.height - viewport.top - viewport.height));
+      const viewportWidth = Math.max(1, Math.round(viewport.width));
+      const viewportHeight = Math.max(1, Math.round(viewport.height));
+      gl.viewport(viewportX, viewportY, viewportWidth, viewportHeight);
+
+      if (options.viewport) {
+        return {
+          texOriginX: this.safeTextureCoordinate(sim.viewX, sim.nx),
+          texOriginY: this.safeTextureCoordinate(sim.viewY, sim.ny),
+          texSpanX: this.safeTextureCoordinate(sim.visibleGridWidth(), sim.nx),
+          texSpanY: this.safeTextureCoordinate(sim.visibleGridHeight(), sim.ny),
+        };
+      }
+      return {
+        texOriginX: 0,
+        texOriginY: 0,
+        texSpanX: 1,
+        texSpanY: 1,
+      };
+    }
+
+    safeTextureCoordinate(value, size) {
+      return Math.max(0, Math.min(1, value / Math.max(1, size || 1)));
     }
 
     bindTexture(texture, textureUnit) {
@@ -508,7 +558,7 @@ void main() {
       }
     }
 
-    setCommonUniforms(renderMode) {
+    setCommonUniforms(renderMode, target) {
       const gl = this.gl;
       gl.useProgram(this.program);
       gl.uniform1i(this.uniforms.ezTex, FIELD_TEXTURE_UNITS.ez);
@@ -521,6 +571,8 @@ void main() {
       gl.uniform1i(this.uniforms.lutTex, LUT_TEXTURE_UNIT);
       gl.uniform1i(this.uniforms.renderMode, renderMode);
       gl.uniform1f(this.uniforms.lutSize, CMASHER_LUT_SIZE);
+      gl.uniform2f(this.uniforms.texOrigin, target.texOriginX, target.texOriginY);
+      gl.uniform2f(this.uniforms.texSpan, target.texSpanX, target.texSpanY);
     }
 
     setNeutralMaterialUniforms() {
@@ -541,13 +593,13 @@ void main() {
       }
     }
 
-    renderField(sim, descriptor) {
+    renderField(sim, descriptor, target) {
       const scale = sim.fieldRenderScale();
       const fieldMapName = currentFieldColormapName(descriptor.magnitude);
       this.uploadLut(fieldMapName, !descriptor.magnitude);
       this.uploadFieldTextures(sim, descriptor.requiredTextures);
       this.uploadMaterialTexture(sim);
-      this.setCommonUniforms(RENDER_MODE_FIELD);
+      this.setCommonUniforms(RENDER_MODE_FIELD, target);
       const gl = this.gl;
       gl.uniform1i(this.uniforms.quantityMode, descriptor.mode);
       gl.uniform1f(this.uniforms.scale, scale);
@@ -559,7 +611,7 @@ void main() {
       this.lastRenderMode = descriptor.renderLabel;
     }
 
-    renderMaterial(sim, materialContext) {
+    renderMaterial(sim, materialContext, target) {
       const materialMapName = currentMaterialColormapName(materialContext);
       const materialMapSigned =
         state.materialPart === "imag" || (materialContext.min < materialContext.center && materialContext.max > materialContext.center);
@@ -576,7 +628,7 @@ void main() {
         if (key !== "ez") this.bindTexture(this.textures.ez, FIELD_TEXTURE_UNITS[key]);
       }
       this.uploadMaterialTexture(sim);
-      this.setCommonUniforms(RENDER_MODE_MATERIAL);
+      this.setCommonUniforms(RENDER_MODE_MATERIAL, target);
       const gl = this.gl;
       gl.uniform1i(this.uniforms.quantityMode, FIELD_QUANTITY_MODE.scalar);
       gl.uniform1f(this.uniforms.scale, 1);
@@ -592,21 +644,21 @@ void main() {
       this.lastRenderMode = "WebGL2 material map";
     }
 
-    render(sim) {
+    render(sim, options = {}) {
       if (state.viewProjection !== "2d") return false;
       const fieldDescriptor = fieldQuantityDescriptor(sim);
       const materialContext = fieldDescriptor ? null : materialValueArray(sim);
       if (!fieldDescriptor && !materialContext) return false;
 
-      this.ensureSize(sim.nx, sim.ny);
-      if (fieldDescriptor) this.renderField(sim, fieldDescriptor);
-      else this.renderMaterial(sim, materialContext);
+      const target = this.prepareRenderTarget(sim, options);
+      if (fieldDescriptor) this.renderField(sim, fieldDescriptor, target);
+      else this.renderMaterial(sim, materialContext, target);
       return true;
     }
   }
 
   function createRenderer(options = {}) {
-    return new FieldWebglRenderer(options.documentRef || global.document);
+    return new FieldWebglRenderer(options.documentRef || global.document, options);
   }
 
   global.FdtdCanvasFieldWebglRenderer = Object.freeze({

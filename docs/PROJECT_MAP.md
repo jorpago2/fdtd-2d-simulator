@@ -43,6 +43,7 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 | Custom monitor geometry or measurement | `src/runtime/simulation/fdtd-custom-monitors.js`, `src/runtime/canvas/canvas-monitor-overlays.js`, `src/runtime/ui/source-monitor-control-bindings.js` |
 | Canvas paint or brush geometry insertion | `src/runtime/canvas/canvas-edit-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js` |
 | Canvas keyboard, pinch/pan, touch, or drag behavior | `src/runtime/canvas/canvas-gesture-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js`, `src/runtime/canvas/canvas-pointer-state.js`, `src/runtime/canvas/canvas-drag-state.js` |
+| Canvas layer stack | `index.html`, `src/styles/fdtd-ui.css`, `src/runtime/canvas/canvas-viewport.js`, `src/runtime/canvas/canvas-export.js` manage the visible WebGL field layer, optional 3D surface layer, and transparent 2D interaction/overlay layer. |
 | Source editor or source behavior | `src/runtime/ui/source-monitor-editor-controller.js`, `src/runtime/ui/source-monitor-model.js`, `src/runtime/ui/source-monitor-control-bindings.js`, `src/runtime/simulation/fdtd-sources.js` |
 | Material selection/apply/delete operations | `src/runtime/ui/material-operations.js` |
 | Brush/material editor controls | `src/runtime/ui/brush-controls-controller.js`, `src/runtime/ui/material-editor-model.js`, `src/runtime/ui/material-editor-ui.js` |

@@ -3,6 +3,7 @@
 class FDTDSim {
   constructor(canvas, config) {
     this.canvas = canvas;
+    this.fieldCanvas = document.getElementById?.("fieldCanvas") || null;
     this.surfaceCanvas = document.getElementById?.("surfaceCanvas") || null;
     this.ctx = canvas.getContext("2d", { alpha: true });
     this.courant = COURANT;

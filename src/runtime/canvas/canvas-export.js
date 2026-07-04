@@ -11,6 +11,7 @@
   function createCanvasExportController(dependencies) {
     const canvas = requireObject(dependencies.canvas, "canvas");
     const documentRef = requireObject(dependencies.documentRef || global.document, "documentRef");
+    const fieldCanvas = dependencies.fieldCanvas || documentRef.getElementById?.("fieldCanvas") || null;
     const surfaceCanvas = dependencies.surfaceCanvas || documentRef.getElementById?.("surfaceCanvas") || null;
     const drawExportOverlays =
       typeof dependencies.drawExportOverlays === "function" ? dependencies.drawExportOverlays : () => {};
@@ -21,6 +22,9 @@
       exportCanvas.height = canvas.height;
       const ctx = exportCanvas.getContext("2d", { alpha: false });
       if (!ctx) return canvas.toDataURL("image/png");
+      if (fieldCanvas && !fieldCanvas.hidden) {
+        ctx.drawImage(fieldCanvas, 0, 0, exportCanvas.width, exportCanvas.height);
+      }
       if (surfaceCanvas && !surfaceCanvas.hidden) {
         const background = ctx.createLinearGradient(0, 0, 0, exportCanvas.height);
         background.addColorStop(0, "rgb(3, 5, 9)");

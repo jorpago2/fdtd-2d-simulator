@@ -187,6 +187,11 @@
         this.canvas.height = height;
         this.ctx.imageSmoothingEnabled = false;
       }
+      for (const layerCanvas of [this.fieldCanvas, this.surfaceCanvas]) {
+        if (!layerCanvas) continue;
+        if (layerCanvas.width !== width) layerCanvas.width = width;
+        if (layerCanvas.height !== height) layerCanvas.height = height;
+      }
       const viewport = this.renderViewport();
       this.canvas.dataset.gridAspect = this.viewAspectRatio().toFixed(6);
       this.canvas.dataset.domainAspect = (viewport.width / Math.max(1e-9, viewport.height)).toFixed(6);

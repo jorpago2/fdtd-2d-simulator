@@ -45,6 +45,7 @@
   function collectDomRefs(documentRef = global.document) {
     return {
       canvas: documentRef.getElementById("simCanvas"),
+      fieldCanvas: documentRef.getElementById("fieldCanvas"),
       canvasFrame: documentRef.querySelector(".canvas-frame"),
       stage: documentRef.querySelector(".stage"),
       canvasToolbar: documentRef.querySelector(".canvas-toolbar"),

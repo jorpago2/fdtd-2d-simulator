@@ -191,6 +191,7 @@ p {
   overflow: hidden;
 }
 
+#fieldCanvas,
 #surfaceCanvas,
 #simCanvas {
   grid-area: 1 / 1;
@@ -201,23 +202,31 @@ p {
   min-height: 0;
 }
 
-#surfaceCanvas {
+#fieldCanvas {
   z-index: 0;
+  background: var(--canvas-bg);
+  pointer-events: none;
+}
+
+#surfaceCanvas {
+  z-index: 1;
   background:
     linear-gradient(180deg, rgb(3, 5, 9) 0%, rgb(7, 8, 13) 58%, rgb(0, 0, 0) 100%);
   pointer-events: none;
 }
 
+#fieldCanvas[hidden],
 #surfaceCanvas[hidden] {
   display: none;
 }
 
 #simCanvas {
-  z-index: 1;
+  z-index: 2;
   background: var(--canvas-bg);
   touch-action: none;
 }
 
+#fieldCanvas:not([hidden]) ~ #simCanvas,
 #surfaceCanvas:not([hidden]) + #simCanvas {
   background: transparent;
 }

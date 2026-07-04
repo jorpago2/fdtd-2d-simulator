@@ -356,21 +356,35 @@ setSurfaceCanvasVisible(visible) {
   this.surfaceCanvas.hidden = !visible;
 },
 
+setFieldCanvasVisible(visible) {
+  if (!this.fieldCanvas) return;
+  this.fieldCanvas.hidden = !visible;
+},
+
 fieldWebglRenderer() {
   if (this.fieldWebglRendererFailed) return null;
   const rendererModule = window.FdtdCanvasFieldWebglRenderer;
   if (!rendererModule?.createRenderer) return null;
   if (!this.fieldWebglRendererInstance) {
-    this.fieldWebglRendererInstance = rendererModule.createRenderer();
+    this.fieldWebglRendererInstance = rendererModule.createRenderer({
+      canvas: this.fieldCanvas || undefined,
+    });
   }
   return this.fieldWebglRendererInstance;
 },
 
-renderFieldMapGpu() {
+renderFieldMapGpu(viewport) {
   const renderer = this.fieldWebglRenderer();
   if (!renderer) return false;
   try {
-    const rendered = renderer.render(this) === true;
+    const renderOptions = this.fieldCanvas
+      ? {
+          targetWidth: this.canvas.width,
+          targetHeight: this.canvas.height,
+          viewport,
+        }
+      : {};
+    const rendered = renderer.render(this, renderOptions) === true;
     if (rendered) {
       this.lastFieldRenderBackend = renderer.lastRenderMode || "WebGL2 field map";
     }
@@ -583,6 +597,7 @@ render() {
   const canRecordRenderBreakdown = typeof perf?.record === "function" && typeof perf?.now === "function";
   let renderPhaseStart = canRecordRenderBreakdown ? perf.now() : 0;
   if (state.viewProjection === "3d") {
+    this.setFieldCanvasVisible(false);
     const reusedGpuFrame = this.reuseSurfaceFieldGpuFrame();
     let renderedWithGpu = reusedGpuFrame;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -616,8 +631,9 @@ render() {
   }
 
   this.setSurfaceCanvasVisible(false);
-  const renderedWithGpu = this.renderFieldMapGpu();
+  const renderedWithGpu = this.renderFieldMapGpu(viewport);
   if (!renderedWithGpu) {
+    this.setFieldCanvasVisible(false);
     const pixels32 = this.imagePixels32;
     if (pixels32 && pixels32.length === this.n) {
       if (state.viewMode === "epsilon" || state.viewMode === "mu") {
@@ -641,7 +657,12 @@ render() {
   }
 
   if (renderedWithGpu) {
-    this.presentFieldMapCanvas(this.fieldWebglRendererInstance.canvas, viewport);
+    if (this.fieldCanvas) {
+      this.setFieldCanvasVisible(true);
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    } else {
+      this.presentFieldMapCanvas(this.fieldWebglRendererInstance.canvas, viewport);
+    }
   } else {
     this.offscreenCtx.putImageData(this.image, 0, 0);
     this.presentFieldMapCanvas(this.offscreen, viewport);
