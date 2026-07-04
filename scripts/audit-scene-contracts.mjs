@@ -100,11 +100,34 @@ const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCou
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
 const qualitativeCaveats = new Map([
+  ["machZehnder", "Reduced 2D guided-interferometer layout; useful for arm splitting/recombination, not a calibrated phase-transfer curve."],
   ["hyperbolicMedium", "Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence."],
   ["microstrip", "2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model."],
+  ["purcell2d", "2D Q/Aeff Purcell proxy; not an absolute 3D local-density-of-states or emitter-rate calculation."],
+  ["chiralMedium", "Six-field chiral-medium proxy; needs optical-rotation or S-parameter regression before quantitative chirality claims."],
+  ["gyrotropicMedium", "Gyrotropic-material route is active, but Faraday rotation/nonreciprocal S-parameters are not calibrated here."],
+  ["phcPointDefect", "Photonic-crystal defect-cavity proxy; no eigenmode frequency or Q convergence is claimed."],
+  ["phcOptimizedCavity", "Optimized-cavity geometry proxy; the optimization objective is not independently re-solved in this audit."],
+  ["phcDarkMode", "Symmetry-dark-mode proxy; needs modal-overlap or radiation-suppression validation for quantitative claims."],
+  ["symmetryProtectedBic", "Symmetry-protected BIC proxy; no eigenmode solver or diverging-Q convergence is claimed."],
+  ["nonHermitianSsh", "Non-Hermitian SSH route is active, but eigenspectrum and biorthogonal-mode validation are out of scope."],
   ["hyperlens", "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."],
   ["topologicalPumping", "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."],
+  ["sppGrating", "SPP grating geometry and surface localization are validated; coupling efficiency is not a de-embedded grating-coupler metric."],
+  ["superlensSlab", "Drude superlens proxy with reduced transfer observable; not a calibrated evanescent-wave transfer-function measurement."],
+  ["spmKerrPulse", "Kerr SPM proxy; spectral broadening is reduced/qualitative, not a calibrated nonlinear phase-shift curve."],
+  ["kerrBistableCavity", "Kerr bistability proxy; no hysteresis sweep or steady-state branch extraction is claimed."],
+  ["saturableAbsorber", "Saturable-absorber route is active, but the transmission-vs-intensity curve is not calibrated in this audit."],
+  ["allOpticalSwitch", "All-optical-switch layout proxy; not a calibrated extinction-ratio or switching-energy result."],
+  ["nonlinearLimiter", "Nonlinear limiter proxy; needs input-output transfer validation before limiter-threshold claims."],
+  ["temporalIsolator", "Temporal-isolator analogue; reduced sideband/isolation observables are not de-embedded two-port S-parameters."],
+  ["syntheticFrequency", "Synthetic-frequency-dimension proxy; sideband graph intuition is shown without a calibrated frequency-lattice model."],
+  ["exceptionalPointCoupler", "Exceptional-point proxy; reduced modal coalescence is checked, not a full eigenvalue/topology validation."],
   ["nonHermitianSkin", "Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation."],
+  ["janusTopologicalGuide", "Hybrid Janus/topological-guide proxy; directional coupling is qualitative without protected-transport spectra."],
+  ["huygensCavity", "Hybrid Huygens/cavity source workflow; not a calibrated Purcell, beta-factor, or far-field optimization."],
+  ["nonreciprocalValleyHall", "Nonreciprocal Valley-Hall proxy; needs reverse-port spectra and topological invariant checks for quantitative claims."],
+  ["spaceTimeCrystal", "Space-time-crystal proxy; modulation and sidebands are reduced observables, not a full band-structure validation."],
 ]);
 
 function startStaticServer() {
