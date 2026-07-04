@@ -248,6 +248,247 @@
       "rationale": "Adds a dynamic ADE-state validation beyond the fast active-media smoke label."
     },
     {
+      "id": "finite_conductivity_skin_depth_proxy",
+      "priority": "P1",
+      "preset": "finiteConductivity",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "conductive half-space cells are present",
+        "J = sigma E update path is active",
+        "field energy enters the conductor and the pulse decays at late time"
+      ],
+      "acceptance": {
+        "materialModelCheck": "conductive",
+        "requiresActiveMediaLabel": "conductive",
+        "materialCellsMin": 400,
+        "conductiveCellsMin": 400,
+        "conductivitySigmaMin": 0.1,
+        "conductorEntranceEnergyMin": 1e-14,
+        "conductorDeepToEntranceRatioMax": 2.0,
+        "lateEnergyRatioMax": 0.35
+      },
+      "rationale": "Guards the finite-conductivity scene as a skin-depth/attenuation example rather than only a colored slab."
+    },
+    {
+      "id": "lorentz_resonant_ade_response",
+      "priority": "P1",
+      "preset": "lorentzMedium",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Lorentz ADE cells are present",
+        "effective permittivity is elevated near the configured resonance",
+        "fields remain finite while the Lorentz slab is active"
+      ],
+      "acceptance": {
+        "materialModelCheck": "dispersive",
+        "requiresActiveMediaLabel": "ADE",
+        "dispersionModel": "lorentz",
+        "dispersiveKind": "lorentz",
+        "dispersiveCellsMin": 400,
+        "effectiveEpsMeanMin": 1.9
+      },
+      "rationale": "Checks that the Lorentz scene uses the resonant ADE branch and produces a finite dispersive-medium interaction."
+    },
+    {
+      "id": "debye_relaxation_ade_response",
+      "priority": "P1",
+      "preset": "debyeDielectric",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Debye ADE cells are present",
+        "effective permittivity exceeds the high-frequency baseline",
+        "fields remain finite while the Debye slab is active"
+      ],
+      "acceptance": {
+        "materialModelCheck": "dispersive",
+        "requiresActiveMediaLabel": "ADE",
+        "dispersionModel": "debye",
+        "dispersiveKind": "debye",
+        "dispersiveCellsMin": 400,
+        "effectiveEpsMeanMin": 2.0
+      },
+      "rationale": "Checks that the Debye relaxation example is wired to the Debye ADE branch with a physically distinct epsilon response."
+    },
+    {
+      "id": "plasma_cutoff_ade_response",
+      "priority": "P1",
+      "preset": "plasmaCutoff",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "plasma ADE cells are present",
+        "effective permittivity is below zero at the diagnostic frequency",
+        "fields remain finite while the plasma slab is active"
+      ],
+      "acceptance": {
+        "materialModelCheck": "dispersive",
+        "requiresActiveMediaLabel": "ADE",
+        "dispersionModel": "plasma",
+        "dispersiveKind": "drudeLike",
+        "dispersiveCellsMin": 400,
+        "effectiveEpsMeanMax": 0
+      },
+      "rationale": "Checks the plasma-cutoff scene as a negative-effective-epsilon ADE medium at the teaching frequency."
+    },
+    {
+      "id": "enz_slab_near_zero_response",
+      "priority": "P1",
+      "preset": "enzSlab",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "Drude ENZ slab cells are present",
+        "effective permittivity is close to zero at the diagnostic frequency",
+        "fields remain finite while the thin ENZ slab is active"
+      ],
+      "acceptance": {
+        "materialModelCheck": "dispersive",
+        "requiresActiveMediaLabel": "ADE",
+        "dispersionModel": "drude",
+        "dispersiveKind": "drudeLike",
+        "dispersiveCellsMin": 100,
+        "effectiveEpsAbsMeanMax": 0.15
+      },
+      "rationale": "Guards the ENZ teaching example by checking the actual effective epsilon tuning rather than only the scene label."
+    },
+    {
+      "id": "anisotropic_tensor_block_response",
+      "priority": "P1",
+      "preset": "anisotropicMedium",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "anisotropic eps_x/eps_y block cells are present",
+        "tensor diagnostics inspect the anisotropic cells",
+        "localized source deposits finite energy inside the block"
+      ],
+      "acceptance": {
+        "materialModelCheck": "tensor",
+        "materialCellsMin": 400,
+        "anisotropicCellsMin": 400,
+        "tensorCheckedCellsMin": 400,
+        "epsAnisotropyDeltaMin": 1.5,
+        "materialEnergyMin": 1e-12
+      },
+      "rationale": "Checks the anisotropic-medium scene as a real tensor-epsilon block with finite field interaction."
+    },
+    {
+      "id": "hyperbolic_indefinite_tensor_proxy",
+      "priority": "P1",
+      "preset": "hyperbolicMedium",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "passive Drude tensor proxy block cells are present",
+        "effective tensor eigenvalues are indefinite near the source frequency",
+        "point-dipole source produces finite energy without nondispersive negative-epsilon blow-up"
+      ],
+      "acceptance": {
+        "materialModelCheck": "tensor",
+        "requiresActiveMediaLabel": "ADE",
+        "fieldComponent": "hz",
+        "dispersionModel": "drude",
+        "dispersiveKind": "drudeLike",
+        "materialCellsMin": 400,
+        "dispersiveCellsMin": 400,
+        "anisotropicCellsMin": 400,
+        "tensorCheckedCellsMin": 400,
+        "indefiniteCellsMin": 400,
+        "negativeTensorCellsMin": 400,
+        "materialEnergyMin": 1e-12
+      },
+      "rationale": "Keeps the hyperbolic scene honest as a reduced passive Drude tensor proxy, not a causal broadband-material validation."
+    },
+    {
+      "id": "chiral_six_field_bianisotropy_response",
+      "priority": "P1",
+      "preset": "chiralMedium",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "Hz six-field bianisotropy path is active",
+        "kappa is passivity-limited and nonzero",
+        "cross-field energy remains finite inside the chiral block"
+      ],
+      "acceptance": {
+        "materialModelCheck": "bianisotropic",
+        "requiresAnalysis": true,
+        "requiresActiveMediaLabel": "bianisotropic",
+        "fieldComponent": "hz",
+        "materialCellsMin": 400,
+        "bianisotropicCellsMin": 400,
+        "meanAbsKappaMin": 0.1,
+        "passiveDefinite": true,
+        "passivityMarginMin": 0.5,
+        "maxCrossFieldMin": 1e-12,
+        "materialCrossFractionMin": 1e-12
+      },
+      "rationale": "Adds an executable six-field/chiral response check while leaving calibrated optical-activity validation as future work."
+    },
+    {
+      "id": "bianisotropic_six_field_response",
+      "priority": "P1",
+      "preset": "bianisotropicMedium",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "Hz six-field bianisotropy path is active",
+        "anisotropic eps/mu block has nonzero kappa",
+        "cross-field energy and passivity diagnostics remain finite"
+      ],
+      "acceptance": {
+        "materialModelCheck": "bianisotropic",
+        "requiresAnalysis": true,
+        "requiresActiveMediaLabel": "bianisotropic",
+        "fieldComponent": "hz",
+        "materialCellsMin": 400,
+        "anisotropicCellsMin": 400,
+        "bianisotropicCellsMin": 400,
+        "meanAbsKappaMin": 0.1,
+        "passiveDefinite": true,
+        "passivityMarginMin": 0.5,
+        "maxCrossFieldMin": 1e-12,
+        "materialCrossFractionMin": 1e-12
+      },
+      "rationale": "Checks that the bianisotropic block exercises the intended six-field coupling rather than a scalar fallback."
+    },
+    {
+      "id": "gyrotropic_tensor_response",
+      "priority": "P1",
+      "preset": "gyrotropicMedium",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "Hz solver is active for the gyrotropic tensor example",
+        "antisymmetric epsilon tensor cells are present",
+        "field energy overlaps the gyrotropic block"
+      ],
+      "acceptance": {
+        "materialModelCheck": "gyrotropic",
+        "requiresActiveMediaLabel": "gyrotropic",
+        "fieldComponent": "hz",
+        "materialCellsMin": 400,
+        "tensorCellsMin": 400,
+        "gyrotropicCellsMin": 400,
+        "gyrotropyAbsMin": 0.2,
+        "materialEnergyMin": 1e-14
+      },
+      "rationale": "Guards the qualitative gyrotropic scene as an actual tensor-route example with finite field interaction."
+    },
+    {
       "id": "quarter_wave_coating_low_reflection",
       "priority": "P1",
       "preset": "quarterWaveCoating",

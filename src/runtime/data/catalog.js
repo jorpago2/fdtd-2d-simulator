@@ -136,7 +136,7 @@ const sceneDescriptions = {
   plasmaCutoff: "Atlas 74: collisionless plasma slab near cutoff.",
   enzSlab: "Atlas 75: passive Drude ADE epsilon-near-zero slab tuned near the source frequency.",
   anisotropicMedium: "Atlas 76: anisotropic block, eps_x = 4, eps_y = 2.",
-  hyperbolicMedium: "Atlas 77: constant anisotropic medium with eps_x > 0 and eps_y < 0.",
+  hyperbolicMedium: "Atlas 77: passive Drude tensor proxy with eps_x > 0 and effective eps_y < 0 near the source frequency.",
   chiralMedium: "Atlas 78: six-component 2D chiral-medium proxy with passivity-limited local magnetoelectric coupling.",
   bianisotropicMedium: "Atlas 79: six-component 2D bianisotropic block with anisotropic eps/mu and local magnetoelectric coupling.",
   gyrotropicMedium: "Atlas 80: qualitative gyrotropic epsilon tensor in the Hz solver, using eps_xy = +g and eps_yx = -g.",

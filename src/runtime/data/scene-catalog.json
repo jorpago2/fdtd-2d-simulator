@@ -946,7 +946,7 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "groupName": "Material models and tensors",
-      "description": "Atlas 77: constant anisotropic medium with eps_x > 0 and eps_y < 0."
+      "description": "Atlas 77: passive Drude tensor proxy with eps_x > 0 and effective eps_y < 0 near the source frequency."
     },
     {
       "id": "chiralMedium",

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T16:24:15.179Z",
-  "gitCommit": "238273a+working-tree",
+  "generatedAt": "2026-07-04T16:46:53.312Z",
+  "gitCommit": "bb07462+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 32,
-    "VALIDATION_GAP": 81,
+    "PASS": 39,
+    "VALIDATION_GAP": 74,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -2338,16 +2338,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "conductive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "finite_conductivity_skin_depth_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2405,16 +2405,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 72: Lorentz ADE resonant dielectric slab.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "lorentz_resonant_ade_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2438,16 +2438,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 73: Debye relaxation dielectric slab.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "debye_relaxation_ade_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2471,16 +2471,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 74: collisionless plasma slab near cutoff.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "plasma_cutoff_ade_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2504,16 +2504,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 75: passive Drude ADE epsilon-near-zero slab tuned near the source frequency.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "enz_slab_near_zero_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2537,16 +2537,16 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 76: anisotropic block, eps_x = 4, eps_y = 2.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "anisotropic_tensor_block_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -2569,30 +2569,30 @@
       "title": "Hyperbolic medium",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 77: constant anisotropic medium with eps_x > 0 and eps_y < 0.",
+      "description": "Atlas 77: passive Drude tensor proxy with eps_x > 0 and effective eps_y < 0 near the source frequency.",
       "status": "WARN",
       "contractTags": [
-        "static Maxwell/FDTD scene"
+        "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "hyperbolic_indefinite_tensor_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
-        "Uses a nondispersive hyperbolic tensor proxy; acceptable for visualization, not causal broadband material evidence."
+        "Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
-        "fieldComponent": "ez",
+        "fieldComponent": "hz",
         "viewMode": "field",
         "sweepMode": "angle",
-        "engine": "WASM CPML",
+        "engine": "WASM CPML+ADE",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 5.669450525874673e-7,
+        "energy": 0.00003131282903536111,
         "analysisSamples": 0,
         "materialCells": 2496,
-        "dispersiveCells": 0,
+        "dispersiveCells": 2496,
         "modulatedCells": 0,
         "nonlinearCells": 0,
         "sourceCount": 1
@@ -2611,15 +2611,14 @@
         "bianisotropy"
       ],
       "validationCases": [
+        "chiral_six_field_bianisotropy_response:P1/physics",
         "bianisotropy_quantitative_gap:P1/physics"
       ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -2643,17 +2642,17 @@
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "description": "Atlas 79: six-component 2D bianisotropic block with anisotropic eps/mu and local magnetoelectric coupling.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization",
         "bianisotropy"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "bianisotropic_six_field_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",
@@ -2682,14 +2681,14 @@
         "HZ polarization",
         "gyrotropy"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "gyrotropic_tensor_response:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "field",

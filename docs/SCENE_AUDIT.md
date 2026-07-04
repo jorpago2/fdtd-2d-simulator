@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T16:24:15.179Z
-Git commit: 238273a+working-tree
+Generated: 2026-07-04T16:46:53.312Z
+Git commit: bb07462+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 32 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 81 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 39 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 74 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -92,17 +92,17 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 67 | `weakLocalization` Weak-localization disorder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | weak_localization_disorder_spread:P1/physics | OK |
 | 68 | `andersonLocalization` Anderson-localization disorder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.41e-6 | anderson_localization_trapping_proxy:P1/physics | OK |
 | 69 | `diffusiveRandomMedium` Diffusive random medium | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.58e-6 | diffusive_random_medium_transport:P1/physics | OK |
-| 70 | `finiteConductivity` Finite-conductivity skin depth | 7. Material models and tensors | VALIDATION_GAP | conductive material | WASM CPML+sigma+TFSF, 24 steps, E=4.54e-5 | none | no validation-matrix case covers this preset |
+| 70 | `finiteConductivity` Finite-conductivity skin depth | 7. Material models and tensors | PASS | conductive material | WASM CPML+sigma+TFSF, 24 steps, E=4.54e-5 | finite_conductivity_skin_depth_proxy:P1/physics | OK |
 | 71 | `drudeMetal` Drude metal | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | advanced_material_smoke:P0/smoke, drude_ade_response:P1/physics | OK |
-| 72 | `lorentzMedium` Lorentz resonant medium | 7. Material models and tensors | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | none | no validation-matrix case covers this preset |
-| 73 | `debyeDielectric` Debye dielectric | 7. Material models and tensors | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.89e-4 | none | no validation-matrix case covers this preset |
-| 74 | `plasmaCutoff` Plasma cutoff | 7. Material models and tensors | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=4.66e-8 | none | no validation-matrix case covers this preset |
-| 75 | `enzSlab` ENZ slab | 7. Material models and tensors | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 76 | `anisotropicMedium` Anisotropic medium | 7. Material models and tensors | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.90e-7 | none | no validation-matrix case covers this preset |
-| 77 | `hyperbolicMedium` Hyperbolic medium | 7. Material models and tensors | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.67e-7 | none | Uses a nondispersive hyperbolic tensor proxy; acceptable for visualization, not causal broadband material evidence.; no validation-matrix case covers this preset |
-| 78 | `chiralMedium` 6-field chiral medium | 7. Material models and tensors | WARN | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | bianisotropy_quantitative_gap:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
-| 79 | `bianisotropicMedium` 6-field bianisotropic medium | 7. Material models and tensors | VALIDATION_GAP | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=8.91e-7 | none | no validation-matrix case covers this preset |
-| 80 | `gyrotropicMedium` Gyrotropic medium | 7. Material models and tensors | WARN | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
+| 72 | `lorentzMedium` Lorentz resonant medium | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | lorentz_resonant_ade_response:P1/physics | OK |
+| 73 | `debyeDielectric` Debye dielectric | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.89e-4 | debye_relaxation_ade_response:P1/physics | OK |
+| 74 | `plasmaCutoff` Plasma cutoff | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=4.66e-8 | plasma_cutoff_ade_response:P1/physics | OK |
+| 75 | `enzSlab` ENZ slab | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=6.96e-8 | enz_slab_near_zero_response:P1/physics | OK |
+| 76 | `anisotropicMedium` Anisotropic medium | 7. Material models and tensors | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.90e-7 | anisotropic_tensor_block_response:P1/physics | OK |
+| 77 | `hyperbolicMedium` Hyperbolic medium | 7. Material models and tensors | WARN | dispersive material | WASM CPML+ADE, 24 steps, E=3.13e-5 | hyperbolic_indefinite_tensor_proxy:P1/physics | Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence. |
+| 78 | `chiralMedium` 6-field chiral medium | 7. Material models and tensors | WARN | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | chiral_six_field_bianisotropy_response:P1/physics, bianisotropy_quantitative_gap:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 79 | `bianisotropicMedium` 6-field bianisotropic medium | 7. Material models and tensors | PASS | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=8.91e-7 | bianisotropic_six_field_response:P1/physics | OK |
+| 80 | `gyrotropicMedium` Gyrotropic medium | 7. Material models and tensors | WARN | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | gyrotropic_tensor_response:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 81 | `braggStack` 1D Bragg stack | 8. Periodic photonics and BICs | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
 | 82 | `photonicCrystal` 2D photonic crystal | 8. Periodic photonics and BICs | VALIDATION_GAP | blochK sweep | WASM CPML+TFSF, 24 steps, E=8.70e-5 | none | no validation-matrix case covers this preset |
 | 83 | `phcPointDefect` PhC point defect | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=3.17e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |

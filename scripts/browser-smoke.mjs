@@ -532,6 +532,224 @@ async function dispersiveAdeMetrics(page) {
   });
 }
 
+async function materialModelMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const omega = 2 * Math.PI * (typeof sim.diagnosticFrequency === "function" ? sim.diagnosticFrequency() : Number(state.sourceFrequency) || 0.035);
+    const finite = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+    const fieldEnergyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      const primary = finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+      const dual = finite(sim.dualEz?.[idx]) ** 2 + finite(sim.dualHx?.[idx]) ** 2 + finite(sim.dualHy?.[idx]) ** 2;
+      return primary + dual;
+    };
+    const emptyBounds = () => ({ minX: maxX + 1, maxX: minX - 1, minY: maxY + 1, maxY: minY - 1, cells: 0 });
+    const updateBounds = (bounds, x, y) => {
+      bounds.minX = Math.min(bounds.minX, x);
+      bounds.maxX = Math.max(bounds.maxX, x);
+      bounds.minY = Math.min(bounds.minY, y);
+      bounds.maxY = Math.max(bounds.maxY, y);
+      bounds.cells += 1;
+    };
+    const finalizeBounds = (bounds) => (bounds.cells > 0 ? bounds : null);
+    const materialBounds = emptyBounds();
+    const conductiveBounds = emptyBounds();
+    const dispersiveBounds = emptyBounds();
+    const tensorDiagnostics = typeof sim.materialTensorDiagnostics === "function" ? sim.materialTensorDiagnostics() : null;
+    const counts = {
+      materialCells: 0,
+      conductiveCells: 0,
+      dispersiveCells: 0,
+      drudeLikeCells: 0,
+      lorentzCells: 0,
+      debyeCells: 0,
+      magneticDispersiveCells: 0,
+      anisotropicCells: 0,
+      negativeEpsilonCells: 0,
+      gyrotropicCells: 0,
+      bianisotropicCells: 0,
+    };
+    const epsStats = {
+      epsMean: 0,
+      epsYMean: 0,
+      epsDeltaMax: 0,
+      effectiveEpsMean: null,
+      effectiveEpsMin: null,
+      effectiveEpsMax: null,
+      effectiveEpsAbsMean: null,
+    };
+    let epsSum = 0;
+    let epsYSum = 0;
+    let effectiveSum = 0;
+    let effectiveAbsSum = 0;
+    let effectiveCount = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let conductiveEnergy = 0;
+    let dispersiveEnergy = 0;
+    let maxSigma = 0;
+    let sigmaSum = 0;
+    let maxGyrotropy = 0;
+    let kappaAbsSum = 0;
+    let maxAbsKappa = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        if (sim.material[idx] === 2) continue;
+        const energy = fieldEnergyAt(idx);
+        totalEnergy += energy;
+        const isMaterial = sim.material[idx] !== 0;
+        const sigma = Math.max(finite(sim.conductivity?.[idx]), finite(sim.conductivityY?.[idx]));
+        const dispersiveKind = Number(sim.dispersiveMaterial?.[idx]) || 0;
+        const magneticKind = Number(sim.muDispersiveMaterial?.[idx]) || 0;
+        const eps = finite(sim.eps?.[idx]);
+        const epsY = finite(sim.epsY?.[idx]);
+        const isAnisotropic = Math.abs(eps - epsY) > 1e-9;
+        if (isMaterial) {
+          updateBounds(materialBounds, x, y);
+          counts.materialCells += 1;
+          materialEnergy += energy;
+          epsSum += eps;
+          epsYSum += epsY;
+          epsStats.epsDeltaMax = Math.max(epsStats.epsDeltaMax, Math.abs(eps - epsY));
+          if (eps < 0 || epsY < 0) counts.negativeEpsilonCells += 1;
+        }
+        if (sigma > 0) {
+          updateBounds(conductiveBounds, x, y);
+          counts.conductiveCells += 1;
+          conductiveEnergy += energy;
+          maxSigma = Math.max(maxSigma, sigma);
+          sigmaSum += sigma;
+        }
+        if (dispersiveKind || magneticKind) {
+          updateBounds(dispersiveBounds, x, y);
+          counts.dispersiveCells += dispersiveKind ? 1 : 0;
+          counts.magneticDispersiveCells += magneticKind ? 1 : 0;
+          if (dispersiveKind === 1) counts.drudeLikeCells += 1;
+          if (dispersiveKind === 2) counts.lorentzCells += 1;
+          if (dispersiveKind === 3) counts.debyeCells += 1;
+          dispersiveEnergy += energy;
+          if (dispersiveKind && typeof sim.effectiveScalarEpsilonAt === "function") {
+            const effective = sim.effectiveScalarEpsilonAt(idx, omega);
+            if (Number.isFinite(effective)) {
+              effectiveSum += effective;
+              effectiveAbsSum += Math.abs(effective);
+              effectiveCount += 1;
+              epsStats.effectiveEpsMin = epsStats.effectiveEpsMin === null ? effective : Math.min(epsStats.effectiveEpsMin, effective);
+              epsStats.effectiveEpsMax = epsStats.effectiveEpsMax === null ? effective : Math.max(epsStats.effectiveEpsMax, effective);
+            }
+          }
+        }
+        if (isAnisotropic) counts.anisotropicCells += 1;
+        if (sim.gyrotropicMaterial?.[idx]) {
+          counts.gyrotropicCells += 1;
+          maxGyrotropy = Math.max(maxGyrotropy, Math.abs(finite(sim.gyrotropyG?.[idx])));
+        }
+        if (sim.bianisotropicMaterial?.[idx]) {
+          counts.bianisotropicCells += 1;
+          const kappa = Math.abs(finite(sim.bianisotropyKappa?.[idx]));
+          kappaAbsSum += kappa;
+          maxAbsKappa = Math.max(maxAbsKappa, kappa);
+        }
+      }
+    }
+    epsStats.epsMean = counts.materialCells > 0 ? epsSum / counts.materialCells : 0;
+    epsStats.epsYMean = counts.materialCells > 0 ? epsYSum / counts.materialCells : 0;
+    epsStats.effectiveEpsMean = effectiveCount > 0 ? effectiveSum / effectiveCount : null;
+    epsStats.effectiveEpsAbsMean = effectiveCount > 0 ? effectiveAbsSum / effectiveCount : null;
+
+    const sumBoxEnergy = (x0, x1, y0, y1) => {
+      let energy = 0;
+      let cells = 0;
+      for (let y = Math.max(minY, y0); y <= Math.min(maxY, y1); y += 1) {
+        for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 1) {
+          energy += fieldEnergyAt(sim.id(x, y));
+          cells += 1;
+        }
+      }
+      return { energy, cells };
+    };
+    let conductorSkinDepth = null;
+    const finalizedConductiveBounds = finalizeBounds(conductiveBounds);
+    if (finalizedConductiveBounds) {
+      const bandWidth = Math.max(2, Math.round(0.32 * cpw));
+      const deepOffset = Math.max(bandWidth + 1, Math.round(0.9 * cpw));
+      const entrance = sumBoxEnergy(
+        finalizedConductiveBounds.minX,
+        finalizedConductiveBounds.minX + bandWidth,
+        finalizedConductiveBounds.minY,
+        finalizedConductiveBounds.maxY,
+      );
+      const deep = sumBoxEnergy(
+        finalizedConductiveBounds.minX + deepOffset,
+        finalizedConductiveBounds.minX + deepOffset + bandWidth,
+        finalizedConductiveBounds.minY,
+        finalizedConductiveBounds.maxY,
+      );
+      conductorSkinDepth = {
+        entranceEnergy: entrance.energy,
+        deepEnergy: deep.energy,
+        deepToEntranceRatio: deep.energy / Math.max(1e-30, entrance.energy),
+        entranceCells: entrance.cells,
+        deepCells: deep.cells,
+      };
+    }
+
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const bianisotropy =
+      analysis?.bianisotropy ?? (typeof sim.bianisotropyQuantitativeEstimate === "function" ? sim.bianisotropyQuantitativeEstimate() : null);
+    const fullVectorBianisotropy =
+      typeof sim.fullVectorBianisotropyDiagnostics === "function" ? sim.fullVectorBianisotropyDiagnostics() : null;
+
+    return {
+      engine: sim.engineLabel?.() || "",
+      fieldComponent: state.fieldComponent,
+      materialDispersionEnabled: Boolean(state.materialDispersionEnabled),
+      materialConductivityEnabled: Boolean(state.materialConductivityEnabled),
+      materialGyrotropyEnabled: Boolean(state.materialGyrotropyEnabled),
+      materialBianisotropyEnabled: Boolean(state.materialBianisotropyEnabled),
+      materialFullVectorBianisotropyEnabled: Boolean(state.materialFullVectorBianisotropyEnabled),
+      dispersionModel: state.dispersionModel,
+      counts,
+      epsStats,
+      tensorDiagnostics,
+      materialBounds: finalizeBounds(materialBounds),
+      conductiveBounds: finalizedConductiveBounds,
+      dispersiveBounds: finalizeBounds(dispersiveBounds),
+      energy: {
+        totalEnergy,
+        materialEnergy,
+        conductiveEnergy,
+        dispersiveEnergy,
+        materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+        conductiveEnergyFraction: conductiveEnergy / Math.max(1e-30, totalEnergy),
+        dispersiveEnergyFraction: dispersiveEnergy / Math.max(1e-30, totalEnergy),
+      },
+      conductivity: {
+        maxSigma,
+        meanSigma: counts.conductiveCells > 0 ? sigmaSum / counts.conductiveCells : 0,
+        skinDepthProxy: conductorSkinDepth,
+      },
+      gyrotropy: {
+        maxAbsG: maxGyrotropy,
+      },
+      bianisotropy: {
+        meanAbsKappa: counts.bianisotropicCells > 0 ? kappaAbsSum / counts.bianisotropicCells : 0,
+        maxAbsKappa,
+        quantitative: bianisotropy,
+        fullVector: fullVectorBianisotropy,
+      },
+    };
+  });
+}
+
 async function plasmonicSurfaceMetrics(page) {
   return page.evaluate(() => {
     const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
@@ -1252,6 +1470,142 @@ async function runSmokeCase(page, testCase) {
       status.ade.maxElectricPolarization < minCurrent
     ) {
       status.failures.push(`ADE response is too small: Jmax=${status.ade.maxElectricCurrent}, Pmax=${status.ade.maxElectricPolarization}`);
+    }
+  }
+  if (testCase.acceptance?.materialModelCheck) {
+    status.materialModel = await materialModelMetrics(page);
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minMaterialEnergy = Number(testCase.acceptance?.materialEnergyMin);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const lateEnergyRatioMax = Number(testCase.acceptance?.lateEnergyRatioMax);
+    const minConductiveCells = Number(testCase.acceptance?.conductiveCellsMin);
+    const minSigma = Number(testCase.acceptance?.conductivitySigmaMin);
+    const minConductorEntranceEnergy = Number(testCase.acceptance?.conductorEntranceEnergyMin);
+    const maxConductorDeepRatio = Number(testCase.acceptance?.conductorDeepToEntranceRatioMax);
+    const minDispersiveCells = Number(testCase.acceptance?.dispersiveCellsMin);
+    const minDispersiveEnergy = Number(testCase.acceptance?.dispersiveEnergyMin);
+    const effectiveEpsMeanMin = Number(testCase.acceptance?.effectiveEpsMeanMin);
+    const effectiveEpsMeanMax = Number(testCase.acceptance?.effectiveEpsMeanMax);
+    const effectiveEpsAbsMeanMax = Number(testCase.acceptance?.effectiveEpsAbsMeanMax);
+    const minTensorCheckedCells = Number(testCase.acceptance?.tensorCheckedCellsMin);
+    const minTensorCells = Number(testCase.acceptance?.tensorCellsMin);
+    const minAnisotropicCells = Number(testCase.acceptance?.anisotropicCellsMin);
+    const minEpsDelta = Number(testCase.acceptance?.epsAnisotropyDeltaMin);
+    const minIndefiniteCells = Number(testCase.acceptance?.indefiniteCellsMin);
+    const minNegativeTensorCells = Number(testCase.acceptance?.negativeTensorCellsMin);
+    const minGyrotropicCells = Number(testCase.acceptance?.gyrotropicCellsMin);
+    const minGyrotropy = Number(testCase.acceptance?.gyrotropyAbsMin);
+    const minBianisotropicCells = Number(testCase.acceptance?.bianisotropicCellsMin);
+    const minMeanAbsKappa = Number(testCase.acceptance?.meanAbsKappaMin);
+    const minPassivityMargin = Number(testCase.acceptance?.passivityMarginMin);
+    const minCrossField = Number(testCase.acceptance?.maxCrossFieldMin);
+    const minMaterialCrossFraction = Number(testCase.acceptance?.materialCrossFractionMin);
+    const expectedFieldComponent = testCase.acceptance?.fieldComponent;
+    const expectedDispersionModel = testCase.acceptance?.dispersionModel;
+    const expectedDispersiveKind = testCase.acceptance?.dispersiveKind;
+    const kindCounts = {
+      drudeLike: status.materialModel.counts.drudeLikeCells,
+      lorentz: status.materialModel.counts.lorentzCells,
+      debye: status.materialModel.counts.debyeCells,
+    };
+    if (expectedFieldComponent && status.materialModel.fieldComponent !== expectedFieldComponent) {
+      status.failures.push(`expected ${expectedFieldComponent} field component, got ${status.materialModel.fieldComponent}`);
+    }
+    if (expectedDispersionModel && status.materialModel.dispersionModel !== expectedDispersionModel) {
+      status.failures.push(`expected ${expectedDispersionModel} dispersion model, got ${status.materialModel.dispersionModel}`);
+    }
+    if (expectedDispersiveKind && !(kindCounts[expectedDispersiveKind] > 0)) {
+      status.failures.push(`expected ${expectedDispersiveKind} ADE cells, got ${JSON.stringify(kindCounts)}`);
+    }
+    if (Number.isFinite(minMaterialCells) && status.materialModel.counts.materialCells < minMaterialCells) {
+      status.failures.push(`material cells ${status.materialModel.counts.materialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minMaterialEnergy) && status.materialModel.energy.materialEnergy < minMaterialEnergy) {
+      status.failures.push(`material-region energy ${status.materialModel.energy.materialEnergy} below ${minMaterialEnergy}`);
+    }
+    if (Number.isFinite(minMaterialFraction) && status.materialModel.energy.materialEnergyFraction < minMaterialFraction) {
+      status.failures.push(`material energy fraction ${status.materialModel.energy.materialEnergyFraction} below ${minMaterialFraction}`);
+    }
+    if (Number.isFinite(lateEnergyRatioMax) && stepResult.lateEnergyRatio > lateEnergyRatioMax) {
+      status.failures.push(`late energy ratio ${stepResult.lateEnergyRatio} exceeds ${lateEnergyRatioMax}`);
+    }
+    if (Number.isFinite(minConductiveCells) && status.materialModel.counts.conductiveCells < minConductiveCells) {
+      status.failures.push(`conductive cells ${status.materialModel.counts.conductiveCells} below ${minConductiveCells}`);
+    }
+    if (Number.isFinite(minSigma) && status.materialModel.conductivity.maxSigma < minSigma) {
+      status.failures.push(`conductivity sigma ${status.materialModel.conductivity.maxSigma} below ${minSigma}`);
+    }
+    const skin = status.materialModel.conductivity.skinDepthProxy;
+    if (Number.isFinite(minConductorEntranceEnergy) && !(skin?.entranceEnergy > minConductorEntranceEnergy)) {
+      status.failures.push(`conductive entrance energy ${skin?.entranceEnergy} below ${minConductorEntranceEnergy}`);
+    }
+    if (Number.isFinite(maxConductorDeepRatio) && !(skin?.deepToEntranceRatio < maxConductorDeepRatio)) {
+      status.failures.push(`conductive deep/entrance energy ratio ${skin?.deepToEntranceRatio} exceeds ${maxConductorDeepRatio}`);
+    }
+    if (Number.isFinite(minDispersiveCells) && status.materialModel.counts.dispersiveCells < minDispersiveCells) {
+      status.failures.push(`dispersive cells ${status.materialModel.counts.dispersiveCells} below ${minDispersiveCells}`);
+    }
+    if (Number.isFinite(minDispersiveEnergy) && status.materialModel.energy.dispersiveEnergy < minDispersiveEnergy) {
+      status.failures.push(`dispersive-region energy ${status.materialModel.energy.dispersiveEnergy} below ${minDispersiveEnergy}`);
+    }
+    const effectiveEpsMean = status.materialModel.epsStats.effectiveEpsMean;
+    const effectiveEpsAbsMean = status.materialModel.epsStats.effectiveEpsAbsMean;
+    if (Number.isFinite(effectiveEpsMeanMin) && !(Number.isFinite(effectiveEpsMean) && effectiveEpsMean > effectiveEpsMeanMin)) {
+      status.failures.push(`effective epsilon mean ${effectiveEpsMean} is not above ${effectiveEpsMeanMin}`);
+    }
+    if (Number.isFinite(effectiveEpsMeanMax) && !(Number.isFinite(effectiveEpsMean) && effectiveEpsMean < effectiveEpsMeanMax)) {
+      status.failures.push(`effective epsilon mean ${effectiveEpsMean} is not below ${effectiveEpsMeanMax}`);
+    }
+    if (
+      Number.isFinite(effectiveEpsAbsMeanMax) &&
+      !(Number.isFinite(effectiveEpsAbsMean) && effectiveEpsAbsMean < effectiveEpsAbsMeanMax)
+    ) {
+      status.failures.push(`effective epsilon abs-mean ${effectiveEpsAbsMean} exceeds ${effectiveEpsAbsMeanMax}`);
+    }
+    const tensor = status.materialModel.tensorDiagnostics || {};
+    if (Number.isFinite(minTensorCheckedCells) && Number(tensor.checkedCells || 0) < minTensorCheckedCells) {
+      status.failures.push(`tensor-checked cells ${tensor.checkedCells || 0} below ${minTensorCheckedCells}`);
+    }
+    if (Number.isFinite(minTensorCells) && Number(tensor.tensorCells || 0) < minTensorCells) {
+      status.failures.push(`tensor cells ${tensor.tensorCells || 0} below ${minTensorCells}`);
+    }
+    if (Number.isFinite(minAnisotropicCells) && status.materialModel.counts.anisotropicCells < minAnisotropicCells) {
+      status.failures.push(`anisotropic cells ${status.materialModel.counts.anisotropicCells} below ${minAnisotropicCells}`);
+    }
+    if (Number.isFinite(minEpsDelta) && status.materialModel.epsStats.epsDeltaMax < minEpsDelta) {
+      status.failures.push(`epsilon anisotropy delta ${status.materialModel.epsStats.epsDeltaMax} below ${minEpsDelta}`);
+    }
+    if (Number.isFinite(minIndefiniteCells) && Number(tensor.indefiniteCells || 0) < minIndefiniteCells) {
+      status.failures.push(`indefinite tensor cells ${tensor.indefiniteCells || 0} below ${minIndefiniteCells}`);
+    }
+    if (Number.isFinite(minNegativeTensorCells) && Number(tensor.negativeCells || 0) < minNegativeTensorCells) {
+      status.failures.push(`negative-eigenvalue tensor cells ${tensor.negativeCells || 0} below ${minNegativeTensorCells}`);
+    }
+    if (Number.isFinite(minGyrotropicCells) && status.materialModel.counts.gyrotropicCells < minGyrotropicCells) {
+      status.failures.push(`gyrotropic cells ${status.materialModel.counts.gyrotropicCells} below ${minGyrotropicCells}`);
+    }
+    if (Number.isFinite(minGyrotropy) && status.materialModel.gyrotropy.maxAbsG < minGyrotropy) {
+      status.failures.push(`gyrotropy |g| ${status.materialModel.gyrotropy.maxAbsG} below ${minGyrotropy}`);
+    }
+    if (Number.isFinite(minBianisotropicCells) && status.materialModel.counts.bianisotropicCells < minBianisotropicCells) {
+      status.failures.push(`bianisotropic cells ${status.materialModel.counts.bianisotropicCells} below ${minBianisotropicCells}`);
+    }
+    if (Number.isFinite(minMeanAbsKappa) && status.materialModel.bianisotropy.meanAbsKappa < minMeanAbsKappa) {
+      status.failures.push(`mean |kappa| ${status.materialModel.bianisotropy.meanAbsKappa} below ${minMeanAbsKappa}`);
+    }
+    const bianisotropic = status.materialModel.bianisotropy.quantitative;
+    const fullVector = status.materialModel.bianisotropy.fullVector;
+    if (testCase.acceptance?.passiveDefinite && !fullVector?.passiveDefinite) {
+      status.failures.push("full-vector bianisotropy energy form is not passive definite");
+    }
+    if (Number.isFinite(minPassivityMargin) && !(Number(fullVector?.minPassivityMargin) > minPassivityMargin)) {
+      status.failures.push(`bianisotropy passivity margin ${fullVector?.minPassivityMargin} below ${minPassivityMargin}`);
+    }
+    if (Number.isFinite(minCrossField) && !(Number(fullVector?.maxCrossField) > minCrossField)) {
+      status.failures.push(`cross-field amplitude ${fullVector?.maxCrossField} below ${minCrossField}`);
+    }
+    if (Number.isFinite(minMaterialCrossFraction) && !(Number(bianisotropic?.materialCrossFraction) > minMaterialCrossFraction)) {
+      status.failures.push(`material cross-energy fraction ${bianisotropic?.materialCrossFraction} below ${minMaterialCrossFraction}`);
     }
   }
   if (testCase.id === "spp_interface_surface_localization" || testCase.id === "spp_grating_surface_coupling") {

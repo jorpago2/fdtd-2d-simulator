@@ -293,6 +293,9 @@ Object.assign(FDTDSim.prototype, {
     const negativeTarget = -1;
     const negativeGamma = 0.026;
     const negativeOmegaP = Math.sqrt(Math.max(0, (1 - negativeTarget) * (sourceOmega * sourceOmega + negativeGamma * negativeGamma)));
+    const hyperbolicTargetY = -2;
+    const hyperbolicGamma = 0.026;
+    const hyperbolicOmegaP = Math.sqrt(Math.max(0, (1 - hyperbolicTargetY) * (sourceOmega * sourceOmega + hyperbolicGamma * hyperbolicGamma)));
     const sourceX = (value) => clamp(value, minSourceXLambda(), maxSourceXLambda());
     const sourceY = (value) => clamp(value, minSourceYLambda(), maxSourceYLambda());
     const mat = {
@@ -312,7 +315,17 @@ Object.assign(FDTDSim.prototype, {
       weak: { material: 4, eps: 1.35 },
       enz: { material: 4, eps: 1, loss: 0.006, dispersion: "drude", omegaP: enzOmegaP, gamma: enzGamma },
       anisotropic: { material: 4, eps: 4, epsY: 2 },
-      hyperbolic: { material: 4, eps: 4, epsY: -2 },
+      hyperbolic: {
+        material: 4,
+        eps: 4,
+        epsY: 1,
+        loss: 0.004,
+        lossY: 0.004,
+        dispersion: "drude",
+        dispersionAxes: 2,
+        omegaP: hyperbolicOmegaP,
+        gamma: hyperbolicGamma,
+      },
       chiral: { material: 4, eps: 3.2, epsY: 3.2, mu: 1.1, muY: 1.1, kappa: 0.22 },
       bianisotropic: { material: 4, eps: 4.2, epsY: 2.6, mu: 1.25, muY: 0.9, kappa: -0.32 },
       gyrotropic: { material: 4, eps: 4, epsY: 4, gyro: 0.35 },
@@ -1242,6 +1255,11 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ shape: "point", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
         break;
       case "hyperbolicMedium":
+        state.fieldComponent = "hz";
+        state.materialDispersionEnabled = true;
+        state.dispersionModel = "drude";
+        state.dispersionOmegaP = mat.hyperbolic.omegaP;
+        state.dispersionGamma = mat.hyperbolic.gamma;
         rectL(midXLambda - 1.3, midYLambda - 1.2, 2.6, 2.4, mat.hyperbolic);
         setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35, amplitude: 0.35 }]);
         break;

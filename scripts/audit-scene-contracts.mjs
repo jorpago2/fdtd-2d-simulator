@@ -100,7 +100,7 @@ const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCou
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
 const qualitativeCaveats = new Map([
-  ["hyperbolicMedium", "Uses a nondispersive hyperbolic tensor proxy; acceptable for visualization, not causal broadband material evidence."],
+  ["hyperbolicMedium", "Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence."],
   ["microstrip", "2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model."],
   ["hyperlens", "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."],
   ["topologicalPumping", "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."],

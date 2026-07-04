@@ -60,7 +60,7 @@ Current quantitative checks include:
 - Ringdown analysis sample count and finite positive Q proxy.
 - Source deletion / retirement stability after a running source is removed.
 - P1 aperture checks: single-slit downstream symmetry and central lobe, and double-slit multi-peak interference profile.
-- P1 material/device checks: Drude ADE route plus effective permittivity, interfaces and multilayers (quarter-wave coating, Bragg mirror, total internal reflection, and frustrated TIR), Fabry-Perot cavity localization/standing-wave contrast, ring/add-drop resonator coupling, cylinder/dimer scattering and random-medium spread proxies, SPP interface/grating surface localization, and negative-index/superlens reduced observables.
+- P1 material/device checks: conductivity route and late-time attenuation proxy, ADE route plus effective permittivity for Drude/Lorentz/Debye/plasma/ENZ and hyperbolic tensor scenes, anisotropic/gyrotropic tensor-cell diagnostics, six-field bianisotropy passivity and cross-energy diagnostics, interfaces and multilayers (quarter-wave coating, Bragg mirror, total internal reflection, and frustrated TIR), Fabry-Perot cavity localization/standing-wave contrast, ring/add-drop resonator coupling, cylinder/dimer scattering and random-medium spread proxies, SPP interface/grating surface localization, and negative-index/superlens reduced observables.
 
 ## Matrix
 
@@ -82,7 +82,7 @@ Current P0 cases:
 | `resonator_ringdown_q` | `qRingdown` | Ringdown analysis and Q proxy. |
 | `advanced_material_smoke` | `drudeMetal` | ADE/dispersive material state arrays. |
 
-P1 entries include both executable scene-family checks and tracking entries for known quantitative gaps. Executable P1 examples currently cover single/double-slit diffraction, Drude ADE material behavior, interfaces and multilayers, Fabry-Perot/ring resonator behavior, scattering/disorder scenes, SPP interface/grating localization, and negative-index/superlens reduced observables. Tracking-only P1 entries remain for first-pass source physics, monitor/observable sweeps, nonlinear material transfer curves, coupled-workflow proxies, Floquet de-embedding, hyperlens MTF calibration, and six-field bianisotropy calibration.
+P1 entries include both executable scene-family checks and tracking entries for known quantitative gaps. Executable P1 examples currently cover single/double-slit diffraction, conductivity and ADE/tensor material behavior, interfaces and multilayers, Fabry-Perot/ring resonator behavior, scattering/disorder scenes, SPP interface/grating localization, and negative-index/superlens reduced observables. Tracking-only P1 entries remain for first-pass source physics, monitor/observable sweeps, nonlinear material transfer curves, coupled-workflow proxies, Floquet de-embedding, hyperlens MTF calibration, and calibrated six-field bianisotropy references.
 
 ## Interpretation
 
@@ -108,6 +108,7 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 - The aperture diffraction checks are executable scene-behavior tests. They do not replace far-field diffraction theory fits or mesh-convergence studies.
 - The interface, multilayer, and resonator P1 checks verify geometry, finite energy localization, monitor samples, and qualitative coupling. They do not replace transfer-matrix spectra, de-embedded S-parameters, Q extraction, or mesh-convergence studies.
 - The scattering/disorder P1 checks verify scatterer geometry, finite field interaction, NTFF/scattering-width availability where configured, and qualitative lateral spread or transport proxies. They do not replace calibrated 2D Mie/RCS references, mean-free-path fits, coherent-backscattering analysis, localization-length extraction, or mesh convergence.
+- The material/tensor P1 checks verify the intended numerical route and first-order observables: conductive sigma masks, ADE material kind and effective epsilon, tensor definiteness, gyrotropy masks, and six-field bianisotropy passivity/cross-energy. They do not replace fitted dispersion spectra, skin-depth extraction, optical-activity rotation, tensor S-parameters, or mesh convergence.
 - The browser physics runner treats unnormalized transmission balance and oblique Brewster-minimum localization as warnings rather than blockers; Fresnel R, low Brewster-angle R, PML residual energy, slab modal launch, ringdown Q, and source-retirement stability remain blocking checks.
 - The first-pass nonlinear material scenes now use physical field-scale-corrected Kerr, harmonic, phase-change, and saturable-gain responses, but nonlinear transfer curves still need calibrated references and convergence workflows.
 - Temporal/Floquet scenes now distinguish uniform temporal modulation from traveling or staggered phase modulation through local phase offsets and a modulation-phase coherence proxy, but calibrated de-embedded multi-incidence scattering matrices still need dedicated validation.
