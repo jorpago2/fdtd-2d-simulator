@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T18:09:34.105Z",
-  "gitCommit": "4d99e2e+working-tree",
+  "generatedAt": "2026-07-04T18:36:46.459Z",
+  "gitCommit": "7219e82+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 63,
-    "VALIDATION_GAP": 50,
+    "PASS": 71,
+    "VALIDATION_GAP": 42,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -4081,16 +4081,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 121: finite dielectric interface with nearly uniform temporal epsilon modulation and reduced Floquet sideband S_m estimate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "temporal_interface_uniform_floquet_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4114,16 +4114,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation and reduced time-refraction sideband S_m estimate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "temporal_slab_uniform_floquet_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4147,18 +4147,17 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 123: region tagged with sinusoidal epsilon modulation and reduced Floquet sideband analysis.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "floquet_power_balance_gap:P1/physics"
+        "floquet_power_balance_gap:P1/physics",
+        "temporal_modulation_region_floquet_proxy:P1/physics"
       ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4182,16 +4181,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 124: extended time-periodic dielectric region with reduced Floquet sideband analysis.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "temporal_crystal_uniform_floquet_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4215,16 +4214,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and reduced S_m sideband readout.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "modulated_guide_active_section:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4248,17 +4247,17 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 126: guide section tagged with traveling epsilon modulation and forward/reverse transmission check.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "traveling_modulation_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4287,14 +4286,14 @@
         "time modulation",
         "direction sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "temporal_isolator_traveling_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -4318,16 +4317,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "modulated_ring_resonator_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4351,16 +4350,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 129: mode-launched coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "floquet_resonators_staggered_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4388,14 +4387,14 @@
       "contractTags": [
         "time modulation"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "synthetic_frequency_chain_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

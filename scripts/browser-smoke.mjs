@@ -1161,6 +1161,188 @@ async function nonlinearMediaMetrics(page) {
   });
 }
 
+async function temporalMediaMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const floquet = analysis?.floquet ?? null;
+    const phase = floquet?.modulationPhase ?? (typeof sim.modulationPhaseCoherenceEstimate === "function" ? sim.modulationPhaseCoherenceEstimate() : null);
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const source = state.sources?.[0] || null;
+    const sourceX = source && typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : minX;
+    const sourceY = source && typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : midY;
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const finiteOrNull = (value) => (Number.isFinite(Number(value)) ? Number(value) : null);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const highIndexAt = (idx) =>
+      sim.material[idx] !== 0 && sim.material[idx] !== 2 && Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0;
+    const modulatedProfile = Array.from({ length: maxX - minX + 1 }, () => 0);
+    const resonatorProfile = Array.from({ length: maxX - minX + 1 }, () => 0);
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let modulatedCells = 0;
+    let lossyCells = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let highIndexEnergy = 0;
+    let modulatedEnergy = 0;
+    let guideEnergy = 0;
+    let activeSectionEnergy = 0;
+    let outputGuideEnergy = 0;
+    let centralRegionEnergy = 0;
+    let rightHalfEnergy = 0;
+    let ringEnergy = 0;
+    let resonatorBandEnergy = 0;
+    let sourceNeighborhoodEnergy = 0;
+    const guideHalfWidth = Math.max(3, Math.round(0.42 * cpw));
+    const sourceRadius = Math.max(3, Math.round(0.48 * cpw));
+    const activeHalfX = Math.round(2.2 * cpw);
+    const activeHalfY = Math.round(0.65 * cpw);
+    const ringCx = midX + Math.round(0.2 * cpw);
+    const ringCy = midY - Math.round(0.16 * cpw);
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        const isMaterial = sim.material[idx] !== 0 && sim.material[idx] !== 2;
+        const isHighIndex = highIndexAt(idx);
+        const isModulated = Boolean(sim.modulatedMaterial?.[idx]);
+        const loss = Math.max(Math.abs(finite(sim.loss?.[idx])), Math.abs(finite(sim.lossY?.[idx])));
+        const inGuide = Math.abs(y - sourceY) <= guideHalfWidth;
+        const inActiveSection = Math.abs(x - midX) <= activeHalfX && Math.abs(y - sourceY) <= activeHalfY;
+        const inCentralRegion = Math.abs(x - midX) <= Math.round(1.45 * cpw) && Math.abs(y - midY) <= Math.round(1.2 * cpw);
+        const inRightHalf = x >= midX;
+        const rx = (x - ringCx) / Math.max(1, cpw);
+        const ry = (y - ringCy) / Math.max(1, cpw);
+        const radius = Math.hypot(rx / 0.62, ry / 0.62);
+        const innerRadius = Math.hypot(rx / 0.43, ry / 0.43);
+        const inRing = radius <= 1.12 && innerRadius >= 0.72;
+        const inResonatorBand = Math.abs(y - midY) <= Math.round(0.75 * cpw) && Math.abs(x - midX) <= Math.round(2.0 * cpw);
+        totalEnergy += energy;
+        if (isMaterial) {
+          materialCells += 1;
+          materialEnergy += energy;
+        }
+        if (isHighIndex) {
+          highIndexCells += 1;
+          highIndexEnergy += energy;
+        }
+        if (isModulated) {
+          modulatedCells += 1;
+          modulatedEnergy += energy;
+          modulatedProfile[x - minX] += 1;
+          if (isHighIndex && inResonatorBand) resonatorProfile[x - minX] += 1;
+        }
+        if (loss > 1e-6) lossyCells += 1;
+        if (inGuide) guideEnergy += energy;
+        if (inActiveSection) activeSectionEnergy += energy;
+        if (inGuide && x > midX + Math.round(0.8 * cpw)) outputGuideEnergy += energy;
+        if (inCentralRegion) centralRegionEnergy += energy;
+        if (inRightHalf) rightHalfEnergy += energy;
+        if (inRing) ringEnergy += energy;
+        if (inResonatorBand) resonatorBandEnergy += energy;
+        if (Math.hypot(x - sourceX, y - sourceY) <= sourceRadius) sourceNeighborhoodEnergy += energy;
+      }
+    }
+
+    const countPeaks = (profile, minSeparationLambda = 0.25) => {
+      const smooth = profile.map((value, index) => {
+        const left = index > 0 ? profile[index - 1] : value;
+        const right = index < profile.length - 1 ? profile[index + 1] : value;
+        return 0.25 * left + 0.5 * value + 0.25 * right;
+      });
+      const maxProfile = smooth.reduce((max, value) => Math.max(max, value), 0);
+      const threshold = Math.max(1, 0.32 * maxProfile);
+      const minSeparation = Math.max(2, Math.round(minSeparationLambda * cpw));
+      const peaks = [];
+      for (let index = 1; index < smooth.length - 1; index += 1) {
+        if (smooth[index] < threshold || smooth[index] < smooth[index - 1] || smooth[index] < smooth[index + 1]) continue;
+        const x = minX + index;
+        const last = peaks[peaks.length - 1];
+        if (last && x - last.x < minSeparation) {
+          if (smooth[index] > last.weight) {
+            last.x = x;
+            last.weight = smooth[index];
+          }
+        } else {
+          peaks.push({ x, weight: smooth[index] });
+        }
+      }
+      return {
+        count: peaks.length,
+        positionsLambda: peaks.map((peak) => Number((peak.x / cpw).toFixed(3))),
+      };
+    };
+    const modulatedPeaks = countPeaks(modulatedProfile);
+    const resonatorPeaks = countPeaks(resonatorProfile, 0.2);
+
+    return {
+      preset: state.preset,
+      analysisSamples: sim.analysisSamples || 0,
+      diagnosticDftSamples: sim.diagnosticDftSampleCount || 0,
+      materialModulationEnabled: Boolean(state.materialModulationEnabled),
+      modulationDepth: Number(state.modulationDepth) || 0,
+      modulationFrequency: Number(state.modulationFrequency) || 0,
+      modulationPeriodLambda: Number(state.modulationPeriodLambda) || 0,
+      modulationAngleDeg: Number(state.modulationAngleDeg) || 0,
+      materialCells,
+      highIndexCells,
+      modulatedCells,
+      lossyCells,
+      totalEnergy,
+      materialEnergy,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      highIndexEnergy,
+      highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      modulatedEnergy,
+      modulatedEnergyFraction: modulatedEnergy / Math.max(1e-30, totalEnergy),
+      guideEnergy,
+      guideEnergyFraction: guideEnergy / Math.max(1e-30, totalEnergy),
+      activeSectionEnergy,
+      activeSectionEnergyFraction: activeSectionEnergy / Math.max(1e-30, totalEnergy),
+      outputGuideEnergy,
+      outputGuideEnergyFraction: outputGuideEnergy / Math.max(1e-30, totalEnergy),
+      centralRegionEnergy,
+      centralRegionEnergyFraction: centralRegionEnergy / Math.max(1e-30, totalEnergy),
+      rightHalfEnergy,
+      rightHalfEnergyFraction: rightHalfEnergy / Math.max(1e-30, totalEnergy),
+      ringEnergy,
+      ringEnergyFraction: ringEnergy / Math.max(1e-30, totalEnergy),
+      resonatorBandEnergy,
+      resonatorBandEnergyFraction: resonatorBandEnergy / Math.max(1e-30, totalEnergy),
+      sourceNeighborhoodEnergy,
+      sourceNeighborhoodEnergyFraction: sourceNeighborhoodEnergy / Math.max(1e-30, totalEnergy),
+      modulatedPeakCount: modulatedPeaks.count,
+      modulatedPeakPositionsLambda: modulatedPeaks.positionsLambda,
+      resonatorPeakCount: resonatorPeaks.count,
+      resonatorPeakPositionsLambda: resonatorPeaks.positionsLambda,
+      floquetPresent: Boolean(floquet),
+      floquetPortDft: Boolean(floquet?.portDft),
+      floquetSidebandPower: finiteOrNull(floquet?.sidebandPower),
+      floquetReflectedSidebandPower: finiteOrNull(floquet?.reflectedSidebandPower),
+      floquetMaxSidebandRatio: finiteOrNull(floquet?.maxSidebandRatio),
+      floquetMaxSidebandOrder: finiteOrNull(floquet?.maxSidebandOrder),
+      floquetFirstUpper: finiteOrNull(floquet?.firstUpper),
+      floquetFirstLower: finiteOrNull(floquet?.firstLower),
+      floquetPowerBalanceAbsResidual: finiteOrNull(floquet?.scatteringMatrix?.powerBalanceAbsResidual),
+      modulationPhaseSpatialCoherence: finiteOrNull(phase?.spatialCoherence),
+      modulationPhaseSpreadRad: finiteOrNull(phase?.phaseSpreadRad),
+      modulationPhaseVelocityLambdaPerStep: finiteOrNull(phase?.phaseVelocityLambdaPerStep),
+    };
+  });
+}
+
 async function layeredOpticsMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
@@ -2596,6 +2778,139 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minLossMax) && metrics.lossMax < minLossMax) {
       status.failures.push(`maximum nonlinear loss ${metrics.lossMax} below ${minLossMax}`);
+    }
+  }
+  if (testCase.acceptance?.temporalMediaCheck) {
+    status.temporalMedia = await temporalMediaMetrics(page);
+    const metrics = status.temporalMedia;
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minModulatedCells = Number(testCase.acceptance?.modulatedCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minModulationDepth = Number(testCase.acceptance?.modulationDepthMin);
+    const minModulationFrequency = Number(testCase.acceptance?.modulationFrequencyMin);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minDftSamples = Number(testCase.acceptance?.minDiagnosticDftSamples);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minModulatedFraction = Number(testCase.acceptance?.modulatedEnergyFractionMin);
+    const minGuideFraction = Number(testCase.acceptance?.guideEnergyFractionMin);
+    const minActiveFraction = Number(testCase.acceptance?.activeSectionEnergyFractionMin);
+    const minOutputFraction = Number(testCase.acceptance?.outputGuideEnergyFractionMin);
+    const minCentralFraction = Number(testCase.acceptance?.centralRegionEnergyFractionMin);
+    const minRightHalfFraction = Number(testCase.acceptance?.rightHalfEnergyFractionMin);
+    const minRingFraction = Number(testCase.acceptance?.ringEnergyFractionMin);
+    const minResonatorBandFraction = Number(testCase.acceptance?.resonatorBandEnergyFractionMin);
+    const minSidebandPower = Number(testCase.acceptance?.floquetSidebandPowerMin);
+    const minMaxSidebandRatio = Number(testCase.acceptance?.floquetMaxSidebandRatioMin);
+    const minFirstUpper = Number(testCase.acceptance?.floquetFirstUpperMin);
+    const minFirstLower = Number(testCase.acceptance?.floquetFirstLowerMin);
+    const minPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMin);
+    const maxPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMax);
+    const minPhaseSpread = Number(testCase.acceptance?.modulationPhaseSpreadRadMin);
+    const maxPhaseSpread = Number(testCase.acceptance?.modulationPhaseSpreadRadMax);
+    const minPhaseVelocity = Number(testCase.acceptance?.modulationPhaseVelocityMin);
+    const minModulatedPeaks = Number(testCase.acceptance?.modulatedPeakCountMin);
+    const maxModulatedPeaks = Number(testCase.acceptance?.modulatedPeakCountMax);
+    const minResonatorPeaks = Number(testCase.acceptance?.resonatorPeakCountMin);
+    const maxResonatorPeaks = Number(testCase.acceptance?.resonatorPeakCountMax);
+    if (testCase.acceptance?.temporalModulationEnabled && !metrics.materialModulationEnabled) {
+      status.failures.push("temporal modulation flag is not enabled");
+    }
+    if (testCase.acceptance?.floquetRequired && !metrics.floquetPresent) {
+      status.failures.push("Floquet reduced analysis is missing");
+    }
+    if (testCase.acceptance?.floquetPortDftRequired && !metrics.floquetPortDft) {
+      status.failures.push("Floquet port-DFT reduced analysis is missing");
+    }
+    if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) {
+      status.failures.push(`temporal material cells ${metrics.materialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
+      status.failures.push(`temporal high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minModulatedCells) && metrics.modulatedCells < minModulatedCells) {
+      status.failures.push(`modulated cells ${metrics.modulatedCells} below ${minModulatedCells}`);
+    }
+    if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) {
+      status.failures.push(`lossy temporal cells ${metrics.lossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(minModulationDepth) && metrics.modulationDepth < minModulationDepth) {
+      status.failures.push(`modulation depth ${metrics.modulationDepth} below ${minModulationDepth}`);
+    }
+    if (Number.isFinite(minModulationFrequency) && Math.abs(metrics.modulationFrequency) < minModulationFrequency) {
+      status.failures.push(`modulation frequency ${metrics.modulationFrequency} below ${minModulationFrequency}`);
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`temporal analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (Number.isFinite(minDftSamples) && metrics.diagnosticDftSamples < minDftSamples) {
+      status.failures.push(`Floquet DFT has ${metrics.diagnosticDftSamples} samples, expected at least ${minDftSamples}`);
+    }
+    if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) {
+      status.failures.push(`temporal material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
+    }
+    if (Number.isFinite(minModulatedFraction) && metrics.modulatedEnergyFraction < minModulatedFraction) {
+      status.failures.push(`modulated energy fraction ${metrics.modulatedEnergyFraction} below ${minModulatedFraction}`);
+    }
+    if (Number.isFinite(minGuideFraction) && metrics.guideEnergyFraction < minGuideFraction) {
+      status.failures.push(`temporal guide energy fraction ${metrics.guideEnergyFraction} below ${minGuideFraction}`);
+    }
+    if (Number.isFinite(minActiveFraction) && metrics.activeSectionEnergyFraction < minActiveFraction) {
+      status.failures.push(`temporal active-section energy fraction ${metrics.activeSectionEnergyFraction} below ${minActiveFraction}`);
+    }
+    if (Number.isFinite(minOutputFraction) && metrics.outputGuideEnergyFraction < minOutputFraction) {
+      status.failures.push(`temporal output-guide energy fraction ${metrics.outputGuideEnergyFraction} below ${minOutputFraction}`);
+    }
+    if (Number.isFinite(minCentralFraction) && metrics.centralRegionEnergyFraction < minCentralFraction) {
+      status.failures.push(`temporal central-region energy fraction ${metrics.centralRegionEnergyFraction} below ${minCentralFraction}`);
+    }
+    if (Number.isFinite(minRightHalfFraction) && metrics.rightHalfEnergyFraction < minRightHalfFraction) {
+      status.failures.push(`temporal right-half energy fraction ${metrics.rightHalfEnergyFraction} below ${minRightHalfFraction}`);
+    }
+    if (Number.isFinite(minRingFraction) && metrics.ringEnergyFraction < minRingFraction) {
+      status.failures.push(`modulated-ring energy fraction ${metrics.ringEnergyFraction} below ${minRingFraction}`);
+    }
+    if (Number.isFinite(minResonatorBandFraction) && metrics.resonatorBandEnergyFraction < minResonatorBandFraction) {
+      status.failures.push(`modulated resonator-band energy fraction ${metrics.resonatorBandEnergyFraction} below ${minResonatorBandFraction}`);
+    }
+    if (Number.isFinite(minSidebandPower) && !(Number.isFinite(metrics.floquetSidebandPower) && metrics.floquetSidebandPower >= minSidebandPower)) {
+      status.failures.push(`Floquet sideband power ${metrics.floquetSidebandPower} below ${minSidebandPower}`);
+    }
+    if (Number.isFinite(minMaxSidebandRatio) && !(Number.isFinite(metrics.floquetMaxSidebandRatio) && metrics.floquetMaxSidebandRatio >= minMaxSidebandRatio)) {
+      status.failures.push(`Floquet max sideband ratio ${metrics.floquetMaxSidebandRatio} below ${minMaxSidebandRatio}`);
+    }
+    if (Number.isFinite(minFirstUpper) && !(Number.isFinite(metrics.floquetFirstUpper) && metrics.floquetFirstUpper >= minFirstUpper)) {
+      status.failures.push(`Floquet first upper sideband ${metrics.floquetFirstUpper} below ${minFirstUpper}`);
+    }
+    if (Number.isFinite(minFirstLower) && !(Number.isFinite(metrics.floquetFirstLower) && metrics.floquetFirstLower >= minFirstLower)) {
+      status.failures.push(`Floquet first lower sideband ${metrics.floquetFirstLower} below ${minFirstLower}`);
+    }
+    if (Number.isFinite(minPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence >= minPhaseCoherence)) {
+      status.failures.push(`modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} below ${minPhaseCoherence}`);
+    }
+    if (Number.isFinite(maxPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence <= maxPhaseCoherence)) {
+      status.failures.push(`modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} exceeds ${maxPhaseCoherence}`);
+    }
+    if (Number.isFinite(minPhaseSpread) && !(Number.isFinite(metrics.modulationPhaseSpreadRad) && metrics.modulationPhaseSpreadRad >= minPhaseSpread)) {
+      status.failures.push(`modulation phase spread ${metrics.modulationPhaseSpreadRad} below ${minPhaseSpread}`);
+    }
+    if (Number.isFinite(maxPhaseSpread) && !(Number.isFinite(metrics.modulationPhaseSpreadRad) && metrics.modulationPhaseSpreadRad <= maxPhaseSpread)) {
+      status.failures.push(`modulation phase spread ${metrics.modulationPhaseSpreadRad} exceeds ${maxPhaseSpread}`);
+    }
+    if (Number.isFinite(minPhaseVelocity) && !(Number.isFinite(metrics.modulationPhaseVelocityLambdaPerStep) && Math.abs(metrics.modulationPhaseVelocityLambdaPerStep) >= minPhaseVelocity)) {
+      status.failures.push(`modulation phase velocity ${metrics.modulationPhaseVelocityLambdaPerStep} below ${minPhaseVelocity}`);
+    }
+    if (Number.isFinite(minModulatedPeaks) && metrics.modulatedPeakCount < minModulatedPeaks) {
+      status.failures.push(`modulated peak count ${metrics.modulatedPeakCount} below ${minModulatedPeaks}`);
+    }
+    if (Number.isFinite(maxModulatedPeaks) && metrics.modulatedPeakCount > maxModulatedPeaks) {
+      status.failures.push(`modulated peak count ${metrics.modulatedPeakCount} exceeds ${maxModulatedPeaks}`);
+    }
+    if (Number.isFinite(minResonatorPeaks) && metrics.resonatorPeakCount < minResonatorPeaks) {
+      status.failures.push(`resonator peak count ${metrics.resonatorPeakCount} below ${minResonatorPeaks}`);
+    }
+    if (Number.isFinite(maxResonatorPeaks) && metrics.resonatorPeakCount > maxResonatorPeaks) {
+      status.failures.push(`resonator peak count ${metrics.resonatorPeakCount} exceeds ${maxResonatorPeaks}`);
     }
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {

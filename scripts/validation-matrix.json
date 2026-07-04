@@ -1969,6 +1969,315 @@
       "rationale": "Tracks the calibrated Floquet scattering-matrix validation gap after adding a normalized measured-order power residual and a phase-coherence check to the reduced S_m0 readout."
     },
     {
+      "id": "temporal_interface_uniform_floquet_proxy",
+      "priority": "P1",
+      "preset": "temporalInterface",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "uniform temporal modulation is enabled over the dielectric half-space",
+        "the modulation phase is spatially coherent after local phase compensation",
+        "the reduced Floquet sideband observable is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 20000,
+        "materialCellsMin": 20000,
+        "modulationDepthMin": 0.1,
+        "modulationFrequencyMin": 0.009,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "modulationPhaseSpreadRadMax": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "rightHalfEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the temporal-interface scene as a real uniform time-modulated dielectric interface with finite Floquet diagnostics."
+    },
+    {
+      "id": "temporal_slab_uniform_floquet_proxy",
+      "priority": "P1",
+      "preset": "temporalSlab",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "uniform temporal modulation is enabled in the finite slab",
+        "the slab contains many modulated cells",
+        "field energy overlaps the slab and Floquet sideband readout is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 4500,
+        "modulationDepthMin": 0.12,
+        "modulationFrequencyMin": 0.01,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "modulationPhaseSpreadRadMax": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "centralRegionEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the temporal slab as a finite time-refraction region, not merely a passive dielectric slab."
+    },
+    {
+      "id": "temporal_modulation_region_floquet_proxy",
+      "priority": "P1",
+      "preset": "temporalModulation",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a compact time-modulated region exists",
+        "the modulation phase is uniform-in-space",
+        "analysis reports a finite reduced Floquet sideband estimate"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 1500,
+        "modulationDepthMin": 0.16,
+        "modulationFrequencyMin": 0.01,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "modulationPhaseSpreadRadMax": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "centralRegionEnergyFractionMin": 1e-8
+      },
+      "rationale": "Turns the temporal epsilon-modulation scene into an executable reduced Floquet sideband check while retaining the calibrated-matrix tracking entry."
+    },
+    {
+      "id": "temporal_crystal_uniform_floquet_proxy",
+      "priority": "P1",
+      "preset": "temporalCrystal",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "an extended time-periodic dielectric region is present",
+        "the periodic high-index ribs remain embedded in the modulated background",
+        "the reduced Floquet sideband observable is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 45000,
+        "materialCellsMin": 45000,
+        "highIndexCellsMin": 1000,
+        "modulationDepthMin": 0.1,
+        "modulationFrequencyMin": 0.014,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "modulationPhaseSpreadRadMax": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "modulatedEnergyFractionMin": 1e-8
+      },
+      "rationale": "Checks the temporal crystal as an extended modulated lattice with finite reduced Floquet diagnostics."
+    },
+    {
+      "id": "modulated_guide_active_section",
+      "priority": "P1",
+      "preset": "modulatedGuide",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a mode-launched guide contains a finite modulated section",
+        "guided energy reaches the active section and output guide",
+        "the reduced sideband readout is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 300,
+        "highIndexCellsMin": 300,
+        "modulationDepthMin": 0.12,
+        "modulationFrequencyMin": 0.012,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.98,
+        "modulationPhaseSpreadRadMax": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "activeSectionEnergyFractionMin": 1e-8,
+        "outputGuideEnergyFractionMin": 1e-9
+      },
+      "rationale": "Checks that the modulated-guide example is a real guided active-section workflow."
+    },
+    {
+      "id": "traveling_modulation_phase_proxy",
+      "priority": "P1",
+      "preset": "travelingModulation",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a guide section carries traveling epsilon modulation",
+        "the modulation phase has low spatial coherence and a finite phase velocity",
+        "guided energy overlaps the traveling-modulation section"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 500,
+        "modulationDepthMin": 0.18,
+        "modulationFrequencyMin": 0.012,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.55,
+        "modulationPhaseSpreadRadMin": 10,
+        "modulationPhaseVelocityMin": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "activeSectionEnergyFractionMin": 1e-8
+      },
+      "rationale": "Guards the traveling-modulation scene against accidentally becoming a uniform temporal modulation."
+    },
+    {
+      "id": "temporal_isolator_traveling_proxy",
+      "priority": "P1",
+      "preset": "temporalIsolator",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "the isolator analogue uses a traveling modulated guide section",
+        "lossy asymmetry cells are present downstream",
+        "mode-launched energy reaches the output guide"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 350,
+        "lossyCellsMin": 40,
+        "modulationDepthMin": 0.14,
+        "modulationFrequencyMin": 0.013,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.55,
+        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseVelocityMin": 0.01,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "outputGuideEnergyFractionMin": 1e-9
+      },
+      "rationale": "Checks the temporal-isolator analogue as a traveling-modulation guide with a lossy asymmetric section, not as a calibrated isolation claim."
+    },
+    {
+      "id": "modulated_ring_resonator_proxy",
+      "priority": "P1",
+      "preset": "modulatedRing",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a side-coupled high-index ring is temporally modulated",
+        "mode-launched energy reaches the guide/ring region",
+        "the reduced sideband readout is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 150,
+        "highIndexCellsMin": 150,
+        "modulationDepthMin": 0.08,
+        "modulationFrequencyMin": 0.009,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMin": 0.95,
+        "modulationPhaseSpreadRadMax": 0.05,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "ringEnergyFractionMin": 1e-9
+      },
+      "rationale": "Checks the modulated-ring scene as a genuine modulated resonator coupled to a guide."
+    },
+    {
+      "id": "floquet_resonators_staggered_phase_proxy",
+      "priority": "P1",
+      "preset": "floquetResonators",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "three coupled resonators are temporally modulated",
+        "their local modulation phases are staggered rather than spatially uniform",
+        "the reduced Floquet sideband observable is finite"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 200,
+        "highIndexCellsMin": 200,
+        "modulationDepthMin": 0.09,
+        "modulationFrequencyMin": 0.013,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.8,
+        "modulationPhaseSpreadRadMin": 3.5,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "resonatorBandEnergyFractionMin": 1e-9,
+        "resonatorPeakCountMin": 3
+      },
+      "rationale": "Checks the Floquet-resonator example as a staggered-phase coupled-resonator chain with finite reduced sideband diagnostics."
+    },
+    {
+      "id": "synthetic_frequency_chain_proxy",
+      "priority": "P1",
+      "preset": "syntheticFrequency",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a five-site modulated resonator chain is present",
+        "the modulation phases sample a synthetic-frequency-like cycle",
+        "guided energy overlaps the resonator chain"
+      ],
+      "acceptance": {
+        "temporalMediaCheck": true,
+        "requiresAnalysis": true,
+        "temporalModulationEnabled": true,
+        "floquetRequired": true,
+        "modulatedCellsMin": 150,
+        "highIndexCellsMin": 150,
+        "modulationDepthMin": 0.08,
+        "modulationFrequencyMin": 0.016,
+        "minAnalysisSamples": 48,
+        "minDiagnosticDftSamples": 48,
+        "modulationPhaseCoherenceMax": 0.75,
+        "modulationPhaseSpreadRadMin": 4.5,
+        "floquetSidebandPowerMin": 0,
+        "guideEnergyFractionMin": 0.01,
+        "resonatorBandEnergyFractionMin": 1e-9,
+        "resonatorPeakCountMin": 4
+      },
+      "rationale": "Checks the synthetic-frequency analogue as a multi-resonator modulated chain with finite reduced sideband diagnostics."
+    },
+    {
       "id": "coupled_workflow_first_pass",
       "priority": "P1",
       "preset": "nonHermitianSkin",

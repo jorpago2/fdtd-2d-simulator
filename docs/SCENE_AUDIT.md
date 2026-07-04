@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T18:09:34.105Z
-Git commit: 4d99e2e+working-tree
+Generated: 2026-07-04T18:36:46.459Z
+Git commit: 7219e82+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 63 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 50 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 71 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 42 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -143,16 +143,16 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | saturable_absorber_phase_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 119 | `allOpticalSwitch` All-optical switch | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | all_optical_switch_active_section:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | nonlinear_limiter_phase_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
-| 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | none | no validation-matrix case covers this preset |
-| 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | none | no validation-matrix case covers this preset |
-| 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics | validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
-| 124 | `temporalCrystal` Temporal crystal | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.27e-8 | none | no validation-matrix case covers this preset |
-| 125 | `modulatedGuide` Temporally modulated guide | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+mode, 24 steps, E=7.84e-6 | none | no validation-matrix case covers this preset |
-| 126 | `travelingModulation` Traveling epsilon modulation | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.71e-9 | none | no validation-matrix case covers this preset |
-| 127 | `temporalIsolator` Temporal isolator analogue | 12. Time-varying and Floquet media | WARN | time modulation, direction sweep | WASM CPML+mod+mode, 24 steps, E=1.48e-7 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 128 | `modulatedRing` Modulated ring | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+mode, 24 steps, E=7.49e-6 | none | no validation-matrix case covers this preset |
-| 129 | `floquetResonators` Floquet resonators | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+mode, 24 steps, E=6.79e-6 | none | no validation-matrix case covers this preset |
-| 130 | `syntheticFrequency` Synthetic frequency dimension | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=6.31e-6 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
+| 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_interface_uniform_floquet_proxy:P1/physics | OK |
+| 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_slab_uniform_floquet_proxy:P1/physics | OK |
+| 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics, temporal_modulation_region_floquet_proxy:P1/physics | OK |
+| 124 | `temporalCrystal` Temporal crystal | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.27e-8 | temporal_crystal_uniform_floquet_proxy:P1/physics | OK |
+| 125 | `modulatedGuide` Temporally modulated guide | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=7.84e-6 | modulated_guide_active_section:P1/physics | OK |
+| 126 | `travelingModulation` Traveling epsilon modulation | 12. Time-varying and Floquet media | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.71e-9 | traveling_modulation_phase_proxy:P1/physics | OK |
+| 127 | `temporalIsolator` Temporal isolator analogue | 12. Time-varying and Floquet media | WARN | time modulation, direction sweep | WASM CPML+mod+mode, 24 steps, E=1.48e-7 | temporal_isolator_traveling_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 128 | `modulatedRing` Modulated ring | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=7.49e-6 | modulated_ring_resonator_proxy:P1/physics | OK |
+| 129 | `floquetResonators` Floquet resonators | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=6.79e-6 | floquet_resonators_staggered_phase_proxy:P1/physics | OK |
+| 130 | `syntheticFrequency` Synthetic frequency dimension | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=6.31e-6 | synthetic_frequency_chain_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 131 | `ptSymmetricCoupler` PT-symmetric gain/loss guides | 13. Coupled and non-Hermitian workflows | VALIDATION_GAP | nonlinear material, gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=2.09e-5 | none | no validation-matrix case covers this preset |
 | 132 | `exceptionalPointCoupler` Exceptional point proxy | 13. Coupled and non-Hermitian workflows | WARN | gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=1.72e-5 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
 | 133 | `nonHermitianSkin` Non-Hermitian skin analogue | 13. Coupled and non-Hermitian workflows | WARN | gain/loss | WASM CPML+gain, 24 steps, E=5.46e-8 | coupled_workflow_first_pass:P1/physics | Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation.; validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
