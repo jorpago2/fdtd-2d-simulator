@@ -1725,8 +1725,8 @@ Object.assign(FDTDSim.prototype, {
         state.materialPhaseChangeEnabled = true;
         state.phaseEpsOn = 9;
         state.phaseLossOn = 0.08;
-        state.phaseThresholdOn = 0.55;
-        state.phaseThresholdOff = 0.16;
+        state.phaseThresholdOn = 0.0015;
+        state.phaseThresholdOff = 0.00045;
         state.phaseTauOn = 14;
         state.phaseTauOff = 220;
         state.analysisEnabled = true;
@@ -1748,8 +1748,8 @@ Object.assign(FDTDSim.prototype, {
         state.materialPhaseChangeEnabled = true;
         state.phaseEpsOn = 12;
         state.phaseLossOn = 0.03;
-        state.phaseThresholdOn = 0.45;
-        state.phaseThresholdOff = 0.08;
+        state.phaseThresholdOn = 0.0000001;
+        state.phaseThresholdOff = 0.00000002;
         state.phaseTauOn = 20;
         state.phaseTauOff = 900;
         state.analysisEnabled = true;

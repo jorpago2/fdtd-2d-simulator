@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T17:47:38.068Z",
-  "gitCommit": "1847641+working-tree",
+  "generatedAt": "2026-07-04T18:09:34.105Z",
+  "gitCommit": "4d99e2e+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 58,
-    "VALIDATION_GAP": 55,
+    "PASS": 63,
+    "VALIDATION_GAP": 50,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -3729,16 +3729,16 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 111: instantaneous Kerr slab with epsilon updated from physical field-scaled intensity.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "kerr_slab_nonlinear_overlap:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3762,18 +3762,18 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 112: chi2 nonlinear slab using a physical field-scaled polarization-current source for second-harmonic generation.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "harmonic conversion",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "shg_slab_harmonic_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3797,18 +3797,18 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source for third-harmonic generation.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "harmonic conversion",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "thg_slab_harmonic_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3838,15 +3838,14 @@
         "amplitude sweep"
       ],
       "validationCases": [
+        "spm_kerr_sideband_proxy:P1/physics",
         "nonlinear_material_first_pass:P1/physics"
       ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3875,14 +3874,14 @@
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "kerr_bistable_cavity_overlap:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3906,17 +3905,17 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "vo2_switching_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3940,17 +3939,17 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "pcm_memory_cell_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3979,14 +3978,14 @@
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "saturable_absorber_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -4015,14 +4014,14 @@
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "all_optical_switch_active_section:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -4051,14 +4050,14 @@
         "nonlinear material",
         "amplitude sweep"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "nonlinear_limiter_phase_proxy:P1/physics"
+      ],
       "blockers": [],
       "warnings": [
         "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
       ],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

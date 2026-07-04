@@ -1034,6 +1034,133 @@ async function metamaterialMetrics(page) {
   });
 }
 
+async function nonlinearMediaMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const finite = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const box = (x, y, halfXLambda, halfYLambda, cx = midX, cy = midY) =>
+      Math.abs(x - cx) <= Math.round(halfXLambda * cpw) && Math.abs(y - cy) <= Math.round(halfYLambda * cpw);
+    let materialCells = 0;
+    let nonlinearCells = 0;
+    let phaseChangeCells = 0;
+    let lossyCells = 0;
+    let highIndexCells = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let nonlinearEnergy = 0;
+    let phaseChangeEnergy = 0;
+    let guideEnergy = 0;
+    let activeSectionEnergy = 0;
+    let upperArmEnergy = 0;
+    let lowerArmEnergy = 0;
+    let limiterEnergy = 0;
+    let phaseStateSum = 0;
+    let phaseStateMax = 0;
+    let switchedCells = 0;
+    let lossMax = 0;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        totalEnergy += energy;
+        const isMaterial = sim.material[idx] !== 0 && sim.material[idx] !== 2;
+        const isNonlinear = Boolean(sim.nonlinearMaterial?.[idx]);
+        const isPhase = Boolean(sim.phaseChangeMaterial?.[idx]);
+        const loss = Math.max(Math.abs(finite(sim.loss?.[idx])), Math.abs(finite(sim.lossY?.[idx])));
+        if (isMaterial) {
+          materialCells += 1;
+          materialEnergy += energy;
+          if (Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0) highIndexCells += 1;
+        }
+        if (isNonlinear) {
+          nonlinearCells += 1;
+          nonlinearEnergy += energy;
+        }
+        if (isPhase) {
+          phaseChangeCells += 1;
+          phaseChangeEnergy += energy;
+          const phase = finite(sim.phaseState?.[idx]);
+          phaseStateSum += phase;
+          phaseStateMax = Math.max(phaseStateMax, phase);
+          if (phase > 0.05) switchedCells += 1;
+        }
+        if (loss > 1e-6) {
+          lossyCells += 1;
+          lossMax = Math.max(lossMax, loss);
+        }
+        if (Math.abs(y - midY) <= Math.round(0.42 * cpw)) guideEnergy += energy;
+        if (box(x, y, 0.65, 0.55, midX + Math.round(0.1 * cpw), midY)) activeSectionEnergy += energy;
+        if (x > midX + Math.round(0.9 * cpw) && Math.abs(y - (midY - Math.round(0.38 * cpw))) <= Math.round(0.22 * cpw)) {
+          upperArmEnergy += energy;
+        }
+        if (x > midX + Math.round(0.9 * cpw) && Math.abs(y - (midY + Math.round(0.38 * cpw))) <= Math.round(0.22 * cpw)) {
+          lowerArmEnergy += energy;
+        }
+        if (box(x, y, 0.75, 5.0, midX + Math.round(0.25 * cpw), midY)) limiterEnergy += energy;
+      }
+    }
+
+    return {
+      preset: state.preset,
+      analysisSamples: sim.analysisSamples || 0,
+      materialNonlinearEnabled: Boolean(state.materialNonlinearEnabled),
+      materialHarmonicEnabled: Boolean(state.materialHarmonicEnabled),
+      materialPhaseChangeEnabled: Boolean(state.materialPhaseChangeEnabled),
+      kerrChi3: Number(state.kerrChi3) || 0,
+      harmonicChi2: Number(state.harmonicChi2) || 0,
+      harmonicChi3: Number(state.harmonicChi3) || 0,
+      phaseThresholdOn: Number(state.phaseThresholdOn) || 0,
+      phaseThresholdOff: Number(state.phaseThresholdOff) || 0,
+      materialCells,
+      highIndexCells,
+      nonlinearCells,
+      phaseChangeCells,
+      lossyCells,
+      lossMax,
+      totalEnergy,
+      materialEnergy,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      nonlinearEnergy,
+      nonlinearEnergyFraction: nonlinearEnergy / Math.max(1e-30, totalEnergy),
+      phaseChangeEnergy,
+      phaseChangeEnergyFraction: phaseChangeEnergy / Math.max(1e-30, totalEnergy),
+      phaseStateMean: phaseChangeCells > 0 ? phaseStateSum / phaseChangeCells : 0,
+      phaseStateMax,
+      switchedCells,
+      guideEnergy,
+      guideEnergyFraction: guideEnergy / Math.max(1e-30, totalEnergy),
+      activeSectionEnergy,
+      activeSectionEnergyFraction: activeSectionEnergy / Math.max(1e-30, totalEnergy),
+      outputArmEnergy: upperArmEnergy + lowerArmEnergy,
+      outputArmEnergyFraction: (upperArmEnergy + lowerArmEnergy) / Math.max(1e-30, totalEnergy),
+      armBalance:
+        upperArmEnergy + lowerArmEnergy > 1e-30
+          ? Math.abs(upperArmEnergy - lowerArmEnergy) / Math.max(1e-30, upperArmEnergy + lowerArmEnergy)
+          : null,
+      limiterEnergy,
+      limiterEnergyFraction: limiterEnergy / Math.max(1e-30, totalEnergy),
+      harmonic2: analysis?.harmonic2 ?? null,
+      harmonic3: analysis?.harmonic3 ?? null,
+      sidebandRatio: analysis?.sidebandRatio ?? null,
+      phaseAverage: analysis?.phaseAverage ?? null,
+    };
+  });
+}
+
 async function layeredOpticsMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
@@ -2372,6 +2499,103 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minEnzEnergyFraction) && metrics.enzEnergyFraction < minEnzEnergyFraction) {
       status.failures.push(`ENZ slab energy fraction ${metrics.enzEnergyFraction} below ${minEnzEnergyFraction}`);
+    }
+  }
+  if (testCase.acceptance?.nonlinearMediaCheck) {
+    status.nonlinearMedia = await nonlinearMediaMetrics(page);
+    const metrics = status.nonlinearMedia;
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minNonlinearCells = Number(testCase.acceptance?.nonlinearCellsMin);
+    const minPhaseCells = Number(testCase.acceptance?.phaseChangeCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minNonlinearFraction = Number(testCase.acceptance?.nonlinearEnergyFractionMin);
+    const minPhaseFraction = Number(testCase.acceptance?.phaseChangeEnergyFractionMin);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minHarmonic2 = Number(testCase.acceptance?.harmonic2Min);
+    const minHarmonic3 = Number(testCase.acceptance?.harmonic3Min);
+    const minSideband = Number(testCase.acceptance?.sidebandRatioMin);
+    const minPhaseMean = Number(testCase.acceptance?.phaseStateMeanMin);
+    const minPhaseMax = Number(testCase.acceptance?.phaseStateMaxMin);
+    const minSwitchedCells = Number(testCase.acceptance?.switchedCellsMin);
+    const minGuideFraction = Number(testCase.acceptance?.guideEnergyFractionMin);
+    const minActiveFraction = Number(testCase.acceptance?.activeSectionEnergyFractionMin);
+    const minOutputFraction = Number(testCase.acceptance?.outputArmEnergyFractionMin);
+    const maxArmBalance = Number(testCase.acceptance?.armBalanceMax);
+    const minLimiterFraction = Number(testCase.acceptance?.limiterEnergyFractionMin);
+    const minLossMax = Number(testCase.acceptance?.lossMaxMin);
+    if (testCase.acceptance?.nonlinearEnabled && !metrics.materialNonlinearEnabled) {
+      status.failures.push("Kerr/nonlinear material flag is not enabled");
+    }
+    if (testCase.acceptance?.harmonicEnabled && !metrics.materialHarmonicEnabled) {
+      status.failures.push("harmonic material flag is not enabled");
+    }
+    if (testCase.acceptance?.phaseChangeEnabled && !metrics.materialPhaseChangeEnabled) {
+      status.failures.push("phase-change material flag is not enabled");
+    }
+    if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) {
+      status.failures.push(`nonlinear material cells ${metrics.materialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
+      status.failures.push(`nonlinear high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minNonlinearCells) && metrics.nonlinearCells < minNonlinearCells) {
+      status.failures.push(`nonlinear cells ${metrics.nonlinearCells} below ${minNonlinearCells}`);
+    }
+    if (Number.isFinite(minPhaseCells) && metrics.phaseChangeCells < minPhaseCells) {
+      status.failures.push(`phase-change cells ${metrics.phaseChangeCells} below ${minPhaseCells}`);
+    }
+    if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) {
+      status.failures.push(`lossy nonlinear cells ${metrics.lossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) {
+      status.failures.push(`nonlinear material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
+    }
+    if (Number.isFinite(minNonlinearFraction) && metrics.nonlinearEnergyFraction < minNonlinearFraction) {
+      status.failures.push(`nonlinear energy fraction ${metrics.nonlinearEnergyFraction} below ${minNonlinearFraction}`);
+    }
+    if (Number.isFinite(minPhaseFraction) && metrics.phaseChangeEnergyFraction < minPhaseFraction) {
+      status.failures.push(`phase-change energy fraction ${metrics.phaseChangeEnergyFraction} below ${minPhaseFraction}`);
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`nonlinear analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (Number.isFinite(minHarmonic2) && !(Number.isFinite(metrics.harmonic2) && metrics.harmonic2 >= minHarmonic2)) {
+      status.failures.push(`H2 proxy ${metrics.harmonic2} below ${minHarmonic2}`);
+    }
+    if (Number.isFinite(minHarmonic3) && !(Number.isFinite(metrics.harmonic3) && metrics.harmonic3 >= minHarmonic3)) {
+      status.failures.push(`H3 proxy ${metrics.harmonic3} below ${minHarmonic3}`);
+    }
+    if (Number.isFinite(minSideband) && !(Number.isFinite(metrics.sidebandRatio) && metrics.sidebandRatio >= minSideband)) {
+      status.failures.push(`sideband proxy ${metrics.sidebandRatio} below ${minSideband}`);
+    }
+    if (Number.isFinite(minPhaseMean) && metrics.phaseStateMean < minPhaseMean) {
+      status.failures.push(`phase-state mean ${metrics.phaseStateMean} below ${minPhaseMean}`);
+    }
+    if (Number.isFinite(minPhaseMax) && metrics.phaseStateMax < minPhaseMax) {
+      status.failures.push(`phase-state max ${metrics.phaseStateMax} below ${minPhaseMax}`);
+    }
+    if (Number.isFinite(minSwitchedCells) && metrics.switchedCells < minSwitchedCells) {
+      status.failures.push(`switched cells ${metrics.switchedCells} below ${minSwitchedCells}`);
+    }
+    if (Number.isFinite(minGuideFraction) && metrics.guideEnergyFraction < minGuideFraction) {
+      status.failures.push(`guide energy fraction ${metrics.guideEnergyFraction} below ${minGuideFraction}`);
+    }
+    if (Number.isFinite(minActiveFraction) && metrics.activeSectionEnergyFraction < minActiveFraction) {
+      status.failures.push(`active-section energy fraction ${metrics.activeSectionEnergyFraction} below ${minActiveFraction}`);
+    }
+    if (Number.isFinite(minOutputFraction) && metrics.outputArmEnergyFraction < minOutputFraction) {
+      status.failures.push(`output-arm energy fraction ${metrics.outputArmEnergyFraction} below ${minOutputFraction}`);
+    }
+    if (Number.isFinite(maxArmBalance) && !(Number.isFinite(metrics.armBalance) && metrics.armBalance <= maxArmBalance)) {
+      status.failures.push(`output-arm balance ${metrics.armBalance} exceeds ${maxArmBalance}`);
+    }
+    if (Number.isFinite(minLimiterFraction) && metrics.limiterEnergyFraction < minLimiterFraction) {
+      status.failures.push(`limiter-section energy fraction ${metrics.limiterEnergyFraction} below ${minLimiterFraction}`);
+    }
+    if (Number.isFinite(minLossMax) && metrics.lossMax < minLossMax) {
+      status.failures.push(`maximum nonlinear loss ${metrics.lossMax} below ${minLossMax}`);
     }
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {

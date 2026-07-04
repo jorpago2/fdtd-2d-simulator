@@ -1631,6 +1631,235 @@
       "rationale": "Checks the ENZ emitter scene as a real near-dipole dispersive slab with finite overlap."
     },
     {
+      "id": "kerr_slab_nonlinear_overlap",
+      "priority": "P1",
+      "preset": "kerrSlab",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "Kerr nonlinear material is enabled",
+        "the nonlinear slab contains many active cells",
+        "field energy overlaps the slab after the wave reaches it"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "nonlinearEnabled": true,
+        "nonlinearCellsMin": 1000,
+        "nonlinearEnergyFractionMin": 1e-6
+      },
+      "rationale": "Guards the Kerr slab as an active nonlinear-material scene rather than a passive dielectric slab."
+    },
+    {
+      "id": "shg_slab_harmonic_proxy",
+      "priority": "P1",
+      "preset": "shgSlab",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "chi2 harmonic material is enabled",
+        "analysis samples accumulate",
+        "the reduced second-harmonic proxy is finite"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "harmonicEnabled": true,
+        "nonlinearCellsMin": 1000,
+        "minAnalysisSamples": 8,
+        "harmonic2Min": 1e-8
+      },
+      "rationale": "Checks that the SHG scene runs through the harmonic route and reports a finite H2 teaching proxy."
+    },
+    {
+      "id": "thg_slab_harmonic_proxy",
+      "priority": "P1",
+      "preset": "thgSlab",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "chi3 harmonic material is enabled",
+        "analysis samples accumulate",
+        "the reduced third-harmonic proxy is finite"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "harmonicEnabled": true,
+        "nonlinearCellsMin": 1000,
+        "minAnalysisSamples": 8,
+        "harmonic3Min": 1e-8
+      },
+      "rationale": "Checks that the THG scene runs through the harmonic route and reports a finite H3 teaching proxy."
+    },
+    {
+      "id": "spm_kerr_sideband_proxy",
+      "priority": "P1",
+      "preset": "spmKerrPulse",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "Kerr nonlinear guide/slab is enabled",
+        "analysis samples accumulate",
+        "the sideband/broadening proxy is finite"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "nonlinearEnabled": true,
+        "nonlinearCellsMin": 500,
+        "minAnalysisSamples": 8,
+        "sidebandRatioMin": 1e-8,
+        "nonlinearEnergyFractionMin": 1e-6
+      },
+      "rationale": "Turns the SPM Kerr pulse scene into an executable reduced spectral-broadening check."
+    },
+    {
+      "id": "kerr_bistable_cavity_overlap",
+      "priority": "P1",
+      "preset": "kerrBistableCavity",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "Kerr nonlinear cavity material is present",
+        "mode-launched guide energy reaches the cavity/active section",
+        "analysis samples accumulate for the qualitative bistability proxy"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "nonlinearEnabled": true,
+        "nonlinearCellsMin": 150,
+        "highIndexCellsMin": 300,
+        "minAnalysisSamples": 8,
+        "activeSectionEnergyFractionMin": 1e-6
+      },
+      "rationale": "Checks the Kerr bistable cavity as a nonlinear resonator geometry with finite active-section overlap."
+    },
+    {
+      "id": "vo2_switching_phase_proxy",
+      "priority": "P1",
+      "preset": "vo2SwitchingSlab",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "phase-change material is enabled",
+        "the VO2-like slab contains many phase-state cells",
+        "the phase-state proxy responds during the run"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "phaseChangeEnabled": true,
+        "phaseChangeCellsMin": 1000,
+        "minAnalysisSamples": 8,
+        "phaseStateMaxMin": 1e-6,
+        "phaseChangeEnergyFractionMin": 1e-6
+      },
+      "rationale": "Checks the VO2 switching slab as a finite-threshold phase-state scene without claiming a calibrated transition curve."
+    },
+    {
+      "id": "pcm_memory_cell_phase_proxy",
+      "priority": "P1",
+      "preset": "pcmMemoryCell",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "a compact phase-change memory cell is embedded in a guide",
+        "analysis samples accumulate",
+        "field energy overlaps the PCM cell"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "phaseChangeEnabled": true,
+        "phaseChangeCellsMin": 50,
+        "highIndexCellsMin": 300,
+        "minAnalysisSamples": 8,
+        "phaseStateMaxMin": 1e-6,
+        "phaseChangeEnergyFractionMin": 1e-6
+      },
+      "rationale": "Guards the PCM memory-cell scene as a phase-change guide device with finite field overlap."
+    },
+    {
+      "id": "saturable_absorber_phase_proxy",
+      "priority": "P1",
+      "preset": "saturableAbsorber",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "phase-state saturable absorber material is enabled",
+        "loss contrast exists between off/on state settings",
+        "the phase-state proxy responds during the run"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "phaseChangeEnabled": true,
+        "phaseChangeCellsMin": 500,
+        "lossMaxMin": 0.05,
+        "minAnalysisSamples": 8,
+        "phaseStateMaxMin": 1e-6
+      },
+      "rationale": "Checks the saturable absorber as an executable bleaching analogue with active phase-state cells."
+    },
+    {
+      "id": "all_optical_switch_active_section",
+      "priority": "P1",
+      "preset": "allOpticalSwitch",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "Kerr and phase-change routes are both enabled",
+        "the active control section contains nonlinear/phase-change cells",
+        "mode-launched energy reaches the active region and output arms"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "nonlinearEnabled": true,
+        "phaseChangeEnabled": true,
+        "nonlinearCellsMin": 50,
+        "phaseChangeCellsMin": 50,
+        "highIndexCellsMin": 50,
+        "minAnalysisSamples": 8,
+        "activeSectionEnergyFractionMin": 1e-8,
+        "outputArmEnergyFractionMin": 1e-9
+      },
+      "rationale": "Checks the all-optical switch as a mode-launched active-section workflow, not just a passive guide drawing."
+    },
+    {
+      "id": "nonlinear_limiter_phase_proxy",
+      "priority": "P1",
+      "preset": "nonlinearLimiter",
+      "profile": "physics",
+      "steps": 1600,
+      "browserSmoke": true,
+      "checks": [
+        "phase-state lossy limiter material is enabled",
+        "the limiter has a strong high-intensity loss state",
+        "field energy overlaps the limiter section"
+      ],
+      "acceptance": {
+        "nonlinearMediaCheck": true,
+        "requiresAnalysis": true,
+        "phaseChangeEnabled": true,
+        "phaseChangeCellsMin": 500,
+        "lossMaxMin": 0.05,
+        "minAnalysisSamples": 8,
+        "limiterEnergyFractionMin": 1e-6
+      },
+      "rationale": "Checks the nonlinear limiter as a finite active-loss section with reduced phase-state observables."
+    },
+    {
       "id": "json_reproducibility",
       "priority": "P1",
       "preset": "normalInterface",

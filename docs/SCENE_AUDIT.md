@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T17:47:38.068Z
-Git commit: 1847641+working-tree
+Generated: 2026-07-04T18:09:34.105Z
+Git commit: 4d99e2e+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 58 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 55 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 63 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 50 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -133,16 +133,16 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 108 | `superlensSlab` Drude superlens slab | 10. Plasmonics and metamaterials | WARN | dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=4.16e-7 | superlens_image_proxy_finite:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 109 | `hyperlens` Hyperlens | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=1.04e-9 | hyperlens_reduced_mtf_proxy:P1/physics, hyperlens_mtf_quantitative_gap:P1/physics | Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation. |
 | 110 | `enzEmitter` Dipole near ENZ slab | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE, 24 steps, E=3.40e-5 | enz_emitter_slab_overlap:P1/physics | OK |
-| 111 | `kerrSlab` Kerr nonlinear slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material | WASM CPML+Kerr+TFSF, 24 steps, E=1.30e-8 | none | no validation-matrix case covers this preset |
-| 112 | `shgSlab` SHG χ² slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=8.91e-9 | none | no validation-matrix case covers this preset |
-| 113 | `thgSlab` THG χ³ slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=1.07e-8 | none | no validation-matrix case covers this preset |
-| 114 | `spmKerrPulse` Kerr SPM pulse | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+TFSF, 24 steps, E=6.58e-6 | nonlinear_material_first_pass:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
-| 115 | `kerrBistableCavity` Kerr bistable cavity | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+mode, 24 steps, E=8.21e-6 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 116 | `vo2SwitchingSlab` VO₂ switching slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=8.75e-6 | none | no validation-matrix case covers this preset |
-| 117 | `pcmMemoryCell` PCM memory cell | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, amplitude sweep | WASM CPML+phase+mode, 24 steps, E=2.96e-6 | none | no validation-matrix case covers this preset |
-| 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 119 | `allOpticalSwitch` All-optical switch | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
-| 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | none | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation.; no validation-matrix case covers this preset |
+| 111 | `kerrSlab` Kerr nonlinear slab | 11. Nonlinear and active media | PASS | nonlinear material | WASM CPML+Kerr+TFSF, 24 steps, E=1.30e-8 | kerr_slab_nonlinear_overlap:P1/physics | OK |
+| 112 | `shgSlab` SHG χ² slab | 11. Nonlinear and active media | PASS | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=8.91e-9 | shg_slab_harmonic_proxy:P1/physics | OK |
+| 113 | `thgSlab` THG χ³ slab | 11. Nonlinear and active media | PASS | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=1.07e-8 | thg_slab_harmonic_proxy:P1/physics | OK |
+| 114 | `spmKerrPulse` Kerr SPM pulse | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+TFSF, 24 steps, E=6.58e-6 | spm_kerr_sideband_proxy:P1/physics, nonlinear_material_first_pass:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 115 | `kerrBistableCavity` Kerr bistable cavity | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+mode, 24 steps, E=8.21e-6 | kerr_bistable_cavity_overlap:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 116 | `vo2SwitchingSlab` VO₂ switching slab | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=8.75e-6 | vo2_switching_phase_proxy:P1/physics | OK |
+| 117 | `pcmMemoryCell` PCM memory cell | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+mode, 24 steps, E=2.96e-6 | pcm_memory_cell_phase_proxy:P1/physics | OK |
+| 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | saturable_absorber_phase_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 119 | `allOpticalSwitch` All-optical switch | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | all_optical_switch_active_section:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
+| 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | nonlinear_limiter_phase_proxy:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
 | 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | none | no validation-matrix case covers this preset |
 | 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | none | no validation-matrix case covers this preset |
 | 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | VALIDATION_GAP | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics | validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
