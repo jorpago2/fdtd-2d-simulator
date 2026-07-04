@@ -50,6 +50,7 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 | Cross-panel text/control synchronization | `src/runtime/app/control-text-controller.js` |
 | App defaults or UI text formatting | `src/runtime/core/app-state.js`, `src/runtime/core/app-formatters.js` |
 | Canvas labels, scale, axes, k-vector | `src/runtime/canvas/canvas-reference-overlays.js` |
+| 2D/3D field rendering | `src/runtime/simulation/fdtd-rendering.js`, `src/runtime/canvas/canvas-field-webgl-renderer.js`, `src/runtime/canvas/canvas-surface-three-renderer.js` |
 | Colorbar or PNG export | `src/runtime/canvas/canvas-colorbar.js`, `src/runtime/canvas/canvas-export.js` |
 | Grid, CFL, default resolution | `src/runtime/core/constants.js`, `src/runtime/simulation/fdtd-sim.js`, `src/runtime/ui/config-control-bindings.js` |
 | Material warnings and numerical health text | `src/runtime/ui/material-stability-controller.js` |

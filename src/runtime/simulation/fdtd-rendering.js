@@ -356,6 +356,51 @@ setSurfaceCanvasVisible(visible) {
   this.surfaceCanvas.hidden = !visible;
 },
 
+fieldWebglRenderer() {
+  if (this.fieldWebglRendererFailed) return null;
+  const rendererModule = window.FdtdCanvasFieldWebglRenderer;
+  if (!rendererModule?.createRenderer) return null;
+  if (!this.fieldWebglRendererInstance) {
+    this.fieldWebglRendererInstance = rendererModule.createRenderer();
+  }
+  return this.fieldWebglRendererInstance;
+},
+
+renderFieldMapGpu() {
+  const renderer = this.fieldWebglRenderer();
+  if (!renderer) return false;
+  try {
+    const rendered = renderer.render(this) === true;
+    if (rendered) {
+      this.lastFieldRenderBackend = renderer.lastRenderMode || "WebGL2 field map";
+    }
+    return rendered;
+  } catch (error) {
+    if (!this.fieldWebglRendererFailed) {
+      console.warn("Falling back to the 2D canvas field renderer.", error);
+    }
+    this.fieldWebglRendererFailed = true;
+    return false;
+  }
+},
+
+presentFieldMapCanvas(sourceCanvas, viewport) {
+  this.ctx.fillStyle = state.theme === "dark" ? "rgb(3, 8, 12)" : "rgb(235, 244, 248)";
+  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  this.ctx.imageSmoothingEnabled = false;
+  this.ctx.drawImage(
+    sourceCanvas,
+    this.viewX,
+    this.viewY,
+    this.visibleGridWidth(),
+    this.visibleGridHeight(),
+    viewport.left,
+    viewport.top,
+    viewport.width,
+    viewport.height
+  );
+},
+
 projectSurfacePoint(x, y, mapped, dims) {
   const invViewW = Number.isFinite(dims.invViewW) ? dims.invViewW : 1 / this.visibleGridWidth();
   const invViewH = Number.isFinite(dims.invViewH) ? dims.invViewH : 1 / this.visibleGridHeight();
@@ -552,6 +597,7 @@ render() {
     } else {
       this.setSurfaceCanvasVisible(true);
     }
+    this.lastFieldRenderBackend = renderedWithGpu ? "Three.js surface" : "Canvas2D surface";
     if (canRecordRenderBreakdown) {
       perf.record("renderMapMs", perf.now() - renderPhaseStart);
       renderPhaseStart = perf.now();
@@ -570,41 +616,36 @@ render() {
   }
 
   this.setSurfaceCanvasVisible(false);
-  const pixels32 = this.imagePixels32;
-  if (pixels32 && pixels32.length === this.n) {
-    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
-      this.renderMaterialImage32(pixels32);
+  const renderedWithGpu = this.renderFieldMapGpu();
+  if (!renderedWithGpu) {
+    const pixels32 = this.imagePixels32;
+    if (pixels32 && pixels32.length === this.n) {
+      if (state.viewMode === "epsilon" || state.viewMode === "mu") {
+        this.renderMaterialImage32(pixels32);
+      } else {
+        this.renderFieldImage32(pixels32);
+      }
     } else {
-      this.renderFieldImage32(pixels32);
+      const data = this.image.data;
+      if (state.viewMode === "epsilon" || state.viewMode === "mu") {
+        this.renderMaterialImage(data);
+      } else {
+        this.renderFieldImage(data);
+      }
     }
-  } else {
-    const data = this.image.data;
-    if (state.viewMode === "epsilon" || state.viewMode === "mu") {
-      this.renderMaterialImage(data);
-    } else {
-      this.renderFieldImage(data);
-    }
+    this.lastFieldRenderBackend = "Canvas2D field map";
   }
   if (canRecordRenderBreakdown) {
     perf.record("renderMapMs", perf.now() - renderPhaseStart);
     renderPhaseStart = perf.now();
   }
 
-  this.offscreenCtx.putImageData(this.image, 0, 0);
-  this.ctx.fillStyle = state.theme === "dark" ? "rgb(3, 8, 12)" : "rgb(235, 244, 248)";
-  this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-  this.ctx.imageSmoothingEnabled = false;
-  this.ctx.drawImage(
-    this.offscreen,
-    this.viewX,
-    this.viewY,
-    this.visibleGridWidth(),
-    this.visibleGridHeight(),
-    viewport.left,
-    viewport.top,
-    viewport.width,
-    viewport.height
-  );
+  if (renderedWithGpu) {
+    this.presentFieldMapCanvas(this.fieldWebglRendererInstance.canvas, viewport);
+  } else {
+    this.offscreenCtx.putImageData(this.image, 0, 0);
+    this.presentFieldMapCanvas(this.offscreen, viewport);
+  }
   if (canRecordRenderBreakdown) {
     perf.record("renderPresentMs", perf.now() - renderPhaseStart);
     renderPhaseStart = perf.now();

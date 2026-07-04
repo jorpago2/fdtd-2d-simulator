@@ -163,7 +163,9 @@
           ? "conductive static path"
           : "static-material path";
       const statusText = performanceStats.stepSamples > 0
-        ? `${compiledActive ? "Compiled kernel active" : "JavaScript fallback"}; ${materialPath}.`
+        ? `${compiledActive ? "Compiled kernel active" : "JavaScript fallback"}; ${materialPath}; render: ${
+            sim.lastFieldRenderBackend || "not sampled"
+          }.`
         : "Run or step the simulation to collect timing samples.";
 
       if (el.performanceBackendOutput) el.performanceBackendOutput.textContent = engineText;
