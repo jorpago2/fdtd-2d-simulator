@@ -191,6 +191,142 @@
       "rationale": "Fast guard for dispersive material state arrays and diagnostics."
     },
     {
+      "id": "single_slit_diffraction_symmetry",
+      "priority": "P1",
+      "preset": "singleSlit",
+      "profile": "physics",
+      "steps": 2400,
+      "browserSmoke": true,
+      "checks": [
+        "finite transmitted field behind the aperture",
+        "downstream diffraction profile is approximately symmetric about the optical axis",
+        "central diffraction lobe is stronger than the mean profile level"
+      ],
+      "acceptance": {
+        "minTransmittedEnergy": 1e-20,
+        "symmetryErrorMax": 0.65,
+        "centerPeakRatioMin": 1.1
+      },
+      "rationale": "Turns the single-slit scene from a visual aperture into a reproducible diffraction-profile check."
+    },
+    {
+      "id": "double_slit_interference_profile",
+      "priority": "P1",
+      "preset": "doubleSlit",
+      "profile": "physics",
+      "steps": 2600,
+      "browserSmoke": true,
+      "checks": [
+        "finite transmitted field behind the two apertures",
+        "downstream profile remains approximately mirror-symmetric",
+        "profile contains multiple resolved maxima rather than one broad leak"
+      ],
+      "acceptance": {
+        "minTransmittedEnergy": 1e-20,
+        "symmetryErrorMax": 0.75,
+        "peakCountMin": 3
+      },
+      "rationale": "Checks that the double-slit example behaves as an interference demonstration, not merely as two holes in a PEC wall."
+    },
+    {
+      "id": "drude_ade_response",
+      "priority": "P1",
+      "preset": "drudeMetal",
+      "profile": "physics",
+      "steps": 480,
+      "browserSmoke": true,
+      "checks": [
+        "Drude material flag and model are active",
+        "dispersive cell mask is populated",
+        "ADE polarization/current state responds to the incident field"
+      ],
+      "acceptance": {
+        "dispersiveCellsMin": 100,
+        "effectiveEpsMax": 0,
+        "adeCurrentMin": 1e-12
+      },
+      "rationale": "Adds a dynamic ADE-state validation beyond the fast active-media smoke label."
+    },
+    {
+      "id": "spp_interface_surface_localization",
+      "priority": "P1",
+      "preset": "sppInterface",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "scene uses Hz polarization and Drude metal",
+        "surface band around the metal-dielectric interface carries measurable energy",
+        "surface energy exceeds far-air and bulk-metal comparison bands"
+      ],
+      "acceptance": {
+        "surfaceFractionMin": 0.2,
+        "surfaceToAirRatioMin": 0.5,
+        "surfaceToBulkRatioMin": 0.5
+      },
+      "rationale": "Checks that the SPP interface scene actually excites an interface-localized field component."
+    },
+    {
+      "id": "spp_grating_surface_coupling",
+      "priority": "P1",
+      "preset": "sppGrating",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "scene uses Hz polarization and Drude metal",
+        "grating teeth are present above the base metal interface",
+        "surface band around the grating/interface carries measurable energy"
+      ],
+      "acceptance": {
+        "surfaceFractionMin": 0.18,
+        "surfaceToAirRatioMin": 0.35,
+        "surfaceToBulkRatioMin": 0.35,
+        "gratingCellsAboveInterfaceMin": 20
+      },
+      "rationale": "Guards the plasmonic grating contract after the SPP scene fix: a shallow periodic Drude grating should remain present and surface-coupled."
+    },
+    {
+      "id": "negative_index_observable_finite",
+      "priority": "P1",
+      "preset": "negativeIndexSlab",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "analysis metrics are populated",
+        "effective epsilon and mu form a double-negative band at the diagnostic frequency",
+        "in-slab phase-front proxy is finite and coherent enough for a teaching observable"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 8,
+        "doubleNegativeCellsMin": 100,
+        "slabPhaseCoherenceMin": 0.02
+      },
+      "rationale": "Makes the negative-index scene execute its reduced observable path rather than relying only on material flags."
+    },
+    {
+      "id": "superlens_image_proxy_finite",
+      "priority": "P1",
+      "preset": "superlensSlab",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "analysis metrics are populated",
+        "effective epsilon and mu form a double-negative band at the diagnostic frequency",
+        "image-plane transfer proxy is finite and nonzero"
+      ],
+      "acceptance": {
+        "requiresAnalysis": true,
+        "minAnalysisSamples": 8,
+        "doubleNegativeCellsMin": 100,
+        "imageTransferMin": 1e-8
+      },
+      "rationale": "Adds a concrete image-transfer sanity check for the qualitative superlens analogue."
+    },
+    {
       "id": "json_reproducibility",
       "priority": "P1",
       "preset": "normalInterface",

@@ -18,10 +18,19 @@ const rootArg = argumentValue("--root");
 const rootDir = rootArg ? path.resolve(process.cwd(), rootArg) : path.resolve(__dirname, "..");
 const matrix = JSON.parse(fs.readFileSync(path.join(__dirname, "validation-matrix.json"), "utf8"));
 const mode = process.argv.includes("--physics") ? "physics" : "smoke";
+const includeAllCases = process.argv.includes("--all");
+const selectedCase = argumentValue("--case");
+const selectedCaseIds = new Set(
+  selectedCase
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+);
 const smokeCases = matrix.cases.filter(
   (testCase) =>
     testCase.browserSmoke &&
-    testCase.priority === "P0" &&
+    (includeAllCases || selectedCaseIds.size > 0 || testCase.priority === "P0") &&
+    (selectedCaseIds.size === 0 || selectedCaseIds.has(testCase.id)) &&
     (mode === "physics" ? testCase.profile === "physics" : testCase.profile === "smoke"),
 );
 const report = {
@@ -150,14 +159,14 @@ async function stepSimulation(page, steps) {
 }
 
 async function preparePhysicsCase(page, testCase) {
-  await page.evaluate((caseId) => {
+  await page.evaluate(({ caseId, requiresAnalysis }) => {
     state.running = false;
     state.diagnosticsEnabled = true;
-    state.analysisEnabled = caseId === "resonator_ringdown_q";
+    state.analysisEnabled = requiresAnalysis || caseId === "resonator_ringdown_q";
     sim.resetFields();
     sim.resetDiagnostics();
     sim.measure();
-  }, testCase.id);
+  }, { caseId: testCase.id, requiresAnalysis: Boolean(testCase.acceptance?.requiresAnalysis) });
 }
 
 async function stepPhysicsSimulation(page, steps) {
@@ -357,6 +366,254 @@ async function slabWaveguideLaunchMetrics(page) {
   });
 }
 
+async function apertureDiffractionMetrics(page, kind) {
+  return page.evaluate((diffractionKind) => {
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const halfProbe = Math.max(1, Math.round(0.05 * cpw));
+    const y0 = Math.max(minY + Math.round(0.35 * cpw), midY - Math.round(2.2 * cpw));
+    const y1 = Math.min(maxY - Math.round(0.35 * cpw), midY + Math.round(2.2 * cpw));
+    const fieldEnergyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const profileAt = (probeX) => {
+      const values = [];
+      let total = 0;
+      let peak = 0;
+      for (let y = y0; y <= y1; y += 1) {
+        let energy = 0;
+        for (let x = Math.max(minX, probeX - halfProbe); x <= Math.min(maxX, probeX + halfProbe); x += 1) {
+          const value = fieldEnergyAt(sim.id(x, y));
+          if (Number.isFinite(value) && value > 0) energy += value;
+        }
+        values.push(energy);
+        total += energy;
+        peak = Math.max(peak, energy);
+      }
+      return { probeX, values, total, peak };
+    };
+    let bestProfile = { probeX: midX + Math.round(0.2 * cpw), values: [], total: 0, peak: 0 };
+    const downstreamStartLambda = diffractionKind === "double" ? 0.9 : 0.12;
+    const xStart = Math.max(minX, midX + Math.round(downstreamStartLambda * cpw));
+    const xEnd = Math.min(maxX - Math.round(0.4 * cpw), midX + Math.round(2.4 * cpw));
+    const xStride = Math.max(1, Math.round(0.12 * cpw));
+    for (let probeX = xStart; probeX <= xEnd; probeX += xStride) {
+      const candidate = profileAt(probeX);
+      if (candidate.total > bestProfile.total) bestProfile = candidate;
+    }
+    const profile = bestProfile.values;
+    const totalEnergy = bestProfile.total;
+    const maxEnergy = bestProfile.peak;
+    const smooth = profile.map((value, index) => {
+      const prev = profile[Math.max(0, index - 1)];
+      const next = profile[Math.min(profile.length - 1, index + 1)];
+      return 0.25 * prev + 0.5 * value + 0.25 * next;
+    });
+    const centerIndex = Math.max(0, Math.min(smooth.length - 1, midY - y0));
+    const centerHalf = Math.max(1, Math.round(0.12 * cpw));
+    let centerEnergy = 0;
+    let centerPeak = 0;
+    for (let index = Math.max(0, centerIndex - centerHalf); index <= Math.min(smooth.length - 1, centerIndex + centerHalf); index += 1) {
+      centerEnergy += smooth[index];
+      centerPeak = Math.max(centerPeak, smooth[index]);
+    }
+    let mirroredDiff = 0;
+    let mirroredSum = 0;
+    const mirrorHalf = Math.min(centerIndex, smooth.length - centerIndex - 1);
+    for (let offset = 1; offset <= mirrorHalf; offset += 1) {
+      const a = smooth[centerIndex - offset];
+      const b = smooth[centerIndex + offset];
+      mirroredDiff += Math.abs(a - b);
+      mirroredSum += Math.abs(a) + Math.abs(b);
+    }
+    const peakThreshold = 0.18 * maxEnergy;
+    const minimumSeparation = Math.max(2, Math.round(0.16 * cpw));
+    const peaks = [];
+    for (let index = 1; index < smooth.length - 1; index += 1) {
+      if (smooth[index] <= peakThreshold || smooth[index] < smooth[index - 1] || smooth[index] < smooth[index + 1]) continue;
+      const last = peaks[peaks.length - 1];
+      if (last && index - last.index < minimumSeparation) {
+        if (smooth[index] > last.energy) {
+          last.index = index;
+          last.energy = smooth[index];
+          last.y = y0 + index;
+        }
+      } else {
+        peaks.push({ index, y: y0 + index, energy: smooth[index] });
+      }
+    }
+    const slitPlaneX = midX;
+    let apertureEnergy = 0;
+    for (let y = midY - Math.round(0.35 * cpw); y <= midY + Math.round(0.35 * cpw); y += 1) {
+      for (let x = slitPlaneX - Math.round(0.1 * cpw); x <= slitPlaneX + Math.round(0.1 * cpw); x += 1) {
+        const idx = sim.id(Math.max(minX, Math.min(maxX, x)), Math.max(minY, Math.min(maxY, y)));
+        if (sim.material[idx] !== 2) apertureEnergy += fieldEnergyAt(idx);
+      }
+    }
+    const meanEnergy = totalEnergy / Math.max(1, smooth.length);
+    return {
+      kind: diffractionKind,
+      probeXLambda: bestProfile.probeX / cpw,
+      samples: smooth.length,
+      totalEnergy,
+      maxEnergy,
+      meanEnergy,
+      centerEnergy,
+      centerPeak,
+      centerPeakRatio: centerPeak / Math.max(1e-30, meanEnergy),
+      centerEnergyFraction: centerEnergy / Math.max(1e-30, totalEnergy),
+      symmetryError: mirroredDiff / Math.max(1e-30, mirroredSum),
+      peaks: peaks.map((peak) => ({ yLambda: peak.y / cpw, energy: peak.energy })),
+      peakCount: peaks.length,
+      apertureEnergy,
+    };
+  }, kind);
+}
+
+async function dispersiveAdeMetrics(page) {
+  return page.evaluate(() => {
+    const arrayStats = (array, mask) => {
+      let count = 0;
+      let nonFinite = 0;
+      let maxAbs = 0;
+      let sumAbs = 0;
+      for (let i = 0; i < array.length; i += 1) {
+        if (mask && !mask(i)) continue;
+        const value = Number(array[i]);
+        if (!Number.isFinite(value)) {
+          nonFinite += 1;
+          continue;
+        }
+        const abs = Math.abs(value);
+        maxAbs = Math.max(maxAbs, abs);
+        sumAbs += abs;
+        count += 1;
+      }
+      return { count, nonFinite, maxAbs, sumAbs };
+    };
+    const dispersiveMask = (idx) => Boolean(sim.dispersiveMaterial?.[idx] || sim.muDispersiveMaterial?.[idx]);
+    const electricCurrent = ["dispJz", "dispJx", "dispJy"].map((name) => ({ name, ...arrayStats(sim[name], dispersiveMask) }));
+    const electricPolarization = ["dispPz", "dispPx", "dispPy"].map((name) => ({ name, ...arrayStats(sim[name], dispersiveMask) }));
+    const magneticCurrent = ["magDispJz", "magDispJx", "magDispJy"].map((name) => ({ name, ...arrayStats(sim[name], dispersiveMask) }));
+    const dispersiveCells = arrayStats(sim.dispersiveMaterial, () => true).sumAbs + arrayStats(sim.muDispersiveMaterial, () => true).sumAbs;
+    let effectiveEpsSum = 0;
+    let effectiveEpsCount = 0;
+    const omega = 2 * Math.PI * (typeof sim.diagnosticFrequency === "function" ? sim.diagnosticFrequency() : Number(state.sourceFrequency) || 0.035);
+    for (let i = 0; i < sim.n; i += 1) {
+      if (!sim.dispersiveMaterial?.[i]) continue;
+      const value = typeof sim.effectiveScalarEpsilonAt === "function" ? sim.effectiveScalarEpsilonAt(i, omega) : sim.eps[i];
+      if (!Number.isFinite(value)) continue;
+      effectiveEpsSum += value;
+      effectiveEpsCount += 1;
+    }
+    const maxElectricCurrent = electricCurrent.reduce((max, item) => Math.max(max, item.maxAbs), 0);
+    const maxElectricPolarization = electricPolarization.reduce((max, item) => Math.max(max, item.maxAbs), 0);
+    const maxMagneticCurrent = magneticCurrent.reduce((max, item) => Math.max(max, item.maxAbs), 0);
+    return {
+      enabled: Boolean(state.materialDispersionEnabled),
+      model: state.dispersionModel,
+      engine: sim.engineLabel?.() || "",
+      dispersiveCells,
+      effectiveEps: effectiveEpsCount > 0 ? effectiveEpsSum / effectiveEpsCount : null,
+      maxElectricCurrent,
+      maxElectricPolarization,
+      maxMagneticCurrent,
+      electricCurrent,
+      electricPolarization,
+      magneticCurrent,
+    };
+  });
+}
+
+async function plasmonicSurfaceMetrics(page) {
+  return page.evaluate(() => {
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const rowCounts = [];
+    for (let y = minY; y <= maxY; y += 1) {
+      let count = 0;
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        if (sim.dispersiveMaterial?.[idx]) count += 1;
+      }
+      rowCounts.push({ y, count });
+    }
+    const fullRowThreshold = Math.max(8, Math.round((maxX - minX + 1) * 0.55));
+    const baseRow = rowCounts.find((row) => row.count >= fullRowThreshold);
+    const interfaceY = baseRow?.y ?? rowCounts.reduce((best, row) => (row.count > best.count ? row : best), { y: Math.round((minY + maxY) / 2), count: 0 }).y;
+    const source = state.sources?.[0] || null;
+    const sourceX = source ? sim.sourceXCell(source) : minX;
+    const x0 = Math.max(minX, sourceX + Math.round(0.35 * cpw));
+    const x1 = Math.min(maxX, x0 + Math.round(5.2 * cpw));
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return sim.analysisFieldEnergyDensityAt(idx);
+      if (sim.material[idx] === 2) return 0;
+      return sim.ez[idx] * sim.ez[idx] + sim.hx[idx] * sim.hx[idx] + sim.hy[idx] * sim.hy[idx];
+    };
+    const sumRegion = (yStart, yEnd) => {
+      let energy = 0;
+      let samples = 0;
+      for (let y = Math.max(minY, yStart); y <= Math.min(maxY, yEnd); y += 1) {
+        for (let x = x0; x <= x1; x += 1) {
+          const value = energyAt(sim.id(x, y));
+          if (Number.isFinite(value) && value > 0) energy += value;
+          samples += 1;
+        }
+      }
+      return { energy, samples };
+    };
+    const nearHalf = Math.max(2, Math.round(0.18 * cpw));
+    const farOffset = Math.max(nearHalf + 2, Math.round(0.65 * cpw));
+    const surface = sumRegion(interfaceY - nearHalf, interfaceY + nearHalf);
+    const airFar = sumRegion(interfaceY - farOffset - nearHalf, interfaceY - farOffset);
+    const metalBulk = sumRegion(interfaceY + farOffset, interfaceY + farOffset + nearHalf);
+    const total = surface.energy + airFar.energy + metalBulk.energy;
+    let gratingCells = 0;
+    for (let y = Math.max(minY, interfaceY - Math.round(0.22 * cpw)); y < interfaceY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        if (sim.dispersiveMaterial?.[sim.id(x, y)]) gratingCells += 1;
+      }
+    }
+    return {
+      fieldComponent: state.fieldComponent,
+      dispersionEnabled: Boolean(state.materialDispersionEnabled),
+      dispersiveRows: rowCounts.filter((row) => row.count > 0).length,
+      interfaceYLambda: interfaceY / cpw,
+      xStartLambda: x0 / cpw,
+      xEndLambda: x1 / cpw,
+      surfaceEnergy: surface.energy,
+      airFarEnergy: airFar.energy,
+      metalBulkEnergy: metalBulk.energy,
+      totalEnergy: total,
+      surfaceFraction: surface.energy / Math.max(1e-30, total),
+      surfaceToAirRatio: surface.energy / Math.max(1e-30, airFar.energy),
+      surfaceToBulkRatio: surface.energy / Math.max(1e-30, metalBulk.energy),
+      gratingCellsAboveInterface: gratingCells,
+    };
+  });
+}
+
+async function negativeIndexMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const metrics = sim.analysisMetricEstimate?.()?.negativeIndex ?? null;
+    return {
+      analysisSamples: sim.analysisSamples || 0,
+      metrics,
+    };
+  });
+}
+
 async function runSmokeCase(page, testCase) {
   const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
   const startedAt = Date.now();
@@ -507,6 +764,99 @@ async function runSmokeCase(page, testCase) {
     }
     if (testCase.acceptance?.qProxyFinite && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ > 0)) {
       status.failures.push(`ringdown Q proxy is not finite and positive: ${status.analysis.ringdownQ}`);
+    }
+  }
+  if (testCase.id === "single_slit_diffraction_symmetry" || testCase.id === "double_slit_interference_profile") {
+    status.diffraction = await apertureDiffractionMetrics(page, testCase.preset === "doubleSlit" ? "double" : "single");
+    const minEnergy = Number(testCase.acceptance?.minTransmittedEnergy);
+    const maxSymmetryError = Number(testCase.acceptance?.symmetryErrorMax);
+    const minCenterPeakRatio = Number(testCase.acceptance?.centerPeakRatioMin);
+    const minPeakCount = Number(testCase.acceptance?.peakCountMin);
+    if (Number.isFinite(minEnergy) && !(status.diffraction.totalEnergy > minEnergy)) {
+      status.failures.push(`diffraction profile energy ${status.diffraction.totalEnergy} is not above ${minEnergy}`);
+    }
+    if (Number.isFinite(maxSymmetryError) && status.diffraction.symmetryError > maxSymmetryError) {
+      status.failures.push(`diffraction symmetry error ${status.diffraction.symmetryError} exceeds ${maxSymmetryError}`);
+    }
+    if (Number.isFinite(minCenterPeakRatio) && status.diffraction.centerPeakRatio < minCenterPeakRatio) {
+      status.failures.push(`central diffraction peak ratio ${status.diffraction.centerPeakRatio} is below ${minCenterPeakRatio}`);
+    }
+    if (Number.isFinite(minPeakCount) && status.diffraction.peakCount < minPeakCount) {
+      status.failures.push(`diffraction profile has ${status.diffraction.peakCount} peaks, expected at least ${minPeakCount}`);
+    }
+    if (!(status.diffraction.apertureEnergy > 0)) {
+      status.failures.push("aperture region does not transmit measurable field energy");
+    }
+  }
+  if (testCase.id === "drude_ade_response") {
+    status.ade = await dispersiveAdeMetrics(page);
+    const minCells = Number(testCase.acceptance?.dispersiveCellsMin);
+    const minCurrent = Number(testCase.acceptance?.adeCurrentMin);
+    const maxEffectiveEps = Number(testCase.acceptance?.effectiveEpsMax);
+    if (!status.ade.enabled) status.failures.push("Drude ADE material flag is disabled");
+    if (status.ade.model !== "drude") status.failures.push(`expected drude dispersion model, got ${status.ade.model}`);
+    if (!String(status.ade.engine).includes("ADE")) status.failures.push(`engine route does not include ADE: ${status.ade.engine}`);
+    if (Number.isFinite(minCells) && status.ade.dispersiveCells < minCells) {
+      status.failures.push(`Drude scene has ${status.ade.dispersiveCells} dispersive cells, expected at least ${minCells}`);
+    }
+    if (Number.isFinite(maxEffectiveEps) && !(Number.isFinite(status.ade.effectiveEps) && status.ade.effectiveEps < maxEffectiveEps)) {
+      status.failures.push(`Drude effective epsilon ${status.ade.effectiveEps} is not below ${maxEffectiveEps}`);
+    }
+    if (
+      !String(status.ade.engine).includes("WASM") &&
+      Number.isFinite(minCurrent) &&
+      status.ade.maxElectricCurrent < minCurrent &&
+      status.ade.maxElectricPolarization < minCurrent
+    ) {
+      status.failures.push(`ADE response is too small: Jmax=${status.ade.maxElectricCurrent}, Pmax=${status.ade.maxElectricPolarization}`);
+    }
+  }
+  if (testCase.id === "spp_interface_surface_localization" || testCase.id === "spp_grating_surface_coupling") {
+    status.spp = await plasmonicSurfaceMetrics(page);
+    const minSurfaceFraction = Number(testCase.acceptance?.surfaceFractionMin);
+    const minSurfaceToBulk = Number(testCase.acceptance?.surfaceToBulkRatioMin);
+    const minSurfaceToAir = Number(testCase.acceptance?.surfaceToAirRatioMin);
+    const minGratingCells = Number(testCase.acceptance?.gratingCellsAboveInterfaceMin);
+    if (status.spp.fieldComponent !== "hz") status.failures.push(`SPP scene should use Hz polarization, got ${status.spp.fieldComponent}`);
+    if (!status.spp.dispersionEnabled) status.failures.push("SPP scene does not enable Drude dispersion");
+    if (Number.isFinite(minSurfaceFraction) && status.spp.surfaceFraction < minSurfaceFraction) {
+      status.failures.push(`SPP surface energy fraction ${status.spp.surfaceFraction} is below ${minSurfaceFraction}`);
+    }
+    if (Number.isFinite(minSurfaceToBulk) && status.spp.surfaceToBulkRatio < minSurfaceToBulk) {
+      status.failures.push(`SPP surface/bulk ratio ${status.spp.surfaceToBulkRatio} is below ${minSurfaceToBulk}`);
+    }
+    if (Number.isFinite(minSurfaceToAir) && status.spp.surfaceToAirRatio < minSurfaceToAir) {
+      status.failures.push(`SPP surface/far-air ratio ${status.spp.surfaceToAirRatio} is below ${minSurfaceToAir}`);
+    }
+    if (Number.isFinite(minGratingCells) && status.spp.gratingCellsAboveInterface < minGratingCells) {
+      status.failures.push(`SPP grating has ${status.spp.gratingCellsAboveInterface} metal cells above the interface, expected at least ${minGratingCells}`);
+    }
+  }
+  if (testCase.id === "negative_index_observable_finite" || testCase.id === "superlens_image_proxy_finite") {
+    status.negativeIndex = await negativeIndexMetrics(page);
+    const metrics = status.negativeIndex.metrics;
+    const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minCells = Number(testCase.acceptance?.doubleNegativeCellsMin);
+    const minCoherence = Number(testCase.acceptance?.slabPhaseCoherenceMin);
+    const minTransfer = Number(testCase.acceptance?.imageTransferMin);
+    if (Number.isFinite(minSamples) && status.negativeIndex.analysisSamples < minSamples) {
+      status.failures.push(`negative-index analysis has ${status.negativeIndex.analysisSamples} samples, expected at least ${minSamples}`);
+    }
+    if (!metrics) {
+      status.failures.push("negative-index analysis metrics are missing");
+    } else {
+      if (Number.isFinite(minCells) && metrics.material.doubleNegativeCells < minCells) {
+        status.failures.push(`double-negative material cells ${metrics.material.doubleNegativeCells} below ${minCells}`);
+      }
+      if (!(metrics.material.nEff < 0)) {
+        status.failures.push(`effective refractive index is not negative: ${metrics.material.nEff}`);
+      }
+      if (Number.isFinite(minCoherence) && metrics.slabPhaseCoherence < minCoherence) {
+        status.failures.push(`slab phase-front coherence ${metrics.slabPhaseCoherence} below ${minCoherence}`);
+      }
+      if (Number.isFinite(minTransfer) && metrics.imageTransfer < minTransfer) {
+        status.failures.push(`superlens image transfer ${metrics.imageTransfer} below ${minTransfer}`);
+      }
     }
   }
   const budget = matrix.profiles[testCase.profile]?.maxMsPerStep;
@@ -2049,7 +2399,7 @@ async function main() {
     for (const testCase of smokeCases) {
       report.cases.push(await runSmokeCase(page, testCase));
     }
-    if (mode === "physics") {
+    if (mode === "physics" && selectedCaseIds.size === 0) {
       report.cases.push(await runSourceMutationStability(page));
     }
     if (mode === "smoke") {

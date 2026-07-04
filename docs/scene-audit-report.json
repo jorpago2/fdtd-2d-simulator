@@ -1,0 +1,4772 @@
+{
+  "generatedAt": "2026-07-04T15:38:26.261Z",
+  "gitCommit": "4002cd1+working-tree",
+  "stepsPerScene": 24,
+  "sceneCount": 141,
+  "summary": {
+    "PASS": 13,
+    "VALIDATION_GAP": 100,
+    "WARN": 28,
+    "FIX_REQUIRED": 0
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "rows": [
+    {
+      "id": "empty",
+      "index": "",
+      "title": "Empty",
+      "groupId": "general",
+      "groupLabel": "General",
+      "description": "Blank domain. Use right-click menus to add sources, boundaries, and drawn materials.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 0
+      }
+    },
+    {
+      "id": "planeWaveAir",
+      "index": 1,
+      "title": "Plane wave in air",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 1: homogeneous air with a continuous line source.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "air_propagation:P0/smoke"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "planeWaveDielectric",
+      "index": 2,
+      "title": "Plane wave in dielectric",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 2: full dielectric domain, n = 1.5, to show shorter wavelength and slower phase velocity.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.791367333304999e-8,
+        "analysisSamples": 0,
+        "materialCells": 86400,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "gaussianPulseAir",
+      "index": 3,
+      "title": "Gaussian pulse in free space",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 3: Gaussian pulse in free space with absorbing boundaries.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "twoSourceInterference",
+      "index": 4,
+      "title": "Two-source interference",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 4: two coherent point Jz sources separated by about 1.5 lambda0.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000030331179334593366,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "frequencyBeat",
+      "index": 5,
+      "title": "Two-frequency beat",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 5: two nearby CW frequencies to reveal a beat envelope.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005260842271555052,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "singleSlit",
+      "index": 6,
+      "title": "Single slit diffraction",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 6: PEC screen with one subwavelength slit.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "single_slit_diffraction_symmetry:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 9.72310994428923e-8,
+        "analysisSamples": 0,
+        "materialCells": 454,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "doubleSlit",
+      "index": 7,
+      "title": "Double slit",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 7: PEC screen with two slits for Young-type interference.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "double_slit_interference_profile:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 9.72310994428923e-8,
+        "analysisSamples": 0,
+        "materialCells": 448,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "circularAperture",
+      "index": 8,
+      "title": "Circular aperture",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 8: 2D circular aperture cut into a PEC screen.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 440,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "teTmComparison",
+      "index": 9,
+      "title": "TEz/TMz comparison",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 9: TEz/TMz comparison on the same air-dielectric interface, using a dual-polarization angular sweep.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00024066491484020977,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "poyntingPlaneWave",
+      "index": 10,
+      "title": "Poynting vector",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 10: oblique plane wave shown as Poynting flux with vector arrows.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003668696754247529,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "evanescentWave",
+      "index": 11,
+      "title": "Evanescent isolated wave",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 11: isolated evanescent wave with explicit k_parallel/k0 > 1 and exponential decay away from the source line.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "source_physics_first_pass:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.05066710608731135,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "pmlAbsorption",
+      "index": 12,
+      "title": "CPML absorption check",
+      "groupId": "maxwell-and-propagation",
+      "groupLabel": "1. Maxwell and propagation",
+      "description": "Atlas 12: pulsed source aimed at the absorbing boundary for reflection checks.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "pml_reflection:P0/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000009982356884259868,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "normalInterface",
+      "index": 13,
+      "title": "Normal air-dielectric interface",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 13: air to n = 1.5 vertical interface.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "normal_interface_fresnel:P0/physics",
+        "json_reproducibility:P1/smoke"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "obliqueRefraction",
+      "index": 14,
+      "title": "Oblique refraction",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 14: oblique Gaussian beam on an air-dielectric interface.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.7273392460085873e-7,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "brewsterTm",
+      "index": 15,
+      "title": "Brewster TM minimum",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 15: p/TM-polarized incidence on an air-dielectric interface near the Brewster angle.",
+      "status": "PASS",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [
+        "brewster_tm_minimum:P0/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0003973007775126771,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "brewsterTeTm",
+      "index": 16,
+      "title": "TE/TM Brewster comparison",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 16: TE/TM Brewster comparison with dual numerical angular sweeps and analytic Fresnel references.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [
+        "monitor_observable_first_pass:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0003973007775126771,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "totalInternalReflection",
+      "index": 17,
+      "title": "Total internal reflection",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 17: beam incident from n = 1.5 toward air above the critical angle.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005069059747353966,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "frustratedTir",
+      "index": 18,
+      "title": "Frustrated TIR",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 18: two high-index regions separated by a narrow air gap.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005069059747353966,
+        "analysisSamples": 0,
+        "materialCells": 84480,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "quarterWaveCoating",
+      "index": 19,
+      "title": "Quarter-wave coating",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 19: air, quarter-wave coating, and n = 1.5 substrate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 44160,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "braggMirror",
+      "index": 20,
+      "title": "1D Bragg mirror",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 20: six-pair n = 1.5 / n = 2.5 Bragg mirror.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 7200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "lossyInterface",
+      "index": 21,
+      "title": "Lossy interface",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 21: air to n = 1.5 + 0.1i interface.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "anisotropicInterface",
+      "index": 22,
+      "title": "Anisotropic interface",
+      "groupId": "interfaces-and-multilayers",
+      "groupLabel": "2. Interfaces and multilayers",
+      "description": "Atlas 22: right-hand medium with eps_x != eps_y.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.0678096770141657e-7,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "jzDipole",
+      "index": 23,
+      "title": "Point electric dipole Jz",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 23: localized electric Jz dipole in air.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00007407418841102404,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "inPlaneDipole",
+      "index": 24,
+      "title": "In-plane electric dipole Jx/Jy",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 24: localized in-plane electric-current dipole Jx/Jy using the Hz solver.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000018569802097509685,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "mzDipole",
+      "index": 25,
+      "title": "Effective magnetic dipole Mz",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 25: localized magnetic Mz dipole using the Hz solver.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00007407418841102404,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dipoleSubstrate",
+      "index": 26,
+      "title": "Dipole over substrate",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 26: Jz dipole close to a dielectric substrate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00005026838025644381,
+        "analysisSamples": 0,
+        "materialCells": 40680,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dipoleNearPec",
+      "index": 27,
+      "title": "Dipole near PEC mirror",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 27: Jz dipole close to a PEC mirror.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00005084488537644691,
+        "analysisSamples": 0,
+        "materialCells": 480,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "huygensRadiator",
+      "index": 28,
+      "title": "Huygens source",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 28: analytic Huygens-like source for directional radiation.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00007397018765080645,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "circularDipole",
+      "index": 29,
+      "title": "Circular dipole",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 29: quadrature circular dipole source.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0009336190064811916,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "janusDipole",
+      "index": 30,
+      "title": "Janus dipole",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 30: Janus source near a dielectric waveguide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0002947591768076985,
+        "analysisSamples": 0,
+        "materialCells": 1344,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dipoleArray",
+      "index": 31,
+      "title": "Equal-phase dipole array",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 31: equal-phase dipole array.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008743078542948943,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 8
+      }
+    },
+    {
+      "id": "phasedDipoleArray",
+      "index": 32,
+      "title": "Progressive-phase dipole array",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 32: progressive temporal phase per dipole, with phase step derived from a target steering angle.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00027557963720286504,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 8
+      }
+    },
+    {
+      "id": "apertureRadiator",
+      "index": 33,
+      "title": "Slot aperture radiator",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 33: source behind a PEC slot aperture.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000006963790477705657,
+        "analysisSamples": 0,
+        "materialCells": 458,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "nearFarFieldNtff",
+      "index": 34,
+      "title": "Near-field / far-field NTFF",
+      "groupId": "sources-and-radiation",
+      "groupLabel": "3. Sources and radiation",
+      "description": "Atlas 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000049586854097891176,
+        "analysisSamples": 0,
+        "materialCells": 0,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "slabWaveguide",
+      "index": 35,
+      "title": "Single-mode slab waveguide",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 35: high-index slab guide excited by a finite-difference fundamental mode profile.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "slab_waveguide_confinement:P0/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 1800,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "multimodeSlab",
+      "index": 36,
+      "title": "Multimode slab waveguide",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005190000514268653,
+        "analysisSamples": 0,
+        "materialCells": 5760,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "lossyGuide",
+      "index": 37,
+      "title": "Lossy waveguide",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 37: lossy high-index guide driven by its finite-difference mode profile.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000001523136039703391,
+        "analysisSamples": 0,
+        "materialCells": 2160,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "waveguideBend",
+      "index": 38,
+      "title": "Waveguide bend",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00000251932828983014,
+        "analysisSamples": 0,
+        "materialCells": 1492,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "taperWaveguide",
+      "index": 39,
+      "title": "Tapered waveguide",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 39: width taper from narrow to wide guide with a modal input field.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002582349047108304,
+        "analysisSamples": 0,
+        "materialCells": 2564,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "widthStepWaveguide",
+      "index": 40,
+      "title": "Width step waveguide",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 40: abrupt waveguide width step driven by the input-guide mode.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 2700,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "directionalCoupler",
+      "index": 41,
+      "title": "Directional coupler",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 41: two parallel guides separated by a small gap, launched from one local guided mode.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002570740283729769,
+        "analysisSamples": 0,
+        "materialCells": 2880,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "mmiWaveguide",
+      "index": 42,
+      "title": "MMI section",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 42: narrow modal input feeding a wider multimode section.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "mmi_50_50_split:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005785207525436581,
+        "analysisSamples": 0,
+        "materialCells": 3588,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "machZehnder",
+      "index": 43,
+      "title": "Mach-Zehnder interferometer",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms and a modal input.",
+      "status": "WARN",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000025825654248489926,
+        "analysisSamples": 0,
+        "materialCells": 1842,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "guideScatterer",
+      "index": 44,
+      "title": "Waveguide with scatterer",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 44: small dielectric scatterer beside a mode-launched guide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000027749695339513574,
+        "analysisSamples": 0,
+        "materialCells": 2173,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "microstrip",
+      "index": 45,
+      "title": "Microstrip line",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 45: qualitative microstrip cross-section with PEC strip, dielectric substrate, and ground plane.",
+      "status": "WARN",
+      "contractTags": [
+        "HZ polarization"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00000303770511761919,
+        "analysisSamples": 0,
+        "materialCells": 42840,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "stubResonator",
+      "index": 46,
+      "title": "Stub resonator",
+      "groupId": "guided-optics",
+      "groupLabel": "4. Guided optics",
+      "description": "Atlas 46: side stub attached to a mode-launched straight guide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 1895,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "fabryPerot",
+      "index": 47,
+      "title": "Fabry-Perot cavity",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 47: dielectric cavity placed between two Bragg reflectors.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 14880,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "fabryPerotStanding",
+      "index": 48,
+      "title": "Fabry-Perot standing field",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 48: Fabry-Perot resonator driven near a standing-wave condition.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.059543263069786e-8,
+        "analysisSamples": 0,
+        "materialCells": 17280,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "ringResonator",
+      "index": 49,
+      "title": "Ring resonator",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 49: dielectric ring coupled to one mode-launched bus waveguide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 2428,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "addDropRing",
+      "index": 50,
+      "title": "Add-drop ring",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 50: dielectric ring coupled to mode-launched input and drop buses.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 4228,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "racetrackResonator",
+      "index": 51,
+      "title": "Racetrack resonator",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 51: elongated racetrack resonator side-coupled to a mode-launched bus waveguide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 2494,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dielectricCavity",
+      "index": 52,
+      "title": "Dielectric defect cavity",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 52: high-index disk with an internal dipole source.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.4069719897011208e-7,
+        "analysisSamples": 0,
+        "materialCells": 197,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "pecCavity",
+      "index": 53,
+      "title": "PEC half-wave cavity",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 53: PEC half-wave box cavity with a point source.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.2336704277305765e-7,
+        "analysisSamples": 0,
+        "materialCells": 176,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "quarterWaveCavity",
+      "index": 54,
+      "title": "Quarter-wave cavity",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 54: shorted quarter-wave stub cavity coupled to a mode-launched dielectric guide.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00000257723202455418,
+        "analysisSamples": 0,
+        "materialCells": 1878,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "qRingdown",
+      "index": 55,
+      "title": "Q by ringdown",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 55: pulsed cavity ringdown with an estimated decay Q from the analysis energy trace.",
+      "status": "PASS",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [
+        "resonator_ringdown_q:P0/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.4577264389718675e-8,
+        "analysisSamples": 0,
+        "materialCells": 377,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "purcell2d",
+      "index": 56,
+      "title": "Purcell 2D proxy",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 56: dipole in a high-index 2D cavity with a comparative Q/Aeff Purcell proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 9.341184164654478e-8,
+        "analysisSamples": 0,
+        "materialCells": 317,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "betaFactor",
+      "index": 57,
+      "title": "beta-factor guide coupling",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 57: dipole coupled to a slab guide with an estimated guided-flux beta factor.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 8.401222298137663e-8,
+        "analysisSamples": 0,
+        "materialCells": 2160,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "degenerateModes",
+      "index": 58,
+      "title": "Degenerate cavity modes",
+      "groupId": "resonators-and-cavities",
+      "groupLabel": "5. Resonators and cavities",
+      "description": "Atlas 58: symmetric disk cavity excited off-center to reveal near-degenerate spectral peaks.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.3761810208403907e-8,
+        "analysisSamples": 0,
+        "materialCells": 521,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "pecCylinder",
+      "index": 59,
+      "title": "PEC cylinder scattering",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 59: PEC cylinder under plane-wave illumination.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 113,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dielectricCylinder",
+      "index": 60,
+      "title": "Dielectric cylinder scattering",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 60: n = 2 cylinder scattering.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 113,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "mieCylinder",
+      "index": 61,
+      "title": "High-index Mie cylinder",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 61: high-index cylinder for Mie-like resonances.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 81,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "rcsCylinder",
+      "index": 62,
+      "title": "RCS 2D cylinder",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 62: PEC cylinder with incident-background subtraction and estimated 2D scattering width.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.660189230046371e-8,
+        "analysisSamples": 0,
+        "materialCells": 113,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "lossyCylinder",
+      "index": 63,
+      "title": "Lossy cylinder",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 63: absorbing dielectric cylinder.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 113,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "dielectricDimer",
+      "index": 64,
+      "title": "Dielectric dimer",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 64: two high-index cylinders with a narrow gap.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 162,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "kerker2d",
+      "index": 65,
+      "title": "Kerker-like 2D scattering",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 65: high-index cylinder showing forward/backward scattering contrast with the 2D NTFF observable.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 7.59023086262511e-8,
+        "analysisSamples": 0,
+        "materialCells": 113,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "multipleScattering",
+      "index": 66,
+      "title": "Multiple scattering",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 66: deterministic random cluster of cylinders.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 611,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "weakLocalization",
+      "index": 67,
+      "title": "Weak-localization disorder",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 67: many weak inclusions for multiple scattering.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 405,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "andersonLocalization",
+      "index": 68,
+      "title": "Anderson-localization disorder",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 68: dense deterministic high-contrast disorder for Anderson-localization-like field trapping.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00000440909817218113,
+        "analysisSamples": 0,
+        "materialCells": 1156,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "diffusiveRandomMedium",
+      "index": 69,
+      "title": "Diffusive random medium",
+      "groupId": "scattering-and-disorder",
+      "groupLabel": "6. Scattering and disorder",
+      "description": "Atlas 69: extended weak random medium for diffusive transport and speckle-like field structure.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000006575046868388098,
+        "analysisSamples": 0,
+        "materialCells": 548,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "finiteConductivity",
+      "index": 70,
+      "title": "Finite-conductivity skin depth",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "conductive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+sigma+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000045354887843190216,
+        "analysisSamples": 0,
+        "materialCells": 43920,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "drudeMetal",
+      "index": 71,
+      "title": "Drude metal",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 71: Drude ADE metal with plasma frequency and damping.",
+      "status": "PASS",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [
+        "advanced_material_smoke:P0/smoke",
+        "drude_ade_response:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003247302900028252,
+        "analysisSamples": 0,
+        "materialCells": 2160,
+        "dispersiveCells": 1476,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "lorentzMedium",
+      "index": 72,
+      "title": "Lorentz resonant medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 72: Lorentz ADE resonant dielectric slab.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003247302900028252,
+        "analysisSamples": 0,
+        "materialCells": 7200,
+        "dispersiveCells": 4920,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "debyeDielectric",
+      "index": 73,
+      "title": "Debye dielectric",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 73: Debye relaxation dielectric slab.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00028850745464857754,
+        "analysisSamples": 0,
+        "materialCells": 7200,
+        "dispersiveCells": 4920,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "plasmaCutoff",
+      "index": 74,
+      "title": "Plasma cutoff",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 74: collisionless plasma slab near cutoff.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.660189230046371e-8,
+        "analysisSamples": 0,
+        "materialCells": 6720,
+        "dispersiveCells": 4592,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "enzSlab",
+      "index": 75,
+      "title": "ENZ slab",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 75: passive Drude ADE epsilon-near-zero slab tuned near the source frequency.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 1440,
+        "dispersiveCells": 984,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "anisotropicMedium",
+      "index": 76,
+      "title": "Anisotropic medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 76: anisotropic block, eps_x = 4, eps_y = 2.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 5.904094655137232e-7,
+        "analysisSamples": 0,
+        "materialCells": 2304,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "hyperbolicMedium",
+      "index": 77,
+      "title": "Hyperbolic medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 77: constant anisotropic medium with eps_x > 0 and eps_y < 0.",
+      "status": "WARN",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Uses a nondispersive hyperbolic tensor proxy; acceptable for visualization, not causal broadband material evidence."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 5.669450525874673e-7,
+        "analysisSamples": 0,
+        "materialCells": 2496,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "chiralMedium",
+      "index": 78,
+      "title": "6-field chiral medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 78: six-component 2D chiral-medium proxy with passivity-limited local magnetoelectric coupling.",
+      "status": "WARN",
+      "contractTags": [
+        "HZ polarization",
+        "bianisotropy"
+      ],
+      "validationCases": [
+        "bianisotropy_quantitative_gap:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM 6-field",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000010178256926615188,
+        "analysisSamples": 0,
+        "materialCells": 9600,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "bianisotropicMedium",
+      "index": 79,
+      "title": "6-field bianisotropic medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 79: six-component 2D bianisotropic block with anisotropic eps/mu and local magnetoelectric coupling.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "HZ polarization",
+        "bianisotropy"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM 6-field",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 8.907298622344857e-7,
+        "analysisSamples": 0,
+        "materialCells": 1680,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "gyrotropicMedium",
+      "index": 80,
+      "title": "Gyrotropic medium",
+      "groupId": "material-models-and-tensors",
+      "groupLabel": "7. Material models and tensors",
+      "description": "Atlas 80: qualitative gyrotropic epsilon tensor in the Hz solver, using eps_xy = +g and eps_yx = -g.",
+      "status": "WARN",
+      "contractTags": [
+        "HZ polarization",
+        "gyrotropy"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+tensor+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000011007523926989677,
+        "analysisSamples": 0,
+        "materialCells": 9600,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "braggStack",
+      "index": 81,
+      "title": "1D Bragg stack",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 81: 1D periodic Bragg stack.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 7200,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "photonicCrystal",
+      "index": 82,
+      "title": "2D photonic crystal",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 82: square lattice of high-index rods with a reduced plane-wave Bloch-k band estimate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 1755,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "phcPointDefect",
+      "index": 83,
+      "title": "PhC point defect",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 83: photonic crystal with one missing central rod, finite-cavity leakage proxy, and reduced Bloch bands.",
+      "status": "WARN",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003167076488217629,
+        "analysisSamples": 0,
+        "materialCells": 1742,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "phcWaveguide",
+      "index": 84,
+      "title": "PhC line-defect waveguide",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 84: photonic crystal line-defect waveguide with reduced plane-wave Bloch-k reference.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 7.010264404311697e-9,
+        "analysisSamples": 0,
+        "materialCells": 1560,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "phcOptimizedCavity",
+      "index": 85,
+      "title": "Optimized PhC cavity",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 85: L3-like photonic-crystal cavity with locally shifted/tapered rods, Q proxy, and reduced Bloch bands.",
+      "status": "WARN",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 9.402597333850588e-7,
+        "analysisSamples": 0,
+        "materialCells": 1950,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "phcDisorder",
+      "index": 86,
+      "title": "Disordered photonic crystal",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 86: photonic crystal with deterministic positional disorder.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00008695256181527093,
+        "analysisSamples": 0,
+        "materialCells": 1755,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "phcDarkMode",
+      "index": 87,
+      "title": "Symmetry-dark mode",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 87: symmetric PhC defect excited with an antisymmetric dark-mode source, leakage/Q proxy, and reduced Bloch bands.",
+      "status": "WARN",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000014966058233856626,
+        "analysisSamples": 0,
+        "materialCells": 1742,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "quasiBic",
+      "index": 88,
+      "title": "Quasi-BIC cavity",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 88: weakly symmetry-broken PhC defect showing quasi-BIC leakage with reduced Bloch bands and local asymmetry proxies.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00001077327315471183,
+        "analysisSamples": 0,
+        "materialCells": 1742,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "symmetryProtectedBic",
+      "index": 89,
+      "title": "Symmetry-protected BIC",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 89: symmetry-protected BIC proxy using a symmetric PhC cavity, odd excitation, and reduced Bloch bands.",
+      "status": "WARN",
+      "contractTags": [
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000011171541569726912,
+        "analysisSamples": 0,
+        "materialCells": 1950,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "fanoResonator",
+      "index": 90,
+      "title": "Fano side resonator",
+      "groupId": "periodic-photonics-and-bics",
+      "groupLabel": "8. Periodic photonics and BICs",
+      "description": "Atlas 90: mode-launched straight guide with a side-coupled dielectric resonator.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000002519421416242709,
+        "analysisSamples": 0,
+        "materialCells": 1949,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sshTrivial",
+      "index": 91,
+      "title": "SSH chain, trivial",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 91: SSH chain with d1 > d2 and analytic Bloch winding/gap reference.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000007767062458381532,
+        "analysisSamples": 0,
+        "materialCells": 421,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sshTopological",
+      "index": 92,
+      "title": "SSH chain, topological",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 92: SSH chain with d1 < d2 and analytic Bloch winding/gap reference.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000013358295640681166,
+        "analysisSamples": 0,
+        "materialCells": 421,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sshInterface",
+      "index": 93,
+      "title": "SSH interface",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 93: interface between two SSH dimerizations with expected edge-state reference.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000013262008620526665,
+        "analysisSamples": 0,
+        "materialCells": 419,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sshDisorder",
+      "index": 94,
+      "title": "SSH with disorder",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 94: SSH interface with deterministic positional disorder and analytic clean-limit Bloch reference.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.722623460771534e-7,
+        "analysisSamples": 0,
+        "materialCells": 471,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "nonHermitianSsh",
+      "index": 95,
+      "title": "Non-Hermitian SSH",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 95: SSH chain with alternating gain/loss, saturable-gain stabilization, and reduced non-Hermitian gap proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "gain/loss"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+gain",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.39628826963654e-7,
+        "analysisSamples": 0,
+        "materialCells": 357,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "honeycombLattice",
+      "index": 96,
+      "title": "Honeycomb lattice",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 96: honeycomb-like dimer lattice for valley-photonic demonstrations.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000005602407170471648,
+        "analysisSamples": 0,
+        "materialCells": 4820,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "valleyHall",
+      "index": 97,
+      "title": "Valley Hall interface",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 97: two inverted honeycomb domains forming a straight Valley-Hall interface.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.0641769555675235e-8,
+        "analysisSamples": 0,
+        "materialCells": 5562,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "valleyHallBend",
+      "index": 98,
+      "title": "Valley Hall bend",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 98: Valley-Hall interface with a 90-degree bend.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.0641769555675235e-8,
+        "analysisSamples": 0,
+        "materialCells": 5560,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "topologicalPumping",
+      "index": 99,
+      "title": "Topological pumping",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 99: modulated SSH chain showing qualitative Thouless-pump-like transport.",
+      "status": "WARN",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.435109969750013e-7,
+        "analysisSamples": 0,
+        "materialCells": 477,
+        "dispersiveCells": 0,
+        "modulatedCells": 477,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "topologyDefect",
+      "index": 100,
+      "title": "Topology with strong defect",
+      "groupId": "topological-photonics",
+      "groupLabel": "9. Topological photonics",
+      "description": "Atlas 100: Valley-Hall interface with a strong defect placed on the channel.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.3895323932466535e-8,
+        "analysisSamples": 0,
+        "materialCells": 5621,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sppInterface",
+      "index": 101,
+      "title": "SPP metal-dielectric interface",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 101: Drude metal-dielectric interface excited by a near-field dipole.",
+      "status": "PASS",
+      "contractTags": [
+        "HZ polarization",
+        "dispersive material"
+      ],
+      "validationCases": [
+        "spp_interface_surface_localization:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.611915443125087e-8,
+        "analysisSamples": 0,
+        "materialCells": 39960,
+        "dispersiveCells": 20732,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "sppGrating",
+      "index": 102,
+      "title": "SPP grating coupler",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 102: shallow Drude grating for qualitative SPP coupling.",
+      "status": "WARN",
+      "contractTags": [
+        "HZ polarization",
+        "dispersive material"
+      ],
+      "validationCases": [
+        "spp_grating_surface_coupling:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.1874628062938161e-11,
+        "analysisSamples": 0,
+        "materialCells": 39308,
+        "dispersiveCells": 20232,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "localizedPlasmon",
+      "index": 103,
+      "title": "Localized plasmon disk",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 103: localized plasmon on a Drude nanodisk.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003247302900028252,
+        "analysisSamples": 0,
+        "materialCells": 149,
+        "dispersiveCells": 149,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "plasmonicDimer",
+      "index": 104,
+      "title": "Plasmonic dimer",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 104: two Drude disks with a narrow hot gap.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000026837211974228058,
+        "analysisSamples": 0,
+        "materialCells": 162,
+        "dispersiveCells": 162,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "metasurfacePhaseBars",
+      "index": 105,
+      "title": "Phase-gradient metasurface",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 105: phase-gradient metasurface approximated by dielectric bars.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.961519414927679e-8,
+        "analysisSamples": 0,
+        "materialCells": 136,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "perfectAbsorber",
+      "index": 106,
+      "title": "Perfect absorber",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 106: impedance-matched lossy sheet backed by PEC, with absorptance estimated from line monitors.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.4198244673011853e-13,
+        "analysisSamples": 0,
+        "materialCells": 5520,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "negativeIndexSlab",
+      "index": 107,
+      "title": "Negative-index slab",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 107: passive Drude ADE epsilon/mu slab tuned to a negative-index band.",
+      "status": "PASS",
+      "contractTags": [
+        "dispersive material",
+        "frequency sweep"
+      ],
+      "validationCases": [
+        "negative_index_observable_finite:P1/physics",
+        "negative_index_quantitative_gap:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "frequency",
+        "engine": "WASM CPML+ADE+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 6.094812881545533e-8,
+        "analysisSamples": 0,
+        "materialCells": 4320,
+        "dispersiveCells": 5904,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "superlensSlab",
+      "index": 108,
+      "title": "Drude superlens slab",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 108: passive Drude ADE epsilon/mu slab as a qualitative superlens analogue.",
+      "status": "WARN",
+      "contractTags": [
+        "dispersive material",
+        "frequency sweep"
+      ],
+      "validationCases": [
+        "superlens_image_proxy_finite:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "frequency",
+        "engine": "WASM CPML+ADE",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.1610801918802405e-7,
+        "analysisSamples": 0,
+        "materialCells": 2400,
+        "dispersiveCells": 3280,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "hyperlens",
+      "index": 109,
+      "title": "Hyperlens",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 109: passive dispersive hyperlens analogue using a radial/tangential Drude tensor in the Hz solver.",
+      "status": "WARN",
+      "contractTags": [
+        "HZ polarization",
+        "dispersive material",
+        "frequency sweep"
+      ],
+      "validationCases": [
+        "hyperlens_mtf_quantitative_gap:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."
+      ],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "hz",
+        "viewMode": "poynting",
+        "sweepMode": "frequency",
+        "engine": "WASM CPML+ADE",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.0438223750374553e-9,
+        "analysisSamples": 0,
+        "materialCells": 1768,
+        "dispersiveCells": 1768,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "enzEmitter",
+      "index": 110,
+      "title": "Dipole near ENZ slab",
+      "groupId": "plasmonics-and-metamaterials",
+      "groupLabel": "10. Plasmonics and metamaterials",
+      "description": "Atlas 110: dipole close to a passive Drude ENZ slab.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+ADE",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.00003403665461108045,
+        "analysisSamples": 0,
+        "materialCells": 2160,
+        "dispersiveCells": 1476,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "kerrSlab",
+      "index": 111,
+      "title": "Kerr nonlinear slab",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 111: instantaneous Kerr slab with epsilon updated from physical field-scaled intensity.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+Kerr+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.3035614736128494e-8,
+        "analysisSamples": 0,
+        "materialCells": 8640,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 5904,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "shgSlab",
+      "index": 112,
+      "title": "SHG χ² slab",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 112: chi2 nonlinear slab using a physical field-scaled polarization-current source for second-harmonic generation.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "harmonic conversion",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+harmonic+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 8.908249388251305e-9,
+        "analysisSamples": 0,
+        "materialCells": 8640,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 5904,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "thgSlab",
+      "index": 113,
+      "title": "THG χ³ slab",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source for third-harmonic generation.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "harmonic conversion",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+harmonic+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.0715854668880046e-8,
+        "analysisSamples": 0,
+        "materialCells": 8640,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 5904,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "spmKerrPulse",
+      "index": 114,
+      "title": "Kerr SPM pulse",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 114: pulsed Kerr guide/slab for qualitative self-phase modulation and spectral sideband broadening.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [
+        "nonlinear_material_first_pass:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+Kerr+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000006575046603234447,
+        "analysisSamples": 0,
+        "materialCells": 740,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 714,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "kerrBistableCavity",
+      "index": 115,
+      "title": "Kerr bistable cavity",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 115: mode-launched Kerr ring-cavity proxy for optical bistability with an optional bidirectional amplitude sweep.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+Kerr+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000008212227778117348,
+        "analysisSamples": 0,
+        "materialCells": 2089,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 363,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "vo2SwitchingSlab",
+      "index": 116,
+      "title": "VO₂ switching slab",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+phase+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000008753760130795885,
+        "analysisSamples": 0,
+        "materialCells": 8160,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "pcmMemoryCell",
+      "index": 117,
+      "title": "PCM memory cell",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+phase+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000029584306987106133,
+        "analysisSamples": 0,
+        "materialCells": 2169,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "saturableAbsorber",
+      "index": 118,
+      "title": "Saturable absorber",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 118: bleachable absorber analogue using the phase-state model to reduce loss above threshold.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+phase+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000007266701350805765,
+        "analysisSamples": 0,
+        "materialCells": 5280,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "allOpticalSwitch",
+      "index": 119,
+      "title": "All-optical switch",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a nonlinear control section for qualitative all-optical switching.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+Kerr+phase+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 8.259672605891515e-9,
+        "analysisSamples": 0,
+        "materialCells": 1759,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 55,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "nonlinearLimiter",
+      "index": 120,
+      "title": "Nonlinear limiter",
+      "groupId": "nonlinear-and-active-media",
+      "groupLabel": "11. Nonlinear and active media",
+      "description": "Atlas 120: intensity-triggered lossy phase-change section for qualitative optical limiting.",
+      "status": "WARN",
+      "contractTags": [
+        "nonlinear material",
+        "amplitude sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "amplitude",
+        "engine": "WASM CPML+phase+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000009753417888506008,
+        "analysisSamples": 0,
+        "materialCells": 4800,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "temporalInterface",
+      "index": 121,
+      "title": "Temporal interface",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 121: finite dielectric interface with nearly uniform temporal epsilon modulation and reduced Floquet sideband S_m estimate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.059543263069786e-8,
+        "analysisSamples": 0,
+        "materialCells": 43200,
+        "dispersiveCells": 0,
+        "modulatedCells": 23288,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "temporalSlab",
+      "index": 122,
+      "title": "Temporal slab",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation and reduced time-refraction sideband S_m estimate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 4.059543263069786e-8,
+        "analysisSamples": 0,
+        "materialCells": 7200,
+        "dispersiveCells": 0,
+        "modulatedCells": 4920,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "temporalModulation",
+      "index": 123,
+      "title": "Temporal epsilon modulation",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 123: region tagged with sinusoidal epsilon modulation and reduced Floquet sideband analysis.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [
+        "floquet_power_balance_gap:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.682125123325819e-8,
+        "analysisSamples": 0,
+        "materialCells": 2000,
+        "dispersiveCells": 0,
+        "modulatedCells": 2000,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "temporalCrystal",
+      "index": 124,
+      "title": "Temporal crystal",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 124: extended time-periodic dielectric region with reduced Floquet sideband analysis.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.265085303973116e-8,
+        "analysisSamples": 0,
+        "materialCells": 86400,
+        "dispersiveCells": 0,
+        "modulatedCells": 46576,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "modulatedGuide",
+      "index": 125,
+      "title": "Temporally modulated guide",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and reduced S_m sideband readout.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000007838344614667247,
+        "analysisSamples": 0,
+        "materialCells": 2520,
+        "dispersiveCells": 0,
+        "modulatedCells": 350,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "travelingModulation",
+      "index": 126,
+      "title": "Traveling epsilon modulation",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 126: guide section tagged with traveling epsilon modulation and forward/reverse transmission check.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation",
+        "direction sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "direction",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.7079080985412844e-9,
+        "analysisSamples": 0,
+        "materialCells": 560,
+        "dispersiveCells": 0,
+        "modulatedCells": 560,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "temporalIsolator",
+      "index": 127,
+      "title": "Temporal isolator analogue",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 127: mode-launched traveling-modulation guide section with approximate isolation and reduced Floquet sideband S_m readout.",
+      "status": "WARN",
+      "contractTags": [
+        "time modulation",
+        "direction sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "direction",
+        "engine": "WASM CPML+mod+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 1.4818881101635796e-7,
+        "analysisSamples": 0,
+        "materialCells": 2202,
+        "dispersiveCells": 0,
+        "modulatedCells": 396,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "modulatedRing",
+      "index": 128,
+      "title": "Modulated ring",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000007492445653943127,
+        "analysisSamples": 0,
+        "materialCells": 1982,
+        "dispersiveCells": 0,
+        "modulatedCells": 192,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "floquetResonators",
+      "index": 129,
+      "title": "Floquet resonators",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 129: mode-launched coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000006786965628810844,
+        "analysisSamples": 0,
+        "materialCells": 2139,
+        "dispersiveCells": 0,
+        "modulatedCells": 339,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "syntheticFrequency",
+      "index": 130,
+      "title": "Synthetic frequency dimension",
+      "groupId": "time-varying-and-floquet-media",
+      "groupLabel": "12. Time-varying and Floquet media",
+      "description": "Atlas 130: mode-launched chain of modulated resonators as a synthetic-frequency analogue with reduced sideband S_m analysis.",
+      "status": "WARN",
+      "contractTags": [
+        "time modulation"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+mod+mode",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000006314087019122647,
+        "analysisSamples": 0,
+        "materialCells": 1685,
+        "dispersiveCells": 0,
+        "modulatedCells": 245,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "ptSymmetricCoupler",
+      "index": 131,
+      "title": "PT-symmetric gain/loss guides",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 131: PT-symmetric coupled guides with balanced gain/loss, saturable gain, gamma sweep, and reduced modal EP estimate.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "gain/loss",
+        "gainLoss sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "gainLoss",
+        "engine": "WASM CPML+gain+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000020869527784828726,
+        "analysisSamples": 0,
+        "materialCells": 3600,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "exceptionalPointCoupler",
+      "index": 132,
+      "title": "Exceptional point proxy",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 132: PT-symmetric coupled-guide exceptional-point proxy with gamma sweep and reduced 2x2 modal coalescence estimate.",
+      "status": "WARN",
+      "contractTags": [
+        "gain/loss",
+        "gainLoss sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "gainLoss",
+        "engine": "WASM CPML+gain+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.000017235484330450633,
+        "analysisSamples": 0,
+        "materialCells": 2937,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "nonHermitianSkin",
+      "index": 133,
+      "title": "Non-Hermitian skin analogue",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 133: non-Hermitian skin-effect analogue using a biased gain/loss SSH chain with reduced skin/localization proxies.",
+      "status": "WARN",
+      "contractTags": [
+        "gain/loss"
+      ],
+      "validationCases": [
+        "coupled_workflow_first_pass:P1/physics"
+      ],
+      "blockers": [],
+      "warnings": [
+        "Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation."
+      ],
+      "gaps": [
+        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML+gain",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 5.4615956801114924e-8,
+        "analysisSamples": 0,
+        "materialCells": 391,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "bicKerr",
+      "index": 134,
+      "title": "BIC + Kerr",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 134: symmetry-protected BIC-style PhC cavity with a Kerr nonlinear defect region, Bloch-k leakage, and active-material overlap proxies.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "nonlinear material",
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML+Kerr",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000031841507351947143,
+        "analysisSamples": 0,
+        "materialCells": 1791,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 49,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "bicEnz",
+      "index": 135,
+      "title": "BIC + ENZ",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 135: BIC-style PhC cavity side-coupled to a passive Drude ENZ inclusion with Bloch-k leakage and active-material overlap proxies.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "dispersive material",
+        "blochK sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "blochK",
+        "engine": "WASM CPML+ADE",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 0.0000067889837306664334,
+        "analysisSamples": 0,
+        "materialCells": 1786,
+        "dispersiveCells": 49,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 2
+      }
+    },
+    {
+      "id": "janusTopologicalGuide",
+      "index": 136,
+      "title": "Janus + topological guide",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 136: Janus source coupled into a qualitative Valley-Hall topological guide with reduced guide-coupling proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 9.933714173281699e-7,
+        "analysisSamples": 0,
+        "materialCells": 5562,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "huygensCavity",
+      "index": 137,
+      "title": "Huygens + cavity",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 137: Huygens source coupled to a dielectric cavity/resonator with reduced cavity-overlap proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "static Maxwell/FDTD scene"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "angle",
+        "engine": "WASM CPML",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.324278512435361e-7,
+        "analysisSamples": 0,
+        "materialCells": 1996,
+        "dispersiveCells": 0,
+        "modulatedCells": 0,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "topologyTemporalMod",
+      "index": 138,
+      "title": "Topology + temporal modulation",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 138: Valley-Hall channel with a temporally modulated segment, reduced Floquet sideband readout, and coupled-workflow proxies.",
+      "status": "VALIDATION_GAP",
+      "contractTags": [
+        "time modulation",
+        "direction sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "direction",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.071788040395418e-14,
+        "analysisSamples": 0,
+        "materialCells": 5633,
+        "dispersiveCells": 0,
+        "modulatedCells": 180,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "nonreciprocalValleyHall",
+      "index": 139,
+      "title": "Nonreciprocity + Valley Hall",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 139: Valley-Hall channel with traveling modulation, approximate isolation, reduced sideband S_m readout, and modulation-phase proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "time modulation",
+        "direction sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "poynting",
+        "sweepMode": "direction",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 2.6257774553350057e-14,
+        "analysisSamples": 0,
+        "materialCells": 5710,
+        "dispersiveCells": 0,
+        "modulatedCells": 308,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    },
+    {
+      "id": "spaceTimeCrystal",
+      "index": 140,
+      "title": "Space-time crystal",
+      "groupId": "coupled-and-non-hermitian-workflows",
+      "groupLabel": "13. Coupled and non-Hermitian workflows",
+      "description": "Atlas 140: space-time crystal analogue with traveling epsilon modulation, reduced Floquet sideband readout, and modulation-phase proxy.",
+      "status": "WARN",
+      "contractTags": [
+        "time modulation",
+        "direction sweep"
+      ],
+      "validationCases": [],
+      "blockers": [],
+      "warnings": [
+        "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation."
+      ],
+      "gaps": [
+        "no validation-matrix case covers this preset"
+      ],
+      "runtime": {
+        "fieldComponent": "ez",
+        "viewMode": "field",
+        "sweepMode": "direction",
+        "engine": "WASM CPML+mod+TFSF",
+        "advancedSteps": 24,
+        "maxField": 0,
+        "energy": 3.323118395121624e-8,
+        "analysisSamples": 0,
+        "materialCells": 7920,
+        "dispersiveCells": 0,
+        "modulatedCells": 5412,
+        "nonlinearCells": 0,
+        "sourceCount": 1
+      }
+    }
+  ],
+  "status": "PASS"
+}

@@ -772,14 +772,14 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "singleSlit":
         rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        rectL(midXLambda - 0.08, midYLambda - 0.25, 0.22, 0.5, mat.air);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
+        rectL(midXLambda - 0.08, midYLambda - 0.32, 0.22, 0.64, mat.air);
+        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.65 }]);
         break;
       case "doubleSlit":
         rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
-        rectL(midXLambda - 0.08, midYLambda - 0.73, 0.22, 0.25, mat.air);
-        rectL(midXLambda - 0.08, midYLambda + 0.48, 0.22, 0.25, mat.air);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
+        rectL(midXLambda - 0.08, midYLambda - 0.86, 0.22, 0.42, mat.air);
+        rectL(midXLambda - 0.08, midYLambda + 0.44, 0.22, 0.42, mat.air);
+        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.65 }]);
         break;
       case "circularAperture":
         rectL(midXLambda - 0.03, 0, 0.12, domainYLambda, mat.pec);
