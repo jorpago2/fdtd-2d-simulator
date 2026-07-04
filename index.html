@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="fdtd-ui.css?v=20260704-numerics-simplify-1" />
+    <link rel="stylesheet" href="fdtd-ui.css?v=20260704-performance-numerics-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -1180,7 +1180,7 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
-              <details class="monitor-panel results-detail-panel">
+              <details class="monitor-panel results-detail-panel" open>
                 <summary>Line monitors</summary>
                 <div class="results-detail-body">
                   <label class="toggle-row">
@@ -1224,66 +1224,7 @@
                   </div>
                 </div>
               </details>
-              <details class="performance-panel results-detail-panel">
-                <summary>Performance</summary>
-                <div class="results-detail-body">
-                  <div class="performance-grid" aria-label="Performance summary">
-                    <div class="diagnostic-metric">
-                      <span>Engine</span>
-                      <output id="performanceBackendOutput">JS</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Grid cells</span>
-                      <output id="performanceGridOutput">360 x 240</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>FDTD step</span>
-                      <output id="performanceStepOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Render</span>
-                      <output id="performanceRenderOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Map pixels</span>
-                      <output id="performanceRenderMapOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Present</span>
-                      <output id="performanceRenderPresentOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Overlays</span>
-                      <output id="performanceRenderOverlayOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Measure</span>
-                      <output id="performanceMeasureOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Capacity</span>
-                      <output id="performanceThroughputOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Target</span>
-                      <output id="performanceTargetStepsOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Live steps</span>
-                      <output id="performanceLiveStepsOutput">-</output>
-                    </div>
-                    <div class="diagnostic-metric">
-                      <span>Live FPS</span>
-                      <output id="performanceFpsOutput">-</output>
-                    </div>
-                  </div>
-                  <div class="performance-actions">
-                    <button id="performanceResetBtn" class="text-button" type="button">Reset samples</button>
-                  </div>
-                  <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
-                </div>
-              </details>
-              <details class="sweep-panel results-detail-panel">
+              <details class="sweep-panel results-detail-panel" open>
                 <summary>Parameter sweep</summary>
                 <div class="results-detail-body">
                   <div class="two-col">
@@ -1338,7 +1279,7 @@
                   </div>
                 </div>
               </details>
-              <details class="analysis-panel results-detail-panel">
+              <details class="analysis-panel results-detail-panel" open>
                 <summary>Spectral / NTFF</summary>
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
@@ -1388,7 +1329,66 @@
                 </div>
               </div>
             </section>
-            <details class="panel-section grid-section config-detail-panel">
+            <details class="panel-section performance-panel config-detail-panel" open>
+              <summary>Performance</summary>
+              <div class="config-detail-body">
+                <div class="performance-grid" aria-label="Performance summary">
+                  <div class="diagnostic-metric">
+                    <span>Engine</span>
+                    <output id="performanceBackendOutput">JS</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Grid cells</span>
+                    <output id="performanceGridOutput">360 x 240</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>FDTD step</span>
+                    <output id="performanceStepOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Render</span>
+                    <output id="performanceRenderOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Map pixels</span>
+                    <output id="performanceRenderMapOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Present</span>
+                    <output id="performanceRenderPresentOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Overlays</span>
+                    <output id="performanceRenderOverlayOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Measure</span>
+                    <output id="performanceMeasureOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Capacity</span>
+                    <output id="performanceThroughputOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Target</span>
+                    <output id="performanceTargetStepsOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Live steps</span>
+                    <output id="performanceLiveStepsOutput">-</output>
+                  </div>
+                  <div class="diagnostic-metric">
+                    <span>Live FPS</span>
+                    <output id="performanceFpsOutput">-</output>
+                  </div>
+                </div>
+                <div class="performance-actions">
+                  <button id="performanceResetBtn" class="text-button" type="button">Reset samples</button>
+                </div>
+                <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
+              </div>
+            </details>
+            <details class="panel-section grid-section config-detail-panel" open>
               <summary>Grid</summary>
               <div class="config-detail-body">
                 <div class="two-col">
@@ -1403,7 +1403,7 @@
                 </div>
               </div>
             </details>
-            <details class="panel-section reproducibility-section config-detail-panel">
+            <details class="panel-section reproducibility-section config-detail-panel" open>
               <summary>Reproducibility</summary>
               <div class="config-detail-body">
                 <div class="button-row">
@@ -1457,9 +1457,9 @@
     <script src="js-next/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-dom.js?v=20260704-scene-views-1"></script>
-    <script src="js-next/runtime/ui/ui-drawer.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="js-next/runtime/ui/ui-drawer.js?v=20260704-open-menu-cards-1"></script>
     <script src="js-next/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
-    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260702-scene-library-1"></script>
+    <script src="js-next/runtime/ui/ui-scene-guide.js?v=20260704-open-menu-cards-1"></script>
     <script src="js-next/runtime/ui/ui-results.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/ui-results-charts.js?v=20260703-runtime-cleanup-1"></script>
     <script src="js-next/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>

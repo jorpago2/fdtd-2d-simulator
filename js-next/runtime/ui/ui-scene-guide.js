@@ -278,6 +278,7 @@
     function appendSceneGuideReferences(parent, references) {
       const details = documentRef.createElement("details");
       details.className = "scene-guide-details";
+      details.open = true;
       const summary = documentRef.createElement("summary");
       summary.textContent = "References";
       const body = documentRef.createElement("div");
@@ -317,6 +318,7 @@
 
       const details = documentRef.createElement("details");
       details.className = "scene-guide-details";
+      details.open = true;
       const detailsSummary = documentRef.createElement("summary");
       detailsSummary.textContent = "More context";
       const detailsBody = documentRef.createElement("div");

@@ -32,7 +32,6 @@
       compactCanvasMediaQuery = "(max-width: 1180px)",
       compactControlsMediaQuery,
       compactPanelTitleMediaQuery,
-      compactResultsMediaQuery,
       contexts = DEFAULT_CONTROL_PANEL_CONTEXTS,
       documentRef = global.document,
       el,
@@ -47,8 +46,6 @@
     const compactCanvasActive = createMediaMatcher(compactCanvasMediaQuery);
     const compactControlsActive = createMediaMatcher(compactControlsMediaQuery);
     const compactPanelTitleActive = createMediaMatcher(compactPanelTitleMediaQuery);
-    const compactResultsActive = createMediaMatcher(compactResultsMediaQuery);
-    let lastCompactResultsDetailState = null;
 
     function controlTabLayerName(tabName) {
       return tabLayers[tabName] || "scenes";
@@ -121,13 +118,9 @@
       activateControlTab(route.tab, { layer, focusSelector: route.focusSelector });
     }
 
-    function syncResultsDetailPanels(force = false) {
-      const compact = compactResultsActive();
-      if (!force && compact === lastCompactResultsDetailState) return;
-      lastCompactResultsDetailState = compact;
-      if (!compact) return;
+    function syncResultsDetailPanels() {
       el.resultsDetailPanels?.forEach((panel) => {
-        panel.open = false;
+        panel.open = true;
       });
     }
 

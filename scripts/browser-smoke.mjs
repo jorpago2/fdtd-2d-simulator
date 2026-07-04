@@ -367,6 +367,9 @@ async function runCanvasActionMenuSmoke(page) {
 
 async function runControlNavigationSmoke(page) {
   const status = await page.evaluate(() => {
+    if (!document.body.classList.contains("controls-drawer-open")) {
+      document.getElementById("controlDrawerToggle")?.click();
+    }
     const tabButtons = Array.from(document.querySelectorAll("[data-control-tab]"));
     const mobileButtons = Array.from(document.querySelectorAll(".mobile-layer-button[data-mobile-layer]"));
     const controlLabel = (button) =>
@@ -380,19 +383,31 @@ async function runControlNavigationSmoke(page) {
         runVisible: Boolean(document.querySelector("#tab-simulation .run-section")),
         scaleSectionVisible: Boolean(document.querySelector("#tab-config .scale-section")),
         stabilitySectionVisible: Boolean(document.querySelector("#tab-config .stability-section")),
+        performanceInResults: Boolean(document.querySelector("#tab-results .performance-panel")),
+        performanceInNumerics: Boolean(document.querySelector("#tab-config .performance-panel")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
+        closedResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
+          .filter((panel) => !panel.open)
+          .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
+        closedNumericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel"))
+          .filter((panel) => !panel.open)
+          .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
       };
     };
     const simulateState = clickTab("simulation");
+    const resultsState = clickTab("results");
     const numericsState = clickTab("config");
-    return {
+    const navigationState = {
       tabLabels,
       mobileLabels,
       hasVisualTab: Boolean(document.getElementById("tab-visual")),
       simulateState,
+      resultsState,
       numericsState,
     };
+    document.getElementById("controlDrawerBackdrop")?.click();
+    return navigationState;
   });
   const failures = [];
   const expectedTabs = ["1 Scenes", "2 Simulate", "3 Results", "4 Numerics"];
@@ -404,11 +419,19 @@ async function runControlNavigationSmoke(page) {
   if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
     failures.push("Simulate tab does not contain both run and visual controls");
   }
+  if (status.resultsState?.closedResultCards?.length) {
+    failures.push(`Results has collapsed cards: ${status.resultsState.closedResultCards.join(", ")}`);
+  }
+  if (status.resultsState?.performanceInResults) failures.push("Performance panel is still under Results");
   if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerics") {
     failures.push("Numerics tab did not activate the numerical setup panel");
   }
+  if (!status.numericsState?.performanceInNumerics) failures.push("Performance panel is missing from Numerics");
   if (status.numericsState?.scaleSectionVisible) failures.push("Numerics still shows the Scale section");
   if (status.numericsState?.stabilitySectionVisible) failures.push("Numerics still shows the Stability section");
+  if (status.numericsState?.closedNumericsCards?.length) {
+    failures.push(`Numerics has collapsed cards: ${status.numericsState.closedNumericsCards.join(", ")}`);
+  }
   return {
     id: "control_navigation_four_sections",
     preset: "current",
@@ -547,6 +570,9 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
             : null,
           panelOverflow,
           guide: rect("#sceneGuidePanel"),
+          closedGuideCards: Array.from(document.querySelectorAll("#sceneGuidePanel .scene-guide-details"))
+            .filter((panel) => !panel.open)
+            .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
             ? {
@@ -650,6 +676,9 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
         currentStatus.guide.top < currentStatus.spotlight.bottom - 1
       ) {
         failures.push(`${viewport.name}: Current scene guide should be stacked below the scene card`);
+      }
+      if (currentStatus.closedGuideCards?.length) {
+        failures.push(`${viewport.name}: Scene guide has collapsed cards: ${currentStatus.closedGuideCards.join(", ")}`);
       }
       if (
         browseStatus.panel &&

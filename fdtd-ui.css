@@ -1846,6 +1846,7 @@ label.scene-select-fallback,
   #tab-results .custom-monitor-panel,
   #tab-results .analysis-panel,
   #tab-results .sweep-panel,
+  #tab-config .performance-panel,
   #tab-config .config-summary-section {
     grid-column: 1 / -1;
   }
