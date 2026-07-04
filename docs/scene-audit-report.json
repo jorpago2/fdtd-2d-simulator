@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-04T17:28:45.943Z",
-  "gitCommit": "3116682+working-tree",
+  "generatedAt": "2026-07-04T17:47:38.068Z",
+  "gitCommit": "1847641+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 53,
-    "VALIDATION_GAP": 60,
+    "PASS": 58,
+    "VALIDATION_GAP": 55,
     "WARN": 28,
     "FIX_REQUIRED": 0
   },
@@ -3455,16 +3455,16 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "description": "Atlas 103: localized plasmon on a Drude nanodisk.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "localized_plasmon_drude_disk:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3488,16 +3488,16 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "description": "Atlas 104: two Drude disks with a narrow hot gap.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "plasmonic_dimer_hot_gap:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3521,16 +3521,16 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "description": "Atlas 105: phase-gradient metasurface approximated by dielectric bars.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "metasurface_phase_bar_gradient:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",
@@ -3554,16 +3554,16 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "description": "Atlas 106: impedance-matched lossy sheet backed by PEC, with absorptance estimated from line monitors.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "perfect_absorber_lossy_backed_sheet:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -3665,15 +3665,14 @@
         "frequency sweep"
       ],
       "validationCases": [
+        "hyperlens_reduced_mtf_proxy:P1/physics",
         "hyperlens_mtf_quantitative_gap:P1/physics"
       ],
       "blockers": [],
       "warnings": [
         "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."
       ],
-      "gaps": [
-        "validation-matrix entry is tracking-only; no executable browser or script case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
         "viewMode": "poynting",
@@ -3697,16 +3696,16 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "description": "Atlas 110: dipole close to a passive Drude ENZ slab.",
-      "status": "VALIDATION_GAP",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
-      "validationCases": [],
+      "validationCases": [
+        "enz_emitter_slab_overlap:P1/physics"
+      ],
       "blockers": [],
       "warnings": [],
-      "gaps": [
-        "no validation-matrix case covers this preset"
-      ],
+      "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
         "viewMode": "field",

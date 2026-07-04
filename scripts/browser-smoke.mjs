@@ -832,6 +832,208 @@ async function negativeIndexMetrics(page) {
   });
 }
 
+async function metamaterialMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const finite = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const epsAbsAt = (idx) => Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx])));
+    const highIndexAt = (idx) => sim.material[idx] !== 0 && sim.material[idx] !== 2 && epsAbsAt(idx) > 3.0;
+    const dispersiveAt = (idx) => Boolean(sim.dispersiveMaterial?.[idx] || sim.muDispersiveMaterial?.[idx]);
+    const lossyAt = (idx) =>
+      Math.max(Math.abs(finite(sim.loss?.[idx])), Math.abs(finite(sim.lossY?.[idx])), Math.abs(finite(sim.muLoss?.[idx])), Math.abs(finite(sim.muLossY?.[idx]))) > 1e-6;
+    const box = (x, y, halfXLambda, halfYLambda, cx = midX, cy = midY) =>
+      Math.abs(x - cx) <= Math.round(halfXLambda * cpw) && Math.abs(y - cy) <= Math.round(halfYLambda * cpw);
+    const ellipse = (x, y, cx, cy, rx, ry) => {
+      const dx = (x - cx) / Math.max(1, rx);
+      const dy = (y - cy) / Math.max(1, ry);
+      return dx * dx + dy * dy <= 1;
+    };
+    const localizedCx = midX + Math.round(0.35 * cpw);
+    const localizedRx = Math.max(2, Math.round(0.38 * cpw));
+    const dimerCx1 = midX + Math.round(0.15 * cpw);
+    const dimerCx2 = midX + Math.round(0.75 * cpw);
+    const dimerCy = midY;
+    const dimerR = Math.max(2, Math.round(0.29 * cpw));
+    const enzX0 = midX + Math.round(0.25 * cpw);
+    const enzX1 = enzX0 + Math.round(0.45 * cpw);
+
+    let materialCells = 0;
+    let highIndexCells = 0;
+    let dispersiveCells = 0;
+    let drudeCells = 0;
+    let lossyCells = 0;
+    let pecCells = 0;
+    let tensorLikeCells = 0;
+    let totalEnergy = 0;
+    let materialEnergy = 0;
+    let dispersiveEnergy = 0;
+    let localizedDiskCells = 0;
+    let localizedDiskEnergy = 0;
+    let localizedNearEnergy = 0;
+    let dimerDisk1Cells = 0;
+    let dimerDisk2Cells = 0;
+    let dimerDiskEnergy = 0;
+    let dimerGapEnergy = 0;
+    let metasurfaceMaterialCells = 0;
+    let absorberLossMin = Infinity;
+    let absorberLossMax = 0;
+    let absorberPecBackplaneCells = 0;
+    let enzCells = 0;
+    let enzEnergy = 0;
+    let effectiveEpsSum = 0;
+    let effectiveEpsAbsSum = 0;
+    let effectiveEpsCount = 0;
+    const omega = 2 * Math.PI * (typeof sim.diagnosticFrequency === "function" ? sim.diagnosticFrequency() : Number(state.sourceFrequency) || 0.035);
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        totalEnergy += energy;
+        const isMaterial = sim.material[idx] !== 0;
+        const isDispersive = dispersiveAt(idx);
+        const isHigh = highIndexAt(idx);
+        const isLocalizedDisk = ellipse(x, y, localizedCx, midY, localizedRx, localizedRx);
+        const localizedDistance = Math.hypot(x - localizedCx, y - midY);
+        const inLocalizedNear = localizedDistance > localizedRx && localizedDistance <= localizedRx + Math.round(0.28 * cpw);
+        const inDimer1 = ellipse(x, y, dimerCx1, dimerCy, dimerR, dimerR);
+        const inDimer2 = ellipse(x, y, dimerCx2, dimerCy, dimerR, dimerR);
+        const inDimerGap = box(x, y, 0.15, 0.2, Math.round(0.5 * (dimerCx1 + dimerCx2)), dimerCy);
+        const inEnzSlab = x >= enzX0 && x <= enzX1 && y >= minY + Math.round(0.7 * cpw) && y <= maxY - Math.round(0.7 * cpw);
+
+        if (isMaterial) {
+          materialCells += 1;
+          materialEnergy += energy;
+        }
+        if (isHigh) highIndexCells += 1;
+        if (isDispersive) {
+          dispersiveCells += 1;
+          dispersiveEnergy += energy;
+          if (Number(sim.dispersiveMaterial?.[idx]) === 1 || Number(sim.muDispersiveMaterial?.[idx]) === 1) drudeCells += 1;
+          if (typeof sim.effectiveScalarEpsilonAt === "function") {
+            const effective = sim.effectiveScalarEpsilonAt(idx, omega);
+            if (Number.isFinite(effective)) {
+              effectiveEpsSum += effective;
+              effectiveEpsAbsSum += Math.abs(effective);
+              effectiveEpsCount += 1;
+            }
+          }
+        }
+        if (lossyAt(idx)) {
+          lossyCells += 1;
+          const loss = Math.max(
+            Math.abs(finite(sim.loss?.[idx])),
+            Math.abs(finite(sim.lossY?.[idx])),
+            Math.abs(finite(sim.muLoss?.[idx])),
+            Math.abs(finite(sim.muLossY?.[idx])),
+          );
+          absorberLossMin = Math.min(absorberLossMin, loss);
+          absorberLossMax = Math.max(absorberLossMax, loss);
+        }
+        if (sim.material[idx] === 2) {
+          pecCells += 1;
+          if (x > midX && box(x, y, 1.0, 5.8, midX + Math.round(1.3 * cpw), midY)) absorberPecBackplaneCells += 1;
+        }
+        if (Math.abs(finite(sim.epsXY?.[idx])) > 1e-9 || Math.abs(finite(sim.eps?.[idx]) - finite(sim.epsY?.[idx])) > 1e-9) tensorLikeCells += 1;
+        if (isLocalizedDisk && isDispersive) localizedDiskCells += 1;
+        if (isLocalizedDisk) localizedDiskEnergy += energy;
+        if (inLocalizedNear) localizedNearEnergy += energy;
+        if (inDimer1 && isDispersive) dimerDisk1Cells += 1;
+        if (inDimer2 && isDispersive) dimerDisk2Cells += 1;
+        if (inDimer1 || inDimer2) dimerDiskEnergy += energy;
+        if (inDimerGap) dimerGapEnergy += energy;
+        if (Math.abs(x - midX) <= Math.round(0.12 * cpw) && isHigh) metasurfaceMaterialCells += 1;
+        if (inEnzSlab && isDispersive) {
+          enzCells += 1;
+          enzEnergy += energy;
+        }
+      }
+    }
+
+    const barHeights = [];
+    for (let i = -7; i <= 7; i += 1) {
+      const centerY = midY + Math.round(i * 0.28 * cpw);
+      let yMin = Infinity;
+      let yMax = -Infinity;
+      let cells = 0;
+      for (let y = Math.max(minY, centerY - Math.round(0.28 * cpw)); y <= Math.min(maxY, centerY + Math.round(0.28 * cpw)); y += 1) {
+        for (let x = Math.max(minX, midX - Math.round(0.08 * cpw)); x <= Math.min(maxX, midX + Math.round(0.08 * cpw)); x += 1) {
+          const idx = sim.id(x, y);
+          if (!highIndexAt(idx)) continue;
+          yMin = Math.min(yMin, y);
+          yMax = Math.max(yMax, y);
+          cells += 1;
+        }
+      }
+      if (cells > 0) barHeights.push((yMax - yMin + 1) / cpw);
+    }
+    const barHeightMin = barHeights.length > 0 ? Math.min(...barHeights) : 0;
+    const barHeightMax = barHeights.length > 0 ? Math.max(...barHeights) : 0;
+    const absorptionProxy =
+      sim.diagnosticSamples > 0 ? Math.max(0, Math.min(1, 1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0))) : null;
+
+    return {
+      preset: state.preset,
+      fieldComponent: state.fieldComponent,
+      viewMode: state.viewMode,
+      analysisSamples: sim.analysisSamples || 0,
+      dispersionEnabled: Boolean(state.materialDispersionEnabled),
+      dispersionModel: state.dispersionModel,
+      materialCells,
+      highIndexCells,
+      dispersiveCells,
+      drudeCells,
+      lossyCells,
+      pecCells,
+      tensorLikeCells,
+      totalEnergy,
+      materialEnergy,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      dispersiveEnergy,
+      dispersiveEnergyFraction: dispersiveEnergy / Math.max(1e-30, totalEnergy),
+      localizedDiskCells,
+      localizedDiskEnergy,
+      localizedNearEnergy,
+      localizedNearToDiskRatio: localizedNearEnergy / Math.max(1e-30, localizedDiskEnergy),
+      dimerDisk1Cells,
+      dimerDisk2Cells,
+      dimerDiskEnergy,
+      dimerGapEnergy,
+      dimerGapToDiskRatio: dimerGapEnergy / Math.max(1e-30, dimerDiskEnergy),
+      metasurfaceMaterialCells,
+      metasurfaceBarCount: barHeights.length,
+      metasurfaceHeightSpanLambda: barHeightMax - barHeightMin,
+      absorberLossMin: Number.isFinite(absorberLossMin) ? absorberLossMin : 0,
+      absorberLossMax,
+      absorberLossGradient: Math.max(0, absorberLossMax - (Number.isFinite(absorberLossMin) ? absorberLossMin : 0)),
+      absorberPecBackplaneCells,
+      diagnosticSamples: sim.diagnosticSamples || 0,
+      reflectance: sim.diagnosticReflectance || 0,
+      transmittance: sim.diagnosticTransmittance || 0,
+      absorptionProxy,
+      hyperlens: analysis?.hyperlens ?? null,
+      enzCells,
+      enzEnergy,
+      enzEnergyFraction: enzEnergy / Math.max(1e-30, totalEnergy),
+      effectiveEpsMean: effectiveEpsCount > 0 ? effectiveEpsSum / effectiveEpsCount : null,
+      effectiveEpsAbsMean: effectiveEpsCount > 0 ? effectiveEpsAbsSum / effectiveEpsCount : null,
+    };
+  });
+}
+
 async function layeredOpticsMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
@@ -2039,6 +2241,137 @@ async function runSmokeCase(page, testCase) {
       if (Number.isFinite(minTransfer) && metrics.imageTransfer < minTransfer) {
         status.failures.push(`superlens image transfer ${metrics.imageTransfer} below ${minTransfer}`);
       }
+    }
+  }
+  if (testCase.acceptance?.metamaterialCheck) {
+    status.metamaterial = await metamaterialMetrics(page);
+    const metrics = status.metamaterial;
+    const expectedFieldComponent = testCase.acceptance?.fieldComponent;
+    const expectedDispersionModel = testCase.acceptance?.dispersionModel;
+    const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const minDispersiveCells = Number(testCase.acceptance?.dispersiveCellsMin);
+    const minDrudeCells = Number(testCase.acceptance?.drudeCellsMin);
+    const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const minPecCells = Number(testCase.acceptance?.pecCellsMin);
+    const minTensorCells = Number(testCase.acceptance?.tensorLikeCellsMin);
+    const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minDispersiveFraction = Number(testCase.acceptance?.dispersiveEnergyFractionMin);
+    const minLocalizedDiskCells = Number(testCase.acceptance?.localizedDiskCellsMin);
+    const minLocalizedNearToDisk = Number(testCase.acceptance?.localizedNearToDiskRatioMin);
+    const minDimerDiskCells = Number(testCase.acceptance?.dimerDiskCellsMin);
+    const minDimerGapEnergy = Number(testCase.acceptance?.dimerGapEnergyMin);
+    const minDimerGapRatio = Number(testCase.acceptance?.dimerGapToDiskRatioMin);
+    const minBars = Number(testCase.acceptance?.metasurfaceBarCountMin);
+    const minHeightSpan = Number(testCase.acceptance?.metasurfaceHeightSpanLambdaMin);
+    const minAbsorberGradient = Number(testCase.acceptance?.absorberLossGradientMin);
+    const minBackplaneCells = Number(testCase.acceptance?.absorberPecBackplaneCellsMin);
+    const minDiagnosticSamples = Number(testCase.acceptance?.minDiagnosticSamples);
+    const minAbsorption = Number(testCase.acceptance?.absorptionProxyMin);
+    const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minHyperlensTransfer = Number(testCase.acceptance?.hyperlensTransferMin);
+    const minHyperlensMtfValid = Number(testCase.acceptance?.hyperlensMtfValidCountMin);
+    const minHyperlensBandwidth = Number(testCase.acceptance?.hyperlensBandwidthOrderMin);
+    const minEnzCells = Number(testCase.acceptance?.enzCellsMin);
+    const maxEffectiveAbsEps = Number(testCase.acceptance?.effectiveEpsAbsMeanMax);
+    const minEnzEnergyFraction = Number(testCase.acceptance?.enzEnergyFractionMin);
+    if (expectedFieldComponent && metrics.fieldComponent !== expectedFieldComponent) {
+      status.failures.push(`expected ${expectedFieldComponent} field component, got ${metrics.fieldComponent}`);
+    }
+    if (testCase.acceptance?.dispersionEnabled && !metrics.dispersionEnabled) {
+      status.failures.push("dispersion is not enabled for metamaterial/plasmonic scene");
+    }
+    if (expectedDispersionModel && metrics.dispersionModel !== expectedDispersionModel) {
+      status.failures.push(`expected ${expectedDispersionModel} dispersion model, got ${metrics.dispersionModel}`);
+    }
+    if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) {
+      status.failures.push(`metamaterial cells ${metrics.materialCells} below ${minMaterialCells}`);
+    }
+    if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
+      status.failures.push(`high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    }
+    if (Number.isFinite(minDispersiveCells) && metrics.dispersiveCells < minDispersiveCells) {
+      status.failures.push(`dispersive cells ${metrics.dispersiveCells} below ${minDispersiveCells}`);
+    }
+    if (Number.isFinite(minDrudeCells) && metrics.drudeCells < minDrudeCells) {
+      status.failures.push(`Drude cells ${metrics.drudeCells} below ${minDrudeCells}`);
+    }
+    if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) {
+      status.failures.push(`lossy cells ${metrics.lossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(minPecCells) && metrics.pecCells < minPecCells) {
+      status.failures.push(`PEC cells ${metrics.pecCells} below ${minPecCells}`);
+    }
+    if (Number.isFinite(minTensorCells) && metrics.tensorLikeCells < minTensorCells) {
+      status.failures.push(`tensor-like cells ${metrics.tensorLikeCells} below ${minTensorCells}`);
+    }
+    if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) {
+      status.failures.push(`material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
+    }
+    if (Number.isFinite(minDispersiveFraction) && metrics.dispersiveEnergyFraction < minDispersiveFraction) {
+      status.failures.push(`dispersive energy fraction ${metrics.dispersiveEnergyFraction} below ${minDispersiveFraction}`);
+    }
+    if (Number.isFinite(minLocalizedDiskCells) && metrics.localizedDiskCells < minLocalizedDiskCells) {
+      status.failures.push(`localized-plasmon disk cells ${metrics.localizedDiskCells} below ${minLocalizedDiskCells}`);
+    }
+    if (Number.isFinite(minLocalizedNearToDisk) && metrics.localizedNearToDiskRatio < minLocalizedNearToDisk) {
+      status.failures.push(`localized-plasmon near/disk energy ratio ${metrics.localizedNearToDiskRatio} below ${minLocalizedNearToDisk}`);
+    }
+    if (
+      Number.isFinite(minDimerDiskCells) &&
+      (metrics.dimerDisk1Cells < minDimerDiskCells || metrics.dimerDisk2Cells < minDimerDiskCells)
+    ) {
+      status.failures.push(`dimer disk cells ${metrics.dimerDisk1Cells}/${metrics.dimerDisk2Cells} below ${minDimerDiskCells}`);
+    }
+    if (Number.isFinite(minDimerGapEnergy) && metrics.dimerGapEnergy < minDimerGapEnergy) {
+      status.failures.push(`dimer gap energy ${metrics.dimerGapEnergy} below ${minDimerGapEnergy}`);
+    }
+    if (Number.isFinite(minDimerGapRatio) && metrics.dimerGapToDiskRatio < minDimerGapRatio) {
+      status.failures.push(`dimer gap/disk energy ratio ${metrics.dimerGapToDiskRatio} below ${minDimerGapRatio}`);
+    }
+    if (Number.isFinite(minBars) && metrics.metasurfaceBarCount < minBars) {
+      status.failures.push(`metasurface bar count ${metrics.metasurfaceBarCount} below ${minBars}`);
+    }
+    if (Number.isFinite(minHeightSpan) && metrics.metasurfaceHeightSpanLambda < minHeightSpan) {
+      status.failures.push(`metasurface height span ${metrics.metasurfaceHeightSpanLambda} below ${minHeightSpan}`);
+    }
+    if (Number.isFinite(minAbsorberGradient) && metrics.absorberLossGradient < minAbsorberGradient) {
+      status.failures.push(`absorber loss gradient ${metrics.absorberLossGradient} below ${minAbsorberGradient}`);
+    }
+    if (Number.isFinite(minBackplaneCells) && metrics.absorberPecBackplaneCells < minBackplaneCells) {
+      status.failures.push(`absorber PEC backplane cells ${metrics.absorberPecBackplaneCells} below ${minBackplaneCells}`);
+    }
+    if (Number.isFinite(minDiagnosticSamples) && metrics.diagnosticSamples < minDiagnosticSamples) {
+      status.failures.push(`metamaterial diagnostics have ${metrics.diagnosticSamples} samples, expected at least ${minDiagnosticSamples}`);
+    }
+    if (Number.isFinite(minAbsorption) && !(Number.isFinite(metrics.absorptionProxy) && metrics.absorptionProxy >= minAbsorption)) {
+      status.failures.push(`absorber proxy ${metrics.absorptionProxy} below ${minAbsorption}`);
+    }
+    if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
+      status.failures.push(`metamaterial analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
+    }
+    if (testCase.acceptance?.hyperlensRequired && !metrics.hyperlens) {
+      status.failures.push("hyperlens reduced analysis is missing");
+    }
+    if (metrics.hyperlens) {
+      if (Number.isFinite(minHyperlensTransfer) && metrics.hyperlens.transfer < minHyperlensTransfer) {
+        status.failures.push(`hyperlens transfer ${metrics.hyperlens.transfer} below ${minHyperlensTransfer}`);
+      }
+      if (Number.isFinite(minHyperlensMtfValid) && metrics.hyperlens.mtfValidCount < minHyperlensMtfValid) {
+        status.failures.push(`hyperlens MTF valid count ${metrics.hyperlens.mtfValidCount} below ${minHyperlensMtfValid}`);
+      }
+      if (Number.isFinite(minHyperlensBandwidth) && metrics.hyperlens.mtfBandwidthOrder < minHyperlensBandwidth) {
+        status.failures.push(`hyperlens MTF bandwidth order ${metrics.hyperlens.mtfBandwidthOrder} below ${minHyperlensBandwidth}`);
+      }
+    }
+    if (Number.isFinite(minEnzCells) && metrics.enzCells < minEnzCells) {
+      status.failures.push(`ENZ slab cells ${metrics.enzCells} below ${minEnzCells}`);
+    }
+    if (Number.isFinite(maxEffectiveAbsEps) && !(Number.isFinite(metrics.effectiveEpsAbsMean) && metrics.effectiveEpsAbsMean < maxEffectiveAbsEps)) {
+      status.failures.push(`effective |epsilon| mean ${metrics.effectiveEpsAbsMean} exceeds ${maxEffectiveAbsEps}`);
+    }
+    if (Number.isFinite(minEnzEnergyFraction) && metrics.enzEnergyFraction < minEnzEnergyFraction) {
+      status.failures.push(`ENZ slab energy fraction ${metrics.enzEnergyFraction} below ${minEnzEnergyFraction}`);
     }
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {

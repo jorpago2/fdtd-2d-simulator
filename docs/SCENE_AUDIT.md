@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-04T17:28:45.943Z
-Git commit: 3116682+working-tree
+Generated: 2026-07-04T17:47:38.068Z
+Git commit: 1847641+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,8 +9,8 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 53 | Contract, runtime smoke, and validation coverage are acceptable. |
-| VALIDATION_GAP | 60 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
+| PASS | 58 | Contract, runtime smoke, and validation coverage are acceptable. |
+| VALIDATION_GAP | 55 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
 | WARN | 28 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
@@ -125,14 +125,14 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 100 | `topologyDefect` Topology with strong defect | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.39e-8 | topology_defect_valley_channel:P1/physics | OK |
 | 101 | `sppInterface` SPP metal-dielectric interface | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material | WASM CPML+ADE, 24 steps, E=3.61e-8 | spp_interface_surface_localization:P1/physics | OK |
 | 102 | `sppGrating` SPP grating coupler | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=1.19e-11 | spp_grating_surface_coupling:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
-| 103 | `localizedPlasmon` Localized plasmon disk | 10. Plasmonics and metamaterials | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | none | no validation-matrix case covers this preset |
-| 104 | `plasmonicDimer` Plasmonic dimer | 10. Plasmonics and metamaterials | VALIDATION_GAP | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.68e-5 | none | no validation-matrix case covers this preset |
-| 105 | `metasurfacePhaseBars` Phase-gradient metasurface | 10. Plasmonics and metamaterials | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | none | no validation-matrix case covers this preset |
-| 106 | `perfectAbsorber` Perfect absorber | 10. Plasmonics and metamaterials | VALIDATION_GAP | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.42e-13 | none | no validation-matrix case covers this preset |
+| 103 | `localizedPlasmon` Localized plasmon disk | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | localized_plasmon_drude_disk:P1/physics | OK |
+| 104 | `plasmonicDimer` Plasmonic dimer | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.68e-5 | plasmonic_dimer_hot_gap:P1/physics | OK |
+| 105 | `metasurfacePhaseBars` Phase-gradient metasurface | 10. Plasmonics and metamaterials | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | metasurface_phase_bar_gradient:P1/physics | OK |
+| 106 | `perfectAbsorber` Perfect absorber | 10. Plasmonics and metamaterials | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.42e-13 | perfect_absorber_lossy_backed_sheet:P1/physics | OK |
 | 107 | `negativeIndexSlab` Negative-index slab | 10. Plasmonics and metamaterials | PASS | dispersive material, frequency sweep | WASM CPML+ADE+TFSF, 24 steps, E=6.09e-8 | negative_index_observable_finite:P1/physics, negative_index_quantitative_gap:P1/physics | OK |
 | 108 | `superlensSlab` Drude superlens slab | 10. Plasmonics and metamaterials | WARN | dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=4.16e-7 | superlens_image_proxy_finite:P1/physics | Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation. |
-| 109 | `hyperlens` Hyperlens | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=1.04e-9 | hyperlens_mtf_quantitative_gap:P1/physics | Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation.; validation-matrix entry is tracking-only; no executable browser or script case covers this preset |
-| 110 | `enzEmitter` Dipole near ENZ slab | 10. Plasmonics and metamaterials | VALIDATION_GAP | dispersive material | WASM CPML+ADE, 24 steps, E=3.40e-5 | none | no validation-matrix case covers this preset |
+| 109 | `hyperlens` Hyperlens | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=1.04e-9 | hyperlens_reduced_mtf_proxy:P1/physics, hyperlens_mtf_quantitative_gap:P1/physics | Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation. |
+| 110 | `enzEmitter` Dipole near ENZ slab | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE, 24 steps, E=3.40e-5 | enz_emitter_slab_overlap:P1/physics | OK |
 | 111 | `kerrSlab` Kerr nonlinear slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material | WASM CPML+Kerr+TFSF, 24 steps, E=1.30e-8 | none | no validation-matrix case covers this preset |
 | 112 | `shgSlab` SHG χ² slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=8.91e-9 | none | no validation-matrix case covers this preset |
 | 113 | `thgSlab` THG χ³ slab | 11. Nonlinear and active media | VALIDATION_GAP | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=1.07e-8 | none | no validation-matrix case covers this preset |

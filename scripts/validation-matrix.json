@@ -1450,6 +1450,97 @@
       "rationale": "Guards the plasmonic grating contract after the SPP scene fix: a shallow periodic Drude grating should remain present and surface-coupled."
     },
     {
+      "id": "localized_plasmon_drude_disk",
+      "priority": "P1",
+      "preset": "localizedPlasmon",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "a Drude disk is present at the expected localized-plasmon position",
+        "field energy overlaps the dispersive nanodisk",
+        "near-field energy around the disk remains finite"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "dispersionEnabled": true,
+        "dispersionModel": "drude",
+        "dispersiveCellsMin": 100,
+        "drudeCellsMin": 100,
+        "localizedDiskCellsMin": 100,
+        "localizedNearToDiskRatioMin": 1
+      },
+      "rationale": "Checks the localized plasmon scene as an actual Drude nanodisk with finite field coupling."
+    },
+    {
+      "id": "plasmonic_dimer_hot_gap",
+      "priority": "P1",
+      "preset": "plasmonicDimer",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "two Drude disks are present",
+        "the narrow gap between disks is geometrically open",
+        "the gap stores finite field energy during the run"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "dispersionEnabled": true,
+        "dispersionModel": "drude",
+        "dispersiveCellsMin": 120,
+        "drudeCellsMin": 120,
+        "dimerDiskCellsMin": 55,
+        "dimerGapEnergyMin": 1e-22,
+        "dimerGapToDiskRatioMin": 1e-12
+      },
+      "rationale": "Guards the plasmonic dimer as a two-particle hot-gap example instead of a single merged object."
+    },
+    {
+      "id": "metasurface_phase_bar_gradient",
+      "priority": "P1",
+      "preset": "metasurfacePhaseBars",
+      "profile": "physics",
+      "steps": 2400,
+      "browserSmoke": true,
+      "checks": [
+        "the dielectric bar array is present",
+        "bar heights span a clear phase-gradient range",
+        "field energy overlaps the metasurface column"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "highIndexCellsMin": 80,
+        "metasurfaceBarCountMin": 13,
+        "metasurfaceHeightSpanLambdaMin": 0.15,
+        "materialEnergyFractionMin": 0.001
+      },
+      "rationale": "Checks the metasurface phase-gradient teaching scene as a real graded bar array."
+    },
+    {
+      "id": "perfect_absorber_lossy_backed_sheet",
+      "priority": "P1",
+      "preset": "perfectAbsorber",
+      "profile": "physics",
+      "steps": 1800,
+      "browserSmoke": true,
+      "checks": [
+        "a graded lossy sheet is backed by a PEC layer",
+        "line diagnostics collect finite samples",
+        "the reduced absorption proxy is finite"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "requiresAnalysis": true,
+        "lossyCellsMin": 1200,
+        "absorberLossGradientMin": 0.2,
+        "absorberPecBackplaneCellsMin": 200,
+        "minDiagnosticSamples": 24,
+        "absorptionProxyMin": 0.01
+      },
+      "rationale": "Makes the perfect-absorber scene executable as a lossy-sheet plus backplane sanity check, not a visual-only stack."
+    },
+    {
       "id": "negative_index_observable_finite",
       "priority": "P1",
       "preset": "negativeIndexSlab",
@@ -1488,6 +1579,56 @@
         "imageTransferMin": 1e-8
       },
       "rationale": "Adds a concrete image-transfer sanity check for the qualitative superlens analogue."
+    },
+    {
+      "id": "hyperlens_reduced_mtf_proxy",
+      "priority": "P1",
+      "preset": "hyperlens",
+      "profile": "physics",
+      "steps": 1400,
+      "browserSmoke": true,
+      "checks": [
+        "the Hz solver and Drude tensor route are active",
+        "the annular hyperlens contains tensor-like dispersive material",
+        "the reduced ring-sampling MTF proxy produces finite samples"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "requiresAnalysis": true,
+        "fieldComponent": "hz",
+        "dispersionEnabled": true,
+        "dispersionModel": "drude",
+        "dispersiveCellsMin": 500,
+        "tensorLikeCellsMin": 500,
+        "minAnalysisSamples": 8,
+        "hyperlensRequired": true,
+        "hyperlensTransferMin": 1e-12,
+        "hyperlensMtfValidCountMin": 4
+      },
+      "rationale": "Turns the hyperlens tracking gap into an executable reduced-MTF proxy while preserving the caveat that it is a 2D analogue."
+    },
+    {
+      "id": "enz_emitter_slab_overlap",
+      "priority": "P1",
+      "preset": "enzEmitter",
+      "profile": "physics",
+      "steps": 1200,
+      "browserSmoke": true,
+      "checks": [
+        "a Drude ENZ slab is present near the dipole",
+        "the diagnostic effective permittivity is near-zero in magnitude",
+        "field energy overlaps the ENZ material region"
+      ],
+      "acceptance": {
+        "metamaterialCheck": true,
+        "dispersionEnabled": true,
+        "dispersionModel": "drude",
+        "enzCellsMin": 800,
+        "drudeCellsMin": 800,
+        "effectiveEpsAbsMeanMax": 0.8,
+        "enzEnergyFractionMin": 0.001
+      },
+      "rationale": "Checks the ENZ emitter scene as a real near-dipole dispersive slab with finite overlap."
     },
     {
       "id": "json_reproducibility",
