@@ -1911,7 +1911,7 @@
       "checks": [
         "straight bus guide is present",
         "side stub high-index branch is present",
-        "stub has no PEC short at its end"
+        "the open stub stores measurable field energy and has no PEC short"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -1920,7 +1920,9 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "guideBandHighIndexCellsMin": 900,
-        "stubHighIndexCellsMin": 80,
+        "stubHighIndexCellsMin": 100,
+        "stubEnergyFractionMin": 0.0003,
+        "stubToGuideEnergyRatioMin": 0.0003,
         "stubPecCellsMax": 0
       },
       "rationale": "Checks the stub resonator as a side-coupled dielectric branch rather than a straight guide."
@@ -1935,7 +1937,7 @@
       "checks": [
         "bus guide is present",
         "racetrack annulus cells are present",
-        "analysis trace fills during modal excitation"
+        "analysis trace fills and the racetrack stores measurable field energy"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -1946,6 +1948,8 @@
         "sourceCountMax": 1,
         "racetrackRingCellsMin": 180,
         "busHighIndexCellsMin": 80,
+        "racetrackRingEnergyFractionMin": 0.005,
+        "ringdownQMin": 100,
         "minAnalysisSamples": 64
       },
       "rationale": "Checks the racetrack example as an elongated side-coupled resonator with analysis enabled."
@@ -2007,7 +2011,7 @@
       "checks": [
         "bus guide is present",
         "quarter-wave dielectric stub is present",
-        "stub terminates in a PEC short"
+        "stub stores measurable field energy and terminates in a PEC short"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -2018,8 +2022,11 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "guideBandHighIndexCellsMin": 900,
-        "stubHighIndexCellsMin": 60,
-        "stubPecCellsMin": 4,
+        "stubHighIndexCellsMin": 90,
+        "stubEnergyFractionMin": 0.005,
+        "stubToGuideEnergyRatioMin": 0.005,
+        "stubPecCellsMin": 12,
+        "ringdownQMin": 100,
         "minAnalysisSamples": 64
       },
       "rationale": "Checks the quarter-wave cavity as a side stub with a shorted end, distinct from the open dielectric stub."
@@ -2366,16 +2373,16 @@
       "browserSmoke": true,
       "checks": [
         "scene uses Hz polarization and Drude metal",
-        "grating teeth are present above the base metal interface",
+        "several weak grating teeth are present above the base metal interface",
         "surface band around the grating/interface carries measurable energy"
       ],
       "acceptance": {
-        "surfaceFractionMin": 0.3,
-        "surfaceToAirRatioMin": 0.6,
+        "surfaceFractionMin": 0.4,
+        "surfaceToAirRatioMin": 0.7,
         "surfaceToBulkRatioMin": 0.35,
-        "gratingCellsAboveInterfaceMin": 20
+        "gratingCellsAboveInterfaceMin": 100
       },
-      "rationale": "Checks that the shallow Drude grating is present and launches measurable interface-localized Hz energy under oblique illumination."
+      "rationale": "Checks that the distributed shallow Drude grating is present and launches measurable interface-localized Hz energy under oblique illumination."
     },
     {
       "id": "localized_plasmon_drude_disk",
@@ -2426,13 +2433,14 @@
         "sourceShape": "inPlaneElectricDipole",
         "dispersionEnabled": true,
         "dispersionModel": "drude",
-        "dispersiveCellsMin": 70,
-        "drudeCellsMin": 70,
-        "dimerDiskCellsMin": 35,
-        "dimerGapCellsMin": 18,
+        "dispersiveCellsMin": 150,
+        "drudeCellsMin": 150,
+        "dimerDiskCellsMin": 70,
+        "dimerGapCellsMin": 16,
         "dimerGapEnergyMin": 1e-12,
-        "dimerGapPeakToBackgroundRatioMin": 4,
-        "dimerGapMeanToBackgroundRatioMin": 1.05
+        "dimerGapToDiskRatioMin": 0.25,
+        "dimerGapPeakToBackgroundRatioMin": 12,
+        "dimerGapMeanToBackgroundRatioMin": 3
       },
       "rationale": "Guards the plasmonic dimer as a dipole-fed hot-gap nanoantenna example instead of two dispersive disks with merely nonzero field in the gap."
     },
@@ -2523,10 +2531,10 @@
         "doubleNegativeCellsMin": 100,
         "slabBeamEnergyMin": 0.01,
         "slabPhaseEnergyMin": 0.01,
-        "imageTransferMin": 0.001,
-        "imageResolutionRatioMax": 0.9
+        "imageTransferMin": 0.01,
+        "imageResolutionRatioMax": 0.85
       },
-      "rationale": "Checks a finite double-negative slab with point-source excitation, nonzero image-plane transfer, and a narrower image-plane width under the current 2D ADE model."
+      "rationale": "Checks a finite low-loss double-negative slab with point-source excitation, measurable image-plane transfer, and a narrower image-plane width under the current 2D ADE model."
     },
     {
       "id": "hyperbolic_annular_mtf_transfer",
@@ -3312,15 +3320,15 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 4500,
-        "modulationDepthMin": 0.12,
+        "modulatedCellsMin": 6500,
+        "modulationDepthMin": 0.16,
         "modulationFrequencyMin": 0.01,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-10,
-        "centralRegionEnergyFractionMin": 1e-8
+        "floquetReflectedSidebandPowerMin": 5e-8,
+        "centralRegionEnergyFractionMin": 0.05
       },
       "rationale": "Checks the temporal slab as a finite time-refraction region, not merely a passive dielectric slab."
     },
@@ -3341,15 +3349,16 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 1500,
-        "modulationDepthMin": 0.16,
+        "modulatedCellsMin": 2500,
+        "modulationDepthMin": 0.22,
         "modulationFrequencyMin": 0.01,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-7,
-        "centralRegionEnergyFractionMin": 1e-8
+        "floquetReflectedSidebandPowerMin": 1e-5,
+        "centralRegionEnergyFractionMin": 0.08,
+        "modulatedEnergyFractionMin": 0.08
       },
       "rationale": "Turns the temporal epsilon-modulation scene into an executable Floquet sideband diagnostic while retaining calibrated-matrix reference tracking."
     },
@@ -3401,18 +3410,18 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 300,
-        "highIndexCellsMin": 300,
-        "modulationDepthMin": 0.12,
+        "modulatedCellsMin": 450,
+        "highIndexCellsMin": 450,
+        "modulationDepthMin": 0.16,
         "modulationFrequencyMin": 0.012,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-8,
+        "floquetReflectedSidebandPowerMin": 1e-7,
         "guideEnergyFractionMin": 0.01,
-        "activeSectionEnergyFractionMin": 1e-8,
-        "outputGuideEnergyFractionMin": 1e-9
+        "activeSectionEnergyFractionMin": 0.15,
+        "outputGuideEnergyFractionMin": 0.00005
       },
       "rationale": "Checks that the modulated-guide example is a real guided active-section workflow."
     },
@@ -3434,17 +3443,17 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 500,
-        "modulationDepthMin": 0.18,
+        "modulatedCellsMin": 700,
+        "modulationDepthMin": 0.22,
         "modulationFrequencyMin": 0.012,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.55,
-        "modulationPhaseSpreadRadMin": 10,
+        "modulationPhaseSpreadRadMin": 20,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-6,
+        "floquetReflectedSidebandPowerMin": 1e-4,
         "guideEnergyFractionMin": 0.01,
-        "activeSectionEnergyFractionMin": 1e-8
+        "activeSectionEnergyFractionMin": 0.1
       },
       "rationale": "Guards the traveling-modulation scene against accidentally becoming a uniform temporal modulation."
     },
@@ -3466,18 +3475,19 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 350,
-        "lossyCellsMin": 40,
-        "modulationDepthMin": 0.14,
+        "modulatedCellsMin": 550,
+        "lossyCellsMin": 550,
+        "modulationDepthMin": 0.18,
         "modulationFrequencyMin": 0.013,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.55,
-        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseSpreadRadMin": 16,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-9,
+        "floquetReflectedSidebandPowerMin": 1e-8,
         "guideEnergyFractionMin": 0.01,
-        "outputGuideEnergyFractionMin": 1e-9
+        "activeSectionEnergyFractionMin": 0.1,
+        "outputGuideEnergyFractionMin": 0.00005
       },
       "rationale": "Checks the scene as a traveling-modulation guide with a lossy asymmetric section, not as a calibrated isolation claim."
     },
@@ -3498,17 +3508,17 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 150,
-        "highIndexCellsMin": 150,
-        "modulationDepthMin": 0.08,
+        "modulatedCellsMin": 250,
+        "highIndexCellsMin": 250,
+        "modulationDepthMin": 0.12,
         "modulationFrequencyMin": 0.009,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.95,
         "modulationPhaseSpreadRadMax": 0.05,
-        "floquetReflectedSidebandPowerMin": 1e-8,
+        "floquetReflectedSidebandPowerMin": 1e-7,
         "guideEnergyFractionMin": 0.01,
-        "ringEnergyFractionMin": 1e-9
+        "ringEnergyFractionMin": 0.001
       },
       "rationale": "Checks the modulated-ring scene as a genuine modulated resonator coupled to a guide."
     },
@@ -3529,17 +3539,17 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 200,
-        "highIndexCellsMin": 200,
-        "modulationDepthMin": 0.09,
+        "modulatedCellsMin": 300,
+        "highIndexCellsMin": 300,
+        "modulationDepthMin": 0.13,
         "modulationFrequencyMin": 0.013,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.8,
         "modulationPhaseSpreadRadMin": 3.5,
-        "floquetReflectedSidebandPowerMin": 1e-9,
+        "floquetReflectedSidebandPowerMin": 2e-8,
         "guideEnergyFractionMin": 0.01,
-        "resonatorBandEnergyFractionMin": 1e-9,
+        "resonatorBandEnergyFractionMin": 0.15,
         "resonatorPeakCountMin": 3
       },
       "rationale": "Checks the Floquet-resonator example as a staggered-phase coupled-resonator chain with finite sideband diagnostics."
@@ -3563,15 +3573,15 @@
         "floquetRequired": true,
         "modulatedCellsMin": 150,
         "highIndexCellsMin": 150,
-        "modulationDepthMin": 0.08,
+        "modulationDepthMin": 0.12,
         "modulationFrequencyMin": 0.016,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.75,
         "modulationPhaseSpreadRadMin": 4.5,
-        "floquetReflectedSidebandPowerMin": 1e-9,
+        "floquetReflectedSidebandPowerMin": 1e-8,
         "guideEnergyFractionMin": 0.01,
-        "resonatorBandEnergyFractionMin": 1e-9,
+        "resonatorBandEnergyFractionMin": 0.15,
         "resonatorPeakCountMin": 4
       },
       "rationale": "Checks the five-phase modulated resonator chain with finite sideband diagnostics."
@@ -3810,14 +3820,15 @@
         "temporalModulationEnabled": true,
         "coupledWorkflowRequired": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 100,
+        "modulatedCellsMin": 280,
+        "lossyCellsMin": 280,
         "highIndexCellsMin": 1000,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
-        "floquetReflectedSidebandPowerMin": 1e-10,
-        "coupledActiveMaterialFractionMin": 1e-9,
-        "coupledMaterialEnergyFractionMin": 0.01
+        "floquetReflectedSidebandPowerMin": 1e-6,
+        "coupledActiveMaterialFractionMin": 0.2,
+        "coupledMaterialEnergyFractionMin": 0.3
       },
       "rationale": "Checks the topology + temporal-modulation workflow as a structured guide with a real uniform modulated section."
     },
@@ -3839,16 +3850,16 @@
         "temporalModulationEnabled": true,
         "coupledWorkflowRequired": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 200,
+        "modulatedCellsMin": 420,
         "highIndexCellsMin": 1000,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.6,
-        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseSpreadRadMin": 12,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-10,
-        "coupledActiveMaterialFractionMin": 1e-8,
-        "coupledMaterialEnergyFractionMin": 0.01
+        "floquetReflectedSidebandPowerMin": 1e-6,
+        "coupledActiveMaterialFractionMin": 0.25,
+        "coupledMaterialEnergyFractionMin": 0.3
       },
       "rationale": "Checks the Valley-Hall scene as a traveling-modulated guide segment without claiming calibrated isolation."
     },
@@ -3869,16 +3880,16 @@
         "requiresAnalysis": true,
         "temporalModulationEnabled": true,
         "floquetRequired": true,
-        "modulatedCellsMin": 4000,
-        "materialCellsMin": 4000,
-        "highIndexCellsMin": 1000,
+        "modulatedCellsMin": 6000,
+        "materialCellsMin": 6000,
+        "highIndexCellsMin": 2500,
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.6,
-        "modulationPhaseSpreadRadMin": 8,
+        "modulationPhaseSpreadRadMin": 16,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetReflectedSidebandPowerMin": 1e-8,
-        "modulatedEnergyFractionMin": 1e-8
+        "floquetReflectedSidebandPowerMin": 5e-5,
+        "modulatedEnergyFractionMin": 0.1
       },
       "rationale": "Checks the traveling-modulated stripe lattice with finite active-material and sideband diagnostics."
     },

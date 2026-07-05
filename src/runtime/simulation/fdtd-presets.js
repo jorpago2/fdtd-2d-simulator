@@ -293,10 +293,14 @@ Object.assign(FDTDSim.prototype, {
     const negativeTarget = -1;
     const negativeGamma = 0.026;
     const negativeOmegaP = Math.sqrt(Math.max(0, (1 - negativeTarget) * (sourceOmega * sourceOmega + negativeGamma * negativeGamma)));
+    const negativeLensGamma = 0.014;
+    const negativeLensOmegaP = Math.sqrt(Math.max(0, (1 - negativeTarget) * (sourceOmega * sourceOmega + negativeLensGamma * negativeLensGamma)));
     const hyperbolicTargetY = -2;
     const hyperbolicGamma = 0.026;
     const hyperbolicOmegaP = Math.sqrt(Math.max(0, (1 - hyperbolicTargetY) * (sourceOmega * sourceOmega + hyperbolicGamma * hyperbolicGamma)));
     const dimerGamma = 0.0015;
+    // In the 2D in-plane cylinder limit the dipolar plasmon is closer to eps=-1 than to the 3D sphere eps=-2 condition.
+    const dimerTargetEpsilon = -1.15;
     const sourceX = (value) => clamp(value, minSourceXLambda(), maxSourceXLambda());
     const sourceY = (value) => clamp(value, minSourceYLambda(), maxSourceYLambda());
     const centeredInterfaceBeam = (angleDeg, distanceLambda = 3.0, widthLambda = 0.8) => {
@@ -359,6 +363,23 @@ Object.assign(FDTDSim.prototype, {
         muOmegaP: negativeOmegaP,
         muGamma: negativeGamma,
       },
+      negativeLens: {
+        material: 4,
+        eps: 1,
+        epsY: 1,
+        loss: 0.004,
+        lossY: 0.004,
+        mu: 1,
+        muY: 1,
+        muLoss: 0.004,
+        muLossY: 0.004,
+        dispersion: "drude",
+        omegaP: negativeLensOmegaP,
+        gamma: negativeLensGamma,
+        muDispersion: "drude",
+        muOmegaP: negativeLensOmegaP,
+        muGamma: negativeLensGamma,
+      },
       metalLoss: { material: 4, eps: -12, loss: 4 },
       drudeMetal: { material: 4, eps: 1, loss: 0.002, dispersion: "drude", omegaP: 0.28, gamma: 0.018 },
       plasmonicMetal: { material: 4, eps: 1, loss: 0.004, dispersion: "drude", omegaP: 0.34, gamma: 0.026 },
@@ -368,7 +389,7 @@ Object.assign(FDTDSim.prototype, {
         eps: 1,
         loss: 0.0015,
         dispersion: "drude",
-        omegaP: Math.sqrt(Math.max(0, 3.0 * (sourceOmega * sourceOmega + dimerGamma * dimerGamma))),
+        omegaP: Math.sqrt(Math.max(0, (1 - dimerTargetEpsilon) * (sourceOmega * sourceOmega + dimerGamma * dimerGamma))),
         gamma: dimerGamma,
       },
       lorentz: {
@@ -1078,8 +1099,8 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "stubResonator":
         guide(midYLambda, 0.25, mat.n34);
-        rectL(midXLambda - 0.12, midYLambda - 1.05, 0.25, 1.05, mat.n34);
-        modalGuideSource(midYLambda, { widthLambda: 1.05 });
+        rectL(midXLambda - 0.16, midYLambda - 1.08, 0.32, 1.08, mat.n34);
+        modalGuideSource(midYLambda, { xLambda: sourceX(midXLambda - 2.25), widthLambda: 1.05, frequency: 0.013, amplitude: 0.56 });
         break;
       case "fabryPerot":
         braggLayers(midXLambda - 2.0, 4, 0, domainYLambda);
@@ -1109,9 +1130,9 @@ Object.assign(FDTDSim.prototype, {
       case "racetrackResonator":
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        guide(midYLambda + 1.05, 0.24, mat.n34, 0.6, domainXLambda - 0.6);
+        guide(midYLambda + 0.98, 0.26, mat.n34, 0.6, domainXLambda - 0.6);
         ringL(midXLambda + 0.45, midYLambda, 1.55, 0.82, 1.26, 0.55, mat.n34);
-        modalGuideSource(midYLambda + 1.05, { widthLambda: 1.05 });
+        modalGuideSource(midYLambda + 0.98, { xLambda: sourceX(midXLambda - 2.35), widthLambda: 1.05, frequency: 0.013, amplitude: 0.52 });
         break;
       case "dielectricCavity":
         ellipseL(midXLambda, midYLambda, 0.42, 0.42, mat.n34);
@@ -1125,9 +1146,9 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 2;
         guide(midYLambda, 0.24, mat.n34, 0.55, domainXLambda - 0.55);
-        rectL(midXLambda - 0.1, midYLambda - 0.92, 0.22, 0.92, mat.n34);
-        rectL(midXLambda - 0.16, midYLambda - 0.98, 0.34, 0.08, mat.pec);
-        modalGuideSource(midYLambda, { type: "gaussian", widthLambda: 1.05, amplitude: 0.72 });
+        rectL(midXLambda - 0.14, midYLambda - 0.96, 0.28, 0.96, mat.n34);
+        rectL(midXLambda - 0.2, midYLambda - 1.03, 0.4, 0.09, mat.pec);
+        modalGuideSource(midYLambda, { type: "gaussian", xLambda: sourceX(midXLambda - 2.35), widthLambda: 1.05, amplitude: 0.82, frequency: 0.013 });
         break;
       case "qRingdown":
         state.analysisEnabled = true;
@@ -1506,12 +1527,12 @@ Object.assign(FDTDSim.prototype, {
         const interfaceY = midYLambda + 0.55;
         rectL(0, interfaceY, domainXLambda, Math.max(0.1, domainYLambda - interfaceY), mat.plasmonicMetal);
         const pitch = 1.42;
-        const start = Math.max(1.2, midXLambda - 4.25);
-        for (let i = 0; i < 7; i += 1) {
+        const start = Math.max(2.9, midXLambda - 6.0);
+        for (let i = 0; i < 9; i += 1) {
           const x = start + i * pitch;
-          rectL(x, interfaceY - 0.13, 0.22, 0.13, mat.plasmonicMetal);
+          rectL(x, interfaceY - 0.13, 0.24, 0.13, mat.plasmonicMetal);
           if (i % 2 === 0) {
-            rectL(x + 0.22, interfaceY, 0.12, 0.11, mat.air);
+            rectL(x + 0.28, interfaceY, 0.12, 0.08, mat.air);
           }
         }
         setSources([
@@ -1519,9 +1540,9 @@ Object.assign(FDTDSim.prototype, {
             shape: "gaussianProfile",
             xLambda: sourceX(1.15),
             yLambda: sourceY(interfaceY - 0.9),
-            widthLambda: 0.75,
+            widthLambda: 1.05,
             angleDeg: 18,
-            amplitude: 0.42,
+            amplitude: 0.46,
           },
         ]);
         break;
@@ -1553,17 +1574,17 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionModel = "drude";
         state.dispersionOmegaP = mat.dimerPlasmonicMetal.omegaP;
         state.dispersionGamma = mat.dimerPlasmonicMetal.gamma;
-        ellipseL(midXLambda + 0.48, midYLambda - 0.31, 0.22, 0.22, mat.dimerPlasmonicMetal);
-        ellipseL(midXLambda + 0.48, midYLambda + 0.31, 0.22, 0.22, mat.dimerPlasmonicMetal);
+        ellipseL(midXLambda + 0.48, midYLambda - 0.31, 0.25, 0.25, mat.dimerPlasmonicMetal);
+        ellipseL(midXLambda + 0.48, midYLambda + 0.31, 0.25, 0.25, mat.dimerPlasmonicMetal);
         setSources([
           {
             type: "sine",
             shape: "inPlaneElectricDipole",
-            xLambda: sourceX(midXLambda + 0.28),
+            xLambda: sourceX(midXLambda + 0.3),
             yLambda: sourceY(midYLambda),
-            widthLambda: 0.22,
+            widthLambda: 0.12,
             angleDeg: 90,
-            amplitude: 0.22,
+            amplitude: 0.18,
           },
         ]);
         break;
@@ -1613,11 +1634,11 @@ Object.assign(FDTDSim.prototype, {
       case "superlensSlab":
         state.materialDispersionEnabled = true;
         state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.negativeDispersive.omegaP;
-        state.dispersionGamma = mat.negativeDispersive.gamma;
+        state.dispersionOmegaP = mat.negativeLens.omegaP;
+        state.dispersionGamma = mat.negativeLens.gamma;
         configureFrequencySweep(sourceFrequency * 0.75, sourceFrequency * 1.25, 9, 1200);
-        rectL(midXLambda - 0.25, 0.6, 0.5, domainYLambda - 1.2, mat.negativeDispersive);
-        setSources([{ shape: "point", xLambda: sourceX(midXLambda - 1.0), yLambda: sourceY(midYLambda), amplitude: 0.22 }]);
+        rectL(midXLambda - 0.25, 0.6, 0.5, domainYLambda - 1.2, mat.negativeLens);
+        setSources([{ shape: "point", xLambda: sourceX(midXLambda - 0.8), yLambda: sourceY(midYLambda), amplitude: 0.22 }]);
         break;
       case "hyperlens":
         state.fieldComponent = "hz";
@@ -1930,18 +1951,6 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "temporalSlab":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.14;
-        state.modulationFrequency = 0.012;
-        state.modulationPeriodLambda = 20;
-        state.modulationAngleDeg = 0;
-        state.modulationPhaseDeg = 0;
-        state.analysisEnabled = true;
-        state.analysisSampleEvery = 3;
-        rectL(midXLambda - 0.75, 0.55, 1.5, domainYLambda - 1.1, uniformTemporalMaterial({ ...mat.n15, loss: 0.001 }));
-        setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
-        break;
-      case "temporalModulation":
-        state.materialModulationEnabled = true;
         state.modulationDepth = 0.18;
         state.modulationFrequency = 0.012;
         state.modulationPeriodLambda = 20;
@@ -1949,7 +1958,19 @@ Object.assign(FDTDSim.prototype, {
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        rectL(midXLambda - 1.25, midYLambda - 1.0, 2.5, 2.0, uniformTemporalMaterial(mat.n15));
+        rectL(midXLambda - 1.1, 0.55, 2.2, domainYLambda - 1.1, uniformTemporalMaterial({ ...mat.n15, loss: 0.001 }));
+        setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
+        break;
+      case "temporalModulation":
+        state.materialModulationEnabled = true;
+        state.modulationDepth = 0.24;
+        state.modulationFrequency = 0.012;
+        state.modulationPeriodLambda = 20;
+        state.modulationAngleDeg = 0;
+        state.modulationPhaseDeg = 0;
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 3;
+        rectL(midXLambda - 1.7, midYLambda - 1.1, 3.4, 2.2, uniformTemporalMaterial(mat.n15));
         setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.4 }]);
         break;
       case "temporalCrystal":
@@ -1969,7 +1990,7 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "modulatedGuide":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.14;
+        state.modulationDepth = 0.18;
         state.modulationFrequency = 0.014;
         state.modulationPeriodLambda = 20;
         state.modulationAngleDeg = 0;
@@ -1977,12 +1998,12 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         guide(midYLambda, 0.34, mat.n15, 0.6, domainXLambda - 0.6);
-        guide(midYLambda, 0.34, uniformTemporalMaterial({ ...mat.n20, loss: 0.001 }), midXLambda - 1.25, midXLambda + 1.25);
+        guide(midYLambda, 0.34, uniformTemporalMaterial({ ...mat.n20, loss: 0.001 }), midXLambda - 1.8, midXLambda + 1.8);
         modalGuideSource(midYLambda, { type: "sine", widthLambda: 1.3, amplitude: 0.42 });
         break;
       case "travelingModulation":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.2;
+        state.modulationDepth = 0.24;
         state.modulationFrequency = 0.014;
         state.modulationPeriodLambda = 1.2;
         state.modulationAngleDeg = 0;
@@ -1990,14 +2011,14 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1000);
-        guide(midYLambda, 0.34, { ...mat.n15, modulated: true }, midXLambda - 2.0, midXLambda + 2.0);
-        gaussianGuideSource(midYLambda, { widthLambda: 0.32, amplitude: 0.4 });
+        guide(midYLambda, 0.36, { ...mat.n15, modulated: true }, midXLambda - 2.65, midXLambda + 2.65);
+        gaussianGuideSource(midYLambda, { widthLambda: 0.34, amplitude: 0.42 });
         break;
       case "temporalIsolator":
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.16;
+        state.modulationDepth = 0.2;
         state.modulationFrequency = 0.015;
         state.modulationPeriodLambda = 1.05;
         state.modulationAngleDeg = 0;
@@ -2006,47 +2027,47 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         guide(midYLambda, 0.32, mat.n15, 0.55, domainXLambda - 0.55);
-        guide(midYLambda, 0.32, { ...mat.n20, loss: 0.002, modulated: true }, midXLambda - 1.65, midXLambda + 1.65);
-        rectL(midXLambda + 2.1, midYLambda - 0.5, 0.16, 1.0, mat.lossyN15);
-        modalGuideSource(midYLambda, { widthLambda: 1.3, amplitude: 0.38 });
+        guide(midYLambda, 0.34, { ...mat.n20, loss: 0.002, modulated: true }, midXLambda - 2.1, midXLambda + 2.1);
+        rectL(midXLambda + 2.65, midYLambda - 0.52, 0.18, 1.04, mat.lossyN15);
+        modalGuideSource(midYLambda, { widthLambda: 1.3, amplitude: 0.42 });
         break;
       case "modulatedRing":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.1;
+        state.modulationDepth = 0.14;
         state.modulationFrequency = 0.011;
         state.modulationPeriodLambda = 20;
         state.modulationAngleDeg = 0;
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        guide(midYLambda + 0.54, 0.26, mat.n15, 0.6, domainXLambda - 0.6);
-        ringL(midXLambda + 0.2, midYLambda - 0.16, 0.62, 0.62, 0.43, 0.43, uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }));
-        modalGuideSource(midYLambda + 0.54, { type: "sine", widthLambda: 1.25, amplitude: 0.42 });
+        guide(midYLambda + 0.5, 0.28, mat.n15, 0.6, domainXLambda - 0.6);
+        ringL(midXLambda + 0.2, midYLambda - 0.16, 0.7, 0.7, 0.48, 0.48, uniformTemporalMaterial({ ...mat.n34, loss: 0.001 }));
+        modalGuideSource(midYLambda + 0.5, { type: "sine", widthLambda: 1.25, amplitude: 0.44 });
         break;
       case "floquetResonators":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.11;
+        state.modulationDepth = 0.15;
         state.modulationFrequency = 0.015;
         state.modulationPeriodLambda = 1.35;
         state.modulationAngleDeg = 0;
         state.modulationPhaseDeg = 0;
         state.analysisEnabled = true;
         state.analysisSampleEvery = 2;
-        guide(midYLambda + 0.42, 0.24, mat.n15, 0.65, domainXLambda - 0.65);
+        guide(midYLambda + 0.38, 0.26, mat.n15, 0.65, domainXLambda - 0.65);
         for (let i = -1; i <= 1; i += 1) {
           ellipseL(
             midXLambda + i * 0.72,
-            midYLambda - 0.1,
-            0.28,
-            0.28,
-            uniformTemporalMaterial({ ...mat.n34, loss: 0.0015 }, ((i + 1) * 2 * Math.PI) / 3),
+            midYLambda - 0.08,
+            0.32,
+            0.32,
+            uniformTemporalMaterial({ ...mat.n34, loss: 0.001 }, ((i + 1) * 2 * Math.PI) / 3),
           );
         }
-        modalGuideSource(midYLambda + 0.42, { type: "sine", widthLambda: 1.25, amplitude: 0.4 });
+        modalGuideSource(midYLambda + 0.38, { type: "sine", widthLambda: 1.25, amplitude: 0.42 });
         break;
       case "syntheticFrequency":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.1;
+        state.modulationDepth = 0.14;
         state.modulationFrequency = 0.018;
         state.modulationPeriodLambda = 0.9;
         state.modulationAngleDeg = 0;
@@ -2063,7 +2084,7 @@ Object.assign(FDTDSim.prototype, {
             uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }, ((i + 2) * 2 * Math.PI) / 5),
           );
         }
-        modalGuideSource(midYLambda + 0.48, { type: "sine", widthLambda: 1.25, amplitude: 0.38 });
+        modalGuideSource(midYLambda + 0.48, { type: "sine", widthLambda: 1.25, amplitude: 0.42 });
         break;
       case "ptSymmetricCoupler":
         state.materialSaturableGainEnabled = true;
@@ -2172,7 +2193,7 @@ Object.assign(FDTDSim.prototype, {
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.12;
+        state.modulationDepth = 0.16;
         state.modulationFrequency = 0.012;
         state.modulationPeriodLambda = 20;
         state.modulationAngleDeg = 0;
@@ -2181,14 +2202,14 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         valleyHallLattice();
-        rectL(sourceX(2.15), midYLambda - 0.16, 1.8, 0.32, uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }));
-        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.52 }]);
+        rectL(sourceX(2.0), midYLambda - 0.18, 2.35, 0.36, uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }));
+        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.54 }]);
         break;
       case "nonreciprocalValleyHall":
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.14;
+        state.modulationDepth = 0.18;
         state.modulationFrequency = 0.014;
         state.modulationPeriodLambda = 1.15;
         state.modulationAngleDeg = 0;
@@ -2197,12 +2218,12 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         valleyHallLattice();
-        rectL(sourceX(2.05), midYLambda - 0.18, 2.4, 0.36, { ...mat.n20, loss: 0.002, modulated: true });
-        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.5 }]);
+        rectL(sourceX(1.95), midYLambda - 0.2, 2.9, 0.4, { ...mat.n20, loss: 0.002, modulated: true });
+        setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.52 }]);
         break;
       case "spaceTimeCrystal":
         state.materialModulationEnabled = true;
-        state.modulationDepth = 0.12;
+        state.modulationDepth = 0.16;
         state.modulationFrequency = 0.016;
         state.modulationPeriodLambda = 1.2;
         state.modulationAngleDeg = 0;
@@ -2210,11 +2231,11 @@ Object.assign(FDTDSim.prototype, {
         state.analysisEnabled = true;
         state.analysisSampleEvery = 2;
         configureDirectionSweep(1200);
-        for (let i = -5; i <= 5; i += 1) {
+        for (let i = -6; i <= 6; i += 1) {
           const params = i % 2 === 0 ? mat.n15 : mat.n20;
           rectL(midXLambda + i * 0.32 - 0.08, 0.7, 0.16, domainYLambda - 1.4, { ...params, loss: 0.0015, modulated: true });
         }
-        setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.85), yLambda: sourceY(midYLambda), amplitude: 0.38 }]);
+        setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.85), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
         break;
       case "dielectricBlock":
         rectL(midXLambda - 0.9, midYLambda - 1.0, 1.8, 2.0, mat.n15);

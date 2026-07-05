@@ -712,6 +712,7 @@ async function guidedDeviceMetrics(page) {
     let upperOffAxisHighIndexCells = 0;
     let lowerOffAxisHighIndexCells = 0;
     let stubHighIndexCells = 0;
+    let stubEnergy = 0;
     let stubPecCells = 0;
     let offsetScattererHighIndexCells = 0;
     let centralDiskHighIndexCells = 0;
@@ -784,6 +785,7 @@ async function guidedDeviceMetrics(page) {
         if (y > sourceY + offAxisThreshold) lowerOffAxisHighIndexCells += 1;
         if (Math.abs(x - midX) <= Math.round(0.28 * cpw) && y < sourceY - Math.round(0.12 * cpw) && y > sourceY - Math.round(1.25 * cpw)) {
           stubHighIndexCells += 1;
+          stubEnergy += energy;
         }
         if (Math.hypot(x - (midX + Math.round(0.9 * cpw)), y - (midY - Math.round(0.32 * cpw))) <= Math.round(0.18 * cpw)) {
           offsetScattererHighIndexCells += 1;
@@ -898,6 +900,8 @@ async function guidedDeviceMetrics(page) {
       upperOffAxisHighIndexCells,
       lowerOffAxisHighIndexCells,
       stubHighIndexCells,
+      stubEnergyFraction: stubEnergy / Math.max(1e-30, totalEnergy),
+      stubToGuideEnergyRatio: stubEnergy / Math.max(1e-30, guideBandEnergy),
       stubPecCells,
       offsetScattererHighIndexCells,
       centralDiskHighIndexCells,
@@ -1829,7 +1833,7 @@ async function metamaterialMetrics(page) {
     const dimerCy1 = midY - Math.round(0.31 * cpw);
     const dimerCy2 = midY + Math.round(0.31 * cpw);
     const dimerCy = midY;
-    const dimerR = Math.max(2, Math.round(0.22 * cpw));
+    const dimerR = Math.max(2, Math.round(0.25 * cpw));
     const enzX0 = midX + Math.round(0.25 * cpw);
     const enzX1 = enzX0 + Math.round(0.45 * cpw);
 
@@ -1883,7 +1887,7 @@ async function metamaterialMetrics(page) {
             : finite(sim.ez?.[idx]) ** 2;
         const inDimer1 = ellipse(x, y, dimerCx, dimerCy1, dimerR, dimerR);
         const inDimer2 = ellipse(x, y, dimerCx, dimerCy2, dimerR, dimerR);
-        const inDimerGap = box(x, y, 0.13, 0.095, dimerCx, dimerCy);
+        const inDimerGap = box(x, y, 0.13, 0.055, dimerCx, dimerCy);
         const inDimerBackground = box(x, y, 0.34, 0.34, dimerCx - Math.round(1.05 * cpw), dimerCy);
         const inEnzSlab = x >= enzX0 && x <= enzX1 && y >= minY + Math.round(0.7 * cpw) && y <= maxY - Math.round(0.7 * cpw);
 
@@ -4198,6 +4202,8 @@ async function runSmokeCase(page, testCase) {
     const minSlabBeamEnergy = Number(testCase.acceptance?.slabBeamEnergyMin);
     const minSlabPhaseEnergy = Number(testCase.acceptance?.slabPhaseEnergyMin);
     const minTransmittedBeamEnergy = Number(testCase.acceptance?.transmittedBeamEnergyMin);
+    const minSourceAngleAbs = Number(testCase.acceptance?.sourceAngleAbsDegMin);
+    const minNegativeScore = Number(testCase.acceptance?.negativeRefractionScoreMin);
     const minTransfer = Number(testCase.acceptance?.imageTransferMin);
     const maxResolutionRatio = Number(testCase.acceptance?.imageResolutionRatioMax);
     if (Number.isFinite(minSamples) && status.negativeIndex.analysisSamples < minSamples) {
@@ -4223,6 +4229,15 @@ async function runSmokeCase(page, testCase) {
       }
       if (Number.isFinite(minTransmittedBeamEnergy) && !(Number(metrics.transmitted?.energy) >= minTransmittedBeamEnergy)) {
         status.failures.push(`transmitted beam energy ${metrics.transmitted?.energy} below ${minTransmittedBeamEnergy}`);
+      }
+      if (Number.isFinite(minSourceAngleAbs) && Math.abs(metrics.sourceAngleDeg) < minSourceAngleAbs) {
+        status.failures.push(`negative-index source angle ${metrics.sourceAngleDeg} below ${minSourceAngleAbs} deg`);
+      }
+      if (testCase.acceptance?.negativeRefractionObserved && !metrics.negativeRefractionObserved) {
+        status.failures.push("negative refraction was not observed by the centroid-slope diagnostic");
+      }
+      if (Number.isFinite(minNegativeScore) && metrics.negativeRefractionScore < minNegativeScore) {
+        status.failures.push(`negative-refraction score ${metrics.negativeRefractionScore} below ${minNegativeScore}`);
       }
       if (Number.isFinite(minTransfer) && metrics.imageTransfer < minTransfer) {
         status.failures.push(`superlens image transfer ${metrics.imageTransfer} below ${minTransfer}`);
@@ -5028,6 +5043,8 @@ async function runSmokeCase(page, testCase) {
     const minUpperOffAxis = Number(testCase.acceptance?.upperOffAxisHighIndexCellsMin);
     const minLowerOffAxis = Number(testCase.acceptance?.lowerOffAxisHighIndexCellsMin);
     const minStubCells = Number(testCase.acceptance?.stubHighIndexCellsMin);
+    const minStubFraction = Number(testCase.acceptance?.stubEnergyFractionMin);
+    const minStubToGuide = Number(testCase.acceptance?.stubToGuideEnergyRatioMin);
     const minStubPecCells = Number(testCase.acceptance?.stubPecCellsMin);
     const maxStubPecCells = Number(testCase.acceptance?.stubPecCellsMax);
     const minScattererCells = Number(testCase.acceptance?.offsetScattererHighIndexCellsMin);
@@ -5099,6 +5116,8 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minUpperOffAxis) && metrics.upperOffAxisHighIndexCells < minUpperOffAxis) status.failures.push(`upper off-axis high-index cells ${metrics.upperOffAxisHighIndexCells} below ${minUpperOffAxis}`);
     if (Number.isFinite(minLowerOffAxis) && metrics.lowerOffAxisHighIndexCells < minLowerOffAxis) status.failures.push(`lower off-axis high-index cells ${metrics.lowerOffAxisHighIndexCells} below ${minLowerOffAxis}`);
     if (Number.isFinite(minStubCells) && metrics.stubHighIndexCells < minStubCells) status.failures.push(`stub high-index cells ${metrics.stubHighIndexCells} below ${minStubCells}`);
+    if (Number.isFinite(minStubFraction) && metrics.stubEnergyFraction < minStubFraction) status.failures.push(`stub energy fraction ${metrics.stubEnergyFraction} below ${minStubFraction}`);
+    if (Number.isFinite(minStubToGuide) && metrics.stubToGuideEnergyRatio < minStubToGuide) status.failures.push(`stub/guide energy ratio ${metrics.stubToGuideEnergyRatio} below ${minStubToGuide}`);
     if (Number.isFinite(minStubPecCells) && metrics.stubPecCells < minStubPecCells) status.failures.push(`stub PEC cells ${metrics.stubPecCells} below ${minStubPecCells}`);
     if (Number.isFinite(maxStubPecCells) && metrics.stubPecCells > maxStubPecCells) status.failures.push(`stub PEC cells ${metrics.stubPecCells} exceeds ${maxStubPecCells}`);
     if (Number.isFinite(minScattererCells) && metrics.offsetScattererHighIndexCells < minScattererCells) status.failures.push(`offset scatterer cells ${metrics.offsetScattererHighIndexCells} below ${minScattererCells}`);

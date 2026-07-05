@@ -438,7 +438,7 @@
     const dimerCx = midX + Math.round(0.48 * cpw);
     const dimerCy1 = midY - Math.round(0.31 * cpw);
     const dimerCy2 = midY + Math.round(0.31 * cpw);
-    const dimerR = Math.max(2, Math.round(0.22 * cpw));
+    const dimerR = Math.max(2, Math.round(0.25 * cpw));
     const ellipse = (x, y, cx, cy, rx, ry) => {
       const dx = (x - cx) / Math.max(1, rx);
       const dy = (y - cy) / Math.max(1, ry);
@@ -465,7 +465,7 @@
     };
     const disk1 = sample((x, y, idx) => Boolean(sim.dispersiveMaterial?.[idx]) && ellipse(x, y, dimerCx, dimerCy1, dimerR, dimerR));
     const disk2 = sample((x, y, idx) => Boolean(sim.dispersiveMaterial?.[idx]) && ellipse(x, y, dimerCx, dimerCy2, dimerR, dimerR));
-    const gap = sample((x, y, idx) => sim.material?.[idx] === 0 && box(x, y, dimerCx, midY, 0.13, 0.095));
+    const gap = sample((x, y, idx) => sim.material?.[idx] === 0 && box(x, y, dimerCx, midY, 0.13, 0.055));
     const background = sample((x, y, idx) => sim.material?.[idx] === 0 && box(x, y, dimerCx - Math.round(1.05 * cpw), midY, 0.34, 0.34));
     return {
       disk1Cells: disk1.cells,
@@ -1876,16 +1876,16 @@
       metric: "Hot-gap resolution",
       measured: `gap=${estimate.gapCells} cells, disks=${estimate.disk1Cells}/${estimate.disk2Cells}`,
       expected: "open air gap and two resolved Drude disks",
-      level: estimate.gapCells >= 18 && estimate.disk1Cells >= 35 && estimate.disk2Cells >= 35 ? "ok" : "caution",
+      level: estimate.gapCells >= 16 && estimate.disk1Cells >= 70 && estimate.disk2Cells >= 70 ? "ok" : "caution",
       note: "A sub-cell or one-cell gap can look plausible but is not a defensible near-field example.",
     }));
     rows.push(row({
       metric: "Gap |E|^2 enhancement",
       measured: `peak/bg=${formatRatio(estimate.gapPeakToBackgroundRatio)}, mean/bg=${formatRatio(estimate.gapMeanToBackgroundRatio)}`,
-      expected: "peak/bg >= 4 and mean/bg >= 1.05 versus local background",
+      expected: "peak/bg >= 12 and mean/bg >= 3 versus local background",
       level:
-        estimate.gapPeakToBackgroundRatio >= 4 &&
-        estimate.gapMeanToBackgroundRatio >= 1.05
+        estimate.gapPeakToBackgroundRatio >= 12 &&
+        estimate.gapMeanToBackgroundRatio >= 3
           ? "ok"
           : "caution",
       note: "This is a hard teaching diagnostic, not a calibrated resonance spectrum or mesh-converged field-enhancement factor.",
