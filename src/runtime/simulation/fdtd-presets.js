@@ -1045,7 +1045,7 @@ Object.assign(FDTDSim.prototype, {
         state.fieldComponent = "hz";
         state.viewMode = "field";
         rectL(0.4, midYLambda + 0.15, Math.max(0.4, domainXLambda - 0.8), Math.max(0.4, domainYLambda - midYLambda - 0.5), mat.n15);
-        rectL(0.4, domainYLambda - 0.72, Math.max(0.4, domainXLambda - 0.8), 0.08, mat.pec);
+        rectL(0.4, domainYLambda - 2.15, Math.max(0.4, domainXLambda - 0.8), 0.08, mat.pec);
         rectL(1.0, midYLambda + 0.04, Math.max(0.5, domainXLambda - 2.0), 0.08, mat.pec);
         setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda - 0.12), widthLambda: 0.34, amplitude: 0.55 }]);
         break;

@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-05T05:33:37.664Z
-Git commit: 308fb16+working-tree
+Generated: 2026-07-05T06:44:37.702Z
+Git commit: 9719f56+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,9 +9,9 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 75 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
+| PASS | 83 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
 | VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
-| WARN | 66 | Scene runs, but has a documented teaching/modeling caveat. |
+| WARN | 58 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
 ## Blocking Findings
@@ -40,23 +40,23 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 15 | `brewsterTm` Brewster TM minimum | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_tm_minimum:P0/physics | OK |
 | 16 | `brewsterTeTm` TE/TM Brewster comparison | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_te_tm_angle_sweep:P1/physics, monitor_observable_first_pass:P1/physics | OK |
 | 17 | `totalInternalReflection` Total internal reflection | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | total_internal_reflection_evanescent:P1/physics | OK |
-| 18 | `frustratedTir` Frustrated TIR | 2. Interfaces and multilayers | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | frustrated_tir_tunneling:P1/physics | Executable validation is reduced/proxy (frustrated_tir_tunneling); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 18 | `frustratedTir` Frustrated TIR | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | frustrated_tir_tunneling:P1/physics | OK |
 | 19 | `quarterWaveCoating` Quarter-wave coating | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | quarter_wave_coating_low_reflection:P1/physics | OK |
 | 20 | `braggMirror` 1D Bragg mirror | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | bragg_mirror_stopband_reflection:P1/physics | OK |
 | 21 | `lossyInterface` Lossy interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | lossy_interface_material_route:P1/physics | OK |
 | 22 | `anisotropicInterface` Anisotropic interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.07e-7 | anisotropic_interface_tensor_route:P1/physics | OK |
 | 23 | `jzDipole` Point electric dipole Jz | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.41e-5 | jz_dipole_localized_source:P1/physics | OK |
 | 24 | `inPlaneDipole` In-plane electric dipole Jx/Jy | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=1.86e-6 | in_plane_dipole_hz_source:P1/physics | OK |
-| 25 | `mzDipole` Effective magnetic dipole Mz | 3. Sources and radiation | WARN | HZ polarization | WASM CPML, 24 steps, E=7.41e-5 | mz_dipole_hz_source:P1/physics | Executable validation is reduced/proxy (mz_dipole_hz_source); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 25 | `mzDipole` Effective magnetic dipole Mz | 3. Sources and radiation | PASS | HZ polarization | WASM CPML, 24 steps, E=7.41e-5 | mz_dipole_hz_source:P1/physics | OK |
 | 26 | `dipoleSubstrate` Dipole over substrate | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.03e-5 | dipole_substrate_material_overlap:P1/physics | OK |
 | 27 | `dipoleNearPec` Dipole near PEC mirror | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.08e-5 | dipole_near_pec_mirror:P1/physics | OK |
 | 28 | `huygensRadiator` Huygens source | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.40e-5 | huygens_radiator_directional_source:P1/physics | OK |
 | 29 | `circularDipole` Circular dipole | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-4 | circular_dipole_quadrature_source:P1/physics | OK |
 | 30 | `janusDipole` Janus dipole | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.95e-4 | janus_dipole_guide_directional_source:P1/physics | OK |
-| 31 | `dipoleArray` Equal-phase dipole array | 3. Sources and radiation | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.74e-5 | dipole_array_equal_phase_geometry:P1/physics | Executable validation is reduced/proxy (dipole_array_equal_phase_geometry); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 31 | `dipoleArray` Equal-phase dipole array | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.74e-5 | dipole_array_equal_phase_geometry:P1/physics | OK |
 | 32 | `phasedDipoleArray` Progressive-phase dipole array | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.76e-4 | phased_dipole_array_progressive_phase:P1/physics | OK |
 | 33 | `apertureRadiator` Slot aperture radiator | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=6.96e-6 | aperture_radiator_slot_geometry:P1/physics | OK |
-| 34 | `nearFarFieldNtff` Near-field / far-field NTFF | 3. Sources and radiation | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=4.96e-5 | near_far_field_ntff_proxy:P1/physics | Executable validation is reduced/proxy (near_far_field_ntff_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 34 | `nearFarFieldNtff` Near-field / far-field NTFF | 3. Sources and radiation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=4.96e-5 | near_far_field_ntff_pattern:P1/physics | OK |
 | 35 | `slabWaveguide` Single-mode slab waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | slab_waveguide_confinement:P0/physics | OK |
 | 36 | `multimodeSlab` Multimode slab waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.19e-6 | multimode_slab_two_mode_launch:P1/physics | OK |
 | 37 | `lossyGuide` Lossy waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.52e-6 | lossy_guide_absorptive_core:P1/physics | OK |
@@ -65,19 +65,19 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 40 | `widthStepWaveguide` Width step waveguide | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | width_step_waveguide_abrupt_step:P1/physics | OK |
 | 41 | `directionalCoupler` Directional coupler | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.57e-6 | directional_coupler_two_parallel_guides:P1/physics | OK |
 | 42 | `mmiWaveguide` MMI section | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=5.79e-6 | mmi_50_50_split:P1/physics | OK |
-| 43 | `machZehnder` Mach-Zehnder interferometer | 4. Guided optics | WARN | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | mach_zehnder_dual_arm_route:P1/physics | Reduced 2D guided-interferometer layout; useful for arm splitting/recombination, not a calibrated phase-transfer curve. |
+| 43 | `machZehnder` Mach-Zehnder interferometer | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | mach_zehnder_dual_arm_route:P1/physics | OK |
 | 44 | `guideScatterer` Waveguide with scatterer | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.77e-6 | guide_scatterer_off_axis_defect:P1/physics | OK |
-| 45 | `microstrip` Microstrip line | 4. Guided optics | WARN | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.04e-6 | microstrip_hz_cross_section_proxy:P1/physics | 2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model. |
+| 45 | `microstrip` Microstrip cross-section | 4. Guided optics | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.04e-6 | microstrip_hz_cross_section_field:P1/physics | OK |
 | 46 | `stubResonator` Stub resonator | 4. Guided optics | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | stub_resonator_side_branch:P1/physics | OK |
 | 47 | `fabryPerot` Fabry-Perot cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | fabry_perot_cavity_localization:P1/physics | OK |
 | 48 | `fabryPerotStanding` Fabry-Perot standing field | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.06e-8 | fabry_perot_standing_wave:P1/physics | OK |
 | 49 | `ringResonator` Ring resonator | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.33e-6 | ring_resonator_coupling:P1/physics | OK |
-| 50 | `addDropRing` Add-drop ring | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.33e-6 | add_drop_ring_coupling:P1/physics | Executable validation is reduced/proxy (add_drop_ring_coupling); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 50 | `addDropRing` Add-drop ring | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=1.33e-6 | add_drop_ring_coupling:P1/physics | OK |
 | 51 | `racetrackResonator` Racetrack resonator | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | racetrack_resonator_bus_coupling:P1/physics | OK |
 | 52 | `dielectricCavity` Dielectric defect cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.41e-7 | dielectric_cavity_disk_dipole:P1/physics | OK |
 | 53 | `pecCavity` PEC half-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.23e-7 | pec_cavity_frame_source:P1/physics | OK |
 | 54 | `quarterWaveCavity` Quarter-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | quarter_wave_cavity_short_stub:P1/physics | OK |
-| 55 | `qRingdown` Q by ringdown | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.46e-8 | resonator_ringdown_q:P0/physics | Executable validation is reduced/proxy (resonator_ringdown_q); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 55 | `qRingdown` Q by ringdown | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.46e-8 | resonator_ringdown_q:P0/physics | OK |
 | 56 | `purcell2d` Purcell 2D proxy | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-8 | purcell_2d_cavity_proxy:P1/physics | 2D Q/Aeff Purcell proxy; not an absolute 3D local-density-of-states or emitter-rate calculation. |
 | 57 | `betaFactor` beta-factor guide coupling | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | beta_factor_guided_flux_proxy:P1/physics | Executable validation is reduced/proxy (beta_factor_guided_flux_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
 | 58 | `degenerateModes` Degenerate cavity modes | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | degenerate_modes_dual_dipole_split:P1/physics | Executable validation is reduced/proxy (degenerate_modes_dual_dipole_split); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |

@@ -55,11 +55,19 @@ Current quantitative checks include:
 
 - Normal-incidence Fresnel reflectance against the analytic air-dielectric reference; raw line-monitor transmittance is reported as a bounded port observable, not used as an independent energy-closure claim for the finite TFSF scene.
 - TM Brewster reflectance at the analytical angle, with the compact runtime angle scan reported alongside an analytic Fresnel reference curve.
+- Frustrated total internal reflection checks require a finite air gap, a second high-index medium, tunneled far-side field energy, and a contrast above the isolated-TIR reference.
 - CPML late-time residual-energy proxy after a Gaussian pulse leaves the active domain.
+- Magnetic-dipole `Mz` source route in the `Hz` formulation, with homogeneous-domain checks for a single sinusoidal point source, local field energy, and approximate left/right and upper/lower symmetry.
+- Equal-phase dipole-array geometry, with checks for eight sinusoidal point sources, vertical half-wavelength spacing, zero progressive phase, and local source energy.
+- NTFF workflow generation, with analysis sample count, finite normalized angular samples, positive far-field peak, and bounded nontrivial angular variation.
+- Mach-Zehnder 2D guided-interferometer routing, with mode-source launch, split arms, a distinct phase-shifter section, and finite field energy reaching splitter, both arms, combiner, and output guide. This is not a calibrated phase-transfer or extinction-ratio curve.
+- Microstrip 2D cross-section field contract, with `Hz` formulation, PEC strip, PEC ground plane inside the active domain, dielectric substrate, finite strip-ground separation, and substrate field energy. This is not a characteristic-impedance or S-parameter extraction.
+- Add-drop ring coupling, with bus/drop waveguide cells, ring energy storage, ring-to-bus coupling, and finite drop-bus energy. This is not a calibrated resonance spectrum or loaded-Q extraction.
+- Ringdown Q estimation, with analysis sample count, finite positive Q estimate, bounded Q range, and late-time energy below the peak envelope.
 - Slab-waveguide modal launch metrics: forward guided energy, backward ratio, cladding radiation ratio, and core energy fraction.
 - Ringdown analysis sample count and finite positive Q proxy.
 - Source deletion / retirement stability after a running source is removed.
-- P1 proxy-contract checks for Mach-Zehnder split-arm geometry, microstrip Hz PEC/substrate cross-section, and Purcell 2D Q/Aeff diagnostics.
+- P1 contract checks for Mach-Zehnder split-arm propagation, microstrip Hz PEC/substrate cross-section, and Purcell 2D Q/Aeff diagnostics.
 - P1 aperture checks: single-slit downstream symmetry and central lobe, and double-slit multi-peak interference profile.
 - P1 material/device checks: source/radiation routes and phase contracts, conductivity route and late-time attenuation proxy, ADE route plus effective permittivity for Drude/Lorentz/Debye/plasma/ENZ and hyperbolic tensor scenes, anisotropic/gyrotropic tensor-cell diagnostics, six-field bianisotropy passivity and cross-energy diagnostics, interfaces and multilayers (quarter-wave coating, Bragg mirror/stack, total internal reflection, and frustrated TIR), Fabry-Perot cavity localization/standing-wave contrast, ring/add-drop resonator coupling, cylinder/dimer scattering and random-medium spread proxies, photonic-crystal/BIC/Fano geometry plus reduced Bloch/leakage observables, SSH/honeycomb/Valley-Hall topology proxies, plasmonic/metasurface/absorber/ENZ geometry and overlap proxies, SPP interface/grating surface localization, negative-index/superlens reduced observables, nonlinear/harmonic/phase-change active-media reduced observables, time-varying/Floquet media geometry, sideband, phase-coherence, and active-region overlap proxies, and coupled/non-Hermitian workflow proxies for PT/EP, skin-effect analogues, BIC-active defects, Janus/Huygens sources, and hybrid topology-temporal scenes.
 

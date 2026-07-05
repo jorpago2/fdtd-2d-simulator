@@ -640,7 +640,7 @@
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms and a modal input."
+      "description": "Atlas 43: 2D Mach-Zehnder interferometer with two dielectric arms, a phase-shifter section, and a modal input."
     },
     {
       "id": "guideScatterer",
@@ -654,11 +654,11 @@
     {
       "id": "microstrip",
       "index": 45,
-      "title": "Microstrip line",
+      "title": "Microstrip cross-section",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
       "groupName": "Guided optics",
-      "description": "Atlas 45: qualitative microstrip cross-section with PEC strip, dielectric substrate, and ground plane."
+      "description": "Atlas 45: 2D microstrip cross-section with PEC strip, dielectric substrate, ground plane, and Hz excitation."
     },
     {
       "id": "stubResonator",

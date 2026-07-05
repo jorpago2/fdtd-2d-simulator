@@ -480,6 +480,16 @@ async function guidedDeviceMetrics(page) {
     let racetrackRingEnergy = 0;
     let busHighIndexCells = 0;
     let dropBusHighIndexCells = 0;
+    let mziInputGuideEnergy = 0;
+    let mziSplitterEnergy = 0;
+    let mziUpperArmHighIndexCells = 0;
+    let mziLowerArmHighIndexCells = 0;
+    let mziUpperArmEnergy = 0;
+    let mziLowerArmEnergy = 0;
+    let mziPhaseShifterCells = 0;
+    let mziPhaseShifterEnergy = 0;
+    let mziCombinerEnergy = 0;
+    let mziOutputGuideEnergy = 0;
     let materialMinX = Infinity;
     let materialMaxX = -Infinity;
     let materialMinY = Infinity;
@@ -487,6 +497,13 @@ async function guidedDeviceMetrics(page) {
     const guideHalf = Math.max(2, Math.round(0.42 * cpw));
     const offAxisThreshold = Math.max(2, Math.round(0.34 * cpw));
     const sourceRadius = Math.max(3, Math.round(0.45 * cpw));
+    const mziArmHalfWidth = Math.max(2, Math.round(0.18 * cpw));
+    const mziUpperArmY = midY - Math.round(0.68 * cpw);
+    const mziLowerArmY = midY + Math.round(0.68 * cpw);
+    const mziArmX0 = midX - Math.round(1.35 * cpw);
+    const mziArmX1 = midX + Math.round(1.35 * cpw);
+    const mziInputX1 = midX - Math.round(2.1 * cpw);
+    const mziOutputX0 = midX + Math.round(2.1 * cpw);
 
     for (let x = minX; x <= maxX; x += 1) {
       const ys = [];
@@ -542,6 +559,26 @@ async function guidedDeviceMetrics(page) {
         }
         if (Math.abs(y - (midY + Math.round(1.1 * cpw))) <= Math.round(0.22 * cpw)) busHighIndexCells += 1;
         if (Math.abs(y - (midY - Math.round(1.1 * cpw))) <= Math.round(0.22 * cpw)) dropBusHighIndexCells += 1;
+        if (Math.abs(y - sourceY) <= guideHalf && x < mziInputX1) mziInputGuideEnergy += energy;
+        if (Math.abs(x - (midX - Math.round(1.75 * cpw))) <= Math.round(0.55 * cpw) && Math.abs(y - midY) <= Math.round(0.75 * cpw)) {
+          mziSplitterEnergy += energy;
+        }
+        if (x >= mziArmX0 && x <= mziArmX1 && Math.abs(y - mziUpperArmY) <= mziArmHalfWidth) {
+          mziUpperArmHighIndexCells += 1;
+          mziUpperArmEnergy += energy;
+          if (Math.abs(x - (midX + Math.round(0.2 * cpw))) <= Math.round(0.45 * cpw) && Math.abs(finite(sim.eps?.[idx]) - 4) < 0.6) {
+            mziPhaseShifterCells += 1;
+            mziPhaseShifterEnergy += energy;
+          }
+        }
+        if (x >= mziArmX0 && x <= mziArmX1 && Math.abs(y - mziLowerArmY) <= mziArmHalfWidth) {
+          mziLowerArmHighIndexCells += 1;
+          mziLowerArmEnergy += energy;
+        }
+        if (Math.abs(x - (midX + Math.round(1.75 * cpw))) <= Math.round(0.55 * cpw) && Math.abs(y - midY) <= Math.round(0.75 * cpw)) {
+          mziCombinerEnergy += energy;
+        }
+        if (Math.abs(y - sourceY) <= guideHalf && x > mziOutputX0) mziOutputGuideEnergy += energy;
       }
       if (!ys.length) continue;
       columnsWithHighIndex += 1;
@@ -629,6 +666,21 @@ async function guidedDeviceMetrics(page) {
       racetrackRingEnergyFraction: racetrackRingEnergy / Math.max(1e-30, totalEnergy),
       busHighIndexCells,
       dropBusHighIndexCells,
+      mziInputGuideEnergyFraction: mziInputGuideEnergy / Math.max(1e-30, totalEnergy),
+      mziSplitterEnergyFraction: mziSplitterEnergy / Math.max(1e-30, totalEnergy),
+      mziUpperArmHighIndexCells,
+      mziLowerArmHighIndexCells,
+      mziUpperArmEnergyFraction: mziUpperArmEnergy / Math.max(1e-30, totalEnergy),
+      mziLowerArmEnergyFraction: mziLowerArmEnergy / Math.max(1e-30, totalEnergy),
+      mziArmEnergyFraction: (mziUpperArmEnergy + mziLowerArmEnergy) / Math.max(1e-30, totalEnergy),
+      mziArmEnergyBalance:
+        mziUpperArmEnergy + mziLowerArmEnergy > 1e-30
+          ? Math.abs(mziUpperArmEnergy - mziLowerArmEnergy) / Math.max(1e-30, mziUpperArmEnergy + mziLowerArmEnergy)
+          : null,
+      mziPhaseShifterCells,
+      mziPhaseShifterEnergyFraction: mziPhaseShifterEnergy / Math.max(1e-30, totalEnergy),
+      mziCombinerEnergyFraction: mziCombinerEnergy / Math.max(1e-30, totalEnergy),
+      mziOutputGuideEnergyFraction: mziOutputGuideEnergy / Math.max(1e-30, totalEnergy),
       beta: finiteOrNull(analysis?.beta),
       split: finiteOrNull(analysis?.split),
       spectralSplit: finiteOrNull(analysis?.spectralSplit),
@@ -1808,6 +1860,8 @@ async function sourceRadiationMetrics(page) {
     const maxX = sim.activeInteriorMaxX();
     const minY = sim.activeInteriorMinY();
     const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
     const sources = state.sources || [];
     const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
     const energyAt = (idx) => {
@@ -1849,6 +1903,15 @@ async function sourceRadiationMetrics(page) {
     const sourceYMax = ys.length ? Math.max(...ys) : minY;
     const sourceXCenter = xs.length ? mean(xs) : Math.round(0.5 * (minX + maxX));
     const sourceYCenter = ys.length ? mean(ys) : Math.round(0.5 * (minY + maxY));
+    const ySortedSources = [...sourceCells].sort((a, b) => a.y - b.y);
+    const sourceYSpacings = [];
+    for (let i = 1; i < ySortedSources.length; i += 1) {
+      sourceYSpacings.push((ySortedSources[i].y - ySortedSources[i - 1].y) / cpw);
+    }
+    const sourceYSpacingMean = sourceYSpacings.length ? mean(sourceYSpacings) : 0;
+    const sourceYSpacingStd = sourceYSpacings.length
+      ? Math.sqrt(mean(sourceYSpacings.map((value) => (value - sourceYSpacingMean) * (value - sourceYSpacingMean))))
+      : 0;
     let materialCells = 0;
     let highIndexCells = 0;
     let lossyCells = 0;
@@ -1863,18 +1926,29 @@ async function sourceRadiationMetrics(page) {
     let upperEnergy = 0;
     let lowerEnergy = 0;
     let apertureGapCells = 0;
+    let microstripSubstrateCells = 0;
+    let microstripStripPecCells = 0;
+    let microstripGroundPecCells = 0;
+    let microstripSubstrateEnergy = 0;
+    let stripPecYSum = 0;
+    let groundPecYSum = 0;
 
     for (let y = minY; y <= maxY; y += 1) {
       for (let x = minX; x <= maxX; x += 1) {
         const idx = sim.id(x, y);
         const energy = energyAt(idx);
         const isMaterial = sim.material[idx] !== 0 && sim.material[idx] !== 2;
+        const epsAbs = Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx])));
         const isHighIndex = isMaterial && Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0;
         const loss = Math.max(Math.abs(finite(sim.loss?.[idx])), Math.abs(finite(sim.lossY?.[idx])));
         totalEnergy += energy;
         if (isMaterial) {
           materialCells += 1;
           materialEnergy += energy;
+        }
+        if (isMaterial && epsAbs > 1.8 && epsAbs < 3.0 && y > midY) {
+          microstripSubstrateCells += 1;
+          microstripSubstrateEnergy += energy;
         }
         if (isHighIndex) {
           highIndexCells += 1;
@@ -1883,8 +1957,16 @@ async function sourceRadiationMetrics(page) {
         if (loss > 1e-6) lossyCells += 1;
         if (isMaterial && Math.abs(finite(sim.eps?.[idx]) - finite(sim.epsY?.[idx])) > 1e-6) anisotropicCells += 1;
         if (sim.material[idx] === 2) pecCells += 1;
-        if (sim.material[idx] === 0 && Math.abs(x - Math.round(0.5 * (minX + maxX))) <= Math.round(0.08 * cpw) && Math.abs(y - sourceYCenter) <= Math.round(0.38 * cpw)) {
+        if (sim.material[idx] === 0 && Math.abs(x - midX) <= Math.round(0.08 * cpw) && Math.abs(y - sourceYCenter) <= Math.round(0.38 * cpw)) {
           apertureGapCells += 1;
+        }
+        if (sim.material[idx] === 2 && y < midY + Math.round(0.5 * cpw)) {
+          microstripStripPecCells += 1;
+          stripPecYSum += y;
+        }
+        if (sim.material[idx] === 2 && y > midY + Math.round(1.2 * cpw)) {
+          microstripGroundPecCells += 1;
+          groundPecYSum += y;
         }
         for (const source of sourceCells) {
           const radius = Math.max(3, Math.round(source.width * 0.85));
@@ -1901,6 +1983,13 @@ async function sourceRadiationMetrics(page) {
     }
 
     const farField = state.analysisEnabled && typeof sim.analysisFarFieldEstimate === "function" ? sim.analysisFarFieldEstimate(96) : [];
+    const farFieldValues = farField
+      .map((point) => finite(point?.value))
+      .filter((value) => Number.isFinite(value) && value >= 0);
+    const farFieldMean = farFieldValues.length ? mean(farFieldValues) : 0;
+    const farFieldStd = farFieldValues.length
+      ? Math.sqrt(mean(farFieldValues.map((value) => (value - farFieldMean) * (value - farFieldMean))))
+      : 0;
     return {
       preset: state.preset,
       fieldComponent: state.fieldComponent,
@@ -1922,6 +2011,10 @@ async function sourceRadiationMetrics(page) {
       evanescentKParallelRatioMax: evanescentRatios.length ? Math.max(...evanescentRatios) : 0,
       sourceXSpanLambda: (sourceXMax - sourceXMin) / cpw,
       sourceYSpanLambda: (sourceYMax - sourceYMin) / cpw,
+      sourceYSpacingMeanLambda: sourceYSpacingMean,
+      sourceYSpacingStdLambda: sourceYSpacingStd,
+      sourceYSpacingMinLambda: sourceYSpacings.length ? Math.min(...sourceYSpacings) : 0,
+      sourceYSpacingMaxLambda: sourceYSpacings.length ? Math.max(...sourceYSpacings) : 0,
       sourcePhaseStepMeanDeg: phaseStepMean,
       sourcePhaseStepMeanAbsDeg: Math.abs(phaseStepMean),
       sourcePhaseStepStdDeg: phaseStepStd,
@@ -1932,15 +2025,29 @@ async function sourceRadiationMetrics(page) {
       anisotropicCells,
       pecCells,
       apertureGapCells,
+      microstripSubstrateCells,
+      microstripStripPecCells,
+      microstripGroundPecCells,
+      microstripPecSeparationLambda:
+        microstripStripPecCells > 0 && microstripGroundPecCells > 0
+          ? groundPecYSum / microstripGroundPecCells / cpw - stripPecYSum / microstripStripPecCells / cpw
+          : 0,
       totalEnergy,
       materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
       highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
+      microstripSubstrateEnergyFraction: microstripSubstrateEnergy / Math.max(1e-30, totalEnergy),
       sourceNeighborhoodEnergyFraction: sourceNeighborhoodEnergy / Math.max(1e-30, totalEnergy),
       rightToLeftEnergyRatio: rightEnergy / Math.max(1e-30, leftEnergy),
       lowerToUpperEnergyRatio: lowerEnergy / Math.max(1e-30, upperEnergy),
       farFieldSamples: farField.length || 0,
+      farFieldFiniteSamples: farFieldValues.length,
       farFieldMode: sim.analysisFarFieldMode || "",
       farFieldPeak: Number(sim.analysisFarFieldPeak) || 0,
+      farFieldMean,
+      farFieldStd,
+      farFieldNormalizedStd: farFieldMean > 1e-30 ? farFieldStd / farFieldMean : 0,
+      farFieldMin: farFieldValues.length ? Math.min(...farFieldValues) : 0,
+      farFieldMax: farFieldValues.length ? Math.max(...farFieldValues) : 0,
     };
   });
 }
@@ -2057,6 +2164,29 @@ async function tirEnergyMetrics(page) {
     const interfaceBand = sumBox(midX - Math.round(0.35 * cpw), midX + Math.round(0.35 * cpw));
     const transmittedNear = sumBox(midX + Math.round(0.35 * cpw), midX + Math.round(1.1 * cpw));
     const transmittedFar = sumBox(midX + Math.round(1.1 * cpw), midX + Math.round(2.8 * cpw));
+    const centerY = Math.round(0.5 * (minY + maxY));
+    const isHighIndexAt = (x) => {
+      const idx = sim.id(x, centerY);
+      return sim.material[idx] !== 0 && Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 1.8;
+    };
+    let leftHighIndexEdge = null;
+    for (let x = midX; x >= minX; x -= 1) {
+      if (isHighIndexAt(x)) {
+        leftHighIndexEdge = x;
+        break;
+      }
+    }
+    let rightHighIndexEdge = null;
+    for (let x = midX; x <= maxX; x += 1) {
+      if (isHighIndexAt(x)) {
+        rightHighIndexEdge = x;
+        break;
+      }
+    }
+    const gapCells =
+      leftHighIndexEdge !== null && rightHighIndexEdge !== null
+        ? Math.max(0, rightHighIndexEdge - leftHighIndexEdge - 1)
+        : null;
     return {
       reflectance: sim.diagnosticReflectance || 0,
       transmittance: sim.diagnosticTransmittance || 0,
@@ -2069,8 +2199,25 @@ async function tirEnergyMetrics(page) {
       transmittedNearRatio: transmittedNear.energy / Math.max(1e-30, interfaceBand.energy),
       rightHighIndexCells: transmittedNear.highIndexCells + transmittedFar.highIndexCells,
       rightMaterialCells: transmittedNear.materialCells + transmittedFar.materialCells,
+      airGapCells: gapCells,
+      airGapLambda: gapCells === null ? null : gapCells / cpw,
     };
   });
+}
+
+async function tirReferenceMetrics(page, preset, steps, testCase) {
+  await selectPreset(page, preset);
+  if (mode === "physics") await preparePhysicsCase(page, testCase);
+  const trace = mode === "physics"
+    ? await stepPhysicsSimulation(page, steps)
+    : { elapsedMs: await stepSimulation(page, steps) };
+  const metrics = await tirEnergyMetrics(page);
+  return {
+    preset,
+    steps,
+    elapsedMs: Number(trace.elapsedMs.toFixed(1)),
+    ...metrics,
+  };
 }
 
 async function fabryPerotCavityMetrics(page) {
@@ -2921,11 +3068,23 @@ async function runSmokeCase(page, testCase) {
   if (testCase.id === "resonator_ringdown_q") {
     status.analysis = await diagnosticMetrics(page);
     const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
+    const minRingdownQ = Number(testCase.acceptance?.ringdownQMin);
+    const maxRingdownQ = Number(testCase.acceptance?.ringdownQMax);
+    const maxLateEnergyRatio = Number(testCase.acceptance?.lateEnergyRatioMax);
     if (Number.isFinite(minSamples) && status.analysis.analysisSamples < minSamples) {
       status.failures.push(`ringdown analysis has ${status.analysis.analysisSamples} samples, expected at least ${minSamples}`);
     }
-    if (testCase.acceptance?.qProxyFinite && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ > 0)) {
-      status.failures.push(`ringdown Q proxy is not finite and positive: ${status.analysis.ringdownQ}`);
+    if ((testCase.acceptance?.qEstimateFinite || testCase.acceptance?.qProxyFinite) && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ > 0)) {
+      status.failures.push(`ringdown Q estimate is not finite and positive: ${status.analysis.ringdownQ}`);
+    }
+    if (Number.isFinite(minRingdownQ) && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ >= minRingdownQ)) {
+      status.failures.push(`ringdown Q estimate ${status.analysis.ringdownQ} below ${minRingdownQ}`);
+    }
+    if (Number.isFinite(maxRingdownQ) && !(Number.isFinite(status.analysis.ringdownQ) && status.analysis.ringdownQ <= maxRingdownQ)) {
+      status.failures.push(`ringdown Q estimate ${status.analysis.ringdownQ} exceeds ${maxRingdownQ}`);
+    }
+    if (Number.isFinite(maxLateEnergyRatio) && stepResult.lateEnergyRatio > maxLateEnergyRatio) {
+      status.failures.push(`ringdown late-energy ratio ${stepResult.lateEnergyRatio} exceeds ${maxLateEnergyRatio}`);
     }
   }
   if (testCase.id === "single_slit_diffraction_symmetry" || testCase.id === "double_slit_interference_profile") {
@@ -3654,13 +3813,27 @@ async function runSmokeCase(page, testCase) {
     const minSourceCount = Number(testCase.acceptance?.sourceCountMin);
     const maxSourceCount = Number(testCase.acceptance?.sourceCountMax);
     const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
+    const maxMaterialCells = Number(testCase.acceptance?.materialCellsMax);
     const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
+    const maxHighIndexCells = Number(testCase.acceptance?.highIndexCellsMax);
     const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
     const minAnisotropicCells = Number(testCase.acceptance?.anisotropicCellsMin);
     const minPecCells = Number(testCase.acceptance?.pecCellsMin);
+    const maxPecCells = Number(testCase.acceptance?.pecCellsMax);
     const minApertureGapCells = Number(testCase.acceptance?.apertureGapCellsMin);
+    const minMicrostripSubstrateCells = Number(testCase.acceptance?.microstripSubstrateCellsMin);
+    const minMicrostripStripPecCells = Number(testCase.acceptance?.microstripStripPecCellsMin);
+    const minMicrostripGroundPecCells = Number(testCase.acceptance?.microstripGroundPecCellsMin);
+    const minMicrostripPecSeparation = Number(testCase.acceptance?.microstripPecSeparationLambdaMin);
+    const maxMicrostripPecSeparation = Number(testCase.acceptance?.microstripPecSeparationLambdaMax);
+    const minMicrostripSubstrateEnergy = Number(testCase.acceptance?.microstripSubstrateEnergyFractionMin);
     const minSourceYSpan = Number(testCase.acceptance?.sourceYSpanLambdaMin);
+    const maxSourceYSpan = Number(testCase.acceptance?.sourceYSpanLambdaMax);
     const minSourceXSpan = Number(testCase.acceptance?.sourceXSpanLambdaMin);
+    const maxSourceXSpan = Number(testCase.acceptance?.sourceXSpanLambdaMax);
+    const minSourceYSpacingMean = Number(testCase.acceptance?.sourceYSpacingMeanLambdaMin);
+    const maxSourceYSpacingMean = Number(testCase.acceptance?.sourceYSpacingMeanLambdaMax);
+    const maxSourceYSpacingStd = Number(testCase.acceptance?.sourceYSpacingStdLambdaMax);
     const minSourceAngle = Number(testCase.acceptance?.sourceAngleMeanAbsDegMin);
     const maxSourceAngle = Number(testCase.acceptance?.sourceAngleMeanAbsDegMax);
     const minFrequencySpread = Number(testCase.acceptance?.sourceFrequencySpreadMin);
@@ -3675,8 +3848,14 @@ async function runSmokeCase(page, testCase) {
     const minRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMin);
     const maxRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMax);
     const minLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMin);
+    const maxLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMax);
     const minFarFieldSamples = Number(testCase.acceptance?.farFieldSamplesMin);
+    const minFarFieldFiniteSamples = Number(testCase.acceptance?.farFieldFiniteSamplesMin);
     const minFarFieldPeak = Number(testCase.acceptance?.farFieldPeakMin);
+    const minFarFieldMean = Number(testCase.acceptance?.farFieldMeanMin);
+    const maxFarFieldMean = Number(testCase.acceptance?.farFieldMeanMax);
+    const minFarFieldNormalizedStd = Number(testCase.acceptance?.farFieldNormalizedStdMin);
+    const maxFarFieldNormalizedStd = Number(testCase.acceptance?.farFieldNormalizedStdMax);
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minSweepSamples = Number(testCase.acceptance?.sweepSamplesMin);
     if (testCase.acceptance?.fieldComponent && metrics.fieldComponent !== testCase.acceptance.fieldComponent) {
@@ -3700,13 +3879,42 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minSourceCount) && metrics.sourceCount < minSourceCount) status.failures.push(`source count ${metrics.sourceCount} below ${minSourceCount}`);
     if (Number.isFinite(maxSourceCount) && metrics.sourceCount > maxSourceCount) status.failures.push(`source count ${metrics.sourceCount} exceeds ${maxSourceCount}`);
     if (Number.isFinite(minMaterialCells) && metrics.materialCells < minMaterialCells) status.failures.push(`source-scene material cells ${metrics.materialCells} below ${minMaterialCells}`);
+    if (Number.isFinite(maxMaterialCells) && metrics.materialCells > maxMaterialCells) status.failures.push(`source-scene material cells ${metrics.materialCells} exceed ${maxMaterialCells}`);
     if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) status.failures.push(`source-scene high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
+    if (Number.isFinite(maxHighIndexCells) && metrics.highIndexCells > maxHighIndexCells) status.failures.push(`source-scene high-index cells ${metrics.highIndexCells} exceed ${maxHighIndexCells}`);
     if (Number.isFinite(minLossyCells) && metrics.lossyCells < minLossyCells) status.failures.push(`source-scene lossy cells ${metrics.lossyCells} below ${minLossyCells}`);
     if (Number.isFinite(minAnisotropicCells) && metrics.anisotropicCells < minAnisotropicCells) status.failures.push(`source-scene anisotropic cells ${metrics.anisotropicCells} below ${minAnisotropicCells}`);
     if (Number.isFinite(minPecCells) && metrics.pecCells < minPecCells) status.failures.push(`source-scene PEC cells ${metrics.pecCells} below ${minPecCells}`);
+    if (Number.isFinite(maxPecCells) && metrics.pecCells > maxPecCells) status.failures.push(`source-scene PEC cells ${metrics.pecCells} exceed ${maxPecCells}`);
     if (Number.isFinite(minApertureGapCells) && metrics.apertureGapCells < minApertureGapCells) status.failures.push(`aperture gap cells ${metrics.apertureGapCells} below ${minApertureGapCells}`);
+    if (Number.isFinite(minMicrostripSubstrateCells) && metrics.microstripSubstrateCells < minMicrostripSubstrateCells) {
+      status.failures.push(`microstrip substrate cells ${metrics.microstripSubstrateCells} below ${minMicrostripSubstrateCells}`);
+    }
+    if (Number.isFinite(minMicrostripStripPecCells) && metrics.microstripStripPecCells < minMicrostripStripPecCells) {
+      status.failures.push(`microstrip strip PEC cells ${metrics.microstripStripPecCells} below ${minMicrostripStripPecCells}`);
+    }
+    if (Number.isFinite(minMicrostripGroundPecCells) && metrics.microstripGroundPecCells < minMicrostripGroundPecCells) {
+      status.failures.push(`microstrip ground PEC cells ${metrics.microstripGroundPecCells} below ${minMicrostripGroundPecCells}`);
+    }
+    if (Number.isFinite(minMicrostripPecSeparation) && metrics.microstripPecSeparationLambda < minMicrostripPecSeparation) {
+      status.failures.push(`microstrip PEC separation ${metrics.microstripPecSeparationLambda} below ${minMicrostripPecSeparation}`);
+    }
+    if (Number.isFinite(maxMicrostripPecSeparation) && metrics.microstripPecSeparationLambda > maxMicrostripPecSeparation) {
+      status.failures.push(`microstrip PEC separation ${metrics.microstripPecSeparationLambda} exceeds ${maxMicrostripPecSeparation}`);
+    }
     if (Number.isFinite(minSourceYSpan) && metrics.sourceYSpanLambda < minSourceYSpan) status.failures.push(`source Y span ${metrics.sourceYSpanLambda} below ${minSourceYSpan}`);
+    if (Number.isFinite(maxSourceYSpan) && metrics.sourceYSpanLambda > maxSourceYSpan) status.failures.push(`source Y span ${metrics.sourceYSpanLambda} exceeds ${maxSourceYSpan}`);
     if (Number.isFinite(minSourceXSpan) && metrics.sourceXSpanLambda < minSourceXSpan) status.failures.push(`source X span ${metrics.sourceXSpanLambda} below ${minSourceXSpan}`);
+    if (Number.isFinite(maxSourceXSpan) && metrics.sourceXSpanLambda > maxSourceXSpan) status.failures.push(`source X span ${metrics.sourceXSpanLambda} exceeds ${maxSourceXSpan}`);
+    if (Number.isFinite(minSourceYSpacingMean) && metrics.sourceYSpacingMeanLambda < minSourceYSpacingMean) {
+      status.failures.push(`source Y spacing mean ${metrics.sourceYSpacingMeanLambda} below ${minSourceYSpacingMean}`);
+    }
+    if (Number.isFinite(maxSourceYSpacingMean) && metrics.sourceYSpacingMeanLambda > maxSourceYSpacingMean) {
+      status.failures.push(`source Y spacing mean ${metrics.sourceYSpacingMeanLambda} exceeds ${maxSourceYSpacingMean}`);
+    }
+    if (Number.isFinite(maxSourceYSpacingStd) && metrics.sourceYSpacingStdLambda > maxSourceYSpacingStd) {
+      status.failures.push(`source Y spacing std ${metrics.sourceYSpacingStdLambda} exceeds ${maxSourceYSpacingStd}`);
+    }
     if (Number.isFinite(minSourceAngle) && metrics.sourceAngleMeanAbsDeg < minSourceAngle) status.failures.push(`mean source angle ${metrics.sourceAngleMeanAbsDeg} below ${minSourceAngle} deg`);
     if (Number.isFinite(maxSourceAngle) && metrics.sourceAngleMeanAbsDeg > maxSourceAngle) status.failures.push(`mean source angle ${metrics.sourceAngleMeanAbsDeg} exceeds ${maxSourceAngle} deg`);
     if (Number.isFinite(minFrequencySpread) && metrics.sourceFrequencySpread < minFrequencySpread) status.failures.push(`source frequency spread ${metrics.sourceFrequencySpread} below ${minFrequencySpread}`);
@@ -3717,12 +3925,27 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(maxPhaseStepStd) && metrics.sourcePhaseStepStdDeg > maxPhaseStepStd) status.failures.push(`source phase-step std ${metrics.sourcePhaseStepStdDeg} exceeds ${maxPhaseStepStd}`);
     if (Number.isFinite(minMaterialFraction) && metrics.materialEnergyFraction < minMaterialFraction) status.failures.push(`source-scene material energy fraction ${metrics.materialEnergyFraction} below ${minMaterialFraction}`);
     if (Number.isFinite(minHighIndexFraction) && metrics.highIndexEnergyFraction < minHighIndexFraction) status.failures.push(`source-scene high-index energy fraction ${metrics.highIndexEnergyFraction} below ${minHighIndexFraction}`);
+    if (Number.isFinite(minMicrostripSubstrateEnergy) && metrics.microstripSubstrateEnergyFraction < minMicrostripSubstrateEnergy) {
+      status.failures.push(`microstrip substrate energy fraction ${metrics.microstripSubstrateEnergyFraction} below ${minMicrostripSubstrateEnergy}`);
+    }
     if (Number.isFinite(minSourceFraction) && metrics.sourceNeighborhoodEnergyFraction < minSourceFraction) status.failures.push(`source-neighborhood energy fraction ${metrics.sourceNeighborhoodEnergyFraction} below ${minSourceFraction}`);
     if (Number.isFinite(minRightLeft) && metrics.rightToLeftEnergyRatio < minRightLeft) status.failures.push(`right/left source energy ratio ${metrics.rightToLeftEnergyRatio} below ${minRightLeft}`);
     if (Number.isFinite(maxRightLeft) && metrics.rightToLeftEnergyRatio > maxRightLeft) status.failures.push(`right/left source energy ratio ${metrics.rightToLeftEnergyRatio} exceeds ${maxRightLeft}`);
     if (Number.isFinite(minLowerUpper) && metrics.lowerToUpperEnergyRatio < minLowerUpper) status.failures.push(`lower/upper source energy ratio ${metrics.lowerToUpperEnergyRatio} below ${minLowerUpper}`);
+    if (Number.isFinite(maxLowerUpper) && metrics.lowerToUpperEnergyRatio > maxLowerUpper) status.failures.push(`lower/upper source energy ratio ${metrics.lowerToUpperEnergyRatio} exceeds ${maxLowerUpper}`);
     if (Number.isFinite(minFarFieldSamples) && metrics.farFieldSamples < minFarFieldSamples) status.failures.push(`far-field samples ${metrics.farFieldSamples} below ${minFarFieldSamples}`);
+    if (Number.isFinite(minFarFieldFiniteSamples) && metrics.farFieldFiniteSamples < minFarFieldFiniteSamples) {
+      status.failures.push(`finite far-field samples ${metrics.farFieldFiniteSamples} below ${minFarFieldFiniteSamples}`);
+    }
     if (Number.isFinite(minFarFieldPeak) && metrics.farFieldPeak < minFarFieldPeak) status.failures.push(`far-field peak ${metrics.farFieldPeak} below ${minFarFieldPeak}`);
+    if (Number.isFinite(minFarFieldMean) && metrics.farFieldMean < minFarFieldMean) status.failures.push(`mean far-field value ${metrics.farFieldMean} below ${minFarFieldMean}`);
+    if (Number.isFinite(maxFarFieldMean) && metrics.farFieldMean > maxFarFieldMean) status.failures.push(`mean far-field value ${metrics.farFieldMean} exceeds ${maxFarFieldMean}`);
+    if (Number.isFinite(minFarFieldNormalizedStd) && metrics.farFieldNormalizedStd < minFarFieldNormalizedStd) {
+      status.failures.push(`normalized far-field std ${metrics.farFieldNormalizedStd} below ${minFarFieldNormalizedStd}`);
+    }
+    if (Number.isFinite(maxFarFieldNormalizedStd) && metrics.farFieldNormalizedStd > maxFarFieldNormalizedStd) {
+      status.failures.push(`normalized far-field std ${metrics.farFieldNormalizedStd} exceeds ${maxFarFieldNormalizedStd}`);
+    }
     if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) status.failures.push(`source analysis samples ${metrics.analysisSamples} below ${minAnalysisSamples}`);
     if (Number.isFinite(minSweepSamples) && metrics.sweepSamples < minSweepSamples) status.failures.push(`sweep samples ${metrics.sweepSamples} below ${minSweepSamples}`);
     if (testCase.acceptance?.farFieldMode && metrics.farFieldMode !== testCase.acceptance.farFieldMode) {
@@ -3780,6 +4003,16 @@ async function runSmokeCase(page, testCase) {
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minBoundsWidth = Number(testCase.acceptance?.materialBoundsWidthLambdaMin);
     const minBoundsHeight = Number(testCase.acceptance?.materialBoundsHeightLambdaMin);
+    const minMziUpperArmCells = Number(testCase.acceptance?.mziUpperArmHighIndexCellsMin);
+    const minMziLowerArmCells = Number(testCase.acceptance?.mziLowerArmHighIndexCellsMin);
+    const minMziPhaseCells = Number(testCase.acceptance?.mziPhaseShifterCellsMin);
+    const minMziSplitterFraction = Number(testCase.acceptance?.mziSplitterEnergyFractionMin);
+    const minMziArmFraction = Number(testCase.acceptance?.mziArmEnergyFractionMin);
+    const maxMziArmBalance = Number(testCase.acceptance?.mziArmEnergyBalanceMax);
+    const minMziPhaseFraction = Number(testCase.acceptance?.mziPhaseShifterEnergyFractionMin);
+    const minMziCombinerFraction = Number(testCase.acceptance?.mziCombinerEnergyFractionMin);
+    const minMziOutputFraction = Number(testCase.acceptance?.mziOutputGuideEnergyFractionMin);
+    const maxMziInputFraction = Number(testCase.acceptance?.mziInputGuideEnergyFractionMax);
     if (testCase.acceptance?.fieldComponent && metrics.fieldComponent !== testCase.acceptance.fieldComponent) {
       status.failures.push(`guided field component ${metrics.fieldComponent} differs from expected ${testCase.acceptance.fieldComponent}`);
     }
@@ -3840,6 +4073,36 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minBoundsHeight) && (!metrics.materialBounds || metrics.materialBounds.heightLambda < minBoundsHeight)) {
       status.failures.push(`material height ${metrics.materialBounds?.heightLambda ?? 0} below ${minBoundsHeight}`);
+    }
+    if (Number.isFinite(minMziUpperArmCells) && metrics.mziUpperArmHighIndexCells < minMziUpperArmCells) {
+      status.failures.push(`MZI upper-arm cells ${metrics.mziUpperArmHighIndexCells} below ${minMziUpperArmCells}`);
+    }
+    if (Number.isFinite(minMziLowerArmCells) && metrics.mziLowerArmHighIndexCells < minMziLowerArmCells) {
+      status.failures.push(`MZI lower-arm cells ${metrics.mziLowerArmHighIndexCells} below ${minMziLowerArmCells}`);
+    }
+    if (Number.isFinite(minMziPhaseCells) && metrics.mziPhaseShifterCells < minMziPhaseCells) {
+      status.failures.push(`MZI phase-shifter cells ${metrics.mziPhaseShifterCells} below ${minMziPhaseCells}`);
+    }
+    if (Number.isFinite(minMziSplitterFraction) && metrics.mziSplitterEnergyFraction < minMziSplitterFraction) {
+      status.failures.push(`MZI splitter energy fraction ${metrics.mziSplitterEnergyFraction} below ${minMziSplitterFraction}`);
+    }
+    if (Number.isFinite(minMziArmFraction) && metrics.mziArmEnergyFraction < minMziArmFraction) {
+      status.failures.push(`MZI arm energy fraction ${metrics.mziArmEnergyFraction} below ${minMziArmFraction}`);
+    }
+    if (Number.isFinite(maxMziArmBalance) && !(Number.isFinite(metrics.mziArmEnergyBalance) && metrics.mziArmEnergyBalance <= maxMziArmBalance)) {
+      status.failures.push(`MZI arm energy balance ${metrics.mziArmEnergyBalance} exceeds ${maxMziArmBalance}`);
+    }
+    if (Number.isFinite(minMziPhaseFraction) && metrics.mziPhaseShifterEnergyFraction < minMziPhaseFraction) {
+      status.failures.push(`MZI phase-shifter energy fraction ${metrics.mziPhaseShifterEnergyFraction} below ${minMziPhaseFraction}`);
+    }
+    if (Number.isFinite(minMziCombinerFraction) && metrics.mziCombinerEnergyFraction < minMziCombinerFraction) {
+      status.failures.push(`MZI combiner energy fraction ${metrics.mziCombinerEnergyFraction} below ${minMziCombinerFraction}`);
+    }
+    if (Number.isFinite(minMziOutputFraction) && metrics.mziOutputGuideEnergyFraction < minMziOutputFraction) {
+      status.failures.push(`MZI output-guide energy fraction ${metrics.mziOutputGuideEnergyFraction} below ${minMziOutputFraction}`);
+    }
+    if (Number.isFinite(maxMziInputFraction) && metrics.mziInputGuideEnergyFraction > maxMziInputFraction) {
+      status.failures.push(`MZI input-guide energy fraction ${metrics.mziInputGuideEnergyFraction} exceeds ${maxMziInputFraction}`);
     }
   }
   if (testCase.acceptance?.periodicPhotonicsCheck) {
@@ -4210,6 +4473,8 @@ async function runSmokeCase(page, testCase) {
     const minFarRatio = Number(testCase.acceptance?.transmittedFarRatioMin);
     const minRightHighIndexCells = Number(testCase.acceptance?.rightHighIndexCellsMin);
     const maxRightHighIndexCells = Number(testCase.acceptance?.rightHighIndexCellsMax);
+    const minAirGapLambda = Number(testCase.acceptance?.airGapLambdaMin);
+    const maxAirGapLambda = Number(testCase.acceptance?.airGapLambdaMax);
     if (Number.isFinite(minInterfaceEnergy) && status.tir.interfaceEnergy < minInterfaceEnergy) {
       status.failures.push(`TIR interface energy ${status.tir.interfaceEnergy} is below ${minInterfaceEnergy}`);
     }
@@ -4224,6 +4489,31 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(maxRightHighIndexCells) && status.tir.rightHighIndexCells > maxRightHighIndexCells) {
       status.failures.push(`right-side high-index cells ${status.tir.rightHighIndexCells} exceed ${maxRightHighIndexCells}`);
+    }
+    if (Number.isFinite(minAirGapLambda) && !(status.tir.airGapLambda >= minAirGapLambda)) {
+      status.failures.push(`TIR air gap ${status.tir.airGapLambda} lambda below ${minAirGapLambda}`);
+    }
+    if (Number.isFinite(maxAirGapLambda) && !(status.tir.airGapLambda <= maxAirGapLambda)) {
+      status.failures.push(`TIR air gap ${status.tir.airGapLambda} lambda exceeds ${maxAirGapLambda}`);
+    }
+    const referencePreset = testCase.acceptance?.referencePreset;
+    if (testCase.id === "frustrated_tir_tunneling" && typeof referencePreset === "string" && referencePreset) {
+      status.tirReference = await tirReferenceMetrics(page, referencePreset, steps, testCase);
+      const minContrast = Number(testCase.acceptance?.tunneledFarRatioVsReferenceMin);
+      const maxReferenceRightHighIndexCells = Number(testCase.acceptance?.referenceRightHighIndexCellsMax);
+      const contrast = status.tir.transmittedFarRatio / Math.max(1e-30, status.tirReference.transmittedFarRatio);
+      status.tir.tunneledFarRatioVsReference = contrast;
+      if (Number.isFinite(minContrast) && contrast < minContrast) {
+        status.failures.push(`frustrated-TIR far-side ratio contrast ${contrast} below ${minContrast}`);
+      }
+      if (
+        Number.isFinite(maxReferenceRightHighIndexCells) &&
+        status.tirReference.rightHighIndexCells > maxReferenceRightHighIndexCells
+      ) {
+        status.failures.push(
+          `reference TIR right-side high-index cells ${status.tirReference.rightHighIndexCells} exceed ${maxReferenceRightHighIndexCells}`,
+        );
+      }
     }
   }
   if (testCase.id === "fabry_perot_cavity_localization" || testCase.id === "fabry_perot_standing_wave") {
@@ -4257,6 +4547,7 @@ async function runSmokeCase(page, testCase) {
     const minRingFraction = Number(testCase.acceptance?.ringEnergyFractionMin);
     const minRingToBus = Number(testCase.acceptance?.ringToBusRatioMin);
     const minDropToBus = Number(testCase.acceptance?.dropToBusRatioMin);
+    const minDropFraction = Number(testCase.acceptance?.dropBusEnergyFractionMin);
     if (Number.isFinite(minRingCells) && status.ring.ringCells < minRingCells) {
       status.failures.push(`ring cells ${status.ring.ringCells} below ${minRingCells}`);
     }
@@ -4274,6 +4565,14 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minDropToBus) && status.ring.dropToBusRatio < minDropToBus) {
       status.failures.push(`drop/bus energy ratio ${status.ring.dropToBusRatio} below ${minDropToBus}`);
+    }
+    if (
+      Number.isFinite(minDropFraction) &&
+      status.ring.dropBusEnergy / Math.max(1e-30, status.ring.totalEnergy) < minDropFraction
+    ) {
+      status.failures.push(
+        `drop-bus energy fraction ${status.ring.dropBusEnergy / Math.max(1e-30, status.ring.totalEnergy)} below ${minDropFraction}`,
+      );
     }
   }
   if (

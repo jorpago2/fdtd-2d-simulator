@@ -15,7 +15,7 @@ This guide translates the validation audit into teaching use. It does not claim 
 | Family | Use it to teach | Best observables | Main caveat |
 | --- | --- | --- | --- |
 | Maxwell and propagation | Yee-grid propagation, interference, apertures, CPML behavior. | Field phase, energy stability, aperture profiles, Poynting direction. | Short browser runs are regression checks, not convergence studies. |
-| Interfaces and multilayers | Fresnel reflection, refraction, Brewster angle, TIR, coatings, Bragg stacks. | Analytic Fresnel R, low R near Brewster angle, evanescent/frustrated-TIR field overlap, coating/stack reflectance proxies. | Raw line-monitor T is a finite-scene port observable; do not use it alone as de-embedded power balance. |
+| Interfaces and multilayers | Fresnel reflection, refraction, Brewster angle, TIR, coatings, Bragg stacks. | Analytic Fresnel R, low R near Brewster angle, evanescent/frustrated-TIR field overlap, frustrated-TIR contrast against isolated TIR, coating/stack reflectance proxies. | Raw line-monitor T is a finite-scene port observable; do not use it alone as de-embedded power balance. |
 | Sources and radiation | Dipoles, phased arrays, Huygens/Janus sources, NTFF workflow. | Source count/phase/polarization, near-field energy, reduced far-field samples. | Radiation patterns need analytic fits and grid convergence for quantitative antenna claims. |
 | Guided optics | Mode launch, bends, tapers, couplers, MMI, MZI, resonator side branches. | Mode-profile source route, guide geometry, guided-band energy, splitter/coupler proxies. | Coupling ratios and phase shifts are teaching proxies unless de-embedded against ports. |
 | Resonators and cavities | Ringdown, standing waves, cavity localization, beta/Purcell proxies. | Analysis samples, Q proxy, cavity energy fraction, Q/Aeff proxy. | 2D Q and Purcell proxies are not 3D LDOS or measured lifetime predictions. |
@@ -30,14 +30,11 @@ This guide translates the validation audit into teaching use. It does not claim 
 
 ## WARN Scene Guidance
 
-The current audit has `PASS 75`, `WARN 66`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
+The current audit has `PASS 83`, `WARN 58`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
 
 | Family | Current `WARN` scenes |
 | --- | --- |
-| Interfaces and multilayers | `frustratedTir` |
-| Sources and radiation | `mzDipole`, `dipoleArray`, `nearFarFieldNtff` |
-| Guided optics | `machZehnder`, `microstrip` |
-| Resonators and cavities | `addDropRing`, `qRingdown`, `purcell2d`, `betaFactor`, `degenerateModes` |
+| Resonators and cavities | `purcell2d`, `betaFactor`, `degenerateModes` |
 | Scattering and disorder | `dielectricCylinder`, `rcsCylinder`, `lossyCylinder`, `kerker2d`, `andersonLocalization` |
 | Materials and tensors | `finiteConductivity`, `hyperbolicMedium`, `chiralMedium`, `gyrotropicMedium` |
 | Periodic photonics and BICs | `photonicCrystal`, `phcPointDefect`, `phcWaveguide`, `phcOptimizedCavity`, `phcDarkMode`, `quasiBic`, `symmetryProtectedBic` |

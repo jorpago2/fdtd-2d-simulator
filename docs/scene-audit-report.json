@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-05T05:33:37.664Z",
-  "gitCommit": "308fb16+working-tree",
+  "generatedAt": "2026-07-05T06:44:37.702Z",
+  "gitCommit": "9719f56+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 75,
+    "PASS": 83,
     "VALIDATION_GAP": 0,
-    "WARN": 66,
+    "WARN": 58,
     "FIX_REQUIRED": 0
   },
   "consoleErrors": [],
@@ -614,7 +614,7 @@
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
       "description": "Atlas 18: two high-index regions separated by a narrow air gap.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -622,9 +622,7 @@
         "frustrated_tir_tunneling:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (frustrated_tir_tunneling); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -847,7 +845,7 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 25: localized magnetic Mz dipole using the Hz solver.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
@@ -855,9 +853,7 @@
         "mz_dipole_hz_source:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (mz_dipole_hz_source); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
@@ -1047,7 +1043,7 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 31: equal-phase dipole array.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -1055,9 +1051,7 @@
         "dipole_array_equal_phase_geometry:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (dipole_array_equal_phase_geometry); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1148,17 +1142,15 @@
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
       "description": "Atlas 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "near_far_field_ntff_proxy:P1/physics"
+        "near_far_field_ntff_pattern:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (near_far_field_ntff_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1446,8 +1438,8 @@
       "title": "Mach-Zehnder interferometer",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 43: qualitative Mach-Zehnder interferometer with two dielectric arms and a modal input.",
-      "status": "WARN",
+      "description": "Atlas 43: 2D Mach-Zehnder interferometer with two dielectric arms, a phase-shifter section, and a modal input.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -1455,9 +1447,7 @@
         "mach_zehnder_dual_arm_route:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Reduced 2D guided-interferometer layout; useful for arm splitting/recombination, not a calibrated phase-transfer curve."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1511,21 +1501,19 @@
     {
       "id": "microstrip",
       "index": 45,
-      "title": "Microstrip line",
+      "title": "Microstrip cross-section",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 45: qualitative microstrip cross-section with PEC strip, dielectric substrate, and ground plane.",
-      "status": "WARN",
+      "description": "Atlas 45: 2D microstrip cross-section with PEC strip, dielectric substrate, ground plane, and Hz excitation.",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization"
       ],
       "validationCases": [
-        "microstrip_hz_cross_section_proxy:P1/physics"
+        "microstrip_hz_cross_section_field:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "2D Hz cross-section proxy for a microstrip-like field pattern, not a calibrated transmission-line model."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
@@ -1682,7 +1670,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 50: dielectric ring side-coupled to input/drop buses and driven by a near-resonant modal source.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -1690,9 +1678,7 @@
         "add_drop_ring_coupling:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (add_drop_ring_coupling); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1849,7 +1835,7 @@
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "description": "Atlas 55: pulsed cavity ringdown with an estimated decay Q from the analysis energy trace.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -1857,9 +1843,7 @@
         "resonator_ringdown_q:P0/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (resonator_ringdown_q); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
