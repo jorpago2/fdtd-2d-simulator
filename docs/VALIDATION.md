@@ -87,9 +87,9 @@ P1 entries include both executable scene-family checks and tracking entries for 
 
 ## Interpretation
 
-`PASS` means the configured checks are satisfied.
+`PASS` means the configured checks are satisfied and no scene-level caveat is currently attached.
 
-`WARN` means the project is runnable, but a maintenance issue should be reviewed.
+`WARN` means the project is runnable, but the example has a documented teaching/modeling caveat, reduced/proxy observable, or missing calibrated reference for stronger claims.
 
 `BLOCK` means the result should not be trusted until the blocker is fixed.
 
@@ -112,6 +112,7 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 - The scattering/disorder P1 checks verify scatterer geometry, finite field interaction, NTFF/scattering-width availability where configured, and qualitative lateral spread or transport proxies. They do not replace calibrated 2D Mie/RCS references, mean-free-path fits, coherent-backscattering analysis, localization-length extraction, or mesh convergence.
 - The material/tensor P1 checks verify the intended numerical route and first-order observables: conductive sigma masks, ADE material kind and effective epsilon, tensor definiteness, gyrotropy masks, and six-field bianisotropy passivity/cross-energy. They do not replace fitted dispersion spectra, skin-depth extraction, optical-activity rotation, tensor S-parameters, or mesh convergence.
 - The photonic-crystal/BIC/Fano P1 checks verify lattice geometry, defects, line guides, intentional symmetry/asymmetry, side-resonator separation, finite field overlap, and reduced Bloch/leakage/PWE proxies. They do not replace calibrated band diagrams, eigenmode solvers, de-embedded transmission spectra, Q extraction, or mesh convergence.
+- The PhC line-defect waveguide check now requires a localized source, significant line-channel energy, and bounded adjacent-row leakage. It is still a reduced teaching validation, not a calibrated W1/eigenmode transmission benchmark.
 - The topological-photonics P1 checks verify SSH dimerization and analytic winding proxies, interface/disorder/non-Hermitian SSH flags, honeycomb sublattice inversion, Valley-Hall bend/defect geometry, modulation masks, and finite field overlap. They do not replace eigenspectrum calculations, Berry curvature/Chern or valley-Chern extraction, topological pump cycle integration, protected-transmission spectra, or mesh convergence.
 - The plasmonic/metamaterial P1 checks verify Drude masks, localized/dimer geometries, finite near/gap fields, metasurface bar gradients, lossy absorber backplanes, hyperlens reduced MTF samples, and ENZ slab overlap. They do not replace resonance spectra, field-enhancement calibration, absorber S-parameter retrieval, full hyperlens imaging metrics, or mesh convergence.
 - The browser physics runner reports raw interface transmittance and runtime Brewster-scan minima as diagnostics. Blocking checks use observables that are meaningful for the finite scene: Fresnel R, low R at the analytic Brewster angle, PML residual energy, slab modal launch, ringdown Q, and source-retirement stability.

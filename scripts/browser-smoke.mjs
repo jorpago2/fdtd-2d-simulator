@@ -2543,6 +2543,7 @@ async function periodicPhotonicsMetrics(page) {
       leakageRate: analysis?.leakageRate ?? null,
       phcBloch,
       sourceCount: sourceList.length,
+      sourceShapes: sourceList.map((source) => source?.shape || ""),
       sourcePhaseDifferenceDeg,
       sourceAmplitudeRatio,
       sourceSeparationLambda,
@@ -3860,6 +3861,7 @@ async function runSmokeCase(page, testCase) {
     const maxCavityHighIndexCells = Number(testCase.acceptance?.cavityHighIndexCellsMax);
     const minCavityFraction = Number(testCase.acceptance?.cavityEnergyFractionMin);
     const minLineFraction = Number(testCase.acceptance?.lineDefectEnergyFractionMin);
+    const maxAdjacentToLineRatio = Number(testCase.acceptance?.adjacentToLineEnergyRatioMax);
     const minOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMin);
     const maxOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMax);
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
@@ -3876,6 +3878,9 @@ async function runSmokeCase(page, testCase) {
     const minFanoResonatorFraction = Number(testCase.acceptance?.fanoResonatorEnergyFractionMin);
     if (expectedSweepMode && metrics.sweepMode !== expectedSweepMode) {
       status.failures.push(`expected ${expectedSweepMode} sweep, got ${metrics.sweepMode}`);
+    }
+    if (testCase.acceptance?.sourceShape && !metrics.sourceShapes.includes(testCase.acceptance.sourceShape)) {
+      status.failures.push(`expected source shape ${testCase.acceptance.sourceShape}, got ${metrics.sourceShapes.join(",") || "none"}`);
     }
     if (Number.isFinite(minHighIndexCells) && metrics.highIndexCells < minHighIndexCells) {
       status.failures.push(`periodic high-index cells ${metrics.highIndexCells} below ${minHighIndexCells}`);
@@ -3921,6 +3926,12 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minLineFraction) && metrics.lineDefectEnergyFraction < minLineFraction) {
       status.failures.push(`line-defect energy fraction ${metrics.lineDefectEnergyFraction} below ${minLineFraction}`);
+    }
+    if (
+      Number.isFinite(maxAdjacentToLineRatio) &&
+      !(Number.isFinite(metrics.adjacentToLineEnergyRatio) && metrics.adjacentToLineEnergyRatio <= maxAdjacentToLineRatio)
+    ) {
+      status.failures.push(`adjacent-to-line energy ratio ${metrics.adjacentToLineEnergyRatio} exceeds ${maxAdjacentToLineRatio}`);
     }
     if (Number.isFinite(minOffsetMean) && metrics.latticeOffsetMeanLambda < minOffsetMean) {
       status.failures.push(`lattice offset mean ${metrics.latticeOffsetMeanLambda} below ${minOffsetMean}`);

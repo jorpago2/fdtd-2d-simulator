@@ -276,7 +276,11 @@ function inferContract(scene) {
   return {
     expected,
     contractTags,
-    qualitativeCaveat: qualitativeCaveats.get(id) || (/proxy|analogue|qualitative/.test(text) ? "Description frames the scene as qualitative/proxy; avoid quantitative claims without extra validation." : ""),
+    qualitativeCaveat:
+      qualitativeCaveats.get(id) ||
+      (/\b(proxy|analogue|qualitative|reduced)\b/.test(text)
+        ? "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
+        : ""),
   };
 }
 
@@ -294,6 +298,17 @@ function countStatus(rows) {
 
 function isExecutableValidationCase(testCase) {
   return Boolean(testCase.browserSmoke || testCase.acceptance?.script);
+}
+
+function proxyValidationCaveat(cases) {
+  const proxyCases = cases.filter((testCase) => {
+    const text = `${testCase.id} ${(testCase.checks || []).join(" ")} ${testCase.rationale || ""}`.toLowerCase();
+    return ["proxy", "reduced", "qualitative", "analogue"].some((marker) => text.includes(marker));
+  });
+  if (proxyCases.length === 0) return "";
+  const ids = proxyCases.map((testCase) => testCase.id).slice(0, 2).join(", ");
+  const suffix = proxyCases.length > 2 ? ", ..." : "";
+  return `Executable validation is reduced/proxy (${ids}${suffix}); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation.`;
 }
 
 function evaluateScene(scene, contract, runtime) {
@@ -360,6 +375,10 @@ function evaluateScene(scene, contract, runtime) {
   }
 
   if (contract.qualitativeCaveat) warnings.push(contract.qualitativeCaveat);
+  else {
+    const proxyCaveat = proxyValidationCaveat(cases);
+    if (proxyCaveat) warnings.push(proxyCaveat);
+  }
   const executableCases = cases.filter(isExecutableValidationCase);
   if (cases.length === 0 && scene.id !== "empty") {
     gaps.push("no validation-matrix case covers this preset");
@@ -557,7 +576,7 @@ function renderMarkdown(report) {
   lines.push("");
   lines.push("| Status | Count | Meaning |");
   lines.push("| --- | ---: | --- |");
-  lines.push(`| PASS | ${report.summary.PASS || 0} | Contract, runtime smoke, and validation coverage are acceptable. |`);
+  lines.push(`| PASS | ${report.summary.PASS || 0} | Configured contract/runtime checks pass and no scene-level caveat is attached. |`);
   lines.push(`| VALIDATION_GAP | ${report.summary.VALIDATION_GAP || 0} | Scene runs and matches its contract, but lacks an executable dedicated validation case. |`);
   lines.push(`| WARN | ${report.summary.WARN || 0} | Scene runs, but has a documented teaching/modeling caveat. |`);
   lines.push(`| FIX_REQUIRED | ${report.summary.FIX_REQUIRED || 0} | Scene violates its inferred physical or runtime contract. |`);
@@ -588,6 +607,7 @@ function renderMarkdown(report) {
   lines.push("## Interpretation");
   lines.push("");
   lines.push("- This audit checks whether each example is educationally coherent and runnable, not whether it is publication-grade.");
+  lines.push("- `WARN` scenes are runnable, but carry a teaching/modeling caveat, reduced/proxy observable, or missing calibrated reference for stronger claims.");
   lines.push("- `VALIDATION_GAP` marks a scene that still needs an executable targeted metric before stronger claims are made.");
   lines.push("- Use `scripts/audit-scene-contracts.mjs --write` to regenerate this report after preset changes.");
   lines.push("");

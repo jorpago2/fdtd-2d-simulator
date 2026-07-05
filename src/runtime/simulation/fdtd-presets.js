@@ -1305,7 +1305,16 @@ Object.assign(FDTDSim.prototype, {
       case "phcWaveguide":
         configureBlochSweep(0, 1, 11, 120);
         phc({ skip: (_ix, iy) => iy === 0 });
-        gaussianGuideSource(midYLambda, { widthLambda: 0.32 });
+        setSources([
+          {
+            type: "gaussian",
+            shape: "pointDipole",
+            xLambda: sourceX(midXLambda - 3.4),
+            yLambda: sourceY(midYLambda),
+            widthLambda: 0.22,
+            amplitude: 0.58,
+          },
+        ]);
         break;
       case "phcOptimizedCavity":
         state.analysisEnabled = true;

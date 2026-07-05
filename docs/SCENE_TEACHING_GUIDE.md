@@ -28,40 +28,26 @@ This guide translates the validation audit into teaching use. It does not claim 
 | Time-varying and Floquet media | Temporal interfaces, modulation, sidebands, synthetic-frequency intuition. | Modulated-cell masks, phase coherence/spread, reduced sideband readouts. | De-embedded multi-port Floquet scattering and isolation spectra are not provided by default. |
 | Coupled and non-Hermitian workflows | PT/EP proxies, skin-effect analogues, hybrid source/topology/cavity scenes. | Gain/loss masks, reduced modal proxies, active-region overlap, source/guide/cavity overlap. | Eigenvalue coalescence, non-Bloch theory, and calibrated isolation/transport spectra need external validation. |
 
-## Reviewed WARN Scenes
+## WARN Scene Guidance
 
-These 28 scenes are intentionally kept as `WARN`, not because they fail to run, but because their teaching claims must stay bounded.
+The current audit has `PASS 75`, `WARN 66`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
 
-| Scene | What is valid for teaching | Do not claim without extra work |
-| --- | --- | --- |
-| `machZehnder` | Split-arm guided layout with mode-profile launch and a phase-shifter section. | Calibrated transfer curve, extinction ratio, or phase sensitivity. |
-| `microstrip` | 2D Hz cross-section with PEC strip, substrate, ground plane, and finite excitation. | Quasi-TEM impedance, dispersion, or S-parameters of a real microstrip. |
-| `purcell2d` | Dipole/cavity interaction with live Q/Aeff proxy. | Absolute 3D Purcell factor or emitter lifetime. |
-| `hyperbolicMedium` | Reduced Drude tensor route for hyperbolic-medium intuition. | Broadband causal hyperbolic material evidence. |
-| `chiralMedium` | Six-field chiral route and cross-coupled fields. | Calibrated optical rotation or chiral S-parameters. |
-| `gyrotropicMedium` | Gyrotropic material masks and non-scalar update route. | Faraday rotation or nonreciprocal isolation. |
-| `phcPointDefect` | Point-defect geometry and localized-field intuition. | Eigenfrequency/Q or mode-volume convergence. |
-| `phcOptimizedCavity` | Optimized-looking cavity geometry and field localization. | Reproduced optimization objective or global optimum. |
-| `phcDarkMode` | Symmetry-dark-mode concept and source-symmetry intuition. | Quantitative radiation suppression. |
-| `symmetryProtectedBic` | Symmetry-protected BIC analogue. | Diverging-Q scaling or eigenmode proof. |
-| `nonHermitianSsh` | Non-Hermitian SSH flags and gain/loss route. | Biorthogonal eigenmodes or non-Hermitian topological invariant. |
-| `topologicalPumping` | Modulated Thouless-pump-like transport intuition. | Quantized adiabatic pumping. |
-| `sppGrating` | Real Drude grating geometry and surface localization. | De-embedded grating-coupler efficiency. |
-| `superlensSlab` | Drude slab and reduced image-transfer intuition. | Calibrated evanescent transfer function. |
-| `hyperlens` | Scalar 2D Hz hyperlens transfer trend. | Full cylindrical 3D hyperlens resolution. |
-| `spmKerrPulse` | Kerr active-region overlap and qualitative SPM sidebands. | Nonlinear phase shift or calibrated spectrum. |
-| `kerrBistableCavity` | Kerr cavity workflow. | Hysteresis branches or switching thresholds. |
-| `saturableAbsorber` | Saturable-loss material route. | Transmission-vs-intensity curve. |
-| `allOpticalSwitch` | Active guide/switching layout and overlap. | Extinction ratio or switching energy. |
-| `nonlinearLimiter` | Limiter material route and active overlap. | Limiter threshold or dynamic range. |
-| `temporalIsolator` | Traveling-modulation isolator analogue and sideband intuition. | Calibrated reverse/forward isolation spectrum. |
-| `syntheticFrequency` | Sideband ladder / synthetic-frequency concept. | Quantitative frequency-lattice Hamiltonian. |
-| `exceptionalPointCoupler` | PT-coupler EP proxy and reduced coalescence estimate. | Rigorous exceptional-point topology. |
-| `nonHermitianSkin` | Active/lossy skin-effect analogue. | Non-Bloch eigenmode validation. |
-| `janusTopologicalGuide` | Directional source coupled to structured guide. | Protected topological transport. |
-| `huygensCavity` | Huygens source/cavity workflow. | Optimized Purcell, beta-factor, or far-field metrics. |
-| `nonreciprocalValleyHall` | Hybrid nonreciprocal/Valley-Hall guide concept. | Nonreciprocal topological S-parameters. |
-| `spaceTimeCrystal` | Spatiotemporal modulation and sideband concept. | Full space-time band structure. |
+| Family | Current `WARN` scenes |
+| --- | --- |
+| Interfaces and multilayers | `frustratedTir` |
+| Sources and radiation | `mzDipole`, `dipoleArray`, `nearFarFieldNtff` |
+| Guided optics | `machZehnder`, `microstrip` |
+| Resonators and cavities | `addDropRing`, `qRingdown`, `purcell2d`, `betaFactor`, `degenerateModes` |
+| Scattering and disorder | `dielectricCylinder`, `rcsCylinder`, `lossyCylinder`, `kerker2d`, `andersonLocalization` |
+| Materials and tensors | `finiteConductivity`, `hyperbolicMedium`, `chiralMedium`, `gyrotropicMedium` |
+| Periodic photonics and BICs | `photonicCrystal`, `phcPointDefect`, `phcWaveguide`, `phcOptimizedCavity`, `phcDarkMode`, `quasiBic`, `symmetryProtectedBic` |
+| Topological photonics | `sshInterface`, `sshDisorder`, `nonHermitianSsh`, `valleyHallBend`, `topologicalPumping` |
+| Plasmonics and metamaterials | `sppGrating`, `perfectAbsorber`, `negativeIndexSlab`, `superlensSlab`, `hyperlens` |
+| Nonlinear and active media | `shgSlab`, `thgSlab`, `spmKerrPulse`, `kerrBistableCavity`, `vo2SwitchingSlab`, `pcmMemoryCell`, `saturableAbsorber`, `allOpticalSwitch`, `nonlinearLimiter` |
+| Time-varying and Floquet media | `temporalInterface`, `temporalSlab`, `temporalModulation`, `temporalCrystal`, `modulatedGuide`, `travelingModulation`, `temporalIsolator`, `modulatedRing`, `floquetResonators`, `syntheticFrequency` |
+| Coupled and non-Hermitian workflows | `ptSymmetricCoupler`, `exceptionalPointCoupler`, `nonHermitianSkin`, `bicKerr`, `bicEnz`, `janusTopologicalGuide`, `huygensCavity`, `topologyTemporalMod`, `nonreciprocalValleyHall`, `spaceTimeCrystal` |
+
+For `phcWaveguide`, the scene now uses a localized source at the line defect and the validation requires significant channel energy plus bounded adjacent-row leakage. It remains `WARN` because the Bloch reference is reduced and no eigenmode transmission spectrum is solved.
 
 ## High-Impact Upgrade Path
 

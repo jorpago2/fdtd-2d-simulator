@@ -915,11 +915,14 @@
       "checks": [
         "the central lattice row is removed to create a line defect",
         "adjacent PhC rows remain populated",
-        "finite field energy propagates in the line-defect channel"
+        "a localized source excites the line-defect channel instead of a broad TFSF beam",
+        "line-defect channel energy is significant compared with the full domain",
+        "adjacent-row leakage remains bounded relative to line-defect energy"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
         "sweepMode": "blochK",
+        "sourceShape": "pointDipole",
         "highIndexCellsMin": 1500,
         "rodCountProxyMin": 100,
         "rowsProxyMin": 8,
@@ -927,12 +930,13 @@
         "lineRowBinCountMax": 1,
         "centralLineHighIndexCellsMax": 8,
         "adjacentRowHighIndexCellsMin": 180,
-        "lineDefectEnergyFractionMin": 0.01,
+        "lineDefectEnergyFractionMin": 0.12,
+        "adjacentToLineEnergyRatioMax": 2.0,
         "phcBlochRequired": true,
         "phcBlochCellsMin": 1500,
         "blochPathPointsMin": 13
       },
-      "rationale": "Checks that the PhC waveguide is a real line-defect guide, not a full lattice or an empty channel without excitation."
+      "rationale": "Checks that the PhC waveguide is a real line-defect demonstration with observable channel localization, not just a correct lattice mask illuminated by a broad free-space beam."
     },
     {
       "id": "phc_optimized_cavity_proxy",
