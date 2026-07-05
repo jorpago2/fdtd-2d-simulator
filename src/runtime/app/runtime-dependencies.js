@@ -20,6 +20,7 @@
     ["sceneCodec", "FdtdSceneCodec", "scene-codec.js"],
     ["sourceMonitorModel", "FdtdSourceMonitorModel", "source-monitor-model.js"],
     ["sourceMonitorOperationsModule", "FdtdSourceMonitorOperations", "source-monitor-operations.js"],
+    ["sceneObservablesModule", "FdtdSceneObservables", "fdtd-scene-observables.js"],
     ["materialEditorModel", "FdtdMaterialEditorModel", "material-editor-model.js"],
     ["materialEditorUi", "FdtdMaterialEditorUi", "material-editor-ui.js"],
     ["materialOperationsModule", "FdtdMaterialOperations", "material-operations.js"],

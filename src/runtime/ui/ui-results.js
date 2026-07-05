@@ -16,6 +16,15 @@
     if (output) output.textContent = value;
   }
 
+  function observableStatusLabel(status) {
+    return {
+      ok: "validated",
+      caution: "check",
+      pending: "pending",
+      info: "reference",
+    }[status] || "reference";
+  }
+
   function resultsInsightText({ balance = 0, diagnosticsEnabled = true, lastDiverged = false, reflectance = 0, samples = 0, transmittance = 0 }, formatDiagnosticRatio) {
     if (lastDiverged) {
       return {
@@ -53,6 +62,7 @@
     el,
     formatDiagnosticRatio,
     formatFieldValue,
+    buildSceneObservables,
     measureCustomMonitors,
     monitorQuantityLabel,
   } = {}) {
@@ -71,6 +81,69 @@
       if (!el?.customMonitorResults) return false;
       if (el.customMonitorResults.closest("[hidden]")) return false;
       return el.customMonitorResults.getClientRects().length > 0;
+    }
+
+    function renderSceneObservables() {
+      if (!el?.sceneObservableResults || typeof buildSceneObservables !== "function") return;
+      const report = buildSceneObservables() || {};
+      const rows = Array.isArray(report.rows) ? report.rows : [];
+      el.sceneObservableResults.replaceChildren();
+      if (rows.length === 0) {
+        const note = documentRef.createElement("p");
+        note.className = "results-insight-note";
+        note.textContent = report.note || "Run the simulation to collect scene observables.";
+        el.sceneObservableResults.appendChild(note);
+        return;
+      }
+
+      const card = documentRef.createElement("article");
+      card.className = "scene-observable-card";
+      card.dataset.healthLevel = report.status || "info";
+
+      const header = documentRef.createElement("header");
+      const title = documentRef.createElement("h3");
+      title.textContent = report.title || "Scene observables";
+      const status = documentRef.createElement("span");
+      status.className = "scene-observable-status";
+      status.dataset.healthLevel = report.status || "info";
+      status.textContent = observableStatusLabel(report.status);
+      header.append(title, status);
+
+      const note = documentRef.createElement("p");
+      note.className = "results-insight-note";
+      note.textContent = report.note || "Measured quantities are compared with compact scene-specific references.";
+
+      const list = documentRef.createElement("div");
+      list.className = "scene-observable-list";
+      rows.forEach((item) => {
+        const rowNode = documentRef.createElement("div");
+        rowNode.className = "scene-observable-row";
+        rowNode.dataset.healthLevel = item.level || "info";
+
+        const metric = documentRef.createElement("span");
+        metric.className = "scene-observable-metric";
+        metric.textContent = item.metric || "Observable";
+
+        const values = documentRef.createElement("output");
+        values.className = "scene-observable-values";
+        const parts = [
+          item.measured ? `measured: ${item.measured}` : null,
+          item.expected ? `reference: ${item.expected}` : null,
+          item.error && item.error !== "-" ? item.error : null,
+        ].filter(Boolean);
+        values.textContent = parts.join(" | ");
+
+        rowNode.append(metric, values);
+        if (item.note) {
+          const rowNote = documentRef.createElement("small");
+          rowNote.textContent = item.note;
+          rowNode.appendChild(rowNote);
+        }
+        list.appendChild(rowNode);
+      });
+
+      card.append(header, note, list);
+      el.sceneObservableResults.appendChild(card);
     }
 
     function renderCustomMonitorResults({ force = false, monitorCount = 0 } = {}) {
@@ -143,6 +216,7 @@
       setOutputText(el?.fluxRightOutput, formatFieldValue(transmittedPower || 0));
       setOutputText(el?.reflectanceOutput, formatDiagnosticRatio(reflectance));
       setOutputText(el?.transmittanceOutput, formatDiagnosticRatio(transmittance));
+      renderSceneObservables();
       renderCustomMonitorResults({ monitorCount });
       setOutputText(el?.engineValue, engineText);
     }
@@ -150,6 +224,7 @@
     return {
       customMonitorResultsVisible,
       renderCustomMonitorResults,
+      renderSceneObservables,
       updateDiagnostics,
       updateInsight,
       updateRunState,

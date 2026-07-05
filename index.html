@@ -1188,6 +1188,14 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
+              <details class="scene-observables-panel results-detail-panel">
+                <summary>Scene observables</summary>
+                <div class="results-detail-body">
+                  <div id="sceneObservableResults" class="scene-observable-results" aria-live="polite">
+                    <p class="results-insight-note">Select and run a scene to compare measured quantities with a physics reference.</p>
+                  </div>
+                </div>
+              </details>
               <details class="monitor-panel results-detail-panel">
                 <summary>Line monitors</summary>
                 <div class="results-detail-body">
@@ -1477,6 +1485,7 @@
     <script src="src/runtime/simulation/fdtd-custom-monitors.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260702-courant-01-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-observables.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260705-scene-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-material-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260704-measure-policy-2"></script>
     <script src="src/runtime/simulation/fdtd-yee.js?v=20260704-validation-profile-1"></script>

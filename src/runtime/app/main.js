@@ -22,6 +22,7 @@ const {
   sceneCodec,
   sourceMonitorModel,
   sourceMonitorOperationsModule,
+  sceneObservablesModule,
   materialEditorModel,
   materialEditorUi,
   materialOperationsModule,
@@ -79,6 +80,7 @@ let canvasRenderController = null;
 let canvasColorbarController = null;
 let canvasExportController = null;
 let sim = null;
+let sceneObservables = null;
 let runtimeController = null;
 let simulationEffects = null;
 let stateNormalizer = null;
@@ -246,6 +248,7 @@ const resultsView = uiResultsModule.createResultsController({
   el,
   formatDiagnosticRatio,
   formatFieldValue,
+  buildSceneObservables: () => sceneObservables?.buildSceneObservables?.(),
   measureCustomMonitors: () => sim.measureCustomMonitors(),
   monitorQuantityLabel,
 });
@@ -1399,6 +1402,10 @@ function insertGeometryFromEvent(event) {
 }
 
 sim = new FDTDSim(el.canvas, DEFAULT_GRID);
+sceneObservables = sceneObservablesModule.createSceneObservableController({
+  state,
+  getSim: () => sim,
+});
 materialStabilityController = materialStabilityModule.createMaterialStabilityController({
   state,
   sim,

@@ -125,6 +125,7 @@
       resultsStateOutput: documentRef.getElementById("resultsStateOutput"),
       resultsInsightNote: documentRef.getElementById("resultsInsightNote"),
       resultsDetailPanels: documentRef.querySelectorAll(".results-detail-panel"),
+      sceneObservableResults: documentRef.getElementById("sceneObservableResults"),
       sweepModeInput: documentRef.getElementById("sweepModeInput"),
       sweepStartInput: documentRef.getElementById("sweepStartInput"),
       sweepEndInput: documentRef.getElementById("sweepEndInput"),

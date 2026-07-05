@@ -5856,6 +5856,126 @@ async function runSourceDependentParamsSmoke(page) {
   };
 }
 
+async function runSceneObservablesSmoke(page) {
+  const status = await page.evaluate(async () => {
+    const selectAndRead = async (preset) => {
+      const input = document.getElementById("presetInput");
+      if (!input || typeof updateStats !== "function" || typeof FdtdSceneObservables === "undefined") {
+        return { preset, loaded: false, panelText: "", rowCount: 0, report: null };
+      }
+      input.value = preset;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      updateStats();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      return {
+        preset: state.preset,
+        loaded: true,
+        panelText: document.getElementById("sceneObservableResults")?.textContent || "",
+        rowCount: document.querySelectorAll(".scene-observable-row").length,
+        report:
+          typeof sceneObservables !== "undefined" && typeof sceneObservables.buildSceneObservables === "function"
+            ? sceneObservables.buildSceneObservables()
+            : null,
+      };
+    };
+    return {
+      planeWaveAir: await selectAndRead("planeWaveAir"),
+      pmlAbsorption: await selectAndRead("pmlAbsorption"),
+      doubleSlit: await selectAndRead("doubleSlit"),
+      phasedDipoleArray: await selectAndRead("phasedDipoleArray"),
+      normalInterface: await selectAndRead("normalInterface"),
+      sppGrating: await selectAndRead("sppGrating"),
+      phcWaveguide: await selectAndRead("phcWaveguide"),
+      kerker2d: await selectAndRead("kerker2d"),
+      drudeMetal: await selectAndRead("drudeMetal"),
+      valleyHall: await selectAndRead("valleyHall"),
+      metasurfacePhaseBars: await selectAndRead("metasurfacePhaseBars"),
+      microstrip: await selectAndRead("microstrip"),
+      pecCavity: await selectAndRead("pecCavity"),
+      quarterWaveCavity: await selectAndRead("quarterWaveCavity"),
+      fanoResonator: await selectAndRead("fanoResonator"),
+      sshInterface: await selectAndRead("sshInterface"),
+      ptSymmetricCoupler: await selectAndRead("ptSymmetricCoupler"),
+      perfectAbsorber: await selectAndRead("perfectAbsorber"),
+      negativeIndexSlab: await selectAndRead("negativeIndexSlab"),
+      chiralMedium: await selectAndRead("chiralMedium"),
+      shgSlab: await selectAndRead("shgSlab"),
+      temporalModulation: await selectAndRead("temporalModulation"),
+    };
+  });
+  const failures = [];
+  if (
+    !status.planeWaveAir.loaded ||
+    !status.pmlAbsorption.loaded ||
+    !status.doubleSlit.loaded ||
+    !status.phasedDipoleArray.loaded ||
+    !status.normalInterface.loaded ||
+    !status.sppGrating.loaded ||
+    !status.phcWaveguide.loaded ||
+    !status.kerker2d.loaded ||
+    !status.drudeMetal.loaded ||
+    !status.valleyHall.loaded ||
+    !status.metasurfacePhaseBars.loaded ||
+    !status.microstrip.loaded ||
+    !status.pecCavity.loaded ||
+    !status.quarterWaveCavity.loaded ||
+    !status.fanoResonator.loaded ||
+    !status.sshInterface.loaded ||
+    !status.ptSymmetricCoupler.loaded ||
+    !status.perfectAbsorber.loaded ||
+    !status.negativeIndexSlab.loaded ||
+    !status.chiralMedium.loaded ||
+    !status.shgSlab.loaded ||
+    !status.temporalModulation.loaded
+  ) {
+    failures.push("scene observable module or results panel did not load");
+  }
+  if (!status.planeWaveAir.panelText.includes("Carrier grid scale")) failures.push("planeWaveAir does not expose the grid-scale observable");
+  if (!status.pmlAbsorption.panelText.includes("Open-boundary residual")) failures.push("pmlAbsorption does not expose the open-boundary residual observable");
+  if (!status.doubleSlit.panelText.includes("Aperture geometry")) failures.push("doubleSlit does not expose the aperture geometry observable");
+  if (!status.doubleSlit.panelText.includes("Diffraction scale")) failures.push("doubleSlit does not expose the diffraction-scale observable");
+  if (!status.phasedDipoleArray.panelText.includes("Array phase law")) failures.push("phasedDipoleArray does not expose the array phase-law observable");
+  if (!status.normalInterface.panelText.includes("R_theory=0.040")) failures.push("normalInterface does not expose the Fresnel R_theory reference");
+  if ((status.normalInterface.rowCount || 0) < 1) failures.push("normalInterface did not render scene observable rows");
+  if (!status.sppGrating.panelText.includes("Planar SPP phase match")) failures.push("sppGrating does not expose the planar SPP phase-match observable");
+  if (!status.sppGrating.panelText.includes("Grating momentum")) failures.push("sppGrating does not expose the grating momentum observable");
+  const gratingRows = status.sppGrating.report?.rows || [];
+  const gratingMomentum = gratingRows.find((item) => item.metric === "Grating momentum");
+  if (gratingMomentum?.level !== "ok") failures.push("sppGrating grating momentum observable is not marked ok");
+  if (!status.phcWaveguide.panelText.includes("Line-defect geometry")) failures.push("phcWaveguide does not expose the line-defect geometry observable");
+  if (!status.phcWaveguide.panelText.includes("Line-defect energy")) failures.push("phcWaveguide does not expose the line-defect energy observable");
+  const phcRows = status.phcWaveguide.report?.rows || [];
+  const phcGeometry = phcRows.find((item) => item.metric === "Line-defect geometry");
+  if (phcGeometry?.level !== "ok") failures.push("phcWaveguide line-defect geometry observable is not marked ok");
+  if (!status.kerker2d.panelText.includes("Scatterer geometry")) failures.push("kerker2d does not expose the scatterer geometry observable");
+  if (!status.kerker2d.panelText.includes("Size-parameter reference")) failures.push("kerker2d does not expose the size-parameter observable");
+  if (!status.drudeMetal.panelText.includes("Material model contract")) failures.push("drudeMetal does not expose the material-model observable");
+  if (!status.drudeMetal.panelText.includes("Carrier epsilon")) failures.push("drudeMetal does not expose the carrier-epsilon observable");
+  if (!status.valleyHall.panelText.includes("Topological lattice geometry")) failures.push("valleyHall does not expose the topological lattice observable");
+  if (!status.metasurfacePhaseBars.panelText.includes("Metasurface phase-bar ladder")) failures.push("metasurfacePhaseBars does not expose the metasurface geometry observable");
+  if (!status.microstrip.panelText.includes("Guided-flux beta")) failures.push("microstrip does not expose the guided beta observable");
+  if (!status.pecCavity.panelText.includes("Resonator spectrum/Q")) failures.push("pecCavity does not expose the resonator observable");
+  if (!status.quarterWaveCavity.panelText.includes("Resonator spectrum/Q")) failures.push("quarterWaveCavity does not expose the resonator observable");
+  if (!status.fanoResonator.panelText.includes("Resonator spectrum/Q")) failures.push("fanoResonator does not expose the resonator observable");
+  if (!status.sshInterface.panelText.includes("SSH coupling topology")) failures.push("sshInterface does not expose the SSH topology observable");
+  if (!status.ptSymmetricCoupler.panelText.includes("PT gain/loss ratio")) failures.push("ptSymmetricCoupler does not expose the PT modal observable");
+  if (!status.perfectAbsorber.panelText.includes("Lossy absorber mask")) failures.push("perfectAbsorber does not expose the absorber material observable");
+  if (!status.negativeIndexSlab.panelText.includes("Double-negative material")) failures.push("negativeIndexSlab does not expose the double-negative material observable");
+  if (!status.chiralMedium.panelText.includes("Bianisotropic material")) failures.push("chiralMedium does not expose the bianisotropic material observable");
+  if (!status.shgSlab.panelText.includes("Second-harmonic proxy")) failures.push("shgSlab does not expose the harmonic observable");
+  if (!status.temporalModulation.panelText.includes("Modulation phase contract")) failures.push("temporalModulation does not expose the modulation phase observable");
+  return {
+    id: "scene_observables_panel",
+    preset: "planeWaveAir,pmlAbsorption,doubleSlit,phasedDipoleArray,normalInterface,sppGrating,phcWaveguide,kerker2d,drudeMetal,valleyHall,metasurfacePhaseBars,microstrip,pecCavity,quarterWaveCavity,fanoResonator,sshInterface,ptSymmetricCoupler,perfectAbsorber,negativeIndexSlab,chiralMedium,shgSlab,temporalModulation",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runFloatingContextMenuDragSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(async () => {
@@ -6334,6 +6454,7 @@ async function main() {
       report.cases.push(await runDrawPreviewSmoke(page));
       report.cases.push(await runSourceWaveVectorOverlaySmoke(page));
       report.cases.push(await runSourceDependentParamsSmoke(page));
+      report.cases.push(await runSceneObservablesSmoke(page));
       report.cases.push(await runFloatingContextMenuDragSmoke(page));
       report.cases.push(await runReflectiveBoundaryWallSmoke(page));
       report.cases.push(await runBrushDependentParamsSmoke(page));

@@ -1640,6 +1640,79 @@ label.scene-select-fallback,
   min-width: 0;
 }
 
+.scene-observable-results,
+.scene-observable-card,
+.scene-observable-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scene-observable-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: var(--panel-2);
+}
+
+.scene-observable-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scene-observable-card h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.scene-observable-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: var(--pill);
+  padding: 0 8px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-size: 0.64rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.scene-observable-row {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.scene-observable-metric {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.scene-observable-values {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.scene-observable-row small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
 .results-state-pill {
   display: inline-flex;
   align-items: center;
