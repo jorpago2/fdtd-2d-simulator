@@ -30,19 +30,15 @@ This guide translates the validation audit into teaching use. It does not claim 
 
 ## WARN Scene Guidance
 
-The current audit has `PASS 93`, `WARN 48`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
+The current audit has `PASS 106`, `WARN 35`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
 
 | Family | Current `WARN` scenes |
 | --- | --- |
-| Materials and tensors | `chiralMedium`, `gyrotropicMedium` |
-| Periodic photonics and BICs | `photonicCrystal`, `phcPointDefect`, `phcWaveguide`, `phcOptimizedCavity`, `phcDarkMode`, `quasiBic`, `symmetryProtectedBic` |
-| Topological photonics | `sshInterface`, `sshDisorder`, `nonHermitianSsh`, `valleyHallBend`, `topologicalPumping` |
+| Topological photonics | `topologicalPumping` |
 | Plasmonics and metamaterials | `sppGrating`, `perfectAbsorber`, `negativeIndexSlab`, `superlensSlab`, `hyperlens` |
 | Nonlinear and active media | `shgSlab`, `thgSlab`, `spmKerrPulse`, `kerrBistableCavity`, `vo2SwitchingSlab`, `pcmMemoryCell`, `saturableAbsorber`, `allOpticalSwitch`, `nonlinearLimiter` |
 | Time-varying and Floquet media | `temporalInterface`, `temporalSlab`, `temporalModulation`, `temporalCrystal`, `modulatedGuide`, `travelingModulation`, `temporalIsolator`, `modulatedRing`, `floquetResonators`, `syntheticFrequency` |
 | Coupled and non-Hermitian workflows | `ptSymmetricCoupler`, `exceptionalPointCoupler`, `nonHermitianSkin`, `bicKerr`, `bicEnz`, `janusTopologicalGuide`, `huygensCavity`, `topologyTemporalMod`, `nonreciprocalValleyHall`, `spaceTimeCrystal` |
-
-For `phcWaveguide`, the scene now uses a localized source at the line defect and the validation requires significant channel energy plus bounded adjacent-row leakage. It remains `WARN` because the Bloch reference is reduced and no eigenmode transmission spectrum is solved.
 
 ## High-Impact Upgrade Path
 

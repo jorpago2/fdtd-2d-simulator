@@ -4126,6 +4126,7 @@ async function runSmokeCase(page, testCase) {
     const minCols = Number(testCase.acceptance?.colsProxyMin);
     const maxCenterBinCells = Number(testCase.acceptance?.centerBinHighIndexCellsMax);
     const minCenterBinCells = Number(testCase.acceptance?.centerBinHighIndexCellsMin);
+    const minCenterDefectFraction = Number(testCase.acceptance?.centerDefectEnergyFractionMin);
     const minCentralVacancies = Number(testCase.acceptance?.centralVacancyBins3Min);
     const maxLineRowBins = Number(testCase.acceptance?.lineRowBinCountMax);
     const minLineRowBins = Number(testCase.acceptance?.lineRowBinCountMin);
@@ -4137,6 +4138,8 @@ async function runSmokeCase(page, testCase) {
     const maxAdjacentToLineRatio = Number(testCase.acceptance?.adjacentToLineEnergyRatioMax);
     const minOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMin);
     const maxOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMax);
+    const minOffsetMax = Number(testCase.acceptance?.latticeOffsetMaxLambdaMin);
+    const maxOffsetMax = Number(testCase.acceptance?.latticeOffsetMaxLambdaMax);
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const maxLeakageRate = Number(testCase.acceptance?.leakageRateMax);
     const minSourceCount = Number(testCase.acceptance?.sourceCountMin);
@@ -4179,6 +4182,9 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minCentralVacancies) && metrics.centralVacancyBins3 < minCentralVacancies) {
       status.failures.push(`central-line vacancy count ${metrics.centralVacancyBins3} below ${minCentralVacancies}`);
     }
+    if (Number.isFinite(minCenterDefectFraction) && metrics.centerDefectEnergyFraction < minCenterDefectFraction) {
+      status.failures.push(`center-defect energy fraction ${metrics.centerDefectEnergyFraction} below ${minCenterDefectFraction}`);
+    }
     if (Number.isFinite(maxLineRowBins) && metrics.lineRowBinCount > maxLineRowBins) {
       status.failures.push(`line-defect row has ${metrics.lineRowBinCount} high-index bins, expected at most ${maxLineRowBins}`);
     }
@@ -4211,6 +4217,12 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(maxOffsetMean) && metrics.latticeOffsetMeanLambda > maxOffsetMean) {
       status.failures.push(`lattice offset mean ${metrics.latticeOffsetMeanLambda} exceeds ${maxOffsetMean}`);
+    }
+    if (Number.isFinite(minOffsetMax) && metrics.latticeOffsetMaxLambda < minOffsetMax) {
+      status.failures.push(`lattice offset max ${metrics.latticeOffsetMaxLambda} below ${minOffsetMax}`);
+    }
+    if (Number.isFinite(maxOffsetMax) && metrics.latticeOffsetMaxLambda > maxOffsetMax) {
+      status.failures.push(`lattice offset max ${metrics.latticeOffsetMaxLambda} exceeds ${maxOffsetMax}`);
     }
     if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
       status.failures.push(`periodic/BIC analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);

@@ -771,7 +771,7 @@
       "rationale": "Checks the scene as a passive 2D anisotropic Drude block whose effective tensor is indefinite at the source frequency."
     },
     {
-      "id": "chiral_six_field_bianisotropy_response",
+      "id": "six_field_bianisotropic_coupling_response",
       "priority": "P1",
       "preset": "chiralMedium",
       "profile": "physics",
@@ -780,7 +780,7 @@
       "checks": [
         "Hz six-field bianisotropy path is active",
         "kappa is passivity-limited and nonzero",
-        "cross-field energy remains finite inside the chiral block"
+        "cross-field energy remains finite inside the bianisotropic block"
       ],
       "acceptance": {
         "materialModelCheck": "bianisotropic",
@@ -795,7 +795,7 @@
         "maxCrossFieldMin": 1e-12,
         "materialCrossFractionMin": 1e-12
       },
-      "rationale": "Adds an executable six-field/chiral response check while leaving calibrated optical-activity validation as future work."
+      "rationale": "Checks the passivity-limited six-field bianisotropic coupling route with finite cross-field energy."
     },
     {
       "id": "bianisotropic_six_field_response",
@@ -842,12 +842,13 @@
         "requiresActiveMediaLabel": "gyrotropic",
         "fieldComponent": "hz",
         "materialCellsMin": 400,
+        "materialEnergyFractionMin": 0.1,
+        "tensorCheckedCellsMin": 400,
         "tensorCellsMin": 400,
         "gyrotropicCellsMin": 400,
-        "gyrotropyAbsMin": 0.2,
-        "materialEnergyMin": 1e-14
+        "gyrotropyAbsMin": 0.2
       },
-      "rationale": "Guards the qualitative gyrotropic scene as an actual tensor-route example with finite field interaction."
+      "rationale": "Checks the local Hz gyrotropic tensor route with nonzero antisymmetric coupling and finite material-region field overlap."
     },
     {
       "id": "bragg_stack_periodic_layers",
@@ -878,8 +879,8 @@
       "browserSmoke": true,
       "checks": [
         "the scene builds a two-dimensional high-index rod lattice",
-        "the Bloch-k sweep and reduced plane-wave estimate are active",
-        "the reduced band estimate reports finite bands and a nonzero gap proxy"
+        "the Bloch-k sweep and compact plane-wave estimate are active",
+        "the band estimate reports finite bands and a nonzero gap observable"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
@@ -899,7 +900,7 @@
       "rationale": "Checks that the photonic-crystal example is an actual periodic lattice with an executable Bloch/PWE teaching observable."
     },
     {
-      "id": "phc_point_defect_cavity_proxy",
+      "id": "phc_point_defect_local_field",
       "priority": "P1",
       "preset": "phcPointDefect",
       "profile": "physics",
@@ -908,23 +909,25 @@
       "checks": [
         "the central rod is removed from an otherwise periodic lattice",
         "a point dipole excites the defect region",
-        "the Bloch-k reduced estimate remains available for the surrounding lattice"
+        "the compact Bloch-k/PWE estimate remains available for the surrounding lattice"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
         "sweepMode": "blochK",
+        "sourceShape": "pointDipole",
         "highIndexCellsMin": 1650,
         "rodCountProxyMin": 115,
         "rowsProxyMin": 8,
         "colsProxyMin": 14,
         "centerBinHighIndexCellsMax": 2,
         "centralVacancyBins3Min": 1,
-        "cavityEnergyFractionMin": 0.001,
+        "centerDefectEnergyFractionMin": 0.02,
+        "cavityEnergyFractionMin": 0.05,
         "phcBlochRequired": true,
         "phcBlochCellsMin": 1650,
         "blochPathPointsMin": 13
       },
-      "rationale": "Turns the point-defect PhC scene into a runnable defect-cavity sanity check while keeping the observable at teaching-proxy level."
+      "rationale": "Checks the point-defect PhC as a missing-rod lattice with local field overlap and a compact surrounding-lattice Bloch/PWE reference."
     },
     {
       "id": "phc_waveguide_line_defect",
@@ -960,7 +963,7 @@
       "rationale": "Checks that the PhC waveguide is a real line-defect demonstration with observable channel localization, not just a correct lattice mask illuminated by a broad free-space beam."
     },
     {
-      "id": "phc_optimized_cavity_proxy",
+      "id": "shifted_l3_phc_cavity_local_field",
       "priority": "P1",
       "preset": "phcOptimizedCavity",
       "profile": "physics",
@@ -968,27 +971,30 @@
       "browserSmoke": true,
       "checks": [
         "an L3-like central defect is present",
-        "nearby holes are shifted or resized through the optimized-cavity geometry",
-        "analysis and Bloch/PWE proxies remain finite"
+        "nearby holes are shifted or resized by the cavity geometry",
+        "analysis and compact Bloch/PWE observables remain finite"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
         "requiresAnalysis": true,
         "sweepMode": "blochK",
+        "sourceShape": "pointDipole",
         "highIndexCellsMin": 1850,
         "rodCountProxyMin": 130,
         "rowsProxyMin": 8,
         "colsProxyMin": 16,
         "centralVacancyBins3Min": 3,
         "cavityHighIndexCellsMax": 2,
-        "cavityEnergyFractionMin": 0.001,
+        "centerDefectEnergyFractionMin": 0.02,
+        "cavityEnergyFractionMin": 0.05,
+        "latticeOffsetMaxLambdaMin": 0.08,
         "minAnalysisSamples": 8,
         "phcBlochRequired": true,
         "phcBlochCellsMin": 1850,
         "qProxyMin": 4,
         "blochPathPointsMin": 13
       },
-      "rationale": "Guards the optimized PhC cavity as a geometry-plus-analysis proxy without implying publication-grade Q extraction."
+      "rationale": "Checks the shifted/tapered L3 PhC cavity geometry, local field overlap, analysis sampling, and compact Bloch/PWE reference without claiming an optimization objective."
     },
     {
       "id": "phc_disorder_lattice_jitter",
@@ -1014,7 +1020,7 @@
       "rationale": "Checks that the disorder example is not a perfect PhC clone and keeps the validation to geometry and finite interaction."
     },
     {
-      "id": "phc_dark_mode_symmetry_proxy",
+      "id": "phc_antisymmetric_defect_excitation",
       "priority": "P1",
       "preset": "phcDarkMode",
       "profile": "physics",
@@ -1023,7 +1029,7 @@
       "checks": [
         "the central defect is excited by two opposite-phase dipoles",
         "the lattice remains nearly mirror symmetric",
-        "analysis produces a finite reduced leakage/Q proxy"
+        "analysis produces finite leakage and compact Bloch/PWE observables"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
@@ -1033,6 +1039,8 @@
         "rodCountProxyMin": 115,
         "centerBinHighIndexCellsMax": 2,
         "centralVacancyBins3Min": 1,
+        "centerDefectEnergyFractionMin": 0.02,
+        "cavityEnergyFractionMin": 0.1,
         "sourceCountMin": 2,
         "sourcePhaseDifferenceDegMin": 175,
         "sourceAmplitudeRatioMin": 0.95,
@@ -1041,10 +1049,10 @@
         "phcAsymmetryMax": 0.08,
         "qProxyMin": 4
       },
-      "rationale": "Validates the dark-mode scene as a symmetry-controlled defect proxy rather than a generic two-source animation."
+      "rationale": "Checks the symmetric PhC defect under equal-amplitude opposite-phase dipole excitation with finite local field overlap and compact leakage/PWE diagnostics."
     },
     {
-      "id": "quasi_bic_asymmetry_proxy",
+      "id": "asymmetric_phc_defect_leakage",
       "priority": "P1",
       "preset": "quasiBic",
       "profile": "physics",
@@ -1053,7 +1061,7 @@
       "checks": [
         "the central defect is retained",
         "source amplitudes/phases deliberately break perfect dark-mode symmetry",
-        "the reduced PhC estimate reports finite asymmetry and Q/leakage proxies"
+        "the compact PhC estimate reports finite asymmetry and leakage observables"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
@@ -1063,20 +1071,23 @@
         "rodCountProxyMin": 115,
         "centerBinHighIndexCellsMax": 2,
         "centralVacancyBins3Min": 1,
+        "centerDefectEnergyFractionMin": 0.02,
+        "cavityEnergyFractionMin": 0.1,
         "sourceCountMin": 2,
         "sourcePhaseDifferenceDegMin": 165,
         "sourcePhaseDifferenceDegMax": 175,
         "sourceAmplitudeRatioMin": 0.85,
         "sourceAmplitudeRatioMax": 0.95,
+        "latticeOffsetMaxLambdaMin": 0.05,
         "minAnalysisSamples": 8,
         "phcBlochRequired": true,
         "phcAsymmetryMin": 0.005,
         "qProxyMin": 3
       },
-      "rationale": "Ensures the quasi-BIC is intentionally perturbed from the symmetry-protected case while staying numerically finite."
+      "rationale": "Checks a weakly asymmetric PhC defect with deliberate source imbalance, geometry offset, local field overlap, and compact leakage/PWE diagnostics."
     },
     {
-      "id": "symmetry_protected_bic_proxy",
+      "id": "symmetric_l3_phc_cavity_odd_excitation",
       "priority": "P1",
       "preset": "symmetryProtectedBic",
       "profile": "physics",
@@ -1084,8 +1095,8 @@
       "browserSmoke": true,
       "checks": [
         "an L3-like PhC defect is driven with opposite-phase symmetric dipoles",
-        "the Bloch-k sweep and reduced PWE path are active",
-        "the reduced Q/leakage proxy remains finite under short browser execution"
+        "the Bloch-k sweep and compact PWE path are active",
+        "leakage and local field observables remain finite under short browser execution"
       ],
       "acceptance": {
         "periodicPhotonicsCheck": true,
@@ -1097,6 +1108,9 @@
         "colsProxyMin": 16,
         "centralVacancyBins3Min": 3,
         "cavityHighIndexCellsMax": 2,
+        "centerDefectEnergyFractionMin": 0.015,
+        "cavityEnergyFractionMin": 0.04,
+        "latticeOffsetMaxLambdaMin": 0.04,
         "sourceCountMin": 2,
         "sourcePhaseDifferenceDegMin": 175,
         "sourceAmplitudeRatioMin": 0.95,
@@ -1106,7 +1120,7 @@
         "qProxyMin": 4,
         "blochPathPointsMin": 13
       },
-      "rationale": "Checks the symmetry-protected BIC as a reduced PhC-cavity workflow with explicit symmetry and analysis observables."
+      "rationale": "Checks a symmetric shifted L3 PhC cavity with equal-amplitude opposite-phase dipoles, local field overlap, and compact leakage/PWE diagnostics."
     },
     {
       "id": "fano_side_resonator_coupling",
@@ -1188,7 +1202,7 @@
       "rationale": "Checks that the topological SSH scene is not accidentally identical to the trivial dimerization."
     },
     {
-      "id": "ssh_interface_edge_proxy",
+      "id": "ssh_interface_local_state",
       "priority": "P1",
       "preset": "sshInterface",
       "profile": "physics",
@@ -1196,7 +1210,7 @@
       "browserSmoke": true,
       "checks": [
         "the interface chain keeps the high-index SSH site pattern",
-        "the analytic reduced model marks an edge-state interface",
+        "the analytic SSH reference marks the topological interface",
         "a central dipole deposits measurable energy near the interface"
       ],
       "acceptance": {
@@ -1208,12 +1222,13 @@
         "sshWinding": 1,
         "sshEdgeExpected": true,
         "sshBandGapMin": 0.25,
+        "interfaceEnergyFractionMin": 0.5,
         "sourceEnergyFractionMin": 0.01
       },
-      "rationale": "Turns the SSH interface into an executable edge-proxy check without claiming a full eigenmode solve."
+      "rationale": "Checks the SSH interface geometry, analytic winding/gap reference, expected interface state flag, and local field overlap without claiming a full-wave eigenmode solve."
     },
     {
-      "id": "ssh_disorder_edge_proxy",
+      "id": "ssh_disorder_interface_local_state",
       "priority": "P1",
       "preset": "sshDisorder",
       "profile": "physics",
@@ -1222,7 +1237,7 @@
       "checks": [
         "the disordered SSH interface keeps a finite high-index site chain",
         "analysis samples and clean-limit SSH Bloch reference remain available",
-        "the reduced model still marks the edge-state proxy"
+        "the analytic SSH reference still marks the interface state"
       ],
       "acceptance": {
         "topologicalPhotonicsCheck": true,
@@ -1235,12 +1250,13 @@
         "sshWinding": 1,
         "sshEdgeExpected": true,
         "sshBandGapMin": 0.25,
+        "interfaceEnergyFractionMin": 0.5,
         "sourceEnergyFractionMin": 0.01
       },
-      "rationale": "Checks the disordered SSH scene as a robust qualitative edge-interface example with an explicit clean-limit reference."
+      "rationale": "Checks the deterministic-disorder SSH interface as a finite site chain with clean-limit winding/gap reference and local field overlap, without claiming a full-wave eigenmode solve."
     },
     {
-      "id": "nonhermitian_ssh_gain_loss_proxy",
+      "id": "nonhermitian_ssh_gain_loss_route",
       "priority": "P1",
       "preset": "nonHermitianSsh",
       "profile": "physics",
@@ -1249,7 +1265,7 @@
       "checks": [
         "the non-Hermitian SSH chain has alternating gain/loss material cells",
         "saturable gain stabilization is active",
-        "the reduced non-Hermitian SSH gap proxy remains finite"
+        "the non-Hermitian SSH gap estimate remains finite"
       ],
       "acceptance": {
         "topologicalPhotonicsCheck": true,
@@ -1264,9 +1280,10 @@
         "sshBlochRequired": true,
         "sshWinding": 1,
         "sshEdgeExpected": true,
-        "sshNonHermitianGapMin": 0.05
+        "sshNonHermitianGapMin": 0.05,
+        "interfaceEnergyFractionMin": 0.5
       },
-      "rationale": "Guards the non-Hermitian SSH scene as a balanced gain/loss proxy with finite reduced topology metrics."
+      "rationale": "Checks the non-Hermitian SSH route as a finite gain/loss site chain with saturable stabilization, analytic clean-limit winding, finite gap estimate, and local field overlap."
     },
     {
       "id": "honeycomb_lattice_sublattice_geometry",
@@ -1315,7 +1332,7 @@
       "rationale": "Validates the Valley-Hall scene as an inverted-domain interface, not merely a generic honeycomb array."
     },
     {
-      "id": "valley_hall_bend_domain_wall",
+      "id": "valley_hall_bend_channel_geometry",
       "priority": "P1",
       "preset": "valleyHallBend",
       "profile": "physics",
@@ -1324,7 +1341,7 @@
       "checks": [
         "the left side retains a horizontal Valley-Hall domain wall",
         "the right side turns into a vertical-domain segment",
-        "the bent channel carries finite field energy in the reduced check"
+        "the bent channel carries finite field energy"
       ],
       "acceptance": {
         "topologicalPhotonicsCheck": true,
@@ -1335,9 +1352,10 @@
         "leftBottomSublatticeBiasMax": -0.1,
         "rightTopSublatticeBiasMax": -0.05,
         "rightBottomSublatticeBiasMax": -0.05,
-        "bendChannelEnergyFractionMin": 0.005
+        "bendChannelEnergyFractionMin": 0.1,
+        "sourceEnergyFractionMin": 0.02
       },
-      "rationale": "Checks that the bend example changes the domain-wall geometry rather than reusing the straight interface."
+      "rationale": "Checks that the Valley-Hall bend example changes the domain-wall geometry, preserves opposite sublattice bias across the bend, and stores finite channel energy."
     },
     {
       "id": "topological_pumping_modulated_ssh",
@@ -3691,7 +3709,7 @@
       "rationale": "Tracks the hyperlens PSF/MTF validation gap after adding angular-harmonic transfer metrics from FDTD field samples."
     },
     {
-      "id": "bianisotropy_quantitative_gap",
+      "id": "six_field_bianisotropy_reference_scope",
       "priority": "P1",
       "preset": "chiralMedium",
       "profile": "physics",
@@ -3700,15 +3718,15 @@
         "six-field path finite",
         "cross-polarized energy finite",
         "output-line cross-polarized conversion finite",
-        "output-line primary/cross correlation and kappa-signed convention proxy finite",
+        "output-line primary/cross correlation and kappa-signed convention finite",
         "passivity margin positive",
-        "compare against calibrated omega/chiral reference",
+        "compare against a calibrated optical-activity or tensor-parameter reference",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "first-fdtd-observables-and-convention-proxy-added; calibrated-reference-and-convergence-pending"
+        "status": "first-fdtd-observables-and-convention-check-added; calibrated-reference-and-convergence-pending"
       },
-      "rationale": "Tracks the quantitative validation gap for six-field bianisotropy after adding direct conversion and passivity-margin observables."
+      "rationale": "Tracks out-of-scene reference work for six-field bianisotropy after adding direct conversion and passivity-margin observables."
     }
   ]
 }

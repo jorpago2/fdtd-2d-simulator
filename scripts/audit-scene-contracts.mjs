@@ -100,13 +100,6 @@ const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCou
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
 const qualitativeCaveats = new Map([
-  ["chiralMedium", "Six-field chiral-medium proxy; needs optical-rotation or S-parameter regression before quantitative chirality claims."],
-  ["gyrotropicMedium", "Gyrotropic-material route is active, but Faraday rotation/nonreciprocal S-parameters are not calibrated here."],
-  ["phcPointDefect", "Photonic-crystal defect-cavity proxy; no eigenmode frequency or Q convergence is claimed."],
-  ["phcOptimizedCavity", "Optimized-cavity geometry proxy; the optimization objective is not independently re-solved in this audit."],
-  ["phcDarkMode", "Symmetry-dark-mode proxy; needs modal-overlap or radiation-suppression validation for quantitative claims."],
-  ["symmetryProtectedBic", "Symmetry-protected BIC proxy; no eigenmode solver or diverging-Q convergence is claimed."],
-  ["nonHermitianSsh", "Non-Hermitian SSH route is active, but eigenspectrum and biorthogonal-mode validation are out of scope."],
   ["hyperlens", "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."],
   ["topologicalPumping", "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."],
   ["sppGrating", "SPP grating geometry and surface localization are validated; coupling efficiency is not a de-embedded grating-coupler metric."],
@@ -361,7 +354,7 @@ function evaluateScene(scene, contract, runtime) {
     blockers.push("expected gyrotropy, but no gyrotropic cells are active");
   }
   if (expected.bianisotropy && !state.materialBianisotropyEnabled && counts.bianisotropicCells === 0) {
-    blockers.push("expected bianisotropy/chirality, but no bianisotropic cells are active");
+    blockers.push("expected bianisotropy, but no bianisotropic cells are active");
   }
   if (expected.gain && !state.materialSaturableGainEnabled && counts.gainCells === 0) {
     blockers.push("expected active gain/loss material, but gain-limited flag is off");

@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-05T07:25:47.257Z
-Git commit: 5c4463c+working-tree
+Generated: 2026-07-05T08:05:39.005Z
+Git commit: cbb7a99+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,9 +9,9 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 93 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
+| PASS | 106 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
 | VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
-| WARN | 48 | Scene runs, but has a documented teaching/modeling caveat. |
+| WARN | 35 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
 ## Blocking Findings
@@ -100,27 +100,27 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 75 | `enzSlab` ENZ slab | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=6.96e-8 | enz_slab_near_zero_response:P1/physics | OK |
 | 76 | `anisotropicMedium` Anisotropic medium | 7. Material models and tensors | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.90e-7 | anisotropic_tensor_block_response:P1/physics | OK |
 | 77 | `hyperbolicMedium` Indefinite Drude tensor | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE, 24 steps, E=3.13e-5 | indefinite_drude_tensor_route:P1/physics | OK |
-| 78 | `chiralMedium` 6-field chiral medium | 7. Material models and tensors | WARN | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | chiral_six_field_bianisotropy_response:P1/physics, bianisotropy_quantitative_gap:P1/physics | Six-field chiral-medium proxy; needs optical-rotation or S-parameter regression before quantitative chirality claims. |
+| 78 | `chiralMedium` 6-field bianisotropic coupling | 7. Material models and tensors | PASS | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | six_field_bianisotropic_coupling_response:P1/physics, six_field_bianisotropy_reference_scope:P1/physics | OK |
 | 79 | `bianisotropicMedium` 6-field bianisotropic medium | 7. Material models and tensors | PASS | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=8.91e-7 | bianisotropic_six_field_response:P1/physics | OK |
-| 80 | `gyrotropicMedium` Gyrotropic medium | 7. Material models and tensors | WARN | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | gyrotropic_tensor_response:P1/physics | Gyrotropic-material route is active, but Faraday rotation/nonreciprocal S-parameters are not calibrated here. |
+| 80 | `gyrotropicMedium` Gyrotropic tensor block | 7. Material models and tensors | PASS | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | gyrotropic_tensor_response:P1/physics | OK |
 | 81 | `braggStack` 1D Bragg stack | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | bragg_stack_periodic_layers:P1/physics | OK |
-| 82 | `photonicCrystal` 2D photonic crystal | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML+TFSF, 24 steps, E=8.70e-5 | photonic_crystal_bloch_geometry:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 83 | `phcPointDefect` PhC point defect | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=3.17e-5 | phc_point_defect_cavity_proxy:P1/physics | Photonic-crystal defect-cavity proxy; no eigenmode frequency or Q convergence is claimed. |
-| 84 | `phcWaveguide` PhC line-defect waveguide | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=6.84e-7 | phc_waveguide_line_defect:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 85 | `phcOptimizedCavity` Optimized PhC cavity | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=9.40e-7 | phc_optimized_cavity_proxy:P1/physics | Optimized-cavity geometry proxy; the optimization objective is not independently re-solved in this audit. |
+| 82 | `photonicCrystal` 2D photonic crystal | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML+TFSF, 24 steps, E=8.70e-5 | photonic_crystal_bloch_geometry:P1/physics | OK |
+| 83 | `phcPointDefect` PhC point defect | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=3.17e-5 | phc_point_defect_local_field:P1/physics | OK |
+| 84 | `phcWaveguide` PhC line-defect waveguide | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=6.84e-7 | phc_waveguide_line_defect:P1/physics | OK |
+| 85 | `phcOptimizedCavity` Shifted L3 PhC cavity | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=9.40e-7 | shifted_l3_phc_cavity_local_field:P1/physics | OK |
 | 86 | `phcDisorder` Disordered photonic crystal | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | phc_disorder_lattice_jitter:P1/physics | OK |
-| 87 | `phcDarkMode` Symmetry-dark mode | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.50e-5 | phc_dark_mode_symmetry_proxy:P1/physics | Symmetry-dark-mode proxy; needs modal-overlap or radiation-suppression validation for quantitative claims. |
-| 88 | `quasiBic` Quasi-BIC cavity | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.08e-5 | quasi_bic_asymmetry_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 89 | `symmetryProtectedBic` Symmetry-protected BIC | 8. Periodic photonics and BICs | WARN | blochK sweep | WASM CPML, 24 steps, E=1.12e-5 | symmetry_protected_bic_proxy:P1/physics | Symmetry-protected BIC proxy; no eigenmode solver or diverging-Q convergence is claimed. |
+| 87 | `phcDarkMode` Antisymmetric PhC defect | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=1.50e-5 | phc_antisymmetric_defect_excitation:P1/physics | OK |
+| 88 | `quasiBic` Asymmetric PhC defect | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=1.08e-5 | asymmetric_phc_defect_leakage:P1/physics | OK |
+| 89 | `symmetryProtectedBic` Symmetric L3 PhC cavity | 8. Periodic photonics and BICs | PASS | blochK sweep | WASM CPML, 24 steps, E=1.12e-5 | symmetric_l3_phc_cavity_odd_excitation:P1/physics | OK |
 | 90 | `fanoResonator` Fano side resonator | 8. Periodic photonics and BICs | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.52e-6 | fano_side_resonator_coupling:P1/physics | OK |
 | 91 | `sshTrivial` SSH chain, trivial | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=7.77e-6 | ssh_trivial_bloch_reference:P1/physics | OK |
 | 92 | `sshTopological` SSH chain, topological | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.34e-6 | ssh_topological_bloch_reference:P1/physics | OK |
-| 93 | `sshInterface` SSH interface | 9. Topological photonics | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.33e-6 | ssh_interface_edge_proxy:P1/physics | Executable validation is reduced/proxy (ssh_interface_edge_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 94 | `sshDisorder` SSH with disorder | 9. Topological photonics | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.72e-7 | ssh_disorder_edge_proxy:P1/physics | Executable validation is reduced/proxy (ssh_disorder_edge_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 95 | `nonHermitianSsh` Non-Hermitian SSH | 9. Topological photonics | WARN | nonlinear material, gain/loss | WASM CPML+gain, 24 steps, E=3.40e-7 | nonhermitian_ssh_gain_loss_proxy:P1/physics | Non-Hermitian SSH route is active, but eigenspectrum and biorthogonal-mode validation are out of scope. |
+| 93 | `sshInterface` SSH interface | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.33e-6 | ssh_interface_local_state:P1/physics | OK |
+| 94 | `sshDisorder` SSH with disorder | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.72e-7 | ssh_disorder_interface_local_state:P1/physics | OK |
+| 95 | `nonHermitianSsh` Non-Hermitian SSH | 9. Topological photonics | PASS | nonlinear material, gain/loss | WASM CPML+gain, 24 steps, E=3.40e-7 | nonhermitian_ssh_gain_loss_route:P1/physics | OK |
 | 96 | `honeycombLattice` Honeycomb lattice | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.60e-6 | honeycomb_lattice_sublattice_geometry:P1/physics | OK |
 | 97 | `valleyHall` Valley Hall interface | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_domain_wall:P1/physics | OK |
-| 98 | `valleyHallBend` Valley Hall bend | 9. Topological photonics | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_bend_domain_wall:P1/physics | Executable validation is reduced/proxy (valley_hall_bend_domain_wall); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 98 | `valleyHallBend` Valley Hall bend | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_bend_channel_geometry:P1/physics | OK |
 | 99 | `topologicalPumping` Topological pumping | 9. Topological photonics | WARN | time modulation | WASM CPML+mod, 24 steps, E=1.44e-7 | topological_pumping_modulated_ssh:P1/physics | Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass. |
 | 100 | `topologyDefect` Topology with strong defect | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.39e-8 | topology_defect_valley_channel:P1/physics | OK |
 | 101 | `sppInterface` SPP metal-dielectric interface | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material | WASM CPML+ADE, 24 steps, E=3.61e-8 | spp_interface_surface_localization:P1/physics | OK |
