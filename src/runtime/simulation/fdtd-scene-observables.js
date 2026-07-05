@@ -419,6 +419,64 @@
     );
   }
 
+  function electricMagnitudeSquaredAt(state, sim, idx) {
+    if (state.fieldComponent === "hz") {
+      return finiteNumber(sim.hx?.[idx], 0) ** 2 + finiteNumber(sim.hy?.[idx], 0) ** 2;
+    }
+    return finiteNumber(sim.ez?.[idx], 0) ** 2;
+  }
+
+  function plasmonicDimerHotGapEstimate(state, sim) {
+    if (state.preset !== "plasmonicDimer" || !sim) return null;
+    const cpw = Math.max(8, Math.round(finiteNumber(state.cellsPerWavelength, 20)));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const dimerCx = midX + Math.round(0.48 * cpw);
+    const dimerCy1 = midY - Math.round(0.31 * cpw);
+    const dimerCy2 = midY + Math.round(0.31 * cpw);
+    const dimerR = Math.max(2, Math.round(0.22 * cpw));
+    const ellipse = (x, y, cx, cy, rx, ry) => {
+      const dx = (x - cx) / Math.max(1, rx);
+      const dy = (y - cy) / Math.max(1, ry);
+      return dx * dx + dy * dy <= 1;
+    };
+    const box = (x, y, cx, cy, halfXLambda, halfYLambda) =>
+      Math.abs(x - cx) <= Math.round(halfXLambda * cpw) && Math.abs(y - cy) <= Math.round(halfYLambda * cpw);
+    const sample = (predicate) => {
+      let cells = 0;
+      let e2Sum = 0;
+      let e2Peak = 0;
+      for (let y = minY; y <= maxY; y += 1) {
+        const rowOffset = y * sim.nx;
+        for (let x = minX; x <= maxX; x += 1) {
+          const idx = rowOffset + x;
+          if (!predicate(x, y, idx)) continue;
+          const e2 = electricMagnitudeSquaredAt(state, sim, idx);
+          cells += 1;
+          e2Sum += e2;
+          e2Peak = Math.max(e2Peak, e2);
+        }
+      }
+      return { cells, e2Mean: e2Sum / Math.max(1, cells), e2Peak };
+    };
+    const disk1 = sample((x, y, idx) => Boolean(sim.dispersiveMaterial?.[idx]) && ellipse(x, y, dimerCx, dimerCy1, dimerR, dimerR));
+    const disk2 = sample((x, y, idx) => Boolean(sim.dispersiveMaterial?.[idx]) && ellipse(x, y, dimerCx, dimerCy2, dimerR, dimerR));
+    const gap = sample((x, y, idx) => sim.material?.[idx] === 0 && box(x, y, dimerCx, midY, 0.13, 0.095));
+    const background = sample((x, y, idx) => sim.material?.[idx] === 0 && box(x, y, dimerCx - Math.round(1.05 * cpw), midY, 0.34, 0.34));
+    return {
+      disk1Cells: disk1.cells,
+      disk2Cells: disk2.cells,
+      gapCells: gap.cells,
+      backgroundCells: background.cells,
+      gapPeakToBackgroundRatio: gap.e2Peak / Math.max(1e-30, background.e2Mean),
+      gapMeanToBackgroundRatio: gap.e2Mean / Math.max(1e-30, background.e2Mean),
+    };
+  }
+
   function materialMaskSummary(sim, predicate) {
     if (!sim || typeof predicate !== "function") return { cells: 0, energyFraction: 0 };
     const minX = sim.activeInteriorMinX();
@@ -1802,6 +1860,39 @@
     return true;
   }
 
+  function addPlasmonicDimerRows(rows, state, sim) {
+    const estimate = plasmonicDimerHotGapEstimate(state, sim);
+    if (!estimate) return false;
+    const excitationOk = state.fieldComponent === "hz" && state.fieldDisplay === "electricMag";
+    const sourceShape = state.sources?.[0]?.shape || "";
+    rows.push(row({
+      metric: "Hot-gap excitation contract",
+      measured: `${state.fieldComponent === "hz" ? "TEz/Hz" : "TMz/Ez"}, display=${state.fieldDisplay}, source=${sourceShape}`,
+      expected: "TEz/Hz, in-plane |E|, local electric-dipole feed",
+      level: excitationOk && sourceShape === "inPlaneElectricDipole" ? "ok" : "caution",
+      note: "This preset models a dipole-fed plasmonic dimer nanoantenna; a passive plane-wave scattering spectrum would need a separate reference run.",
+    }));
+    rows.push(row({
+      metric: "Hot-gap resolution",
+      measured: `gap=${estimate.gapCells} cells, disks=${estimate.disk1Cells}/${estimate.disk2Cells}`,
+      expected: "open air gap and two resolved Drude disks",
+      level: estimate.gapCells >= 18 && estimate.disk1Cells >= 35 && estimate.disk2Cells >= 35 ? "ok" : "caution",
+      note: "A sub-cell or one-cell gap can look plausible but is not a defensible near-field example.",
+    }));
+    rows.push(row({
+      metric: "Gap |E|^2 enhancement",
+      measured: `peak/bg=${formatRatio(estimate.gapPeakToBackgroundRatio)}, mean/bg=${formatRatio(estimate.gapMeanToBackgroundRatio)}`,
+      expected: "peak/bg >= 4 and mean/bg >= 1.05 versus local background",
+      level:
+        estimate.gapPeakToBackgroundRatio >= 4 &&
+        estimate.gapMeanToBackgroundRatio >= 1.05
+          ? "ok"
+          : "caution",
+      note: "This is a hard teaching diagnostic, not a calibrated resonance spectrum or mesh-converged field-enhancement factor.",
+    }));
+    return true;
+  }
+
   function addTensorMaterialRows(rows, state, sim) {
     if (!TENSOR_PRESETS.has(state.preset)) return false;
     const material = primaryMaterialSummary(state, sim);
@@ -2022,6 +2113,7 @@
         addPtRows(rows, state, sim),
         addScatteringRows(rows, state, sim),
         addAbsorptionRows(rows, state, sim),
+        addPlasmonicDimerRows(rows, state, sim),
         addDispersiveMaterialRows(rows, state, sim),
         addTensorMaterialRows(rows, state, sim),
         addNegativeIndexRows(rows, state, sim),

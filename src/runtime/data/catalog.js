@@ -163,7 +163,7 @@ const sceneDescriptions = {
   sppInterface: "Atlas 101: Drude metal-dielectric interface excited by a near-field dipole.",
   sppGrating: "Atlas 102: shallow Drude grating that launches measurable interface-localized Hz field under oblique illumination.",
   localizedPlasmon: "Atlas 103: localized plasmon on a Drude nanodisk.",
-  plasmonicDimer: "Atlas 104: two Drude disks with a narrow hot gap.",
+  plasmonicDimer: "Atlas 104: dipole-fed Drude dimer with a resolved hot gap.",
   metasurfacePhaseBars: "Atlas 105: phase-gradient metasurface approximated by dielectric bars.",
   perfectAbsorber: "Atlas 106: graded lossy sheet backed by PEC with near-unity line-monitor absorption estimate.",
   negativeIndexSlab: "Atlas 107: passive Drude ADE slab with epsilon and mu tuned near -1 at the source frequency.",

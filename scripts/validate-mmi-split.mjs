@@ -97,6 +97,7 @@ function makeHeadlessCanvas(width = 1, height = 1) {
   return {
     width,
     height,
+    dataset: {},
     style: {},
     getContext() {
       return makeHeadlessContext();
@@ -113,7 +114,8 @@ const document = {
   },
 };
 
-const window = { devicePixelRatio: 1 };
+const window = globalThis;
+window.devicePixelRatio = 1;
 
 function updateCanvasAspectRatio() {}
 function updateColorbar() {}
@@ -420,18 +422,33 @@ function clampSweepRangeForMode(mode, value) {
 }
 
 function loadSimulator() {
-  const files = [
-    ["src", "constants.js"],
-    ["src", "numerics.js"],
-    ["src", "catalog.js"],
-    ["src", "wasm-backend.js"],
-    ["src", "fdtd-sim.js"],
-    ["src", "fdtd-materials.js"],
-    ["src", "fdtd-boundaries.js"],
-    ["src", "fdtd-presets.js"],
-    ["src", "fdtd-sources.js"],
-    ["src", "fdtd-diagnostics.js"],
-    ["src", "fdtd-yee.js"],
+  const preBootstrapFiles = [
+    ["src", "runtime", "core", "constants.js"],
+    ["src", "runtime", "simulation", "wasm-backend.js"],
+    ["src", "runtime", "core", "numerics.js"],
+    ["src", "runtime", "data", "catalog.js"],
+  ];
+  const runtimeFiles = [
+    ["src", "runtime", "simulation", "fdtd-sim.js"],
+    ["src", "runtime", "simulation", "fdtd-array-state.js"],
+    ["src", "runtime", "simulation", "fdtd-engine-routing.js"],
+    ["src", "runtime", "canvas", "canvas-viewport.js"],
+    ["src", "runtime", "simulation", "fdtd-field-state.js"],
+    ["src", "runtime", "simulation", "fdtd-materials.js"],
+    ["src", "runtime", "simulation", "fdtd-field-observables.js"],
+    ["src", "runtime", "simulation", "fdtd-boundaries.js"],
+    ["src", "runtime", "simulation", "fdtd-presets.js"],
+    ["src", "runtime", "simulation", "fdtd-incident-field.js"],
+    ["src", "runtime", "simulation", "fdtd-mode-solver.js"],
+    ["src", "runtime", "simulation", "fdtd-sources.js"],
+    ["src", "runtime", "simulation", "fdtd-analysis-sampling.js"],
+    ["src", "runtime", "simulation", "fdtd-custom-monitors.js"],
+    ["src", "runtime", "simulation", "fdtd-line-diagnostics.js"],
+    ["src", "runtime", "simulation", "fdtd-analysis-observables.js"],
+    ["src", "runtime", "simulation", "fdtd-scene-observables.js"],
+    ["src", "runtime", "simulation", "fdtd-material-diagnostics.js"],
+    ["src", "runtime", "simulation", "fdtd-diagnostics.js"],
+    ["src", "runtime", "simulation", "fdtd-yee.js"],
   ];
   const exportCode = `
 function createHeadlessSim(nx = DEFAULT_GRID.nx, ny = DEFAULT_GRID.ny) {
@@ -450,9 +467,9 @@ globalThis.__fdtd = {
 };
 `;
   const bundle = [
-    files.slice(0, 3).map((file) => readText(...file)).join("\n"),
+    preBootstrapFiles.map((file) => readText(...file)).join("\n"),
     headlessBootstrap(),
-    files.slice(3).map((file) => readText(...file)).join("\n"),
+    runtimeFiles.map((file) => readText(...file)).join("\n"),
     exportCode,
   ].join("\n");
   const context = {

@@ -169,16 +169,207 @@ async function preparePhysicsCase(page, testCase) {
   }, { caseId: testCase.id, requiresAnalysis: Boolean(testCase.acceptance?.requiresAnalysis) });
 }
 
-async function stepPhysicsSimulation(page, steps) {
-  return page.evaluate(async (stepCount) => {
+async function stepPhysicsSimulation(page, steps, testCase = {}) {
+  return page.evaluate(async ({ stepCount, temporalProbe, materialMonitor, fanoMonitor }) => {
     const sampleStride = Math.max(1, Math.floor(stepCount / 60));
     const lateStart = Math.max(0, Math.floor(stepCount * 0.78));
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const fieldEnergyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      const electric =
+        finite(sim.ez?.[idx]) ** 2 +
+        finite(sim.ex?.[idx]) ** 2 +
+        finite(sim.ey?.[idx]) ** 2 +
+        finite(sim.dualEz?.[idx]) ** 2;
+      const magnetic =
+        finite(sim.hz?.[idx]) ** 2 +
+        finite(sim.hx?.[idx]) ** 2 +
+        finite(sim.hy?.[idx]) ** 2 +
+        finite(sim.dualHz?.[idx]) ** 2;
+      return electric + magnetic;
+    };
     let energyPeak = 0;
     let lateEnergySum = 0;
     let lateEnergySamples = 0;
+    const probeValues = [];
+    let probeIdx = null;
+    let temporalSampleStride = 1;
+    let temporalWarmup = 0;
+    if (temporalProbe) {
+      const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+      const sources = state.sources || [];
+      const mean = (values) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
+      const sxValues = sources.map((source) =>
+        typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : Math.round(finite(source.xLambda) * cpw),
+      );
+      const syValues = sources.map((source) =>
+        typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : Math.round(finite(source.yLambda) * cpw),
+      );
+      const sourceX = sxValues.length ? mean(sxValues) : Math.round(0.5 * (sim.activeInteriorMinX() + sim.activeInteriorMaxX()));
+      const sourceY = syValues.length ? mean(syValues) : Math.round(0.5 * (sim.activeInteriorMinY() + sim.activeInteriorMaxY()));
+      const probeX = Math.max(
+        sim.activeInteriorMinX(),
+        Math.min(sim.activeInteriorMaxX(), Math.round(sourceX + finite(temporalProbe.offsetXLambda, 2.2) * cpw)),
+      );
+      const probeY = Math.max(
+        sim.activeInteriorMinY(),
+        Math.min(sim.activeInteriorMaxY(), Math.round(sourceY + finite(temporalProbe.offsetYLambda, 0) * cpw)),
+      );
+      probeIdx = sim.id(probeX, probeY);
+      temporalSampleStride = Math.max(1, Math.round(finite(temporalProbe.sampleStride, 4)));
+      temporalWarmup = Math.max(0, Math.round(finite(temporalProbe.warmupSteps, Math.floor(stepCount * 0.2))));
+    }
+    const materialTemporal = materialMonitor
+      ? {
+          samples: 0,
+          materialCells: 0,
+          dispersiveCells: 0,
+          conductiveCells: 0,
+          materialEnergyPeak: 0,
+          dispersiveEnergyPeak: 0,
+          conductiveEnergyPeak: 0,
+          totalEnergyAtMaterialPeak: 0,
+          materialPeakFraction: 0,
+          dispersivePeakFraction: 0,
+          conductivePeakFraction: 0,
+        }
+      : null;
+    const materialSampleStride = Math.max(1, Math.round(finite(materialMonitor?.sampleStride, Math.max(4, Math.floor(stepCount / 80)))));
+    const materialWarmup = Math.max(0, Math.round(finite(materialMonitor?.warmupSteps, 0)));
+    const sampleMaterialTemporal = () => {
+      if (!materialTemporal) return;
+      const minX = sim.activeInteriorMinX();
+      const maxX = sim.activeInteriorMaxX();
+      const minY = sim.activeInteriorMinY();
+      const maxY = sim.activeInteriorMaxY();
+      let totalEnergy = 0;
+      let materialEnergy = 0;
+      let dispersiveEnergy = 0;
+      let conductiveEnergy = 0;
+      let materialCells = 0;
+      let dispersiveCells = 0;
+      let conductiveCells = 0;
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = minX; x <= maxX; x += 1) {
+          const idx = sim.id(x, y);
+          const energy = fieldEnergyAt(idx);
+          totalEnergy += energy;
+          const isMaterial = sim.material[idx] !== 0;
+          const isDispersive = Boolean(Number(sim.dispersiveMaterial?.[idx]) || Number(sim.muDispersiveMaterial?.[idx]));
+          const isConductive = Math.max(finite(sim.conductivity?.[idx]), finite(sim.conductivityY?.[idx])) > 0;
+          if (isMaterial) {
+            materialCells += 1;
+            materialEnergy += energy;
+          }
+          if (isDispersive) {
+            dispersiveCells += 1;
+            dispersiveEnergy += energy;
+          }
+          if (isConductive) {
+            conductiveCells += 1;
+            conductiveEnergy += energy;
+          }
+        }
+      }
+      materialTemporal.samples += 1;
+      materialTemporal.materialCells = Math.max(materialTemporal.materialCells, materialCells);
+      materialTemporal.dispersiveCells = Math.max(materialTemporal.dispersiveCells, dispersiveCells);
+      materialTemporal.conductiveCells = Math.max(materialTemporal.conductiveCells, conductiveCells);
+      if (materialEnergy > materialTemporal.materialEnergyPeak) {
+        materialTemporal.materialEnergyPeak = materialEnergy;
+        materialTemporal.totalEnergyAtMaterialPeak = totalEnergy;
+        materialTemporal.materialPeakFraction = materialEnergy / Math.max(1e-30, totalEnergy);
+      }
+      if (dispersiveEnergy > materialTemporal.dispersiveEnergyPeak) {
+        materialTemporal.dispersiveEnergyPeak = dispersiveEnergy;
+        materialTemporal.dispersivePeakFraction = dispersiveEnergy / Math.max(1e-30, totalEnergy);
+      }
+      if (conductiveEnergy > materialTemporal.conductiveEnergyPeak) {
+        materialTemporal.conductiveEnergyPeak = conductiveEnergy;
+        materialTemporal.conductivePeakFraction = conductiveEnergy / Math.max(1e-30, totalEnergy);
+      }
+    };
+    const fanoTemporal = fanoMonitor
+      ? {
+          samples: 0,
+          busHighIndexCells: 0,
+          resonatorHighIndexCells: 0,
+          gapHighIndexCells: 0,
+          busEnergyPeak: 0,
+          resonatorEnergyPeak: 0,
+          gapEnergyPeak: 0,
+          totalEnergyAtResonatorPeak: 0,
+          busEnergyAtResonatorPeak: 0,
+          resonatorPeakFraction: 0,
+          resonatorToBusPeakRatio: 0,
+        }
+      : null;
+    const fanoSampleStride = Math.max(1, Math.round(finite(fanoMonitor?.sampleStride, Math.max(4, Math.floor(stepCount / 90)))));
+    const fanoWarmup = Math.max(0, Math.round(finite(fanoMonitor?.warmupSteps, 0)));
+    const sampleFanoTemporal = () => {
+      if (!fanoTemporal) return;
+      const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+      const minX = sim.activeInteriorMinX();
+      const maxX = sim.activeInteriorMaxX();
+      const minY = sim.activeInteriorMinY();
+      const maxY = sim.activeInteriorMaxY();
+      const midX = Math.round(0.5 * (minX + maxX));
+      const midY = Math.round(0.5 * (minY + maxY));
+      const fanoCx = midX + Math.round(0.8 * cpw);
+      const fanoCy = midY - Math.round(0.5 * cpw);
+      const fanoRx = Math.max(2, Math.round(0.42 * cpw));
+      const fanoRy = Math.max(2, Math.round(0.42 * cpw));
+      let totalEnergy = 0;
+      let busEnergy = 0;
+      let resonatorEnergy = 0;
+      let gapEnergy = 0;
+      let busHighIndexCells = 0;
+      let resonatorHighIndexCells = 0;
+      let gapHighIndexCells = 0;
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = minX; x <= maxX; x += 1) {
+          const idx = sim.id(x, y);
+          const energy = fieldEnergyAt(idx);
+          const highIndex = sim.material[idx] !== 0 && Math.max(Math.abs(finite(sim.eps?.[idx])), Math.abs(finite(sim.epsY?.[idx]))) > 3.0;
+          const inBus = Math.abs(y - midY) <= Math.round(0.18 * cpw);
+          const inResonator = ((x - fanoCx) / fanoRx) ** 2 + ((y - fanoCy) / fanoRy) ** 2 <= 1;
+          const inGap =
+            Math.abs(x - fanoCx) <= Math.round(0.22 * cpw) &&
+            y > fanoCy + Math.round(0.37 * cpw) &&
+            y < midY - Math.round(0.12 * cpw);
+          totalEnergy += energy;
+          if (inBus) busEnergy += energy;
+          if (inResonator) resonatorEnergy += energy;
+          if (inGap) gapEnergy += energy;
+          if (highIndex && inBus) busHighIndexCells += 1;
+          if (highIndex && inResonator) resonatorHighIndexCells += 1;
+          if (highIndex && inGap) gapHighIndexCells += 1;
+        }
+      }
+      fanoTemporal.samples += 1;
+      fanoTemporal.busHighIndexCells = Math.max(fanoTemporal.busHighIndexCells, busHighIndexCells);
+      fanoTemporal.resonatorHighIndexCells = Math.max(fanoTemporal.resonatorHighIndexCells, resonatorHighIndexCells);
+      fanoTemporal.gapHighIndexCells = Math.max(fanoTemporal.gapHighIndexCells, gapHighIndexCells);
+      fanoTemporal.busEnergyPeak = Math.max(fanoTemporal.busEnergyPeak, busEnergy);
+      fanoTemporal.gapEnergyPeak = Math.max(fanoTemporal.gapEnergyPeak, gapEnergy);
+      if (resonatorEnergy > fanoTemporal.resonatorEnergyPeak) {
+        fanoTemporal.resonatorEnergyPeak = resonatorEnergy;
+        fanoTemporal.totalEnergyAtResonatorPeak = totalEnergy;
+        fanoTemporal.busEnergyAtResonatorPeak = busEnergy;
+        fanoTemporal.resonatorPeakFraction = resonatorEnergy / Math.max(1e-30, totalEnergy);
+        fanoTemporal.resonatorToBusPeakRatio = resonatorEnergy / Math.max(1e-30, busEnergy);
+      }
+    };
     const t0 = performance.now();
     for (let step = 0; step < stepCount; step += 1) {
       sim.step();
+      if (probeIdx != null && step >= temporalWarmup && step % temporalSampleStride === 0) {
+        const value = state.fieldComponent === "hz" ? Number(sim.ez?.[probeIdx]) || 0 : Number(sim.ez?.[probeIdx]) || 0;
+        probeValues.push(value);
+      }
+      if (materialTemporal && step >= materialWarmup && step % materialSampleStride === 0) sampleMaterialTemporal();
+      if (fanoTemporal && step >= fanoWarmup && step % fanoSampleStride === 0) sampleFanoTemporal();
       if (step % sampleStride === 0 || step === stepCount - 1) {
         sim.measure();
         const energy = Number(sim.lastEnergy) || 0;
@@ -193,15 +384,67 @@ async function stepPhysicsSimulation(page, steps) {
       }
     }
     sim.measure();
+    const temporalStats = (() => {
+      if (probeIdx == null) return null;
+      const samples = probeValues.filter((value) => Number.isFinite(value));
+      if (samples.length < 8) {
+        return { samples: samples.length, peakAbs: 0, rmsMean: 0, rmsMin: 0, rmsMax: 0, envelopeDynamicRange: 0 };
+      }
+      const abs = samples.map((value) => Math.abs(value));
+      const peakAbs = Math.max(...abs);
+      const rms = (values) => Math.sqrt(values.reduce((sum, value) => sum + value * value, 0) / Math.max(1, values.length));
+      const windowCount = Math.min(16, Math.max(4, Math.floor(samples.length / 12)));
+      const windowLength = Math.max(4, Math.floor(samples.length / windowCount));
+      const rmsWindows = [];
+      for (let start = 0; start + windowLength <= samples.length; start += windowLength) {
+        rmsWindows.push(rms(samples.slice(start, start + windowLength)));
+      }
+      const rmsMin = rmsWindows.length ? Math.min(...rmsWindows) : 0;
+      const rmsMax = rmsWindows.length ? Math.max(...rmsWindows) : 0;
+      return {
+        samples: samples.length,
+        peakAbs,
+        rmsMean: rms(samples),
+        rmsMin,
+        rmsMax,
+        envelopeDynamicRange: rmsMax / Math.max(1e-30, rmsMin),
+      };
+    })();
     return {
       elapsedMs: performance.now() - t0,
       energyPeak,
       lateEnergyAverage: lateEnergySamples > 0 ? lateEnergySum / lateEnergySamples : 0,
       lateEnergyRatio: lateEnergySamples > 0 ? lateEnergySum / lateEnergySamples / Math.max(1e-30, energyPeak) : 0,
+      finalEnergyRatio: (Number(sim.lastEnergy) || 0) / Math.max(1e-30, energyPeak),
       diagnosticSamples: sim.diagnosticSamples || 0,
       analysisSamples: sim.analysisSamples || 0,
+      temporalProbe: temporalStats,
+      materialTemporal,
+      fanoTemporal,
     };
-  }, steps);
+  }, {
+    stepCount: steps,
+    temporalProbe: testCase.acceptance?.temporalProbeCheck
+      ? {
+          offsetXLambda: testCase.acceptance.temporalProbeOffsetXLambda,
+          offsetYLambda: testCase.acceptance.temporalProbeOffsetYLambda,
+          sampleStride: testCase.acceptance.temporalProbeSampleStride,
+          warmupSteps: testCase.acceptance.temporalProbeWarmupSteps,
+        }
+      : null,
+    materialMonitor: testCase.acceptance?.materialTemporalCheck
+      ? {
+          sampleStride: testCase.acceptance.materialTemporalSampleStride,
+          warmupSteps: testCase.acceptance.materialTemporalWarmupSteps,
+        }
+      : null,
+    fanoMonitor: testCase.acceptance?.fanoTemporalCheck
+      ? {
+          sampleStride: testCase.acceptance.fanoTemporalSampleStride,
+          warmupSteps: testCase.acceptance.fanoTemporalWarmupSteps,
+        }
+      : null,
+  });
 }
 
 function parseFiniteUiNumber(text) {
@@ -693,6 +936,92 @@ async function guidedDeviceMetrics(page) {
   });
 }
 
+async function mmiSplitMetrics(page, testCase) {
+  return page.evaluate(async (acceptance) => {
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const monitorXLambda = finite(acceptance.monitorXLambda, 7.2);
+    const guideHalfWidthLambda = finite(acceptance.guideHalfWidthLambda, 0.11);
+    const sampleSteps = Math.max(1, Math.round(finite(acceptance.mmiSampleSteps, 480)));
+    const sampleEvery = Math.max(1, Math.round(finite(acceptance.mmiSampleEvery, 2)));
+    const monitorX = Math.max(sim.activeInteriorMinX(), Math.min(sim.activeInteriorMaxX(), Math.round(monitorXLambda * cpw)));
+    const midYLambda = sim.ny / cpw / 2;
+    const upperCenterY = Math.round((midYLambda - 0.25) * cpw);
+    const lowerCenterY = Math.round((midYLambda + 0.25) * cpw);
+    const halfWidth = Math.max(2, Math.round(guideHalfWidthLambda * cpw));
+
+    const integratePort = (centerY) => {
+      const y0 = Math.max(sim.activeInteriorMinY(), centerY - halfWidth);
+      const y1 = Math.min(sim.activeInteriorMaxY(), centerY + halfWidth);
+      let ez2 = 0;
+      let eAbs = 0;
+      let sx = 0;
+      let forwardSx = 0;
+      let samples = 0;
+      for (let y = y0; y <= y1; y += 1) {
+        const idx = sim.id(monitorX, y);
+        if (sim.material[idx] === 2) continue;
+        const ez = finite(sim.ez?.[idx]) * (typeof sim.fieldPhysicalScale === "function" ? sim.fieldPhysicalScale() : 1);
+        const poynting = typeof sim.poyntingAt === "function" ? finite(sim.poyntingAt(idx)?.x) : 0;
+        ez2 += ez * ez;
+        eAbs += Math.abs(ez);
+        sx += poynting;
+        forwardSx += Math.max(0, poynting);
+        samples += 1;
+      }
+      return { y0, y1, ez2, eAbs, sx, forwardSx, samples };
+    };
+
+    const totals = {
+      upper: { ez2: 0, eAbs: 0, sx: 0, forwardSx: 0, samples: 0 },
+      lower: { ez2: 0, eAbs: 0, sx: 0, forwardSx: 0, samples: 0 },
+      temporalSamples: 0,
+    };
+    for (let step = 0; step < sampleSteps; step += 1) {
+      sim.step();
+      if (step % sampleEvery !== 0) continue;
+      const upper = integratePort(upperCenterY);
+      const lower = integratePort(lowerCenterY);
+      for (const key of ["ez2", "eAbs", "sx", "forwardSx"]) {
+        totals.upper[key] += upper[key];
+        totals.lower[key] += lower[key];
+      }
+      totals.upper.samples += upper.samples;
+      totals.lower.samples += lower.samples;
+      totals.upper.band = { x: monitorX, y0: upper.y0, y1: upper.y1 };
+      totals.lower.band = { x: monitorX, y0: lower.y0, y1: lower.y1 };
+      totals.temporalSamples += 1;
+      if ((step + 1) % 180 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    sim.measure();
+    const ratio = (upper, lower, key) => {
+      const total = upper[key] + lower[key];
+      return total > 1e-30 ? upper[key] / total : null;
+    };
+    const totalEz2 = totals.upper.ez2 + totals.lower.ez2;
+    const totalForwardSx = totals.upper.forwardSx + totals.lower.forwardSx;
+    return {
+      preset: state.preset,
+      monitorXLambda,
+      guideHalfWidthLambda,
+      sampleSteps,
+      sampleEvery,
+      temporalSamples: totals.temporalSamples,
+      upper: totals.upper,
+      lower: totals.lower,
+      totalEz2,
+      totalForwardSx,
+      upperEz2Fraction: ratio(totals.upper, totals.lower, "ez2"),
+      upperAbsFraction: ratio(totals.upper, totals.lower, "eAbs"),
+      upperForwardSxFraction: ratio(totals.upper, totals.lower, "forwardSx"),
+      signedSxBalance:
+        Math.abs(totals.upper.sx) + Math.abs(totals.lower.sx) > 1e-30
+          ? totals.upper.sx / (Math.abs(totals.upper.sx) + Math.abs(totals.lower.sx))
+          : null,
+    };
+  }, testCase.acceptance || {});
+}
+
 async function apertureDiffractionMetrics(page, kind) {
   return page.evaluate((diffractionKind) => {
     const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
@@ -802,6 +1131,312 @@ async function apertureDiffractionMetrics(page, kind) {
       apertureEnergy,
     };
   }, kind);
+}
+
+async function maxwellBlockMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midY = Math.round(0.5 * (minY + maxY));
+    const sources = state.sources || [];
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const mean = (values) => values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
+    const energyAt = (idx) => {
+      if (typeof sim.analysisFieldEnergyDensityAt === "function") return finite(sim.analysisFieldEnergyDensityAt(idx));
+      if (sim.material[idx] === 2) return 0;
+      return finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+    };
+    const sourceCells = sources.map((source) => ({
+      x: typeof sim.sourceXCell === "function" ? sim.sourceXCell(source) : Math.round(finite(source.xLambda) * cpw),
+      y: typeof sim.sourceYCell === "function" ? sim.sourceYCell(source) : Math.round(finite(source.yLambda) * cpw),
+      angleDeg: finite(source.angleDeg),
+    }));
+    const sourceX = sourceCells.length ? mean(sourceCells.map((source) => source.x)) : Math.round(0.5 * (minX + maxX));
+    const sourceY = sourceCells.length ? mean(sourceCells.map((source) => source.y)) : midY;
+    const sourceAngleDeg = sourceCells.length ? mean(sourceCells.map((source) => source.angleDeg)) : 0;
+
+    let materialCells = 0;
+    let pecCells = 0;
+    let totalEnergy = 0;
+    let leftEnergy = 0;
+    let rightEnergy = 0;
+    let upperEnergy = 0;
+    let lowerEnergy = 0;
+    let sxSum = 0;
+    let sySum = 0;
+    let sMagnitudeSum = 0;
+    const flowX0 = Math.max(minX, Math.round(sourceX + 0.65 * cpw));
+    const flowX1 = Math.min(maxX, Math.round(sourceX + 4.4 * cpw));
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = energyAt(idx);
+        totalEnergy += energy;
+        if (sim.material[idx] !== 0 && sim.material[idx] !== 2) materialCells += 1;
+        if (sim.material[idx] === 2) pecCells += 1;
+        if (x < sourceX - Math.round(0.45 * cpw)) leftEnergy += energy;
+        if (x > sourceX + Math.round(0.45 * cpw)) rightEnergy += energy;
+        if (y < sourceY - Math.round(0.45 * cpw)) upperEnergy += energy;
+        if (y > sourceY + Math.round(0.45 * cpw)) lowerEnergy += energy;
+        if (x >= flowX0 && x <= flowX1 && sim.material[idx] !== 2 && typeof sim.poyntingAt === "function" && x % 2 === 0 && y % 2 === 0) {
+          const s = sim.poyntingAt(idx);
+          const sx = finite(s?.x);
+          const sy = finite(s?.y);
+          sxSum += sx;
+          sySum += sy;
+          sMagnitudeSum += Math.hypot(sx, sy);
+        }
+      }
+    }
+
+    const poyntingNorm = Math.hypot(sxSum, sySum);
+    const poyntingAngleDeg = poyntingNorm > 1e-30 ? ((Math.atan2(sySum, sxSum) * 180) / Math.PI + 360) % 360 : null;
+    const poyntingDirectionality = poyntingNorm / Math.max(1e-30, sMagnitudeSum);
+    const poyntingExpectedAngleDeg = ((sourceAngleDeg % 360) + 360) % 360;
+    const poyntingAngleErrorDeg =
+      poyntingAngleDeg == null ? null : Math.abs((((poyntingAngleDeg - poyntingExpectedAngleDeg + 180) % 360) + 360) % 360 - 180);
+
+    const bandEnergy = (centerX, halfXLambda = 0.045, yCenter = sourceY, halfYLambda = 2.8) => {
+      let energy = 0;
+      let cells = 0;
+      const x0 = Math.max(minX, Math.round(centerX - halfXLambda * cpw));
+      const x1 = Math.min(maxX, Math.round(centerX + halfXLambda * cpw));
+      const y0 = Math.max(minY, Math.round(yCenter - halfYLambda * cpw));
+      const y1 = Math.min(maxY, Math.round(yCenter + halfYLambda * cpw));
+      for (let y = y0; y <= y1; y += 1) {
+        for (let x = x0; x <= x1; x += 1) {
+          const idx = sim.id(x, y);
+          if (sim.material[idx] === 2) continue;
+          energy += energyAt(idx);
+          cells += 1;
+        }
+      }
+      return { energy, cells };
+    };
+    const evanescentNear = bandEnergy(sourceX + 0.08 * cpw, 0.035, sourceY, 2.2);
+    const evanescentMid = bandEnergy(sourceX + 0.38 * cpw, 0.035, sourceY, 2.2);
+    const evanescentFar = bandEnergy(sourceX + 0.9 * cpw, 0.035, sourceY, 2.2);
+
+    const interferenceProfile = (() => {
+      const probeX = Math.max(minX, Math.min(maxX, Math.round(sourceX + 2.25 * cpw)));
+      const halfProbe = Math.max(1, Math.round(0.045 * cpw));
+      const y0 = Math.max(minY + Math.round(0.25 * cpw), Math.round(sourceY - 3.0 * cpw));
+      const y1 = Math.min(maxY - Math.round(0.25 * cpw), Math.round(sourceY + 3.0 * cpw));
+      const values = [];
+      for (let y = y0; y <= y1; y += 1) {
+        let energy = 0;
+        for (let x = Math.max(minX, probeX - halfProbe); x <= Math.min(maxX, probeX + halfProbe); x += 1) {
+          energy += energyAt(sim.id(x, y));
+        }
+        values.push(energy);
+      }
+      const smooth = values.map((value, index) => {
+        const prev = values[Math.max(0, index - 1)];
+        const next = values[Math.min(values.length - 1, index + 1)];
+        return 0.25 * prev + 0.5 * value + 0.25 * next;
+      });
+      const peak = smooth.length ? Math.max(...smooth) : 0;
+      const meanEnergy = mean(smooth);
+      const threshold = 0.2 * peak;
+      const minSeparation = Math.max(2, Math.round(0.18 * cpw));
+      const peaks = [];
+      for (let i = 1; i < smooth.length - 1; i += 1) {
+        if (smooth[i] <= threshold || smooth[i] < smooth[i - 1] || smooth[i] < smooth[i + 1]) continue;
+        const last = peaks[peaks.length - 1];
+        if (last && i - last.index < minSeparation) {
+          if (smooth[i] > last.energy) {
+            last.index = i;
+            last.energy = smooth[i];
+          }
+        } else {
+          peaks.push({ index: i, energy: smooth[i] });
+        }
+      }
+      const centerIndex = Math.max(0, Math.min(smooth.length - 1, Math.round(sourceY) - y0));
+      let mirroredDiff = 0;
+      let mirroredSum = 0;
+      const mirrorHalf = Math.min(centerIndex, smooth.length - centerIndex - 1);
+      for (let offset = 1; offset <= mirrorHalf; offset += 1) {
+        const a = smooth[centerIndex - offset];
+        const b = smooth[centerIndex + offset];
+        mirroredDiff += Math.abs(a - b);
+        mirroredSum += Math.abs(a) + Math.abs(b);
+      }
+      const sorted = [...smooth].sort((a, b) => a - b);
+      const low = sorted.length ? sorted[Math.floor(sorted.length * 0.15)] : 0;
+      const high = sorted.length ? sorted[Math.floor(sorted.length * 0.85)] : 0;
+      return {
+        probeXLambda: probeX / cpw,
+        samples: smooth.length,
+        peakCount: peaks.length,
+        peakToMeanRatio: peak / Math.max(1e-30, meanEnergy),
+        visibility: (high - low) / Math.max(1e-30, high + low),
+        symmetryError: mirroredDiff / Math.max(1e-30, mirroredSum),
+      };
+    })();
+
+    return {
+      preset: state.preset,
+      fieldComponent: state.fieldComponent,
+      sourceCount: sources.length,
+      sourceShapes: sources.map((source) => source.shape || ""),
+      sourceTypes: sources.map((source) => source.type || ""),
+      materialCells,
+      pecCells,
+      totalEnergy,
+      rightToLeftEnergyRatio: rightEnergy / Math.max(1e-30, leftEnergy),
+      lowerToUpperEnergyRatio: lowerEnergy / Math.max(1e-30, upperEnergy),
+      poyntingAngleDeg,
+      poyntingAngleErrorDeg,
+      poyntingDirectionality,
+      evanescentNearEnergy: evanescentNear.energy,
+      evanescentMidEnergy: evanescentMid.energy,
+      evanescentFarEnergy: evanescentFar.energy,
+      evanescentNearToFarRatio: evanescentNear.energy / Math.max(1e-30, evanescentFar.energy),
+      evanescentMidToFarRatio: evanescentMid.energy / Math.max(1e-30, evanescentFar.energy),
+      interference: interferenceProfile,
+    };
+  });
+}
+
+async function interfaceOpticsMetrics(page) {
+  return page.evaluate(() => {
+    sim.measure();
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const source = state.sources?.[0] || {};
+    const sourceAngleDeg = Number(source.angleDeg) || 0;
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const sampleFlow = (x0, x1) => {
+      let sxSum = 0;
+      let sySum = 0;
+      let magnitudeSum = 0;
+      let energy = 0;
+      let cells = 0;
+      for (let y = minY; y <= maxY; y += 2) {
+        for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 2) {
+          const idx = sim.id(x, y);
+          if (sim.material[idx] === 2 || typeof sim.poyntingAt !== "function") continue;
+          const s = sim.poyntingAt(idx);
+          const sx = finite(s?.x);
+          const sy = finite(s?.y);
+          const e =
+            typeof sim.analysisFieldEnergyDensityAt === "function"
+              ? finite(sim.analysisFieldEnergyDensityAt(idx))
+              : finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+          sxSum += sx;
+          sySum += sy;
+          magnitudeSum += Math.hypot(sx, sy);
+          energy += e;
+          cells += 1;
+        }
+      }
+      const norm = Math.hypot(sxSum, sySum);
+      return {
+        cells,
+        energy,
+        angleDeg: norm > 1e-30 ? ((Math.atan2(sySum, sxSum) * 180) / Math.PI + 360) % 360 : null,
+        directionality: norm / Math.max(1e-30, magnitudeSum),
+      };
+    };
+    const beamCentroidFit = (x0, x1) => {
+      const points = [];
+      for (let x = Math.max(minX, x0); x <= Math.min(maxX, x1); x += 1) {
+        let energy = 0;
+        let yWeighted = 0;
+        for (let y = minY; y <= maxY; y += 1) {
+          const idx = sim.id(x, y);
+          if (sim.material[idx] === 2) continue;
+          const e =
+            typeof sim.analysisFieldEnergyDensityAt === "function"
+              ? finite(sim.analysisFieldEnergyDensityAt(idx))
+              : finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+          energy += e;
+          yWeighted += y * e;
+        }
+        if (energy > 1e-16) points.push({ x, y: yWeighted / energy, weight: energy });
+      }
+      if (points.length < 6) return null;
+      const maxWeight = Math.max(...points.map((point) => point.weight));
+      const filtered = points.filter((point) => point.weight >= 0.08 * maxWeight);
+      const fitPoints = filtered.length >= 6 ? filtered : points;
+      let weightSum = 0;
+      let xMean = 0;
+      let yMean = 0;
+      for (const point of fitPoints) {
+        weightSum += point.weight;
+        xMean += point.weight * point.x;
+        yMean += point.weight * point.y;
+      }
+      xMean /= Math.max(1e-30, weightSum);
+      yMean /= Math.max(1e-30, weightSum);
+      let numerator = 0;
+      let denominator = 0;
+      for (const point of fitPoints) {
+        numerator += point.weight * (point.x - xMean) * (point.y - yMean);
+        denominator += point.weight * (point.x - xMean) * (point.x - xMean);
+      }
+      const slope = denominator > 1e-30 ? numerator / denominator : 0;
+      return {
+        samples: fitPoints.length,
+        angleDeg: (Math.atan(slope) * 180) / Math.PI,
+        energy: fitPoints.reduce((sum, point) => sum + point.weight, 0),
+      };
+    };
+    let epsSum = 0;
+    let epsCells = 0;
+    let materialEnergy = 0;
+    let totalEnergy = 0;
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const e =
+          typeof sim.analysisFieldEnergyDensityAt === "function"
+            ? finite(sim.analysisFieldEnergyDensityAt(idx))
+            : finite(sim.ez[idx]) ** 2 + finite(sim.hx[idx]) ** 2 + finite(sim.hy[idx]) ** 2;
+        totalEnergy += e;
+        if (x > midX && sim.material[idx] !== 0 && sim.material[idx] !== 2) {
+          epsSum += Math.max(1e-9, Math.abs(finite(sim.eps[idx], 1)));
+          epsCells += 1;
+          materialEnergy += e;
+        }
+      }
+    }
+    const n2 = Math.sqrt(epsSum / Math.max(1, epsCells));
+    const sinT = Math.sin((sourceAngleDeg * Math.PI) / 180) / Math.max(1e-9, n2);
+    const expectedTransmittedAngleDeg = Math.asin(Math.max(-1, Math.min(1, sinT))) * 180 / Math.PI;
+    const transmitted = sampleFlow(midX + Math.round(0.55 * cpw), midX + Math.round(3.2 * cpw));
+    const incident = sampleFlow(Math.max(minX, midX - Math.round(4.5 * cpw)), midX - Math.round(0.6 * cpw));
+    const incidentCentroid = beamCentroidFit(Math.max(minX, midX - Math.round(4.5 * cpw)), midX - Math.round(0.6 * cpw));
+    const transmittedCentroid = beamCentroidFit(midX + Math.round(0.35 * cpw), midX + Math.round(3.2 * cpw));
+    const transmittedAngleErrorDeg =
+      transmitted.angleDeg == null
+        ? null
+        : Math.abs((((transmitted.angleDeg - expectedTransmittedAngleDeg + 180) % 360) + 360) % 360 - 180);
+    const transmittedCentroidAngleErrorDeg =
+      transmittedCentroid?.angleDeg == null ? null : Math.abs(transmittedCentroid.angleDeg - expectedTransmittedAngleDeg);
+    return {
+      preset: state.preset,
+      sourceAngleDeg,
+      n2,
+      expectedTransmittedAngleDeg,
+      transmittedAngleErrorDeg,
+      transmittedCentroidAngleErrorDeg,
+      materialEnergyFraction: materialEnergy / Math.max(1e-30, totalEnergy),
+      incident,
+      transmitted,
+      incidentCentroid,
+      transmittedCentroid,
+    };
+  });
 }
 
 async function dispersiveAdeMetrics(page) {
@@ -1190,10 +1825,11 @@ async function metamaterialMetrics(page) {
     };
     const localizedCx = midX + Math.round(0.35 * cpw);
     const localizedRx = Math.max(2, Math.round(0.38 * cpw));
-    const dimerCx1 = midX + Math.round(0.15 * cpw);
-    const dimerCx2 = midX + Math.round(0.75 * cpw);
+    const dimerCx = midX + Math.round(0.48 * cpw);
+    const dimerCy1 = midY - Math.round(0.31 * cpw);
+    const dimerCy2 = midY + Math.round(0.31 * cpw);
     const dimerCy = midY;
-    const dimerR = Math.max(2, Math.round(0.29 * cpw));
+    const dimerR = Math.max(2, Math.round(0.22 * cpw));
     const enzX0 = midX + Math.round(0.25 * cpw);
     const enzX1 = enzX0 + Math.round(0.45 * cpw);
 
@@ -1214,6 +1850,11 @@ async function metamaterialMetrics(page) {
     let dimerDisk2Cells = 0;
     let dimerDiskEnergy = 0;
     let dimerGapEnergy = 0;
+    let dimerGapCells = 0;
+    let dimerGapE2 = 0;
+    let dimerGapPeakE2 = 0;
+    let dimerBackgroundCells = 0;
+    let dimerBackgroundE2 = 0;
     let metasurfaceMaterialCells = 0;
     let absorberLossMin = Infinity;
     let absorberLossMax = 0;
@@ -1236,9 +1877,14 @@ async function metamaterialMetrics(page) {
         const isLocalizedDisk = ellipse(x, y, localizedCx, midY, localizedRx, localizedRx);
         const localizedDistance = Math.hypot(x - localizedCx, y - midY);
         const inLocalizedNear = localizedDistance > localizedRx && localizedDistance <= localizedRx + Math.round(0.28 * cpw);
-        const inDimer1 = ellipse(x, y, dimerCx1, dimerCy, dimerR, dimerR);
-        const inDimer2 = ellipse(x, y, dimerCx2, dimerCy, dimerR, dimerR);
-        const inDimerGap = box(x, y, 0.15, 0.2, Math.round(0.5 * (dimerCx1 + dimerCx2)), dimerCy);
+        const e2 =
+          state.fieldComponent === "hz"
+            ? finite(sim.hx?.[idx]) ** 2 + finite(sim.hy?.[idx]) ** 2
+            : finite(sim.ez?.[idx]) ** 2;
+        const inDimer1 = ellipse(x, y, dimerCx, dimerCy1, dimerR, dimerR);
+        const inDimer2 = ellipse(x, y, dimerCx, dimerCy2, dimerR, dimerR);
+        const inDimerGap = box(x, y, 0.13, 0.095, dimerCx, dimerCy);
+        const inDimerBackground = box(x, y, 0.34, 0.34, dimerCx - Math.round(1.05 * cpw), dimerCy);
         const inEnzSlab = x >= enzX0 && x <= enzX1 && y >= minY + Math.round(0.7 * cpw) && y <= maxY - Math.round(0.7 * cpw);
 
         if (isMaterial) {
@@ -1282,6 +1928,15 @@ async function metamaterialMetrics(page) {
         if (inDimer2 && isDispersive) dimerDisk2Cells += 1;
         if (inDimer1 || inDimer2) dimerDiskEnergy += energy;
         if (inDimerGap) dimerGapEnergy += energy;
+        if (inDimerGap && !isMaterial) {
+          dimerGapCells += 1;
+          dimerGapE2 += e2;
+          dimerGapPeakE2 = Math.max(dimerGapPeakE2, e2);
+        }
+        if (inDimerBackground && !isMaterial) {
+          dimerBackgroundCells += 1;
+          dimerBackgroundE2 += e2;
+        }
         if (Math.abs(x - midX) <= Math.round(0.12 * cpw) && isHigh) metasurfaceMaterialCells += 1;
         if (inEnzSlab && isDispersive) {
           enzCells += 1;
@@ -1315,7 +1970,9 @@ async function metamaterialMetrics(page) {
     return {
       preset: state.preset,
       fieldComponent: state.fieldComponent,
+      fieldDisplay: state.fieldDisplay,
       viewMode: state.viewMode,
+      sourceShape: state.sources?.[0]?.shape || "",
       analysisSamples: sim.analysisSamples || 0,
       dispersionEnabled: Boolean(state.materialDispersionEnabled),
       dispersionModel: state.dispersionModel,
@@ -1340,6 +1997,12 @@ async function metamaterialMetrics(page) {
       dimerDiskEnergy,
       dimerGapEnergy,
       dimerGapToDiskRatio: dimerGapEnergy / Math.max(1e-30, dimerDiskEnergy),
+      dimerGapCells,
+      dimerGapPeakE2,
+      dimerGapMeanE2: dimerGapE2 / Math.max(1, dimerGapCells),
+      dimerBackgroundMeanE2: dimerBackgroundE2 / Math.max(1, dimerBackgroundCells),
+      dimerGapPeakToBackgroundRatio: dimerGapPeakE2 / Math.max(1e-30, dimerBackgroundE2 / Math.max(1, dimerBackgroundCells)),
+      dimerGapMeanToBackgroundRatio: (dimerGapE2 / Math.max(1, dimerGapCells)) / Math.max(1e-30, dimerBackgroundE2 / Math.max(1, dimerBackgroundCells)),
       metasurfaceMaterialCells,
       metasurfaceBarCount: barHeights.length,
       metasurfaceHeightSpanLambda: barHeightMax - barHeightMin,
@@ -1935,6 +2598,30 @@ async function sourceRadiationMetrics(page) {
     let microstripSubstrateEnergy = 0;
     let stripPecYSum = 0;
     let groundPecYSum = 0;
+    const angularBinCount = 72;
+    const angularBins = Array.from({ length: angularBinCount }, () => 0);
+    const annulusMinRadius = Math.max(1.0 * cpw, 1.5 * Math.max(1, ...sourceCells.map((source) => source.width)));
+    const annulusMaxRadius = Math.max(annulusMinRadius + 1, Math.min(5.5 * cpw, 0.45 * Math.min(maxX - minX, maxY - minY)));
+    const normalizeAngleDeg = (angle) => {
+      const wrapped = ((((angle + 180) % 360) + 360) % 360) - 180;
+      return wrapped === -180 ? 180 : wrapped;
+    };
+    const angularDistanceDeg = (a, b) => Math.abs(normalizeAngleDeg(a - b));
+    const arraySourceSpacingLambda = sourceYSpacingMean > 0 ? sourceYSpacingMean : 0;
+    const arrayPhaseStep = sourceCells.find((source) => source.arrayPhaseStepDeg != null)?.arrayPhaseStepDeg ?? null;
+    const derivedArraySteeringAngleDeg =
+      sourceCells.length > 1 && Number.isFinite(arrayPhaseStep) && arraySourceSpacingLambda > 1e-9
+        ? (Math.asin(Math.max(-1, Math.min(1, -arrayPhaseStep / (360 * arraySourceSpacingLambda)))) * 180) / Math.PI
+        : null;
+    const configuredArraySteeringAngleDeg = sources.find((source) => Number.isFinite(Number(source.arraySteeringAngleDeg)))?.arraySteeringAngleDeg;
+    const expectedRadiationAngleDeg =
+      Number.isFinite(Number(configuredArraySteeringAngleDeg))
+        ? Number(configuredArraySteeringAngleDeg)
+        : Number.isFinite(Number(derivedArraySteeringAngleDeg))
+          ? Number(derivedArraySteeringAngleDeg)
+          : sourceAngles.length
+            ? mean(sourceAngles)
+            : 0;
 
     for (let y = minY; y <= maxY; y += 1) {
       for (let x = minX; x <= maxX; x += 1) {
@@ -1982,8 +2669,38 @@ async function sourceRadiationMetrics(page) {
         if (x > sourceXCenter + Math.round(0.45 * cpw)) rightEnergy += energy;
         if (y < sourceYCenter - Math.round(0.45 * cpw)) upperEnergy += energy;
         if (y > sourceYCenter + Math.round(0.45 * cpw)) lowerEnergy += energy;
+        const dx = x - sourceXCenter;
+        const dy = y - sourceYCenter;
+        const radius = Math.hypot(dx, dy);
+        if (radius >= annulusMinRadius && radius <= annulusMaxRadius && energy > 0) {
+          const angleDeg = normalizeAngleDeg((Math.atan2(dy, dx) * 180) / Math.PI);
+          const bin = Math.floor((((angleDeg + 180) / 360) * angularBinCount) % angularBinCount);
+          angularBins[Math.max(0, Math.min(angularBinCount - 1, bin))] += energy;
+        }
       }
     }
+
+    const angularTotalEnergy = angularBins.reduce((sum, value) => sum + value, 0);
+    let angularPeakBin = 0;
+    for (let i = 1; i < angularBins.length; i += 1) {
+      if (angularBins[i] > angularBins[angularPeakBin]) angularPeakBin = i;
+    }
+    const binCenterAngleDeg = (bin) => normalizeAngleDeg(-180 + ((bin + 0.5) * 360) / angularBinCount);
+    const angularPeakAngleDeg = binCenterAngleDeg(angularPeakBin);
+    const sectorEnergy = (targetDeg, halfWidthDeg) =>
+      angularBins.reduce((sum, value, bin) => {
+        const angle = binCenterAngleDeg(bin);
+        return angularDistanceDeg(angle, targetDeg) <= halfWidthDeg ? sum + value : sum;
+      }, 0);
+    const forwardSectorEnergy = sectorEnergy(expectedRadiationAngleDeg, 35);
+    const backwardSectorEnergy = sectorEnergy(expectedRadiationAngleDeg + 180, 35);
+    let forwardHemispherePeakBin = -1;
+    for (let i = 0; i < angularBins.length; i += 1) {
+      const angle = binCenterAngleDeg(i);
+      if (angularDistanceDeg(angle, expectedRadiationAngleDeg) > 90) continue;
+      if (forwardHemispherePeakBin < 0 || angularBins[i] > angularBins[forwardHemispherePeakBin]) forwardHemispherePeakBin = i;
+    }
+    const forwardHemispherePeakAngleDeg = forwardHemispherePeakBin >= 0 ? binCenterAngleDeg(forwardHemispherePeakBin) : null;
 
     const farField = state.analysisEnabled && typeof sim.analysisFarFieldEstimate === "function" ? sim.analysisFarFieldEstimate(96) : [];
     const farFieldValues = farField
@@ -2022,6 +2739,9 @@ async function sourceRadiationMetrics(page) {
       sourcePhaseStepMeanAbsDeg: Math.abs(phaseStepMean),
       sourcePhaseStepStdDeg: phaseStepStd,
       configuredArrayPhaseStepDeg: sourceCells.find((source) => source.arrayPhaseStepDeg != null)?.arrayPhaseStepDeg ?? null,
+      configuredArraySteeringAngleDeg: Number.isFinite(Number(configuredArraySteeringAngleDeg)) ? Number(configuredArraySteeringAngleDeg) : null,
+      derivedArraySteeringAngleDeg: Number.isFinite(Number(derivedArraySteeringAngleDeg)) ? Number(derivedArraySteeringAngleDeg) : null,
+      expectedRadiationAngleDeg,
       materialCells,
       highIndexCells,
       lossyCells,
@@ -2042,6 +2762,17 @@ async function sourceRadiationMetrics(page) {
       sourceNeighborhoodEnergyFraction: sourceNeighborhoodEnergy / Math.max(1e-30, totalEnergy),
       rightToLeftEnergyRatio: rightEnergy / Math.max(1e-30, leftEnergy),
       lowerToUpperEnergyRatio: lowerEnergy / Math.max(1e-30, upperEnergy),
+      sourceAngularAnnulusMinLambda: annulusMinRadius / cpw,
+      sourceAngularAnnulusMaxLambda: annulusMaxRadius / cpw,
+      sourceAngularTotalEnergy: angularTotalEnergy,
+      sourceAngularPeakAngleDeg: angularPeakAngleDeg,
+      sourceAngularPeakEnergyFraction: angularTotalEnergy > 1e-30 ? angularBins[angularPeakBin] / angularTotalEnergy : 0,
+      sourceForwardHemispherePeakAngleDeg: forwardHemispherePeakAngleDeg,
+      sourceForwardHemispherePeakAngleErrorDeg:
+        forwardHemispherePeakAngleDeg == null ? null : angularDistanceDeg(forwardHemispherePeakAngleDeg, expectedRadiationAngleDeg),
+      sourceForwardSectorEnergyFraction: forwardSectorEnergy / Math.max(1e-30, angularTotalEnergy),
+      sourceBackwardSectorEnergyFraction: backwardSectorEnergy / Math.max(1e-30, angularTotalEnergy),
+      sourceForwardBackwardSectorRatio: forwardSectorEnergy / Math.max(1e-30, backwardSectorEnergy),
       farFieldSamples: farField.length || 0,
       farFieldFiniteSamples: farFieldValues.length,
       farFieldMode: sim.analysisFarFieldMode || "",
@@ -2560,7 +3291,7 @@ async function periodicPhotonicsMetrics(page) {
     };
     const isHighIndex = (idx) => sim.material[idx] !== 0 && Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 3.0;
     const fanoCx = midX + Math.round(0.8 * cpw);
-    const fanoCy = midY - Math.round(0.62 * cpw);
+    const fanoCy = midY - Math.round(0.5 * cpw);
     const fanoRx = Math.max(2, Math.round(0.42 * cpw));
     const fanoRy = Math.max(2, Math.round(0.42 * cpw));
     const box = (x, y, halfXLambda, halfYLambda, cx = midX, cy = midY) =>
@@ -2609,7 +3340,7 @@ async function periodicPhotonicsMetrics(page) {
         const inFanoResonator = ellipse(x, y, fanoCx, fanoCy, fanoRx, fanoRy);
         const inFanoGap =
           Math.abs(x - fanoCx) <= Math.round(0.22 * cpw) &&
-          y > fanoCy + Math.round(0.34 * cpw) &&
+          y > fanoCy + Math.round(0.37 * cpw) &&
           y < midY - Math.round(0.12 * cpw);
 
         if (inCenterDefect) centerDefectEnergy += energy;
@@ -2931,7 +3662,7 @@ async function runSmokeCase(page, testCase) {
   if (mode === "physics") await preparePhysicsCase(page, testCase);
   const before = await simulationSnapshot(page);
   const stepResult = mode === "physics"
-    ? await stepPhysicsSimulation(page, steps)
+    ? await stepPhysicsSimulation(page, steps, testCase)
     : { elapsedMs: await stepSimulation(page, steps) };
   const elapsedMs = stepResult.elapsedMs;
   const after = await simulationSnapshot(page);
@@ -3045,6 +3776,23 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`PML residual reflection proxy ${status.pml.residualReflectionProxy} exceeds ${reflectionLimit}`);
     }
   }
+  if (
+    Object.prototype.hasOwnProperty.call(testCase.acceptance || {}, "lateEnergyRatioMax") &&
+    testCase.id !== "pml_reflection" &&
+    testCase.id !== "resonator_ringdown_q" &&
+    !testCase.acceptance?.materialModelCheck
+  ) {
+    const lateEnergyLimit = Number(testCase.acceptance.lateEnergyRatioMax);
+    if (Number.isFinite(lateEnergyLimit) && stepResult.lateEnergyRatio > lateEnergyLimit) {
+      status.failures.push(`late energy ratio ${stepResult.lateEnergyRatio} exceeds ${lateEnergyLimit}`);
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(testCase.acceptance || {}, "finalEnergyRatioMax")) {
+    const finalEnergyLimit = Number(testCase.acceptance.finalEnergyRatioMax);
+    if (Number.isFinite(finalEnergyLimit) && stepResult.finalEnergyRatio > finalEnergyLimit) {
+      status.failures.push(`final energy ratio ${stepResult.finalEnergyRatio} exceeds ${finalEnergyLimit}`);
+    }
+  }
   if (testCase.id === "slab_waveguide_confinement") {
     status.modeLaunch = await slabWaveguideLaunchMetrics(page);
     const backwardLimit = Number(testCase.acceptance?.backwardEnergyRatioMax);
@@ -3090,8 +3838,12 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`ringdown late-energy ratio ${stepResult.lateEnergyRatio} exceeds ${maxLateEnergyRatio}`);
     }
   }
-  if (testCase.id === "single_slit_diffraction_symmetry" || testCase.id === "double_slit_interference_profile") {
-    status.diffraction = await apertureDiffractionMetrics(page, testCase.preset === "doubleSlit" ? "double" : "single");
+  if (
+    testCase.id === "single_slit_diffraction_symmetry" ||
+    testCase.id === "double_slit_interference_profile" ||
+    testCase.id === "circular_aperture_diffraction_profile"
+  ) {
+    status.diffraction = await apertureDiffractionMetrics(page, testCase.preset === "doubleSlit" ? "double" : testCase.preset === "circularAperture" ? "circular" : "single");
     const minEnergy = Number(testCase.acceptance?.minTransmittedEnergy);
     const maxSymmetryError = Number(testCase.acceptance?.symmetryErrorMax);
     const minCenterPeakRatio = Number(testCase.acceptance?.centerPeakRatioMin);
@@ -3110,6 +3862,151 @@ async function runSmokeCase(page, testCase) {
     }
     if (!(status.diffraction.apertureEnergy > 0)) {
       status.failures.push("aperture region does not transmit measurable field energy");
+    }
+  }
+  if (testCase.acceptance?.maxwellBlockCheck) {
+    status.maxwell = await maxwellBlockMetrics(page);
+    const minTotalEnergy = Number(testCase.acceptance?.totalEnergyMin);
+    const maxMaterialCells = Number(testCase.acceptance?.materialCellsMax);
+    const maxPecCells = Number(testCase.acceptance?.pecCellsMax);
+    const minRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMin);
+    const minLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMin);
+    const maxLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMax);
+    const maxPoyntingAngleError = Number(testCase.acceptance?.poyntingAngleErrorDegMax);
+    const minPoyntingDirectionality = Number(testCase.acceptance?.poyntingDirectionalityMin);
+    const minEvanescentNearFar = Number(testCase.acceptance?.evanescentNearToFarRatioMin);
+    const minEvanescentMidFar = Number(testCase.acceptance?.evanescentMidToFarRatioMin);
+    const minInterferencePeaks = Number(testCase.acceptance?.interferencePeakCountMin);
+    const minInterferenceVisibility = Number(testCase.acceptance?.interferenceVisibilityMin);
+    const maxInterferenceSymmetry = Number(testCase.acceptance?.interferenceSymmetryErrorMax);
+    if (Number.isFinite(minTotalEnergy) && !(status.maxwell.totalEnergy > minTotalEnergy)) {
+      status.failures.push(`Maxwell total energy ${status.maxwell.totalEnergy} is not above ${minTotalEnergy}`);
+    }
+    if (Number.isFinite(maxMaterialCells) && status.maxwell.materialCells > maxMaterialCells) {
+      status.failures.push(`Maxwell material cells ${status.maxwell.materialCells} exceed ${maxMaterialCells}`);
+    }
+    if (Number.isFinite(maxPecCells) && status.maxwell.pecCells > maxPecCells) {
+      status.failures.push(`Maxwell PEC cells ${status.maxwell.pecCells} exceed ${maxPecCells}`);
+    }
+    if (Number.isFinite(minRightLeft) && status.maxwell.rightToLeftEnergyRatio < minRightLeft) {
+      status.failures.push(`Maxwell right/left energy ratio ${status.maxwell.rightToLeftEnergyRatio} below ${minRightLeft}`);
+    }
+    if (Number.isFinite(minLowerUpper) && status.maxwell.lowerToUpperEnergyRatio < minLowerUpper) {
+      status.failures.push(`Maxwell lower/upper energy ratio ${status.maxwell.lowerToUpperEnergyRatio} below ${minLowerUpper}`);
+    }
+    if (Number.isFinite(maxLowerUpper) && status.maxwell.lowerToUpperEnergyRatio > maxLowerUpper) {
+      status.failures.push(`Maxwell lower/upper energy ratio ${status.maxwell.lowerToUpperEnergyRatio} exceeds ${maxLowerUpper}`);
+    }
+    if (
+      Number.isFinite(maxPoyntingAngleError) &&
+      !(Number.isFinite(status.maxwell.poyntingAngleErrorDeg) && status.maxwell.poyntingAngleErrorDeg <= maxPoyntingAngleError)
+    ) {
+      status.failures.push(`Poynting angle error ${status.maxwell.poyntingAngleErrorDeg} exceeds ${maxPoyntingAngleError} deg`);
+    }
+    if (
+      Number.isFinite(minPoyntingDirectionality) &&
+      !(Number.isFinite(status.maxwell.poyntingDirectionality) && status.maxwell.poyntingDirectionality >= minPoyntingDirectionality)
+    ) {
+      status.failures.push(`Poynting directionality ${status.maxwell.poyntingDirectionality} below ${minPoyntingDirectionality}`);
+    }
+    if (Number.isFinite(minEvanescentNearFar) && status.maxwell.evanescentNearToFarRatio < minEvanescentNearFar) {
+      status.failures.push(`evanescent near/far energy ratio ${status.maxwell.evanescentNearToFarRatio} below ${minEvanescentNearFar}`);
+    }
+    if (Number.isFinite(minEvanescentMidFar) && status.maxwell.evanescentMidToFarRatio < minEvanescentMidFar) {
+      status.failures.push(`evanescent mid/far energy ratio ${status.maxwell.evanescentMidToFarRatio} below ${minEvanescentMidFar}`);
+    }
+    if (Number.isFinite(minInterferencePeaks) && status.maxwell.interference.peakCount < minInterferencePeaks) {
+      status.failures.push(`interference profile peak count ${status.maxwell.interference.peakCount} below ${minInterferencePeaks}`);
+    }
+    if (Number.isFinite(minInterferenceVisibility) && status.maxwell.interference.visibility < minInterferenceVisibility) {
+      status.failures.push(`interference visibility ${status.maxwell.interference.visibility} below ${minInterferenceVisibility}`);
+    }
+    if (Number.isFinite(maxInterferenceSymmetry) && status.maxwell.interference.symmetryError > maxInterferenceSymmetry) {
+      status.failures.push(`interference symmetry error ${status.maxwell.interference.symmetryError} exceeds ${maxInterferenceSymmetry}`);
+    }
+  }
+  if (testCase.acceptance?.interfaceOpticsCheck) {
+    status.interfaceOptics = await interfaceOpticsMetrics(page);
+    const minMaterialEnergy = Number(testCase.acceptance?.materialEnergyFractionMin);
+    const minTransmittedEnergy = Number(testCase.acceptance?.transmittedFlowEnergyMin);
+    const minTransmittedDirectionality = Number(testCase.acceptance?.transmittedDirectionalityMin);
+    const maxSnellAngleError = Number(testCase.acceptance?.snellAngleErrorDegMax);
+    if (Number.isFinite(minMaterialEnergy) && status.interfaceOptics.materialEnergyFraction < minMaterialEnergy) {
+      status.failures.push(`interface material energy fraction ${status.interfaceOptics.materialEnergyFraction} below ${minMaterialEnergy}`);
+    }
+    if (Number.isFinite(minTransmittedEnergy) && status.interfaceOptics.transmitted.energy < minTransmittedEnergy) {
+      status.failures.push(`transmitted-flow energy ${status.interfaceOptics.transmitted.energy} below ${minTransmittedEnergy}`);
+    }
+    if (
+      Number.isFinite(minTransmittedDirectionality) &&
+      !(Number.isFinite(status.interfaceOptics.transmitted.directionality) && status.interfaceOptics.transmitted.directionality >= minTransmittedDirectionality)
+    ) {
+      status.failures.push(`transmitted-flow directionality ${status.interfaceOptics.transmitted.directionality} below ${minTransmittedDirectionality}`);
+    }
+    if (
+      Number.isFinite(maxSnellAngleError) &&
+      !(
+        Number.isFinite(status.interfaceOptics.transmittedCentroidAngleErrorDeg ?? status.interfaceOptics.transmittedAngleErrorDeg) &&
+        (status.interfaceOptics.transmittedCentroidAngleErrorDeg ?? status.interfaceOptics.transmittedAngleErrorDeg) <= maxSnellAngleError
+      )
+    ) {
+      status.failures.push(
+        `Snell transmitted-angle error ${status.interfaceOptics.transmittedCentroidAngleErrorDeg ?? status.interfaceOptics.transmittedAngleErrorDeg} exceeds ${maxSnellAngleError} deg`,
+      );
+    }
+  }
+  if (testCase.acceptance?.temporalProbeCheck) {
+    status.temporalProbe = stepResult.temporalProbe;
+    const minSamples = Number(testCase.acceptance?.temporalProbeSamplesMin);
+    const minPeakAbs = Number(testCase.acceptance?.temporalProbePeakAbsMin);
+    const minEnvelopeDynamicRange = Number(testCase.acceptance?.temporalEnvelopeDynamicRangeMin);
+    if (!status.temporalProbe) {
+      status.failures.push("temporal probe was not collected");
+    } else {
+      if (Number.isFinite(minSamples) && status.temporalProbe.samples < minSamples) {
+        status.failures.push(`temporal probe samples ${status.temporalProbe.samples} below ${minSamples}`);
+      }
+      if (Number.isFinite(minPeakAbs) && status.temporalProbe.peakAbs < minPeakAbs) {
+        status.failures.push(`temporal probe peak ${status.temporalProbe.peakAbs} below ${minPeakAbs}`);
+      }
+      if (Number.isFinite(minEnvelopeDynamicRange) && status.temporalProbe.envelopeDynamicRange < minEnvelopeDynamicRange) {
+        status.failures.push(`temporal envelope dynamic range ${status.temporalProbe.envelopeDynamicRange} below ${minEnvelopeDynamicRange}`);
+      }
+    }
+  }
+  if (testCase.acceptance?.materialTemporalCheck) {
+    status.materialTemporal = stepResult.materialTemporal;
+    const minSamples = Number(testCase.acceptance?.materialTemporalSamplesMin);
+    const minMaterialPeak = Number(testCase.acceptance?.materialTemporalPeakEnergyMin);
+    const minDispersivePeak = Number(testCase.acceptance?.dispersiveTemporalPeakEnergyMin);
+    const minConductivePeak = Number(testCase.acceptance?.conductiveTemporalPeakEnergyMin);
+    const minMaterialFraction = Number(testCase.acceptance?.materialTemporalPeakFractionMin);
+    const minDispersiveFraction = Number(testCase.acceptance?.dispersiveTemporalPeakFractionMin);
+    const minConductiveFraction = Number(testCase.acceptance?.conductiveTemporalPeakFractionMin);
+    if (!status.materialTemporal) {
+      status.failures.push("material temporal monitor was not collected");
+    } else {
+      if (Number.isFinite(minSamples) && status.materialTemporal.samples < minSamples) {
+        status.failures.push(`material temporal samples ${status.materialTemporal.samples} below ${minSamples}`);
+      }
+      if (Number.isFinite(minMaterialPeak) && status.materialTemporal.materialEnergyPeak < minMaterialPeak) {
+        status.failures.push(`material temporal peak energy ${status.materialTemporal.materialEnergyPeak} below ${minMaterialPeak}`);
+      }
+      if (Number.isFinite(minDispersivePeak) && status.materialTemporal.dispersiveEnergyPeak < minDispersivePeak) {
+        status.failures.push(`dispersive temporal peak energy ${status.materialTemporal.dispersiveEnergyPeak} below ${minDispersivePeak}`);
+      }
+      if (Number.isFinite(minConductivePeak) && status.materialTemporal.conductiveEnergyPeak < minConductivePeak) {
+        status.failures.push(`conductive temporal peak energy ${status.materialTemporal.conductiveEnergyPeak} below ${minConductivePeak}`);
+      }
+      if (Number.isFinite(minMaterialFraction) && status.materialTemporal.materialPeakFraction < minMaterialFraction) {
+        status.failures.push(`material temporal peak fraction ${status.materialTemporal.materialPeakFraction} below ${minMaterialFraction}`);
+      }
+      if (Number.isFinite(minDispersiveFraction) && status.materialTemporal.dispersivePeakFraction < minDispersiveFraction) {
+        status.failures.push(`dispersive temporal peak fraction ${status.materialTemporal.dispersivePeakFraction} below ${minDispersiveFraction}`);
+      }
+      if (Number.isFinite(minConductiveFraction) && status.materialTemporal.conductivePeakFraction < minConductiveFraction) {
+        status.failures.push(`conductive temporal peak fraction ${status.materialTemporal.conductivePeakFraction} below ${minConductiveFraction}`);
+      }
     }
   }
   if (testCase.id === "drude_ade_response") {
@@ -3339,6 +4236,8 @@ async function runSmokeCase(page, testCase) {
     status.metamaterial = await metamaterialMetrics(page);
     const metrics = status.metamaterial;
     const expectedFieldComponent = testCase.acceptance?.fieldComponent;
+    const expectedFieldDisplay = testCase.acceptance?.fieldDisplay;
+    const expectedSourceShape = testCase.acceptance?.sourceShape;
     const expectedDispersionModel = testCase.acceptance?.dispersionModel;
     const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
     const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
@@ -3350,10 +4249,15 @@ async function runSmokeCase(page, testCase) {
     const minMaterialFraction = Number(testCase.acceptance?.materialEnergyFractionMin);
     const minDispersiveFraction = Number(testCase.acceptance?.dispersiveEnergyFractionMin);
     const minLocalizedDiskCells = Number(testCase.acceptance?.localizedDiskCellsMin);
+    const minLocalizedDiskEnergy = Number(testCase.acceptance?.localizedDiskEnergyMin);
+    const minLocalizedNearEnergy = Number(testCase.acceptance?.localizedNearEnergyMin);
     const minLocalizedNearToDisk = Number(testCase.acceptance?.localizedNearToDiskRatioMin);
     const minDimerDiskCells = Number(testCase.acceptance?.dimerDiskCellsMin);
     const minDimerGapEnergy = Number(testCase.acceptance?.dimerGapEnergyMin);
     const minDimerGapRatio = Number(testCase.acceptance?.dimerGapToDiskRatioMin);
+    const minDimerGapCells = Number(testCase.acceptance?.dimerGapCellsMin);
+    const minDimerGapPeakToBackground = Number(testCase.acceptance?.dimerGapPeakToBackgroundRatioMin);
+    const minDimerGapMeanToBackground = Number(testCase.acceptance?.dimerGapMeanToBackgroundRatioMin);
     const minBars = Number(testCase.acceptance?.metasurfaceBarCountMin);
     const minHeightSpan = Number(testCase.acceptance?.metasurfaceHeightSpanLambdaMin);
     const minAbsorberGradient = Number(testCase.acceptance?.absorberLossGradientMin);
@@ -3371,6 +4275,12 @@ async function runSmokeCase(page, testCase) {
     const minEnzEnergyFraction = Number(testCase.acceptance?.enzEnergyFractionMin);
     if (expectedFieldComponent && metrics.fieldComponent !== expectedFieldComponent) {
       status.failures.push(`expected ${expectedFieldComponent} field component, got ${metrics.fieldComponent}`);
+    }
+    if (expectedFieldDisplay && metrics.fieldDisplay !== expectedFieldDisplay) {
+      status.failures.push(`expected ${expectedFieldDisplay} field display, got ${metrics.fieldDisplay}`);
+    }
+    if (expectedSourceShape && metrics.sourceShape !== expectedSourceShape) {
+      status.failures.push(`expected ${expectedSourceShape} source, got ${metrics.sourceShape}`);
     }
     if (testCase.acceptance?.dispersionEnabled && !metrics.dispersionEnabled) {
       status.failures.push("dispersion is not enabled for metamaterial/plasmonic scene");
@@ -3408,6 +4318,12 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minLocalizedDiskCells) && metrics.localizedDiskCells < minLocalizedDiskCells) {
       status.failures.push(`localized-plasmon disk cells ${metrics.localizedDiskCells} below ${minLocalizedDiskCells}`);
     }
+    if (Number.isFinite(minLocalizedDiskEnergy) && metrics.localizedDiskEnergy < minLocalizedDiskEnergy) {
+      status.failures.push(`localized-plasmon disk energy ${metrics.localizedDiskEnergy} below ${minLocalizedDiskEnergy}`);
+    }
+    if (Number.isFinite(minLocalizedNearEnergy) && metrics.localizedNearEnergy < minLocalizedNearEnergy) {
+      status.failures.push(`localized-plasmon near-field energy ${metrics.localizedNearEnergy} below ${minLocalizedNearEnergy}`);
+    }
     if (Number.isFinite(minLocalizedNearToDisk) && metrics.localizedNearToDiskRatio < minLocalizedNearToDisk) {
       status.failures.push(`localized-plasmon near/disk energy ratio ${metrics.localizedNearToDiskRatio} below ${minLocalizedNearToDisk}`);
     }
@@ -3422,6 +4338,15 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minDimerGapRatio) && metrics.dimerGapToDiskRatio < minDimerGapRatio) {
       status.failures.push(`dimer gap/disk energy ratio ${metrics.dimerGapToDiskRatio} below ${minDimerGapRatio}`);
+    }
+    if (Number.isFinite(minDimerGapCells) && metrics.dimerGapCells < minDimerGapCells) {
+      status.failures.push(`dimer gap air cells ${metrics.dimerGapCells} below ${minDimerGapCells}`);
+    }
+    if (Number.isFinite(minDimerGapPeakToBackground) && metrics.dimerGapPeakToBackgroundRatio < minDimerGapPeakToBackground) {
+      status.failures.push(`dimer gap peak/background E2 ratio ${metrics.dimerGapPeakToBackgroundRatio} below ${minDimerGapPeakToBackground}`);
+    }
+    if (Number.isFinite(minDimerGapMeanToBackground) && metrics.dimerGapMeanToBackgroundRatio < minDimerGapMeanToBackground) {
+      status.failures.push(`dimer gap mean/background E2 ratio ${metrics.dimerGapMeanToBackgroundRatio} below ${minDimerGapMeanToBackground}`);
     }
     if (Number.isFinite(minBars) && metrics.metasurfaceBarCount < minBars) {
       status.failures.push(`metasurface bar count ${metrics.metasurfaceBarCount} below ${minBars}`);
@@ -3901,6 +4826,17 @@ async function runSmokeCase(page, testCase) {
     const maxRightLeft = Number(testCase.acceptance?.rightToLeftEnergyRatioMax);
     const minLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMin);
     const maxLowerUpper = Number(testCase.acceptance?.lowerToUpperEnergyRatioMax);
+    const minSourceAngularEnergy = Number(testCase.acceptance?.sourceAngularTotalEnergyMin);
+    const minSourcePeakFraction = Number(testCase.acceptance?.sourceAngularPeakEnergyFractionMin);
+    const minSourceForwardFraction = Number(testCase.acceptance?.sourceForwardSectorEnergyFractionMin);
+    const maxSourceForwardFraction = Number(testCase.acceptance?.sourceForwardSectorEnergyFractionMax);
+    const minSourceForwardBackward = Number(testCase.acceptance?.sourceForwardBackwardSectorRatioMin);
+    const maxSourceForwardBackward = Number(testCase.acceptance?.sourceForwardBackwardSectorRatioMax);
+    const maxSourceForwardPeakError = Number(testCase.acceptance?.sourceForwardPeakAngleErrorDegMax);
+    const minSourceExpectedAngle = Number(testCase.acceptance?.sourceExpectedRadiationAngleDegMin);
+    const maxSourceExpectedAngle = Number(testCase.acceptance?.sourceExpectedRadiationAngleDegMax);
+    const minDerivedSteeringAngle = Number(testCase.acceptance?.derivedArraySteeringAngleDegMin);
+    const maxDerivedSteeringAngle = Number(testCase.acceptance?.derivedArraySteeringAngleDegMax);
     const minFarFieldSamples = Number(testCase.acceptance?.farFieldSamplesMin);
     const minFarFieldFiniteSamples = Number(testCase.acceptance?.farFieldFiniteSamplesMin);
     const minFarFieldPeak = Number(testCase.acceptance?.farFieldPeakMin);
@@ -3985,6 +4921,42 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(maxRightLeft) && metrics.rightToLeftEnergyRatio > maxRightLeft) status.failures.push(`right/left source energy ratio ${metrics.rightToLeftEnergyRatio} exceeds ${maxRightLeft}`);
     if (Number.isFinite(minLowerUpper) && metrics.lowerToUpperEnergyRatio < minLowerUpper) status.failures.push(`lower/upper source energy ratio ${metrics.lowerToUpperEnergyRatio} below ${minLowerUpper}`);
     if (Number.isFinite(maxLowerUpper) && metrics.lowerToUpperEnergyRatio > maxLowerUpper) status.failures.push(`lower/upper source energy ratio ${metrics.lowerToUpperEnergyRatio} exceeds ${maxLowerUpper}`);
+    if (Number.isFinite(minSourceAngularEnergy) && metrics.sourceAngularTotalEnergy < minSourceAngularEnergy) {
+      status.failures.push(`source angular annulus energy ${metrics.sourceAngularTotalEnergy} below ${minSourceAngularEnergy}`);
+    }
+    if (Number.isFinite(minSourcePeakFraction) && metrics.sourceAngularPeakEnergyFraction < minSourcePeakFraction) {
+      status.failures.push(`source angular peak fraction ${metrics.sourceAngularPeakEnergyFraction} below ${minSourcePeakFraction}`);
+    }
+    if (Number.isFinite(minSourceForwardFraction) && metrics.sourceForwardSectorEnergyFraction < minSourceForwardFraction) {
+      status.failures.push(`source forward-sector fraction ${metrics.sourceForwardSectorEnergyFraction} below ${minSourceForwardFraction}`);
+    }
+    if (Number.isFinite(maxSourceForwardFraction) && metrics.sourceForwardSectorEnergyFraction > maxSourceForwardFraction) {
+      status.failures.push(`source forward-sector fraction ${metrics.sourceForwardSectorEnergyFraction} exceeds ${maxSourceForwardFraction}`);
+    }
+    if (Number.isFinite(minSourceForwardBackward) && metrics.sourceForwardBackwardSectorRatio < minSourceForwardBackward) {
+      status.failures.push(`source forward/backward sector ratio ${metrics.sourceForwardBackwardSectorRatio} below ${minSourceForwardBackward}`);
+    }
+    if (Number.isFinite(maxSourceForwardBackward) && metrics.sourceForwardBackwardSectorRatio > maxSourceForwardBackward) {
+      status.failures.push(`source forward/backward sector ratio ${metrics.sourceForwardBackwardSectorRatio} exceeds ${maxSourceForwardBackward}`);
+    }
+    if (
+      Number.isFinite(maxSourceForwardPeakError) &&
+      !(Number.isFinite(metrics.sourceForwardHemispherePeakAngleErrorDeg) && metrics.sourceForwardHemispherePeakAngleErrorDeg <= maxSourceForwardPeakError)
+    ) {
+      status.failures.push(`source forward peak-angle error ${metrics.sourceForwardHemispherePeakAngleErrorDeg} exceeds ${maxSourceForwardPeakError}`);
+    }
+    if (Number.isFinite(minSourceExpectedAngle) && metrics.expectedRadiationAngleDeg < minSourceExpectedAngle) {
+      status.failures.push(`expected source radiation angle ${metrics.expectedRadiationAngleDeg} below ${minSourceExpectedAngle}`);
+    }
+    if (Number.isFinite(maxSourceExpectedAngle) && metrics.expectedRadiationAngleDeg > maxSourceExpectedAngle) {
+      status.failures.push(`expected source radiation angle ${metrics.expectedRadiationAngleDeg} exceeds ${maxSourceExpectedAngle}`);
+    }
+    if (Number.isFinite(minDerivedSteeringAngle) && !(Number.isFinite(metrics.derivedArraySteeringAngleDeg) && metrics.derivedArraySteeringAngleDeg >= minDerivedSteeringAngle)) {
+      status.failures.push(`derived array steering angle ${metrics.derivedArraySteeringAngleDeg} below ${minDerivedSteeringAngle}`);
+    }
+    if (Number.isFinite(maxDerivedSteeringAngle) && !(Number.isFinite(metrics.derivedArraySteeringAngleDeg) && metrics.derivedArraySteeringAngleDeg <= maxDerivedSteeringAngle)) {
+      status.failures.push(`derived array steering angle ${metrics.derivedArraySteeringAngleDeg} exceeds ${maxDerivedSteeringAngle}`);
+    }
     if (Number.isFinite(minFarFieldSamples) && metrics.farFieldSamples < minFarFieldSamples) status.failures.push(`far-field samples ${metrics.farFieldSamples} below ${minFarFieldSamples}`);
     if (Number.isFinite(minFarFieldFiniteSamples) && metrics.farFieldFiniteSamples < minFarFieldFiniteSamples) {
       status.failures.push(`finite far-field samples ${metrics.farFieldFiniteSamples} below ${minFarFieldFiniteSamples}`);
@@ -4002,6 +4974,31 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minSweepSamples) && metrics.sweepSamples < minSweepSamples) status.failures.push(`sweep samples ${metrics.sweepSamples} below ${minSweepSamples}`);
     if (testCase.acceptance?.farFieldMode && metrics.farFieldMode !== testCase.acceptance.farFieldMode) {
       status.failures.push(`far-field mode ${metrics.farFieldMode} differs from expected ${testCase.acceptance.farFieldMode}`);
+    }
+  }
+  if (testCase.acceptance?.mmiSplitCheck) {
+    status.mmiSplit = await mmiSplitMetrics(page, testCase);
+    const metrics = status.mmiSplit;
+    const target = Number(testCase.acceptance?.upperFractionTarget ?? testCase.acceptance?.mmiUpperFractionTarget ?? 0.5);
+    const tolerance = Number(testCase.acceptance?.upperFractionTolerance ?? testCase.acceptance?.mmiUpperFractionTolerance ?? 0.12);
+    const minTemporalSamples = Number(testCase.acceptance?.mmiTemporalSamplesMin);
+    const minTotalEz2 = Number(testCase.acceptance?.mmiTotalEz2Min);
+    const minTotalForwardSx = Number(testCase.acceptance?.mmiTotalForwardSxMin);
+    const maxSignedSxAbs = Number(testCase.acceptance?.mmiSignedSxBalanceAbsMax);
+    if (Number.isFinite(minTemporalSamples) && metrics.temporalSamples < minTemporalSamples) {
+      status.failures.push(`MMI temporal samples ${metrics.temporalSamples} below ${minTemporalSamples}`);
+    }
+    if (Number.isFinite(minTotalEz2) && metrics.totalEz2 < minTotalEz2) {
+      status.failures.push(`MMI total Ez^2 ${metrics.totalEz2} below ${minTotalEz2}`);
+    }
+    if (Number.isFinite(minTotalForwardSx) && metrics.totalForwardSx < minTotalForwardSx) {
+      status.failures.push(`MMI total forward Sx ${metrics.totalForwardSx} below ${minTotalForwardSx}`);
+    }
+    if (!(Number.isFinite(metrics.upperEz2Fraction) && Math.abs(metrics.upperEz2Fraction - target) <= tolerance)) {
+      status.failures.push(`MMI upper Ez^2 fraction ${metrics.upperEz2Fraction} differs from ${target} by more than ${tolerance}`);
+    }
+    if (Number.isFinite(maxSignedSxAbs) && !(Number.isFinite(metrics.signedSxBalance) && Math.abs(metrics.signedSxBalance) <= maxSignedSxAbs)) {
+      status.failures.push(`MMI signed Sx balance ${metrics.signedSxBalance} exceeds ${maxSignedSxAbs}`);
     }
   }
   if (testCase.acceptance?.guidedDeviceCheck) {
@@ -4202,6 +5199,10 @@ async function runSmokeCase(page, testCase) {
     const maxFanoGapCells = Number(testCase.acceptance?.fanoGapHighIndexCellsMax);
     const minFanoResonatorEnergy = Number(testCase.acceptance?.fanoResonatorEnergyMin);
     const minFanoResonatorFraction = Number(testCase.acceptance?.fanoResonatorEnergyFractionMin);
+    const minFanoTemporalSamples = Number(testCase.acceptance?.fanoTemporalSamplesMin);
+    const minFanoTemporalEnergy = Number(testCase.acceptance?.fanoTemporalResonatorEnergyPeakMin);
+    const minFanoTemporalFraction = Number(testCase.acceptance?.fanoTemporalResonatorPeakFractionMin);
+    const minFanoTemporalRatio = Number(testCase.acceptance?.fanoTemporalResonatorToBusPeakRatioMin);
     if (expectedSweepMode && metrics.sweepMode !== expectedSweepMode) {
       status.failures.push(`expected ${expectedSweepMode} sweep, got ${metrics.sweepMode}`);
     }
@@ -4362,6 +5363,25 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minFanoResonatorFraction) && metrics.fanoResonatorEnergyFraction < minFanoResonatorFraction) {
       status.failures.push(`Fano side-resonator energy fraction ${metrics.fanoResonatorEnergyFraction} below ${minFanoResonatorFraction}`);
+    }
+    if (testCase.acceptance?.fanoTemporalCheck) {
+      status.fanoTemporal = stepResult.fanoTemporal;
+      if (!status.fanoTemporal) {
+        status.failures.push("Fano temporal monitor was not collected");
+      } else {
+        if (Number.isFinite(minFanoTemporalSamples) && status.fanoTemporal.samples < minFanoTemporalSamples) {
+          status.failures.push(`Fano temporal samples ${status.fanoTemporal.samples} below ${minFanoTemporalSamples}`);
+        }
+        if (Number.isFinite(minFanoTemporalEnergy) && status.fanoTemporal.resonatorEnergyPeak < minFanoTemporalEnergy) {
+          status.failures.push(`Fano temporal resonator peak ${status.fanoTemporal.resonatorEnergyPeak} below ${minFanoTemporalEnergy}`);
+        }
+        if (Number.isFinite(minFanoTemporalFraction) && status.fanoTemporal.resonatorPeakFraction < minFanoTemporalFraction) {
+          status.failures.push(`Fano temporal resonator fraction ${status.fanoTemporal.resonatorPeakFraction} below ${minFanoTemporalFraction}`);
+        }
+        if (Number.isFinite(minFanoTemporalRatio) && status.fanoTemporal.resonatorToBusPeakRatio < minFanoTemporalRatio) {
+          status.failures.push(`Fano temporal resonator/bus ratio ${status.fanoTemporal.resonatorToBusPeakRatio} below ${minFanoTemporalRatio}`);
+        }
+      }
     }
   }
   if (testCase.acceptance?.topologicalPhotonicsCheck) {

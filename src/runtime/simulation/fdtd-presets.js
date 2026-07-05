@@ -296,8 +296,21 @@ Object.assign(FDTDSim.prototype, {
     const hyperbolicTargetY = -2;
     const hyperbolicGamma = 0.026;
     const hyperbolicOmegaP = Math.sqrt(Math.max(0, (1 - hyperbolicTargetY) * (sourceOmega * sourceOmega + hyperbolicGamma * hyperbolicGamma)));
+    const dimerGamma = 0.0015;
     const sourceX = (value) => clamp(value, minSourceXLambda(), maxSourceXLambda());
     const sourceY = (value) => clamp(value, minSourceYLambda(), maxSourceYLambda());
+    const centeredInterfaceBeam = (angleDeg, distanceLambda = 3.0, widthLambda = 0.8) => {
+      const theta = (angleDeg * Math.PI) / 180;
+      const xLambda = midXLambda - distanceLambda;
+      const yLambda = midYLambda - Math.tan(theta) * distanceLambda;
+      return {
+        shape: "gaussianProfile",
+        xLambda: sourceX(xLambda),
+        yLambda: sourceY(yLambda),
+        widthLambda,
+        angleDeg,
+      };
+    };
     const mat = {
       air: { material: 0 },
       pec: { material: 2 },
@@ -350,6 +363,14 @@ Object.assign(FDTDSim.prototype, {
       drudeMetal: { material: 4, eps: 1, loss: 0.002, dispersion: "drude", omegaP: 0.28, gamma: 0.018 },
       plasmonicMetal: { material: 4, eps: 1, loss: 0.004, dispersion: "drude", omegaP: 0.34, gamma: 0.026 },
       plasma: { material: 4, eps: 1, loss: 0, dispersion: "plasma", omegaP: 2 * Math.PI * sourceFrequency * 1.25, gamma: 0.001 },
+      dimerPlasmonicMetal: {
+        material: 4,
+        eps: 1,
+        loss: 0.0015,
+        dispersion: "drude",
+        omegaP: Math.sqrt(Math.max(0, 3.0 * (sourceOmega * sourceOmega + dimerGamma * dimerGamma))),
+        gamma: dimerGamma,
+      },
       lorentz: {
         material: 4,
         eps: 1.7,
@@ -840,7 +861,7 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "obliqueRefraction":
         fillRightOf(midXLambda, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 28 }]);
+        setSources([centeredInterfaceBeam(28, 3.0, 0.8)]);
         break;
       case "brewsterTm":
         state.fieldComponent = "hz";
@@ -868,12 +889,12 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "totalInternalReflection":
         fillLeftOf(midXLambda, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.1), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 48 }]);
+        setSources([centeredInterfaceBeam(48, 2.15, 0.8)]);
         break;
       case "frustratedTir":
         fillLeftOf(midXLambda - 0.18, mat.n15);
         fillRightOf(midXLambda + 0.18, mat.n15);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.1), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 48 }]);
+        setSources([centeredInterfaceBeam(48, 2.15, 0.8)]);
         break;
       case "quarterWaveCoating": {
         const d = 1 / (4 * Math.sqrt(1.5));
@@ -893,7 +914,7 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "anisotropicInterface":
         fillRightOf(midXLambda, mat.anisotropic);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 24 }]);
+        setSources([centeredInterfaceBeam(24, 3.0, 0.8)]);
         break;
       case "jzDipole":
         setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.35 }]);
@@ -923,6 +944,8 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ shape: "pointDipole", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.32 }]);
         break;
       case "huygensRadiator":
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 3;
         setSources([{ shape: "huygens", xLambda: sourceX(midXLambda), yLambda: sourceY(midYLambda), widthLambda: 0.45, angleDeg: 0 }]);
         break;
       case "circularDipole":
@@ -933,6 +956,8 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ shape: "janusDipole", xLambda: sourceX(midXLambda - 0.75), yLambda: sourceY(midYLambda - 0.42), widthLambda: 0.42, angleDeg: 0 }]);
         break;
       case "dipoleArray": {
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 3;
         const sources = [];
         for (let i = 0; i < 8; i += 1) {
           sources.push({ shape: "pointDipole", xLambda: sourceX(1.6), yLambda: sourceY(midYLambda - 1.75 + i * 0.5), widthLambda: 0.24, amplitude: 0.32 });
@@ -941,6 +966,8 @@ Object.assign(FDTDSim.prototype, {
         break;
       }
       case "phasedDipoleArray": {
+        state.analysisEnabled = true;
+        state.analysisSampleEvery = 3;
         const sources = [];
         const elementSpacingLambda = 0.5;
         const steeringAngleDeg = -12;
@@ -1215,7 +1242,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionOmegaP = mat.drudeMetal.omegaP;
         state.dispersionGamma = mat.drudeMetal.gamma;
         rectL(midXLambda - 0.22, 0.65, 0.44, domainYLambda - 1.3, mat.drudeMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
+        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(midXLambda - 0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
         break;
       case "lorentzMedium":
         state.materialDispersionEnabled = true;
@@ -1224,7 +1251,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionGamma = mat.lorentz.gamma;
         state.dispersionDeltaEps = mat.lorentz.deltaEps;
         rectL(midXLambda - 0.75, 0.75, 1.5, domainYLambda - 1.5, mat.lorentz);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
+        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(midXLambda - 1.35), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
         break;
       case "debyeDielectric":
         state.materialDispersionEnabled = true;
@@ -1232,7 +1259,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionDeltaEps = mat.debye.deltaEps;
         state.dispersionTau = mat.debye.tau;
         rectL(midXLambda - 0.75, 0.75, 1.5, domainYLambda - 1.5, mat.debye);
-        setSources([{ type: "ricker", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
+        setSources([{ type: "ricker", shape: "line", xLambda: sourceX(midXLambda - 1.35), yLambda: sourceY(midYLambda), amplitude: 0.55 }]);
         break;
       case "plasmaCutoff":
         state.materialDispersionEnabled = true;
@@ -1240,7 +1267,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionOmegaP = mat.plasma.omegaP;
         state.dispersionGamma = mat.plasma.gamma;
         rectL(midXLambda - 0.7, 0.65, 1.4, domainYLambda - 1.3, mat.plasma);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.45 }]);
+        setSources([{ shape: "line", xLambda: sourceX(midXLambda - 1.3), yLambda: sourceY(midYLambda), amplitude: 0.45 }]);
         break;
       case "enzSlab":
         state.materialDispersionEnabled = true;
@@ -1248,7 +1275,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionOmegaP = mat.enz.omegaP;
         state.dispersionGamma = mat.enz.gamma;
         rectL(midXLambda - 0.15, 0, 0.3, domainYLambda, mat.enz);
-        setSources([{ shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda) }]);
+        setSources([{ shape: "line", xLambda: sourceX(midXLambda - 0.8), yLambda: sourceY(midYLambda) }]);
         break;
       case "anisotropicMedium":
         rectL(midXLambda - 1.2, midYLambda - 1.2, 2.4, 2.4, mat.anisotropic);
@@ -1377,8 +1404,8 @@ Object.assign(FDTDSim.prototype, {
         break;
       case "fanoResonator":
         guide(midYLambda, 0.25, mat.n34);
-        ellipseL(midXLambda + 0.8, midYLambda - 0.62, 0.36, 0.36, mat.n34);
-        modalGuideSource(midYLambda, { widthLambda: 1.05 });
+        ellipseL(midXLambda + 0.8, midYLambda - 0.5, 0.36, 0.36, mat.n34);
+        modalGuideSource(midYLambda, { xLambda: sourceX(midXLambda - 1.6), widthLambda: 1.05, amplitude: 0.55 });
         break;
       case "sshTrivial":
         sshChain(0.42, 0.25);
@@ -1500,21 +1527,45 @@ Object.assign(FDTDSim.prototype, {
         break;
       }
       case "localizedPlasmon":
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "electricMag";
         state.materialDispersionEnabled = true;
         state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        ellipseL(midXLambda + 0.35, midYLambda, 0.34, 0.34, mat.plasmonicMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.55, amplitude: 0.55 }]);
+        state.dispersionOmegaP = mat.dimerPlasmonicMetal.omegaP;
+        state.dispersionGamma = mat.dimerPlasmonicMetal.gamma;
+        ellipseL(midXLambda + 0.35, midYLambda, 0.34, 0.34, mat.dimerPlasmonicMetal);
+        setSources([
+          {
+            type: "sine",
+            shape: "inPlaneElectricDipole",
+            xLambda: sourceX(midXLambda - 0.04),
+            yLambda: sourceY(midYLambda),
+            widthLambda: 0.24,
+            angleDeg: 0,
+            amplitude: 0.18,
+          },
+        ]);
         break;
       case "plasmonicDimer":
+        state.fieldComponent = "hz";
+        state.fieldDisplay = "electricMag";
         state.materialDispersionEnabled = true;
         state.dispersionModel = "drude";
-        state.dispersionOmegaP = mat.plasmonicMetal.omegaP;
-        state.dispersionGamma = mat.plasmonicMetal.gamma;
-        ellipseL(midXLambda + 0.15, midYLambda, 0.26, 0.26, mat.plasmonicMetal);
-        ellipseL(midXLambda + 0.75, midYLambda, 0.26, 0.26, mat.plasmonicMetal);
-        setSources([{ type: "gaussian", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), widthLambda: 0.45, amplitude: 0.5 }]);
+        state.dispersionOmegaP = mat.dimerPlasmonicMetal.omegaP;
+        state.dispersionGamma = mat.dimerPlasmonicMetal.gamma;
+        ellipseL(midXLambda + 0.48, midYLambda - 0.31, 0.22, 0.22, mat.dimerPlasmonicMetal);
+        ellipseL(midXLambda + 0.48, midYLambda + 0.31, 0.22, 0.22, mat.dimerPlasmonicMetal);
+        setSources([
+          {
+            type: "sine",
+            shape: "inPlaneElectricDipole",
+            xLambda: sourceX(midXLambda + 0.28),
+            yLambda: sourceY(midYLambda),
+            widthLambda: 0.22,
+            angleDeg: 90,
+            amplitude: 0.22,
+          },
+        ]);
         break;
       case "metasurfacePhaseBars":
         for (let i = -7; i <= 7; i += 1) {

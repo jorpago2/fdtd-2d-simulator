@@ -1189,7 +1189,7 @@
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 104: two Drude disks with a narrow hot gap."
+      "description": "Atlas 104: dipole-fed Drude dimer with a resolved hot gap."
     },
     {
       "id": "metasurfacePhaseBars",

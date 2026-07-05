@@ -18,6 +18,7 @@
   },
   "requiredP0Cases": [
     "air_propagation",
+    "plane_wave_air_free_space_flux",
     "normal_interface_fresnel",
     "brewster_tm_minimum",
     "pml_reflection",
@@ -43,6 +44,37 @@
         "noNaNOrInfinityInUi": true
       },
       "rationale": "Baseline homogeneous Yee propagation. If this fails, no higher-level validation is meaningful."
+    },
+    {
+      "id": "plane_wave_air_free_space_flux",
+      "priority": "P0",
+      "preset": "planeWaveAir",
+      "profile": "physics",
+      "steps": 900,
+      "browserSmoke": true,
+      "checks": [
+        "homogeneous air domain has no material or PEC mask",
+        "single line source launches a finite right-going plane wave",
+        "transverse field energy is approximately symmetric about the optical axis",
+        "Poynting-vector direction is consistent with the configured source angle"
+      ],
+      "acceptance": {
+        "sourceRadiationCheck": true,
+        "maxwellBlockCheck": true,
+        "sourceShape": "line",
+        "fieldComponent": "ez",
+        "sourceCountMin": 1,
+        "sourceCountMax": 1,
+        "materialCellsMax": 0,
+        "pecCellsMax": 0,
+        "totalEnergyMin": 1e-6,
+        "rightToLeftEnergyRatioMin": 20,
+        "lowerToUpperEnergyRatioMin": 0.75,
+        "lowerToUpperEnergyRatioMax": 1.35,
+        "poyntingAngleErrorDegMax": 18,
+        "poyntingDirectionalityMin": 0.08
+      },
+      "rationale": "Turns the air plane-wave example into a physical propagation check instead of only a finite-field smoke test."
     },
     {
       "id": "normal_interface_fresnel",
@@ -138,17 +170,22 @@
       "priority": "P1",
       "preset": "mmiWaveguide",
       "profile": "physics",
-      "browserSmoke": false,
+      "steps": 1800,
+      "browserSmoke": true,
       "checks": [
         "finite fields after transient warmup",
         "integrated Ez^2 is sampled in the two output-guide cores",
         "upper/lower output field-energy split is close to 50/50"
       ],
       "acceptance": {
-        "script": "scripts/validate-mmi-split.mjs",
+        "mmiSplitCheck": true,
         "metric": "time-averaged integrated Ez^2",
         "monitorXLambda": 7.2,
         "guideHalfWidthLambda": 0.11,
+        "mmiSampleSteps": 600,
+        "mmiSampleEvery": 2,
+        "mmiTemporalSamplesMin": 200,
+        "mmiTotalEz2Min": 1e-8,
         "upperFractionTarget": 0.5,
         "upperFractionTolerance": 0.1
       },
@@ -209,8 +246,8 @@
         "qEstimateFinite": true,
         "minAnalysisSamples": 128,
         "ringdownQMin": 100,
-        "ringdownQMax": 100000000,
-        "lateEnergyRatioMax": 0.99
+        "ringdownQMax": 1000000,
+        "lateEnergyRatioMax": 0.98
       },
       "rationale": "Checks spectral/ringdown post-processing used by resonator teaching scenes."
     },
@@ -276,12 +313,18 @@
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "maxwellBlockCheck": true,
         "sourceShape": "line",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "materialCellsMin": 45000,
-        "sourceNeighborhoodEnergyFractionMin": 1e-12
+        "sourceNeighborhoodEnergyFractionMin": 1e-12,
+        "totalEnergyMin": 1e-6,
+        "lowerToUpperEnergyRatioMin": 0.75,
+        "lowerToUpperEnergyRatioMax": 1.35,
+        "poyntingAngleErrorDegMax": 18,
+        "poyntingDirectionalityMin": 0.08
       },
       "rationale": "Checks the dielectric plane-wave example as a homogeneous-medium Maxwell route rather than only a preset label."
     },
@@ -290,12 +333,13 @@
       "priority": "P1",
       "preset": "gaussianPulseAir",
       "profile": "physics",
-      "steps": 900,
+      "steps": 3600,
       "browserSmoke": true,
       "checks": [
         "Gaussian temporal source type is selected",
         "single line source is present",
-        "fields remain finite after pulse launch"
+        "fields remain finite after pulse launch",
+        "final residual energy is small after the pulse reaches the CPML"
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
@@ -303,7 +347,8 @@
         "sourceType": "gaussian",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
-        "sourceCountMax": 1
+        "sourceCountMax": 1,
+        "finalEnergyRatioMax": 0.08
       },
       "rationale": "Checks that the Gaussian-pulse scene exercises the broadband source path, not the continuous-wave default."
     },
@@ -321,12 +366,16 @@
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "maxwellBlockCheck": true,
         "sourceShape": "point",
         "fieldComponent": "ez",
         "sourceCountMin": 2,
         "sourceCountMax": 2,
         "sourceYSpanLambdaMin": 1.2,
-        "sourceNeighborhoodEnergyFractionMin": 1e-12
+        "sourceNeighborhoodEnergyFractionMin": 1e-12,
+        "interferencePeakCountMin": 3,
+        "interferenceVisibilityMin": 0.25,
+        "interferenceSymmetryErrorMax": 0.45
       },
       "rationale": "Checks the interference example as a genuine two-source coherent geometry."
     },
@@ -335,22 +384,30 @@
       "priority": "P1",
       "preset": "frequencyBeat",
       "profile": "physics",
-      "steps": 900,
+      "steps": 3600,
       "browserSmoke": true,
       "checks": [
         "two point sources are present",
         "source frequencies are deliberately detuned",
-        "source-neighborhood energy remains finite"
+        "source-neighborhood energy remains finite",
+        "a downstream probe sees a slow temporal envelope from the detuned sources"
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "temporalProbeCheck": true,
         "sourceShape": "point",
         "fieldComponent": "ez",
         "sourceCountMin": 2,
         "sourceCountMax": 2,
         "sourceYSpanLambdaMin": 0.7,
         "sourceFrequencyRatioMin": 1.1,
-        "sourceNeighborhoodEnergyFractionMin": 1e-12
+        "sourceNeighborhoodEnergyFractionMin": 1e-12,
+        "temporalProbeOffsetXLambda": 2.2,
+        "temporalProbeSampleStride": 4,
+        "temporalProbeWarmupSteps": 240,
+        "temporalProbeSamplesMin": 400,
+        "temporalProbePeakAbsMin": 1e-4,
+        "temporalEnvelopeDynamicRangeMin": 1.25
       },
       "rationale": "Checks the beating example as two coherent emitters with distinct temporal frequencies."
     },
@@ -376,6 +433,25 @@
         "apertureGapCellsMin": 20
       },
       "rationale": "Checks the circular-aperture diffraction scene as a real PEC screen with an open aperture."
+    },
+    {
+      "id": "circular_aperture_diffraction_profile",
+      "priority": "P1",
+      "preset": "circularAperture",
+      "profile": "physics",
+      "steps": 2400,
+      "browserSmoke": true,
+      "checks": [
+        "finite transmitted field passes through the circular opening",
+        "downstream profile is approximately symmetric about the optical axis",
+        "central lobe is stronger than the profile mean"
+      ],
+      "acceptance": {
+        "minTransmittedEnergy": 1e-20,
+        "symmetryErrorMax": 0.7,
+        "centerPeakRatioMin": 1.05
+      },
+      "rationale": "Adds a diffraction-profile check so the circular aperture is not validated only by PEC geometry."
     },
     {
       "id": "te_tm_comparison_angle_sweep",
@@ -417,6 +493,7 @@
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "maxwellBlockCheck": true,
         "sourceShape": "line",
         "fieldComponent": "ez",
         "viewMode": "poynting",
@@ -424,7 +501,10 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "sourceAngleMeanAbsDegMin": 20,
-        "sourceAngleMeanAbsDegMax": 30
+        "sourceAngleMeanAbsDegMax": 30,
+        "totalEnergyMin": 1e-6,
+        "poyntingAngleErrorDegMax": 25,
+        "poyntingDirectionalityMin": 0.06
       },
       "rationale": "Checks that the Poynting example actually selects a flux-oriented visualization and oblique propagation."
     },
@@ -442,12 +522,15 @@
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "maxwellBlockCheck": true,
         "sourceShape": "evanescentLine",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "evanescentKParallelRatioMin": 1.1,
-        "sourceNeighborhoodEnergyFractionMin": 1e-12
+        "sourceNeighborhoodEnergyFractionMin": 1e-12,
+        "evanescentNearToFarRatioMin": 10,
+        "evanescentMidToFarRatioMin": 5
       },
       "rationale": "Checks the evanescent-wave scene as an explicit supercritical tangential-wavenumber source."
     },
@@ -456,7 +539,7 @@
       "priority": "P1",
       "preset": "obliqueRefraction",
       "profile": "physics",
-      "steps": 900,
+      "steps": 2400,
       "browserSmoke": true,
       "checks": [
         "Gaussian-profile beam source is obliquely incident",
@@ -465,6 +548,7 @@
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "interfaceOpticsCheck": true,
         "sourceShape": "gaussianProfile",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
@@ -472,7 +556,11 @@
         "sourceAngleMeanAbsDegMin": 22,
         "sourceAngleMeanAbsDegMax": 34,
         "materialCellsMin": 22000,
-        "sourceNeighborhoodEnergyFractionMin": 1e-12
+        "sourceNeighborhoodEnergyFractionMin": 1e-12,
+        "materialEnergyFractionMin": 0.08,
+        "transmittedFlowEnergyMin": 1e-3,
+        "transmittedDirectionalityMin": 0.15,
+        "snellAngleErrorDegMax": 18
       },
       "rationale": "Checks the oblique-refraction scene as a finite-width beam incident on a dielectric interface."
     },
@@ -507,7 +595,7 @@
       "priority": "P1",
       "preset": "lossyInterface",
       "profile": "physics",
-      "steps": 900,
+      "steps": 2400,
       "browserSmoke": true,
       "checks": [
         "dielectric half-space is present",
@@ -521,7 +609,8 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "materialCellsMin": 22000,
-        "lossyCellsMin": 22000
+        "lossyCellsMin": 22000,
+        "materialEnergyFractionMin": 0.005
       },
       "rationale": "Checks the lossy-interface scene as an absorptive dielectric interface, not merely a refractive-index step."
     },
@@ -530,7 +619,7 @@
       "priority": "P1",
       "preset": "anisotropicInterface",
       "profile": "physics",
-      "steps": 900,
+      "steps": 2400,
       "browserSmoke": true,
       "checks": [
         "anisotropic dielectric half-space is present",
@@ -546,7 +635,9 @@
         "sourceAngleMeanAbsDegMin": 18,
         "sourceAngleMeanAbsDegMax": 30,
         "materialCellsMin": 22000,
-        "anisotropicCellsMin": 22000
+        "anisotropicCellsMin": 22000,
+        "materialEnergyFractionMin": 0.08,
+        "highIndexEnergyFractionMin": 0.08
       },
       "rationale": "Checks the anisotropic-interface scene as a tensor-material route with oblique excitation."
     },
@@ -603,7 +694,12 @@
       "acceptance": {
         "dispersiveCellsMin": 100,
         "effectiveEpsMax": 0,
-        "adeCurrentMin": 1e-12
+        "adeCurrentMin": 1e-12,
+        "materialTemporalCheck": true,
+        "materialTemporalSamplesMin": 40,
+        "materialTemporalSampleStride": 8,
+        "dispersiveTemporalPeakEnergyMin": 1,
+        "dispersiveTemporalPeakFractionMin": 0.05
       },
       "rationale": "Adds a dynamic ADE-state validation beyond the fast active-media smoke label."
     },
@@ -650,7 +746,12 @@
         "dispersionModel": "lorentz",
         "dispersiveKind": "lorentz",
         "dispersiveCellsMin": 400,
-        "effectiveEpsMeanMin": 1.9
+        "effectiveEpsMeanMin": 1.9,
+        "materialTemporalCheck": true,
+        "materialTemporalSamplesMin": 60,
+        "materialTemporalSampleStride": 10,
+        "dispersiveTemporalPeakEnergyMin": 10,
+        "dispersiveTemporalPeakFractionMin": 0.2
       },
       "rationale": "Checks that the Lorentz scene uses the resonant ADE branch and produces a finite dispersive-medium interaction."
     },
@@ -672,7 +773,12 @@
         "dispersionModel": "debye",
         "dispersiveKind": "debye",
         "dispersiveCellsMin": 400,
-        "effectiveEpsMeanMin": 2.0
+        "effectiveEpsMeanMin": 2.0,
+        "materialTemporalCheck": true,
+        "materialTemporalSamplesMin": 60,
+        "materialTemporalSampleStride": 10,
+        "dispersiveTemporalPeakEnergyMin": 20,
+        "dispersiveTemporalPeakFractionMin": 0.2
       },
       "rationale": "Checks that the Debye relaxation example is wired to the Debye ADE branch with a physically distinct epsilon response."
     },
@@ -694,7 +800,12 @@
         "dispersionModel": "plasma",
         "dispersiveKind": "drudeLike",
         "dispersiveCellsMin": 400,
-        "effectiveEpsMeanMax": 0
+        "effectiveEpsMeanMax": 0,
+        "materialTemporalCheck": true,
+        "materialTemporalSamplesMin": 60,
+        "materialTemporalSampleStride": 10,
+        "dispersiveTemporalPeakEnergyMin": 20,
+        "dispersiveTemporalPeakFractionMin": 0.1
       },
       "rationale": "Checks the plasma-cutoff scene as a negative-effective-epsilon ADE medium at the teaching frequency."
     },
@@ -716,7 +827,12 @@
         "dispersionModel": "drude",
         "dispersiveKind": "drudeLike",
         "dispersiveCellsMin": 100,
-        "effectiveEpsAbsMeanMax": 0.15
+        "effectiveEpsAbsMeanMax": 0.15,
+        "materialTemporalCheck": true,
+        "materialTemporalSamplesMin": 60,
+        "materialTemporalSampleStride": 10,
+        "dispersiveTemporalPeakEnergyMin": 10,
+        "dispersiveTemporalPeakFractionMin": 0.05
       },
       "rationale": "Guards the ENZ teaching example by checking the actual effective epsilon tuning rather than only the scene label."
     },
@@ -1140,8 +1256,14 @@
         "fanoBusHighIndexCellsMin": 700,
         "fanoResonatorHighIndexCellsMin": 120,
         "fanoGapHighIndexCellsMax": 2,
-        "fanoResonatorEnergyMin": 1e-16,
-        "fanoResonatorEnergyFractionMin": 1e-6
+        "fanoResonatorEnergyMin": 0.5,
+        "fanoResonatorEnergyFractionMin": 0.003,
+        "fanoTemporalCheck": true,
+        "fanoTemporalSamplesMin": 80,
+        "fanoTemporalSampleStride": 10,
+        "fanoTemporalResonatorEnergyPeakMin": 0.5,
+        "fanoTemporalResonatorPeakFractionMin": 0.003,
+        "fanoTemporalResonatorToBusPeakRatioMin": 0.003
       },
       "rationale": "Guards the Fano resonator scene as an actual bus-plus-side-resonator coupling example rather than a disconnected geometry sketch."
     },
@@ -2269,38 +2391,50 @@
       ],
       "acceptance": {
         "metamaterialCheck": true,
+        "fieldComponent": "hz",
+        "fieldDisplay": "electricMag",
+        "sourceShape": "inPlaneElectricDipole",
         "dispersionEnabled": true,
         "dispersionModel": "drude",
         "dispersiveCellsMin": 100,
         "drudeCellsMin": 100,
         "localizedDiskCellsMin": 100,
-        "localizedNearToDiskRatioMin": 1
+        "materialEnergyFractionMin": 0.005,
+        "dispersiveEnergyFractionMin": 0.005,
+        "localizedDiskEnergyMin": 0.01,
+        "localizedNearEnergyMin": 0.01,
+        "localizedNearToDiskRatioMin": 0.05
       },
-      "rationale": "Checks the localized plasmon scene as an actual Drude nanodisk with finite field coupling."
+      "rationale": "Checks the localized plasmon scene as a locally driven Drude nanodisk with measurable dispersive-material coupling and near-field storage."
     },
     {
       "id": "plasmonic_dimer_hot_gap",
       "priority": "P1",
       "preset": "plasmonicDimer",
       "profile": "physics",
-      "steps": 1200,
+      "steps": 2000,
       "browserSmoke": true,
       "checks": [
-        "two Drude disks are present",
-        "the narrow gap between disks is geometrically open",
-        "the gap stores finite field energy during the run"
+        "two Drude disks are present with an open, grid-resolved gap",
+        "a local in-plane electric dipole feeds the bonding dimer mode",
+        "the gap produces measurable electric-field enhancement above the local background"
       ],
       "acceptance": {
         "metamaterialCheck": true,
+        "fieldComponent": "hz",
+        "fieldDisplay": "electricMag",
+        "sourceShape": "inPlaneElectricDipole",
         "dispersionEnabled": true,
         "dispersionModel": "drude",
-        "dispersiveCellsMin": 120,
-        "drudeCellsMin": 120,
-        "dimerDiskCellsMin": 55,
-        "dimerGapEnergyMin": 1e-22,
-        "dimerGapToDiskRatioMin": 1e-12
+        "dispersiveCellsMin": 70,
+        "drudeCellsMin": 70,
+        "dimerDiskCellsMin": 35,
+        "dimerGapCellsMin": 18,
+        "dimerGapEnergyMin": 1e-12,
+        "dimerGapPeakToBackgroundRatioMin": 4,
+        "dimerGapMeanToBackgroundRatioMin": 1.05
       },
-      "rationale": "Guards the plasmonic dimer as a two-particle hot-gap example instead of a single merged object."
+      "rationale": "Guards the plasmonic dimer as a dipole-fed hot-gap nanoantenna example instead of two dispersive disks with merely nonzero field in the gap."
     },
     {
       "id": "metasurface_phase_bar_gradient",
@@ -2854,19 +2988,29 @@
       "browserSmoke": true,
       "checks": [
         "Huygens source route is selected",
-        "field energy is biased toward the forward side",
+        "field energy is strongly biased toward the forward side",
+        "NTFF analysis can sample a finite angular pattern",
         "source-neighborhood field energy remains finite"
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "requiresAnalysis": true,
         "sourceShape": "huygens",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
         "sourceCountMax": 1,
-        "rightToLeftEnergyRatioMin": 1.05,
+        "minAnalysisSamples": 48,
+        "farFieldSamplesMin": 48,
+        "farFieldFiniteSamplesMin": 48,
+        "farFieldMode": "ntff",
+        "rightToLeftEnergyRatioMin": 5,
+        "sourceAngularTotalEnergyMin": 10,
+        "sourceForwardSectorEnergyFractionMin": 0.45,
+        "sourceForwardBackwardSectorRatioMin": 5,
+        "sourceForwardPeakAngleErrorDegMax": 15,
         "sourceNeighborhoodEnergyFractionMin": 1e-8
       },
-      "rationale": "Checks the Huygens radiator as a directional source route rather than an ordinary point source."
+      "rationale": "Checks the Huygens radiator as a directional cardioid-like source route rather than an ordinary point source."
     },
     {
       "id": "circular_dipole_quadrature_source",
@@ -2923,15 +3067,21 @@
       "checks": [
         "eight equal-phase point dipoles are present",
         "the array is vertical with uniform half-wavelength spacing",
-        "phase-step remains near zero"
+        "phase-step remains near zero",
+        "the near-field angular lobe remains close to broadside"
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "requiresAnalysis": true,
         "sourceShape": "pointDipole",
         "sourceType": "sine",
         "fieldComponent": "ez",
         "sourceCountMin": 8,
         "sourceCountMax": 8,
+        "minAnalysisSamples": 48,
+        "farFieldSamplesMin": 48,
+        "farFieldFiniteSamplesMin": 48,
+        "farFieldMode": "ntff",
         "sourceXSpanLambdaMax": 0.1,
         "sourceYSpanLambdaMin": 3.4,
         "sourceYSpanLambdaMax": 3.6,
@@ -2940,6 +3090,8 @@
         "sourceYSpacingStdLambdaMax": 0.03,
         "sourcePhaseStepMeanAbsDegMax": 1,
         "sourcePhaseStepStdDegMax": 1,
+        "sourceForwardSectorEnergyFractionMin": 0.45,
+        "sourceForwardPeakAngleErrorDegMax": 10,
         "sourceNeighborhoodEnergyFractionMin": 0.01
       },
       "rationale": "Checks the equal-phase dipole array geometry and phase contract."
@@ -2954,18 +3106,30 @@
       "checks": [
         "eight point dipoles are present",
         "the array spans multiple wavelengths in y",
-        "a nonzero progressive phase step is applied consistently"
+        "a nonzero progressive phase step is applied consistently",
+        "the computed steering angle matches the configured array phase"
       ],
       "acceptance": {
         "sourceRadiationCheck": true,
+        "requiresAnalysis": true,
         "sourceShape": "pointDipole",
         "fieldComponent": "ez",
         "sourceCountMin": 8,
         "sourceCountMax": 8,
+        "minAnalysisSamples": 48,
+        "farFieldSamplesMin": 48,
+        "farFieldFiniteSamplesMin": 48,
+        "farFieldMode": "ntff",
         "sourceYSpanLambdaMin": 3,
         "sourcePhaseStepMeanAbsDegMin": 20,
         "sourcePhaseStepMeanAbsDegMax": 60,
         "sourcePhaseStepStdDegMax": 1,
+        "derivedArraySteeringAngleDegMin": -13,
+        "derivedArraySteeringAngleDegMax": -11,
+        "sourceExpectedRadiationAngleDegMin": -13,
+        "sourceExpectedRadiationAngleDegMax": -11,
+        "sourceForwardSectorEnergyFractionMin": 0.45,
+        "sourceForwardPeakAngleErrorDegMax": 20,
         "sourceNeighborhoodEnergyFractionMin": 1e-8
       },
       "rationale": "Checks the phased dipole array as a progressive-phase steering example."

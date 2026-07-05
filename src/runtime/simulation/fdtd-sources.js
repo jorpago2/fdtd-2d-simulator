@@ -669,7 +669,7 @@ localizedSourceTerms(shape, order, u, v, source) {
   if (shape === "huygens") {
     return [
       { profile: 0.56 * gaussian, phaseRad: 0 },
-      { profile: 0.56 * dipoleU, phaseRad: 0 },
+      { profile: 0.56 * dipoleU, phaseRad: -Math.PI / 2 },
     ];
   }
   return [{ profile: this.localizedSourceProfile(shape, order, u, v, source), phaseRad: 0 }];
