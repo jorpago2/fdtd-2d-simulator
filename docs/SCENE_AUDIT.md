@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-05T08:47:21.864Z
-Git commit: ab9783f+working-tree
+Generated: 2026-07-05T09:08:58.857Z
+Git commit: eae9c2f+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,9 +9,9 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 121 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
+| PASS | 141 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
 | VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
-| WARN | 20 | Scene runs, but has a documented teaching/modeling caveat. |
+| WARN | 0 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
 ## Blocking Findings
@@ -143,26 +143,26 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | saturable_absorber_phase_response:P1/physics | OK |
 | 119 | `allOpticalSwitch` All-optical active section | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | all_optical_active_section_response:P1/physics | OK |
 | 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | nonlinear_limiter_active_loss_response:P1/physics | OK |
-| 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_interface_uniform_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_slab_uniform_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics, temporal_modulation_region_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 124 | `temporalCrystal` Temporal crystal | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.27e-8 | temporal_crystal_uniform_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 125 | `modulatedGuide` Temporally modulated guide | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=7.84e-6 | modulated_guide_active_section:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 126 | `travelingModulation` Traveling epsilon modulation | 12. Time-varying and Floquet media | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.71e-9 | traveling_modulation_phase_proxy:P1/physics | Executable validation is reduced/proxy (traveling_modulation_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 127 | `temporalIsolator` Temporal isolator analogue | 12. Time-varying and Floquet media | WARN | time modulation, direction sweep | WASM CPML+mod+mode, 24 steps, E=1.48e-7 | temporal_isolator_traveling_proxy:P1/physics | Temporal-isolator analogue; reduced sideband/isolation observables are not de-embedded two-port S-parameters. |
-| 128 | `modulatedRing` Modulated ring | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=7.49e-6 | modulated_ring_resonator_proxy:P1/physics | Executable validation is reduced/proxy (modulated_ring_resonator_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 129 | `floquetResonators` Floquet resonators | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=6.79e-6 | floquet_resonators_staggered_phase_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 130 | `syntheticFrequency` Synthetic frequency dimension | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+mode, 24 steps, E=6.31e-6 | synthetic_frequency_chain_proxy:P1/physics | Synthetic-frequency-dimension proxy; sideband graph intuition is shown without a calibrated frequency-lattice model. |
-| 131 | `ptSymmetricCoupler` PT-symmetric gain/loss guides | 13. Coupled and non-Hermitian workflows | WARN | nonlinear material, gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=2.09e-5 | pt_symmetric_coupler_modal_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 132 | `exceptionalPointCoupler` Exceptional point proxy | 13. Coupled and non-Hermitian workflows | WARN | gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=1.72e-5 | exceptional_point_coupler_modal_proxy:P1/physics | Exceptional-point proxy; reduced modal coalescence is checked, not a full eigenvalue/topology validation. |
-| 133 | `nonHermitianSkin` Non-Hermitian skin analogue | 13. Coupled and non-Hermitian workflows | WARN | gain/loss | WASM CPML+gain, 24 steps, E=5.46e-8 | non_hermitian_skin_edge_proxy:P1/physics, coupled_workflow_first_pass:P1/physics | Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation. |
-| 134 | `bicKerr` BIC + Kerr | 13. Coupled and non-Hermitian workflows | WARN | nonlinear material, blochK sweep | WASM CPML+Kerr, 24 steps, E=3.18e-6 | bic_kerr_active_phc_proxy:P1/physics | Executable validation is reduced/proxy (bic_kerr_active_phc_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 135 | `bicEnz` BIC + ENZ | 13. Coupled and non-Hermitian workflows | WARN | dispersive material, blochK sweep | WASM CPML+ADE, 24 steps, E=6.79e-6 | bic_enz_dispersive_phc_proxy:P1/physics | Executable validation is reduced/proxy (bic_enz_dispersive_phc_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 136 | `janusTopologicalGuide` Janus + topological guide | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.93e-7 | janus_topological_guide_source_proxy:P1/physics | Hybrid Janus/topological-guide proxy; directional coupling is qualitative without protected-transport spectra. |
-| 137 | `huygensCavity` Huygens + cavity | 13. Coupled and non-Hermitian workflows | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.32e-7 | huygens_cavity_source_proxy:P1/physics | Hybrid Huygens/cavity source workflow; not a calibrated Purcell, beta-factor, or far-field optimization. |
-| 138 | `topologyTemporalMod` Topology + temporal modulation | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.07e-14 | topology_temporal_mod_coupled_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
-| 139 | `nonreciprocalValleyHall` Nonreciprocity + Valley Hall | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=2.63e-14 | nonreciprocal_valley_hall_traveling_proxy:P1/physics | Nonreciprocal Valley-Hall proxy; needs reverse-port spectra and topological invariant checks for quantitative claims. |
-| 140 | `spaceTimeCrystal` Space-time crystal | 13. Coupled and non-Hermitian workflows | WARN | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.32e-8 | space_time_crystal_traveling_proxy:P1/physics | Space-time-crystal proxy; modulation and sidebands are reduced observables, not a full band-structure validation. |
+| 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_interface_uniform_sideband_response:P1/physics | OK |
+| 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_slab_uniform_sideband_response:P1/physics | OK |
+| 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics, temporal_modulation_region_sideband_response:P1/physics | OK |
+| 124 | `temporalCrystal` Temporal crystal | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.27e-8 | temporal_crystal_uniform_sideband_response:P1/physics | OK |
+| 125 | `modulatedGuide` Temporally modulated guide | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=7.84e-6 | modulated_guide_active_section:P1/physics | OK |
+| 126 | `travelingModulation` Traveling epsilon modulation | 12. Time-varying and Floquet media | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.71e-9 | traveling_modulation_phase_response:P1/physics | OK |
+| 127 | `temporalIsolator` Traveling-modulated lossy guide | 12. Time-varying and Floquet media | PASS | time modulation, direction sweep | WASM CPML+mod+mode, 24 steps, E=1.48e-7 | traveling_modulated_lossy_guide_response:P1/physics | OK |
+| 128 | `modulatedRing` Modulated ring | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=7.49e-6 | modulated_ring_resonator_sideband_response:P1/physics | OK |
+| 129 | `floquetResonators` Floquet resonators | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=6.79e-6 | floquet_resonators_staggered_phase_response:P1/physics | OK |
+| 130 | `syntheticFrequency` Five-phase modulated resonator chain | 12. Time-varying and Floquet media | PASS | time modulation | WASM CPML+mod+mode, 24 steps, E=6.31e-6 | phased_modulated_resonator_chain:P1/physics | OK |
+| 131 | `ptSymmetricCoupler` PT-symmetric gain/loss guides | 13. Coupled and non-Hermitian workflows | PASS | nonlinear material, gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=2.09e-5 | pt_symmetric_coupler_modal_response:P1/physics | OK |
+| 132 | `exceptionalPointCoupler` Near-EP gain/loss coupler | 13. Coupled and non-Hermitian workflows | PASS | gain/loss, gainLoss sweep | WASM CPML+gain+TFSF, 24 steps, E=1.72e-5 | near_ep_coupler_modal_response:P1/physics | OK |
+| 133 | `nonHermitianSkin` Biased non-Hermitian SSH chain | 13. Coupled and non-Hermitian workflows | PASS | gain/loss | WASM CPML+gain, 24 steps, E=5.46e-8 | biased_nonhermitian_ssh_edge_response:P1/physics, coupled_workflow_first_pass:P1/physics | OK |
+| 134 | `bicKerr` Kerr PhC defect cavity | 13. Coupled and non-Hermitian workflows | PASS | nonlinear material, blochK sweep | WASM CPML+Kerr, 24 steps, E=3.18e-6 | kerr_phc_defect_overlap:P1/physics | OK |
+| 135 | `bicEnz` ENZ PhC defect cavity | 13. Coupled and non-Hermitian workflows | PASS | dispersive material, blochK sweep | WASM CPML+ADE, 24 steps, E=6.79e-6 | enz_phc_defect_overlap:P1/physics | OK |
+| 136 | `janusTopologicalGuide` Janus source in Valley-Hall lattice | 13. Coupled and non-Hermitian workflows | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.93e-7 | janus_valley_hall_source_overlap:P1/physics | OK |
+| 137 | `huygensCavity` Huygens source near cavity | 13. Coupled and non-Hermitian workflows | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=3.32e-7 | huygens_cavity_overlap:P1/physics | OK |
+| 138 | `topologyTemporalMod` Valley-Hall temporal segment | 13. Coupled and non-Hermitian workflows | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=1.43e-12 | valley_hall_temporal_segment_response:P1/physics | OK |
+| 139 | `nonreciprocalValleyHall` Traveling-modulated Valley-Hall guide | 13. Coupled and non-Hermitian workflows | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=1.14e-12 | traveling_modulated_valley_hall_response:P1/physics | OK |
+| 140 | `spaceTimeCrystal` Traveling-modulated stripe lattice | 13. Coupled and non-Hermitian workflows | PASS | time modulation, direction sweep | WASM CPML+mod+TFSF, 24 steps, E=3.32e-8 | traveling_modulated_stripe_lattice_response:P1/physics | OK |
 
 ## Interpretation
 

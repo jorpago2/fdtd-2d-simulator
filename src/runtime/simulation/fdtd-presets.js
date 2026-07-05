@@ -2130,7 +2130,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         valleyHallLattice();
-        rectL(midXLambda - 0.75, midYLambda - 0.16, 1.5, 0.32, uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }));
+        rectL(sourceX(2.15), midYLambda - 0.16, 1.8, 0.32, uniformTemporalMaterial({ ...mat.n20, loss: 0.002 }));
         setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.52 }]);
         break;
       case "nonreciprocalValleyHall":
@@ -2146,7 +2146,7 @@ Object.assign(FDTDSim.prototype, {
         state.analysisSampleEvery = 3;
         configureDirectionSweep(1200);
         valleyHallLattice();
-        rectL(midXLambda - 1.1, midYLambda - 0.18, 2.2, 0.36, { ...mat.n20, loss: 0.002, modulated: true });
+        rectL(sourceX(2.05), midYLambda - 0.18, 2.4, 0.36, { ...mat.n20, loss: 0.002, modulated: true });
         setSources([{ type: "sine", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.3, amplitude: 0.5 }]);
         break;
       case "spaceTimeCrystal":

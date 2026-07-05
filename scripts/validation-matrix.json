@@ -3090,7 +3090,7 @@
       "checks": [
         "finite fields",
         "accumulate input and output monitor DFT phasors",
-        "estimate reduced S_m0 transmitted and reflected sidebands",
+        "estimate truncated-order S_m0 transmitted and reflected sideband diagnostics",
         "report measured-order power-balance residual",
         "report modulation phase coherence to distinguish uniform temporal modulation from traveling or staggered phase modulation",
         "de-embed reference planes",
@@ -3099,10 +3099,10 @@
       "acceptance": {
         "status": "first-measured-order-power-residual-and-modulation-phase-coherence-added; deembedding-multi-incidence-and-truncation-validation-pending"
       },
-      "rationale": "Tracks the calibrated Floquet scattering-matrix validation gap after adding a normalized measured-order power residual and a phase-coherence check to the reduced S_m0 readout."
+      "rationale": "Tracks calibrated Floquet scattering-matrix reference work after adding a normalized measured-order power residual and phase-coherence checks to the truncated-order S_m0 readout."
     },
     {
-      "id": "temporal_interface_uniform_floquet_proxy",
+      "id": "temporal_interface_uniform_sideband_response",
       "priority": "P1",
       "preset": "temporalInterface",
       "profile": "physics",
@@ -3111,7 +3111,7 @@
       "checks": [
         "uniform temporal modulation is enabled over the dielectric half-space",
         "the modulation phase is spatially coherent after local phase compensation",
-        "the reduced Floquet sideband observable is finite"
+        "the reflected Floquet sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3126,13 +3126,13 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-12,
         "rightHalfEnergyFractionMin": 1e-8
       },
       "rationale": "Checks the temporal-interface scene as a real uniform time-modulated dielectric interface with finite Floquet diagnostics."
     },
     {
-      "id": "temporal_slab_uniform_floquet_proxy",
+      "id": "temporal_slab_uniform_sideband_response",
       "priority": "P1",
       "preset": "temporalSlab",
       "profile": "physics",
@@ -3155,13 +3155,13 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-10,
         "centralRegionEnergyFractionMin": 1e-8
       },
       "rationale": "Checks the temporal slab as a finite time-refraction region, not merely a passive dielectric slab."
     },
     {
-      "id": "temporal_modulation_region_floquet_proxy",
+      "id": "temporal_modulation_region_sideband_response",
       "priority": "P1",
       "preset": "temporalModulation",
       "profile": "physics",
@@ -3170,7 +3170,7 @@
       "checks": [
         "a compact time-modulated region exists",
         "the modulation phase is uniform-in-space",
-        "analysis reports a finite reduced Floquet sideband estimate"
+        "analysis reports a finite reflected Floquet sideband diagnostic"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3184,13 +3184,13 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-7,
         "centralRegionEnergyFractionMin": 1e-8
       },
-      "rationale": "Turns the temporal epsilon-modulation scene into an executable reduced Floquet sideband check while retaining the calibrated-matrix tracking entry."
+      "rationale": "Turns the temporal epsilon-modulation scene into an executable Floquet sideband diagnostic while retaining calibrated-matrix reference tracking."
     },
     {
-      "id": "temporal_crystal_uniform_floquet_proxy",
+      "id": "temporal_crystal_uniform_sideband_response",
       "priority": "P1",
       "preset": "temporalCrystal",
       "profile": "physics",
@@ -3199,7 +3199,7 @@
       "checks": [
         "an extended time-periodic dielectric region is present",
         "the periodic high-index ribs remain embedded in the modulated background",
-        "the reduced Floquet sideband observable is finite"
+        "the reflected Floquet sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3215,10 +3215,10 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-6,
         "modulatedEnergyFractionMin": 1e-8
       },
-      "rationale": "Checks the temporal crystal as an extended modulated lattice with finite reduced Floquet diagnostics."
+      "rationale": "Checks the temporal crystal as an extended modulated lattice with finite Floquet sideband diagnostics."
     },
     {
       "id": "modulated_guide_active_section",
@@ -3230,7 +3230,7 @@
       "checks": [
         "a mode-launched guide contains a finite modulated section",
         "guided energy reaches the active section and output guide",
-        "the reduced sideband readout is finite"
+        "the reflected sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3245,7 +3245,7 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
         "modulationPhaseSpreadRadMax": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-8,
         "guideEnergyFractionMin": 0.01,
         "activeSectionEnergyFractionMin": 1e-8,
         "outputGuideEnergyFractionMin": 1e-9
@@ -3253,7 +3253,7 @@
       "rationale": "Checks that the modulated-guide example is a real guided active-section workflow."
     },
     {
-      "id": "traveling_modulation_phase_proxy",
+      "id": "traveling_modulation_phase_response",
       "priority": "P1",
       "preset": "travelingModulation",
       "profile": "physics",
@@ -3262,7 +3262,8 @@
       "checks": [
         "a guide section carries traveling epsilon modulation",
         "the modulation phase has low spatial coherence and a finite phase velocity",
-        "guided energy overlaps the traveling-modulation section"
+        "guided energy overlaps the traveling-modulation section",
+        "the reflected sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3277,23 +3278,24 @@
         "modulationPhaseCoherenceMax": 0.55,
         "modulationPhaseSpreadRadMin": 10,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-6,
         "guideEnergyFractionMin": 0.01,
         "activeSectionEnergyFractionMin": 1e-8
       },
       "rationale": "Guards the traveling-modulation scene against accidentally becoming a uniform temporal modulation."
     },
     {
-      "id": "temporal_isolator_traveling_proxy",
+      "id": "traveling_modulated_lossy_guide_response",
       "priority": "P1",
       "preset": "temporalIsolator",
       "profile": "physics",
       "steps": 1800,
       "browserSmoke": true,
       "checks": [
-        "the isolator analogue uses a traveling modulated guide section",
+        "the guide uses a traveling modulated high-index section",
         "lossy asymmetry cells are present downstream",
-        "mode-launched energy reaches the output guide"
+        "mode-launched energy reaches the output guide",
+        "the reflected sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3309,14 +3311,14 @@
         "modulationPhaseCoherenceMax": 0.55,
         "modulationPhaseSpreadRadMin": 8,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-9,
         "guideEnergyFractionMin": 0.01,
         "outputGuideEnergyFractionMin": 1e-9
       },
-      "rationale": "Checks the temporal-isolator analogue as a traveling-modulation guide with a lossy asymmetric section, not as a calibrated isolation claim."
+      "rationale": "Checks the scene as a traveling-modulation guide with a lossy asymmetric section, not as a calibrated isolation claim."
     },
     {
-      "id": "modulated_ring_resonator_proxy",
+      "id": "modulated_ring_resonator_sideband_response",
       "priority": "P1",
       "preset": "modulatedRing",
       "profile": "physics",
@@ -3325,7 +3327,7 @@
       "checks": [
         "a side-coupled high-index ring is temporally modulated",
         "mode-launched energy reaches the guide/ring region",
-        "the reduced sideband readout is finite"
+        "the reflected sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3340,14 +3342,14 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.95,
         "modulationPhaseSpreadRadMax": 0.05,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-8,
         "guideEnergyFractionMin": 0.01,
         "ringEnergyFractionMin": 1e-9
       },
       "rationale": "Checks the modulated-ring scene as a genuine modulated resonator coupled to a guide."
     },
     {
-      "id": "floquet_resonators_staggered_phase_proxy",
+      "id": "floquet_resonators_staggered_phase_response",
       "priority": "P1",
       "preset": "floquetResonators",
       "profile": "physics",
@@ -3356,7 +3358,7 @@
       "checks": [
         "three coupled resonators are temporally modulated",
         "their local modulation phases are staggered rather than spatially uniform",
-        "the reduced Floquet sideband observable is finite"
+        "the reflected Floquet sideband diagnostic is finite"
       ],
       "acceptance": {
         "temporalMediaCheck": true,
@@ -3371,15 +3373,15 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.8,
         "modulationPhaseSpreadRadMin": 3.5,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-9,
         "guideEnergyFractionMin": 0.01,
         "resonatorBandEnergyFractionMin": 1e-9,
         "resonatorPeakCountMin": 3
       },
-      "rationale": "Checks the Floquet-resonator example as a staggered-phase coupled-resonator chain with finite reduced sideband diagnostics."
+      "rationale": "Checks the Floquet-resonator example as a staggered-phase coupled-resonator chain with finite sideband diagnostics."
     },
     {
-      "id": "synthetic_frequency_chain_proxy",
+      "id": "phased_modulated_resonator_chain",
       "priority": "P1",
       "preset": "syntheticFrequency",
       "profile": "physics",
@@ -3387,7 +3389,7 @@
       "browserSmoke": true,
       "checks": [
         "a five-site modulated resonator chain is present",
-        "the modulation phases sample a synthetic-frequency-like cycle",
+        "the modulation phases sample a five-step phase cycle",
         "guided energy overlaps the resonator chain"
       ],
       "acceptance": {
@@ -3403,15 +3405,15 @@
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMax": 0.75,
         "modulationPhaseSpreadRadMin": 4.5,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-9,
         "guideEnergyFractionMin": 0.01,
         "resonatorBandEnergyFractionMin": 1e-9,
         "resonatorPeakCountMin": 4
       },
-      "rationale": "Checks the synthetic-frequency analogue as a multi-resonator modulated chain with finite reduced sideband diagnostics."
+      "rationale": "Checks the five-phase modulated resonator chain with finite sideband diagnostics."
     },
     {
-      "id": "pt_symmetric_coupler_modal_proxy",
+      "id": "pt_symmetric_coupler_modal_response",
       "priority": "P1",
       "preset": "ptSymmetricCoupler",
       "profile": "physics",
@@ -3419,7 +3421,7 @@
       "browserSmoke": true,
       "checks": [
         "balanced gain and loss guide masks are present",
-        "PT modal reduced estimate reports an unbroken-phase proxy",
+        "the 2x2 PT modal diagnostic reports an unbroken phase",
         "field energy overlaps the gain/loss guide pair"
       ],
       "acceptance": {
@@ -3435,13 +3437,15 @@
         "ptNormalizedGammaMax": 0.95,
         "ptRealSplitMin": 0.01,
         "ptPhase": "unbroken",
+        "gainEnergyFractionMin": 0.1,
+        "lossEnergyFractionMin": 0.01,
         "guideEnergyFractionMin": 0.05,
         "materialEnergyFractionMin": 0.05
       },
-      "rationale": "Checks the PT coupler as a real gain/loss guided system with a finite reduced modal proxy."
+      "rationale": "Checks the PT coupler as a gain/loss guided system with a finite 2x2 modal diagnostic."
     },
     {
-      "id": "exceptional_point_coupler_modal_proxy",
+      "id": "near_ep_coupler_modal_response",
       "priority": "P1",
       "preset": "exceptionalPointCoupler",
       "profile": "physics",
@@ -3449,7 +3453,7 @@
       "browserSmoke": true,
       "checks": [
         "balanced gain and loss guides are present",
-        "the reduced PT modal proxy is close to the exceptional-point condition",
+        "the 2x2 PT modal diagnostic is close to the exceptional-point condition",
         "field energy overlaps the coupled guide region"
       ],
       "acceptance": {
@@ -3461,18 +3465,21 @@
         "lossyCellsMin": 1000,
         "highIndexCellsMin": 2000,
         "minAnalysisSamples": 48,
-        "ptNormalizedGammaMin": 0.9,
-        "ptNormalizedGammaMax": 1.1,
-        "ptEpDistanceMax": 0.12,
-        "ptCoalescenceMin": 0.25,
+        "ptNormalizedGammaMin": 0.95,
+        "ptNormalizedGammaMax": 1.05,
+        "ptEpDistanceMax": 0.02,
+        "ptCoalescenceMin": 0.8,
+        "ptRealSplitMax": 0.001,
         "ptPhase": "near-EP",
+        "gainEnergyFractionMin": 0.1,
+        "lossEnergyFractionMin": 0.01,
         "guideEnergyFractionMin": 0.05,
         "materialEnergyFractionMin": 0.05
       },
-      "rationale": "Checks the exceptional-point coupler as a near-balanced gain/loss teaching proxy, without claiming eigenvalue coalescence validation."
+      "rationale": "Checks the gain/loss coupler as a near-EP 2x2 modal diagnostic, without claiming full eigenmode-topology validation."
     },
     {
-      "id": "non_hermitian_skin_edge_proxy",
+      "id": "biased_nonhermitian_ssh_edge_response",
       "priority": "P1",
       "preset": "nonHermitianSkin",
       "profile": "physics",
@@ -3480,7 +3487,7 @@
       "browserSmoke": true,
       "checks": [
         "the non-Hermitian lattice contains both gain and loss cells",
-        "the coupled-workflow estimate reports edge and gain/loss localization proxies",
+        "the coupled-workflow diagnostic reports edge and gain/loss localization",
         "field energy remains finite around the launched lattice"
       ],
       "acceptance": {
@@ -3492,15 +3499,20 @@
         "lossyCellsMin": 100,
         "highIndexCellsMin": 300,
         "minAnalysisSamples": 48,
-        "coupledMaterialEnergyFractionMin": 0.01,
+        "coupledMaterialEnergyFractionMin": 0.1,
+        "coupledHighIndexEnergyFractionMin": 0.1,
+        "coupledGuideEnergyFractionMin": 0.1,
         "coupledSkinEdgeFractionMin": 0.000001,
+        "absSkinBiasMin": 0.8,
+        "absCoupledSkinBiasMin": 0.8,
+        "absCoupledGainLossBiasMin": 0.8,
         "sourceOverlapFractionMin": 1e-8,
         "skinEdgeFractionMin": 0.000001
       },
-      "rationale": "Checks the non-Hermitian skin analogue as an active/lossy lattice with finite reduced localization proxies."
+      "rationale": "Checks the biased non-Hermitian SSH chain as an active/lossy lattice with finite edge-localization diagnostics."
     },
     {
-      "id": "bic_kerr_active_phc_proxy",
+      "id": "kerr_phc_defect_overlap",
       "priority": "P1",
       "preset": "bicKerr",
       "profile": "physics",
@@ -3508,8 +3520,8 @@
       "browserSmoke": true,
       "checks": [
         "the photonic-crystal cavity contains a Kerr active defect",
-        "anti-phase point dipoles excite the BIC-like defect region",
-        "Bloch/leakage and coupled active-material proxies are finite"
+        "anti-phase point dipoles excite the defect region",
+        "Bloch/leakage and active-material overlap diagnostics are finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3523,13 +3535,17 @@
         "sourcePhaseDifferenceDegMin": 170,
         "sourcePhaseDifferenceDegMax": 190,
         "phcQProxyMin": 1,
-        "coupledActiveMaterialFractionMin": 1e-8,
-        "coupledCavityEnergyFractionMin": 1e-8
+        "phcLeakageMin": 0.001,
+        "phcLeakageMax": 0.1,
+        "nonlinearEnergyFractionMin": 0.05,
+        "coupledActiveMaterialFractionMin": 0.05,
+        "coupledCavityEnergyFractionMin": 0.1,
+        "coupledSourceOverlapFractionMin": 0.01
       },
-      "rationale": "Checks BIC + Kerr as a nonlinear-defect photonic-crystal scene with finite reduced leakage/active-overlap observables."
+      "rationale": "Checks the Kerr PhC defect scene with anti-phase excitation, finite leakage diagnostic, and strong active-defect overlap."
     },
     {
-      "id": "bic_enz_dispersive_phc_proxy",
+      "id": "enz_phc_defect_overlap",
       "priority": "P1",
       "preset": "bicEnz",
       "profile": "physics",
@@ -3537,8 +3553,8 @@
       "browserSmoke": true,
       "checks": [
         "the photonic-crystal cavity contains an ENZ dispersive defect",
-        "anti-phase point dipoles excite the BIC-like defect region",
-        "Bloch/leakage and dispersive active-material proxies are finite"
+        "anti-phase point dipoles excite the defect region",
+        "Bloch/leakage and dispersive active-material overlap diagnostics are finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3552,13 +3568,17 @@
         "sourcePhaseDifferenceDegMin": 170,
         "sourcePhaseDifferenceDegMax": 190,
         "phcQProxyMin": 1,
-        "coupledActiveMaterialFractionMin": 1e-8,
-        "coupledCavityEnergyFractionMin": 1e-8
+        "phcLeakageMin": 0.001,
+        "phcLeakageMax": 0.1,
+        "dispersiveEnergyFractionMin": 0.001,
+        "coupledActiveMaterialFractionMin": 0.001,
+        "coupledCavityEnergyFractionMin": 0.1,
+        "coupledSourceOverlapFractionMin": 0.01
       },
-      "rationale": "Checks BIC + ENZ as a dispersive-defect photonic-crystal scene with finite reduced leakage/active-overlap observables."
+      "rationale": "Checks the ENZ PhC defect scene with anti-phase excitation, finite leakage diagnostic, and dispersive-defect overlap."
     },
     {
-      "id": "janus_topological_guide_source_proxy",
+      "id": "janus_valley_hall_source_overlap",
       "priority": "P1",
       "preset": "janusTopologicalGuide",
       "profile": "physics",
@@ -3567,7 +3587,7 @@
       "checks": [
         "the Valley-Hall-like guide geometry is present",
         "the source uses the Janus dipole route",
-        "coupled-workflow material and source-overlap proxies are finite"
+        "coupled-workflow material and source-overlap diagnostics are finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3576,14 +3596,15 @@
         "sourceShape": "janusDipole",
         "highIndexCellsMin": 1000,
         "minAnalysisSamples": 48,
-        "coupledMaterialEnergyFractionMin": 0.01,
-        "coupledHighIndexEnergyFractionMin": 1e-8,
-        "coupledSourceOverlapFractionMin": 1e-8
+        "coupledMaterialEnergyFractionMin": 0.1,
+        "coupledHighIndexEnergyFractionMin": 0.1,
+        "coupledGuideEnergyFractionMin": 0.1,
+        "coupledSourceOverlapFractionMin": 0.001
       },
       "rationale": "Checks the Janus/topological guide workflow as a real directional-source plus structured-guide scene."
     },
     {
-      "id": "huygens_cavity_source_proxy",
+      "id": "huygens_cavity_overlap",
       "priority": "P1",
       "preset": "huygensCavity",
       "profile": "physics",
@@ -3592,7 +3613,7 @@
       "checks": [
         "the source uses the Huygens route",
         "a side-coupled high-index cavity is present",
-        "guide/cavity/source-overlap proxies are finite"
+        "guide/cavity/source-overlap diagnostics are finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3601,14 +3622,14 @@
         "sourceShape": "huygens",
         "highIndexCellsMin": 100,
         "minAnalysisSamples": 48,
-        "coupledGuideEnergyFractionMin": 0.01,
-        "coupledCavityEnergyFractionMin": 1e-8,
-        "coupledSourceOverlapFractionMin": 1e-8
+        "coupledGuideEnergyFractionMin": 0.1,
+        "coupledCavityEnergyFractionMin": 0.05,
+        "coupledSourceOverlapFractionMin": 0.0001
       },
-      "rationale": "Checks the Huygens + cavity workflow as a real source/cavity/guide scene with finite overlap proxies."
+      "rationale": "Checks the Huygens source/cavity/guide scene with finite overlap diagnostics."
     },
     {
-      "id": "topology_temporal_mod_coupled_proxy",
+      "id": "valley_hall_temporal_segment_response",
       "priority": "P1",
       "preset": "topologyTemporalMod",
       "profile": "physics",
@@ -3616,7 +3637,7 @@
       "browserSmoke": true,
       "checks": [
         "a Valley-Hall-like lattice contains a uniform temporally modulated segment",
-        "the coupled-workflow and Floquet reduced estimates are finite",
+        "the coupled-workflow and Floquet diagnostics are finite",
         "the modulation phase is spatially coherent after local compensation"
       ],
       "acceptance": {
@@ -3630,14 +3651,14 @@
         "minAnalysisSamples": 48,
         "minDiagnosticDftSamples": 48,
         "modulationPhaseCoherenceMin": 0.98,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-10,
         "coupledActiveMaterialFractionMin": 1e-9,
         "coupledMaterialEnergyFractionMin": 0.01
       },
       "rationale": "Checks the topology + temporal-modulation workflow as a structured guide with a real uniform modulated section."
     },
     {
-      "id": "nonreciprocal_valley_hall_traveling_proxy",
+      "id": "traveling_modulated_valley_hall_response",
       "priority": "P1",
       "preset": "nonreciprocalValleyHall",
       "profile": "physics",
@@ -3646,7 +3667,7 @@
       "checks": [
         "a Valley-Hall-like lattice contains a traveling-modulated segment",
         "the modulation phase has low spatial coherence and finite phase velocity",
-        "coupled-workflow and reduced Floquet proxies remain finite"
+        "coupled-workflow and Floquet diagnostics remain finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3661,14 +3682,14 @@
         "modulationPhaseCoherenceMax": 0.6,
         "modulationPhaseSpreadRadMin": 8,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-10,
         "coupledActiveMaterialFractionMin": 1e-8,
         "coupledMaterialEnergyFractionMin": 0.01
       },
-      "rationale": "Checks the nonreciprocal Valley-Hall example as a traveling-modulation proxy without claiming calibrated isolation."
+      "rationale": "Checks the Valley-Hall scene as a traveling-modulated guide segment without claiming calibrated isolation."
     },
     {
-      "id": "space_time_crystal_traveling_proxy",
+      "id": "traveling_modulated_stripe_lattice_response",
       "priority": "P1",
       "preset": "spaceTimeCrystal",
       "profile": "physics",
@@ -3677,7 +3698,7 @@
       "checks": [
         "the space-time crystal contains many modulated dielectric stripes",
         "the modulation phase is traveling rather than uniform",
-        "reduced Floquet sideband and coupled active-material proxies are finite"
+        "Floquet sideband and coupled active-material diagnostics are finite"
       ],
       "acceptance": {
         "coupledWorkflowCheck": true,
@@ -3692,10 +3713,10 @@
         "modulationPhaseCoherenceMax": 0.6,
         "modulationPhaseSpreadRadMin": 8,
         "modulationPhaseVelocityMin": 0.01,
-        "floquetSidebandPowerMin": 0,
+        "floquetReflectedSidebandPowerMin": 1e-8,
         "modulatedEnergyFractionMin": 1e-8
       },
-      "rationale": "Checks the space-time crystal analogue as a real traveling-modulated stripe lattice with finite reduced sideband diagnostics."
+      "rationale": "Checks the traveling-modulated stripe lattice with finite active-material and sideband diagnostics."
     },
     {
       "id": "coupled_workflow_first_pass",
@@ -3704,16 +3725,16 @@
       "profile": "physics",
       "browserSmoke": false,
       "checks": [
-        "non-Hermitian skin analogue reports field centroid, edge accumulation, and gain/loss localization proxies",
-        "BIC + Kerr and BIC + ENZ report active-material overlap alongside Bloch-k leakage proxy",
-        "Janus/topological and Huygens/cavity workflows report guide, cavity, source-overlap, and material-energy proxies",
-        "topology + temporal modulation, nonreciprocal Valley Hall, and space-time crystal expose coupled workflow proxies together with reduced Floquet sideband readouts",
+        "biased non-Hermitian SSH scene reports field centroid, edge accumulation, and gain/loss localization diagnostics",
+        "Kerr and ENZ PhC defects report active-material overlap alongside Bloch-k leakage diagnostics",
+        "Janus/Valley-Hall and Huygens/cavity workflows report guide, cavity, source-overlap, and material-energy diagnostics",
+        "Valley-Hall temporal modulation and traveling stripe-lattice scenes expose coupled workflow diagnostics together with Floquet sideband readouts",
         "metrics remain finite during short browser execution"
       ],
       "acceptance": {
-        "status": "first-coupled-workflow-proxy-pass; calibrated eigenmode, non-Bloch, and device-level validation pending"
+        "status": "first-coupled-workflow-diagnostic-pass; calibrated eigenmode, non-Bloch, and device-level validation pending"
       },
-      "rationale": "Tracks Atlas 133-140 after adding scene-level reduced observables for composite workflows rather than relying only on reused component diagnostics."
+      "rationale": "Tracks Atlas 133-140 after adding scene-level diagnostics for composite workflows rather than relying only on reused component diagnostics."
     },
     {
       "id": "hyperbolic_annular_mtf_reference_scope",

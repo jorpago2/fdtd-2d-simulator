@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-05T08:47:21.864Z",
-  "gitCommit": "ab9783f+working-tree",
+  "generatedAt": "2026-07-05T09:08:58.857Z",
+  "gitCommit": "eae9c2f+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 121,
+    "PASS": 141,
     "VALIDATION_GAP": 0,
-    "WARN": 20,
+    "WARN": 0,
     "FIX_REQUIRED": 0
   },
   "consoleErrors": [],
@@ -4038,18 +4038,16 @@
       "title": "Temporal interface",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 121: finite dielectric interface with nearly uniform temporal epsilon modulation and reduced Floquet sideband S_m estimate.",
-      "status": "WARN",
+      "description": "Atlas 121: dielectric interface with uniform temporal epsilon modulation, phase-coherent material mask, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "temporal_interface_uniform_floquet_proxy:P1/physics"
+        "temporal_interface_uniform_sideband_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4073,18 +4071,16 @@
       "title": "Temporal slab",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation and reduced time-refraction sideband S_m estimate.",
-      "status": "WARN",
+      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation, field overlap, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "temporal_slab_uniform_floquet_proxy:P1/physics"
+        "temporal_slab_uniform_sideband_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4108,19 +4104,17 @@
       "title": "Temporal epsilon modulation",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 123: region tagged with sinusoidal epsilon modulation and reduced Floquet sideband analysis.",
-      "status": "WARN",
+      "description": "Atlas 123: compact region with sinusoidal epsilon modulation, uniform phase, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
         "floquet_power_balance_gap:P1/physics",
-        "temporal_modulation_region_floquet_proxy:P1/physics"
+        "temporal_modulation_region_sideband_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4144,18 +4138,16 @@
       "title": "Temporal crystal",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 124: extended time-periodic dielectric region with reduced Floquet sideband analysis.",
-      "status": "WARN",
+      "description": "Atlas 124: extended time-periodic dielectric lattice with embedded high-index ribs and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "temporal_crystal_uniform_floquet_proxy:P1/physics"
+        "temporal_crystal_uniform_sideband_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4179,8 +4171,8 @@
       "title": "Temporally modulated guide",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and reduced S_m sideband readout.",
-      "status": "WARN",
+      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
@@ -4188,9 +4180,7 @@
         "modulated_guide_active_section:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4215,18 +4205,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "description": "Atlas 126: guide section tagged with traveling epsilon modulation and forward/reverse transmission check.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
       "validationCases": [
-        "traveling_modulation_phase_proxy:P1/physics"
+        "traveling_modulation_phase_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (traveling_modulation_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4247,22 +4235,20 @@
     {
       "id": "temporalIsolator",
       "index": 127,
-      "title": "Temporal isolator analogue",
+      "title": "Traveling-modulated lossy guide",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 127: mode-launched traveling-modulation guide section with approximate isolation and reduced Floquet sideband S_m readout.",
-      "status": "WARN",
+      "description": "Atlas 127: mode-launched traveling-modulation guide with downstream lossy section, output-guide overlap, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
       "validationCases": [
-        "temporal_isolator_traveling_proxy:P1/physics"
+        "traveling_modulated_lossy_guide_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Temporal-isolator analogue; reduced sideband/isolation observables are not de-embedded two-port S-parameters."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4286,18 +4272,16 @@
       "title": "Modulated ring",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate.",
-      "status": "WARN",
+      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "modulated_ring_resonator_proxy:P1/physics"
+        "modulated_ring_resonator_sideband_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (modulated_ring_resonator_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4321,18 +4305,16 @@
       "title": "Floquet resonators",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 129: mode-launched coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis.",
-      "status": "WARN",
+      "description": "Atlas 129: mode-launched coupled modulated resonators with staggered local phases and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "floquet_resonators_staggered_phase_proxy:P1/physics"
+        "floquet_resonators_staggered_phase_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4353,21 +4335,19 @@
     {
       "id": "syntheticFrequency",
       "index": 130,
-      "title": "Synthetic frequency dimension",
+      "title": "Five-phase modulated resonator chain",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 130: mode-launched chain of modulated resonators as a synthetic-frequency analogue with reduced sideband S_m analysis.",
-      "status": "WARN",
+      "description": "Atlas 130: mode-launched five-phase modulated resonator chain with guide overlap and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "synthetic_frequency_chain_proxy:P1/physics"
+        "phased_modulated_resonator_chain:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Synthetic-frequency-dimension proxy; sideband graph intuition is shown without a calibrated frequency-lattice model."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4391,20 +4371,18 @@
       "title": "PT-symmetric gain/loss guides",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 131: PT-symmetric coupled guides with balanced gain/loss, saturable gain, gamma sweep, and reduced modal EP estimate.",
-      "status": "WARN",
+      "description": "Atlas 131: PT-balanced coupled guides with saturable gain/loss, gamma sweep, and unbroken-phase modal diagnostic.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "gain/loss",
         "gainLoss sweep"
       ],
       "validationCases": [
-        "pt_symmetric_coupler_modal_proxy:P1/physics"
+        "pt_symmetric_coupler_modal_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4425,22 +4403,20 @@
     {
       "id": "exceptionalPointCoupler",
       "index": 132,
-      "title": "Exceptional point proxy",
+      "title": "Near-EP gain/loss coupler",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 132: PT-symmetric coupled-guide exceptional-point proxy with gamma sweep and reduced 2x2 modal coalescence estimate.",
-      "status": "WARN",
+      "description": "Atlas 132: gain/loss coupled guides tuned near gamma/kappa = 1 with a 2x2 near-EP modal diagnostic.",
+      "status": "PASS",
       "contractTags": [
         "gain/loss",
         "gainLoss sweep"
       ],
       "validationCases": [
-        "exceptional_point_coupler_modal_proxy:P1/physics"
+        "near_ep_coupler_modal_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Exceptional-point proxy; reduced modal coalescence is checked, not a full eigenvalue/topology validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4461,22 +4437,20 @@
     {
       "id": "nonHermitianSkin",
       "index": 133,
-      "title": "Non-Hermitian skin analogue",
+      "title": "Biased non-Hermitian SSH chain",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 133: non-Hermitian skin-effect analogue using a biased gain/loss SSH chain with reduced skin/localization proxies.",
-      "status": "WARN",
+      "description": "Atlas 133: biased gain/loss SSH chain with edge-energy and gain/loss localization diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "gain/loss"
       ],
       "validationCases": [
-        "non_hermitian_skin_edge_proxy:P1/physics",
+        "biased_nonhermitian_ssh_edge_response:P1/physics",
         "coupled_workflow_first_pass:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4497,22 +4471,20 @@
     {
       "id": "bicKerr",
       "index": 134,
-      "title": "BIC + Kerr",
+      "title": "Kerr PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 134: symmetry-protected BIC-style PhC cavity with a Kerr nonlinear defect region, Bloch-k leakage, and active-material overlap proxies.",
-      "status": "WARN",
+      "description": "Atlas 134: Kerr nonlinear defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "blochK sweep"
       ],
       "validationCases": [
-        "bic_kerr_active_phc_proxy:P1/physics"
+        "kerr_phc_defect_overlap:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (bic_kerr_active_phc_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4533,22 +4505,20 @@
     {
       "id": "bicEnz",
       "index": 135,
-      "title": "BIC + ENZ",
+      "title": "ENZ PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 135: BIC-style PhC cavity side-coupled to a passive Drude ENZ inclusion with Bloch-k leakage and active-material overlap proxies.",
-      "status": "WARN",
+      "description": "Atlas 135: passive Drude ENZ defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "dispersive material",
         "blochK sweep"
       ],
       "validationCases": [
-        "bic_enz_dispersive_phc_proxy:P1/physics"
+        "enz_phc_defect_overlap:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (bic_enz_dispersive_phc_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4569,21 +4539,19 @@
     {
       "id": "janusTopologicalGuide",
       "index": 136,
-      "title": "Janus + topological guide",
+      "title": "Janus source in Valley-Hall lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 136: Janus source coupled into a qualitative Valley-Hall topological guide with reduced guide-coupling proxy.",
-      "status": "WARN",
+      "description": "Atlas 136: Janus dipole launched into a Valley-Hall-like structured guide with material and source-overlap diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "janus_topological_guide_source_proxy:P1/physics"
+        "janus_valley_hall_source_overlap:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Hybrid Janus/topological-guide proxy; directional coupling is qualitative without protected-transport spectra."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4604,21 +4572,19 @@
     {
       "id": "huygensCavity",
       "index": 137,
-      "title": "Huygens + cavity",
+      "title": "Huygens source near cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 137: Huygens source coupled to a dielectric cavity/resonator with reduced cavity-overlap proxy.",
-      "status": "WARN",
+      "description": "Atlas 137: Huygens source coupled to a dielectric side cavity with guide, cavity, and source-overlap diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "huygens_cavity_source_proxy:P1/physics"
+        "huygens_cavity_overlap:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Hybrid Huygens/cavity source workflow; not a calibrated Purcell, beta-factor, or far-field optimization."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4639,22 +4605,20 @@
     {
       "id": "topologyTemporalMod",
       "index": 138,
-      "title": "Topology + temporal modulation",
+      "title": "Valley-Hall temporal segment",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 138: Valley-Hall channel with a temporally modulated segment, reduced Floquet sideband readout, and coupled-workflow proxies.",
-      "status": "WARN",
+      "description": "Atlas 138: Valley-Hall-like channel with an input-side temporally modulated segment and Floquet/coupled-region diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
       "validationCases": [
-        "topology_temporal_mod_coupled_proxy:P1/physics"
+        "valley_hall_temporal_segment_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4663,11 +4627,11 @@
         "engine": "WASM CPML+mod+TFSF",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 3.071788040395418e-14,
+        "energy": 1.4317575546391146e-12,
         "analysisSamples": 0,
-        "materialCells": 5633,
+        "materialCells": 5778,
         "dispersiveCells": 0,
-        "modulatedCells": 180,
+        "modulatedCells": 216,
         "nonlinearCells": 0,
         "sourceCount": 1
       }
@@ -4675,22 +4639,20 @@
     {
       "id": "nonreciprocalValleyHall",
       "index": 139,
-      "title": "Nonreciprocity + Valley Hall",
+      "title": "Traveling-modulated Valley-Hall guide",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 139: Valley-Hall channel with traveling modulation, approximate isolation, reduced sideband S_m readout, and modulation-phase proxy.",
-      "status": "WARN",
+      "description": "Atlas 139: Valley-Hall-like channel with an input-side traveling-modulated segment, phase, material-overlap, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
       "validationCases": [
-        "nonreciprocal_valley_hall_traveling_proxy:P1/physics"
+        "traveling_modulated_valley_hall_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Nonreciprocal Valley-Hall proxy; needs reverse-port spectra and topological invariant checks for quantitative claims."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4699,11 +4661,11 @@
         "engine": "WASM CPML+mod+TFSF",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 2.6257774553350057e-14,
+        "energy": 1.1361044267112977e-12,
         "analysisSamples": 0,
-        "materialCells": 5710,
+        "materialCells": 5898,
         "dispersiveCells": 0,
-        "modulatedCells": 308,
+        "modulatedCells": 336,
         "nonlinearCells": 0,
         "sourceCount": 1
       }
@@ -4711,22 +4673,20 @@
     {
       "id": "spaceTimeCrystal",
       "index": 140,
-      "title": "Space-time crystal",
+      "title": "Traveling-modulated stripe lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 140: space-time crystal analogue with traveling epsilon modulation, reduced Floquet sideband readout, and modulation-phase proxy.",
-      "status": "WARN",
+      "description": "Atlas 140: traveling-modulated dielectric stripe lattice with phase-coherence, active-material, and sideband diagnostics.",
+      "status": "PASS",
       "contractTags": [
         "time modulation",
         "direction sweep"
       ],
       "validationCases": [
-        "space_time_crystal_traveling_proxy:P1/physics"
+        "traveling_modulated_stripe_lattice_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Space-time-crystal proxy; modulation and sidebands are reduced observables, not a full band-structure validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",

@@ -1846,6 +1846,7 @@ async function coupledWorkflowMetrics(page) {
       coupledGainLossBias: finiteOrNull(coupled?.gainLossBias),
       floquetRequiredData: Boolean(floquet),
       floquetSidebandPower: finiteOrNull(floquet?.sidebandPower),
+      floquetReflectedSidebandPower: finiteOrNull(floquet?.reflectedSidebandPower),
       floquetMaxSidebandRatio: finiteOrNull(floquet?.maxSidebandRatio),
       modulationPhaseSpatialCoherence: finiteOrNull(phase?.spatialCoherence),
       modulationPhaseSpreadRad: finiteOrNull(phase?.phaseSpreadRad),
@@ -3605,6 +3606,7 @@ async function runSmokeCase(page, testCase) {
     const minRingFraction = Number(testCase.acceptance?.ringEnergyFractionMin);
     const minResonatorBandFraction = Number(testCase.acceptance?.resonatorBandEnergyFractionMin);
     const minSidebandPower = Number(testCase.acceptance?.floquetSidebandPowerMin);
+    const minReflectedSidebandPower = Number(testCase.acceptance?.floquetReflectedSidebandPowerMin);
     const minMaxSidebandRatio = Number(testCase.acceptance?.floquetMaxSidebandRatioMin);
     const minFirstUpper = Number(testCase.acceptance?.floquetFirstUpperMin);
     const minFirstLower = Number(testCase.acceptance?.floquetFirstLowerMin);
@@ -3680,6 +3682,12 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minSidebandPower) && !(Number.isFinite(metrics.floquetSidebandPower) && metrics.floquetSidebandPower >= minSidebandPower)) {
       status.failures.push(`Floquet sideband power ${metrics.floquetSidebandPower} below ${minSidebandPower}`);
     }
+    if (
+      Number.isFinite(minReflectedSidebandPower) &&
+      !(Number.isFinite(metrics.floquetReflectedSidebandPower) && metrics.floquetReflectedSidebandPower >= minReflectedSidebandPower)
+    ) {
+      status.failures.push(`Floquet reflected sideband power ${metrics.floquetReflectedSidebandPower} below ${minReflectedSidebandPower}`);
+    }
     if (Number.isFinite(minMaxSidebandRatio) && !(Number.isFinite(metrics.floquetMaxSidebandRatio) && metrics.floquetMaxSidebandRatio >= minMaxSidebandRatio)) {
       status.failures.push(`Floquet max sideband ratio ${metrics.floquetMaxSidebandRatio} below ${minMaxSidebandRatio}`);
     }
@@ -3746,6 +3754,7 @@ async function runSmokeCase(page, testCase) {
     const maxPtEpDistance = Number(testCase.acceptance?.ptEpDistanceMax);
     const minPtCoalescence = Number(testCase.acceptance?.ptCoalescenceMin);
     const minPtRealSplit = Number(testCase.acceptance?.ptRealSplitMin);
+    const maxPtRealSplit = Number(testCase.acceptance?.ptRealSplitMax);
     const minPtImagSplit = Number(testCase.acceptance?.ptImagSplitMin);
     const minPhcQ = Number(testCase.acceptance?.phcQProxyMin);
     const minPhcLeakage = Number(testCase.acceptance?.phcLeakageMin);
@@ -3760,6 +3769,7 @@ async function runSmokeCase(page, testCase) {
     const minAbsCoupledSkinBias = Number(testCase.acceptance?.absCoupledSkinBiasMin);
     const minAbsGainLossBias = Number(testCase.acceptance?.absCoupledGainLossBiasMin);
     const minSidebandPower = Number(testCase.acceptance?.floquetSidebandPowerMin);
+    const minReflectedSidebandPower = Number(testCase.acceptance?.floquetReflectedSidebandPowerMin);
     const minMaxSidebandRatio = Number(testCase.acceptance?.floquetMaxSidebandRatioMin);
     const minPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMin);
     const maxPhaseCoherence = Number(testCase.acceptance?.modulationPhaseCoherenceMax);
@@ -3824,6 +3834,7 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(maxPtEpDistance) && !(Number.isFinite(metrics.ptEpDistance) && metrics.ptEpDistance <= maxPtEpDistance)) status.failures.push(`PT EP distance ${metrics.ptEpDistance} exceeds ${maxPtEpDistance}`);
     if (Number.isFinite(minPtCoalescence) && !(Number.isFinite(metrics.ptCoalescence) && metrics.ptCoalescence >= minPtCoalescence)) status.failures.push(`PT coalescence proxy ${metrics.ptCoalescence} below ${minPtCoalescence}`);
     if (Number.isFinite(minPtRealSplit) && !(Number.isFinite(metrics.ptRealSplit) && metrics.ptRealSplit >= minPtRealSplit)) status.failures.push(`PT real split ${metrics.ptRealSplit} below ${minPtRealSplit}`);
+    if (Number.isFinite(maxPtRealSplit) && !(Number.isFinite(metrics.ptRealSplit) && metrics.ptRealSplit <= maxPtRealSplit)) status.failures.push(`PT real split ${metrics.ptRealSplit} exceeds ${maxPtRealSplit}`);
     if (Number.isFinite(minPtImagSplit) && !(Number.isFinite(metrics.ptImagSplit) && metrics.ptImagSplit >= minPtImagSplit)) status.failures.push(`PT imaginary split ${metrics.ptImagSplit} below ${minPtImagSplit}`);
     if (testCase.acceptance?.ptPhase && metrics.ptPhase !== testCase.acceptance.ptPhase) status.failures.push(`PT phase ${metrics.ptPhase} differs from expected ${testCase.acceptance.ptPhase}`);
     if (Number.isFinite(minPhcQ) && !(Number.isFinite(metrics.phcQProxy) && metrics.phcQProxy >= minPhcQ)) status.failures.push(`PHC Q proxy ${metrics.phcQProxy} below ${minPhcQ}`);
@@ -3839,6 +3850,7 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minAbsCoupledSkinBias) && !(Number.isFinite(metrics.coupledSkinBias) && Math.abs(metrics.coupledSkinBias) >= minAbsCoupledSkinBias)) status.failures.push(`coupled skin-bias magnitude ${metrics.coupledSkinBias} below ${minAbsCoupledSkinBias}`);
     if (Number.isFinite(minAbsGainLossBias) && !(Number.isFinite(metrics.coupledGainLossBias) && Math.abs(metrics.coupledGainLossBias) >= minAbsGainLossBias)) status.failures.push(`coupled gain/loss-bias magnitude ${metrics.coupledGainLossBias} below ${minAbsGainLossBias}`);
     if (Number.isFinite(minSidebandPower) && !(Number.isFinite(metrics.floquetSidebandPower) && metrics.floquetSidebandPower >= minSidebandPower)) status.failures.push(`coupled Floquet sideband power ${metrics.floquetSidebandPower} below ${minSidebandPower}`);
+    if (Number.isFinite(minReflectedSidebandPower) && !(Number.isFinite(metrics.floquetReflectedSidebandPower) && metrics.floquetReflectedSidebandPower >= minReflectedSidebandPower)) status.failures.push(`coupled Floquet reflected sideband power ${metrics.floquetReflectedSidebandPower} below ${minReflectedSidebandPower}`);
     if (Number.isFinite(minMaxSidebandRatio) && !(Number.isFinite(metrics.floquetMaxSidebandRatio) && metrics.floquetMaxSidebandRatio >= minMaxSidebandRatio)) status.failures.push(`coupled Floquet sideband ratio ${metrics.floquetMaxSidebandRatio} below ${minMaxSidebandRatio}`);
     if (Number.isFinite(minPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence >= minPhaseCoherence)) status.failures.push(`coupled modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} below ${minPhaseCoherence}`);
     if (Number.isFinite(maxPhaseCoherence) && !(Number.isFinite(metrics.modulationPhaseSpatialCoherence) && metrics.modulationPhaseSpatialCoherence <= maxPhaseCoherence)) status.failures.push(`coupled modulation phase coherence ${metrics.modulationPhaseSpatialCoherence} exceeds ${maxPhaseCoherence}`);

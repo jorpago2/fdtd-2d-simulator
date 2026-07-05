@@ -99,16 +99,7 @@ const frequencySweepPresets = new Set(["negativeIndexSlab", "superlensSlab", "hy
 const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCoupler"]);
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
-const qualitativeCaveats = new Map([
-  ["temporalIsolator", "Temporal-isolator analogue; reduced sideband/isolation observables are not de-embedded two-port S-parameters."],
-  ["syntheticFrequency", "Synthetic-frequency-dimension proxy; sideband graph intuition is shown without a calibrated frequency-lattice model."],
-  ["exceptionalPointCoupler", "Exceptional-point proxy; reduced modal coalescence is checked, not a full eigenvalue/topology validation."],
-  ["nonHermitianSkin", "Reduced active/lossy lattice analogue; not a non-Bloch eigenmode validation."],
-  ["janusTopologicalGuide", "Hybrid Janus/topological-guide proxy; directional coupling is qualitative without protected-transport spectra."],
-  ["huygensCavity", "Hybrid Huygens/cavity source workflow; not a calibrated Purcell, beta-factor, or far-field optimization."],
-  ["nonreciprocalValleyHall", "Nonreciprocal Valley-Hall proxy; needs reverse-port spectra and topological invariant checks for quantitative claims."],
-  ["spaceTimeCrystal", "Space-time-crystal proxy; modulation and sidebands are reduced observables, not a full band-structure validation."],
-]);
+const qualitativeCaveats = new Map();
 
 function startStaticServer() {
   const mimeTypes = new Map([

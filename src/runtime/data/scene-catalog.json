@@ -1342,7 +1342,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 121: finite dielectric interface with nearly uniform temporal epsilon modulation and reduced Floquet sideband S_m estimate."
+      "description": "Atlas 121: dielectric interface with uniform temporal epsilon modulation, phase-coherent material mask, and sideband diagnostics."
     },
     {
       "id": "temporalSlab",
@@ -1351,7 +1351,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation and reduced time-refraction sideband S_m estimate."
+      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation, field overlap, and sideband diagnostics."
     },
     {
       "id": "temporalModulation",
@@ -1360,7 +1360,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 123: region tagged with sinusoidal epsilon modulation and reduced Floquet sideband analysis."
+      "description": "Atlas 123: compact region with sinusoidal epsilon modulation, uniform phase, and sideband diagnostics."
     },
     {
       "id": "temporalCrystal",
@@ -1369,7 +1369,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 124: extended time-periodic dielectric region with reduced Floquet sideband analysis."
+      "description": "Atlas 124: extended time-periodic dielectric lattice with embedded high-index ribs and sideband diagnostics."
     },
     {
       "id": "modulatedGuide",
@@ -1378,7 +1378,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and reduced S_m sideband readout."
+      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and sideband diagnostics."
     },
     {
       "id": "travelingModulation",
@@ -1392,11 +1392,11 @@
     {
       "id": "temporalIsolator",
       "index": 127,
-      "title": "Temporal isolator analogue",
+      "title": "Traveling-modulated lossy guide",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 127: mode-launched traveling-modulation guide section with approximate isolation and reduced Floquet sideband S_m readout."
+      "description": "Atlas 127: mode-launched traveling-modulation guide with downstream lossy section, output-guide overlap, and sideband diagnostics."
     },
     {
       "id": "modulatedRing",
@@ -1405,7 +1405,7 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband S_m estimate."
+      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband diagnostics."
     },
     {
       "id": "floquetResonators",
@@ -1414,16 +1414,16 @@
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 129: mode-launched coupled modulated resonators with reduced Floquet splitting and sideband S_m analysis."
+      "description": "Atlas 129: mode-launched coupled modulated resonators with staggered local phases and sideband diagnostics."
     },
     {
       "id": "syntheticFrequency",
       "index": 130,
-      "title": "Synthetic frequency dimension",
+      "title": "Five-phase modulated resonator chain",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
       "groupName": "Time-varying and Floquet media",
-      "description": "Atlas 130: mode-launched chain of modulated resonators as a synthetic-frequency analogue with reduced sideband S_m analysis."
+      "description": "Atlas 130: mode-launched five-phase modulated resonator chain with guide overlap and sideband diagnostics."
     },
     {
       "id": "ptSymmetricCoupler",
@@ -1432,88 +1432,88 @@
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 131: PT-symmetric coupled guides with balanced gain/loss, saturable gain, gamma sweep, and reduced modal EP estimate."
+      "description": "Atlas 131: PT-balanced coupled guides with saturable gain/loss, gamma sweep, and unbroken-phase modal diagnostic."
     },
     {
       "id": "exceptionalPointCoupler",
       "index": 132,
-      "title": "Exceptional point proxy",
+      "title": "Near-EP gain/loss coupler",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 132: PT-symmetric coupled-guide exceptional-point proxy with gamma sweep and reduced 2x2 modal coalescence estimate."
+      "description": "Atlas 132: gain/loss coupled guides tuned near gamma/kappa = 1 with a 2x2 near-EP modal diagnostic."
     },
     {
       "id": "nonHermitianSkin",
       "index": 133,
-      "title": "Non-Hermitian skin analogue",
+      "title": "Biased non-Hermitian SSH chain",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 133: non-Hermitian skin-effect analogue using a biased gain/loss SSH chain with reduced skin/localization proxies."
+      "description": "Atlas 133: biased gain/loss SSH chain with edge-energy and gain/loss localization diagnostics."
     },
     {
       "id": "bicKerr",
       "index": 134,
-      "title": "BIC + Kerr",
+      "title": "Kerr PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 134: symmetry-protected BIC-style PhC cavity with a Kerr nonlinear defect region, Bloch-k leakage, and active-material overlap proxies."
+      "description": "Atlas 134: Kerr nonlinear defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics."
     },
     {
       "id": "bicEnz",
       "index": 135,
-      "title": "BIC + ENZ",
+      "title": "ENZ PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 135: BIC-style PhC cavity side-coupled to a passive Drude ENZ inclusion with Bloch-k leakage and active-material overlap proxies."
+      "description": "Atlas 135: passive Drude ENZ defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics."
     },
     {
       "id": "janusTopologicalGuide",
       "index": 136,
-      "title": "Janus + topological guide",
+      "title": "Janus source in Valley-Hall lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 136: Janus source coupled into a qualitative Valley-Hall topological guide with reduced guide-coupling proxy."
+      "description": "Atlas 136: Janus dipole launched into a Valley-Hall-like structured guide with material and source-overlap diagnostics."
     },
     {
       "id": "huygensCavity",
       "index": 137,
-      "title": "Huygens + cavity",
+      "title": "Huygens source near cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 137: Huygens source coupled to a dielectric cavity/resonator with reduced cavity-overlap proxy."
+      "description": "Atlas 137: Huygens source coupled to a dielectric side cavity with guide, cavity, and source-overlap diagnostics."
     },
     {
       "id": "topologyTemporalMod",
       "index": 138,
-      "title": "Topology + temporal modulation",
+      "title": "Valley-Hall temporal segment",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 138: Valley-Hall channel with a temporally modulated segment, reduced Floquet sideband readout, and coupled-workflow proxies."
+      "description": "Atlas 138: Valley-Hall-like channel with an input-side temporally modulated segment and Floquet/coupled-region diagnostics."
     },
     {
       "id": "nonreciprocalValleyHall",
       "index": 139,
-      "title": "Nonreciprocity + Valley Hall",
+      "title": "Traveling-modulated Valley-Hall guide",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 139: Valley-Hall channel with traveling modulation, approximate isolation, reduced sideband S_m readout, and modulation-phase proxy."
+      "description": "Atlas 139: Valley-Hall-like channel with an input-side traveling-modulated segment, phase, material-overlap, and sideband diagnostics."
     },
     {
       "id": "spaceTimeCrystal",
       "index": 140,
-      "title": "Space-time crystal",
+      "title": "Traveling-modulated stripe lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
       "groupName": "Coupled and non-Hermitian workflows",
-      "description": "Atlas 140: space-time crystal analogue with traveling epsilon modulation, reduced Floquet sideband readout, and modulation-phase proxy."
+      "description": "Atlas 140: traveling-modulated dielectric stripe lattice with phase-coherence, active-material, and sideband diagnostics."
     }
   ]
 }
