@@ -4,6 +4,8 @@
   const SOURCE_TYPES = Object.freeze(["sine", "gaussian", "ricker"]);
   const MONITOR_QUANTITIES = Object.freeze(["scalar", "magnitude", "normalFlux", "tangentFlux"]);
   const MAX_IMPORTED_ITEMS = 32;
+  const MIN_SOURCE_FREQUENCY = 0.001;
+  const MAX_SOURCE_FREQUENCY = 0.02;
 
   function isPlainObject(value) {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -20,6 +22,37 @@
 
   function clampFinite(value, fallback, min, max) {
     return clampNumber(finiteOrFallback(value, fallback), min, max);
+  }
+
+  function sourceReferenceFrequency(cellsPerWavelength) {
+    const courant = typeof COURANT === "undefined" ? 0.1 : Number(COURANT);
+    const cells = clampNumber(Number(cellsPerWavelength) || 20, 8, 80);
+    return finiteOrFallback(courant, 0.1) / cells;
+  }
+
+  function sourceWavelengthRange(cellsPerWavelength) {
+    const referenceFrequency = sourceReferenceFrequency(cellsPerWavelength);
+    return {
+      min: referenceFrequency / MAX_SOURCE_FREQUENCY,
+      max: referenceFrequency / MIN_SOURCE_FREQUENCY,
+    };
+  }
+
+  function frequencyToSourceWavelengthLambda(frequency, cellsPerWavelength) {
+    const range = sourceWavelengthRange(cellsPerWavelength);
+    const normalizedFrequency = clampFinite(
+      frequency,
+      sourceReferenceFrequency(cellsPerWavelength),
+      MIN_SOURCE_FREQUENCY,
+      MAX_SOURCE_FREQUENCY,
+    );
+    return clampNumber(sourceReferenceFrequency(cellsPerWavelength) / normalizedFrequency, range.min, range.max);
+  }
+
+  function sourceWavelengthLambdaToFrequency(wavelengthLambda, cellsPerWavelength) {
+    const range = sourceWavelengthRange(cellsPerWavelength);
+    const normalizedWavelength = clampFinite(wavelengthLambda, 1, range.min, range.max);
+    return clampNumber(sourceReferenceFrequency(cellsPerWavelength) / normalizedWavelength, MIN_SOURCE_FREQUENCY, MAX_SOURCE_FREQUENCY);
   }
 
   function clampInt(value, min, max) {
@@ -51,7 +84,7 @@
 
     source.type = SOURCE_TYPES.includes(source.type) ? source.type : "sine";
     source.shape = Object.prototype.hasOwnProperty.call(shapeLabels, source.shape) ? source.shape : "point";
-    source.frequency = clampFinite(source.frequency, config.frequency, 0.001, 0.02);
+    source.frequency = clampFinite(source.frequency, config.frequency, MIN_SOURCE_FREQUENCY, MAX_SOURCE_FREQUENCY);
     source.amplitude = clampFinite(source.amplitude, config.amplitude, 0.05, 1.2);
     source.xLambda = clampFinite(source.xLambda, config.xLambda, bounds.minX, bounds.maxX);
     source.yLambda = clampFinite(source.yLambda, config.yLambda, bounds.minY, bounds.maxY);
@@ -117,11 +150,11 @@
     return { monitor, nextId: id + 1 };
   }
 
-  function readSourceEditorValues(el) {
+  function readSourceEditorValues(el, context = {}) {
     return {
       type: el.sourceTypeInput.value,
       shape: el.sourceShapeInput.value,
-      frequency: Number(el.frequencyInput.value) / 1000,
+      frequency: sourceWavelengthLambdaToFrequency(Number(el.frequencyInput.value), context.cellsPerWavelength),
       amplitude: Number(el.amplitudeInput.value) / 100,
       xLambda: Number(el.sourceXInput.value),
       yLambda: Number(el.sourceYInput.value),
@@ -225,6 +258,8 @@
   global.FdtdSourceMonitorModel = Object.freeze({
     normalizeSource,
     normalizeMonitor,
+    frequencyToSourceWavelengthLambda,
+    sourceWavelengthRange,
     makeSource,
     makeMonitor,
     readSourceEditorValues,

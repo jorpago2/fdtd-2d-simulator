@@ -128,11 +128,19 @@
     
     function populateSourceEditor(source) {
       const normalized = normalizeSource(source);
+      const wavelengthRange = sourceMonitorModel.sourceWavelengthRange(state.cellsPerWavelength);
+      const sourceWavelengthLambda = sourceMonitorModel.frequencyToSourceWavelengthLambda(
+        normalized.frequency,
+        state.cellsPerWavelength,
+      );
       updateSourceShapeOptionLabels();
       el.sourceTypeInput.value = normalized.type;
       el.sourceShapeInput.value = normalized.shape;
-      el.frequencyInput.value = String(Math.round(normalized.frequency * 1000));
-      el.frequencyOutput.value = normalized.frequency.toFixed(3);
+      el.frequencyInput.min = wavelengthRange.min.toFixed(2);
+      el.frequencyInput.max = wavelengthRange.max.toFixed(2);
+      el.frequencyInput.step = "any";
+      el.frequencyInput.value = sourceWavelengthLambda.toFixed(2);
+      el.frequencyOutput.value = sourceWavelengthLambda.toFixed(2);
       el.amplitudeInput.value = String(Math.round(normalized.amplitude * 100));
       el.amplitudeOutput.value = normalized.amplitude.toFixed(2);
       el.sourceAmplitudeLabel.innerHTML = sourceAmplitudeLabelHtml(normalized.shape);
@@ -200,7 +208,9 @@
     }
     
     function readSourceEditorValues() {
-      return sourceMonitorModel.readSourceEditorValues(el);
+      return sourceMonitorModel.readSourceEditorValues(el, {
+        cellsPerWavelength: state.cellsPerWavelength,
+      });
     }
     
     function syncSourceEditorTarget() {

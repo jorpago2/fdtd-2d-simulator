@@ -74,7 +74,13 @@
       state.sources.forEach((source) => {
         source.frequency = nextFrequency;
       });
-      if (el.frequencyInput) el.frequencyInput.value = String(Math.round(nextFrequency * 1000));
+      if (el.frequencyInput) {
+        el.frequencyInput.min = (nextFrequency / 0.02).toFixed(2);
+        el.frequencyInput.max = (nextFrequency / 0.001).toFixed(2);
+        el.frequencyInput.step = "any";
+        el.frequencyInput.value = "1.00";
+      }
+      if (el.frequencyOutput) el.frequencyOutput.value = "1.00";
       sim.buildBoundary(state.boundary);
       if (state.preset !== "empty") {
         sim.applyPreset(state.preset);
