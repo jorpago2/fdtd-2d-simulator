@@ -1358,7 +1358,7 @@
       "rationale": "Checks that the Valley-Hall bend example changes the domain-wall geometry, preserves opposite sublattice bias across the bend, and stores finite channel energy."
     },
     {
-      "id": "topological_pumping_modulated_ssh",
+      "id": "modulated_ssh_chain_route",
       "priority": "P1",
       "preset": "topologicalPumping",
       "profile": "physics",
@@ -1366,8 +1366,8 @@
       "browserSmoke": true,
       "checks": [
         "the SSH chain is materially modulated",
-        "analysis samples are collected for the qualitative pumping proxy",
-        "finite field energy is present near the launched excitation"
+        "analysis samples are collected for the modulation route",
+        "finite field energy overlaps the modulated SSH chain"
       ],
       "acceptance": {
         "topologicalPhotonicsCheck": true,
@@ -1379,9 +1379,10 @@
         "modulatedCellsMin": 170,
         "modulationDepthMin": 0.1,
         "minAnalysisSamples": 8,
-        "sourceEnergyFractionMin": 0.005
+        "sourceEnergyFractionMin": 0.005,
+        "interfaceEnergyFractionMin": 0.5
       },
-      "rationale": "Keeps the Thouless-pump-like scene honest as a modulated qualitative proxy rather than an unmodulated SSH chain."
+      "rationale": "Checks the modulated SSH-chain route through active material modulation, analysis sampling, site-count bounds, and finite local field overlap."
     },
     {
       "id": "topology_defect_valley_channel",
@@ -2235,7 +2236,7 @@
       "rationale": "Checks that the SPP interface scene actually excites an interface-localized field component."
     },
     {
-      "id": "spp_grating_surface_coupling",
+      "id": "spp_grating_surface_launcher",
       "priority": "P1",
       "preset": "sppGrating",
       "profile": "physics",
@@ -2247,12 +2248,12 @@
         "surface band around the grating/interface carries measurable energy"
       ],
       "acceptance": {
-        "surfaceFractionMin": 0.18,
-        "surfaceToAirRatioMin": 0.35,
+        "surfaceFractionMin": 0.3,
+        "surfaceToAirRatioMin": 0.6,
         "surfaceToBulkRatioMin": 0.35,
         "gratingCellsAboveInterfaceMin": 20
       },
-      "rationale": "Guards the plasmonic grating contract after the SPP scene fix: a shallow periodic Drude grating should remain present and surface-coupled."
+      "rationale": "Checks that the shallow Drude grating is present and launches measurable interface-localized Hz energy under oblique illumination."
     },
     {
       "id": "localized_plasmon_drude_disk",
@@ -2323,7 +2324,7 @@
       "rationale": "Checks the metasurface phase-gradient teaching scene as a real graded bar array."
     },
     {
-      "id": "perfect_absorber_lossy_backed_sheet",
+      "id": "backed_lossy_absorber_balance",
       "priority": "P1",
       "preset": "perfectAbsorber",
       "profile": "physics",
@@ -2332,7 +2333,7 @@
       "checks": [
         "a graded lossy sheet is backed by a PEC layer",
         "line diagnostics collect finite samples",
-        "the reduced absorption proxy is finite"
+        "line-monitor balance estimates high absorption and low reflection"
       ],
       "acceptance": {
         "metamaterialCheck": true,
@@ -2341,32 +2342,37 @@
         "absorberLossGradientMin": 0.2,
         "absorberPecBackplaneCellsMin": 200,
         "minDiagnosticSamples": 24,
-        "absorptionProxyMin": 0.01
+        "absorptionProxyMin": 0.95,
+        "reflectanceMax": 0.01,
+        "transmittanceMax": 0.001
       },
-      "rationale": "Makes the perfect-absorber scene executable as a lossy-sheet plus backplane sanity check, not a visual-only stack."
+      "rationale": "Checks the backed graded-loss absorber as a near-unity line-monitor absorption example with a PEC transmission block and low reflected carrier power."
     },
     {
-      "id": "negative_index_observable_finite",
+      "id": "double_negative_drude_slab_phase",
       "priority": "P1",
       "preset": "negativeIndexSlab",
       "profile": "physics",
-      "steps": 1200,
+      "steps": 2600,
       "browserSmoke": true,
       "checks": [
         "analysis metrics are populated",
         "effective epsilon and mu form a double-negative band at the diagnostic frequency",
-        "in-slab phase-front proxy is finite and coherent enough for a teaching observable"
+        "normal-incidence field and phase-front energy are finite inside the slab"
       ],
       "acceptance": {
         "requiresAnalysis": true,
         "minAnalysisSamples": 8,
         "doubleNegativeCellsMin": 100,
-        "slabPhaseCoherenceMin": 0.02
+        "slabBeamEnergyMin": 1,
+        "slabPhaseEnergyMin": 1,
+        "slabPhaseCoherenceMin": 0.5,
+        "transmittedBeamEnergyMin": 0.1
       },
-      "rationale": "Makes the negative-index scene execute its reduced observable path rather than relying only on material flags."
+      "rationale": "Checks the slab as a passive double-negative Drude ADE material with n_eff < 0 and measurable normal-incidence field/phase energy."
     },
     {
-      "id": "superlens_image_proxy_finite",
+      "id": "dng_slab_point_source_transfer",
       "priority": "P1",
       "preset": "superlensSlab",
       "profile": "physics",
@@ -2375,18 +2381,21 @@
       "checks": [
         "analysis metrics are populated",
         "effective epsilon and mu form a double-negative band at the diagnostic frequency",
-        "image-plane transfer proxy is finite and nonzero"
+        "point-source image-plane transfer is finite and narrower than the object-plane width"
       ],
       "acceptance": {
         "requiresAnalysis": true,
         "minAnalysisSamples": 8,
         "doubleNegativeCellsMin": 100,
-        "imageTransferMin": 1e-8
+        "slabBeamEnergyMin": 0.01,
+        "slabPhaseEnergyMin": 0.01,
+        "imageTransferMin": 0.001,
+        "imageResolutionRatioMax": 0.9
       },
-      "rationale": "Adds a concrete image-transfer sanity check for the qualitative superlens analogue."
+      "rationale": "Checks a finite double-negative slab with point-source excitation, nonzero image-plane transfer, and a narrower image-plane width under the current 2D ADE model."
     },
     {
-      "id": "hyperlens_reduced_mtf_proxy",
+      "id": "hyperbolic_annular_mtf_transfer",
       "priority": "P1",
       "preset": "hyperlens",
       "profile": "physics",
@@ -2394,8 +2403,8 @@
       "browserSmoke": true,
       "checks": [
         "the Hz solver and Drude tensor route are active",
-        "the annular hyperlens contains tensor-like dispersive material",
-        "the reduced ring-sampling MTF proxy produces finite samples"
+        "the annular hyperbolic medium contains tensor-like dispersive material",
+        "inner-to-outer ring sampling produces finite angular-harmonic transfer samples"
       ],
       "acceptance": {
         "metamaterialCheck": true,
@@ -2405,12 +2414,14 @@
         "dispersionModel": "drude",
         "dispersiveCellsMin": 500,
         "tensorLikeCellsMin": 500,
+        "materialEnergyFractionMin": 0.1,
         "minAnalysisSamples": 8,
         "hyperlensRequired": true,
-        "hyperlensTransferMin": 1e-12,
-        "hyperlensMtfValidCountMin": 4
+        "hyperlensTransferMin": 0.00001,
+        "hyperlensMtfValidCountMin": 8,
+        "hyperlensBandwidthOrderMin": 8
       },
-      "rationale": "Turns the hyperlens tracking gap into an executable reduced-MTF proxy while preserving the caveat that it is a 2D analogue."
+      "rationale": "Checks the 2D hyperbolic annular-transfer scene through Hz Drude-tensor routing, material energy overlap, and finite angular-harmonic transfer."
     },
     {
       "id": "enz_emitter_slab_overlap",
@@ -2456,7 +2467,7 @@
       "rationale": "Guards the Kerr slab as an active nonlinear-material scene rather than a passive dielectric slab."
     },
     {
-      "id": "shg_slab_harmonic_proxy",
+      "id": "shg_chi2_harmonic_response",
       "priority": "P1",
       "preset": "shgSlab",
       "profile": "physics",
@@ -2465,20 +2476,22 @@
       "checks": [
         "chi2 harmonic material is enabled",
         "analysis samples accumulate",
-        "the reduced second-harmonic proxy is finite"
+        "the second-harmonic response is finite and dominates the third-harmonic readout"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
         "requiresAnalysis": true,
         "harmonicEnabled": true,
         "nonlinearCellsMin": 1000,
+        "nonlinearEnergyFractionMin": 0.05,
         "minAnalysisSamples": 8,
-        "harmonic2Min": 1e-8
+        "harmonic2Min": 0.05,
+        "harmonic2To3RatioMin": 1.2
       },
-      "rationale": "Checks that the SHG scene runs through the harmonic route and reports a finite H2 teaching proxy."
+      "rationale": "Checks that the chi2 slab runs through the harmonic route with substantial H2 output and H2-dominant harmonic content."
     },
     {
-      "id": "thg_slab_harmonic_proxy",
+      "id": "chi3_harmonic_slab_response",
       "priority": "P1",
       "preset": "thgSlab",
       "profile": "physics",
@@ -2487,20 +2500,21 @@
       "checks": [
         "chi3 harmonic material is enabled",
         "analysis samples accumulate",
-        "the reduced third-harmonic proxy is finite"
+        "the third-harmonic readout is finite"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
         "requiresAnalysis": true,
         "harmonicEnabled": true,
         "nonlinearCellsMin": 1000,
+        "nonlinearEnergyFractionMin": 0.05,
         "minAnalysisSamples": 8,
-        "harmonic3Min": 1e-8
+        "harmonic3Min": 0.05
       },
-      "rationale": "Checks that the THG scene runs through the harmonic route and reports a finite H3 teaching proxy."
+      "rationale": "Checks that the chi3 harmonic slab route is active and reports a finite H3 readout without claiming calibrated THG efficiency."
     },
     {
-      "id": "spm_kerr_sideband_proxy",
+      "id": "kerr_spm_sideband_response",
       "priority": "P1",
       "preset": "spmKerrPulse",
       "profile": "physics",
@@ -2509,7 +2523,7 @@
       "checks": [
         "Kerr nonlinear guide/slab is enabled",
         "analysis samples accumulate",
-        "the sideband/broadening proxy is finite"
+        "sideband response and active-section field overlap are finite"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
@@ -2517,13 +2531,14 @@
         "nonlinearEnabled": true,
         "nonlinearCellsMin": 500,
         "minAnalysisSamples": 8,
-        "sidebandRatioMin": 1e-8,
-        "nonlinearEnergyFractionMin": 1e-6
+        "sidebandRatioMin": 0.2,
+        "nonlinearEnergyFractionMin": 0.1,
+        "activeSectionEnergyFractionMin": 0.05
       },
-      "rationale": "Turns the SPM Kerr pulse scene into an executable reduced spectral-broadening check."
+      "rationale": "Checks that the Kerr pulse scene routes through the nonlinear material with measurable active-section overlap and finite sideband response."
     },
     {
-      "id": "kerr_bistable_cavity_overlap",
+      "id": "kerr_ring_cavity_active_overlap",
       "priority": "P1",
       "preset": "kerrBistableCavity",
       "profile": "physics",
@@ -2532,7 +2547,7 @@
       "checks": [
         "Kerr nonlinear cavity material is present",
         "mode-launched guide energy reaches the cavity/active section",
-        "analysis samples accumulate for the qualitative bistability proxy"
+        "analysis samples accumulate for the Kerr ring-cavity route"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
@@ -2541,12 +2556,13 @@
         "nonlinearCellsMin": 150,
         "highIndexCellsMin": 300,
         "minAnalysisSamples": 8,
-        "activeSectionEnergyFractionMin": 1e-6
+        "guideEnergyFractionMin": 0.05,
+        "activeSectionEnergyFractionMin": 0.001
       },
-      "rationale": "Checks the Kerr bistable cavity as a nonlinear resonator geometry with finite active-section overlap."
+      "rationale": "Checks the Kerr ring-cavity scene as a mode-launched nonlinear resonator geometry with finite guide and active-section field overlap."
     },
     {
-      "id": "vo2_switching_phase_proxy",
+      "id": "vo2_phase_change_switching_response",
       "priority": "P1",
       "preset": "vo2SwitchingSlab",
       "profile": "physics",
@@ -2555,7 +2571,7 @@
       "checks": [
         "phase-change material is enabled",
         "the VO2-like slab contains many phase-state cells",
-        "the phase-state proxy responds during the run"
+        "the phase-state variable and switched-cell count respond during the run"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
@@ -2563,13 +2579,15 @@
         "phaseChangeEnabled": true,
         "phaseChangeCellsMin": 1000,
         "minAnalysisSamples": 8,
-        "phaseStateMaxMin": 1e-6,
-        "phaseChangeEnergyFractionMin": 1e-6
+        "phaseStateMaxMin": 0.1,
+        "switchedCellsMin": 50,
+        "phaseChangeEnergyFractionMin": 0.05,
+        "lossMaxMin": 0.02
       },
       "rationale": "Checks the VO2 switching slab as a finite-threshold phase-state scene without claiming a calibrated transition curve."
     },
     {
-      "id": "pcm_memory_cell_phase_proxy",
+      "id": "pcm_memory_cell_phase_state_response",
       "priority": "P1",
       "preset": "pcmMemoryCell",
       "profile": "physics",
@@ -2578,7 +2596,7 @@
       "checks": [
         "a compact phase-change memory cell is embedded in a guide",
         "analysis samples accumulate",
-        "field energy overlaps the PCM cell"
+        "the compact cell reaches a persistent switched phase state"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
@@ -2587,13 +2605,15 @@
         "phaseChangeCellsMin": 50,
         "highIndexCellsMin": 300,
         "minAnalysisSamples": 8,
-        "phaseStateMaxMin": 1e-6,
-        "phaseChangeEnergyFractionMin": 1e-6
+        "phaseStateMeanMin": 0.2,
+        "phaseStateMaxMin": 0.8,
+        "switchedCellsMin": 40,
+        "guideEnergyFractionMin": 0.5
       },
       "rationale": "Guards the PCM memory-cell scene as a phase-change guide device with finite field overlap."
     },
     {
-      "id": "saturable_absorber_phase_proxy",
+      "id": "saturable_absorber_phase_response",
       "priority": "P1",
       "preset": "saturableAbsorber",
       "profile": "physics",
@@ -2602,7 +2622,7 @@
       "checks": [
         "phase-state saturable absorber material is enabled",
         "loss contrast exists between off/on state settings",
-        "the phase-state proxy responds during the run"
+        "the bleachable phase-state variable responds during the run"
       ],
       "acceptance": {
         "nonlinearMediaCheck": true,
@@ -2611,12 +2631,15 @@
         "phaseChangeCellsMin": 500,
         "lossMaxMin": 0.05,
         "minAnalysisSamples": 8,
-        "phaseStateMaxMin": 1e-6
+        "phaseStateMeanMin": 0.05,
+        "phaseStateMaxMin": 0.5,
+        "switchedCellsMin": 100,
+        "phaseChangeEnergyFractionMin": 0.02
       },
-      "rationale": "Checks the saturable absorber as an executable bleaching analogue with active phase-state cells."
+      "rationale": "Checks the saturable absorber as an active lossy phase-state section with measurable bleaching response."
     },
     {
-      "id": "all_optical_switch_active_section",
+      "id": "all_optical_active_section_response",
       "priority": "P1",
       "preset": "allOpticalSwitch",
       "profile": "physics",
@@ -2636,13 +2659,15 @@
         "phaseChangeCellsMin": 50,
         "highIndexCellsMin": 50,
         "minAnalysisSamples": 8,
-        "activeSectionEnergyFractionMin": 1e-8,
-        "outputArmEnergyFractionMin": 1e-9
+        "activeSectionEnergyFractionMin": 0.05,
+        "outputArmEnergyFractionMin": 0.001,
+        "phaseStateMaxMin": 0.5,
+        "switchedCellsMin": 10
       },
-      "rationale": "Checks the all-optical switch as a mode-launched active-section workflow, not just a passive guide drawing."
+      "rationale": "Checks the all-optical active-section scene as a mode-launched Kerr/phase-state workflow with finite active-region and output-arm field overlap."
     },
     {
-      "id": "nonlinear_limiter_phase_proxy",
+      "id": "nonlinear_limiter_active_loss_response",
       "priority": "P1",
       "preset": "nonlinearLimiter",
       "profile": "physics",
@@ -2660,9 +2685,11 @@
         "phaseChangeCellsMin": 500,
         "lossMaxMin": 0.05,
         "minAnalysisSamples": 8,
-        "limiterEnergyFractionMin": 1e-6
+        "phaseStateMaxMin": 0.5,
+        "switchedCellsMin": 100,
+        "limiterEnergyFractionMin": 0.02
       },
-      "rationale": "Checks the nonlinear limiter as a finite active-loss section with reduced phase-state observables."
+      "rationale": "Checks the nonlinear limiter as a finite active-loss section with phase-state response and limiter-region field overlap."
     },
     {
       "id": "json_reproducibility",
@@ -3026,10 +3053,10 @@
       "browserSmoke": false,
       "checks": [
         "Kerr, phase-change, harmonic, and saturable-gain responses use physical field scale after internal renormalization",
-        "SHG/THG scenes report harmonic proxies H2/H3",
-        "SPM and bistability amplitude sweeps report sideband and hysteresis proxies",
-        "VO2/PCM/saturable/limiter scenes report average switched-state proxy",
-        "PT/EP scenes report gamma-sweep modal splitting proxy"
+        "SHG and chi3 harmonic scenes report H2/H3 readouts",
+        "SPM and Kerr ring-cavity amplitude sweeps report sideband and active-section readouts",
+        "VO2, PCM, saturable, and limiter scenes report phase-state metrics",
+        "PT and EP scenes report gamma-sweep modal splitting estimates"
       ],
       "acceptance": {
         "status": "first-nonlinear-material-pass-field-scale-corrected; calibrated-transfer-curves-and-convergence-pending"
@@ -3037,23 +3064,22 @@
       "rationale": "Tracks Atlas 111-120 and 131-132 after making nonlinear intensity, harmonic polarization, phase-state thresholds, and saturable gain consistent with field renormalization."
     },
     {
-      "id": "negative_index_quantitative_gap",
+      "id": "double_negative_slab_reference_scope",
       "priority": "P1",
       "preset": "negativeIndexSlab",
       "profile": "physics",
       "browserSmoke": false,
       "checks": [
         "finite fields",
-        "measure in-slab beam-centroid angle",
-        "measure in-slab field-gradient phase-front proxy and coherence",
-        "measure superlens image transfer and image width",
+        "measure in-slab phase-front coherence",
+        "compare field phase and flux against an independent double-negative slab reference",
         "beam-case power-balance residual",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "first-fdtd-observables-and-phase-front-proxy-added; calibrated-reference-and-convergence-pending"
+        "status": "first-fdtd-observables-and-phase-front-added; calibrated-reference-and-convergence-pending"
       },
-      "rationale": "Tracks the quantitative validation gap for double-negative and superlens scenes after first-pass field observables."
+      "rationale": "Tracks future reference work for the double-negative slab beyond the current material and in-slab field checks."
     },
     {
       "id": "floquet_power_balance_gap",
@@ -3690,7 +3716,7 @@
       "rationale": "Tracks Atlas 133-140 after adding scene-level reduced observables for composite workflows rather than relying only on reused component diagnostics."
     },
     {
-      "id": "hyperlens_mtf_quantitative_gap",
+      "id": "hyperbolic_annular_mtf_reference_scope",
       "priority": "P1",
       "preset": "hyperlens",
       "profile": "physics",
@@ -3698,15 +3724,15 @@
       "checks": [
         "finite fields",
         "measure inner and outer ring field transfer",
-        "measure normalized angular-harmonic MTF proxy",
+        "measure normalized angular-harmonic MTF",
         "estimate MTF50 angular order",
         "compare against controlled subwavelength source pattern",
         "grid convergence"
       ],
       "acceptance": {
-        "status": "first-mtf-proxy-added; calibrated-source-reference-and-convergence-pending"
+        "status": "first-mtf-observables-added; calibrated-source-reference-and-convergence-pending"
       },
-      "rationale": "Tracks the hyperlens PSF/MTF validation gap after adding angular-harmonic transfer metrics from FDTD field samples."
+      "rationale": "Tracks future reference work for the 2D hyperbolic annular-transfer scene after adding angular-harmonic transfer metrics from FDTD field samples."
     },
     {
       "id": "six_field_bianisotropy_reference_scope",

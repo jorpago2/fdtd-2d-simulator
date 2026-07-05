@@ -3270,7 +3270,7 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`material cross-energy fraction ${bianisotropic?.materialCrossFraction} below ${minMaterialCrossFraction}`);
     }
   }
-  if (testCase.id === "spp_interface_surface_localization" || testCase.id === "spp_grating_surface_coupling") {
+  if (testCase.id === "spp_interface_surface_localization" || testCase.id === "spp_grating_surface_launcher") {
     status.spp = await plasmonicSurfaceMetrics(page);
     const minSurfaceFraction = Number(testCase.acceptance?.surfaceFractionMin);
     const minSurfaceToBulk = Number(testCase.acceptance?.surfaceToBulkRatioMin);
@@ -3291,13 +3291,17 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`SPP grating has ${status.spp.gratingCellsAboveInterface} metal cells above the interface, expected at least ${minGratingCells}`);
     }
   }
-  if (testCase.id === "negative_index_observable_finite" || testCase.id === "superlens_image_proxy_finite") {
+  if (testCase.id === "double_negative_drude_slab_phase" || testCase.id === "dng_slab_point_source_transfer") {
     status.negativeIndex = await negativeIndexMetrics(page);
     const metrics = status.negativeIndex.metrics;
     const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minCells = Number(testCase.acceptance?.doubleNegativeCellsMin);
     const minCoherence = Number(testCase.acceptance?.slabPhaseCoherenceMin);
+    const minSlabBeamEnergy = Number(testCase.acceptance?.slabBeamEnergyMin);
+    const minSlabPhaseEnergy = Number(testCase.acceptance?.slabPhaseEnergyMin);
+    const minTransmittedBeamEnergy = Number(testCase.acceptance?.transmittedBeamEnergyMin);
     const minTransfer = Number(testCase.acceptance?.imageTransferMin);
+    const maxResolutionRatio = Number(testCase.acceptance?.imageResolutionRatioMax);
     if (Number.isFinite(minSamples) && status.negativeIndex.analysisSamples < minSamples) {
       status.failures.push(`negative-index analysis has ${status.negativeIndex.analysisSamples} samples, expected at least ${minSamples}`);
     }
@@ -3313,8 +3317,20 @@ async function runSmokeCase(page, testCase) {
       if (Number.isFinite(minCoherence) && metrics.slabPhaseCoherence < minCoherence) {
         status.failures.push(`slab phase-front coherence ${metrics.slabPhaseCoherence} below ${minCoherence}`);
       }
+      if (Number.isFinite(minSlabBeamEnergy) && !(Number(metrics.slab?.energy) >= minSlabBeamEnergy)) {
+        status.failures.push(`slab beam energy ${metrics.slab?.energy} below ${minSlabBeamEnergy}`);
+      }
+      if (Number.isFinite(minSlabPhaseEnergy) && !(Number(metrics.slabPhase?.energy) >= minSlabPhaseEnergy)) {
+        status.failures.push(`slab phase energy ${metrics.slabPhase?.energy} below ${minSlabPhaseEnergy}`);
+      }
+      if (Number.isFinite(minTransmittedBeamEnergy) && !(Number(metrics.transmitted?.energy) >= minTransmittedBeamEnergy)) {
+        status.failures.push(`transmitted beam energy ${metrics.transmitted?.energy} below ${minTransmittedBeamEnergy}`);
+      }
       if (Number.isFinite(minTransfer) && metrics.imageTransfer < minTransfer) {
         status.failures.push(`superlens image transfer ${metrics.imageTransfer} below ${minTransfer}`);
+      }
+      if (Number.isFinite(maxResolutionRatio) && !(metrics.resolutionRatio > 0 && metrics.resolutionRatio <= maxResolutionRatio)) {
+        status.failures.push(`image resolution ratio ${metrics.resolutionRatio} exceeds ${maxResolutionRatio}`);
       }
     }
   }
@@ -3343,6 +3359,8 @@ async function runSmokeCase(page, testCase) {
     const minBackplaneCells = Number(testCase.acceptance?.absorberPecBackplaneCellsMin);
     const minDiagnosticSamples = Number(testCase.acceptance?.minDiagnosticSamples);
     const minAbsorption = Number(testCase.acceptance?.absorptionProxyMin);
+    const maxReflectance = Number(testCase.acceptance?.reflectanceMax);
+    const maxTransmittance = Number(testCase.acceptance?.transmittanceMax);
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minHyperlensTransfer = Number(testCase.acceptance?.hyperlensTransferMin);
     const minHyperlensMtfValid = Number(testCase.acceptance?.hyperlensMtfValidCountMin);
@@ -3422,6 +3440,12 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minAbsorption) && !(Number.isFinite(metrics.absorptionProxy) && metrics.absorptionProxy >= minAbsorption)) {
       status.failures.push(`absorber proxy ${metrics.absorptionProxy} below ${minAbsorption}`);
     }
+    if (Number.isFinite(maxReflectance) && !(Number.isFinite(metrics.reflectance) && metrics.reflectance <= maxReflectance)) {
+      status.failures.push(`absorber reflectance ${metrics.reflectance} exceeds ${maxReflectance}`);
+    }
+    if (Number.isFinite(maxTransmittance) && !(Number.isFinite(metrics.transmittance) && metrics.transmittance <= maxTransmittance)) {
+      status.failures.push(`absorber transmittance ${metrics.transmittance} exceeds ${maxTransmittance}`);
+    }
     if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) {
       status.failures.push(`metamaterial analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
     }
@@ -3463,6 +3487,8 @@ async function runSmokeCase(page, testCase) {
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minHarmonic2 = Number(testCase.acceptance?.harmonic2Min);
     const minHarmonic3 = Number(testCase.acceptance?.harmonic3Min);
+    const minHarmonic2To3 = Number(testCase.acceptance?.harmonic2To3RatioMin);
+    const minHarmonic3To2 = Number(testCase.acceptance?.harmonic3To2RatioMin);
     const minSideband = Number(testCase.acceptance?.sidebandRatioMin);
     const minPhaseMean = Number(testCase.acceptance?.phaseStateMeanMin);
     const minPhaseMax = Number(testCase.acceptance?.phaseStateMaxMin);
@@ -3510,10 +3536,22 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`nonlinear analysis has ${metrics.analysisSamples} samples, expected at least ${minAnalysisSamples}`);
     }
     if (Number.isFinite(minHarmonic2) && !(Number.isFinite(metrics.harmonic2) && metrics.harmonic2 >= minHarmonic2)) {
-      status.failures.push(`H2 proxy ${metrics.harmonic2} below ${minHarmonic2}`);
+      status.failures.push(`H2 response ${metrics.harmonic2} below ${minHarmonic2}`);
     }
     if (Number.isFinite(minHarmonic3) && !(Number.isFinite(metrics.harmonic3) && metrics.harmonic3 >= minHarmonic3)) {
-      status.failures.push(`H3 proxy ${metrics.harmonic3} below ${minHarmonic3}`);
+      status.failures.push(`H3 response ${metrics.harmonic3} below ${minHarmonic3}`);
+    }
+    if (Number.isFinite(minHarmonic2To3)) {
+      const ratio = Number(metrics.harmonic2) / Math.max(1e-30, Number(metrics.harmonic3));
+      if (!(Number.isFinite(ratio) && ratio >= minHarmonic2To3)) {
+        status.failures.push(`H2/H3 response ratio ${ratio} below ${minHarmonic2To3}`);
+      }
+    }
+    if (Number.isFinite(minHarmonic3To2)) {
+      const ratio = Number(metrics.harmonic3) / Math.max(1e-30, Number(metrics.harmonic2));
+      if (!(Number.isFinite(ratio) && ratio >= minHarmonic3To2)) {
+        status.failures.push(`H3/H2 response ratio ${ratio} below ${minHarmonic3To2}`);
+      }
     }
     if (Number.isFinite(minSideband) && !(Number.isFinite(metrics.sidebandRatio) && metrics.sidebandRatio >= minSideband)) {
       status.failures.push(`sideband proxy ${metrics.sidebandRatio} below ${minSideband}`);

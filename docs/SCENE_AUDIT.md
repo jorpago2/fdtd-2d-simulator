@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-05T08:05:39.005Z
-Git commit: cbb7a99+working-tree
+Generated: 2026-07-05T08:47:21.864Z
+Git commit: ab9783f+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,9 +9,9 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 106 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
+| PASS | 121 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
 | VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
-| WARN | 35 | Scene runs, but has a documented teaching/modeling caveat. |
+| WARN | 20 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
 ## Blocking Findings
@@ -121,28 +121,28 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 96 | `honeycombLattice` Honeycomb lattice | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.60e-6 | honeycomb_lattice_sublattice_geometry:P1/physics | OK |
 | 97 | `valleyHall` Valley Hall interface | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_domain_wall:P1/physics | OK |
 | 98 | `valleyHallBend` Valley Hall bend | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.06e-8 | valley_hall_bend_channel_geometry:P1/physics | OK |
-| 99 | `topologicalPumping` Topological pumping | 9. Topological photonics | WARN | time modulation | WASM CPML+mod, 24 steps, E=1.44e-7 | topological_pumping_modulated_ssh:P1/physics | Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass. |
+| 99 | `topologicalPumping` Modulated SSH chain | 9. Topological photonics | PASS | time modulation | WASM CPML+mod, 24 steps, E=1.44e-7 | modulated_ssh_chain_route:P1/physics | OK |
 | 100 | `topologyDefect` Topology with strong defect | 9. Topological photonics | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=1.39e-8 | topology_defect_valley_channel:P1/physics | OK |
 | 101 | `sppInterface` SPP metal-dielectric interface | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material | WASM CPML+ADE, 24 steps, E=3.61e-8 | spp_interface_surface_localization:P1/physics | OK |
-| 102 | `sppGrating` SPP grating coupler | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=1.19e-11 | spp_grating_surface_coupling:P1/physics | SPP grating geometry and surface localization are validated; coupling efficiency is not a de-embedded grating-coupler metric. |
+| 102 | `sppGrating` SPP grating launcher | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=1.19e-11 | spp_grating_surface_launcher:P1/physics | OK |
 | 103 | `localizedPlasmon` Localized plasmon disk | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | localized_plasmon_drude_disk:P1/physics | OK |
 | 104 | `plasmonicDimer` Plasmonic dimer | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.68e-5 | plasmonic_dimer_hot_gap:P1/physics | OK |
 | 105 | `metasurfacePhaseBars` Phase-gradient metasurface | 10. Plasmonics and metamaterials | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | metasurface_phase_bar_gradient:P1/physics | OK |
-| 106 | `perfectAbsorber` Perfect absorber | 10. Plasmonics and metamaterials | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.42e-13 | perfect_absorber_lossy_backed_sheet:P1/physics | Executable validation is reduced/proxy (perfect_absorber_lossy_backed_sheet); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 107 | `negativeIndexSlab` Negative-index slab | 10. Plasmonics and metamaterials | WARN | dispersive material, frequency sweep | WASM CPML+ADE+TFSF, 24 steps, E=6.09e-8 | negative_index_observable_finite:P1/physics, negative_index_quantitative_gap:P1/physics | Executable validation is reduced/proxy (negative_index_observable_finite, negative_index_quantitative_gap); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 108 | `superlensSlab` Drude superlens slab | 10. Plasmonics and metamaterials | WARN | dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=4.16e-7 | superlens_image_proxy_finite:P1/physics | Drude superlens proxy with reduced transfer observable; not a calibrated evanescent-wave transfer-function measurement. |
-| 109 | `hyperlens` Hyperlens | 10. Plasmonics and metamaterials | WARN | HZ polarization, dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=1.04e-9 | hyperlens_reduced_mtf_proxy:P1/physics, hyperlens_mtf_quantitative_gap:P1/physics | Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation. |
+| 106 | `perfectAbsorber` Near-perfect backed absorber | 10. Plasmonics and metamaterials | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.42e-13 | backed_lossy_absorber_balance:P1/physics | OK |
+| 107 | `negativeIndexSlab` Double-negative Drude slab | 10. Plasmonics and metamaterials | PASS | dispersive material, frequency sweep | WASM CPML+ADE+TFSF, 24 steps, E=3.32e-8 | double_negative_drude_slab_phase:P1/physics, double_negative_slab_reference_scope:P1/physics | OK |
+| 108 | `superlensSlab` DNG slab image transfer | 10. Plasmonics and metamaterials | PASS | dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=4.16e-7 | dng_slab_point_source_transfer:P1/physics | OK |
+| 109 | `hyperlens` 2D hyperbolic annular transfer | 10. Plasmonics and metamaterials | PASS | HZ polarization, dispersive material, frequency sweep | WASM CPML+ADE, 24 steps, E=1.04e-9 | hyperbolic_annular_mtf_transfer:P1/physics, hyperbolic_annular_mtf_reference_scope:P1/physics | OK |
 | 110 | `enzEmitter` Dipole near ENZ slab | 10. Plasmonics and metamaterials | PASS | dispersive material | WASM CPML+ADE, 24 steps, E=3.40e-5 | enz_emitter_slab_overlap:P1/physics | OK |
 | 111 | `kerrSlab` Kerr nonlinear slab | 11. Nonlinear and active media | PASS | nonlinear material | WASM CPML+Kerr+TFSF, 24 steps, E=1.30e-8 | kerr_slab_nonlinear_overlap:P1/physics | OK |
-| 112 | `shgSlab` SHG χ² slab | 11. Nonlinear and active media | WARN | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=8.91e-9 | shg_slab_harmonic_proxy:P1/physics | Executable validation is reduced/proxy (shg_slab_harmonic_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 113 | `thgSlab` THG χ³ slab | 11. Nonlinear and active media | WARN | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=1.07e-8 | thg_slab_harmonic_proxy:P1/physics | Executable validation is reduced/proxy (thg_slab_harmonic_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 114 | `spmKerrPulse` Kerr SPM pulse | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+TFSF, 24 steps, E=6.58e-6 | spm_kerr_sideband_proxy:P1/physics, nonlinear_material_first_pass:P1/physics | Kerr SPM proxy; spectral broadening is reduced/qualitative, not a calibrated nonlinear phase-shift curve. |
-| 115 | `kerrBistableCavity` Kerr bistable cavity | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+mode, 24 steps, E=8.21e-6 | kerr_bistable_cavity_overlap:P1/physics | Kerr bistability proxy; no hysteresis sweep or steady-state branch extraction is claimed. |
-| 116 | `vo2SwitchingSlab` VO₂ switching slab | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=8.75e-6 | vo2_switching_phase_proxy:P1/physics | Executable validation is reduced/proxy (vo2_switching_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 117 | `pcmMemoryCell` PCM memory cell | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+mode, 24 steps, E=2.96e-6 | pcm_memory_cell_phase_proxy:P1/physics | Executable validation is reduced/proxy (pcm_memory_cell_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | saturable_absorber_phase_proxy:P1/physics | Saturable-absorber route is active, but the transmission-vs-intensity curve is not calibrated in this audit. |
-| 119 | `allOpticalSwitch` All-optical switch | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | all_optical_switch_active_section:P1/physics | All-optical-switch layout proxy; not a calibrated extinction-ratio or switching-energy result. |
-| 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | WARN | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | nonlinear_limiter_phase_proxy:P1/physics | Nonlinear limiter proxy; needs input-output transfer validation before limiter-threshold claims. |
+| 112 | `shgSlab` SHG χ² slab | 11. Nonlinear and active media | PASS | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=8.91e-9 | shg_chi2_harmonic_response:P1/physics | OK |
+| 113 | `thgSlab` Chi3 harmonic slab | 11. Nonlinear and active media | PASS | nonlinear material, harmonic conversion, amplitude sweep | WASM CPML+harmonic+TFSF, 24 steps, E=1.07e-8 | chi3_harmonic_slab_response:P1/physics | OK |
+| 114 | `spmKerrPulse` Kerr SPM pulse | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+Kerr+TFSF, 24 steps, E=6.58e-6 | kerr_spm_sideband_response:P1/physics, nonlinear_material_first_pass:P1/physics | OK |
+| 115 | `kerrBistableCavity` Kerr ring-cavity overlap | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+Kerr+mode, 24 steps, E=8.21e-6 | kerr_ring_cavity_active_overlap:P1/physics | OK |
+| 116 | `vo2SwitchingSlab` VO₂ switching slab | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=8.75e-6 | vo2_phase_change_switching_response:P1/physics | OK |
+| 117 | `pcmMemoryCell` PCM memory cell | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+mode, 24 steps, E=2.96e-6 | pcm_memory_cell_phase_state_response:P1/physics | OK |
+| 118 | `saturableAbsorber` Saturable absorber | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=7.27e-6 | saturable_absorber_phase_response:P1/physics | OK |
+| 119 | `allOpticalSwitch` All-optical active section | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+Kerr+phase+mode, 24 steps, E=8.26e-9 | all_optical_active_section_response:P1/physics | OK |
+| 120 | `nonlinearLimiter` Nonlinear limiter | 11. Nonlinear and active media | PASS | nonlinear material, amplitude sweep | WASM CPML+phase+TFSF, 24 steps, E=9.75e-6 | nonlinear_limiter_active_loss_response:P1/physics | OK |
 | 121 | `temporalInterface` Temporal interface | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_interface_uniform_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
 | 122 | `temporalSlab` Temporal slab | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=4.06e-8 | temporal_slab_uniform_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |
 | 123 | `temporalModulation` Temporal epsilon modulation | 12. Time-varying and Floquet media | WARN | time modulation | WASM CPML+mod+TFSF, 24 steps, E=3.68e-8 | floquet_power_balance_gap:P1/physics, temporal_modulation_region_floquet_proxy:P1/physics | Description frames the scene as qualitative/reduced/proxy; avoid quantitative claims without extra validation. |

@@ -30,13 +30,10 @@ This guide translates the validation audit into teaching use. It does not claim 
 
 ## WARN Scene Guidance
 
-The current audit has `PASS 106`, `WARN 35`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
+The current audit has `PASS 121`, `WARN 20`, `VALIDATION_GAP 0`, and `FIX_REQUIRED 0`. `WARN` does not mean the scene is broken. It means the scene runs, but its current executable check is reduced/proxy or its description makes a bounded teaching claim rather than a calibrated device claim.
 
 | Family | Current `WARN` scenes |
 | --- | --- |
-| Topological photonics | `topologicalPumping` |
-| Plasmonics and metamaterials | `sppGrating`, `perfectAbsorber`, `negativeIndexSlab`, `superlensSlab`, `hyperlens` |
-| Nonlinear and active media | `shgSlab`, `thgSlab`, `spmKerrPulse`, `kerrBistableCavity`, `vo2SwitchingSlab`, `pcmMemoryCell`, `saturableAbsorber`, `allOpticalSwitch`, `nonlinearLimiter` |
 | Time-varying and Floquet media | `temporalInterface`, `temporalSlab`, `temporalModulation`, `temporalCrystal`, `modulatedGuide`, `travelingModulation`, `temporalIsolator`, `modulatedRing`, `floquetResonators`, `syntheticFrequency` |
 | Coupled and non-Hermitian workflows | `ptSymmetricCoupler`, `exceptionalPointCoupler`, `nonHermitianSkin`, `bicKerr`, `bicEnz`, `janusTopologicalGuide`, `huygensCavity`, `topologyTemporalMod`, `nonreciprocalValleyHall`, `spaceTimeCrystal` |
 

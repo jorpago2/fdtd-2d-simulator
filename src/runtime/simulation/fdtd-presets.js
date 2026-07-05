@@ -1557,7 +1557,7 @@ Object.assign(FDTDSim.prototype, {
         state.dispersionGamma = mat.negativeDispersive.gamma;
         configureFrequencySweep(sourceFrequency * 0.75, sourceFrequency * 1.25, 9, 1200);
         rectL(midXLambda - 0.45, 0.5, 0.9, domainYLambda - 1.0, mat.negativeDispersive);
-        setSources([{ shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), widthLambda: 0.8, angleDeg: 28, amplitude: 0.26 }]);
+        setSources([{ shape: "line", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda), amplitude: 0.38 }]);
         break;
       case "superlensSlab":
         state.materialDispersionEnabled = true;

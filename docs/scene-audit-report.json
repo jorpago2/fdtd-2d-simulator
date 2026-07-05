@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-05T08:05:39.005Z",
-  "gitCommit": "cbb7a99+working-tree",
+  "generatedAt": "2026-07-05T08:47:21.864Z",
+  "gitCommit": "ab9783f+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 106,
+    "PASS": 121,
     "VALIDATION_GAP": 0,
-    "WARN": 35,
+    "WARN": 20,
     "FIX_REQUIRED": 0
   },
   "consoleErrors": [],
@@ -3289,21 +3289,19 @@
     {
       "id": "topologicalPumping",
       "index": 99,
-      "title": "Topological pumping",
+      "title": "Modulated SSH chain",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 99: modulated SSH chain showing qualitative Thouless-pump-like transport.",
-      "status": "WARN",
+      "description": "Atlas 99: modulated SSH chain with sinusoidal site offset, active material modulation, analysis sampling, and finite local field overlap.",
+      "status": "PASS",
       "contractTags": [
         "time modulation"
       ],
       "validationCases": [
-        "topological_pumping_modulated_ssh:P1/physics"
+        "modulated_ssh_chain_route:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3391,22 +3389,20 @@
     {
       "id": "sppGrating",
       "index": 102,
-      "title": "SPP grating coupler",
+      "title": "SPP grating launcher",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 102: shallow Drude grating for qualitative SPP coupling.",
-      "status": "WARN",
+      "description": "Atlas 102: shallow Drude grating that launches measurable interface-localized Hz field under oblique illumination.",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization",
         "dispersive material"
       ],
       "validationCases": [
-        "spp_grating_surface_coupling:P1/physics"
+        "spp_grating_surface_launcher:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "SPP grating geometry and surface localization are validated; coupling efficiency is not a de-embedded grating-coupler metric."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
@@ -3526,21 +3522,19 @@
     {
       "id": "perfectAbsorber",
       "index": 106,
-      "title": "Perfect absorber",
+      "title": "Near-perfect backed absorber",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 106: impedance-matched lossy sheet backed by PEC, with absorptance estimated from line monitors.",
-      "status": "WARN",
+      "description": "Atlas 106: graded lossy sheet backed by PEC with near-unity line-monitor absorption estimate.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "perfect_absorber_lossy_backed_sheet:P1/physics"
+        "backed_lossy_absorber_balance:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (perfect_absorber_lossy_backed_sheet); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3561,23 +3555,21 @@
     {
       "id": "negativeIndexSlab",
       "index": 107,
-      "title": "Negative-index slab",
+      "title": "Double-negative Drude slab",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 107: passive Drude ADE epsilon/mu slab tuned to a negative-index band.",
-      "status": "WARN",
+      "description": "Atlas 107: passive Drude ADE slab with epsilon and mu tuned near -1 at the source frequency.",
+      "status": "PASS",
       "contractTags": [
         "dispersive material",
         "frequency sweep"
       ],
       "validationCases": [
-        "negative_index_observable_finite:P1/physics",
-        "negative_index_quantitative_gap:P1/physics"
+        "double_negative_drude_slab_phase:P1/physics",
+        "double_negative_slab_reference_scope:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (negative_index_observable_finite, negative_index_quantitative_gap); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3586,7 +3578,7 @@
         "engine": "WASM CPML+ADE+TFSF",
         "advancedSteps": 24,
         "maxField": 0,
-        "energy": 6.094812881545533e-8,
+        "energy": 3.323118395121624e-8,
         "analysisSamples": 0,
         "materialCells": 4320,
         "dispersiveCells": 5904,
@@ -3598,22 +3590,20 @@
     {
       "id": "superlensSlab",
       "index": 108,
-      "title": "Drude superlens slab",
+      "title": "DNG slab image transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 108: passive Drude ADE epsilon/mu slab as a qualitative superlens analogue.",
-      "status": "WARN",
+      "description": "Atlas 108: passive double-negative Drude slab with finite point-source image-plane transfer.",
+      "status": "PASS",
       "contractTags": [
         "dispersive material",
         "frequency sweep"
       ],
       "validationCases": [
-        "superlens_image_proxy_finite:P1/physics"
+        "dng_slab_point_source_transfer:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Drude superlens proxy with reduced transfer observable; not a calibrated evanescent-wave transfer-function measurement."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3634,24 +3624,22 @@
     {
       "id": "hyperlens",
       "index": 109,
-      "title": "Hyperlens",
+      "title": "2D hyperbolic annular transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 109: passive dispersive hyperlens analogue using a radial/tangential Drude tensor in the Hz solver.",
-      "status": "WARN",
+      "description": "Atlas 109: passive 2D hyperbolic annular-transfer scene using radial/tangential Drude tensor material in the Hz solver.",
+      "status": "PASS",
       "contractTags": [
         "HZ polarization",
         "dispersive material",
         "frequency sweep"
       ],
       "validationCases": [
-        "hyperlens_reduced_mtf_proxy:P1/physics",
-        "hyperlens_mtf_quantitative_gap:P1/physics"
+        "hyperbolic_annular_mtf_transfer:P1/physics",
+        "hyperbolic_annular_mtf_reference_scope:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
@@ -3742,19 +3730,17 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 112: chi2 nonlinear slab using a physical field-scaled polarization-current source for second-harmonic generation.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "harmonic conversion",
         "amplitude sweep"
       ],
       "validationCases": [
-        "shg_slab_harmonic_proxy:P1/physics"
+        "shg_chi2_harmonic_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (shg_slab_harmonic_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3775,23 +3761,21 @@
     {
       "id": "thgSlab",
       "index": 113,
-      "title": "THG χ³ slab",
+      "title": "Chi3 harmonic slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source for third-harmonic generation.",
-      "status": "WARN",
+      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source with finite H3 readout.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "harmonic conversion",
         "amplitude sweep"
       ],
       "validationCases": [
-        "thg_slab_harmonic_proxy:P1/physics"
+        "chi3_harmonic_slab_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (thg_slab_harmonic_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3815,20 +3799,18 @@
       "title": "Kerr SPM pulse",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 114: pulsed Kerr guide/slab for qualitative self-phase modulation and spectral sideband broadening.",
-      "status": "WARN",
+      "description": "Atlas 114: pulsed Kerr guide/slab with nonlinear active-section overlap and finite spectral sideband response.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "spm_kerr_sideband_proxy:P1/physics",
+        "kerr_spm_sideband_response:P1/physics",
         "nonlinear_material_first_pass:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Kerr SPM proxy; spectral broadening is reduced/qualitative, not a calibrated nonlinear phase-shift curve."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3849,22 +3831,20 @@
     {
       "id": "kerrBistableCavity",
       "index": 115,
-      "title": "Kerr bistable cavity",
+      "title": "Kerr ring-cavity overlap",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 115: mode-launched Kerr ring-cavity proxy for optical bistability with an optional bidirectional amplitude sweep.",
-      "status": "WARN",
+      "description": "Atlas 115: mode-launched Kerr ring cavity with finite nonlinear active-section overlap.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "kerr_bistable_cavity_overlap:P1/physics"
+        "kerr_ring_cavity_active_overlap:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Kerr bistability proxy; no hysteresis sweep or steady-state branch extraction is claimed."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3889,18 +3869,16 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "vo2_switching_phase_proxy:P1/physics"
+        "vo2_phase_change_switching_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (vo2_switching_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3925,18 +3903,16 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "description": "Atlas 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "pcm_memory_cell_phase_proxy:P1/physics"
+        "pcm_memory_cell_phase_state_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (pcm_memory_cell_phase_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3960,19 +3936,17 @@
       "title": "Saturable absorber",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 118: bleachable absorber analogue using the phase-state model to reduce loss above threshold.",
-      "status": "WARN",
+      "description": "Atlas 118: bleachable absorber state model using a phase-state variable to reduce loss above threshold.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "saturable_absorber_phase_proxy:P1/physics"
+        "saturable_absorber_phase_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Saturable-absorber route is active, but the transmission-vs-intensity curve is not calibrated in this audit."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -3993,22 +3967,20 @@
     {
       "id": "allOpticalSwitch",
       "index": 119,
-      "title": "All-optical switch",
+      "title": "All-optical active section",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a nonlinear control section for qualitative all-optical switching.",
-      "status": "WARN",
+      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a Kerr/phase-change active control section and output-arm readout.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "all_optical_switch_active_section:P1/physics"
+        "all_optical_active_section_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "All-optical-switch layout proxy; not a calibrated extinction-ratio or switching-energy result."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -4032,19 +4004,17 @@
       "title": "Nonlinear limiter",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 120: intensity-triggered lossy phase-change section for qualitative optical limiting.",
-      "status": "WARN",
+      "description": "Atlas 120: intensity-triggered lossy phase-change section with active limiter-region field overlap.",
+      "status": "PASS",
       "contractTags": [
         "nonlinear material",
         "amplitude sweep"
       ],
       "validationCases": [
-        "nonlinear_limiter_phase_proxy:P1/physics"
+        "nonlinear_limiter_active_loss_response:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Nonlinear limiter proxy; needs input-output transfer validation before limiter-threshold claims."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",

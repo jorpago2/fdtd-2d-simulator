@@ -1140,11 +1140,11 @@
     {
       "id": "topologicalPumping",
       "index": 99,
-      "title": "Topological pumping",
+      "title": "Modulated SSH chain",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
       "groupName": "Topological photonics",
-      "description": "Atlas 99: modulated SSH chain showing qualitative Thouless-pump-like transport."
+      "description": "Atlas 99: modulated SSH chain with sinusoidal site offset, active material modulation, analysis sampling, and finite local field overlap."
     },
     {
       "id": "topologyDefect",
@@ -1167,11 +1167,11 @@
     {
       "id": "sppGrating",
       "index": 102,
-      "title": "SPP grating coupler",
+      "title": "SPP grating launcher",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 102: shallow Drude grating for qualitative SPP coupling."
+      "description": "Atlas 102: shallow Drude grating that launches measurable interface-localized Hz field under oblique illumination."
     },
     {
       "id": "localizedPlasmon",
@@ -1203,38 +1203,38 @@
     {
       "id": "perfectAbsorber",
       "index": 106,
-      "title": "Perfect absorber",
+      "title": "Near-perfect backed absorber",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 106: impedance-matched lossy sheet backed by PEC, with absorptance estimated from line monitors."
+      "description": "Atlas 106: graded lossy sheet backed by PEC with near-unity line-monitor absorption estimate."
     },
     {
       "id": "negativeIndexSlab",
       "index": 107,
-      "title": "Negative-index slab",
+      "title": "Double-negative Drude slab",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 107: passive Drude ADE epsilon/mu slab tuned to a negative-index band."
+      "description": "Atlas 107: passive Drude ADE slab with epsilon and mu tuned near -1 at the source frequency."
     },
     {
       "id": "superlensSlab",
       "index": 108,
-      "title": "Drude superlens slab",
+      "title": "DNG slab image transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 108: passive Drude ADE epsilon/mu slab as a qualitative superlens analogue."
+      "description": "Atlas 108: passive double-negative Drude slab with finite point-source image-plane transfer."
     },
     {
       "id": "hyperlens",
       "index": 109,
-      "title": "Hyperlens",
+      "title": "2D hyperbolic annular transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
       "groupName": "Plasmonics and metamaterials",
-      "description": "Atlas 109: passive dispersive hyperlens analogue using a radial/tangential Drude tensor in the Hz solver."
+      "description": "Atlas 109: passive 2D hyperbolic annular-transfer scene using radial/tangential Drude tensor material in the Hz solver."
     },
     {
       "id": "enzEmitter",
@@ -1266,11 +1266,11 @@
     {
       "id": "thgSlab",
       "index": 113,
-      "title": "THG χ³ slab",
+      "title": "Chi3 harmonic slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source for third-harmonic generation."
+      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source with finite H3 readout."
     },
     {
       "id": "spmKerrPulse",
@@ -1279,16 +1279,16 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 114: pulsed Kerr guide/slab for qualitative self-phase modulation and spectral sideband broadening."
+      "description": "Atlas 114: pulsed Kerr guide/slab with nonlinear active-section overlap and finite spectral sideband response."
     },
     {
       "id": "kerrBistableCavity",
       "index": 115,
-      "title": "Kerr bistable cavity",
+      "title": "Kerr ring-cavity overlap",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 115: mode-launched Kerr ring-cavity proxy for optical bistability with an optional bidirectional amplitude sweep."
+      "description": "Atlas 115: mode-launched Kerr ring cavity with finite nonlinear active-section overlap."
     },
     {
       "id": "vo2SwitchingSlab",
@@ -1315,16 +1315,16 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 118: bleachable absorber analogue using the phase-state model to reduce loss above threshold."
+      "description": "Atlas 118: bleachable absorber state model using a phase-state variable to reduce loss above threshold."
     },
     {
       "id": "allOpticalSwitch",
       "index": 119,
-      "title": "All-optical switch",
+      "title": "All-optical active section",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a nonlinear control section for qualitative all-optical switching."
+      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a Kerr/phase-change active control section and output-arm readout."
     },
     {
       "id": "nonlinearLimiter",
@@ -1333,7 +1333,7 @@
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
       "groupName": "Nonlinear and active media",
-      "description": "Atlas 120: intensity-triggered lossy phase-change section for qualitative optical limiting."
+      "description": "Atlas 120: intensity-triggered lossy phase-change section with active limiter-region field overlap."
     },
     {
       "id": "temporalInterface",

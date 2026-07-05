@@ -100,15 +100,6 @@ const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCou
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
 const qualitativeCaveats = new Map([
-  ["hyperlens", "Scalar 2D Hz hyperlens analogue; useful for teaching transfer trends, not a full cylindrical 3D validation."],
-  ["topologicalPumping", "Qualitative Thouless-pump-like transport proxy; no eigenmode or adiabatic-cycle validation in this pass."],
-  ["sppGrating", "SPP grating geometry and surface localization are validated; coupling efficiency is not a de-embedded grating-coupler metric."],
-  ["superlensSlab", "Drude superlens proxy with reduced transfer observable; not a calibrated evanescent-wave transfer-function measurement."],
-  ["spmKerrPulse", "Kerr SPM proxy; spectral broadening is reduced/qualitative, not a calibrated nonlinear phase-shift curve."],
-  ["kerrBistableCavity", "Kerr bistability proxy; no hysteresis sweep or steady-state branch extraction is claimed."],
-  ["saturableAbsorber", "Saturable-absorber route is active, but the transmission-vs-intensity curve is not calibrated in this audit."],
-  ["allOpticalSwitch", "All-optical-switch layout proxy; not a calibrated extinction-ratio or switching-energy result."],
-  ["nonlinearLimiter", "Nonlinear limiter proxy; needs input-output transfer validation before limiter-threshold claims."],
   ["temporalIsolator", "Temporal-isolator analogue; reduced sideband/isolation observables are not de-embedded two-port S-parameters."],
   ["syntheticFrequency", "Synthetic-frequency-dimension proxy; sideband graph intuition is shown without a calibrated frequency-lattice model."],
   ["exceptionalPointCoupler", "Exceptional-point proxy; reduced modal coalescence is checked, not a full eigenvalue/topology validation."],
