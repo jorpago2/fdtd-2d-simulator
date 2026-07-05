@@ -215,16 +215,16 @@
       "rationale": "Checks spectral/ringdown post-processing used by resonator teaching scenes."
     },
     {
-      "id": "purcell_2d_cavity_proxy",
+      "id": "purcell_2d_cavity_q_area_metric",
       "priority": "P1",
       "preset": "purcell2d",
       "profile": "physics",
       "steps": 1600,
       "browserSmoke": true,
       "checks": [
-        "point-dipole source is embedded in a high-index 2D cavity",
+        "point-dipole source is embedded in a nested dielectric 2D cavity",
         "analysis trace accumulates enough samples",
-        "Q/Aeff Purcell proxy is finite and positive"
+        "2D Q/Aeff cavity metric is finite and bounded"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -234,11 +234,16 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "centralDiskHighIndexCellsMin": 80,
-        "centralDiskEnergyFractionMin": 1e-6,
+        "centralDiskEnergyFractionMin": 0.05,
+        "sourceOverlapEnergyFractionMin": 0.02,
         "minAnalysisSamples": 64,
-        "purcellProxyMin": 1e-6
+        "ringdownQMin": 20,
+        "modeAreaLambda2Min": 0.05,
+        "modeAreaLambda2Max": 20,
+        "qAreaMetricMin": 1,
+        "qAreaMetricMax": 1000000
       },
-      "rationale": "Checks the Purcell scene as a finite 2D cavity/source proxy with a live Q/Aeff diagnostic, not an absolute 3D Purcell-factor claim."
+      "rationale": "Checks the 2D cavity source as a bounded teaching metric: finite ringdown Q divided by effective field area in lambda0 squared."
     },
     {
       "id": "advanced_material_smoke",
@@ -603,7 +608,7 @@
       "rationale": "Adds a dynamic ADE-state validation beyond the fast active-media smoke label."
     },
     {
-      "id": "finite_conductivity_skin_depth_proxy",
+      "id": "finite_conductivity_damping_contract",
       "priority": "P1",
       "preset": "finiteConductivity",
       "profile": "physics",
@@ -612,19 +617,20 @@
       "checks": [
         "conductive half-space cells are present",
         "J = sigma E update path is active",
-        "field energy enters the conductor and the pulse decays at late time"
+        "field energy enters the conductor and the pulse is damped at late time"
       ],
       "acceptance": {
         "materialModelCheck": "conductive",
         "requiresActiveMediaLabel": "conductive",
-        "materialCellsMin": 400,
-        "conductiveCellsMin": 400,
+        "materialCellsMin": 20000,
+        "conductiveCellsMin": 20000,
         "conductivitySigmaMin": 0.1,
-        "conductorEntranceEnergyMin": 1e-14,
-        "conductorDeepToEntranceRatioMax": 2.0,
-        "lateEnergyRatioMax": 0.35
+        "materialEnergyFractionMin": 0.1,
+        "conductorEntranceEnergyMin": 0.1,
+        "conductorDeepToEntranceRatioMax": 1.8,
+        "lateEnergyRatioMax": 0.3
       },
-      "rationale": "Guards the finite-conductivity scene as a skin-depth/attenuation example rather than only a colored slab."
+      "rationale": "Checks the finite-conductivity scene as an explicit conductive damping route, without claiming a calibrated skin-depth fit."
     },
     {
       "id": "lorentz_resonant_ade_response",
@@ -737,14 +743,14 @@
       "rationale": "Checks the anisotropic-medium scene as a real tensor-epsilon block with finite field interaction."
     },
     {
-      "id": "hyperbolic_indefinite_tensor_proxy",
+      "id": "indefinite_drude_tensor_route",
       "priority": "P1",
       "preset": "hyperbolicMedium",
       "profile": "physics",
       "steps": 900,
       "browserSmoke": true,
       "checks": [
-        "passive Drude tensor proxy block cells are present",
+        "passive anisotropic Drude tensor block cells are present",
         "effective tensor eigenvalues are indefinite near the source frequency",
         "point-dipole source produces finite energy without nondispersive negative-epsilon blow-up"
       ],
@@ -754,15 +760,15 @@
         "fieldComponent": "hz",
         "dispersionModel": "drude",
         "dispersiveKind": "drudeLike",
-        "materialCellsMin": 400,
-        "dispersiveCellsMin": 400,
-        "anisotropicCellsMin": 400,
-        "tensorCheckedCellsMin": 400,
-        "indefiniteCellsMin": 400,
-        "negativeTensorCellsMin": 400,
-        "materialEnergyMin": 1e-12
+        "materialCellsMin": 2000,
+        "dispersiveCellsMin": 2000,
+        "anisotropicCellsMin": 2000,
+        "tensorCheckedCellsMin": 2000,
+        "indefiniteCellsMin": 2000,
+        "negativeTensorCellsMin": 2000,
+        "materialEnergyFractionMin": 0.3
       },
-      "rationale": "Keeps the hyperbolic scene honest as a reduced passive Drude tensor proxy, not a causal broadband-material validation."
+      "rationale": "Checks the scene as a passive 2D anisotropic Drude block whose effective tensor is indefinite at the source frequency."
     },
     {
       "id": "chiral_six_field_bianisotropy_response",
@@ -1878,7 +1884,7 @@
       "rationale": "Checks the quarter-wave cavity as a side stub with a shorted end, distinct from the open dielectric stub."
     },
     {
-      "id": "beta_factor_guided_flux_proxy",
+      "id": "dipole_guided_flux_ratio",
       "priority": "P1",
       "preset": "betaFactor",
       "profile": "physics",
@@ -1886,8 +1892,8 @@
       "browserSmoke": true,
       "checks": [
         "slab guide is present",
-        "single dipole source is coupled to the guide",
-        "analysis reports a finite guided-flux beta proxy"
+        "single Gaussian dipole source is coupled to the guide",
+        "analysis reports a finite bounded guided-flux ratio"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -1898,14 +1904,18 @@
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "guideBandHighIndexCellsMin": 1000,
-        "sourceOverlapEnergyFractionMin": 1e-10,
-        "betaMin": 1e-6,
-        "minAnalysisSamples": 64
+        "guideBandEnergyFractionMin": 0.5,
+        "materialBoundsWidthLambdaMin": 10,
+        "materialBoundsHeightLambdaMin": 0.25,
+        "sourceOverlapEnergyFractionMin": 1e-5,
+        "betaMin": 0.001,
+        "betaMax": 0.2,
+        "minAnalysisSamples": 128
       },
-      "rationale": "Checks the beta-factor example as a dipole-to-guide coupling proxy, not an absolute calibrated beta-factor measurement."
+      "rationale": "Checks the 2D dipole-to-guide scene as a finite guided-flux ratio with a long dielectric guide and live analysis samples."
     },
     {
-      "id": "degenerate_modes_dual_dipole_split",
+      "id": "dual_dipole_disk_spectral_split",
       "priority": "P1",
       "preset": "degenerateModes",
       "profile": "physics",
@@ -1913,8 +1923,8 @@
       "browserSmoke": true,
       "checks": [
         "central high-index disk is present",
-        "two off-center dipole sources are present",
-        "analysis reports a finite modal/spectral split proxy"
+        "two separated off-center Gaussian dipole sources are present",
+        "analysis reports a finite bounded spectral split"
       ],
       "acceptance": {
         "guidedDeviceCheck": true,
@@ -1925,11 +1935,17 @@
         "sourceCountMin": 2,
         "sourceCountMax": 2,
         "sourceSeparationLambdaMin": 0.2,
-        "centralDiskHighIndexCellsMin": 250,
-        "splitMin": 1e-7,
-        "minAnalysisSamples": 64
+        "centralDiskHighIndexCellsMin": 400,
+        "materialBoundsWidthLambdaMin": 1.2,
+        "materialBoundsHeightLambdaMin": 1.2,
+        "highIndexEnergyFractionMin": 0.2,
+        "centralDiskEnergyFractionMin": 0.1,
+        "sourceOverlapEnergyFractionMin": 0.05,
+        "spectralSplitMin": 0.001,
+        "ringdownQMin": 5,
+        "minAnalysisSamples": 128
       },
-      "rationale": "Checks the degenerate-mode scene as a symmetric disk with two perturbative dipole drives and a finite spectral splitting proxy."
+      "rationale": "Checks the disk-cavity spectrum scene as two separated dipole drives exciting a finite two-peak spectral split in the 2D analysis trace."
     },
     {
       "id": "pec_cylinder_scattering_shadow",
@@ -1951,24 +1967,29 @@
       "rationale": "Guards the PEC-cylinder scene as a real obstacle/scatterer instead of an empty plane-wave case."
     },
     {
-      "id": "dielectric_cylinder_scattering_presence",
+      "id": "dielectric_cylinder_near_field_scattering",
       "priority": "P1",
       "preset": "dielectricCylinder",
       "profile": "physics",
       "steps": 2600,
       "browserSmoke": true,
       "checks": [
-        "dielectric cylinder cells are present",
+        "lossless high-index dielectric cylinder cells are present",
         "field energy overlaps the cylinder",
-        "off-axis scattered energy is finite"
+        "off-axis near-field scattering exceeds the downstream back region"
       ],
       "acceptance": {
         "materialCellsMin": 100,
         "highIndexCellsMin": 100,
-        "objectEnergyMin": 1e-10,
-        "sideToBackRatioMin": 0.005
+        "pecCellsMax": 0,
+        "lossyCellsMax": 0,
+        "objectCountProxyMin": 20,
+        "objectEnergyMin": 1,
+        "sideToBackRatioMin": 1.2,
+        "shadowToUpstreamRatioMax": 0.2,
+        "backToFrontRatioMin": 0.2
       },
-      "rationale": "Checks that the dielectric-cylinder scattering example has both geometry and a measurable scattered-field proxy."
+      "rationale": "Checks the lossless 2D dielectric-cylinder scene as a finite near-field scattering interaction under plane-wave illumination."
     },
     {
       "id": "mie_cylinder_high_index_response",
@@ -1991,7 +2012,7 @@
       "rationale": "Provides a first executable guard for the Mie-like high-index cylinder without claiming a calibrated 2D Mie spectrum."
     },
     {
-      "id": "rcs_cylinder_ntff_finite",
+      "id": "pec_cylinder_ntff_scattering_width",
       "priority": "P1",
       "preset": "rcsCylinder",
       "profile": "physics",
@@ -2000,36 +2021,46 @@
       "checks": [
         "PEC cylinder cells are present",
         "analysis samples accumulate",
-        "the scattering-width/NTFF proxy is finite and nonzero"
+        "the 2D NTFF scattering-width estimate is finite and directionally nontrivial"
       ],
       "acceptance": {
         "requiresAnalysis": true,
-        "minAnalysisSamples": 64,
+        "minAnalysisSamples": 512,
         "pecCellsMin": 100,
-        "scatteringTotalMin": 1e-12,
-        "backwardForwardRatioMin": 0.001
+        "lossyCellsMax": 0,
+        "objectCountProxyMin": 20,
+        "scatteringTotalMin": 0.1,
+        "forwardBackwardRatioMin": 1,
+        "backwardForwardRatioMin": 0.1,
+        "sideToBackRatioMin": 1,
+        "shadowToUpstreamRatioMax": 0.2
       },
-      "rationale": "Turns the RCS cylinder into an executable NTFF/scattering-width sanity check."
+      "rationale": "Checks the PEC-cylinder NTFF scene as a finite 2D scattering-width workflow with incident-background subtraction."
     },
     {
-      "id": "lossy_cylinder_absorption_proxy",
+      "id": "lossy_cylinder_field_attenuation",
       "priority": "P1",
       "preset": "lossyCylinder",
       "profile": "physics",
       "steps": 2600,
       "browserSmoke": true,
       "checks": [
-        "lossy cylinder cells are present",
+        "lossy high-index cylinder cells are present",
         "field energy reaches the lossy region",
-        "downstream channel energy is bounded by absorption and scattering"
+        "downstream channel energy is attenuated by loss and scattering"
       ],
       "acceptance": {
         "materialCellsMin": 100,
+        "highIndexCellsMin": 100,
         "lossyCellsMin": 100,
-        "objectEnergyMin": 1e-10,
-        "shadowToUpstreamRatioMax": 1.8
+        "pecCellsMax": 0,
+        "objectCountProxyMin": 20,
+        "objectEnergyMin": 0.1,
+        "sideToBackRatioMin": 1,
+        "shadowToUpstreamRatioMax": 0.1,
+        "backToFrontRatioMin": 0.2
       },
-      "rationale": "Checks that the lossy-cylinder scene actually contains a lossy absorber interacting with the field."
+      "rationale": "Checks the absorbing dielectric cylinder as a lossy 2D scatterer with finite in-object field energy and bounded downstream channel energy."
     },
     {
       "id": "dielectric_dimer_gap_coupling",
@@ -2060,18 +2091,24 @@
       "steps": 3600,
       "browserSmoke": true,
       "checks": [
-        "Hz polarization is active for the Kerker-like example",
+        "Hz polarization is active for the forward/backward contrast example",
         "analysis samples accumulate",
-        "forward/backward scattering proxy is finite and asymmetric"
+        "2D NTFF forward/backward scattering contrast is finite and strongly asymmetric"
       ],
       "acceptance": {
         "requiresAnalysis": true,
-        "minAnalysisSamples": 64,
+        "fieldComponent": "hz",
+        "minAnalysisSamples": 512,
         "highIndexCellsMin": 100,
-        "scatteringTotalMin": 1e-12,
-        "forwardBackwardRatioMin": 0.01
+        "pecCellsMax": 0,
+        "lossyCellsMax": 0,
+        "objectCountProxyMin": 20,
+        "objectEnergyMin": 1,
+        "scatteringTotalMin": 1,
+        "forwardBackwardRatioMin": 5,
+        "backwardForwardRatioMax": 0.3
       },
-      "rationale": "Checks the reduced forward/backward scattering observable used by the Kerker-like teaching scene."
+      "rationale": "Checks the 2D high-index-cylinder NTFF workflow for a strong forward/backward scattering contrast under Hz illumination."
     },
     {
       "id": "multiple_scattering_cluster_spread",
@@ -2114,27 +2151,29 @@
       "rationale": "Guards the weak-localization scene as a disorder/spread example, not a calibrated coherent-backscattering validation."
     },
     {
-      "id": "anderson_localization_trapping_proxy",
+      "id": "dense_disorder_trapping_transport",
       "priority": "P1",
       "preset": "andersonLocalization",
       "profile": "physics",
       "steps": 3600,
       "browserSmoke": true,
       "checks": [
-        "dense high-contrast disorder is present",
+        "dense deterministic high-contrast disorder is present",
         "analysis samples accumulate",
-        "energy remains trapped/scattered before the right boundary"
+        "energy is laterally scattered and right-boundary transport is bounded"
       ],
       "acceptance": {
         "requiresAnalysis": true,
-        "minAnalysisSamples": 64,
-        "materialCellsMin": 500,
-        "highIndexCellsMin": 500,
-        "scattererCountProxyMin": 45,
-        "lateralFractionMin": 0.003,
-        "rightToLeftChannelRatioMax": 25
+        "minAnalysisSamples": 512,
+        "materialCellsMin": 650,
+        "highIndexCellsMin": 650,
+        "scattererCountProxyMin": 180,
+        "totalEnergyMin": 1,
+        "lateralFractionMin": 0.2,
+        "rightToLeftChannelRatioMax": 0.8,
+        "centerToLeftChannelRatioMin": 0.2
       },
-      "rationale": "Adds a conservative localization/trapping proxy for the dense-disorder example; calibrated localization length remains future work."
+      "rationale": "Checks the dense-disorder scene as a bounded-transport and lateral-scattering teaching example, without claiming a calibrated Anderson localization length."
     },
     {
       "id": "diffusive_random_medium_transport",

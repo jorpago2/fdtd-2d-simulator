@@ -685,6 +685,8 @@ async function guidedDeviceMetrics(page) {
       split: finiteOrNull(analysis?.split),
       spectralSplit: finiteOrNull(analysis?.spectralSplit),
       ringdownQ: finiteOrNull(analysis?.ringdown?.q),
+      modeAreaLambda2: finiteOrNull(analysis?.modeAreaLambda2),
+      qAreaMetric: finiteOrNull(analysis?.purcellProxy),
       purcellProxy: finiteOrNull(analysis?.purcellProxy),
       leakageRate: finiteOrNull(analysis?.leakageRate),
     };
@@ -3999,6 +4001,10 @@ async function runSmokeCase(page, testCase) {
     const minSplit = Number(testCase.acceptance?.splitMin);
     const minSpectralSplit = Number(testCase.acceptance?.spectralSplitMin);
     const minRingdownQ = Number(testCase.acceptance?.ringdownQMin);
+    const minModeArea = Number(testCase.acceptance?.modeAreaLambda2Min);
+    const maxModeArea = Number(testCase.acceptance?.modeAreaLambda2Max);
+    const minQAreaMetric = Number(testCase.acceptance?.qAreaMetricMin);
+    const maxQAreaMetric = Number(testCase.acceptance?.qAreaMetricMax);
     const minPurcellProxy = Number(testCase.acceptance?.purcellProxyMin);
     const minAnalysisSamples = Number(testCase.acceptance?.minAnalysisSamples);
     const minBoundsWidth = Number(testCase.acceptance?.materialBoundsWidthLambdaMin);
@@ -4061,12 +4067,16 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minCentralDiskFraction) && metrics.centralDiskEnergyFraction < minCentralDiskFraction) status.failures.push(`central disk energy fraction ${metrics.centralDiskEnergyFraction} below ${minCentralDiskFraction}`);
     if (Number.isFinite(minRingFraction) && metrics.ringEnergyFraction < minRingFraction) status.failures.push(`guided ring energy fraction ${metrics.ringEnergyFraction} below ${minRingFraction}`);
     if (Number.isFinite(minRacetrackFraction) && metrics.racetrackRingEnergyFraction < minRacetrackFraction) status.failures.push(`racetrack ring energy fraction ${metrics.racetrackRingEnergyFraction} below ${minRacetrackFraction}`);
-    if (Number.isFinite(minBeta) && !(Number.isFinite(metrics.beta) && metrics.beta >= minBeta)) status.failures.push(`beta proxy ${metrics.beta} below ${minBeta}`);
-    if (Number.isFinite(maxBeta) && !(Number.isFinite(metrics.beta) && metrics.beta <= maxBeta)) status.failures.push(`beta proxy ${metrics.beta} exceeds ${maxBeta}`);
-    if (Number.isFinite(minSplit) && !(Number.isFinite(metrics.split) && metrics.split >= minSplit)) status.failures.push(`mode split proxy ${metrics.split} below ${minSplit}`);
+    if (Number.isFinite(minBeta) && !(Number.isFinite(metrics.beta) && metrics.beta >= minBeta)) status.failures.push(`guided-flux ratio ${metrics.beta} below ${minBeta}`);
+    if (Number.isFinite(maxBeta) && !(Number.isFinite(metrics.beta) && metrics.beta <= maxBeta)) status.failures.push(`guided-flux ratio ${metrics.beta} exceeds ${maxBeta}`);
+    if (Number.isFinite(minSplit) && !(Number.isFinite(metrics.split) && metrics.split >= minSplit)) status.failures.push(`mode/spectral split ${metrics.split} below ${minSplit}`);
     if (Number.isFinite(minSpectralSplit) && !(Number.isFinite(metrics.spectralSplit) && metrics.spectralSplit >= minSpectralSplit)) status.failures.push(`spectral split ${metrics.spectralSplit} below ${minSpectralSplit}`);
     if (Number.isFinite(minRingdownQ) && !(Number.isFinite(metrics.ringdownQ) && metrics.ringdownQ >= minRingdownQ)) status.failures.push(`ringdown Q ${metrics.ringdownQ} below ${minRingdownQ}`);
-    if (Number.isFinite(minPurcellProxy) && !(Number.isFinite(metrics.purcellProxy) && metrics.purcellProxy >= minPurcellProxy)) status.failures.push(`Purcell proxy ${metrics.purcellProxy} below ${minPurcellProxy}`);
+    if (Number.isFinite(minModeArea) && !(Number.isFinite(metrics.modeAreaLambda2) && metrics.modeAreaLambda2 >= minModeArea)) status.failures.push(`mode area ${metrics.modeAreaLambda2} below ${minModeArea}`);
+    if (Number.isFinite(maxModeArea) && !(Number.isFinite(metrics.modeAreaLambda2) && metrics.modeAreaLambda2 <= maxModeArea)) status.failures.push(`mode area ${metrics.modeAreaLambda2} exceeds ${maxModeArea}`);
+    if (Number.isFinite(minQAreaMetric) && !(Number.isFinite(metrics.qAreaMetric) && metrics.qAreaMetric >= minQAreaMetric)) status.failures.push(`Q/Aeff metric ${metrics.qAreaMetric} below ${minQAreaMetric}`);
+    if (Number.isFinite(maxQAreaMetric) && !(Number.isFinite(metrics.qAreaMetric) && metrics.qAreaMetric <= maxQAreaMetric)) status.failures.push(`Q/Aeff metric ${metrics.qAreaMetric} exceeds ${maxQAreaMetric}`);
+    if (Number.isFinite(minPurcellProxy) && !(Number.isFinite(metrics.purcellProxy) && metrics.purcellProxy >= minPurcellProxy)) status.failures.push(`legacy Q/Aeff metric ${metrics.purcellProxy} below ${minPurcellProxy}`);
     if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) status.failures.push(`guided analysis samples ${metrics.analysisSamples} below ${minAnalysisSamples}`);
     if (Number.isFinite(minBoundsWidth) && (!metrics.materialBounds || metrics.materialBounds.widthLambda < minBoundsWidth)) {
       status.failures.push(`material width ${metrics.materialBounds?.widthLambda ?? 0} below ${minBoundsWidth}`);
@@ -4577,17 +4587,19 @@ async function runSmokeCase(page, testCase) {
   }
   if (
     testCase.id === "pec_cylinder_scattering_shadow" ||
-    testCase.id === "dielectric_cylinder_scattering_presence" ||
+    testCase.id === "dielectric_cylinder_near_field_scattering" ||
     testCase.id === "mie_cylinder_high_index_response" ||
-    testCase.id === "rcs_cylinder_ntff_finite" ||
-    testCase.id === "lossy_cylinder_absorption_proxy" ||
+    testCase.id === "pec_cylinder_ntff_scattering_width" ||
+    testCase.id === "lossy_cylinder_field_attenuation" ||
     testCase.id === "dielectric_dimer_gap_coupling" ||
     testCase.id === "kerker_forward_backward_contrast"
   ) {
     status.scattering = await scatteringCylinderMetrics(page);
     const minMaterialCells = Number(testCase.acceptance?.materialCellsMin);
     const minPecCells = Number(testCase.acceptance?.pecCellsMin);
+    const maxPecCells = Number(testCase.acceptance?.pecCellsMax);
     const minLossyCells = Number(testCase.acceptance?.lossyCellsMin);
+    const maxLossyCells = Number(testCase.acceptance?.lossyCellsMax);
     const minHighIndexCells = Number(testCase.acceptance?.highIndexCellsMin);
     const minObjectEnergy = Number(testCase.acceptance?.objectEnergyMin);
     const maxShadowRatio = Number(testCase.acceptance?.shadowToUpstreamRatioMax);
@@ -4597,17 +4609,27 @@ async function runSmokeCase(page, testCase) {
     const minScatteringTotal = Number(testCase.acceptance?.scatteringTotalMin);
     const minForwardBackward = Number(testCase.acceptance?.forwardBackwardRatioMin);
     const minBackwardForward = Number(testCase.acceptance?.backwardForwardRatioMin);
+    const maxBackwardForward = Number(testCase.acceptance?.backwardForwardRatioMax);
     const minObjectCount = Number(testCase.acceptance?.objectCountProxyMin);
     const minGapEnergy = Number(testCase.acceptance?.dimerGapEnergyMin);
     const minGapToObject = Number(testCase.acceptance?.dimerGapToObjectRatioMin);
+    if (testCase.acceptance?.fieldComponent && status.scattering.fieldComponent !== testCase.acceptance.fieldComponent) {
+      status.failures.push(`scattering field component ${status.scattering.fieldComponent} differs from expected ${testCase.acceptance.fieldComponent}`);
+    }
     if (Number.isFinite(minMaterialCells) && status.scattering.objectMaterialCells < minMaterialCells) {
       status.failures.push(`scatterer material cells ${status.scattering.objectMaterialCells} below ${minMaterialCells}`);
     }
     if (Number.isFinite(minPecCells) && status.scattering.objectPecCells < minPecCells) {
       status.failures.push(`PEC scatterer cells ${status.scattering.objectPecCells} below ${minPecCells}`);
     }
+    if (Number.isFinite(maxPecCells) && status.scattering.objectPecCells > maxPecCells) {
+      status.failures.push(`PEC scatterer cells ${status.scattering.objectPecCells} exceeds ${maxPecCells}`);
+    }
     if (Number.isFinite(minLossyCells) && status.scattering.objectLossyCells < minLossyCells) {
       status.failures.push(`lossy scatterer cells ${status.scattering.objectLossyCells} below ${minLossyCells}`);
+    }
+    if (Number.isFinite(maxLossyCells) && status.scattering.objectLossyCells > maxLossyCells) {
+      status.failures.push(`lossy scatterer cells ${status.scattering.objectLossyCells} exceeds ${maxLossyCells}`);
     }
     if (Number.isFinite(minHighIndexCells) && status.scattering.objectHighIndexCells < minHighIndexCells) {
       status.failures.push(`high-index scatterer cells ${status.scattering.objectHighIndexCells} below ${minHighIndexCells}`);
@@ -4636,6 +4658,9 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minBackwardForward) && status.scattering.backwardForwardRatio < minBackwardForward) {
       status.failures.push(`backward/forward scattering ratio ${status.scattering.backwardForwardRatio} below ${minBackwardForward}`);
     }
+    if (Number.isFinite(maxBackwardForward) && status.scattering.backwardForwardRatio > maxBackwardForward) {
+      status.failures.push(`backward/forward scattering ratio ${status.scattering.backwardForwardRatio} exceeds ${maxBackwardForward}`);
+    }
     if (Number.isFinite(minObjectCount) && status.scattering.objectCountProxy < minObjectCount) {
       status.failures.push(`scatterer count proxy ${status.scattering.objectCountProxy} below ${minObjectCount}`);
     }
@@ -4649,7 +4674,7 @@ async function runSmokeCase(page, testCase) {
   if (
     testCase.id === "multiple_scattering_cluster_spread" ||
     testCase.id === "weak_localization_disorder_spread" ||
-    testCase.id === "anderson_localization_trapping_proxy" ||
+    testCase.id === "dense_disorder_trapping_transport" ||
     testCase.id === "diffusive_random_medium_transport"
   ) {
     status.randomScattering = await randomScatteringMetrics(page);
@@ -4660,6 +4685,7 @@ async function runSmokeCase(page, testCase) {
     const maxRightToLeft = Number(testCase.acceptance?.rightToLeftChannelRatioMax);
     const minRightToLeft = Number(testCase.acceptance?.rightToLeftChannelRatioMin);
     const minCenterToLeft = Number(testCase.acceptance?.centerToLeftChannelRatioMin);
+    const minTotalEnergy = Number(testCase.acceptance?.totalEnergyMin);
     const minSamples = Number(testCase.acceptance?.minAnalysisSamples);
     if (Number.isFinite(minMaterialCells) && status.randomScattering.materialCells < minMaterialCells) {
       status.failures.push(`random-scattering material cells ${status.randomScattering.materialCells} below ${minMaterialCells}`);
@@ -4672,6 +4698,9 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minLateralFraction) && status.randomScattering.lateralFraction < minLateralFraction) {
       status.failures.push(`lateral scattered-energy fraction ${status.randomScattering.lateralFraction} below ${minLateralFraction}`);
+    }
+    if (Number.isFinite(minTotalEnergy) && status.randomScattering.totalEnergy < minTotalEnergy) {
+      status.failures.push(`random-scattering total energy ${status.randomScattering.totalEnergy} below ${minTotalEnergy}`);
     }
     if (Number.isFinite(maxRightToLeft) && status.randomScattering.rightToLeftChannelRatio > maxRightToLeft) {
       status.failures.push(`right/left channel energy ratio ${status.randomScattering.rightToLeftChannelRatio} exceeds ${maxRightToLeft}`);

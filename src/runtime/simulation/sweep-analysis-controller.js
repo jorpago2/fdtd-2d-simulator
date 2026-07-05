@@ -667,7 +667,7 @@
             resonatorText += ` | Q/Aeff=${formatFieldValue(metrics.purcellProxy)}`;
           }
           if (betaAnalysisPresets.has(state.preset) && metrics.beta > 0) {
-            resonatorText += ` | beta~${formatDiagnosticRatio(metrics.beta)}`;
+            resonatorText += ` | guided~${formatDiagnosticRatio(metrics.beta)}`;
           }
           if (degenerateAnalysisPresets.has(state.preset) && metrics.split > 0) {
             resonatorText += ` | df=${formatFieldValue(metrics.split)}`;

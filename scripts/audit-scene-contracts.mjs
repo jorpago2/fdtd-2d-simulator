@@ -100,8 +100,6 @@ const gainLossSweepPresets = new Set(["ptSymmetricCoupler", "exceptionalPointCou
 const gainPresets = new Set(["nonHermitianSsh", "ptSymmetricCoupler", "exceptionalPointCoupler", "nonHermitianSkin"]);
 
 const qualitativeCaveats = new Map([
-  ["hyperbolicMedium", "Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence."],
-  ["purcell2d", "2D Q/Aeff Purcell proxy; not an absolute 3D local-density-of-states or emitter-rate calculation."],
   ["chiralMedium", "Six-field chiral-medium proxy; needs optical-rotation or S-parameter regression before quantitative chirality claims."],
   ["gyrotropicMedium", "Gyrotropic-material route is active, but Faraday rotation/nonreciprocal S-parameters are not calibrated here."],
   ["phcPointDefect", "Photonic-crystal defect-cavity proxy; no eigenmode frequency or Q convergence is claimed."],

@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-05T06:44:37.702Z",
-  "gitCommit": "9719f56+working-tree",
+  "generatedAt": "2026-07-05T07:25:47.257Z",
+  "gitCommit": "5c4463c+working-tree",
   "stepsPerScene": 24,
   "sceneCount": 141,
   "summary": {
-    "PASS": 83,
+    "PASS": 93,
     "VALIDATION_GAP": 0,
-    "WARN": 58,
+    "WARN": 48,
     "FIX_REQUIRED": 0
   },
   "consoleErrors": [],
@@ -1864,21 +1864,19 @@
     {
       "id": "purcell2d",
       "index": 56,
-      "title": "Purcell 2D proxy",
+      "title": "2D cavity Q/Aeff metric",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 56: dipole in a high-index 2D cavity with a comparative Q/Aeff Purcell proxy.",
-      "status": "WARN",
+      "description": "Atlas 56: dipole in a nested dielectric 2D cavity with a bounded Q/Aeff teaching metric.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "purcell_2d_cavity_proxy:P1/physics"
+        "purcell_2d_cavity_q_area_metric:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "2D Q/Aeff Purcell proxy; not an absolute 3D local-density-of-states or emitter-rate calculation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1899,21 +1897,19 @@
     {
       "id": "betaFactor",
       "index": 57,
-      "title": "beta-factor guide coupling",
+      "title": "Dipole-to-guide flux ratio",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 57: dipole coupled to a slab guide with an estimated guided-flux beta factor.",
-      "status": "WARN",
+      "description": "Atlas 57: 2D dipole coupled to a slab guide with a bounded guided-flux ratio readout.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "beta_factor_guided_flux_proxy:P1/physics"
+        "dipole_guided_flux_ratio:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (beta_factor_guided_flux_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -1934,21 +1930,19 @@
     {
       "id": "degenerateModes",
       "index": 58,
-      "title": "Degenerate cavity modes",
+      "title": "Dual-dipole disk spectrum",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 58: symmetric disk cavity excited off-center to reveal near-degenerate spectral peaks.",
-      "status": "WARN",
+      "description": "Atlas 58: symmetric disk cavity driven by two off-center dipoles with a bounded spectral-split readout.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "degenerate_modes_dual_dipole_split:P1/physics"
+        "dual_dipole_disk_spectral_split:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (degenerate_modes_dual_dipole_split); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2006,17 +2000,15 @@
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "description": "Atlas 60: n = 2 cylinder scattering.",
-      "status": "WARN",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "dielectric_cylinder_scattering_presence:P1/physics"
+        "dielectric_cylinder_near_field_scattering:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (dielectric_cylinder_scattering_presence); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2070,21 +2062,19 @@
     {
       "id": "rcsCylinder",
       "index": 62,
-      "title": "RCS 2D cylinder",
+      "title": "2D NTFF scattering width",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 62: PEC cylinder with incident-background subtraction and estimated 2D scattering width.",
-      "status": "WARN",
+      "description": "Atlas 62: PEC cylinder with incident-background subtraction and finite 2D NTFF scattering-width readout.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "rcs_cylinder_ntff_finite:P1/physics"
+        "pec_cylinder_ntff_scattering_width:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (rcs_cylinder_ntff_finite); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2105,21 +2095,19 @@
     {
       "id": "lossyCylinder",
       "index": 63,
-      "title": "Lossy cylinder",
+      "title": "Absorbing dielectric cylinder",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 63: absorbing dielectric cylinder.",
-      "status": "WARN",
+      "description": "Atlas 63: absorbing dielectric cylinder with finite in-object field energy and downstream attenuation.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "lossy_cylinder_absorption_proxy:P1/physics"
+        "lossy_cylinder_field_attenuation:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (lossy_cylinder_absorption_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2173,11 +2161,11 @@
     {
       "id": "kerker2d",
       "index": 65,
-      "title": "Kerker-like 2D scattering",
+      "title": "Forward/backward contrast",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 65: high-index cylinder showing forward/backward scattering contrast with the 2D NTFF observable.",
-      "status": "WARN",
+      "description": "Atlas 65: high-index cylinder showing strong 2D NTFF forward/backward scattering contrast.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
@@ -2185,9 +2173,7 @@
         "kerker_forward_backward_contrast:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (kerker_forward_backward_contrast); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",
@@ -2274,21 +2260,19 @@
     {
       "id": "andersonLocalization",
       "index": 68,
-      "title": "Anderson-localization disorder",
+      "title": "Dense-disorder trapping",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 68: dense deterministic high-contrast disorder for Anderson-localization-like field trapping.",
-      "status": "WARN",
+      "description": "Atlas 68: dense deterministic high-contrast disorder with bounded transport and lateral field trapping.",
+      "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
       ],
       "validationCases": [
-        "anderson_localization_trapping_proxy:P1/physics"
+        "dense_disorder_trapping_transport:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (anderson_localization_trapping_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2342,21 +2326,19 @@
     {
       "id": "finiteConductivity",
       "index": 70,
-      "title": "Finite-conductivity skin depth",
+      "title": "Finite-conductivity damping",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation.",
-      "status": "WARN",
+      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show finite-conductivity damping.",
+      "status": "PASS",
       "contractTags": [
         "conductive material"
       ],
       "validationCases": [
-        "finite_conductivity_skin_depth_proxy:P1/physics"
+        "finite_conductivity_damping_contract:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Executable validation is reduced/proxy (finite_conductivity_skin_depth_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "ez",
@@ -2576,21 +2558,19 @@
     {
       "id": "hyperbolicMedium",
       "index": 77,
-      "title": "Hyperbolic medium",
+      "title": "Indefinite Drude tensor",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 77: passive Drude tensor proxy with eps_x > 0 and effective eps_y < 0 near the source frequency.",
-      "status": "WARN",
+      "description": "Atlas 77: passive anisotropic Drude block with eps_x > 0 and effective eps_y < 0 at the source frequency.",
+      "status": "PASS",
       "contractTags": [
         "dispersive material"
       ],
       "validationCases": [
-        "hyperbolic_indefinite_tensor_proxy:P1/physics"
+        "indefinite_drude_tensor_route:P1/physics"
       ],
       "blockers": [],
-      "warnings": [
-        "Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence."
-      ],
+      "warnings": [],
       "gaps": [],
       "runtime": {
         "fieldComponent": "hz",

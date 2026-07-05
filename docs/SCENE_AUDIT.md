@@ -1,7 +1,7 @@
 # Scene Physics Audit
 
-Generated: 2026-07-05T06:44:37.702Z
-Git commit: 9719f56+working-tree
+Generated: 2026-07-05T07:25:47.257Z
+Git commit: 5c4463c+working-tree
 Scenes audited: 141
 Steps per scene: 24
 
@@ -9,9 +9,9 @@ Steps per scene: 24
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| PASS | 83 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
+| PASS | 93 | Configured contract/runtime checks pass and no scene-level caveat is attached. |
 | VALIDATION_GAP | 0 | Scene runs and matches its contract, but lacks an executable dedicated validation case. |
-| WARN | 58 | Scene runs, but has a documented teaching/modeling caveat. |
+| WARN | 48 | Scene runs, but has a documented teaching/modeling caveat. |
 | FIX_REQUIRED | 0 | Scene violates its inferred physical or runtime contract. |
 
 ## Blocking Findings
@@ -78,28 +78,28 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 53 | `pecCavity` PEC half-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=2.23e-7 | pec_cavity_frame_source:P1/physics | OK |
 | 54 | `quarterWaveCavity` Quarter-wave cavity | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML+mode, 24 steps, E=2.58e-6 | quarter_wave_cavity_short_stub:P1/physics | OK |
 | 55 | `qRingdown` Q by ringdown | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.46e-8 | resonator_ringdown_q:P0/physics | OK |
-| 56 | `purcell2d` Purcell 2D proxy | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-8 | purcell_2d_cavity_proxy:P1/physics | 2D Q/Aeff Purcell proxy; not an absolute 3D local-density-of-states or emitter-rate calculation. |
-| 57 | `betaFactor` beta-factor guide coupling | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | beta_factor_guided_flux_proxy:P1/physics | Executable validation is reduced/proxy (beta_factor_guided_flux_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 58 | `degenerateModes` Degenerate cavity modes | 5. Resonators and cavities | WARN | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | degenerate_modes_dual_dipole_split:P1/physics | Executable validation is reduced/proxy (degenerate_modes_dual_dipole_split); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 56 | `purcell2d` 2D cavity Q/Aeff metric | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.34e-8 | purcell_2d_cavity_q_area_metric:P1/physics | OK |
+| 57 | `betaFactor` Dipole-to-guide flux ratio | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=8.40e-8 | dipole_guided_flux_ratio:P1/physics | OK |
+| 58 | `degenerateModes` Dual-dipole disk spectrum | 5. Resonators and cavities | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=1.38e-8 | dual_dipole_disk_spectral_split:P1/physics | OK |
 | 59 | `pecCylinder` PEC cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | pec_cylinder_scattering_shadow:P1/physics | OK |
-| 60 | `dielectricCylinder` Dielectric cylinder scattering | 6. Scattering and disorder | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_cylinder_scattering_presence:P1/physics | Executable validation is reduced/proxy (dielectric_cylinder_scattering_presence); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 60 | `dielectricCylinder` Dielectric cylinder scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_cylinder_near_field_scattering:P1/physics | OK |
 | 61 | `mieCylinder` High-index Mie cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | mie_cylinder_high_index_response:P1/physics | OK |
-| 62 | `rcsCylinder` RCS 2D cylinder | 6. Scattering and disorder | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.66e-8 | rcs_cylinder_ntff_finite:P1/physics | Executable validation is reduced/proxy (rcs_cylinder_ntff_finite); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
-| 63 | `lossyCylinder` Lossy cylinder | 6. Scattering and disorder | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | lossy_cylinder_absorption_proxy:P1/physics | Executable validation is reduced/proxy (lossy_cylinder_absorption_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 62 | `rcsCylinder` 2D NTFF scattering width | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.66e-8 | pec_cylinder_ntff_scattering_width:P1/physics | OK |
+| 63 | `lossyCylinder` Absorbing dielectric cylinder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | lossy_cylinder_field_attenuation:P1/physics | OK |
 | 64 | `dielectricDimer` Dielectric dimer | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | dielectric_dimer_gap_coupling:P1/physics | OK |
-| 65 | `kerker2d` Kerker-like 2D scattering | 6. Scattering and disorder | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=7.59e-8 | kerker_forward_backward_contrast:P1/physics | Executable validation is reduced/proxy (kerker_forward_backward_contrast); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 65 | `kerker2d` Forward/backward contrast | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=7.59e-8 | kerker_forward_backward_contrast:P1/physics | OK |
 | 66 | `multipleScattering` Multiple scattering | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | multiple_scattering_cluster_spread:P1/physics | OK |
 | 67 | `weakLocalization` Weak-localization disorder | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=8.70e-5 | weak_localization_disorder_spread:P1/physics | OK |
-| 68 | `andersonLocalization` Anderson-localization disorder | 6. Scattering and disorder | WARN | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.41e-6 | anderson_localization_trapping_proxy:P1/physics | Executable validation is reduced/proxy (anderson_localization_trapping_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 68 | `andersonLocalization` Dense-disorder trapping | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=4.41e-6 | dense_disorder_trapping_transport:P1/physics | OK |
 | 69 | `diffusiveRandomMedium` Diffusive random medium | 6. Scattering and disorder | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.58e-6 | diffusive_random_medium_transport:P1/physics | OK |
-| 70 | `finiteConductivity` Finite-conductivity skin depth | 7. Material models and tensors | WARN | conductive material | WASM CPML+sigma+TFSF, 24 steps, E=4.54e-5 | finite_conductivity_skin_depth_proxy:P1/physics | Executable validation is reduced/proxy (finite_conductivity_skin_depth_proxy); suitable for bounded teaching use, not calibrated device claims without stronger behavioral or quantitative validation. |
+| 70 | `finiteConductivity` Finite-conductivity damping | 7. Material models and tensors | PASS | conductive material | WASM CPML+sigma+TFSF, 24 steps, E=4.54e-5 | finite_conductivity_damping_contract:P1/physics | OK |
 | 71 | `drudeMetal` Drude metal | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | advanced_material_smoke:P0/smoke, drude_ade_response:P1/physics | OK |
 | 72 | `lorentzMedium` Lorentz resonant medium | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=3.25e-5 | lorentz_resonant_ade_response:P1/physics | OK |
 | 73 | `debyeDielectric` Debye dielectric | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=2.89e-4 | debye_relaxation_ade_response:P1/physics | OK |
 | 74 | `plasmaCutoff` Plasma cutoff | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=4.66e-8 | plasma_cutoff_ade_response:P1/physics | OK |
 | 75 | `enzSlab` ENZ slab | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE+TFSF, 24 steps, E=6.96e-8 | enz_slab_near_zero_response:P1/physics | OK |
 | 76 | `anisotropicMedium` Anisotropic medium | 7. Material models and tensors | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=5.90e-7 | anisotropic_tensor_block_response:P1/physics | OK |
-| 77 | `hyperbolicMedium` Hyperbolic medium | 7. Material models and tensors | WARN | dispersive material | WASM CPML+ADE, 24 steps, E=3.13e-5 | hyperbolic_indefinite_tensor_proxy:P1/physics | Uses a reduced Drude tensor proxy for a hyperbolic medium; acceptable for visualization, not broadband material evidence. |
+| 77 | `hyperbolicMedium` Indefinite Drude tensor | 7. Material models and tensors | PASS | dispersive material | WASM CPML+ADE, 24 steps, E=3.13e-5 | indefinite_drude_tensor_route:P1/physics | OK |
 | 78 | `chiralMedium` 6-field chiral medium | 7. Material models and tensors | WARN | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=1.02e-6 | chiral_six_field_bianisotropy_response:P1/physics, bianisotropy_quantitative_gap:P1/physics | Six-field chiral-medium proxy; needs optical-rotation or S-parameter regression before quantitative chirality claims. |
 | 79 | `bianisotropicMedium` 6-field bianisotropic medium | 7. Material models and tensors | PASS | HZ polarization, bianisotropy | WASM 6-field, 24 steps, E=8.91e-7 | bianisotropic_six_field_response:P1/physics | OK |
 | 80 | `gyrotropicMedium` Gyrotropic medium | 7. Material models and tensors | WARN | HZ polarization, gyrotropy | WASM CPML+tensor+TFSF, 24 steps, E=1.10e-5 | gyrotropic_tensor_response:P1/physics | Gyrotropic-material route is active, but Faraday rotation/nonreciprocal S-parameters are not calibrated here. |

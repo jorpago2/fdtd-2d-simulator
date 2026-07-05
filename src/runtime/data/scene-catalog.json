@@ -753,29 +753,29 @@
     {
       "id": "purcell2d",
       "index": 56,
-      "title": "Purcell 2D proxy",
+      "title": "2D cavity Q/Aeff metric",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 56: dipole in a high-index 2D cavity with a comparative Q/Aeff Purcell proxy."
+      "description": "Atlas 56: dipole in a nested dielectric 2D cavity with a bounded Q/Aeff teaching metric."
     },
     {
       "id": "betaFactor",
       "index": 57,
-      "title": "beta-factor guide coupling",
+      "title": "Dipole-to-guide flux ratio",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 57: dipole coupled to a slab guide with an estimated guided-flux beta factor."
+      "description": "Atlas 57: 2D dipole coupled to a slab guide with a bounded guided-flux ratio readout."
     },
     {
       "id": "degenerateModes",
       "index": 58,
-      "title": "Degenerate cavity modes",
+      "title": "Dual-dipole disk spectrum",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
       "groupName": "Resonators and cavities",
-      "description": "Atlas 58: symmetric disk cavity excited off-center to reveal near-degenerate spectral peaks."
+      "description": "Atlas 58: symmetric disk cavity driven by two off-center dipoles with a bounded spectral-split readout."
     },
     {
       "id": "pecCylinder",
@@ -807,20 +807,20 @@
     {
       "id": "rcsCylinder",
       "index": 62,
-      "title": "RCS 2D cylinder",
+      "title": "2D NTFF scattering width",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "groupName": "Scattering and disorder",
-      "description": "Atlas 62: PEC cylinder with incident-background subtraction and estimated 2D scattering width."
+      "description": "Atlas 62: PEC cylinder with incident-background subtraction and finite 2D NTFF scattering-width readout."
     },
     {
       "id": "lossyCylinder",
       "index": 63,
-      "title": "Lossy cylinder",
+      "title": "Absorbing dielectric cylinder",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "groupName": "Scattering and disorder",
-      "description": "Atlas 63: absorbing dielectric cylinder."
+      "description": "Atlas 63: absorbing dielectric cylinder with finite in-object field energy and downstream attenuation."
     },
     {
       "id": "dielectricDimer",
@@ -834,11 +834,11 @@
     {
       "id": "kerker2d",
       "index": 65,
-      "title": "Kerker-like 2D scattering",
+      "title": "Forward/backward contrast",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "groupName": "Scattering and disorder",
-      "description": "Atlas 65: high-index cylinder showing forward/backward scattering contrast with the 2D NTFF observable."
+      "description": "Atlas 65: high-index cylinder showing strong 2D NTFF forward/backward scattering contrast."
     },
     {
       "id": "multipleScattering",
@@ -861,11 +861,11 @@
     {
       "id": "andersonLocalization",
       "index": 68,
-      "title": "Anderson-localization disorder",
+      "title": "Dense-disorder trapping",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
       "groupName": "Scattering and disorder",
-      "description": "Atlas 68: dense deterministic high-contrast disorder for Anderson-localization-like field trapping."
+      "description": "Atlas 68: dense deterministic high-contrast disorder with bounded transport and lateral field trapping."
     },
     {
       "id": "diffusiveRandomMedium",
@@ -879,11 +879,11 @@
     {
       "id": "finiteConductivity",
       "index": 70,
-      "title": "Finite-conductivity skin depth",
+      "title": "Finite-conductivity damping",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "groupName": "Material models and tensors",
-      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show skin-depth attenuation."
+      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show finite-conductivity damping."
     },
     {
       "id": "drudeMetal",
@@ -942,11 +942,11 @@
     {
       "id": "hyperbolicMedium",
       "index": 77,
-      "title": "Hyperbolic medium",
+      "title": "Indefinite Drude tensor",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
       "groupName": "Material models and tensors",
-      "description": "Atlas 77: passive Drude tensor proxy with eps_x > 0 and effective eps_y < 0 near the source frequency."
+      "description": "Atlas 77: passive anisotropic Drude block with eps_x > 0 and effective eps_y < 0 at the source frequency."
     },
     {
       "id": "chiralMedium",
