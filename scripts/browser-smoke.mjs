@@ -708,6 +708,11 @@ async function guidedDeviceMetrics(page) {
     let highIndexEnergy = 0;
     let guideBandHighIndexCells = 0;
     let guideBandEnergy = 0;
+    let inputGuideEnergy = 0;
+    let outputGuideHighIndexCells = 0;
+    let outputGuideEnergy = 0;
+    let couplerThroughEnergy = 0;
+    let couplerCrossEnergy = 0;
     let sourceOverlapEnergy = 0;
     let upperOffAxisHighIndexCells = 0;
     let lowerOffAxisHighIndexCells = 0;
@@ -739,13 +744,17 @@ async function guidedDeviceMetrics(page) {
     let materialMinY = Infinity;
     let materialMaxY = -Infinity;
     const guideHalf = Math.max(2, Math.round(0.42 * cpw));
+    const portHalf = Math.max(2, Math.round(0.18 * cpw));
+    const inputGuideX1 = sourceX + Math.round(1.4 * cpw);
+    const outputGuideX0 = Math.min(maxX, sourceX + Math.round(4.0 * cpw));
+    const couplerCrossY = sourceY + Math.round(0.46 * cpw);
     const offAxisThreshold = Math.max(2, Math.round(0.34 * cpw));
     const sourceRadius = Math.max(3, Math.round(0.45 * cpw));
     const mziArmHalfWidth = Math.max(2, Math.round(0.18 * cpw));
-    const mziUpperArmY = midY - Math.round(0.68 * cpw);
-    const mziLowerArmY = midY + Math.round(0.68 * cpw);
-    const mziArmX0 = midX - Math.round(1.35 * cpw);
-    const mziArmX1 = midX + Math.round(1.35 * cpw);
+    const mziUpperArmY = midY - Math.round(0.48 * cpw);
+    const mziLowerArmY = midY + Math.round(0.48 * cpw);
+    const mziArmX0 = midX - Math.round(1.25 * cpw);
+    const mziArmX1 = midX + Math.round(1.25 * cpw);
     const mziInputX1 = midX - Math.round(2.1 * cpw);
     const mziOutputX0 = midX + Math.round(2.1 * cpw);
 
@@ -768,6 +777,15 @@ async function guidedDeviceMetrics(page) {
         if (sim.material[idx] === 2) pecCells += 1;
         if (Math.max(Math.abs(finite(sim.loss?.[idx])), Math.abs(finite(sim.lossY?.[idx]))) > 1e-6) lossyCells += 1;
         if (sim.material[idx] !== 2 && Math.hypot(x - sourceX, y - sourceY) <= sourceRadius) sourceOverlapEnergy += energy;
+        const inInputGuidePort = x <= inputGuideX1 && Math.abs(y - sourceY) <= portHalf;
+        const inOutputGuidePort = x >= outputGuideX0 && Math.abs(y - sourceY) <= portHalf;
+        const inCouplerCrossPort = x >= outputGuideX0 && Math.abs(y - couplerCrossY) <= portHalf;
+        if (sim.material[idx] !== 2 && inInputGuidePort) inputGuideEnergy += energy;
+        if (sim.material[idx] !== 2 && inOutputGuidePort) {
+          outputGuideEnergy += energy;
+          couplerThroughEnergy += energy;
+        }
+        if (sim.material[idx] !== 2 && inCouplerCrossPort) couplerCrossEnergy += energy;
         if (!highIndex) {
           if (sim.material[idx] === 2 && Math.abs(x - midX) <= Math.round(0.32 * cpw) && y < midY - Math.round(0.65 * cpw)) stubPecCells += 1;
           if (sim.material[idx] === 2 && Math.abs(x - midX) <= Math.round(0.9 * cpw) && Math.abs(y - midY) <= Math.round(0.7 * cpw)) centralPecCells += 1;
@@ -780,6 +798,9 @@ async function guidedDeviceMetrics(page) {
         if (Math.abs(y - sourceY) <= guideHalf) {
           guideBandHighIndexCells += 1;
           guideBandEnergy += energy;
+        }
+        if (x >= outputGuideX0 && Math.abs(y - sourceY) <= portHalf) {
+          outputGuideHighIndexCells += 1;
         }
         if (y < sourceY - offAxisThreshold) upperOffAxisHighIndexCells += 1;
         if (y > sourceY + offAxisThreshold) lowerOffAxisHighIndexCells += 1;
@@ -811,7 +832,7 @@ async function guidedDeviceMetrics(page) {
         if (x >= mziArmX0 && x <= mziArmX1 && Math.abs(y - mziUpperArmY) <= mziArmHalfWidth) {
           mziUpperArmHighIndexCells += 1;
           mziUpperArmEnergy += energy;
-          if (Math.abs(x - (midX + Math.round(0.2 * cpw))) <= Math.round(0.45 * cpw) && Math.abs(finite(sim.eps?.[idx]) - 4) < 0.6) {
+          if (Math.abs(x - (midX + Math.round(0.2 * cpw))) <= Math.round(0.45 * cpw) && finite(sim.eps?.[idx]) >= 9) {
             mziPhaseShifterCells += 1;
             mziPhaseShifterEnergy += energy;
           }
@@ -896,6 +917,13 @@ async function guidedDeviceMetrics(page) {
       highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
       guideBandHighIndexCells,
       guideBandEnergyFraction: guideBandEnergy / Math.max(1e-30, totalEnergy),
+      inputGuideEnergyFraction: inputGuideEnergy / Math.max(1e-30, totalEnergy),
+      outputGuideHighIndexCells,
+      outputGuideEnergyFraction: outputGuideEnergy / Math.max(1e-30, totalEnergy),
+      outputGuideToInputRatio: outputGuideEnergy / Math.max(1e-30, inputGuideEnergy),
+      couplerThroughEnergyFraction: couplerThroughEnergy / Math.max(1e-30, totalEnergy),
+      couplerCrossEnergyFraction: couplerCrossEnergy / Math.max(1e-30, totalEnergy),
+      couplerCrossToThroughRatio: couplerCrossEnergy / Math.max(1e-30, couplerThroughEnergy),
       sourceOverlapEnergyFraction: sourceOverlapEnergy / Math.max(1e-30, totalEnergy),
       upperOffAxisHighIndexCells,
       lowerOffAxisHighIndexCells,
@@ -1022,6 +1050,123 @@ async function mmiSplitMetrics(page, testCase) {
         Math.abs(totals.upper.sx) + Math.abs(totals.lower.sx) > 1e-30
           ? totals.upper.sx / (Math.abs(totals.upper.sx) + Math.abs(totals.lower.sx))
           : null,
+    };
+  }, testCase.acceptance || {});
+}
+
+async function directionalCouplerMetrics(page, testCase) {
+  return page.evaluate(async (acceptance) => {
+    const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
+    const finite = (value, fallback = 0) => (Number.isFinite(Number(value)) ? Number(value) : fallback);
+    const sources = Array.isArray(state.sources) ? state.sources : [];
+    const source = sources[0] || {};
+    const sourceY =
+      typeof sim.sourceYCell === "function"
+        ? sim.sourceYCell(source)
+        : Math.round(finite(source.yLambda, sim.ny / cpw / 2) * cpw);
+    const guideSeparationLambda = finite(acceptance.couplerGuideSeparationLambda, 0.46);
+    const monitorStartLambda = finite(acceptance.couplerMonitorXStartLambda, 4.0);
+    const monitorEndLambda = finite(acceptance.couplerMonitorXEndLambda, 12.2);
+    const monitorStrideLambda = Math.max(0.1, finite(acceptance.couplerMonitorXStrideLambda, 0.35));
+    const guideHalfWidthLambda = finite(acceptance.couplerGuideHalfWidthLambda, 0.11);
+    const sampleSteps = Math.max(1, Math.round(finite(acceptance.couplerSampleSteps, 720)));
+    const sampleEvery = Math.max(1, Math.round(finite(acceptance.couplerSampleEvery, 3)));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const throughCenterY = sourceY;
+    const crossCenterY = sourceY + Math.round(guideSeparationLambda * cpw);
+    const halfWidth = Math.max(2, Math.round(guideHalfWidthLambda * cpw));
+    const monitorXs = [];
+    for (let xLambda = monitorStartLambda; xLambda <= monitorEndLambda + 1e-9; xLambda += monitorStrideLambda) {
+      const monitorX = Math.max(minX, Math.min(maxX, Math.round(xLambda * cpw)));
+      if (!monitorXs.includes(monitorX)) monitorXs.push(monitorX);
+    }
+    if (!monitorXs.length) monitorXs.push(Math.round(0.5 * (minX + maxX)));
+
+    const emptyPort = (x, centerY) => ({
+      x,
+      centerY,
+      ez2: 0,
+      eAbs: 0,
+      sx: 0,
+      forwardSx: 0,
+      samples: 0,
+    });
+    const ports = monitorXs.map((monitorX) => ({
+      x: monitorX,
+      xLambda: monitorX / cpw,
+      through: emptyPort(monitorX, throughCenterY),
+      cross: emptyPort(monitorX, crossCenterY),
+    }));
+    const integrateInto = (target) => {
+      const y0 = Math.max(minY, target.centerY - halfWidth);
+      const y1 = Math.min(maxY, target.centerY + halfWidth);
+      for (let y = y0; y <= y1; y += 1) {
+        const idx = sim.id(target.x, y);
+        if (sim.material[idx] === 2) continue;
+        const ez = finite(sim.ez?.[idx]) * (typeof sim.fieldPhysicalScale === "function" ? sim.fieldPhysicalScale() : 1);
+        const poynting = typeof sim.poyntingAt === "function" ? finite(sim.poyntingAt(idx)?.x) : 0;
+        target.ez2 += ez * ez;
+        target.eAbs += Math.abs(ez);
+        target.sx += poynting;
+        target.forwardSx += Math.max(0, poynting);
+        target.samples += 1;
+      }
+    };
+
+    let temporalSamples = 0;
+    for (let step = 0; step < sampleSteps; step += 1) {
+      sim.step();
+      if (step % sampleEvery !== 0) continue;
+      for (const port of ports) {
+        integrateInto(port.through);
+        integrateInto(port.cross);
+      }
+      temporalSamples += 1;
+      if ((step + 1) % 180 === 0) await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+    sim.measure();
+
+    const evaluatedPorts = ports.map((port) => {
+      const totalForwardSx = port.through.forwardSx + port.cross.forwardSx;
+      const totalEz2 = port.through.ez2 + port.cross.ez2;
+      return {
+        xLambda: port.xLambda,
+        throughForwardSx: port.through.forwardSx,
+        crossForwardSx: port.cross.forwardSx,
+        totalForwardSx,
+        totalEz2,
+        crossForwardSxFraction: totalForwardSx > 1e-30 ? port.cross.forwardSx / totalForwardSx : null,
+        crossEz2Fraction: totalEz2 > 1e-30 ? port.cross.ez2 / totalEz2 : null,
+        signedSxBalance:
+          Math.abs(port.through.sx) + Math.abs(port.cross.sx) > 1e-30
+            ? (port.through.sx + port.cross.sx) / (Math.abs(port.through.sx) + Math.abs(port.cross.sx))
+            : null,
+      };
+    });
+    const eligible = evaluatedPorts.filter((port) => port.totalForwardSx > 1e-30 && Number.isFinite(port.crossForwardSxFraction));
+    const best = eligible.reduce(
+      (current, candidate) =>
+        !current || candidate.crossForwardSxFraction > current.crossForwardSxFraction ? candidate : current,
+      null,
+    );
+    const strongest = eligible.reduce(
+      (current, candidate) => (!current || candidate.totalForwardSx > current.totalForwardSx ? candidate : current),
+      null,
+    );
+    return {
+      preset: state.preset,
+      guideSeparationLambda,
+      guideHalfWidthLambda,
+      sampleSteps,
+      sampleEvery,
+      temporalSamples,
+      monitorCount: evaluatedPorts.length,
+      best,
+      strongest,
+      ports: evaluatedPorts,
     };
   }, testCase.acceptance || {});
 }
@@ -3316,6 +3461,10 @@ async function periodicPhotonicsMetrics(page) {
     let highIndexEnergy = 0;
     let centerDefectEnergy = 0;
     let lineDefectEnergy = 0;
+    let lineLeftEnergy = 0;
+    let lineCenterEnergy = 0;
+    let lineRightEnergy = 0;
+    let lineSourceEnergy = 0;
     let adjacentRowEnergy = 0;
     let cavityEnergy = 0;
     let fanoBusEnergy = 0;
@@ -3328,6 +3477,15 @@ async function periodicPhotonicsMetrics(page) {
     let fanoBusHighIndexCells = 0;
     let fanoResonatorHighIndexCells = 0;
     let fanoGapHighIndexCells = 0;
+    const firstSource = sourceList[0] || null;
+    const firstSourceX =
+      firstSource && typeof sim.sourceXCell === "function"
+        ? sim.sourceXCell(firstSource)
+        : Math.round(Number(firstSource?.xLambda || midX / cpw) * cpw);
+    const firstSourceY =
+      firstSource && typeof sim.sourceYCell === "function"
+        ? sim.sourceYCell(firstSource)
+        : Math.round(Number(firstSource?.yLambda || midY / cpw) * cpw);
 
     for (let y = minY; y <= maxY; y += 1) {
       for (let x = minX; x <= maxX; x += 1) {
@@ -3337,6 +3495,10 @@ async function periodicPhotonicsMetrics(page) {
 
         const inCenterDefect = box(x, y, 0.24, 0.24);
         const inLineDefect = box(x, y, 3.4, 0.16);
+        const inLineLeft = box(x, y, 0.55, 0.16, midX - Math.round(2.25 * cpw), midY);
+        const inLineCenter = box(x, y, 0.55, 0.16, midX, midY);
+        const inLineRight = box(x, y, 0.55, 0.16, midX + Math.round(2.25 * cpw), midY);
+        const inLineSource = box(x, y, 0.45, 0.16, firstSourceX, firstSourceY);
         const inAdjacentRows =
           Math.abs(Math.abs(y - midY) - aCells) <= Math.round(0.15 * cpw) && Math.abs(x - midX) <= Math.round(3.4 * cpw);
         const inCavity = box(x, y, 0.76, 0.2);
@@ -3349,6 +3511,10 @@ async function periodicPhotonicsMetrics(page) {
 
         if (inCenterDefect) centerDefectEnergy += energy;
         if (inLineDefect) lineDefectEnergy += energy;
+        if (inLineLeft) lineLeftEnergy += energy;
+        if (inLineCenter) lineCenterEnergy += energy;
+        if (inLineRight) lineRightEnergy += energy;
+        if (inLineSource) lineSourceEnergy += energy;
         if (inAdjacentRows) adjacentRowEnergy += energy;
         if (inCavity) cavityEnergy += energy;
         if (inFanoBus) fanoBusEnergy += energy;
@@ -3459,10 +3625,21 @@ async function periodicPhotonicsMetrics(page) {
       highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
       centerDefectEnergy,
       lineDefectEnergy,
+      lineLeftEnergy,
+      lineCenterEnergy,
+      lineRightEnergy,
+      lineSourceEnergy,
       adjacentRowEnergy,
       cavityEnergy,
       centerDefectEnergyFraction: centerDefectEnergy / Math.max(1e-30, totalEnergy),
       lineDefectEnergyFraction: lineDefectEnergy / Math.max(1e-30, totalEnergy),
+      lineLeftEnergyFraction: lineLeftEnergy / Math.max(1e-30, totalEnergy),
+      lineCenterEnergyFraction: lineCenterEnergy / Math.max(1e-30, totalEnergy),
+      lineRightEnergyFraction: lineRightEnergy / Math.max(1e-30, totalEnergy),
+      lineSourceEnergyFraction: lineSourceEnergy / Math.max(1e-30, totalEnergy),
+      lineRightToSourceEnergyRatio: lineRightEnergy / Math.max(1e-30, lineSourceEnergy),
+      lineRightToAdjacentEnergyRatio: lineRightEnergy / Math.max(1e-30, adjacentRowEnergy),
+      lineRightToLeftEnergyRatio: lineRightEnergy / Math.max(1e-30, lineLeftEnergy),
       cavityEnergyFraction: cavityEnergy / Math.max(1e-30, totalEnergy),
       adjacentToLineEnergyRatio: adjacentRowEnergy / Math.max(1e-30, lineDefectEnergy),
       fanoBusHighIndexCells,
@@ -5016,6 +5193,41 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`MMI signed Sx balance ${metrics.signedSxBalance} exceeds ${maxSignedSxAbs}`);
     }
   }
+  if (testCase.acceptance?.directionalCouplerCheck) {
+    status.directionalCoupler = await directionalCouplerMetrics(page, testCase);
+    const metrics = status.directionalCoupler;
+    const minTemporalSamples = Number(testCase.acceptance?.couplerTemporalSamplesMin);
+    const minMonitorCount = Number(testCase.acceptance?.couplerMonitorCountMin);
+    const minTotalForwardSx = Number(testCase.acceptance?.couplerBestTotalForwardSxMin);
+    const minCrossForwardFraction = Number(testCase.acceptance?.couplerCrossForwardSxFractionMin);
+    const minCrossEz2Fraction = Number(testCase.acceptance?.couplerCrossEz2FractionMin);
+    if (Number.isFinite(minTemporalSamples) && metrics.temporalSamples < minTemporalSamples) {
+      status.failures.push(`directional-coupler temporal samples ${metrics.temporalSamples} below ${minTemporalSamples}`);
+    }
+    if (Number.isFinite(minMonitorCount) && metrics.monitorCount < minMonitorCount) {
+      status.failures.push(`directional-coupler monitor count ${metrics.monitorCount} below ${minMonitorCount}`);
+    }
+    if (
+      Number.isFinite(minTotalForwardSx) &&
+      !(metrics.best && Number.isFinite(metrics.best.totalForwardSx) && metrics.best.totalForwardSx >= minTotalForwardSx)
+    ) {
+      status.failures.push(`directional-coupler best total forward Sx ${metrics.best?.totalForwardSx} below ${minTotalForwardSx}`);
+    }
+    if (
+      Number.isFinite(minCrossForwardFraction) &&
+      !(metrics.best && Number.isFinite(metrics.best.crossForwardSxFraction) && metrics.best.crossForwardSxFraction >= minCrossForwardFraction)
+    ) {
+      status.failures.push(
+        `directional-coupler cross forward-Sx fraction ${metrics.best?.crossForwardSxFraction} below ${minCrossForwardFraction}`,
+      );
+    }
+    if (
+      Number.isFinite(minCrossEz2Fraction) &&
+      !(metrics.best && Number.isFinite(metrics.best.crossEz2Fraction) && metrics.best.crossEz2Fraction >= minCrossEz2Fraction)
+    ) {
+      status.failures.push(`directional-coupler cross Ez^2 fraction ${metrics.best?.crossEz2Fraction} below ${minCrossEz2Fraction}`);
+    }
+  }
   if (testCase.acceptance?.guidedDeviceCheck) {
     status.guidedDevice = await guidedDeviceMetrics(page);
     const metrics = status.guidedDevice;
@@ -5201,6 +5413,9 @@ async function runSmokeCase(page, testCase) {
     const maxCavityHighIndexCells = Number(testCase.acceptance?.cavityHighIndexCellsMax);
     const minCavityFraction = Number(testCase.acceptance?.cavityEnergyFractionMin);
     const minLineFraction = Number(testCase.acceptance?.lineDefectEnergyFractionMin);
+    const minLineRightFraction = Number(testCase.acceptance?.lineRightEnergyFractionMin);
+    const minLineRightToSourceRatio = Number(testCase.acceptance?.lineRightToSourceEnergyRatioMin);
+    const minLineRightToLeftRatio = Number(testCase.acceptance?.lineRightToLeftEnergyRatioMin);
     const maxAdjacentToLineRatio = Number(testCase.acceptance?.adjacentToLineEnergyRatioMax);
     const minOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMin);
     const maxOffsetMean = Number(testCase.acceptance?.latticeOffsetMeanLambdaMax);
@@ -5275,6 +5490,25 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minLineFraction) && metrics.lineDefectEnergyFraction < minLineFraction) {
       status.failures.push(`line-defect energy fraction ${metrics.lineDefectEnergyFraction} below ${minLineFraction}`);
+    }
+    if (Number.isFinite(minLineRightFraction) && metrics.lineRightEnergyFraction < minLineRightFraction) {
+      status.failures.push(`line-defect downstream energy fraction ${metrics.lineRightEnergyFraction} below ${minLineRightFraction}`);
+    }
+    if (
+      Number.isFinite(minLineRightToSourceRatio) &&
+      !(Number.isFinite(metrics.lineRightToSourceEnergyRatio) && metrics.lineRightToSourceEnergyRatio >= minLineRightToSourceRatio)
+    ) {
+      status.failures.push(
+        `line-defect downstream/source energy ratio ${metrics.lineRightToSourceEnergyRatio} below ${minLineRightToSourceRatio}`,
+      );
+    }
+    if (
+      Number.isFinite(minLineRightToLeftRatio) &&
+      !(Number.isFinite(metrics.lineRightToLeftEnergyRatio) && metrics.lineRightToLeftEnergyRatio >= minLineRightToLeftRatio)
+    ) {
+      status.failures.push(
+        `line-defect downstream/upstream energy ratio ${metrics.lineRightToLeftEnergyRatio} below ${minLineRightToLeftRatio}`,
+      );
     }
     if (
       Number.isFinite(maxAdjacentToLineRatio) &&

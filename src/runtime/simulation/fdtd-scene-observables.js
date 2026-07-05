@@ -770,12 +770,26 @@
     let highIndexEnergy = 0;
     let centerDefectEnergy = 0;
     let lineDefectEnergy = 0;
+    let lineLeftEnergy = 0;
+    let lineCenterEnergy = 0;
+    let lineRightEnergy = 0;
+    let lineSourceEnergy = 0;
     let adjacentRowEnergy = 0;
     let cavityEnergy = 0;
     let centerHighIndexCells = 0;
     let centralLineHighIndexCells = 0;
     let adjacentRowHighIndexCells = 0;
     let cavityHighIndexCells = 0;
+    const sourceList = Array.isArray(state.sources) ? state.sources : [];
+    const firstSource = sourceList[0] || null;
+    const firstSourceX =
+      firstSource && typeof sim.sourceXCell === "function"
+        ? sim.sourceXCell(firstSource)
+        : Math.round(Number(firstSource?.xLambda || midX / cpw) * cpw);
+    const firstSourceY =
+      firstSource && typeof sim.sourceYCell === "function"
+        ? sim.sourceYCell(firstSource)
+        : Math.round(Number(firstSource?.yLambda || midY / cpw) * cpw);
 
     for (let y = minY; y <= maxY; y += 1) {
       for (let x = minX; x <= maxX; x += 1) {
@@ -783,6 +797,10 @@
         const energy = fieldEnergyAt(sim, idx);
         const inCenterDefect = box(x, y, 0.24, 0.24);
         const inLineDefect = box(x, y, 3.4, 0.16);
+        const inLineLeft = box(x, y, 0.55, 0.16, midX - Math.round(2.25 * cpw), midY);
+        const inLineCenter = box(x, y, 0.55, 0.16, midX, midY);
+        const inLineRight = box(x, y, 0.55, 0.16, midX + Math.round(2.25 * cpw), midY);
+        const inLineSource = box(x, y, 0.45, 0.16, firstSourceX, firstSourceY);
         const inAdjacentRows =
           Math.abs(Math.abs(y - midY) - aCells) <= Math.round(0.15 * cpw) && Math.abs(x - midX) <= Math.round(3.4 * cpw);
         const inCavity = box(x, y, 0.76, 0.2);
@@ -790,6 +808,10 @@
         totalEnergy += energy;
         if (inCenterDefect) centerDefectEnergy += energy;
         if (inLineDefect) lineDefectEnergy += energy;
+        if (inLineLeft) lineLeftEnergy += energy;
+        if (inLineCenter) lineCenterEnergy += energy;
+        if (inLineRight) lineRightEnergy += energy;
+        if (inLineSource) lineSourceEnergy += energy;
         if (inAdjacentRows) adjacentRowEnergy += energy;
         if (inCavity) cavityEnergy += energy;
 
@@ -826,7 +848,6 @@
       latticeOffsetMax = Math.max(latticeOffsetMax, offset);
     }
 
-    const sourceList = Array.isArray(state.sources) ? state.sources : [];
     let sourcePhaseDifferenceDeg = null;
     let sourceAmplitudeRatio = null;
     if (sourceList.length >= 2) {
@@ -858,6 +879,12 @@
       highIndexEnergyFraction: highIndexEnergy / Math.max(1e-30, totalEnergy),
       centerDefectEnergyFraction: centerDefectEnergy / Math.max(1e-30, totalEnergy),
       lineDefectEnergyFraction: lineDefectEnergy / Math.max(1e-30, totalEnergy),
+      lineLeftEnergyFraction: lineLeftEnergy / Math.max(1e-30, totalEnergy),
+      lineCenterEnergyFraction: lineCenterEnergy / Math.max(1e-30, totalEnergy),
+      lineRightEnergyFraction: lineRightEnergy / Math.max(1e-30, totalEnergy),
+      lineSourceEnergyFraction: lineSourceEnergy / Math.max(1e-30, totalEnergy),
+      lineRightToSourceEnergyRatio: lineRightEnergy / Math.max(1e-30, lineSourceEnergy),
+      lineRightToLeftEnergyRatio: lineRightEnergy / Math.max(1e-30, lineLeftEnergy),
       adjacentToLineEnergyRatio: adjacentRowEnergy / Math.max(1e-30, lineDefectEnergy),
       cavityEnergyFraction: cavityEnergy / Math.max(1e-30, totalEnergy),
       sourceCount: sourceList.length,
@@ -1351,6 +1378,20 @@
               ? "ok"
               : "caution",
         note: "This is the check that matters for the image you flagged: the launched field should remain measurably in the defect channel.",
+      }));
+      const downstreamOk =
+        geometry.lineRightEnergyFraction > 0.08 &&
+        geometry.lineRightToSourceEnergyRatio >= 3 &&
+        geometry.lineRightToLeftEnergyRatio >= 2;
+      rows.push(row({
+        metric: "Line-defect downstream transport",
+        measured: energyReady
+          ? `right=${formatRatio(geometry.lineRightEnergyFraction)}, right/source=${formatRatio(geometry.lineRightToSourceEnergyRatio)}`
+          : "not warmed up",
+        expected: "right > 0.08 and right/source > 3",
+        error: `right/left=${formatRatio(geometry.lineRightToLeftEnergyRatio)}`,
+        level: !energyReady ? "pending" : downstreamOk ? "ok" : "caution",
+        note: "This rejects a line-defect scene that only stores energy near the launch region instead of carrying it through the channel.",
       }));
       return true;
     }

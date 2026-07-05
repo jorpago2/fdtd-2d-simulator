@@ -1072,18 +1072,22 @@ Object.assign(FDTDSim.prototype, {
         guide(midYLambda + 0.25, 0.22, mat.n34, 5.7, domainXLambda - 0.5);
         modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
-      case "machZehnder":
-        guide(midYLambda, 0.22, mat.n34, 0.55, midXLambda - 2.1);
-        rotatedRectL(midXLambda - 1.75, midYLambda - 0.34, 1.0, 0.22, -35, mat.n34);
-        rotatedRectL(midXLambda - 1.75, midYLambda + 0.34, 1.0, 0.22, 35, mat.n34);
-        guide(midYLambda - 0.68, 0.22, mat.n34, midXLambda - 1.35, midXLambda + 1.35);
-        guide(midYLambda + 0.68, 0.22, mat.n34, midXLambda - 1.35, midXLambda + 1.35);
-        rectL(midXLambda - 0.15, midYLambda - 0.79, 0.75, 0.22, mat.n20);
-        rotatedRectL(midXLambda + 1.75, midYLambda - 0.34, 1.0, 0.22, 35, mat.n34);
-        rotatedRectL(midXLambda + 1.75, midYLambda + 0.34, 1.0, 0.22, -35, mat.n34);
-        guide(midYLambda, 0.22, mat.n34, midXLambda + 2.1, domainXLambda - 0.55);
-        modalGuideSource(midYLambda, { widthLambda: 1.0 });
+      case "machZehnder": {
+        const mziGuide = mat.n25;
+        const armOffset = 0.48;
+        const guideWidth = 0.24;
+        guide(midYLambda, guideWidth, mziGuide, 0.55, midXLambda - 2.2);
+        rotatedRectL(midXLambda - 1.75, midYLambda - armOffset / 2, 1.12, guideWidth, -25, mziGuide);
+        rotatedRectL(midXLambda - 1.75, midYLambda + armOffset / 2, 1.12, guideWidth, 25, mziGuide);
+        guide(midYLambda - armOffset, guideWidth, mziGuide, midXLambda - 1.25, midXLambda + 1.25);
+        guide(midYLambda + armOffset, guideWidth, mziGuide, midXLambda - 1.25, midXLambda + 1.25);
+        rectL(midXLambda - 0.15, midYLambda - armOffset - guideWidth / 2, 0.75, guideWidth, mat.n34);
+        rotatedRectL(midXLambda + 1.75, midYLambda - armOffset / 2, 1.12, guideWidth, 25, mziGuide);
+        rotatedRectL(midXLambda + 1.75, midYLambda + armOffset / 2, 1.12, guideWidth, -25, mziGuide);
+        guide(midYLambda, guideWidth, mziGuide, midXLambda + 2.2, domainXLambda - 0.55);
+        modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
+      }
       case "guideScatterer":
         guide(midYLambda, 0.28, mat.n34);
         ellipseL(midXLambda + 0.9, midYLambda - 0.32, 0.08, 0.08, mat.n20);
