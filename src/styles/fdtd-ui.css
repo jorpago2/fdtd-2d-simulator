@@ -638,6 +638,14 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   white-space: nowrap;
 }
 
+.grid-option-toggle {
+  min-height: 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: var(--panel-2);
+}
+
 /* 04. Canvas overlays and context menus */
 
 .colorbar {

@@ -1363,6 +1363,21 @@
                     <input id="gridNyInput" type="number" inputmode="decimal" autocomplete="off" min="60" max="800" step="10" value="240" />
                   </label>
                 </div>
+                <div class="two-col">
+                  <label>
+                    <span>Cells / &lambda;<sub>0</sub></span>
+                    <input id="cellsPerWavelengthInput" type="number" inputmode="decimal" autocomplete="off" min="8" max="80" step="1" value="20" />
+                  </label>
+                  <label class="toggle-row grid-option-toggle">
+                    <input id="subpixelSmoothingInput" type="checkbox" />
+                    <span>Subpixel smoothing</span>
+                  </label>
+                </div>
+                <div class="diagnostic-metric">
+                  <span>Subpixel smoothing status</span>
+                  <output id="subpixelSmoothingStatus">Off &middot; passive interfaces only</output>
+                </div>
+                <p class="simulation-guide-note">Cells / &lambda;<sub>0</sub> sets the normalized grid resolution. Subpixel smoothing only changes passive dielectric interface coefficients; PEC, dispersive, tensorial, nonlinear, gain, and phase-change cells are left unchanged.</p>
               </div>
             </details>
             <details class="panel-section reproducibility-section config-detail-panel" open>
@@ -1376,20 +1391,6 @@
                 <input id="importSceneFileInput" type="file" accept="application/json,.json" hidden />
                 <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
                 <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
-              </div>
-            </details>
-            <details class="panel-section interface-accuracy-panel config-detail-panel">
-              <summary>Interface accuracy</summary>
-              <div class="config-detail-body">
-                <label class="toggle-row">
-                  <input id="subpixelSmoothingInput" type="checkbox" />
-                  <span>Subpixel smoothing</span>
-                </label>
-                <div class="diagnostic-metric">
-                  <span>Status</span>
-                  <output id="subpixelSmoothingStatus">Off · passive interfaces only</output>
-                </div>
-                <p class="simulation-guide-note">Uses direction-aware effective coefficients at passive dielectric corners. PEC, dispersive, tensorial, nonlinear, gain, and phase-change cells are left unchanged.</p>
               </div>
             </details>
             <details class="panel-section performance-panel config-detail-panel">

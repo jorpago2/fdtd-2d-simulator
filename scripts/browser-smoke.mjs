@@ -6239,6 +6239,9 @@ async function runControlNavigationSmoke(page) {
         stabilitySectionVisible: Boolean(document.querySelector("#tab-config .stability-section")),
         performanceInResults: Boolean(document.querySelector("#tab-results .performance-panel")),
         performanceInNumerics: Boolean(document.querySelector("#tab-config .performance-panel")),
+        interfaceAccuracyPanelVisible: Boolean(document.querySelector("#tab-config .interface-accuracy-panel")),
+        gridHasCellsPerWavelength: Boolean(document.querySelector("#tab-config .grid-section #cellsPerWavelengthInput")),
+        gridHasSubpixelSmoothing: Boolean(document.querySelector("#tab-config .grid-section #subpixelSmoothingInput")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
         openResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
@@ -6286,9 +6289,12 @@ async function runControlNavigationSmoke(page) {
   if (status.numericsState?.stabilitySectionVisible) failures.push("Numerics still shows the Stability section");
   const numericsCards = status.numericsState?.numericsCards || [];
   const numericsOrder = numericsCards.map((card) => card.title).join("|");
-  if (numericsOrder !== "Grid|Reproducibility|Interface accuracy|Performance") {
+  if (numericsOrder !== "Grid|Reproducibility|Performance") {
     failures.push(`Numerics card order is ${numericsOrder || "empty"}`);
   }
+  if (status.numericsState?.interfaceAccuracyPanelVisible) failures.push("Interface accuracy is still a standalone Numerics card");
+  if (!status.numericsState?.gridHasCellsPerWavelength) failures.push("Grid card is missing cells-per-wavelength control");
+  if (!status.numericsState?.gridHasSubpixelSmoothing) failures.push("Grid card is missing subpixel smoothing control");
   const unexpectedNumericsState = numericsCards.filter((card) => {
     if (card.title === "Grid" || card.title === "Reproducibility") return !card.open;
     return card.open;
