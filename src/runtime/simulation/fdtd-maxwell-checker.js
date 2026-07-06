@@ -165,18 +165,34 @@
     return "ok";
   }
 
+  function maxwellSnapshotBuffers(sim) {
+    const current = sim.maxwellCheckSnapshotBuffers;
+    if (current?.ez?.length === sim.n) return current;
+    // ponytail: one scratch snapshot per sim; per-step allocations on large grids make the GC do unpaid lab work.
+    sim.maxwellCheckSnapshotBuffers = {
+      component: "ez",
+      time: 0,
+      ez: new Float32Array(sim.n),
+      ezx: new Float32Array(sim.n),
+      ezy: new Float32Array(sim.n),
+      hx: new Float32Array(sim.n),
+      hy: new Float32Array(sim.n),
+    };
+    return sim.maxwellCheckSnapshotBuffers;
+  }
+
   Object.assign(FDTDSim.prototype, {
     captureMaxwellCheckSnapshot() {
       if (!state.maxwellCheckEnabled || this.lastDiverged) return null;
-      return {
-        component: state.fieldComponent === "hz" ? "hz" : "ez",
-        time: this.time,
-        ez: new Float32Array(this.ez),
-        ezx: new Float32Array(this.ezx),
-        ezy: new Float32Array(this.ezy),
-        hx: new Float32Array(this.hx),
-        hy: new Float32Array(this.hy),
-      };
+      const snapshot = maxwellSnapshotBuffers(this);
+      snapshot.component = state.fieldComponent === "hz" ? "hz" : "ez";
+      snapshot.time = this.time;
+      snapshot.ez.set(this.ez);
+      snapshot.ezx.set(this.ezx);
+      snapshot.ezy.set(this.ezy);
+      snapshot.hx.set(this.hx);
+      snapshot.hy.set(this.hy);
+      return snapshot;
     },
 
     maxwellCellIsSampled(x, y, i, guards) {

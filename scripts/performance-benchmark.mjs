@@ -167,6 +167,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
         fieldDisplay: state.fieldDisplay,
         autoScale: state.autoScale,
         fieldQuiver: state.fieldQuiver,
+        maxwellCheckEnabled: state.maxwellCheckEnabled,
       };
       const savedBackend = sim.wasmBackend;
 
@@ -178,6 +179,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
       state.fieldDisplay = "scalar";
       state.autoScale = true;
       state.fieldQuiver = false;
+      state.maxwellCheckEnabled = false;
 
       applySimulationGridSize(grid.nx, grid.ny, { applyPreset: true, render: false });
       sim.resetFields();
@@ -242,6 +244,7 @@ async function runBenchmarkCase(page, grid, backend, options) {
       state.fieldDisplay = saved.fieldDisplay;
       state.autoScale = saved.autoScale;
       state.fieldQuiver = saved.fieldQuiver;
+      state.maxwellCheckEnabled = saved.maxwellCheckEnabled;
 
       return {
         backend,

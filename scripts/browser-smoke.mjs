@@ -6761,6 +6761,7 @@ async function runPoyntingComponentVisibilitySmoke(page) {
 async function runMaxwellCheckerSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
+    const savedMaxwellCheckEnabled = Boolean(state.maxwellCheckEnabled);
     document.querySelector('[data-control-tab="results"]')?.click();
     const panel = document.querySelector(".maxwell-check-panel");
     if (panel) panel.open = true;
@@ -6772,8 +6773,11 @@ async function runMaxwellCheckerSmoke(page) {
     if (typeof updateStats === "function") updateStats();
     const results = document.getElementById("maxwellCheckResults");
     const report = typeof sim !== "undefined" && typeof sim.maxwellCheckReport === "function" ? sim.maxwellCheckReport() : null;
+    state.maxwellCheckEnabled = savedMaxwellCheckEnabled;
+    if (input) input.checked = savedMaxwellCheckEnabled;
+    if (!savedMaxwellCheckEnabled && typeof sim !== "undefined") sim.lastMaxwellCheck = null;
     return {
-      inputChecked: Boolean(input?.checked),
+      inputChecked: Boolean(report?.enabled),
       panelText: results?.textContent || "",
       rowCount: results?.querySelectorAll(".maxwell-equation-card").length || 0,
       reportStatus: report?.status || "",
