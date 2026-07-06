@@ -15,9 +15,9 @@ This guide translates the validation audit into teaching use. It does not claim 
 | Family | Use it to teach | Best observables | Main caveat |
 | --- | --- | --- | --- |
 | Maxwell and propagation | Yee-grid propagation, interference, apertures, CPML behavior. | Field phase, energy stability, aperture profiles, Poynting direction. | Short browser runs are regression checks, not convergence studies. |
-| Interfaces and multilayers | Fresnel reflection, refraction, Brewster angle, TIR, coatings, Bragg stacks. | Analytic Fresnel R, low R near Brewster angle, evanescent/frustrated-TIR field overlap, frustrated-TIR contrast against isolated TIR, coating/stack reflectance diagnostics. | Raw line-monitor T is a finite-scene port observable; do not use it alone as de-embedded power balance. |
+| Interfaces and multilayers | Fresnel reflection, refraction, Brewster angle, TIR, coatings, Bragg stacks. | Analytic Fresnel R, low R near Brewster angle, line-port R/T/A, finite-window R/T/A spectrum, optional reference-normalized R/T/A, evanescent/frustrated-TIR field overlap, coating/stack reflectance diagnostics. | Reference-normalized spectra remove a matched background response but still need convergence before device-grade S-parameter claims. |
 | Sources and radiation | Dipoles, phased arrays, Huygens/Janus sources, NTFF workflow. | Source count/phase/polarization, near-field energy, finite far-field samples. | Radiation patterns need analytic fits and grid convergence for quantitative antenna claims. |
-| Guided optics | Mode launch, bends, tapers, couplers, MMI, MZI, resonator side branches. | Mode-profile source route, guide geometry, guided-band energy, splitter/coupler diagnostics. | Coupling ratios and phase shifts need de-embedding against ports for calibrated device claims. |
+| Guided optics | Mode launch, bends, tapers, couplers, MMI, MZI, resonator side branches. | Mode-profile source route, finite-difference effective index, mode-port overlap, carrier modal S11/S21 estimates, guided-band energy, splitter/coupler diagnostics. | Modal S-parameters are finite-port estimates from scalar mode projections; device claims still need matched-port references and convergence. |
 | Resonators and cavities | Ringdown, standing waves, cavity localization, 2D Q/Aeff and dipole-guide flux workflows. | Analysis samples, Q estimate, cavity energy fraction, Q/Aeff metric, guided-flux ratio. | 2D Q/Aeff and guided-flux ratios are not 3D LDOS, measured lifetime, or de-embedded beta-factor predictions. |
 | Scattering and disorder | Cylinder/dimer scattering, random transport, localization intuition. | Scatterer geometry, finite interaction energy, NTFF/scattering-width diagnostics, lateral spread. | Not a calibrated Mie/RCS/localization-length workflow. |
 | Materials and tensors | Drude/Lorentz/Debye/plasma, ENZ, anisotropy, gyrotropy, bianisotropy. | ADE state, effective epsilon, tensor masks, passivity/cross-field diagnostics. | Dispersion spectra, optical rotation, and S-parameters need dedicated references. |
@@ -34,7 +34,7 @@ The current audit has `PASS 141`, `WARN 0`, `VALIDATION_GAP 0`, and `FIX_REQUIRE
 
 ## High-Impact Upgrade Path
 
-1. Add de-embedded port normalization for interface and guided-device transmission.
+1. Add reference-run de-embedding for interface and guided-device transmission.
 2. Add grid-refinement presets for the P0 and highest-use P1 teaching scenes.
-3. Add analytic or independent references for the main diagnostic families: transfer-matrix multilayers, mode-solver waveguides, Mie cylinder scattering, photonic-crystal band diagrams, nonlinear transfer curves, and Floquet S-parameters.
+3. Add analytic or independent references for the main diagnostic families: transfer-matrix multilayers, vector waveguide modes, Mie cylinder scattering, photonic-crystal band diagrams, nonlinear transfer curves, and Floquet S-parameters.
 4. Keep bounded-claim labels visible in teaching material until those references exist.

@@ -39,7 +39,7 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 | Scene JSON export/import/share behavior | `src/runtime/app/scene-state-controller.js`, `src/runtime/core/scene-codec.js`, `src/runtime/core/scene-application.js`, `src/runtime/core/scene-repro.js` |
 | Results panel display | `src/runtime/ui/ui-results.js`, `src/runtime/ui/results-control-bindings.js` |
 | Sweep analysis, charts, and CSV | `src/runtime/simulation/sweep-analysis-controller.js`, `src/runtime/ui/ui-results-charts.js` |
-| Metric calculation | `src/runtime/simulation/fdtd-analysis-observables.js`, `src/runtime/simulation/fdtd-line-diagnostics.js`, `src/runtime/simulation/fdtd-diagnostics.js` |
+| Metric calculation | `src/runtime/simulation/fdtd-analysis-observables.js`, `src/runtime/simulation/fdtd-line-diagnostics.js`, `src/runtime/simulation/fdtd-modal-analysis.js`, `src/runtime/simulation/fdtd-diagnostics.js` |
 | Custom monitor geometry or measurement | `src/runtime/simulation/fdtd-custom-monitors.js`, `src/runtime/canvas/canvas-monitor-overlays.js`, `src/runtime/ui/source-monitor-control-bindings.js` |
 | Canvas paint or brush geometry insertion | `src/runtime/canvas/canvas-edit-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js` |
 | Canvas keyboard, pinch/pan, touch, or drag behavior | `src/runtime/canvas/canvas-gesture-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js`, `src/runtime/canvas/canvas-pointer-state.js`, `src/runtime/canvas/canvas-drag-state.js` |

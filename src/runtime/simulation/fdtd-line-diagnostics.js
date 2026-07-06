@@ -1,6 +1,66 @@
 (function initFdtdLineDiagnostics() {
   "use strict";
 
+  const LINE_REFERENCE_MIN_S21_AMPLITUDE = 1e-4;
+
+  function finiteNumber(value, fallback = 0) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+  }
+
+  function cloneScatteringPoint(point) {
+    if (!point) return null;
+    return {
+      frequency: finiteNumber(point.frequency, 0),
+      valid: Boolean(point.valid),
+      incidentPower: finiteNumber(point.incidentPower, 0),
+      reflectance: finiteNumber(point.reflectance, 0),
+      transmittance: finiteNumber(point.transmittance, 0),
+      absorption: finiteNumber(point.absorption, 0),
+      s11: point.s11 ? { ...point.s11 } : null,
+      s21: point.s21 ? { ...point.s21 } : null,
+    };
+  }
+
+  function complexDivide(numerator, denominator) {
+    const den2 = finiteNumber(denominator?.re, 0) ** 2 + finiteNumber(denominator?.im, 0) ** 2;
+    if (!(den2 > 1e-24)) return { re: 0, im: 0, amplitude: 0, phaseRad: 0, valid: false };
+    const re = (finiteNumber(numerator?.re, 0) * finiteNumber(denominator?.re, 0) + finiteNumber(numerator?.im, 0) * finiteNumber(denominator?.im, 0)) / den2;
+    const im = (finiteNumber(numerator?.im, 0) * finiteNumber(denominator?.re, 0) - finiteNumber(numerator?.re, 0) * finiteNumber(denominator?.im, 0)) / den2;
+    return { re, im, amplitude: Math.hypot(re, im), phaseRad: Math.atan2(im, re), valid: Number.isFinite(re) && Number.isFinite(im) };
+  }
+
+  function complexSubtract(left, right) {
+    const re = finiteNumber(left?.re, 0) - finiteNumber(right?.re, 0);
+    const im = finiteNumber(left?.im, 0) - finiteNumber(right?.im, 0);
+    return { re, im, amplitude: Math.hypot(re, im), phaseRad: Math.atan2(im, re), valid: Number.isFinite(re) && Number.isFinite(im) };
+  }
+
+  function complexPower(value) {
+    const re = finiteNumber(value?.re, 0);
+    const im = finiteNumber(value?.im, 0);
+    return re * re + im * im;
+  }
+
+  function powerNormalizedScattering(numerator, denominator, numeratorPower, denominatorPower) {
+    const phaseRatio = complexDivide(numerator, denominator);
+    const powerRatio = denominatorPower > 1e-24 ? Math.max(0, numeratorPower / denominatorPower) : 0;
+    const amplitude = Math.sqrt(powerRatio);
+    const phaseRad = phaseRatio.valid ? phaseRatio.phaseRad : 0;
+    return {
+      re: amplitude * Math.cos(phaseRad),
+      im: amplitude * Math.sin(phaseRad),
+      amplitude,
+      phaseRad,
+      powerRatio,
+      valid: phaseRatio.valid && Number.isFinite(powerRatio),
+    };
+  }
+
+  function scatteringPointHasReferenceSignal(point) {
+    return Boolean(point?.valid && point.s21?.valid && finiteNumber(point.s21.amplitude, 0) >= LINE_REFERENCE_MIN_S21_AMPLITUDE);
+  }
+
   Object.assign(FDTDSim.prototype, {
     resetLineDiagnostics() {
       this.diagnosticFluxLeft = 0;
@@ -33,6 +93,9 @@
       this.diagnosticDftIncidentSeries = new Float32Array(DIAGNOSTIC_DFT_WINDOW);
       this.diagnosticDftReflectedSeries = new Float32Array(DIAGNOSTIC_DFT_WINDOW);
       this.diagnosticDftTransmittedSeries = new Float32Array(DIAGNOSTIC_DFT_WINDOW);
+      this.diagnosticPowerBalanceSummary = null;
+      this.diagnosticSpectrumSummary = null;
+      this.linePortReferenceStatusCache = null;
       this.diagnosticImpedanceLeft = 1;
       this.diagnosticImpedanceRight = 1;
     },
@@ -163,7 +226,7 @@
 
     diagnosticDftOrders() {
       const omega = Math.abs(Number(state.modulationFrequency) || 0);
-      return temporalFloquetAnalysisPresets.has(state.preset) && omega > 1e-6 ? [-2, -1, 0, 1, 2] : [];
+      return temporalFloquetAnalysisPresets.has(state.preset) && omega > 1e-6 ? [-2, -1, 0, 1, 2] : [0];
     },
 
     modulationPhaseCoherenceEstimate() {
@@ -309,6 +372,321 @@
       const amplitude = 2 * Math.hypot(target.re, target.im);
       const z = Math.max(1e-9, Math.abs(impedance));
       return (amplitude * amplitude * this.fieldPowerScale()) / (2 * z);
+    },
+
+    diagnosticDftPowerFromPhasor(target, impedance) {
+      if (!target) return 0;
+      const amplitude = 2 * Math.hypot(target.re, target.im);
+      const z = Math.max(1e-9, Math.abs(impedance));
+      const power = (amplitude * amplitude * this.fieldPowerScale()) / (2 * z);
+      return Number.isFinite(power) && power > 0 ? power : 0;
+    },
+
+    diagnosticSpectrumFrequencies(binCount = 33) {
+      const carrier = Math.max(1e-6, this.diagnosticFrequency());
+      const count = clampInt(binCount, 9, 65);
+      const lower = Math.max(0.001, carrier * 0.25);
+      const upper = Math.min(0.25, Math.max(carrier * 2.25, carrier + 0.01));
+      if (!(upper > lower)) return [carrier];
+      const frequencies = [];
+      for (let i = 0; i < count; i += 1) {
+        frequencies.push(lower + ((upper - lower) * i) / Math.max(1, count - 1));
+      }
+      let nearestIndex = 0;
+      let nearestDistance = Infinity;
+      for (let i = 0; i < frequencies.length; i += 1) {
+        const distance = Math.abs(frequencies[i] - carrier);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = i;
+        }
+      }
+      frequencies[nearestIndex] = carrier;
+      return frequencies;
+    },
+
+    linePortReferenceKey() {
+      const monitors = this.diagnosticMonitorPositions();
+      const source = this.diagnosticIncidentSource();
+      const boundary = typeof state.boundary === "object" ? JSON.stringify(state.boundary) : String(state.boundary || "");
+      return [
+        `nx=${this.nx}`,
+        `ny=${this.ny}`,
+        `cpw=${finiteNumber(state.cellsPerWavelength, 0).toFixed(6)}`,
+        `courant=${finiteNumber(COURANT, 0).toFixed(6)}`,
+        `field=${state.fieldComponent || ""}`,
+        `boundary=${boundary}`,
+        `left=${monitors.left}`,
+        `right=${monitors.right}`,
+        `shape=${source?.shape || ""}`,
+        `type=${source?.type || ""}`,
+        `freq=${finiteNumber(source?.frequency, this.diagnosticFrequency()).toFixed(8)}`,
+        `angle=${finiteNumber(source?.angleDeg, 0).toFixed(4)}`,
+        `x=${finiteNumber(source?.xLambda, 0).toFixed(6)}`,
+        `y=${finiteNumber(source?.yLambda, 0).toFixed(6)}`,
+        `width=${finiteNumber(source?.widthLambda, 0).toFixed(6)}`,
+        `mode=${finiteNumber(source?.modeOrder, 0).toFixed(0)}`,
+        `mod=${finiteNumber(state.modulationFrequency, 0).toFixed(8)}`,
+      ].join("|");
+    },
+
+    linePortReferenceStatus() {
+      const reference = this.linePortReference || null;
+      if (!reference) {
+        return {
+          active: false,
+          compatible: false,
+          stale: false,
+          validPointCount: 0,
+          message: "No line-port reference captured.",
+        };
+      }
+      const compatible = reference.key === this.linePortReferenceKey();
+      const validPointCount = Array.isArray(reference.points) ? reference.points.filter((point) => point?.valid).length : 0;
+      return {
+        active: compatible && validPointCount > 0,
+        compatible,
+        stale: !compatible,
+        validPointCount,
+        capturedAtStep: reference.capturedAtStep,
+        carrierFrequency: reference.carrierFrequency,
+        message: compatible
+          ? `Reference active: ${validPointCount} spectral bins.`
+          : "Reference stored but incompatible with this grid/source/monitor setup.",
+      };
+    },
+
+    captureLinePortReference() {
+      const summary = this.diagnosticSpectrumSummary || null;
+      const validPoints = Array.isArray(summary?.points) ? summary.points.filter(scatteringPointHasReferenceSignal) : [];
+      if (validPoints.length <= 0) {
+        return {
+          ok: false,
+          message: "Run longer before capturing: no valid transmitted reference bins yet.",
+        };
+      }
+      this.linePortReference = {
+        key: this.linePortReferenceKey(),
+        capturedAtStep: Math.round(finiteNumber(this.time, 0)),
+        carrierFrequency: finiteNumber(summary.carrierFrequency, this.diagnosticFrequency()),
+        sampleCount: finiteNumber(summary.sampleCount, 0),
+        points: validPoints.map(cloneScatteringPoint),
+        normalization: "stored background line-port S11/S21 from a reference run",
+      };
+      this.linePortReferenceStatusCache = this.linePortReferenceStatus();
+      this.applyLinePortReferenceToSpectrum(summary);
+      return {
+        ok: true,
+        message: `Captured ${validPoints.length} reference bins.`,
+      };
+    },
+
+    clearLinePortReference() {
+      this.linePortReference = null;
+      this.linePortReferenceStatusCache = null;
+      if (this.diagnosticSpectrumSummary) {
+        this.diagnosticSpectrumSummary.reference = null;
+        this.diagnosticSpectrumSummary.referenceCarrierPoint = null;
+        for (const point of this.diagnosticSpectrumSummary.points || []) point.referenceNormalized = null;
+      }
+      return { ok: true, message: "Line-port reference cleared." };
+    },
+
+    applyLinePortReferenceToSpectrum(summary) {
+      if (!summary || !Array.isArray(summary.points)) return summary;
+      const status = this.linePortReferenceStatus();
+      this.linePortReferenceStatusCache = status;
+      summary.reference = {
+        active: false,
+        compatible: status.compatible,
+        stale: status.stale,
+        validPointCount: 0,
+        message: status.message,
+      };
+      summary.referenceCarrierPoint = null;
+      if (!status.active) {
+        for (const point of summary.points) point.referenceNormalized = null;
+        return summary;
+      }
+
+      const referenceByFrequency = new Map(
+        this.linePortReference.points
+          .filter((point) => point?.valid)
+          .map((point) => [finiteNumber(point.frequency, 0).toFixed(8), point]),
+      );
+      let validPointCount = 0;
+      let carrierPoint = null;
+      for (const point of summary.points) {
+        point.referenceNormalized = null;
+        const reference = referenceByFrequency.get(finiteNumber(point.frequency, 0).toFixed(8));
+        if (
+          !point.valid ||
+          !scatteringPointHasReferenceSignal(reference) ||
+          !point.s11?.valid ||
+          !point.s21?.valid ||
+          !reference.s11 ||
+          !reference.s21
+        ) {
+          continue;
+        }
+        const s21 = complexDivide(point.s21, reference.s21);
+        if (!s21.valid) continue;
+        const s11 = complexSubtract(point.s11, reference.s11);
+        const reflectance = clamp(complexPower(s11), 0, 9.999);
+        const transmittance = clamp(complexPower(s21), 0, 9.999);
+        const balanceResidual = 1 - reflectance - transmittance;
+        point.referenceNormalized = {
+          valid: true,
+          reflectance,
+          transmittance,
+          absorption: clamp(balanceResidual, 0, 9.999),
+          balanceResidual,
+          s11,
+          s21,
+          referenceReflectance: finiteNumber(reference.reflectance, 0),
+          referenceTransmittance: finiteNumber(reference.transmittance, 0),
+        };
+        validPointCount += 1;
+        if (!carrierPoint || Math.abs(point.frequency - summary.carrierFrequency) < Math.abs(carrierPoint.frequency - summary.carrierFrequency)) {
+          carrierPoint = point;
+        }
+      }
+      summary.reference = {
+        active: validPointCount > 0,
+        compatible: true,
+        stale: false,
+        validPointCount,
+        message: validPointCount > 0 ? `Reference-normalized ${validPointCount} spectral bins.` : "Reference has no overlapping valid bins.",
+        normalization: "device S21 divided by reference S21; S11 background-subtracted from reference S11",
+      };
+      summary.referenceCarrierPoint = carrierPoint?.referenceNormalized?.valid ? carrierPoint : null;
+      return summary;
+    },
+
+    updateDiagnosticSpectrumSummary(incident, transmitted) {
+      if (this.diagnosticDftSampleCount < 64) {
+        this.diagnosticSpectrumSummary = null;
+        return;
+      }
+      const updateStride = this.diagnosticDftSampleCount < 160 ? 8 : 16;
+      if (this.diagnosticSpectrumSummary && this.diagnosticDftSampleIndex % updateStride !== 0) return;
+
+      const frequencies = this.diagnosticSpectrumFrequencies(33);
+      const points = [];
+      let maxIncidentPower = 0;
+      let peakIncidentFrequency = 0;
+      for (const frequency of frequencies) {
+        const incidentPhasor = this.diagnosticDftPhasor(this.diagnosticDftIncidentSeries, frequency);
+        const reflectedPhasor = this.diagnosticDftPhasor(this.diagnosticDftReflectedSeries, frequency);
+        const transmittedPhasor = this.diagnosticDftPhasor(this.diagnosticDftTransmittedSeries, frequency);
+        const incidentPower = this.diagnosticDftPowerFromPhasor(incidentPhasor, incident.impedance);
+        const reflectedPower = this.diagnosticDftPowerFromPhasor(reflectedPhasor, incident.impedance);
+        const transmittedPower = this.diagnosticDftPowerFromPhasor(transmittedPhasor, transmitted.impedance);
+        const s11 = powerNormalizedScattering(reflectedPhasor, incidentPhasor, reflectedPower, incidentPower);
+        const s21 = powerNormalizedScattering(transmittedPhasor, incidentPhasor, transmittedPower, incidentPower);
+        if (incidentPower > maxIncidentPower) {
+          maxIncidentPower = incidentPower;
+          peakIncidentFrequency = frequency;
+        }
+        points.push({
+          frequency,
+          incidentPower,
+          reflectedPower,
+          transmittedPower,
+          reflectance: 0,
+          transmittance: 0,
+          absorption: 0,
+          balanceResidual: 0,
+          s11,
+          s21,
+          referenceNormalized: null,
+          valid: false,
+        });
+      }
+
+      const incidentFloor = Math.max(1e-18, maxIncidentPower * 1e-4);
+      let validPointCount = 0;
+      let carrierPoint = null;
+      const carrierFrequency = this.diagnosticFrequency();
+      for (const point of points) {
+        point.valid = point.incidentPower >= incidentFloor;
+        if (point.valid) {
+          point.reflectance = clamp(point.reflectedPower / point.incidentPower, 0, 9.999);
+          point.transmittance = clamp(point.transmittedPower / point.incidentPower, 0, 9.999);
+          point.balanceResidual = 1 - point.reflectance - point.transmittance;
+          point.absorption = clamp(point.balanceResidual, 0, 9.999);
+          validPointCount += 1;
+        }
+        if (!carrierPoint || Math.abs(point.frequency - carrierFrequency) < Math.abs(carrierPoint.frequency - carrierFrequency)) {
+          carrierPoint = point;
+        }
+      }
+
+      this.diagnosticSpectrumSummary = {
+        carrierFrequency,
+        peakIncidentFrequency,
+        maxIncidentPower,
+        sampleCount: this.diagnosticDftSampleCount,
+        validPointCount,
+        points,
+        carrierPoint,
+        normalization: "line-port DFT power normalized to the incident spectrum at the same frequency",
+      };
+      this.applyLinePortReferenceToSpectrum(this.diagnosticSpectrumSummary);
+    },
+
+    diagnosticPowerBalanceEstimate() {
+      const summary = this.diagnosticDftSummary;
+      const carrierOrder = summary?.orders?.find?.((channel) => channel.order === 0) || null;
+      const scattering = summary?.scatteringMatrix || null;
+      if (summary && carrierOrder && summary.carrierIncidentPower > 1e-18) {
+        const reflectance = clamp(
+          Number.isFinite(scattering?.totalReflectedPower) ? scattering.totalReflectedPower : carrierOrder.reflectedPowerRatio,
+          0,
+          9.999,
+        );
+        const transmittance = clamp(
+          Number.isFinite(scattering?.totalTransmittedPower) ? scattering.totalTransmittedPower : carrierOrder.powerRatio,
+          0,
+          9.999,
+        );
+        const balanceResidual = 1 - reflectance - transmittance;
+        return {
+          ready: true,
+          method: summary.orders.length > 1 ? "line-port DFT all measured orders" : "line-port carrier DFT",
+          samples: this.diagnosticDftSampleCount,
+          incidentPower: summary.carrierIncidentPower,
+          reflectedPower: reflectance * summary.carrierIncidentPower,
+          transmittedPower: transmittance * summary.carrierIncidentPower,
+          reflectance,
+          transmittance,
+          absorption: clamp(balanceResidual, 0, 9.999),
+          balanceResidual,
+          carrierFrequency: summary.carrierFrequency,
+          normalization: "carrier incident phasor at the input monitor",
+        };
+      }
+
+      const incidentPower = this.diagnosticIncidentPhasorPower || this.diagnosticIncidentPowerEwma || 0;
+      const reflectedPower = this.diagnosticReflectedPhasorPower || this.diagnosticReflectedPowerEwma || 0;
+      const transmittedPower = this.diagnosticTransmittedPhasorPower || this.diagnosticTransmittedPowerEwma || 0;
+      const reflectance = incidentPower > 1e-12 ? clamp(reflectedPower / incidentPower, 0, 9.999) : 0;
+      const transmittance = incidentPower > 1e-12 ? clamp(transmittedPower / incidentPower, 0, 9.999) : 0;
+      const balanceResidual = 1 - reflectance - transmittance;
+      return {
+        ready: incidentPower > 1e-12 && this.diagnosticSamples >= 20,
+        method: this.diagnosticSamples >= 20 ? "phasor monitor fallback" : "collecting samples",
+        samples: this.diagnosticSamples,
+        incidentPower,
+        reflectedPower,
+        transmittedPower,
+        reflectance,
+        transmittance,
+        absorption: clamp(balanceResidual, 0, 9.999),
+        balanceResidual,
+        carrierFrequency: this.diagnosticFrequency(),
+        normalization: "single-frequency wave separation at the input/output monitor lines",
+      };
     },
 
     updateDiagnosticDftChannels(incident, transmitted, rightIncident = false) {
@@ -458,6 +836,7 @@
         firstLower: this.diagnosticDftChannels.find((channel) => channel.order === -1)?.transmittedAmplitudeRatio || 0,
         portDft: true,
       };
+      this.updateDiagnosticSpectrumSummary(incident, transmitted);
     },
 
     updateLineDiagnostics() {
@@ -494,6 +873,15 @@
       } else {
         this.diagnosticTransmittance = 0;
         this.diagnosticReflectance = 0;
+      }
+      const balance = this.diagnosticPowerBalanceEstimate();
+      this.diagnosticPowerBalanceSummary = balance;
+      if (balance.ready && balance.method.includes("DFT")) {
+        this.diagnosticIncidentPower = balance.incidentPower;
+        this.diagnosticReflectedPower = balance.reflectedPower;
+        this.diagnosticTransmittedPower = balance.transmittedPower;
+        this.diagnosticReflectance = balance.reflectance;
+        this.diagnosticTransmittance = balance.transmittance;
       }
     },
   });

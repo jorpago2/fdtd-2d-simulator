@@ -320,7 +320,7 @@
         .join(" | ");
     }
 
-    function drawSpectrumChart({ maxFrequency = 0.1, sampleEvery = 1, theme = "light", values = [] } = {}) {
+    function drawSpectrumChart({ maxFrequency = 0.1, portSpectrum = null, sampleEvery = 1, theme = "light", values = [] } = {}) {
       const prepared = prepareChartCanvas(el?.spectrumChart, 260, 126);
       if (!prepared) return;
       const { ctx, width, height, dpr } = prepared;
@@ -379,7 +379,60 @@
       ctx.lineTo(width - padR, padT + plotH);
       ctx.stroke();
 
-      if (bins.length > 0 && maxMag > 1e-12) {
+      const referenceActive = Boolean(portSpectrum?.reference?.active);
+      const portPoints = Array.isArray(portSpectrum?.points) ? portSpectrum.points.filter((point) => point?.valid) : [];
+      const plottedPortPoints = referenceActive
+        ? portPoints
+            .filter((point) => point.referenceNormalized?.valid)
+            .map((point) => ({
+              ...point,
+              reflectance: point.referenceNormalized.reflectance,
+              transmittance: point.referenceNormalized.transmittance,
+              absorption: point.referenceNormalized.absorption,
+            }))
+        : portPoints;
+      if (plottedPortPoints.length > 0) {
+        const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
+        const fMax = Math.max(...plottedPortPoints.map((point) => point.frequency));
+        const yMax = Math.max(
+          1,
+          ...plottedPortPoints.map((point) => Math.max(point.reflectance || 0, point.transmittance || 0, point.absorption || 0)),
+        );
+        const xFor = (frequency) => padL + ((frequency - fMin) / Math.max(1e-9, fMax - fMin)) * plotW;
+        const yFor = (value) => padT + plotH - (clampNumber(value, 0, yMax) / yMax) * plotH;
+        const drawCurve = (key, color) => {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = Math.max(2 * dpr, 1.5);
+          ctx.beginPath();
+          plottedPortPoints.forEach((point, index) => {
+            const x = xFor(point.frequency);
+            const y = yFor(point[key]);
+            if (index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        };
+        drawCurve("reflectance", colors.blue);
+        drawCurve("transmittance", colors.green);
+        drawCurve("absorption", colors.reference);
+        ctx.fillStyle = colors.text;
+        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(referenceActive ? "Reference-normalized R/T/A" : "Line-port R/T/A", padL, 11 * dpr);
+        ctx.fillStyle = colors.blue;
+        ctx.fillText("R", width - padR - 58 * dpr, 11 * dpr);
+        ctx.fillStyle = colors.green;
+        ctx.fillText("T", width - padR - 38 * dpr, 11 * dpr);
+        ctx.fillStyle = colors.reference;
+        ctx.fillText("A", width - padR - 18 * dpr, 11 * dpr);
+        ctx.fillStyle = colors.text;
+        ctx.textAlign = "right";
+        ctx.fillText(formatDiagnosticRatio(yMax), padL - 6 * dpr, padT + 2 * dpr);
+        ctx.fillText("0", padL - 6 * dpr, padT + plotH);
+        ctx.textAlign = "center";
+        ctx.fillText("f", padL + plotW / 2, height - 11 * dpr);
+      } else if (bins.length > 0 && maxMag > 1e-12) {
         ctx.strokeStyle = colors.blue;
         ctx.lineWidth = Math.max(2 * dpr, 1.5);
         ctx.beginPath();
@@ -399,16 +452,18 @@
         ctx.fillText("Collecting probe samples", padL + plotW / 2, padT + plotH / 2);
       }
 
-      ctx.fillStyle = colors.text;
-      ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "left";
-      ctx.fillText("Probe spectrum", padL, 11 * dpr);
-      ctx.textAlign = "right";
-      ctx.fillText("0 dB", padL - 6 * dpr, padT + 2 * dpr);
-      ctx.fillText("-54", padL - 6 * dpr, padT + plotH);
-      ctx.textAlign = "center";
-      ctx.fillText("f", padL + plotW / 2, height - 11 * dpr);
+      if (plottedPortPoints.length <= 0) {
+        ctx.fillStyle = colors.text;
+        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "left";
+        ctx.fillText("Probe spectrum", padL, 11 * dpr);
+        ctx.textAlign = "right";
+        ctx.fillText("0 dB", padL - 6 * dpr, padT + 2 * dpr);
+        ctx.fillText("-54", padL - 6 * dpr, padT + plotH);
+        ctx.textAlign = "center";
+        ctx.fillText("f", padL + plotW / 2, height - 11 * dpr);
+      }
     }
 
     function drawFarFieldChart({ data = [], scatteringMode = false, scatteringTotalText = "", theme = "light" } = {}) {

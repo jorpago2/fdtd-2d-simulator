@@ -5,6 +5,7 @@ const UI_MEASURE_MIN_INTERVAL_MS = 250;
 Object.assign(FDTDSim.prototype, {
 resetDiagnostics() {
   this.resetLineDiagnostics();
+  this.resetModePortDiagnostics?.();
   this.resetAnalysisDiagnostics();
 },
 
@@ -609,6 +610,7 @@ analysisMetricEstimate() {
   const negativeIndex = this.negativeIndexQuantitativeEstimate();
   const bianisotropy = this.bianisotropyQuantitativeEstimate();
   const coupledWorkflow = this.coupledWorkflowEstimate();
+  const modePort = typeof this.modePortAnalysisEstimate === "function" ? this.modePortAnalysisEstimate() : null;
   if (this.analysisSamples < 8) {
     this.analysisMetrics = {
       spectrum: null,
@@ -631,6 +633,7 @@ analysisMetricEstimate() {
       negativeIndex,
       bianisotropy,
       coupledWorkflow,
+      modePort,
     };
     return this.analysisMetrics;
   }
@@ -681,6 +684,7 @@ analysisMetricEstimate() {
     negativeIndex,
     bianisotropy,
     coupledWorkflow,
+    modePort,
   };
   return this.analysisMetrics;
 },
@@ -904,6 +908,7 @@ updateDiagnostics({ forceAnalysis = false } = {}) {
   }
   this.updateAnalysisDiagnostics(forceAnalysis);
   this.updateLineDiagnostics();
+  this.updateModePortDiagnostics?.();
 },
 
 measureCacheKey() {

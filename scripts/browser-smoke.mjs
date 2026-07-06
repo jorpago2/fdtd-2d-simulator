@@ -478,8 +478,15 @@ async function diagnosticMetrics(page) {
       samples: sim.diagnosticSamples || 0,
       reflectance: sim.diagnosticReflectance || 0,
       transmittance: sim.diagnosticTransmittance || 0,
+      powerBalanceMethod: sim.diagnosticPowerBalanceSummary?.method || null,
       powerBalanceResidual:
-        sim.diagnosticSamples > 0 ? 1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0) : null,
+        sim.diagnosticPowerBalanceSummary?.balanceResidual ??
+        (sim.diagnosticSamples > 0 ? 1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0) : null),
+      spectrumValidPointCount: sim.diagnosticSpectrumSummary?.validPointCount || 0,
+      spectrumCarrierReflectance: sim.diagnosticSpectrumSummary?.carrierPoint?.reflectance ?? null,
+      referenceActive: Boolean(sim.diagnosticSpectrumSummary?.reference?.active),
+      referenceValidPointCount: sim.diagnosticSpectrumSummary?.reference?.validPointCount || 0,
+      referenceCarrierReflectance: sim.diagnosticSpectrumSummary?.referenceCarrierPoint?.referenceNormalized?.reflectance ?? null,
       incidentPower: sim.diagnosticIncidentPower || 0,
       reflectedPower: sim.diagnosticReflectedPower || 0,
       transmittedPower: sim.diagnosticTransmittedPower || 0,
@@ -647,6 +654,8 @@ async function guidedDeviceMetrics(page) {
   return page.evaluate(() => {
     sim.measure();
     const analysis = state.analysisEnabled && typeof sim.analysisMetricEstimate === "function" ? sim.analysisMetricEstimate() : null;
+    const modePort =
+      analysis?.modePort || (typeof sim.modePortAnalysisEstimate === "function" ? sim.modePortAnalysisEstimate() : null);
     const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
     const minX = sim.activeInteriorMinX();
     const maxX = sim.activeInteriorMaxX();
@@ -964,6 +973,18 @@ async function guidedDeviceMetrics(page) {
       qAreaMetric: finiteOrNull(analysis?.purcellProxy),
       purcellProxy: finiteOrNull(analysis?.purcellProxy),
       leakageRate: finiteOrNull(analysis?.leakageRate),
+      modePortAvailable: Boolean(modePort?.available),
+      modePortValid: Boolean(modePort?.valid),
+      modeEffectiveIndex: finiteOrNull(modePort?.neff),
+      modeInputOverlap: finiteOrNull(modePort?.inputOverlap),
+      modeOutputOverlap: finiteOrNull(modePort?.outputOverlap),
+      modeRadiationFraction: finiteOrNull(modePort?.radiationFraction),
+      modalTransmissionProxy: finiteOrNull(modePort?.modalTransmissionProxy),
+      modalReflectionProxy: finiteOrNull(modePort?.modalReflectionProxy),
+      modalS11Power: finiteOrNull(modePort?.sParameters?.reflectance),
+      modalS21Power: finiteOrNull(modePort?.sParameters?.transmittance),
+      modalSPowerResidual: finiteOrNull(modePort?.sParameters?.balanceResidual),
+      modalSSamples: finiteOrNull(modePort?.sParameters?.sampleCount),
     };
   });
 }
@@ -3895,12 +3916,13 @@ async function runSmokeCase(page, testCase) {
     const reference = fresnelCoefficients(0, referenceN1, referenceN2, "tm");
     const rTolerance = Number(testCase.acceptance?.reflectanceAbsTolerance);
     const rawTransmittanceMax = Number(testCase.acceptance?.rawTransmittanceMax);
+    const minSpectrumBins = Number(testCase.acceptance?.spectralRtaMinBins);
     status.diagnostics.reference = {
       reflectance: Number.isFinite(expectedR) ? expectedR : reference.reflectance,
       transmittance: reference.transmittance,
       powerBalanceResidual: Math.abs(reference.reflectance + reference.transmittance - 1),
       note:
-        "The line-monitor transmittance is a raw port observable for the finite TFSF scene; Fresnel energy closure is checked against the analytic lossless interface reference, not by R + raw T.",
+        "The line-monitor transmittance is a finite-scene port observable; Fresnel energy closure is checked against the analytic lossless interface reference, not by treating the finite monitor as a de-embedded S-parameter.",
     };
     if (!(status.diagnostics.samples > 12)) status.failures.push("Fresnel diagnostics did not collect enough line-monitor samples");
     if (Number.isFinite(expectedR) && Number.isFinite(rTolerance)) {
@@ -3915,6 +3937,12 @@ async function runSmokeCase(page, testCase) {
       !(Number.isFinite(status.diagnostics.transmittance) && status.diagnostics.transmittance >= 0 && status.diagnostics.transmittance <= rawTransmittanceMax)
     ) {
       status.failures.push(`raw line-monitor T ${status.diagnostics.transmittance} is outside [0, ${rawTransmittanceMax}]`);
+    }
+    if (Number.isFinite(minSpectrumBins) && status.diagnostics.spectrumValidPointCount < minSpectrumBins) {
+      status.failures.push(`spectral R/T/A has ${status.diagnostics.spectrumValidPointCount} valid bins, expected at least ${minSpectrumBins}`);
+    }
+    if (testCase.acceptance?.powerBalanceRequiresDft && !String(status.diagnostics.powerBalanceMethod || "").includes("DFT")) {
+      status.failures.push(`line-port power balance did not use DFT normalization: ${status.diagnostics.powerBalanceMethod}`);
     }
   }
   if (testCase.id === "brewster_tm_minimum") {
@@ -3976,9 +4004,32 @@ async function runSmokeCase(page, testCase) {
   }
   if (testCase.id === "slab_waveguide_confinement") {
     status.modeLaunch = await slabWaveguideLaunchMetrics(page);
+    status.modePort = await page.evaluate(() => {
+      const metric = typeof sim.modePortAnalysisEstimate === "function" ? sim.modePortAnalysisEstimate() : null;
+      return metric
+        ? {
+            available: Boolean(metric.available),
+            valid: Boolean(metric.valid),
+            neff: Number.isFinite(metric.neff) ? metric.neff : null,
+            inputOverlap: Number.isFinite(metric.inputOverlap) ? metric.inputOverlap : null,
+            outputOverlap: Number.isFinite(metric.outputOverlap) ? metric.outputOverlap : null,
+            radiationFraction: Number.isFinite(metric.radiationFraction) ? metric.radiationFraction : null,
+            modalTransmissionProxy: Number.isFinite(metric.modalTransmissionProxy) ? metric.modalTransmissionProxy : null,
+            modalReflectionProxy: Number.isFinite(metric.modalReflectionProxy) ? metric.modalReflectionProxy : null,
+            modalS11Power: Number.isFinite(metric.sParameters?.reflectance) ? metric.sParameters.reflectance : null,
+            modalS21Power: Number.isFinite(metric.sParameters?.transmittance) ? metric.sParameters.transmittance : null,
+            modalSPowerResidual: Number.isFinite(metric.sParameters?.balanceResidual) ? metric.sParameters.balanceResidual : null,
+            modalSSamples: Number.isFinite(metric.sParameters?.sampleCount) ? metric.sParameters.sampleCount : null,
+          }
+        : null;
+    });
     const backwardLimit = Number(testCase.acceptance?.backwardEnergyRatioMax);
     const radiationLimit = Number(testCase.acceptance?.radiationEnergyRatioMax);
     const coreFractionLimit = Number(testCase.acceptance?.coreEnergyFractionMin);
+    const minModeNeff = Number(testCase.acceptance?.modeEffectiveIndexMin);
+    const minModeInputOverlap = Number(testCase.acceptance?.modeInputOverlapMin);
+    const minModeOutputOverlap = Number(testCase.acceptance?.modeOutputOverlapMin);
+    const requiresModalS = Boolean(testCase.acceptance?.modalSParametersFinite);
     if (!status.modeLaunch) {
       status.failures.push("slab waveguide did not expose modal launch metrics");
     } else {
@@ -3994,6 +4045,35 @@ async function runSmokeCase(page, testCase) {
       }
       if (Number.isFinite(radiationLimit) && status.modeLaunch.radiationEnergyRatio > radiationLimit) {
         status.failures.push(`cladding radiation energy ratio ${status.modeLaunch.radiationEnergyRatio} exceeds ${radiationLimit}`);
+      }
+    }
+    if (!status.modePort?.available) {
+      status.failures.push("slab waveguide did not expose finite-difference mode-port metrics");
+    } else {
+      if (Number.isFinite(minModeNeff) && !(Number.isFinite(status.modePort.neff) && status.modePort.neff >= minModeNeff)) {
+        status.failures.push(`mode effective index ${status.modePort.neff} below ${minModeNeff}`);
+      }
+      if (
+        Number.isFinite(minModeInputOverlap) &&
+        !(Number.isFinite(status.modePort.inputOverlap) && status.modePort.inputOverlap >= minModeInputOverlap)
+      ) {
+        status.failures.push(`mode input overlap ${status.modePort.inputOverlap} below ${minModeInputOverlap}`);
+      }
+      if (
+        Number.isFinite(minModeOutputOverlap) &&
+        !(Number.isFinite(status.modePort.outputOverlap) && status.modePort.outputOverlap >= minModeOutputOverlap)
+      ) {
+        status.failures.push(`mode output overlap ${status.modePort.outputOverlap} below ${minModeOutputOverlap}`);
+      }
+      if (
+        requiresModalS &&
+        !(
+          Number.isFinite(status.modePort.modalS11Power) &&
+          Number.isFinite(status.modePort.modalS21Power) &&
+          Number.isFinite(status.modePort.modalSPowerResidual)
+        )
+      ) {
+        status.failures.push("modal S-parameter estimate is not finite");
       }
     }
   }
@@ -5274,6 +5354,12 @@ async function runSmokeCase(page, testCase) {
     const minRacetrackFraction = Number(testCase.acceptance?.racetrackRingEnergyFractionMin);
     const minBeta = Number(testCase.acceptance?.betaMin);
     const maxBeta = Number(testCase.acceptance?.betaMax);
+    const minModeNeff = Number(testCase.acceptance?.modeEffectiveIndexMin);
+    const minModeInputOverlap = Number(testCase.acceptance?.modeInputOverlapMin);
+    const minModeOutputOverlap = Number(testCase.acceptance?.modeOutputOverlapMin);
+    const maxModeRadiationFraction = Number(testCase.acceptance?.modeRadiationFractionMax);
+    const maxModalReflectionProxy = Number(testCase.acceptance?.modalReflectionProxyMax);
+    const requiresModalS = Boolean(testCase.acceptance?.modalSParametersFinite);
     const minSplit = Number(testCase.acceptance?.splitMin);
     const minSpectralSplit = Number(testCase.acceptance?.spectralSplitMin);
     const minRingdownQ = Number(testCase.acceptance?.ringdownQMin);
@@ -5347,6 +5433,33 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minRacetrackFraction) && metrics.racetrackRingEnergyFraction < minRacetrackFraction) status.failures.push(`racetrack ring energy fraction ${metrics.racetrackRingEnergyFraction} below ${minRacetrackFraction}`);
     if (Number.isFinite(minBeta) && !(Number.isFinite(metrics.beta) && metrics.beta >= minBeta)) status.failures.push(`guided-flux ratio ${metrics.beta} below ${minBeta}`);
     if (Number.isFinite(maxBeta) && !(Number.isFinite(metrics.beta) && metrics.beta <= maxBeta)) status.failures.push(`guided-flux ratio ${metrics.beta} exceeds ${maxBeta}`);
+    if (Number.isFinite(minModeNeff) && !(Number.isFinite(metrics.modeEffectiveIndex) && metrics.modeEffectiveIndex >= minModeNeff)) {
+      status.failures.push(`mode effective index ${metrics.modeEffectiveIndex} below ${minModeNeff}`);
+    }
+    if (Number.isFinite(minModeInputOverlap) && !(Number.isFinite(metrics.modeInputOverlap) && metrics.modeInputOverlap >= minModeInputOverlap)) {
+      status.failures.push(`mode input overlap ${metrics.modeInputOverlap} below ${minModeInputOverlap}`);
+    }
+    if (Number.isFinite(minModeOutputOverlap) && !(Number.isFinite(metrics.modeOutputOverlap) && metrics.modeOutputOverlap >= minModeOutputOverlap)) {
+      status.failures.push(`mode output overlap ${metrics.modeOutputOverlap} below ${minModeOutputOverlap}`);
+    }
+    if (
+      Number.isFinite(maxModeRadiationFraction) &&
+      !(Number.isFinite(metrics.modeRadiationFraction) && metrics.modeRadiationFraction <= maxModeRadiationFraction)
+    ) {
+      status.failures.push(`mode radiation fraction ${metrics.modeRadiationFraction} exceeds ${maxModeRadiationFraction}`);
+    }
+    if (
+      requiresModalS &&
+      !(Number.isFinite(metrics.modalS11Power) && Number.isFinite(metrics.modalS21Power) && Number.isFinite(metrics.modalSPowerResidual))
+    ) {
+      status.failures.push("modal S-parameter estimate is not finite");
+    }
+    if (
+      Number.isFinite(maxModalReflectionProxy) &&
+      !(Number.isFinite(metrics.modalReflectionProxy) && metrics.modalReflectionProxy <= maxModalReflectionProxy)
+    ) {
+      status.failures.push(`modal reflection proxy ${metrics.modalReflectionProxy} exceeds ${maxModalReflectionProxy}`);
+    }
     if (Number.isFinite(minSplit) && !(Number.isFinite(metrics.split) && metrics.split >= minSplit)) status.failures.push(`mode/spectral split ${metrics.split} below ${minSplit}`);
     if (Number.isFinite(minSpectralSplit) && !(Number.isFinite(metrics.spectralSplit) && metrics.spectralSplit >= minSpectralSplit)) status.failures.push(`spectral split ${metrics.spectralSplit} below ${minSpectralSplit}`);
     if (Number.isFinite(minRingdownQ) && !(Number.isFinite(metrics.ringdownQ) && metrics.ringdownQ >= minRingdownQ)) status.failures.push(`ringdown Q ${metrics.ringdownQ} below ${minRingdownQ}`);
@@ -6505,6 +6618,18 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       document.querySelector('[data-control-tab="scenes"]')?.click();
     });
     await selectPreset(page, "planeWaveAir");
+    await page
+      .waitForFunction(
+        () =>
+          document.querySelectorAll("[data-scene-view]").length >= 2 &&
+          document.querySelectorAll("[data-scene-filter]").length > 0 &&
+          document.querySelectorAll("#sceneCards [data-scene-card]").length > 0,
+        null,
+        { timeout: 3000 },
+      )
+      .catch(() => {
+        failures.push("Scene browse controls did not render before interaction");
+      });
     await page.waitForTimeout(120);
     await openBrowseView();
 
@@ -7159,6 +7284,7 @@ async function runSceneObservablesSmoke(page) {
       doubleSlit: await selectAndRead("doubleSlit"),
       phasedDipoleArray: await selectAndRead("phasedDipoleArray"),
       normalInterface: await selectAndRead("normalInterface"),
+      slabWaveguide: await selectAndRead("slabWaveguide"),
       sppGrating: await selectAndRead("sppGrating"),
       phcWaveguide: await selectAndRead("phcWaveguide"),
       kerker2d: await selectAndRead("kerker2d"),
@@ -7185,6 +7311,7 @@ async function runSceneObservablesSmoke(page) {
     !status.doubleSlit.loaded ||
     !status.phasedDipoleArray.loaded ||
     !status.normalInterface.loaded ||
+    !status.slabWaveguide.loaded ||
     !status.sppGrating.loaded ||
     !status.phcWaveguide.loaded ||
     !status.kerker2d.loaded ||
@@ -7211,7 +7338,10 @@ async function runSceneObservablesSmoke(page) {
   if (!status.doubleSlit.panelText.includes("Diffraction scale")) failures.push("doubleSlit does not expose the diffraction-scale observable");
   if (!status.phasedDipoleArray.panelText.includes("Array phase law")) failures.push("phasedDipoleArray does not expose the array phase-law observable");
   if (!status.normalInterface.panelText.includes("R_theory=0.040")) failures.push("normalInterface does not expose the Fresnel R_theory reference");
+  if (!status.normalInterface.panelText.includes("Spectral R/T/A")) failures.push("normalInterface does not expose the spectral R/T/A observable");
   if ((status.normalInterface.rowCount || 0) < 1) failures.push("normalInterface did not render scene observable rows");
+  if (!status.slabWaveguide.panelText.includes("Mode-port overlap")) failures.push("slabWaveguide does not expose the mode-port observable");
+  if (!status.slabWaveguide.panelText.includes("Guided-flux beta")) failures.push("slabWaveguide does not expose the guided beta observable");
   if (!status.sppGrating.panelText.includes("Planar SPP phase match")) failures.push("sppGrating does not expose the planar SPP phase-match observable");
   if (!status.sppGrating.panelText.includes("Grating momentum")) failures.push("sppGrating does not expose the grating momentum observable");
   const gratingRows = status.sppGrating.report?.rows || [];
@@ -7241,7 +7371,7 @@ async function runSceneObservablesSmoke(page) {
   if (!status.temporalModulation.panelText.includes("Modulation phase contract")) failures.push("temporalModulation does not expose the modulation phase observable");
   return {
     id: "scene_observables_panel",
-    preset: "planeWaveAir,pmlAbsorption,doubleSlit,phasedDipoleArray,normalInterface,sppGrating,phcWaveguide,kerker2d,drudeMetal,valleyHall,metasurfacePhaseBars,microstrip,pecCavity,quarterWaveCavity,fanoResonator,sshInterface,ptSymmetricCoupler,perfectAbsorber,negativeIndexSlab,chiralMedium,shgSlab,temporalModulation",
+    preset: "planeWaveAir,pmlAbsorption,doubleSlit,phasedDipoleArray,normalInterface,slabWaveguide,sppGrating,phcWaveguide,kerker2d,drudeMetal,valleyHall,metasurfacePhaseBars,microstrip,pecCavity,quarterWaveCavity,fanoResonator,sshInterface,ptSymmetricCoupler,perfectAbsorber,negativeIndexSlab,chiralMedium,shgSlab,temporalModulation",
     priority: "P1",
     ...status,
     passed: failures.length === 0,

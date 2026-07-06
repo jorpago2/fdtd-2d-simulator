@@ -72,6 +72,16 @@
     const sweepModeLabel = requireFunction(dependencies.sweepModeLabel, "sweepModeLabel");
     const formatSweepValue = requireFunction(dependencies.formatSweepValue, "formatSweepValue");
 
+    function refreshLineReferenceStatus(message = "") {
+      if (!el.lineReferenceStatus) return;
+      if (message) {
+        el.lineReferenceStatus.textContent = message;
+        return;
+      }
+      const status = typeof sim.linePortReferenceStatus === "function" ? sim.linePortReferenceStatus() : null;
+      el.lineReferenceStatus.textContent = status?.message || "No line-port reference captured.";
+    }
+
     function measureResultsUi() {
       if (typeof sim.measureForUi === "function") sim.measureForUi();
       else sim.measure();
@@ -108,6 +118,28 @@
       updateStats();
       sim.render();
     });
+
+    el.lineReferenceCaptureBtn?.addEventListener("click", () => {
+      const result =
+        typeof sim.captureLinePortReference === "function"
+          ? sim.captureLinePortReference()
+          : { ok: false, message: "Line-port reference capture is unavailable." };
+      refreshLineReferenceStatus(result.message);
+      updateStats();
+      sim.render();
+    });
+
+    el.lineReferenceClearBtn?.addEventListener("click", () => {
+      const result =
+        typeof sim.clearLinePortReference === "function"
+          ? sim.clearLinePortReference()
+          : { ok: false, message: "Line-port reference capture is unavailable." };
+      refreshLineReferenceStatus(result.message);
+      updateStats();
+      sim.render();
+    });
+
+    refreshLineReferenceStatus();
 
     el.spectrumChart?.addEventListener("pointermove", updateSpectrumReadout);
     el.farFieldChart?.addEventListener("pointermove", updateFarFieldReadout);

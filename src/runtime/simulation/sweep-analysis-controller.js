@@ -618,6 +618,7 @@
     
     function drawSpectrumChart() {
       resultsCharts.drawSpectrumChart({
+        portSpectrum: sim.diagnosticSpectrumSummary,
         sampleEvery: state.analysisSampleEvery,
         theme: state.theme,
         values: orderedProbeSamples(),
@@ -647,6 +648,10 @@
       if (el.analysisInput) el.analysisInput.checked = state.analysisEnabled;
       drawSpectrumChart();
       drawFarFieldChart();
+      if (el.lineReferenceStatus) {
+        const referenceStatus = typeof sim.linePortReferenceStatus === "function" ? sim.linePortReferenceStatus() : null;
+        el.lineReferenceStatus.textContent = referenceStatus?.message || "No line-port reference captured.";
+      }
       if (el.analysisStatus) {
         const sampleText = `${sim.analysisSamples || 0} samples`;
         const contourText = `${sim.analysisContour?.length || 0} contour pts`;
@@ -718,6 +723,29 @@
                 clamp(1 - (sim.diagnosticReflectance || 0) - (sim.diagnosticTransmittance || 0), 0, 1),
               )}`
             : "";
+        const portSpectrumText =
+          sim.diagnosticSpectrumSummary?.carrierPoint?.valid && sim.diagnosticSpectrumSummary.validPointCount > 0
+            ? ` | RTA(f0)=${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.reflectance)}/${formatDiagnosticRatio(
+                sim.diagnosticSpectrumSummary.carrierPoint.transmittance,
+              )}/${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.absorption)}`
+            : "";
+        const referenceCarrier = sim.diagnosticSpectrumSummary?.referenceCarrierPoint?.referenceNormalized || null;
+        const referenceSpectrumText =
+          referenceCarrier?.valid
+            ? ` | RTAref(f0)=${formatDiagnosticRatio(referenceCarrier.reflectance)}/${formatDiagnosticRatio(
+                referenceCarrier.transmittance,
+              )}/${formatDiagnosticRatio(referenceCarrier.absorption)}`
+            : "";
+        const modePort = metrics?.modePort;
+        const modalS = modePort?.sParameters || null;
+        const modePortText =
+          modePort?.available && modePort.valid
+            ? ` | mode n=${formatFieldValue(modePort.neff)} | Oout=${formatDiagnosticRatio(modePort.outputOverlap)}${
+                modalS
+                  ? ` | S11m=${formatDiagnosticRatio(modalS.reflectance)} | S21m=${formatDiagnosticRatio(modalS.transmittance)}`
+                  : ""
+              }`
+            : "";
         let nonlinearText = "";
         if (metrics && nonlinearAnalysisPresets.has(state.preset)) {
           if (harmonicAnalysisPresets.has(state.preset)) {
@@ -783,7 +811,7 @@
         if (state.analysisEnabled) {
           el.analysisStatus.textContent = `${sampleText} | ${contourText} | f=${formatFieldValue(
             sim.diagnosticFrequency(),
-          )}${scatteringText}${resonatorText}${topologicalText}${coupledText}${absorptionText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}${bianisotropyText}`;
+          )}${scatteringText}${resonatorText}${topologicalText}${coupledText}${absorptionText}${portSpectrumText}${referenceSpectrumText}${modePortText}${nonlinearText}${floquetText}${hyperlensText}${negativeIndexText}${bianisotropyText}`;
         }
       }
     }

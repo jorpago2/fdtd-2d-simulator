@@ -1305,6 +1305,11 @@
                     </label>
                     <button id="analysisResetBtn" class="text-button" type="button">Reset analysis</button>
                   </div>
+                  <div class="sweep-actions">
+                    <button id="lineReferenceCaptureBtn" class="text-button" type="button">Capture reference</button>
+                    <button id="lineReferenceClearBtn" class="text-button" type="button">Clear reference</button>
+                  </div>
+                  <p id="lineReferenceStatus" class="sweep-status">No line-port reference captured.</p>
                   <p id="analysisStatus" class="sweep-status">Waiting for samples.</p>
                   <div class="analysis-chart-grid">
                     <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
@@ -1481,13 +1486,14 @@
     <script src="src/runtime/simulation/fdtd-incident-field.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-mode-solver.js?v=20260702-mode-source-1"></script>
     <script src="src/runtime/simulation/fdtd-sources.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/simulation/fdtd-modal-analysis.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-sampling.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-custom-monitors.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260702-courant-01-1"></script>
+    <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-observables.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260705-scene-observables-1"></script>
+    <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-material-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260704-measure-policy-2"></script>
+    <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-yee.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-surface-orbit-1"></script>
     <script src="src/runtime/canvas/canvas-field-webgl-renderer.js?v=20260704-field-webgl-1"></script>
@@ -1498,12 +1504,12 @@
     <script src="src/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-dom.js?v=20260704-validation-profile-1"></script>
+    <script src="src/runtime/ui/ui-dom.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
     <script src="src/runtime/ui/ui-scene-guide.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-results.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-results-charts.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/ui/ui-results-charts.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/control-sync-ui.js?v=20260703-time-rate-fps-1"></script>
     <script src="src/runtime/core/scene-codec.js?v=20260703-overlay-modes-1"></script>
@@ -1521,7 +1527,7 @@
     <script src="src/runtime/canvas/canvas-render-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/runtime-control-bindings.js?v=20260704-runtime-pacing-1"></script>
     <script src="src/runtime/ui/visual-control-bindings.js?v=20260704-measure-policy-1"></script>
-    <script src="src/runtime/ui/results-control-bindings.js?v=20260704-measure-policy-1"></script>
+    <script src="src/runtime/ui/results-control-bindings.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/source-monitor-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/material-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/config-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
@@ -1545,7 +1551,7 @@
     <script src="src/runtime/app/app-bootstrap.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/app-layout.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/app-performance.js?v=20260704-validation-profile-1"></script>
-    <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260704-measure-policy-1"></script>
+    <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/material-stability-controller.js?v=20260704-numerics-simplify-1"></script>
     <script src="src/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/brush-controls-controller.js?v=20260703-runtime-cleanup-1"></script>

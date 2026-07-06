@@ -86,12 +86,15 @@
       "checks": [
         "finite fields",
         "line-monitor R is bounded",
-        "raw line-monitor T remains finite and documented as a port observable",
+        "line-port T remains finite and documented as a finite-scene port observable",
+        "carrier DFT R/T/A is populated",
         "compare R against normal-incidence Fresnel reference"
       ],
       "acceptance": {
         "reflectanceAbsTolerance": 0.08,
-        "rawTransmittanceMax": 2.25
+        "rawTransmittanceMax": 2.25,
+        "powerBalanceRequiresDft": true,
+        "spectralRtaMinBins": 1
       },
       "reference": {
         "type": "fresnel_normal_incidence",
@@ -155,13 +158,17 @@
         "finite fields",
         "guided flux is positive",
         "field energy is concentrated near the guide",
-        "modal source launches predominantly forward with low cladding radiation"
+        "modal source launches predominantly forward with low cladding radiation",
+        "finite-difference mode-port overlap is available"
       ],
       "acceptance": {
         "guidedFluxPositive": true,
         "coreEnergyFractionMin": 0.45,
         "backwardEnergyRatioMax": 0.02,
-        "radiationEnergyRatioMax": 0.02
+        "radiationEnergyRatioMax": 0.02,
+        "modeEffectiveIndexMin": 1.05,
+        "modeInputOverlapMin": 0.01,
+        "modalSParametersFinite": true
       },
       "rationale": "Core guided-optics workflow for integrated photonics examples."
     },

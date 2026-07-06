@@ -895,6 +895,43 @@
   }
 
   function addLineMonitorRows(rows, state, sim, target = {}) {
+    const appendSpectralRow = () => {
+      const spectrum = sim.diagnosticSpectrumSummary || null;
+      const carrierPoint = spectrum?.carrierPoint || null;
+      if (spectrum?.validPointCount > 0 && carrierPoint?.valid) {
+        rows.push(row({
+          metric: "Spectral R/T/A",
+          measured: `f0=${formatField(spectrum.carrierFrequency)}, R=${formatRatio(carrierPoint.reflectance)}, T=${formatRatio(
+            carrierPoint.transmittance,
+          )}, A~${formatRatio(carrierPoint.absorption)}`,
+          expected: `${spectrum.validPointCount} normalized DFT bins`,
+          error: `resid=${formatRatio(carrierPoint.balanceResidual)}`,
+          level: spectrum.validPointCount >= 3 ? "ok" : "info",
+          note: "The spectrum is normalized frequency by frequency to the incident line-port DFT window.",
+        }));
+        const referenceCarrier = spectrum.referenceCarrierPoint?.referenceNormalized || null;
+        if (referenceCarrier?.valid) {
+          rows.push(row({
+            metric: "Reference R/T/A",
+            measured: `R=${formatRatio(referenceCarrier.reflectance)}, T=${formatRatio(referenceCarrier.transmittance)}, A~${formatRatio(
+              referenceCarrier.absorption,
+            )}`,
+            expected: `${spectrum.reference?.validPointCount || 0} reference-normalized bins`,
+            error: `resid=${formatRatio(referenceCarrier.balanceResidual)}`,
+            level: "info",
+            note: "Reference-normalized values divide S21 by the captured background S21 and subtract the captured S11 background.",
+          }));
+        }
+      } else {
+        rows.push(row({
+          metric: "Spectral R/T/A",
+          measured: `${finiteNumber(sim.diagnosticDftSampleCount, 0)} DFT samples`,
+          expected: ">=64 samples with finite incident spectrum",
+          level: "pending",
+          note: "Run longer to populate broadband R/T/A bins; continuous-wave scenes will mainly validate the carrier bin.",
+        }));
+      }
+    };
     if (!state.diagnosticsEnabled) {
       rows.push(row({
         metric: "Line-port R/T/A",
@@ -903,6 +940,7 @@
         level: "pending",
         note: "The line-port observable is quantitative only after line monitors are enabled and have collected samples.",
       }));
+      appendSpectralRow();
       return;
     }
     const samples = finiteNumber(sim.diagnosticSamples, 0);
@@ -914,11 +952,14 @@
         level: "pending",
         note: "Run longer before interpreting reflectance, transmittance, or absorption.",
       }));
+      appendSpectralRow();
       return;
     }
-    const r = finiteNumber(sim.diagnosticReflectance, 0);
-    const t = finiteNumber(sim.diagnosticTransmittance, 0);
-    const a = 1 - r - t;
+    const balance = safeSimEstimate(sim, "diagnosticPowerBalanceEstimate");
+    const r = finiteNumber(balance?.reflectance, finiteNumber(sim.diagnosticReflectance, 0));
+    const t = finiteNumber(balance?.transmittance, finiteNumber(sim.diagnosticTransmittance, 0));
+    const a = finiteNumber(balance?.absorption, 1 - r - t);
+    const residual = finiteNumber(balance?.balanceResidual, 1 - r - t);
     let level = "info";
     let error = "-";
     if (Number.isFinite(target.reflectance)) {
@@ -937,10 +978,11 @@
       metric: "Line-port R/T/A",
       measured: `R=${formatRatio(r)}, T=${formatRatio(t)}, A~${formatRatio(a)}`,
       expected: target.label || "power balance",
-      error,
+      error: error === "-" ? `resid=${formatRatio(residual)}` : error,
       level,
-      note: "Line-port values use the built-in incident/reflected/transmitted phasor separation.",
+      note: `Line-port values use ${balance?.method || "the built-in incident/reflected/transmitted phasor separation"}.`,
     }));
+    appendSpectralRow();
   }
 
   function addFresnelRows(rows, state, sim) {
@@ -1203,6 +1245,56 @@
   function addGuidedRows(rows, state, sim) {
     if (!GUIDED_PRESETS.has(state.preset)) return false;
     const metrics = analysisMetrics(state, sim);
+    const appendModePortRows = () => {
+      const modePort = metrics?.modePort || null;
+      if (modePort?.available) {
+        rows.push(row({
+          metric: "Mode effective index",
+          measured: `n_eff=${formatField(modePort.neff)}, m=${modePort.modeOrder}`,
+          expected: "finite guided source mode",
+          level: modePort.neff > 1 ? "ok" : "caution",
+          note: "The effective index is computed from the same finite-difference scalar mode used by the mode source.",
+        }));
+        rows.push(row({
+          metric: "Mode-port overlap",
+          measured: `in=${formatRatio(modePort.inputOverlap)}, out=${formatRatio(modePort.outputOverlap)}, rad~${formatRatio(
+            modePort.radiationFraction,
+          )}`,
+          expected: state.preset === "lossyGuide" ? "guided but attenuated" : "large output modal overlap",
+          level: modePort.outputOverlap > 0.18 || modePort.inputOverlap > 0.25 ? "ok" : "pending",
+          note: "Overlap is the normalized scalar inner product between the field and the local guided-mode profile.",
+        }));
+        if (state.diagnosticsEnabled && finiteNumber(sim.diagnosticSamples, 0) >= 20) {
+          rows.push(row({
+            metric: "Modal R/T proxy",
+            measured: `T_m~${formatRatio(modePort.modalTransmissionProxy)}, R_m~${formatRatio(modePort.modalReflectionProxy)}`,
+            expected: "low modal reflection for matched straight guides",
+            level: modePort.modalReflectionProxy < 0.2 || state.preset !== "slabWaveguide" ? "ok" : "caution",
+            note: "This is a port-overlap proxy, not a de-embedded eigenmode S-parameter.",
+          }));
+        }
+        if (modePort.sParameters) {
+          rows.push(row({
+            metric: "Modal S-parameters",
+            measured: `|S11|^2=${formatRatio(modePort.sParameters.reflectance)}, |S21|^2=${formatRatio(
+              modePort.sParameters.transmittance,
+            )}`,
+            expected: "single guided-mode port estimate",
+            error: `resid=${formatRatio(modePort.sParameters.balanceResidual)}`,
+            level: modePort.sParameters.reflectance < 0.2 || state.preset !== "slabWaveguide" ? "ok" : "caution",
+            note: "Carrier phasors are obtained by projecting the FDTD field onto the finite-difference source mode at input, reflection, and output ports.",
+          }));
+        }
+      } else if (state.sources?.some?.((source) => source?.shape === "modeProfile")) {
+        rows.push(row({
+          metric: "Mode-port overlap",
+          measured: modePort?.reason || "collecting field",
+          expected: "guided source mode",
+          level: "pending",
+          note: "The finite-difference mode solver did not yet find a usable bound profile at the current source cross-section.",
+        }));
+      }
+    };
     if (!metrics || finiteNumber(sim.analysisSamples, 0) < 8) {
       rows.push(row({
         metric: "Guided-flux beta",
@@ -1211,6 +1303,7 @@
         level: "pending",
         note: "Run longer so the analysis contour can estimate guided versus outward flux.",
       }));
+      appendModePortRows();
       return true;
     }
     const beta = finiteNumber(metrics.beta, 0);
@@ -1232,6 +1325,7 @@
         note: "This guards against a drawn guide that is not actually reached by the source.",
       }));
     }
+    appendModePortRows();
     return true;
   }
 
