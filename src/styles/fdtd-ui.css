@@ -1019,10 +1019,26 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   margin: 0;
 }
 
+.help-guide-topic h3 {
+  margin: 2px 0 -2px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .help-guide-topic ul {
   display: grid;
   gap: 6px;
   padding-left: 18px;
+}
+
+.help-guide-topic-note {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px;
+  background: var(--panel);
 }
 
 .help-guide-note {

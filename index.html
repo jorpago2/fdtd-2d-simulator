@@ -302,27 +302,56 @@
                   </ul>
                 </section>
                 <section class="help-guide-topic" data-help-guide-topic-panel="simulate" hidden>
-                  <p>Simulate controls the time evolution and the way the field data is rendered.</p>
+                  <p>Simulate controls the time evolution and how the field data is rendered. It does not change the geometry or material map by itself.</p>
+                  <h3>Time controls</h3>
                   <ul>
-                    <li><strong>Play</strong> advances the Yee-grid update continuously; <strong>Step</strong> advances one controlled batch.</li>
-                    <li><strong>Reset</strong> clears the time history while keeping the selected scene and edited geometry.</li>
-                    <li>The display can show field maps, Poynting flux, material maps, and 2D or 3D views without changing the physics.</li>
+                    <li><strong>Play</strong> advances the Yee-grid update continuously. The animation rate is a display choice; the solver still advances by discrete FDTD time steps.</li>
+                    <li><strong>Step</strong> advances one controlled batch, useful when checking a source turn-on, a reflection, or whether a field has reached a monitor.</li>
+                    <li><strong>Reset</strong> clears fields, dispersive memory, source history, and monitor traces while keeping the selected scene and edited objects.</li>
                   </ul>
+                  <h3>What the display means</h3>
+                  <ul>
+                    <li><strong>Field maps</strong> show instantaneous field components. They are excellent for intuition, but not enough for quantitative reflection or transmission.</li>
+                    <li><strong>Poynting flux</strong> is the local power-flow proxy. For quantitative work, integrate it on monitors and compare with a reference simulation.</li>
+                    <li><strong>2D and 3D views</strong> render the same simulation data. Changing the view should not be interpreted as changing the electromagnetic model.</li>
+                  </ul>
+                  <p class="help-guide-topic-note">A stable-looking animation can still be under-resolved. For resonators, waveguides, plasmonics, or lossy media, inspect monitors after transients decay.</p>
                 </section>
                 <section class="help-guide-topic" data-help-guide-topic-panel="edit" hidden>
-                  <p>Edit changes the simulation setup, so the solver should be interpreted again after modifying it.</p>
+                  <p>Edit changes the simulation setup, so results should be interpreted again after modifying it. A geometry edit is a new numerical experiment.</p>
+                  <h3>Select</h3>
                   <ul>
-                    <li><strong>Select</strong> moves or deletes sources and monitors.</li>
-                    <li><strong>Draw</strong> paints material cells with the brush or places simple geometries.</li>
-                    <li>The contextual menus expose only the parameters relevant to the selected source, monitor, or geometry.</li>
+                    <li><strong>Sources</strong> define how energy enters the domain: plane wave, mode, dipole, current source, or other excitation depending on the scene.</li>
+                    <li><strong>Monitors</strong> are measurement objects. Place them away from sources, discontinuities, and CPML unless measuring a local near-field quantity intentionally.</li>
+                    <li><strong>Delete</strong> removes the selected object from the setup. If a source or monitor disappears, the simulation may still run but the physical question changes.</li>
                   </ul>
+                  <h3>Draw</h3>
+                  <ul>
+                    <li><strong>Brush</strong> paints material cells. It is useful for quick sketches, but curved or thin features can suffer from staircasing on a coarse grid.</li>
+                    <li><strong>Geometry</strong> places cleaner rectangles, disks, ellipses, or rings using the selected material parameters.</li>
+                    <li><strong>Material values</strong> affect the update coefficients. Loss, anisotropy, dispersion, or negative parameters are not just colors on the canvas.</li>
+                  </ul>
+                  <p class="help-guide-topic-note">After drawing, check whether the smallest feature is actually resolved by enough cells. Visual smoothness is not the same as numerical convergence.</p>
                 </section>
                 <section class="help-guide-topic" data-help-guide-topic-panel="numerics" hidden>
-                  <p>Numerics controls accuracy, stability, and performance.</p>
+                  <p>Numerics controls accuracy, stability, and performance. These settings decide whether a pretty field pattern is also a trustworthy simulation.</p>
+                  <h3>Resolution</h3>
                   <ul>
-                    <li><strong>Cells / &lambda;<sub>0</sub></strong> sets how finely the wavelength is sampled.</li>
-                    <li><strong>CFL</strong> controls the time step; smaller values are more conservative but slower.</li>
-                    <li><strong>CPML</strong> absorbs outgoing waves, while grid size and subpixel smoothing affect staircasing and reflections.</li>
+                    <li><strong>Cells / &lambda;<sub>0</sub></strong> sets how finely the free-space wavelength is sampled. Inside a material, the wavelength is shorter by the refractive index.</li>
+                    <li>Basic propagation may look acceptable with moderate resolution, but high-Q resonators, thin gaps, plasmonics, and phase-sensitive devices need many more cells.</li>
+                    <li><strong>Subpixel smoothing</strong> reduces staircasing at material interfaces. It helps geometry errors, but it is not a substitute for convergence checks.</li>
+                  </ul>
+                  <h3>Time step and boundaries</h3>
+                  <ul>
+                    <li><strong>CFL</strong> controls the time step. A smaller value is more conservative for difficult media, but it requires more steps for the same physical time.</li>
+                    <li><strong>CPML</strong> absorbs outgoing waves at open boundaries. It works best when sources, resonators, and strong near fields are not too close to the absorbing layer.</li>
+                    <li><strong>Reflective boundaries</strong> are physical walls, not numerical absorbers. Use them only when a mirror-like boundary is part of the intended problem.</li>
+                  </ul>
+                  <h3>What to trust</h3>
+                  <ul>
+                    <li>For quantitative reflection, transmission, absorption, or Q factor, use monitors and compare against a reference or a refined grid.</li>
+                    <li>If changing grid size, CFL, or CPML thickness changes the conclusion, the setup is not converged yet.</li>
+                    <li>Performance cost grows with the number of cells, fields, material states, monitors, and rendered pixels.</li>
                   </ul>
                 </section>
               </div>
