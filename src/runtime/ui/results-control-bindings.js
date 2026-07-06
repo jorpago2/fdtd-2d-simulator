@@ -102,6 +102,26 @@
       sim.render();
     });
 
+    el.maxwellCheckInput?.addEventListener("change", () => {
+      state.maxwellCheckEnabled = Boolean(el.maxwellCheckInput.checked);
+      if (!state.maxwellCheckEnabled) {
+        sim.lastMaxwellCheck = null;
+      } else if (typeof sim.updateMaxwellCheck === "function") {
+        sim.updateMaxwellCheck(null);
+      }
+      updateStats();
+      sim.render();
+    });
+
+    el.maxwellCheckResetBtn?.addEventListener("click", () => {
+      sim.lastMaxwellCheck = null;
+      if (state.maxwellCheckEnabled && typeof sim.updateMaxwellCheck === "function") {
+        sim.updateMaxwellCheck(null);
+      }
+      updateStats();
+      sim.render();
+    });
+
     el.performanceResetBtn?.addEventListener("click", () => {
       resetPerformanceStats();
     });

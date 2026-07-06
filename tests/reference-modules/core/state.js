@@ -52,6 +52,7 @@
       fieldDisplay: "scalar",
       fieldQuiver: false,
       diagnosticsEnabled: false,
+      maxwellCheckEnabled: false,
       visualLayerBoundaries: true,
       visualLayerMonitors: false,
       visualLayerAxes: true,

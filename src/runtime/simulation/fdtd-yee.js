@@ -14,6 +14,7 @@ function fdtdRecordSolverPhase(name, startedAt) {
 Object.assign(FDTDSim.prototype, {
   step() {
     this.rebuildSubpixelMaterialCoefficients?.();
+    const maxwellSnapshot = this.captureMaxwellCheckSnapshot?.();
     const compiledMaterialStep = this.canUseCompiledMaterialStep();
     let phaseStartedAt = fdtdSolverPhaseStart();
     const phaseChangeActive = state.materialPhaseChangeEnabled;
@@ -43,6 +44,7 @@ Object.assign(FDTDSim.prototype, {
       }
       this.applyBianisotropicResponse();
       fdtdRecordSolverPhase("solverAuxMaterialMs", phaseStartedAt);
+      this.updateMaxwellCheck?.(maxwellSnapshot);
       phaseStartedAt = fdtdSolverPhaseStart();
       this.zeroBoundaryFields();
       this.injectSource();
@@ -75,6 +77,7 @@ Object.assign(FDTDSim.prototype, {
     this.applyHarmonicNonlinearResponse();
     this.applyBianisotropicResponse();
     fdtdRecordSolverPhase("solverAuxMaterialMs", phaseStartedAt);
+    this.updateMaxwellCheck?.(maxwellSnapshot);
 
     phaseStartedAt = fdtdSolverPhaseStart();
     this.zeroBoundaryFields();

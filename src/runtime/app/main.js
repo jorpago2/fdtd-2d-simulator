@@ -259,6 +259,7 @@ const resultsView = uiResultsModule.createResultsController({
   formatFieldValue,
   buildSceneObservables: () => sceneObservables?.buildSceneObservables?.(),
   measureCustomMonitors: () => sim.measureCustomMonitors(),
+  maxwellCheckReport: () => sim.maxwellCheckReport?.(),
   monitorQuantityLabel,
 });
 const resultsCharts = uiResultsChartsModule.createResultsChartsController({
@@ -1141,6 +1142,7 @@ function updateStats() {
     samples: sim.diagnosticSamples || 0,
     transmittedPower: sim.diagnosticTransmittedPower || 0,
     transmittance: diagnosticTransmittance,
+    maxwellCheckEnabled: state.maxwellCheckEnabled,
   });
   updateMaterialWarning();
   if (sim.lastDiverged || sim.time % 20 === 0) {

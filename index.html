@@ -340,6 +340,10 @@
                       <span class="help-guide-formula">Ez mode: S<sub>x</sub> = -E<sub>z</sub>H<sub>y</sub>, &nbsp; S<sub>y</sub> = E<sub>z</sub>H<sub>x</sub></span>
                       <span class="help-guide-formula">Hz mode: S<sub>x</sub> = H<sub>y</sub>H<sub>z</sub>, &nbsp; S<sub>y</sub> = -H<sub>x</sub>H<sub>z</sub></span>
                     </li>
+                    <li><strong>Maxwell checker:</strong> Results &gt; Maxwell equations compares two consecutive Yee states with the update equations actually used by the simulator.
+                      <span class="help-guide-formula">residual = RMS(LHS - RHS) / RMS(LHS, RHS)</span>
+                      It samples only regular interior cells; CPML, injected-source neighborhoods, material interfaces, PEC, lossy, dispersive, tensor, gain, nonlinear, and time-varying material cells are excluded from the simple curl check.
+                    </li>
                   </ul>
                   <p class="help-guide-topic-note">A stable-looking animation can still be under-resolved. For resonators, waveguides, plasmonics, or lossy media, inspect monitors after transients decay.</p>
                 </section>
@@ -1486,6 +1490,22 @@
                   </div>
                 </div>
               </details>
+              <details class="maxwell-check-panel results-detail-panel">
+                <summary>Maxwell equations</summary>
+                <div class="results-detail-body">
+                  <div class="analysis-panel-header">
+                    <label class="toggle-row">
+                      <input id="maxwellCheckInput" type="checkbox" />
+                      <span>Discrete Maxwell checker</span>
+                    </label>
+                    <button id="maxwellCheckResetBtn" class="text-button" type="button">Reset check</button>
+                  </div>
+                  <p class="results-insight-note">Checks the last Yee update against the discrete curl equations, away from CPML, sources, material interfaces, PEC, loss, dispersion, tensors, gain, and nonlinear cells.</p>
+                  <div id="maxwellCheckResults" class="maxwell-check-results" aria-live="polite">
+                    <p class="results-insight-note">Enable the checker and run or step once.</p>
+                  </div>
+                </div>
+              </details>
               <details class="monitor-panel results-detail-panel">
                 <summary>Line monitors</summary>
                 <div class="results-detail-body">
@@ -1799,6 +1819,7 @@
     <script src="src/runtime/simulation/fdtd-analysis-observables.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-material-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/simulation/fdtd-maxwell-checker.js?v=20260706-maxwell-check-1"></script>
     <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-yee.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-surface-orbit-1"></script>

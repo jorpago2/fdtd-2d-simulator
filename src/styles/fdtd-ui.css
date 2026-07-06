@@ -2038,20 +2038,24 @@ label.scene-select-fallback,
 
 .scene-observable-results,
 .scene-observable-card,
-.scene-observable-list {
+.scene-observable-list,
+.maxwell-check-results,
+.maxwell-check-card {
   display: grid;
   gap: 10px;
   min-width: 0;
 }
 
-.scene-observable-card {
+.scene-observable-card,
+.maxwell-check-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
   background: var(--panel-2);
 }
 
-.scene-observable-card header {
+.scene-observable-card header,
+.maxwell-check-card header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2059,7 +2063,8 @@ label.scene-select-fallback,
   min-width: 0;
 }
 
-.scene-observable-card h3 {
+.scene-observable-card h3,
+.maxwell-check-card h3 {
   margin: 0;
   color: var(--text);
   font-size: 0.82rem;
@@ -2067,7 +2072,8 @@ label.scene-select-fallback,
   line-height: 1.2;
 }
 
-.scene-observable-status {
+.scene-observable-status,
+.maxwell-check-status {
   display: inline-flex;
   align-items: center;
   min-height: 22px;
@@ -2106,6 +2112,99 @@ label.scene-select-fallback,
 .scene-observable-row small {
   color: var(--muted);
   font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+.maxwell-equation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.maxwell-equation-card {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: var(--panel);
+}
+
+.maxwell-equation-card h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.maxwell-equation-formula {
+  margin: 0;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.maxwell-residual-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.maxwell-residual-row span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.maxwell-residual-row output {
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.maxwell-residual-bar {
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--pill);
+  background: var(--panel-3);
+}
+
+.maxwell-residual-fill {
+  display: block;
+  width: var(--residual-width, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--good);
+}
+
+[data-health-level="caution"] .maxwell-residual-fill {
+  background: var(--warn);
+}
+
+[data-health-level="unstable"] .maxwell-residual-fill {
+  background: var(--bad);
+}
+
+.maxwell-equation-card small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 650;
   line-height: 1.3;
 }
 

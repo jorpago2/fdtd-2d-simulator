@@ -6758,6 +6758,52 @@ async function runPoyntingComponentVisibilitySmoke(page) {
   };
 }
 
+async function runMaxwellCheckerSmoke(page) {
+  await selectPreset(page, "planeWaveAir");
+  const status = await page.evaluate(() => {
+    document.querySelector('[data-control-tab="results"]')?.click();
+    const panel = document.querySelector(".maxwell-check-panel");
+    if (panel) panel.open = true;
+    const input = document.getElementById("maxwellCheckInput");
+    if (input && !input.checked) input.click();
+    for (let i = 0; i < 6; i += 1) {
+      if (typeof sim !== "undefined" && typeof sim.step === "function") sim.step();
+    }
+    if (typeof updateStats === "function") updateStats();
+    const results = document.getElementById("maxwellCheckResults");
+    const report = typeof sim !== "undefined" && typeof sim.maxwellCheckReport === "function" ? sim.maxwellCheckReport() : null;
+    return {
+      inputChecked: Boolean(input?.checked),
+      panelText: results?.textContent || "",
+      rowCount: results?.querySelectorAll(".maxwell-equation-card").length || 0,
+      reportStatus: report?.status || "",
+      reportEnabled: Boolean(report?.enabled),
+      sampleCount: report?.sampleCount || 0,
+      skippedCount: report?.skippedCount || 0,
+      formulaMentioned: Boolean(
+        results?.textContent?.includes("dB_x/dt") ||
+          results?.textContent?.includes("dD_zx/dt") ||
+          results?.textContent?.includes("dD_x/dt"),
+      ),
+    };
+  });
+  const failures = [];
+  if (!status.inputChecked) failures.push("Maxwell checker input did not remain enabled");
+  if (!status.reportEnabled) failures.push("Maxwell checker report is not enabled");
+  if (status.rowCount < 5) failures.push("Maxwell checker did not render the equation cards");
+  if (status.sampleCount <= 0) failures.push("Maxwell checker did not sample interior cells");
+  if (status.reportStatus === "off" || status.reportStatus === "pending") failures.push(`Maxwell checker status stayed ${status.reportStatus}`);
+  if (!status.formulaMentioned) failures.push("Maxwell checker cards do not expose equation formulas");
+  return {
+    id: "maxwell_equation_checker",
+    preset: "planeWaveAir",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSceneMenuResponsiveSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
@@ -8254,6 +8300,7 @@ async function main() {
       report.cases.push(await runCanvasFooterSmoke(browser, url));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
+      report.cases.push(await runMaxwellCheckerSmoke(page));
       report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
       report.cases.push(await runSceneMenuSelectionSmoke(browser, url));
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));

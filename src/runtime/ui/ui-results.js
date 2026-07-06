@@ -25,6 +25,30 @@
     }[status] || "reference";
   }
 
+  function maxwellStatusLabel(status) {
+    return {
+      ok: "verified",
+      caution: "inspect",
+      unstable: "mismatch",
+      pending: "pending",
+      off: "off",
+    }[status] || "pending";
+  }
+
+  function formatMaxwellResidual(value) {
+    if (!Number.isFinite(value)) return "n/a";
+    if (value === 0) return "0";
+    const magnitude = Math.abs(value);
+    if (magnitude < 1e-3 || magnitude >= 10) return value.toExponential(2);
+    return value.toPrecision(3);
+  }
+
+  function formatMaxwellCount(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number <= 0) return "0";
+    return Math.round(number).toLocaleString("en-US");
+  }
+
   function resultsInsightText({ balance = 0, diagnosticsEnabled = true, lastDiverged = false, reflectance = 0, samples = 0, transmittance = 0 }, formatDiagnosticRatio) {
     if (lastDiverged) {
       return {
@@ -64,6 +88,7 @@
     formatFieldValue,
     buildSceneObservables,
     measureCustomMonitors,
+    maxwellCheckReport,
     monitorQuantityLabel,
   } = {}) {
     function updateRunState(isRunning) {
@@ -146,6 +171,118 @@
       el.sceneObservableResults.appendChild(card);
     }
 
+    function renderMaxwellCheckResults({ maxwellCheckEnabled = false } = {}) {
+      if (!el?.maxwellCheckResults) return;
+      const fallbackReport = {
+        enabled: false,
+        status: "off",
+        component: "",
+        sampleCount: 0,
+        skippedCount: 0,
+        stride: 1,
+        rows: [],
+        note: "Enable the checker to compute discrete Maxwell-equation residuals.",
+      };
+      const report = typeof maxwellCheckReport === "function" ? maxwellCheckReport() || fallbackReport : fallbackReport;
+      const enabled = Boolean(maxwellCheckEnabled || report.enabled);
+      if (el.maxwellCheckInput) el.maxwellCheckInput.checked = enabled;
+      el.maxwellCheckResults.replaceChildren();
+
+      if (!enabled) {
+        const note = documentRef.createElement("p");
+        note.className = "results-insight-note";
+        note.textContent = report.note || fallbackReport.note;
+        el.maxwellCheckResults.appendChild(note);
+        return;
+      }
+
+      const rows = Array.isArray(report.rows) ? report.rows : [];
+      if (rows.length === 0) {
+        const note = documentRef.createElement("p");
+        note.className = "results-insight-note";
+        note.textContent = report.note || "Run at least one step to compare the discrete Yee update against Maxwell curl equations.";
+        el.maxwellCheckResults.appendChild(note);
+        return;
+      }
+
+      const card = documentRef.createElement("article");
+      card.className = "maxwell-check-card";
+      card.dataset.healthLevel = report.status || "pending";
+
+      const header = documentRef.createElement("header");
+      const title = documentRef.createElement("h3");
+      title.textContent = "Discrete residuals";
+      const status = documentRef.createElement("span");
+      status.className = "maxwell-check-status";
+      status.dataset.healthLevel = report.status || "pending";
+      status.textContent = maxwellStatusLabel(report.status);
+      header.append(title, status);
+
+      const meta = documentRef.createElement("p");
+      meta.className = "results-insight-note";
+      meta.textContent = [
+        report.component || "Yee grid",
+        `t=${formatMaxwellCount(report.time)}`,
+        `${formatMaxwellCount(report.sampleCount)} samples`,
+        `${formatMaxwellCount(report.skippedCount)} skipped`,
+        `stride ${formatMaxwellCount(report.stride || 1)}`,
+      ].join(" | ");
+
+      const note = documentRef.createElement("p");
+      note.className = "results-insight-note";
+      note.textContent = report.note || "Residuals are normalized and sampled on regular interior cells.";
+
+      const grid = documentRef.createElement("div");
+      grid.className = "maxwell-equation-grid";
+      rows.forEach((row) => {
+        const rowCard = documentRef.createElement("article");
+        rowCard.className = "maxwell-equation-card";
+        rowCard.dataset.healthLevel = row.level || "pending";
+        const residualWidth = `${Math.round(Math.max(0, Math.min(1, Number(row.bar) || 0)) * 1000) / 10}%`;
+        rowCard.style.setProperty("--residual-width", residualWidth);
+
+        const rowTitle = documentRef.createElement("h4");
+        rowTitle.textContent = row.label || "Equation";
+
+        const formula = documentRef.createElement("p");
+        formula.className = "maxwell-equation-formula";
+        formula.textContent = row.formula || "";
+
+        const residual = documentRef.createElement("div");
+        residual.className = "maxwell-residual-row";
+        const residualLabel = documentRef.createElement("span");
+        residualLabel.textContent = "normalized RMS";
+        const residualValue = documentRef.createElement("output");
+        residualValue.textContent = formatMaxwellResidual(row.residual);
+        residual.append(residualLabel, residualValue);
+
+        const peak = documentRef.createElement("div");
+        peak.className = "maxwell-residual-row";
+        const peakLabel = documentRef.createElement("span");
+        peakLabel.textContent = "max local";
+        const peakValue = documentRef.createElement("output");
+        peakValue.textContent = formatMaxwellResidual(row.maxResidual);
+        peak.append(peakLabel, peakValue);
+
+        const bar = documentRef.createElement("div");
+        bar.className = "maxwell-residual-bar";
+        const fill = documentRef.createElement("span");
+        fill.className = "maxwell-residual-fill";
+        bar.appendChild(fill);
+
+        rowCard.append(rowTitle, formula, residual, peak, bar);
+        if (row.note) {
+          const rowNote = documentRef.createElement("small");
+          rowNote.textContent = row.note;
+          rowCard.appendChild(rowNote);
+        }
+        grid.appendChild(rowCard);
+      });
+
+      card.append(header, meta, note, grid);
+      el.maxwellCheckResults.appendChild(card);
+    }
+
     function renderCustomMonitorResults({ force = false, monitorCount = 0 } = {}) {
       if (!el?.customMonitorResults) return;
       if (!force && !customMonitorResultsVisible()) return;
@@ -204,6 +341,7 @@
       transmittedPower,
       transmittance,
       engineText,
+      maxwellCheckEnabled,
     }) {
       setOutputText(el?.summaryReflectanceOutput, formatDiagnosticRatio(reflectance));
       setOutputText(el?.summaryTransmittanceOutput, formatDiagnosticRatio(transmittance));
@@ -217,6 +355,7 @@
       setOutputText(el?.reflectanceOutput, formatDiagnosticRatio(reflectance));
       setOutputText(el?.transmittanceOutput, formatDiagnosticRatio(transmittance));
       renderSceneObservables();
+      renderMaxwellCheckResults({ maxwellCheckEnabled });
       renderCustomMonitorResults({ monitorCount });
       setOutputText(el?.engineValue, engineText);
     }
@@ -224,6 +363,7 @@
     return {
       customMonitorResultsVisible,
       renderCustomMonitorResults,
+      renderMaxwellCheckResults,
       renderSceneObservables,
       updateDiagnostics,
       updateInsight,
