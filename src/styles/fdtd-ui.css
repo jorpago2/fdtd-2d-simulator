@@ -2231,7 +2231,7 @@ label.scene-select-fallback,
 /* 10. Responsive behavior */
 
 /* Large screens: keep the title visible and use a limited left drawer. */
-@media (min-width: 1280px) and (min-height: 760px) {
+@media (min-width: 1024px) and (min-height: 760px) {
   .app-shell.controls-open .topbar {
     z-index: 120;
     opacity: 1;
@@ -2331,7 +2331,7 @@ label.scene-select-fallback,
 }
 
 /* Medium screens: preserve canvas space and compact the floating toolbar. */
-@media (max-width: 1180px) {
+@media (max-width: 1023px) {
   .topbar .brand-lockup {
     max-width: min(300px, calc(100vw - 120px));
   }
@@ -2347,7 +2347,7 @@ label.scene-select-fallback,
 }
 
 /* Mobile/tablet drawer: use one primary vertical scroll for scene browsing. */
-@media (max-width: 900px) {
+@media (max-width: 820px) {
   .topbar {
     width: auto;
     padding: 4px;

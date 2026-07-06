@@ -6750,6 +6750,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
     { name: "tablet", width: 768, height: 1024, isMobile: true, deviceScaleFactor: 2 },
+    { name: "tabletLandscape", width: 1024, height: 768, isMobile: false, deviceScaleFactor: 1, expectsDesktopDrawer: true },
     { name: "desktop", width: 1440, height: 1000, isMobile: false, deviceScaleFactor: 1 },
     { name: "uhd", width: 3840, height: 2160, isMobile: false, deviceScaleFactor: 1 },
   ];
@@ -6914,6 +6915,12 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (currentStatus.documentOverflow > 1) failures.push(`${viewport.name}: document horizontal overflow ${currentStatus.documentOverflow}`);
       if (currentStatus.panelOverflow > 1) failures.push(`${viewport.name}: control panel horizontal overflow ${currentStatus.panelOverflow}`);
       if (browseStatus.panelOverflow > 1) failures.push(`${viewport.name}: browse panel horizontal overflow ${browseStatus.panelOverflow}`);
+      if (
+        viewport.expectsDesktopDrawer &&
+        (!currentStatus.panel || currentStatus.panel.width >= viewport.width - 24 || currentStatus.panel.left <= 0)
+      ) {
+        failures.push(`${viewport.name}: control panel is still using the fullscreen mobile layout`);
+      }
       if (
         currentStatus.panel &&
         currentStatus.spotlight &&

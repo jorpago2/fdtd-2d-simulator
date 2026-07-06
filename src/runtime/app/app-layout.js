@@ -1,8 +1,8 @@
 (function initFdtdAppLayout(global) {
   "use strict";
 
-  const COMPACT_CONTROLS_MEDIA_QUERY = "(max-width: 1440px)";
-  const COMPACT_RESULTS_MEDIA_QUERY = "(max-width: 1180px)";
+  const COMPACT_CONTROLS_MEDIA_QUERY = "(max-width: 1023px), (max-height: 759px)";
+  const COMPACT_RESULTS_MEDIA_QUERY = "(max-width: 1023px)";
   const COMPACT_PANEL_TITLE_MEDIA_QUERY = "(max-width: 430px)";
 
   function createLayoutController({
