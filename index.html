@@ -361,7 +361,7 @@
                   <ul>
                     <li><strong>Custom material:</strong> passive cells use relative material parameters in the update coefficients.
                       <span class="help-guide-formula">&epsilon;<sub>r</sub> = &epsilon;' + i&epsilon;'', &nbsp; &mu;<sub>r</sub> = &mu;' + i&mu;''</span>
-                      Defaults: &epsilon;' = 4.00, &epsilon;'' = 0.0005, &mu;' = 1.00, &mu;'' = 0.00. When anisotropy is enabled, x and y components are stored separately.
+                      Defaults: &epsilon;' = 4.00, &epsilon;'' = 0.00, &mu;' = 1.00, &mu;'' = 0.00. When anisotropy is enabled, x and y components are stored separately.
                     </li>
                     <li><strong>Conductivity and loss:</strong> electric conductivity enters the finite-difference coefficient, while the loss value applies an additional decay.
                       <span class="help-guide-formula">&sigma;<sub>damp</sub> = &sigma;S / (2|\epsilon|), &nbsp; C<sub>a</sub> = (1 - &sigma;<sub>damp</sub>) / (1 + &sigma;<sub>damp</sub>), &nbsp; C<sub>b</sub> = 1 / (1 + &sigma;<sub>damp</sub>)</span>
@@ -730,11 +730,11 @@
                   <span class="material-tensor-row">&epsilon;</span>
                   <label class="material-tensor-cell material-cell-eps-imag">
                     <span id="customEpsImagLabel">&epsilon;&Prime;</span>
-                    <input id="customEpsImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0005" />
+                    <input id="customEpsImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <label class="material-tensor-cell material-cell-eps-y-imag brush-anisotropic-params" hidden>
                     <span>&epsilon;<sub>y</sub>&Prime;</span>
-                    <input id="customEpsYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0005" />
+                    <input id="customEpsYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
                   <label class="material-tensor-cell material-cell-mu-imag">
