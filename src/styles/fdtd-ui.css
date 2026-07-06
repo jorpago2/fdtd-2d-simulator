@@ -1130,6 +1130,86 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   background: var(--panel);
 }
 
+.help-guide-walkthrough-button {
+  width: 100%;
+}
+
+.walkthrough-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgb(10 24 32 / 0.16);
+  pointer-events: none;
+}
+
+.walkthrough-highlight {
+  position: fixed;
+  z-index: 131;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 0 0 9999px rgb(10 24 32 / 0.18),
+    0 0 0 5px color-mix(in srgb, var(--accent-soft) 65%, transparent),
+    var(--shadow-sm);
+  pointer-events: none;
+  transition:
+    left 140ms ease,
+    top 140ms ease,
+    width 140ms ease,
+    height 140ms ease;
+}
+
+.walkthrough-panel {
+  position: fixed;
+  z-index: 132;
+  display: grid;
+  gap: 10px;
+  width: min(350px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.walkthrough-overlay[hidden],
+.walkthrough-highlight[hidden],
+.walkthrough-panel[hidden] {
+  display: none;
+}
+
+.walkthrough-header,
+.walkthrough-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.walkthrough-panel h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.walkthrough-panel p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.walkthrough-actions {
+  justify-content: end;
+  flex-wrap: wrap;
+}
+
 .help-guide-note {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -2533,6 +2613,14 @@ label.scene-select-fallback,
 
   .help-guide-grid {
     grid-template-columns: 1fr;
+  }
+
+  .walkthrough-panel {
+    width: calc(100vw - 20px);
+  }
+
+  .walkthrough-actions .text-button {
+    flex: 1 1 120px;
   }
 }
 

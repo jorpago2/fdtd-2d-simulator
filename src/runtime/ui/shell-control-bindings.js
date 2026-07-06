@@ -30,6 +30,13 @@
     const setCanvasMode = requireFunction(dependencies.setCanvasMode, "setCanvasMode");
     const toggleControlDrawer = requireFunction(dependencies.toggleControlDrawer, "toggleControlDrawer");
     const closeControlDrawer = requireFunction(dependencies.closeControlDrawer, "closeControlDrawer");
+    const setControlDrawerOpen =
+      typeof dependencies.setControlDrawerOpen === "function"
+        ? dependencies.setControlDrawerOpen
+        : (open) => {
+            const isOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+            if (Boolean(open) !== isOpen) toggleControlDrawer();
+          };
     const toggleCanvasActionsMenu = requireFunction(
       dependencies.toggleCanvasActionsMenu,
       "toggleCanvasActionsMenu",
@@ -100,6 +107,18 @@
         el.helpGuideToggle.focus?.({ preventScroll: true });
       }
     };
+    const walkthroughController = global.FdtdHelpWalkthrough?.createHelpWalkthroughController?.({
+      activateControlTab,
+      closeCanvasActionsMenu,
+      closeCanvasContextMenuAndRender,
+      closeCanvasOptionsMenu,
+      closeControlDrawer,
+      documentRef,
+      el,
+      setControlDrawerOpen,
+      setHelpGuideOpen,
+      windowRef,
+    });
 
     el.selectModeBtn?.addEventListener("click", () => setCanvasMode("select"));
     el.brushModeBtn?.addEventListener("click", () => setCanvasMode("brush"));
@@ -166,6 +185,7 @@
     el.helpGuideBackBtn?.addEventListener("click", () => setHelpGuideTopic(null, { restoreFocus: true }));
     el.helpGuideCloseBtn?.addEventListener("click", () => setHelpGuideOpen(false, { restoreFocus: true }));
     el.helpGuidePanel?.addEventListener("click", (event) => event.stopPropagation());
+    walkthroughController?.bind?.();
     documentRef?.addEventListener?.("click", (event) => {
       if (!helpGuideOpen()) return;
       if (isElement(event.target) && (event.target.closest("#helpGuidePanel") || event.target.closest("#helpGuideToggle"))) return;

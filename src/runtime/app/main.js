@@ -1764,6 +1764,7 @@ shellControlBindingsModule.bindShellControls({
   setCanvasMode,
   toggleControlDrawer,
   closeControlDrawer,
+  setControlDrawerOpen,
   toggleCanvasActionsMenu,
   closeCanvasActionsMenu,
   toggleCanvasOptionsMenu,

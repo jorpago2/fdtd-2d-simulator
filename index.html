@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260704-performance-numerics-1" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260706-walkthrough-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -262,6 +262,9 @@
                 <p id="helpGuideIntro" class="help-guide-intro">
                   Choose a scene, run the FDTD update, then inspect fields, materials, flux, or numerical settings.
                 </p>
+                <button id="walkthroughStartBtn" class="text-button primary-button help-guide-walkthrough-button" type="button">
+                  Start walkthrough
+                </button>
                 <div class="help-guide-grid">
                   <button class="help-guide-card" type="button" data-help-guide-topic="scene">
                     <span aria-hidden="true">1</span>
@@ -420,6 +423,28 @@
                     <li>Performance cost grows with the number of cells, fields, material states, monitors, and rendered pixels.</li>
                   </ul>
                 </section>
+              </div>
+            </section>
+            <div id="walkthroughOverlay" class="walkthrough-overlay" hidden></div>
+            <div id="walkthroughHighlight" class="walkthrough-highlight" aria-hidden="true" hidden></div>
+            <section
+              id="walkthroughPanel"
+              class="walkthrough-panel"
+              role="dialog"
+              aria-labelledby="walkthroughTitle"
+              aria-describedby="walkthroughText"
+              tabindex="-1"
+              hidden
+            >
+              <div class="walkthrough-header">
+                <output id="walkthroughProgress" class="panel-kicker">Step 1 of 7</output>
+                <button id="walkthroughSkipBtn" class="icon-button compact-button" type="button" title="Close walkthrough" aria-label="Close walkthrough">&times;</button>
+              </div>
+              <h2 id="walkthroughTitle">Open the controls</h2>
+              <p id="walkthroughText">Use the menu button to open the simulation controls.</p>
+              <div class="walkthrough-actions">
+                <button id="walkthroughPrevBtn" class="text-button" type="button">Back</button>
+                <button id="walkthroughNextBtn" class="text-button primary-button" type="button">Next</button>
               </div>
             </section>
             <div
@@ -1727,7 +1752,7 @@
     <script src="src/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-dom.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/ui/ui-dom.js?v=20260706-walkthrough-1"></script>
     <script src="src/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
     <script src="src/runtime/ui/ui-scene-guide.js?v=20260704-collapsed-menu-cards-1"></script>
@@ -1755,7 +1780,8 @@
     <script src="src/runtime/ui/material-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/config-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/brush-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/shell-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/ui/help-walkthrough-controller.js?v=20260706-walkthrough-1"></script>
+    <script src="src/runtime/ui/shell-control-bindings.js?v=20260706-walkthrough-1"></script>
     <script src="src/runtime/ui/layout-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/core/scene-application.js?v=20260703-time-rate-fps-1"></script>
     <script src="src/runtime/core/scene-repro.js?v=20260703-runtime-cleanup-1"></script>
@@ -1786,6 +1812,6 @@
     <script src="src/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/control-ui-state-controller.js?v=20260704-poynting-components-1"></script>
     <script src="src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
-    <script src="src/runtime/app/main.js?v=20260704-validation-profile-1"></script>
+    <script src="src/runtime/app/main.js?v=20260706-walkthrough-1"></script>
   </body>
 </html>

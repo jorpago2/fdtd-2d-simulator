@@ -6407,6 +6407,119 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
   };
 }
 
+async function runWalkthroughSmoke(browser, url) {
+  const viewports = [
+    { name: "mobile", width: 390, height: 844 },
+    { name: "desktop", width: 1280, height: 840 },
+  ];
+  const states = [];
+  for (const viewport of viewports) {
+    const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+    try {
+      await page.goto(url, { waitUntil: "networkidle" });
+      await page.click("#helpGuideToggle");
+      await page.click("#walkthroughStartBtn");
+      for (let stepIndex = 0; stepIndex < 7; stepIndex += 1) {
+        await page.waitForTimeout(80);
+        states.push(await page.evaluate((args) => {
+          const rect = (node) => {
+            if (!node) return null;
+            const bounds = node.getBoundingClientRect();
+            return {
+              top: bounds.top,
+              bottom: bounds.bottom,
+              left: bounds.left,
+              right: bounds.right,
+              width: bounds.width,
+              height: bounds.height,
+            };
+          };
+          const panel = document.getElementById("walkthroughPanel");
+          const highlight = document.getElementById("walkthroughHighlight");
+          const progress = document.getElementById("walkthroughProgress")?.textContent?.trim() || "";
+          const title = document.getElementById("walkthroughTitle")?.textContent?.trim() || "";
+          const nextText = document.getElementById("walkthroughNextBtn")?.textContent?.trim() || "";
+          const panelRect = rect(panel);
+          const highlightRect = rect(highlight);
+          const withinViewport = (bounds) =>
+            Boolean(
+              bounds &&
+                bounds.left >= 0 &&
+                bounds.top >= 0 &&
+                bounds.right <= window.innerWidth &&
+                bounds.bottom <= window.innerHeight,
+            );
+          return {
+            viewport: args.viewport,
+            stepIndex: args.stepIndex,
+            open: Boolean(panel && !panel.hidden && highlight && !highlight.hidden),
+            progress,
+            title,
+            nextText,
+            drawerOpen: document.body.classList.contains("controls-drawer-open"),
+            activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
+            panel: panelRect,
+            highlight: highlightRect,
+            panelWithinViewport: withinViewport(panelRect),
+            highlightVisible: Boolean(highlightRect && highlightRect.width > 12 && highlightRect.height > 12),
+          };
+        }, { viewport: viewport.name, stepIndex }));
+        if (stepIndex < 6) {
+          await page.click("#walkthroughNextBtn");
+        }
+      }
+      await page.click("#walkthroughNextBtn");
+      await page.waitForTimeout(40);
+      states.push(await page.evaluate((name) => ({
+        viewport: name,
+        stepIndex: "closed",
+        closed: Boolean(document.getElementById("walkthroughPanel")?.hidden),
+        focusReturned: document.activeElement === document.getElementById("helpGuideToggle"),
+      }), viewport.name));
+    } finally {
+      await page.close();
+    }
+  }
+
+  const failures = [];
+  for (const state of states) {
+    if (state.stepIndex === "closed") {
+      if (!state.closed) failures.push(`${state.viewport}: walkthrough did not close after Finish`);
+      if (!state.focusReturned) failures.push(`${state.viewport}: walkthrough did not return focus to the guide toggle`);
+      continue;
+    }
+    const expectedProgress = `Step ${state.stepIndex + 1} of 7`;
+    if (!state.open) failures.push(`${state.viewport} step ${state.stepIndex + 1}: walkthrough is not open`);
+    if (state.progress !== expectedProgress) failures.push(`${state.viewport} step ${state.stepIndex + 1}: progress is ${state.progress}`);
+    if (!state.title) failures.push(`${state.viewport} step ${state.stepIndex + 1}: title missing`);
+    if (!state.panelWithinViewport) failures.push(`${state.viewport} step ${state.stepIndex + 1}: panel overflows viewport`);
+    if (!state.highlightVisible) failures.push(`${state.viewport} step ${state.stepIndex + 1}: highlight is not visible`);
+    if ([1, 3, 4, 6].includes(state.stepIndex) && !state.drawerOpen) {
+      failures.push(`${state.viewport} step ${state.stepIndex + 1}: drawer should be open`);
+    }
+    if (state.stepIndex === 3 && state.activePanel !== "tab-simulation") {
+      failures.push(`${state.viewport} step 4: simulation tab was not activated`);
+    }
+    if (state.stepIndex === 4 && state.activePanel !== "tab-results") {
+      failures.push(`${state.viewport} step 5: results tab was not activated`);
+    }
+    if (state.stepIndex === 6 && state.activePanel !== "tab-config") {
+      failures.push(`${state.viewport} step 7: numerics tab was not activated`);
+    }
+    if (state.stepIndex === 6 && state.nextText !== "Finish") {
+      failures.push(`${state.viewport} step 7: final action should be Finish`);
+    }
+  }
+  return {
+    id: "help_walkthrough_flow",
+    preset: "current",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runCanvasFooterSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844 },
@@ -8118,6 +8231,7 @@ async function main() {
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runHelpGuideSmoke(page));
       report.cases.push(await runHelpGuideResponsiveSmoke(browser, url));
+      report.cases.push(await runWalkthroughSmoke(browser, url));
       report.cases.push(await runCanvasFooterSmoke(browser, url));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
