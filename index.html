@@ -351,11 +351,69 @@
                     <li><strong>Monitors</strong> are measurement objects. Place them away from sources, discontinuities, and CPML unless measuring a local near-field quantity intentionally.</li>
                     <li><strong>Delete</strong> removes the selected object from the setup. If a source or monitor disappears, the simulation may still run but the physical question changes.</li>
                   </ul>
+                  <h3>Contextual menus</h3>
+                  <ul>
+                    <li><strong>Canvas menu:</strong> right-click or long-press an empty point of the canvas to add a source or a contextual monitor. The pointer position is converted to simulation coordinates, expressed as x/&lambda;<sub>0</sub> and y/&lambda;<sub>0</sub>, then clamped to the active interior so the object is not created inside the CPML band.</li>
+                    <li><strong>Source menu:</strong> edits the temporal profile, spatial profile, source wavelength &lambda;<sub>s</sub>/&lambda;<sub>0</sub>, amplitude A, position, FWHM/window, propagation angle &theta;, phase &phi;, and multipole order n when the selected source type uses it.</li>
+                    <li><strong>Monitor menu:</strong> edits the measured quantity, center position, length L, and angle &theta;. The angle defines the monitor tangent direction.
+                      <span class="help-guide-formula">u = (cos&theta;, sin&theta;), &nbsp; n = (-sin&theta;, cos&theta;)</span>
+                    </li>
+                    <li><strong>Boundary menu:</strong> switches the selected boundary between CPML absorbing and reflective. This changes the numerical boundary condition, so reflected/transmitted measurements should be recollected after the fields have been reset or have decayed.</li>
+                  </ul>
+                  <h3>Contextual monitor results</h3>
+                  <ul>
+                    <li><strong>Sampling:</strong> a contextual monitor is a discrete line segment, not a continuous analytical port. Its center is converted to a cell, its length is converted to cells, and the segment is sampled by rounding points back to Yee cells. Duplicate cells and PEC cells are skipped.
+                      <span class="help-guide-formula">N<sub>s</sub> = number of accepted cells after rounding, clamping, duplicate removal, and PEC rejection</span>
+                    </li>
+                    <li><strong>Scalar readouts:</strong> each accepted cell contributes the scaled out-of-plane electric field.
+                      <span class="help-guide-formula">e<sub>i</sub> = E<sub>z,i</sub> &middot; fieldScale</span>
+                      <span class="help-guide-formula">Mean = (1/N<sub>s</sub>)&Sigma;e<sub>i</sub>, &nbsp; RMS = sqrt[(1/N<sub>s</sub>)&Sigma;e<sub>i</sub><sup>2</sup>], &nbsp; Mean |F| = (1/N<sub>s</sub>)&Sigma;|e<sub>i</sub>|</span>
+                      In the current Ez engine, Mean |F| is the mean of |E<sub>z</sub>|, not a full vector norm of E and H.
+                    </li>
+                    <li><strong>Flux readouts:</strong> the simulator first computes the local Poynting proxy from the simulated fields, then projects it onto the monitor normal and tangent.
+                      <span class="help-guide-formula">Ez mode: S = (-E<sub>z</sub>H<sub>y</sub>, E<sub>z</sub>H<sub>x</sub>)</span>
+                      <span class="help-guide-formula">Flux n = (1/N<sub>s</sub>)&Sigma;(S<sub>i</sub>&middot;n)&middot;fieldScale<sup>2</sup>, &nbsp; Flux t = (1/N<sub>s</sub>)&Sigma;(S<sub>i</sub>&middot;u)&middot;fieldScale<sup>2</sup></span>
+                    </li>
+                    <li><strong>Selected value:</strong> the highlighted Value follows the monitor quantity: Scalar returns Mean, Field magnitude returns Mean |F|, Normal flux returns Flux n, and Tangent flux returns Flux t. The other values stay visible to help diagnose sign, phase, and sampling issues.</li>
+                    <li><strong>Interpretation:</strong> these are line averages in simulator units. They are useful for local probes, qualitative flux direction, and relative comparisons. For quantitative R/T/A, use the diagnostic line-port results or compare contextual monitor readings against a reference scene with the same grid, source, scale, and monitor placement.</li>
+                  </ul>
                   <h3>Draw</h3>
                   <ul>
-                    <li><strong>Brush</strong> paints material cells. It is useful for quick sketches, but curved or thin features can suffer from staircasing on a coarse grid.</li>
-                    <li><strong>Geometry</strong> places cleaner rectangles, disks, ellipses, or rings using the selected material parameters.</li>
-                    <li><strong>Material values</strong> affect the update coefficients. Loss, anisotropy, dispersion, or negative parameters are not just colors on the canvas.</li>
+                    <li><strong>Brush mode:</strong> paints material cells along the pointer path. Brush size is given in &lambda;<sub>0</sub> and converted to an integer cell radius before painting. It is fast for sketches, but curved or thin features can still be staircased on a coarse grid.</li>
+                    <li><strong>Geometry mode:</strong> inserts a parametric object centered on the click or touch point. Rectangle and ellipse use width w and height h; circle uses radius r; ring uses outer radius r and inner radius r<sub>in</sub>. All dimensions are normalized to &lambda;<sub>0</sub>.</li>
+                    <li><strong>Geometry limits:</strong> w and h are clamped to 0.05-50 &lambda;<sub>0</sub>, r to 0.05-25 &lambda;<sub>0</sub>, and r<sub>in</sub> to 0.01-25 &lambda;<sub>0</sub>. If r<sub>in</sub> is not smaller than r, it is reduced automatically.</li>
+                    <li><strong>Selected regions:</strong> when an already drawn material region is selected, the same Draw menu edits that region instead of preparing a new brush stroke. Changing custom parameters rewrites all custom cells with the current material model and recollects the numerical state.</li>
+                  </ul>
+                  <h3>Material presets</h3>
+                  <ul>
+                    <li><strong>Custom &epsilon;, &mu;:</strong> writes the user-defined relative permittivity and permeability into the selected cells. This is the only preset that can carry anisotropy, conductivity, gain, modulation, nonlinearity, phase-change, gyrotropy, bianisotropy, or ADE dispersion.</li>
+                    <li><strong>PEC:</strong> creates a perfect electric conductor mask. The cell material code is PEC, electric fields in that cell are zeroed, and advanced material states are cleared for those cells.</li>
+                    <li><strong>Loss preset:</strong> writes a simple lossy dielectric with &epsilon;' = 2.6, &epsilon;'' = 0.028, &mu;' = 1, and &mu;'' = 0. It is a convenient absorber/scatterer material, not a CPML replacement.</li>
+                    <li><strong>Erase:</strong> returns cells to air, with &epsilon;' = 1, &epsilon;'' = 0, &mu;' = 1, &mu;'' = 0, and no dynamic material state.</li>
+                    <li><strong>Clear medium / Clear field:</strong> Clear medium removes drawn material from the scene. Clear field resets the electromagnetic field arrays while keeping the geometry and material parameters.</li>
+                  </ul>
+                  <h3>Custom material parameters</h3>
+                  <ul>
+                    <li><strong>Isotropic custom material:</strong> the visible 2 x 2 grid stores real and imaginary parts of &epsilon;<sub>r</sub> and &mu;<sub>r</sub>. Defaults are &epsilon;' = 4.00, &epsilon;'' = 0.00, &mu;' = 1.00, and &mu;'' = 0.00.</li>
+                    <li><strong>Anisotropic custom material:</strong> enables separate x and y entries: &epsilon;<sub>x</sub>, &epsilon;<sub>y</sub>, &mu;<sub>x</sub>, and &mu;<sub>y</sub>, each with real and imaginary parts. The ranges are -30 to 30 for the stored real/loss values.</li>
+                    <li><strong>Imaginary parts:</strong> positive &epsilon;'' or &mu;'' adds loss. Negative values represent gain and can diverge unless the setup is physically and numerically constrained.</li>
+                    <li><strong>Stability warnings:</strong> near-zero &epsilon;' or &mu;' can amplify fields strongly. The simulator warns about near-zero, gain, strong modulation, and high coupling cases, but those warnings are not a convergence proof.</li>
+                  </ul>
+                  <h3>Advanced material options</h3>
+                  <ul>
+                    <li><strong>Anisotropic &epsilon;, &mu;:</strong> exposes y-axis material components. Use it for principal-axis anisotropy on the grid; it is not a general rotated tensor unless combined with a dedicated tensor model.</li>
+                    <li><strong>Gyrotropic &epsilon; tensor:</strong> applies in Hz mode and uses g<sub>&epsilon;</sub> in the off-diagonal tensor terms. The parameter range is -5 to 5 and the default is 0.25.
+                      <span class="help-guide-formula">&epsilon;<sub>xy</sub> = +g<sub>&epsilon;</sub>, &nbsp; &epsilon;<sub>yx</sub> = -g<sub>&epsilon;</sub></span>
+                    </li>
+                    <li><strong>Magnetoelectric coupling:</strong> uses normalized &kappa;<sub>n</sub> = &kappa;/&radic;(&epsilon;&mu;) to locally couple electric and magnetic updates. It is clamped to -0.85 to 0.85, with default 0.20, to avoid obviously non-passive coupling.</li>
+                    <li><strong>Finite conductivity:</strong> adds a conduction current J = &sigma;E. &sigma;<sub>x</sub> is always available; &sigma;<sub>y</sub> appears only for anisotropic material. Both are normalized, non-negative, and clamped to 0-5.</li>
+                    <li><strong>Saturable gain:</strong> only matters when electric loss is negative. I<sub>sat,g</sub> limits the gain at high intensity; default I<sub>sat,g</sub> = 4.00 and range 0.05-100.</li>
+                    <li><strong>Space-time modulation:</strong> modulates the stored real permittivity. Parameters are depth m, normalized modulation frequency f<sub>m</sub>, spatial period &Lambda;<sub>m</sub>/&lambda;<sub>0</sub>, direction &theta;<sub>m</sub>, and phase &phi;<sub>m</sub>. Defaults are m = 0.20, f<sub>m</sub> = 0.010, &Lambda;<sub>m</sub> = 2.0 &lambda;<sub>0</sub>, &theta;<sub>m</sub> = 0&deg;, &phi;<sub>m</sub> = 0&deg;.</li>
+                    <li><strong>Kerr &chi;<sup>(3)</sup>:</strong> changes &epsilon;' according to local intensity. &chi;<sup>(3)</sup> is clamped to -20 to 20, I<sub>sat</sub> to 0.05-50, with defaults &chi;<sup>(3)</sup> = 0.50 and I<sub>sat</sub> = 5.00.</li>
+                    <li><strong>Harmonic polarization:</strong> adds nonlinear polarization memory for harmonic generation. Parameters are &chi;<sup>(2)</sup>, &chi;<sup>(3)</sup><sub>H</sub>, and I<sub>sat,H</sub>, with defaults 0.08, 0.00, and 6.00.</li>
+                    <li><strong>Phase-change memory:</strong> stores an internal state s between 0 and 1. Parameters are &epsilon;<sub>on</sub>', &epsilon;<sub>on</sub>'', I<sub>on</sub>, I<sub>off</sub>, &tau;<sub>on</sub>, and &tau;<sub>off</sub>. I<sub>off</sub> is kept below I<sub>on</sub>.</li>
+                    <li><strong>Dispersive model:</strong> uses ADE material memory. Drude and plasma expose &omega;<sub>p</sub> and &gamma;; Lorentz exposes &gamma;, &omega;<sub>0</sub>, and &Delta;&epsilon;; Debye exposes &Delta;&epsilon; and &tau;. The defaults are &omega;<sub>p</sub> = 0.28, &gamma; = 0.018, &omega;<sub>0</sub> = 0.15, &Delta;&epsilon; = 2.00, and &tau; = 18.</li>
+                    <li><strong>Subpixel note:</strong> subpixel smoothing is intentionally restricted to passive dielectric interfaces. PEC, dispersive, tensorial, nonlinear, gain, modulation, and phase-change cells keep their explicit cell masks.</li>
                   </ul>
                   <h3>Material formulas</h3>
                   <ul>

@@ -6287,6 +6287,12 @@ async function runHelpGuideSmoke(page) {
       mentionsSourceFormula: Boolean(panel?.textContent?.includes("f = S /")),
       mentionsCpmlDefaults: Boolean(panel?.textContent?.includes("target reflection R = 1e-10")),
       mentionsMaterialDefaults: Boolean(panel?.textContent?.includes("Kerr and modulation")),
+      mentionsContextualMonitorResults: Boolean(panel?.textContent?.includes("Contextual monitor results")),
+      mentionsContextualMonitorFlux: Boolean(panel?.textContent?.includes("Flux n =")),
+      mentionsDrawMaterialPresets: Boolean(panel?.textContent?.includes("Material presets")),
+      mentionsDrawAdvancedOptions: Boolean(panel?.textContent?.includes("Advanced material options")),
+      mentionsDrawGeometryLimits: Boolean(panel?.textContent?.includes("Geometry limits")),
+      mentionsDrawDispersionParameters: Boolean(panel?.textContent?.includes("Drude and plasma expose")),
       sections,
     };
   });
@@ -6315,6 +6321,12 @@ async function runHelpGuideSmoke(page) {
   if (!detailStatus.mentionsSourceFormula) failures.push("help guide does not explain source frequency normalization");
   if (!detailStatus.mentionsCpmlDefaults) failures.push("help guide does not expose CPML default parameters");
   if (!detailStatus.mentionsMaterialDefaults) failures.push("help guide does not expose material model defaults");
+  if (!detailStatus.mentionsContextualMonitorResults) failures.push("help guide does not explain contextual monitor results");
+  if (!detailStatus.mentionsContextualMonitorFlux) failures.push("help guide does not explain contextual monitor flux calculation");
+  if (!detailStatus.mentionsDrawMaterialPresets) failures.push("help guide does not explain draw material presets");
+  if (!detailStatus.mentionsDrawAdvancedOptions) failures.push("help guide does not explain advanced draw material options");
+  if (!detailStatus.mentionsDrawGeometryLimits) failures.push("help guide does not explain draw geometry parameters");
+  if (!detailStatus.mentionsDrawDispersionParameters) failures.push("help guide does not explain dispersive material parameters");
   if (!openStatus.title.includes("simulator")) failures.push("help guide title is missing simulator context");
   if (!openStatus.intro.includes("FDTD")) failures.push("help guide intro does not mention the FDTD update");
   if (!openStatus.withinViewport) failures.push("help guide panel overflows the viewport");
