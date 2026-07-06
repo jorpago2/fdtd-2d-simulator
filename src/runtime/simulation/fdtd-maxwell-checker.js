@@ -82,17 +82,23 @@
     return Math.abs(l - r) > 1e-8 * scale;
   }
 
+  function materialNeighborDiffers(sim, i, j) {
+    if (sim.material[j] !== sim.material[i]) return true;
+    if (valuesDiffer(sim.eps[j], sim.eps[i]) || valuesDiffer(sim.epsY[j], sim.epsY[i])) return true;
+    if (valuesDiffer(sim.mu[j], sim.mu[i]) || valuesDiffer(sim.muY[j], sim.muY[i])) return true;
+    if (valuesDiffer(sim.loss[j], sim.loss[i]) || valuesDiffer(sim.lossY[j], sim.lossY[i])) return true;
+    if (valuesDiffer(sim.conductivity?.[j], sim.conductivity?.[i]) || valuesDiffer(sim.conductivityY?.[j], sim.conductivityY?.[i])) return true;
+    return false;
+  }
+
   function materialHasLocalInterface(sim, i) {
     const nx = sim.nx;
-    const neighbors = [i - 1, i + 1, i - nx, i + nx];
-    for (const j of neighbors) {
-      if (sim.material[j] !== sim.material[i]) return true;
-      if (valuesDiffer(sim.eps[j], sim.eps[i]) || valuesDiffer(sim.epsY[j], sim.epsY[i])) return true;
-      if (valuesDiffer(sim.mu[j], sim.mu[i]) || valuesDiffer(sim.muY[j], sim.muY[i])) return true;
-      if (valuesDiffer(sim.loss[j], sim.loss[i]) || valuesDiffer(sim.lossY[j], sim.lossY[i])) return true;
-      if (valuesDiffer(sim.conductivity?.[j], sim.conductivity?.[i]) || valuesDiffer(sim.conductivityY?.[j], sim.conductivityY?.[i])) return true;
-    }
-    return false;
+    return (
+      materialNeighborDiffers(sim, i, i - 1) ||
+      materialNeighborDiffers(sim, i, i + 1) ||
+      materialNeighborDiffers(sim, i, i - nx) ||
+      materialNeighborDiffers(sim, i, i + nx)
+    );
   }
 
   function sourceGuards(sim) {

@@ -147,8 +147,8 @@
         220,
         Math.min(preferredMaxHeight, frameRect.height - floatingMenuPad * 2, global.innerHeight - frameRect.top - floatingMenuPad)
       );
-      menu.style.setProperty("max-height", `${availableHeight}px`, "important");
-      menu.style.setProperty("overflow-y", "auto", "important");
+      menu.style.maxHeight = `${availableHeight}px`;
+      menu.style.overflowY = "auto";
       clampFloatingMenuPosition(menu, clientX - frameRect.left + floatingMenuPad, clientY - frameRect.top + floatingMenuPad);
     }
 

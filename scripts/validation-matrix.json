@@ -162,6 +162,7 @@
         "finite-difference mode-port overlap is available"
       ],
       "acceptance": {
+        "requiresWasmEngine": true,
         "guidedFluxPositive": true,
         "coreEnergyFractionMin": 0.45,
         "backwardEnergyRatioMax": 0.02,
@@ -250,6 +251,7 @@
         "estimated ringdown Q is finite and positive"
       ],
       "acceptance": {
+        "requiresWasmEngine": true,
         "qEstimateFinite": true,
         "minAnalysisSamples": 128,
         "ringdownQMin": 100,
@@ -1678,6 +1680,7 @@
         "ring/bus energy ratio is finite during modal excitation"
       ],
       "acceptance": {
+        "requiresWasmEngine": true,
         "ringCellsMin": 80,
         "busCellsMin": 80,
         "ringEnergyFractionMin": 0.005,
@@ -1698,6 +1701,7 @@
         "drop bus receives finite coupled energy"
       ],
       "acceptance": {
+        "requiresWasmEngine": true,
         "ringCellsMin": 80,
         "busCellsMin": 80,
         "dropBusCellsMin": 80,
@@ -1965,6 +1969,7 @@
         "analysis trace fills and the racetrack stores measurable field energy"
       ],
       "acceptance": {
+        "requiresWasmEngine": true,
         "guidedDeviceCheck": true,
         "requiresAnalysis": true,
         "sourceShape": "modeProfile",

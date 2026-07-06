@@ -464,6 +464,7 @@ async function simulationSnapshot(page) {
     const runtime = typeof sim !== "undefined" ? sim : null;
     return {
       time: Number.isFinite(runtime?.time) ? runtime.time : readNumber("stepCounter"),
+      engine: typeof runtime?.engineLabel === "function" ? runtime.engineLabel() : "",
       maxField: Number.isFinite(runtime?.lastMax) ? runtime.lastMax : readNumber("maxField"),
       energy: Number.isFinite(runtime?.lastEnergy) ? runtime.lastEnergy : readNumber("energyValue"),
     };
@@ -3892,6 +3893,8 @@ async function runSmokeCase(page, testCase) {
     msPerStep: Number((elapsedMs / Math.max(1, steps)).toFixed(2)),
     beforeStep: before.time,
     afterStep: after.time,
+    beforeEngine: before.engine,
+    afterEngine: after.engine,
     maxField: after.maxField,
     energy: after.energy,
     physicsTrace: mode === "physics" ? stepResult : undefined,
@@ -3905,6 +3908,9 @@ async function runSmokeCase(page, testCase) {
   if (!Number.isFinite(Number(after.maxField)) && !parseFiniteUiNumber(after.maxField)) status.failures.push("max field is non-finite");
   if (!Number.isFinite(Number(after.energy)) && !parseFiniteUiNumber(after.energy)) status.failures.push("energy is non-finite");
   if (/\b(NaN|Infinity|undefined)\b/.test(bodyText)) status.failures.push("UI contains non-finite or undefined text");
+  if (testCase.acceptance?.requiresWasmEngine && !String(after.engine || "").startsWith("WASM")) {
+    status.failures.push(`expected WASM engine, got ${after.engine || "unknown"}`);
+  }
   if (testCase.acceptance?.requiresActiveMediaLabel && !String(stabilityMedia).includes(testCase.acceptance.requiresActiveMediaLabel)) {
     status.failures.push(`stability media does not include ${testCase.acceptance.requiresActiveMediaLabel}`);
   }
@@ -5467,7 +5473,7 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(maxModeArea) && !(Number.isFinite(metrics.modeAreaLambda2) && metrics.modeAreaLambda2 <= maxModeArea)) status.failures.push(`mode area ${metrics.modeAreaLambda2} exceeds ${maxModeArea}`);
     if (Number.isFinite(minQAreaMetric) && !(Number.isFinite(metrics.qAreaMetric) && metrics.qAreaMetric >= minQAreaMetric)) status.failures.push(`Q/Aeff metric ${metrics.qAreaMetric} below ${minQAreaMetric}`);
     if (Number.isFinite(maxQAreaMetric) && !(Number.isFinite(metrics.qAreaMetric) && metrics.qAreaMetric <= maxQAreaMetric)) status.failures.push(`Q/Aeff metric ${metrics.qAreaMetric} exceeds ${maxQAreaMetric}`);
-    if (Number.isFinite(minPurcellProxy) && !(Number.isFinite(metrics.purcellProxy) && metrics.purcellProxy >= minPurcellProxy)) status.failures.push(`legacy Q/Aeff metric ${metrics.purcellProxy} below ${minPurcellProxy}`);
+    if (Number.isFinite(minPurcellProxy) && !(Number.isFinite(metrics.purcellProxy) && metrics.purcellProxy >= minPurcellProxy)) status.failures.push(`Q/Aeff proxy ${metrics.purcellProxy} below ${minPurcellProxy}`);
     if (Number.isFinite(minAnalysisSamples) && metrics.analysisSamples < minAnalysisSamples) status.failures.push(`guided analysis samples ${metrics.analysisSamples} below ${minAnalysisSamples}`);
     if (Number.isFinite(minBoundsWidth) && (!metrics.materialBounds || metrics.materialBounds.widthLambda < minBoundsWidth)) {
       status.failures.push(`material width ${metrics.materialBounds?.widthLambda ?? 0} below ${minBoundsWidth}`);
