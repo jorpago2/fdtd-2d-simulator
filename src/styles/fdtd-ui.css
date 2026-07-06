@@ -60,6 +60,7 @@
   --control: 40px;
   --touch: 44px;
   --toolbar: 46px;
+  --canvas-footer-height: 46px;
   --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --serif: Georgia, "Times New Roman", serif;
   --drawer-width: clamp(720px, 38vw, 1080px);
@@ -171,6 +172,11 @@ p {
   min-height: 100dvh;
 }
 
+.workspace,
+.stage {
+  height: 100dvh;
+}
+
 .app-shell,
 .workspace,
 .stage {
@@ -179,15 +185,17 @@ p {
 }
 
 .stage {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   background: var(--canvas-bg);
 }
 
 .canvas-frame {
-  position: absolute;
-  inset: 0;
+  position: relative;
   display: grid;
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -233,6 +241,58 @@ p {
 
 .stage.is-draw-mode #simCanvas {
   cursor: none;
+}
+
+.canvas-footer {
+  position: relative;
+  z-index: 62;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--canvas-footer-height);
+  padding:
+    6px max(14px, env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 92%, var(--canvas-bg));
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.canvas-footer-author {
+  color: var(--text);
+  font-weight: 900;
+}
+
+.canvas-footer-author::after,
+.canvas-footer-links a:not(:last-child)::after {
+  content: "·";
+  margin: 0 8px;
+  color: var(--border-strong);
+}
+
+.canvas-footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-footer a {
+  color: var(--accent-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.canvas-footer a:hover,
+.canvas-footer a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .topbar,
@@ -833,7 +893,7 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   position: fixed;
   z-index: 58;
   right: max(12px, env(safe-area-inset-right));
-  bottom: max(12px, env(safe-area-inset-bottom));
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--canvas-footer-height));
   display: grid;
   place-items: center;
   width: 50px;
@@ -858,7 +918,7 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   position: fixed;
   z-index: 88;
   right: max(12px, env(safe-area-inset-right));
-  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 62px);
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + var(--canvas-footer-height) + 62px);
   display: grid;
   gap: 12px;
   width: min(440px, calc(100vw - 24px));
@@ -2442,14 +2502,14 @@ label.scene-select-fallback,
 
   .help-guide-toggle {
     right: max(8px, env(safe-area-inset-right));
-    bottom: max(8px, env(safe-area-inset-bottom));
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--canvas-footer-height));
     width: 46px;
     height: 46px;
   }
 
   .help-guide-panel {
     right: max(8px, env(safe-area-inset-right));
-    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 56px);
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + var(--canvas-footer-height) + 56px);
     width: calc(100vw - 16px);
     max-height: calc(100dvh - 78px);
   }
@@ -2463,6 +2523,7 @@ label.scene-select-fallback,
 @media (max-width: 420px) {
   :root {
     --toolbar: 40px;
+    --canvas-footer-height: 58px;
   }
 
   .scene-spotlight {

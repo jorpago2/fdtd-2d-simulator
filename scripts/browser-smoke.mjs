@@ -6334,6 +6334,82 @@ async function runHelpGuideSmoke(page) {
   };
 }
 
+async function runCanvasFooterSmoke(browser, url) {
+  const viewports = [
+    { name: "mobile", width: 390, height: 844 },
+    { name: "desktop", width: 1280, height: 840 },
+    { name: "uhd", width: 1920, height: 1080 },
+  ];
+  const states = [];
+  for (const viewport of viewports) {
+    const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+    try {
+      await page.goto(url, { waitUntil: "networkidle" });
+      states.push(await page.evaluate((name) => {
+        const rect = (node) => {
+          if (!node) return null;
+          const bounds = node.getBoundingClientRect();
+          return {
+            top: bounds.top,
+            bottom: bounds.bottom,
+            left: bounds.left,
+            right: bounds.right,
+            width: bounds.width,
+            height: bounds.height,
+          };
+        };
+        const footer = document.querySelector(".canvas-footer");
+        const frame = document.querySelector(".canvas-frame");
+        const help = document.getElementById("helpGuideToggle");
+        const links = Array.from(footer?.querySelectorAll("a") || []).map((link) => ({
+          text: link.textContent.trim(),
+          href: link.href,
+        }));
+        const footerRect = rect(footer);
+        const frameRect = rect(frame);
+        const helpRect = rect(help);
+        return {
+          viewport: name,
+          text: footer?.textContent.replace(/\s+/g, " ").trim() || "",
+          links,
+          footer: footerRect,
+          frame: frameRect,
+          help: helpRect,
+          withinViewport: Boolean(
+            footerRect &&
+              footerRect.left >= 0 &&
+              footerRect.right <= window.innerWidth &&
+              footerRect.bottom <= window.innerHeight + 1,
+          ),
+          belowCanvas: Boolean(footerRect && frameRect && footerRect.top >= frameRect.bottom - 1),
+          helpAboveFooter: Boolean(footerRect && helpRect && helpRect.bottom <= footerRect.top - 2),
+        };
+      }, viewport.name));
+    } finally {
+      await page.close();
+    }
+  }
+
+  const failures = [];
+  for (const state of states) {
+    if (!state.text.includes("Jorge Parra")) failures.push(`${state.viewport}: footer does not show Jorge Parra`);
+    if (state.text.toLowerCase().includes("github")) failures.push(`${state.viewport}: footer should not expose GitHub text`);
+    if (!state.links.some((link) => link.href === "https://jorpago2.blogs.uv.es/")) failures.push(`${state.viewport}: footer blog link missing`);
+    if (!state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer apps link missing`);
+    if (!state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
+    if (!state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
+    if (!state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
+  }
+  return {
+    id: "canvas_footer_links",
+    preset: "current",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runControlNavigationSmoke(page) {
   const status = await page.evaluate(() => {
     if (!document.body.classList.contains("controls-drawer-open")) {
@@ -7968,6 +8044,7 @@ async function main() {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runHelpGuideSmoke(page));
+      report.cases.push(await runCanvasFooterSmoke(browser, url));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
       report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
