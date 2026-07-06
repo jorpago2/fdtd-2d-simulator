@@ -26,6 +26,7 @@
   function bindShellControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
     const windowRef = dependencies.windowRef || global;
+    const documentRef = dependencies.documentRef || global.document;
     const setCanvasMode = requireFunction(dependencies.setCanvasMode, "setCanvasMode");
     const toggleControlDrawer = requireFunction(dependencies.toggleControlDrawer, "toggleControlDrawer");
     const closeControlDrawer = requireFunction(dependencies.closeControlDrawer, "closeControlDrawer");
@@ -55,6 +56,19 @@
       dependencies.handleCanvasContextAdd,
       "handleCanvasContextAdd",
     );
+    const helpGuideElements = () => Boolean(el.helpGuideToggle && el.helpGuidePanel);
+    const helpGuideOpen = () => helpGuideElements() && !el.helpGuidePanel.hidden;
+    const setHelpGuideOpen = (open, { restoreFocus = false } = {}) => {
+      if (!helpGuideElements()) return;
+      el.helpGuidePanel.hidden = !open;
+      el.helpGuideToggle.setAttribute("aria-expanded", String(Boolean(open)));
+      if (open) {
+        closeCanvasActionsMenu();
+        el.helpGuidePanel.focus?.({ preventScroll: true });
+      } else if (restoreFocus) {
+        el.helpGuideToggle.focus?.({ preventScroll: true });
+      }
+    };
 
     el.selectModeBtn?.addEventListener("click", () => setCanvasMode("select"));
     el.brushModeBtn?.addEventListener("click", () => setCanvasMode("brush"));
@@ -105,6 +119,24 @@
       const button = isElement(event.target) ? event.target.closest("[data-canvas-add]") : null;
       if (button) {
         handleCanvasContextAdd(button);
+      }
+    });
+
+    el.helpGuideToggle?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setHelpGuideOpen(!helpGuideOpen(), { restoreFocus: true });
+    });
+    el.helpGuideCloseBtn?.addEventListener("click", () => setHelpGuideOpen(false, { restoreFocus: true }));
+    el.helpGuidePanel?.addEventListener("click", (event) => event.stopPropagation());
+    documentRef?.addEventListener?.("click", (event) => {
+      if (!helpGuideOpen()) return;
+      if (isElement(event.target) && (event.target.closest("#helpGuidePanel") || event.target.closest("#helpGuideToggle"))) return;
+      setHelpGuideOpen(false);
+    });
+    documentRef?.addEventListener?.("keydown", (event) => {
+      if (event.key === "Escape" && helpGuideOpen()) {
+        event.stopPropagation();
+        setHelpGuideOpen(false, { restoreFocus: true });
       }
     });
   }

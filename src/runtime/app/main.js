@@ -1760,6 +1760,7 @@ function handleCanvasContextAdd(button) {
 shellControlBindingsModule.bindShellControls({
   el,
   windowRef: window,
+  documentRef: document,
   setCanvasMode,
   toggleControlDrawer,
   closeControlDrawer,

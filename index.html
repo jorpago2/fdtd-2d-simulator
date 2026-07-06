@@ -221,6 +221,64 @@
               </div>
               <output id="surfaceOrbitReadout" class="sr-only" aria-live="polite">3D orbit yaw 0°, pitch 0°</output>
             </div>
+            <button
+              id="helpGuideToggle"
+              class="help-guide-toggle"
+              type="button"
+              aria-controls="helpGuidePanel"
+              aria-expanded="false"
+              aria-label="Open simulator guide"
+              title="Open simulator guide"
+            >
+              ?
+            </button>
+            <section
+              id="helpGuidePanel"
+              class="help-guide-panel"
+              role="dialog"
+              aria-labelledby="helpGuideTitle"
+              aria-describedby="helpGuideIntro"
+              tabindex="-1"
+              hidden
+            >
+              <div class="help-guide-header">
+                <div>
+                  <p class="panel-kicker">Quick guide</p>
+                  <h2 id="helpGuideTitle">How to use the simulator</h2>
+                </div>
+                <button id="helpGuideCloseBtn" class="icon-button compact-button" type="button" title="Close guide" aria-label="Close guide">&times;</button>
+              </div>
+              <div class="help-guide-body">
+                <p id="helpGuideIntro" class="help-guide-intro">
+                  Choose a scene, run the FDTD update, then inspect fields, materials, flux, or numerical settings.
+                </p>
+                <div class="help-guide-grid">
+                  <article class="help-guide-card">
+                    <span>1</span>
+                    <h3>Scene</h3>
+                    <p>Open the menu, browse examples, and pick a prepared source, geometry, boundary, and material setup.</p>
+                  </article>
+                  <article class="help-guide-card">
+                    <span>2</span>
+                    <h3>Simulate</h3>
+                    <p>Use play, reset, or step. The display can show fields, Poynting flux, epsilon, mu, and 2D or 3D views.</p>
+                  </article>
+                  <article class="help-guide-card">
+                    <span>3</span>
+                    <h3>Edit</h3>
+                    <p>Select moves sources and monitors. Draw paints media or places simple geometries on the grid.</p>
+                  </article>
+                  <article class="help-guide-card">
+                    <span>4</span>
+                    <h3>Numerics</h3>
+                    <p>Grid cells, cells / &lambda;<sub>0</sub>, CPML boundaries, and subpixel smoothing control accuracy and cost.</p>
+                  </article>
+                </div>
+                <div class="help-guide-note">
+                  <strong>Physics note:</strong> field snapshots are qualitative. For quantitative work, check resolution, boundary distance, source type, monitors, and convergence.
+                </div>
+              </div>
+            </section>
             <div
               id="canvasContextMenu"
               class="source-menu context-choice-menu"

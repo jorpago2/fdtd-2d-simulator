@@ -6219,6 +6219,69 @@ async function runCanvasActionMenuSmoke(page) {
   };
 }
 
+async function runHelpGuideSmoke(page) {
+  await page.evaluate(() => {
+    document.getElementById("helpGuideToggle")?.click();
+  });
+  const openStatus = await page.evaluate(() => {
+    const toggle = document.getElementById("helpGuideToggle");
+    const panel = document.getElementById("helpGuidePanel");
+    const panelRect = panel?.getBoundingClientRect();
+    const toggleRect = toggle?.getBoundingClientRect();
+    const style = panel ? getComputedStyle(panel) : null;
+    const withinViewport =
+      panelRect &&
+      panelRect.left >= 0 &&
+      panelRect.top >= 0 &&
+      panelRect.right <= window.innerWidth &&
+      panelRect.bottom <= window.innerHeight;
+    const bottomRight =
+      toggleRect &&
+      toggleRect.right > window.innerWidth - 90 &&
+      toggleRect.bottom > window.innerHeight - 90;
+    return {
+      opened: Boolean(panel && !panel.hidden && style?.display !== "none"),
+      expanded: toggle?.getAttribute("aria-expanded") || "",
+      cardCount: panel?.querySelectorAll(".help-guide-card").length || 0,
+      title: panel?.querySelector("#helpGuideTitle")?.textContent?.trim() || "",
+      intro: panel?.querySelector("#helpGuideIntro")?.textContent?.trim() || "",
+      withinViewport: Boolean(withinViewport),
+      bottomRight: Boolean(bottomRight),
+    };
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(20);
+  const closedStatus = await page.evaluate(() => {
+    const toggle = document.getElementById("helpGuideToggle");
+    const panel = document.getElementById("helpGuidePanel");
+    return {
+      closed: Boolean(panel?.hidden),
+      expanded: toggle?.getAttribute("aria-expanded") || "",
+      focusReturned: document.activeElement === toggle,
+    };
+  });
+  const failures = [];
+  if (!openStatus.opened) failures.push("help guide did not open from the circular toggle");
+  if (openStatus.expanded !== "true") failures.push("help guide toggle did not report aria-expanded=true");
+  if (openStatus.cardCount < 4) failures.push("help guide does not expose the four basic workflow cards");
+  if (!openStatus.title.includes("simulator")) failures.push("help guide title is missing simulator context");
+  if (!openStatus.intro.includes("FDTD")) failures.push("help guide intro does not mention the FDTD update");
+  if (!openStatus.withinViewport) failures.push("help guide panel overflows the viewport");
+  if (!openStatus.bottomRight) failures.push("help guide toggle is not anchored near the lower-right display corner");
+  if (!closedStatus.closed) failures.push("help guide did not close with Escape");
+  if (closedStatus.expanded !== "false") failures.push("help guide toggle did not reset aria-expanded=false");
+  if (!closedStatus.focusReturned) failures.push("help guide did not return focus to the toggle");
+  return {
+    id: "help_guide_overlay",
+    preset: "current",
+    priority: "P1",
+    openStatus,
+    closedStatus,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runControlNavigationSmoke(page) {
   const status = await page.evaluate(() => {
     if (!document.body.classList.contains("controls-drawer-open")) {
@@ -7852,6 +7915,7 @@ async function main() {
     if (mode === "smoke") {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
+      report.cases.push(await runHelpGuideSmoke(page));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
       report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
