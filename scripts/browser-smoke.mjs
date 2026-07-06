@@ -6334,6 +6334,79 @@ async function runHelpGuideSmoke(page) {
   };
 }
 
+async function runHelpGuideResponsiveSmoke(browser, url) {
+  const viewports = [
+    { name: "mobile", width: 390, height: 844 },
+    { name: "tablet", width: 768, height: 1024 },
+    { name: "desktop", width: 1280, height: 840 },
+  ];
+  const states = [];
+  for (const viewport of viewports) {
+    const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+    try {
+      await page.goto(url, { waitUntil: "networkidle" });
+      await page.click("#helpGuideToggle");
+      states.push(await page.evaluate((name) => {
+        const rect = (node) => {
+          if (!node) return null;
+          const bounds = node.getBoundingClientRect();
+          return {
+            top: bounds.top,
+            bottom: bounds.bottom,
+            left: bounds.left,
+            right: bounds.right,
+            width: bounds.width,
+            height: bounds.height,
+          };
+        };
+        const panel = document.getElementById("helpGuidePanel");
+        const toggle = document.getElementById("helpGuideToggle");
+        const footer = document.querySelector(".canvas-footer");
+        const panelRect = rect(panel);
+        const toggleRect = rect(toggle);
+        const footerRect = rect(footer);
+        const style = panel ? getComputedStyle(panel) : null;
+        return {
+          viewport: name,
+          opened: Boolean(panel && !panel.hidden && style?.display !== "none"),
+          panel: panelRect,
+          toggle: toggleRect,
+          footer: footerRect,
+          withinViewport: Boolean(
+            panelRect &&
+              panelRect.left >= 0 &&
+              panelRect.top >= 0 &&
+              panelRect.right <= window.innerWidth &&
+              panelRect.bottom <= window.innerHeight,
+          ),
+          panelAboveToggle: Boolean(panelRect && toggleRect && panelRect.bottom <= toggleRect.top - 4),
+          toggleAboveFooter: Boolean(toggleRect && footerRect && toggleRect.bottom <= footerRect.top - 2),
+          scrollableWhenNeeded: Boolean(panel && panel.scrollHeight >= panel.clientHeight),
+        };
+      }, viewport.name));
+    } finally {
+      await page.close();
+    }
+  }
+
+  const failures = [];
+  for (const state of states) {
+    if (!state.opened) failures.push(`${state.viewport}: help guide did not open`);
+    if (!state.withinViewport) failures.push(`${state.viewport}: help guide panel overflows the viewport`);
+    if (!state.panelAboveToggle) failures.push(`${state.viewport}: help guide panel overlaps the toggle`);
+    if (!state.toggleAboveFooter) failures.push(`${state.viewport}: help guide toggle overlaps the footer`);
+    if (!state.scrollableWhenNeeded) failures.push(`${state.viewport}: help guide panel is not scrollable`);
+  }
+  return {
+    id: "help_guide_responsive_layout",
+    preset: "current",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runCanvasFooterSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844 },
@@ -8044,6 +8117,7 @@ async function main() {
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runHelpGuideSmoke(page));
+      report.cases.push(await runHelpGuideResponsiveSmoke(browser, url));
       report.cases.push(await runCanvasFooterSmoke(browser, url));
       report.cases.push(await runControlNavigationSmoke(page));
       report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
