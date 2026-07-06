@@ -5,7 +5,7 @@ This folder contains only browser assets that are loaded by the simulator.
 ## Rules
 
 - Keep modules small and domain-focused.
-- Register modules under `window.FdtdNext`.
+- Register active runtime modules as explicit `window.Fdtd...` globals.
 - Use explicit dependency checks at module boundaries.
 - Keep pure data/formatting logic away from DOM code.
 - Keep UI code away from FDTD stepping and numerical kernels.
@@ -26,4 +26,6 @@ These are classic browser scripts, not ES modules, so they remain compatible wit
 
 `index.html` loads `src/runtime/` as the active application path. That folder is grouped by responsibility and is the canonical runtime used by the page.
 
-Reference modules used only for parity checks live in `tests/reference-modules/`; they are not part of the deployed app.
+When `main.js` depends on a new runtime module, add it to `src/runtime/app/runtime-dependencies.js` instead of adding ad hoc load checks.
+
+Reference modules used only for parity checks live in `tests/reference-modules/`; they are not part of the deployed app. The `window.FdtdNext` namespace is reserved for those reference modules.

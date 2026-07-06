@@ -30,6 +30,7 @@
     ["stateNormalizerModule", "FdtdStateNormalizer", "state-normalizer.js"],
     ["simulationEffectsModule", "FdtdSimulationEffects", "simulation-effects.js"],
     ["runtimeControllerModule", "FdtdRuntimeController", "runtime-controller.js"],
+    ["runtimeSessionModule", "FdtdRuntimeSession", "runtime-session-controller.js"],
     ["canvasRenderControllerModule", "FdtdCanvasRenderController", "canvas-render-controller.js"],
     ["canvasColorbarModule", "FdtdCanvasColorbar", "canvas-colorbar.js"],
     ["canvasExportModule", "FdtdCanvasExport", "canvas-export.js"],

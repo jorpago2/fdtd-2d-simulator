@@ -115,6 +115,29 @@ function validateRuntimeDependencyInventory(indexHtml) {
   );
 }
 
+function validateRuntimeNamespaceDocumentation() {
+  const docs = [
+    ["src/README.md", readText("src", "README.md")],
+    ["docs/RUNTIME_ARCHITECTURE.md", readText("docs", "RUNTIME_ARCHITECTURE.md")],
+  ];
+  const stalePatterns = [
+    /Register modules under `window\.FdtdNext`/i,
+    /active[^.\n]*`window\.FdtdNext`/i,
+    /runtime files?[^.\n]*`window\.FdtdNext`/i,
+    /exposes?[^.\n]*under `window\.FdtdNext`/i,
+  ];
+  const staleDocs = docs
+    .filter(([, text]) => stalePatterns.some((pattern) => pattern.test(text)))
+    .map(([file]) => file);
+  addCheck(
+    "runtime namespace docs match active globals",
+    staleDocs.length === 0,
+    staleDocs.length
+      ? staleDocs.join(", ")
+      : "active runtime uses window.Fdtd... globals; FdtdNext remains reference-module only",
+  );
+}
+
 function validateSimulationDomBoundary() {
   const simulationFiles = listFilesRecursive("src/runtime/simulation", ".js");
   const allowedDomFiles = new Set([
@@ -171,6 +194,7 @@ validateActiveAssets(indexHtml);
 validatePackageScripts(JSON.parse(readText("package.json")));
 validateSourceRootShape();
 validateRuntimeDependencyInventory(indexHtml);
+validateRuntimeNamespaceDocumentation();
 validateSimulationDomBoundary();
 validateUiCssBoundary(readText("src/styles/fdtd-ui.css"));
 validateCentralFileBudget();

@@ -32,6 +32,7 @@ const {
   stateNormalizerModule,
   simulationEffectsModule,
   runtimeControllerModule,
+  runtimeSessionModule,
   canvasRenderControllerModule,
   canvasColorbarModule,
   canvasExportModule,
@@ -218,8 +219,16 @@ const SERIALIZABLE_STATE_KEYS = sceneCodec.SERIALIZABLE_STATE_KEYS;
 const el = uiDom.validateDomRefs(uiDom.collectDomRefs(document));
 const numericInputs = numericInputModule.createNumericInputController({ documentRef: document });
 numericInputs.bind();
-let editSessionDepth = 0;
-let editSessionShouldResume = false;
+const runtimeSession = runtimeSessionModule.createRuntimeSessionController({
+  state,
+  el,
+  numericInputs,
+  appPerformanceModule,
+  documentRef: document,
+  windowRef: window,
+  getSim: () => sim,
+  getRuntimeController: () => runtimeController,
+});
 materialSelectionController = materialSelectionModule.createMaterialSelectionController();
 materialSelection = materialSelectionController.state;
 entitySelection = entitySelectionModule.createEntitySelectionController({
@@ -579,34 +588,15 @@ function refreshControlPanelData() {
 }
 
 function setSimulationRunning(running) {
-  if (runtimeController?.setRunning) {
-    runtimeController.setRunning(running);
-    return;
-  }
-  state.running = Boolean(running);
+  runtimeSession.setRunning(running);
 }
 
 function beginSimulationEditSession() {
-  if (editSessionDepth === 0) {
-    editSessionShouldResume = Boolean(state.running);
-    if (state.running) {
-      setSimulationRunning(false);
-    }
-  }
-  editSessionDepth += 1;
+  runtimeSession.beginEditSession();
 }
 
 function finishSimulationEditSession(scope = document) {
-  if (scope && !numericInputs.validateScope(scope)) return false;
-  editSessionDepth = Math.max(0, editSessionDepth - 1);
-  if (editSessionDepth === 0) {
-    const shouldResume = editSessionShouldResume;
-    editSessionShouldResume = false;
-    if (shouldResume && !numericInputs.hasInvalidInputs(document)) {
-      setSimulationRunning(true);
-    }
-  }
-  return true;
+  return runtimeSession.endEditSession(scope);
 }
 
 function closeControlDrawer() {
@@ -788,50 +778,24 @@ function minMonitorYLambda() {
 
 
 
-let performanceController = null;
-function getPerformanceController() {
-  if (!performanceController) {
-    performanceController = appPerformanceModule.createPerformanceController({
-      el,
-      state,
-      getSim: () => sim,
-      getRuntimeController: () => runtimeController,
-    });
-    window.fdtdPerformance = {
-      now: performanceController.now,
-      record: performanceController.record,
-      performanceStats: performanceController.performanceStats,
-    };
-  }
-  return performanceController;
-}
-
 function timeStepBatch(stepCount, runner) {
-  return getPerformanceController().timeStepBatch(stepCount, runner);
+  return runtimeSession.timeStepBatch(stepCount, runner);
 }
 
 function instrumentSimulationPerformance(targetSim) {
-  return getPerformanceController().instrumentSimulation(targetSim);
+  return runtimeSession.instrumentSimulationPerformance(targetSim);
 }
 
 function resetPerformanceStats() {
-  return getPerformanceController().reset();
-}
-
-function formatPerformanceMs(value, samples) {
-  return getPerformanceController().formatMs(value, samples);
-}
-
-function formatPerformanceRate(stepMs, samples) {
-  return getPerformanceController().formatRate(stepMs, samples);
+  return runtimeSession.resetPerformanceStats();
 }
 
 function runtimeEngineLabel() {
-  return getPerformanceController().runtimeEngineLabel();
+  return runtimeSession.runtimeEngineLabel();
 }
 
 function updatePerformanceStats(force = false) {
-  return getPerformanceController().update(force);
+  return runtimeSession.updatePerformanceStats(force);
 }
 
 function sourceBoundsLambda() {
