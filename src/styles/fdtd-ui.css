@@ -883,6 +883,11 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   gap: 12px;
 }
 
+.help-guide-header > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .help-guide-header h2 {
   color: var(--text);
   font-size: 1rem;
@@ -896,7 +901,9 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
 }
 
 .help-guide-intro,
-.help-guide-card p,
+.help-guide-card small,
+.help-guide-topic p,
+.help-guide-topic li,
 .help-guide-note {
   color: var(--text);
   font-size: 0.82rem;
@@ -904,25 +911,54 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   line-height: 1.38;
 }
 
+.help-guide-view[hidden],
+.help-guide-topic[hidden],
+.help-guide-back[hidden] {
+  display: none;
+}
+
 .help-guide-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 10px;
 }
 
 .help-guide-card {
+  appearance: none;
   display: grid;
-  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 4px 8px;
+  width: 100%;
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
+  color: inherit;
   background: var(--panel-2);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.help-guide-card span {
+.help-guide-card:hover,
+.help-guide-card:focus-visible {
+  border-color: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent-soft) 13%, var(--panel-2));
+}
+
+.help-guide-card:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.help-guide-card > span {
   display: grid;
   place-items: center;
+  grid-column: 1;
+  grid-row: 1 / span 2;
   width: 24px;
   height: 24px;
   border-radius: var(--pill);
@@ -932,12 +968,61 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   font-weight: 900;
 }
 
-.help-guide-card h3 {
+.help-guide-card > strong {
+  grid-column: 2;
+  min-width: 0;
   margin: 0;
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 900;
   line-height: 1.1;
+}
+
+.help-guide-card > small {
+  grid-column: 2;
+  min-width: 0;
+  color: var(--muted);
+}
+
+.help-guide-card > b {
+  display: grid;
+  place-items: center;
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--pill);
+  color: var(--accent-strong);
+  background: var(--panel);
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.help-guide-detail-view {
+  min-height: 220px;
+  align-content: start;
+}
+
+.help-guide-topic {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--panel-2);
+}
+
+.help-guide-topic p,
+.help-guide-topic ul {
+  margin: 0;
+}
+
+.help-guide-topic ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
 }
 
 .help-guide-note {

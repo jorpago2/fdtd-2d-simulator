@@ -242,41 +242,89 @@
               hidden
             >
               <div class="help-guide-header">
+                <button
+                  id="helpGuideBackBtn"
+                  class="icon-button compact-button help-guide-back"
+                  type="button"
+                  title="Back to guide"
+                  aria-label="Back to guide overview"
+                  hidden
+                >
+                  &larr;
+                </button>
                 <div>
-                  <p class="panel-kicker">Quick guide</p>
+                  <p id="helpGuideKicker" class="panel-kicker">Quick guide</p>
                   <h2 id="helpGuideTitle">How to use the simulator</h2>
                 </div>
                 <button id="helpGuideCloseBtn" class="icon-button compact-button" type="button" title="Close guide" aria-label="Close guide">&times;</button>
               </div>
-              <div class="help-guide-body">
+              <div id="helpGuideHome" class="help-guide-body help-guide-view">
                 <p id="helpGuideIntro" class="help-guide-intro">
                   Choose a scene, run the FDTD update, then inspect fields, materials, flux, or numerical settings.
                 </p>
                 <div class="help-guide-grid">
-                  <article class="help-guide-card">
-                    <span>1</span>
-                    <h3>Scene</h3>
-                    <p>Open the menu, browse examples, and pick a prepared source, geometry, boundary, and material setup.</p>
-                  </article>
-                  <article class="help-guide-card">
-                    <span>2</span>
-                    <h3>Simulate</h3>
-                    <p>Use play, reset, or step. The display can show fields, Poynting flux, epsilon, mu, and 2D or 3D views.</p>
-                  </article>
-                  <article class="help-guide-card">
-                    <span>3</span>
-                    <h3>Edit</h3>
-                    <p>Select moves sources and monitors. Draw paints media or places simple geometries on the grid.</p>
-                  </article>
-                  <article class="help-guide-card">
-                    <span>4</span>
-                    <h3>Numerics</h3>
-                    <p>Grid cells, cells / &lambda;<sub>0</sub>, CPML boundaries, and subpixel smoothing control accuracy and cost.</p>
-                  </article>
+                  <button class="help-guide-card" type="button" data-help-guide-topic="scene">
+                    <span aria-hidden="true">1</span>
+                    <strong>Scene</strong>
+                    <small>Examples, source, geometry, and boundaries.</small>
+                    <b aria-hidden="true">&rsaquo;</b>
+                  </button>
+                  <button class="help-guide-card" type="button" data-help-guide-topic="simulate">
+                    <span aria-hidden="true">2</span>
+                    <strong>Simulate</strong>
+                    <small>Run, reset, step, and display the fields.</small>
+                    <b aria-hidden="true">&rsaquo;</b>
+                  </button>
+                  <button class="help-guide-card" type="button" data-help-guide-topic="edit">
+                    <span aria-hidden="true">3</span>
+                    <strong>Edit</strong>
+                    <small>Select objects or draw material regions.</small>
+                    <b aria-hidden="true">&rsaquo;</b>
+                  </button>
+                  <button class="help-guide-card" type="button" data-help-guide-topic="numerics">
+                    <span aria-hidden="true">4</span>
+                    <strong>Numerics</strong>
+                    <small>Resolution, CFL, boundaries, and cost.</small>
+                    <b aria-hidden="true">&rsaquo;</b>
+                  </button>
                 </div>
                 <div class="help-guide-note">
                   <strong>Physics note:</strong> field snapshots are qualitative. For quantitative work, check resolution, boundary distance, source type, monitors, and convergence.
                 </div>
+              </div>
+              <div id="helpGuideDetail" class="help-guide-body help-guide-view help-guide-detail-view" aria-live="polite" hidden>
+                <section class="help-guide-topic" data-help-guide-topic-panel="scene" hidden>
+                  <p>The Scene menu is the fastest way to start from a physically coherent setup.</p>
+                  <ul>
+                    <li><strong>Current</strong> shows the loaded example and what it is intended to demonstrate.</li>
+                    <li><strong>Browse</strong> searches examples by family, such as sources, waveguides, resonators, or advanced materials.</li>
+                    <li>Loading a scene updates the grid, sources, monitors, material map, and boundary conditions together.</li>
+                  </ul>
+                </section>
+                <section class="help-guide-topic" data-help-guide-topic-panel="simulate" hidden>
+                  <p>Simulate controls the time evolution and the way the field data is rendered.</p>
+                  <ul>
+                    <li><strong>Play</strong> advances the Yee-grid update continuously; <strong>Step</strong> advances one controlled batch.</li>
+                    <li><strong>Reset</strong> clears the time history while keeping the selected scene and edited geometry.</li>
+                    <li>The display can show field maps, Poynting flux, material maps, and 2D or 3D views without changing the physics.</li>
+                  </ul>
+                </section>
+                <section class="help-guide-topic" data-help-guide-topic-panel="edit" hidden>
+                  <p>Edit changes the simulation setup, so the solver should be interpreted again after modifying it.</p>
+                  <ul>
+                    <li><strong>Select</strong> moves or deletes sources and monitors.</li>
+                    <li><strong>Draw</strong> paints material cells with the brush or places simple geometries.</li>
+                    <li>The contextual menus expose only the parameters relevant to the selected source, monitor, or geometry.</li>
+                  </ul>
+                </section>
+                <section class="help-guide-topic" data-help-guide-topic-panel="numerics" hidden>
+                  <p>Numerics controls accuracy, stability, and performance.</p>
+                  <ul>
+                    <li><strong>Cells / &lambda;<sub>0</sub></strong> sets how finely the wavelength is sampled.</li>
+                    <li><strong>CFL</strong> controls the time step; smaller values are more conservative but slower.</li>
+                    <li><strong>CPML</strong> absorbs outgoing waves, while grid size and subpixel smoothing affect staircasing and reflections.</li>
+                  </ul>
+                </section>
               </div>
             </section>
             <div

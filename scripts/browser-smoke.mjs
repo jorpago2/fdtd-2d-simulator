@@ -6249,6 +6249,43 @@ async function runHelpGuideSmoke(page) {
       bottomRight: Boolean(bottomRight),
     };
   });
+  const detailStatus = await page.evaluate(() => {
+    const panel = document.getElementById("helpGuidePanel");
+    const home = document.getElementById("helpGuideHome");
+    const detail = document.getElementById("helpGuideDetail");
+    const title = document.getElementById("helpGuideTitle");
+    const back = document.getElementById("helpGuideBackBtn");
+    const buttons = Array.from(panel?.querySelectorAll("[data-help-guide-topic]") || []);
+    const sections = [];
+    for (const button of buttons) {
+      const topic = button.dataset.helpGuideTopic || "";
+      button.click();
+      const topicPanel = panel?.querySelector(`[data-help-guide-topic-panel="${topic}"]`);
+      sections.push({
+        topic,
+        title: title?.textContent?.trim() || "",
+        homeHidden: Boolean(home?.hidden),
+        detailVisible: Boolean(detail && !detail.hidden),
+        backVisible: Boolean(back && !back.hidden),
+        activePanelVisible: Boolean(topicPanel && !topicPanel.hidden),
+        detailLength: topicPanel?.textContent?.trim().length || 0,
+        listItems: topicPanel?.querySelectorAll("li").length || 0,
+      });
+      back?.click();
+    }
+    return {
+      buttonCount: buttons.length,
+      detailsCount: panel?.querySelectorAll("details.help-guide-card").length || 0,
+      detailViewCount: sections.filter(
+        (section) => section.homeHidden && section.detailVisible && section.backVisible && section.activePanelVisible,
+      ).length,
+      detailedSections: sections.filter((section) => section.detailLength > 80 && section.listItems >= 2).length,
+      backReturnedHome: Boolean(home && !home.hidden && detail?.hidden && back?.hidden),
+      titles: sections.map((section) => section.title),
+      mentionsCfl: Boolean(panel?.textContent?.includes("CFL")),
+      sections,
+    };
+  });
   await page.keyboard.press("Escape");
   await page.waitForTimeout(20);
   const closedStatus = await page.evaluate(() => {
@@ -6264,6 +6301,12 @@ async function runHelpGuideSmoke(page) {
   if (!openStatus.opened) failures.push("help guide did not open from the circular toggle");
   if (openStatus.expanded !== "true") failures.push("help guide toggle did not report aria-expanded=true");
   if (openStatus.cardCount < 4) failures.push("help guide does not expose the four basic workflow cards");
+  if (detailStatus.detailsCount > 0) failures.push("help guide should navigate to detail views instead of expanding cards");
+  if (detailStatus.buttonCount < 4) failures.push("help guide cards are not implemented as navigation buttons");
+  if (detailStatus.detailViewCount < 4) failures.push("help guide cards did not navigate to their detail view");
+  if (detailStatus.detailedSections < 4) failures.push("help guide detail views do not expose explanatory content");
+  if (!detailStatus.backReturnedHome) failures.push("help guide back button did not return to the overview");
+  if (!detailStatus.mentionsCfl) failures.push("help guide numerics detail does not mention CFL");
   if (!openStatus.title.includes("simulator")) failures.push("help guide title is missing simulator context");
   if (!openStatus.intro.includes("FDTD")) failures.push("help guide intro does not mention the FDTD update");
   if (!openStatus.withinViewport) failures.push("help guide panel overflows the viewport");
@@ -6276,6 +6319,7 @@ async function runHelpGuideSmoke(page) {
     preset: "current",
     priority: "P1",
     openStatus,
+    detailStatus,
     closedStatus,
     passed: failures.length === 0,
     failures,

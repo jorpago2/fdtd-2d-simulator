@@ -56,16 +56,47 @@
       dependencies.handleCanvasContextAdd,
       "handleCanvasContextAdd",
     );
+    let lastHelpGuideTopicButton = null;
+    const helpGuideDefaultKicker = el.helpGuideKicker?.textContent || "Quick guide";
+    const helpGuideDefaultTitle = el.helpGuideTitle?.textContent || "How to use the simulator";
     const helpGuideElements = () => Boolean(el.helpGuideToggle && el.helpGuidePanel);
     const helpGuideOpen = () => helpGuideElements() && !el.helpGuidePanel.hidden;
+    const setHelpGuideTopic = (topic, { restoreFocus = false } = {}) => {
+      const showDetail = Boolean(topic);
+      if (el.helpGuideHome) el.helpGuideHome.hidden = showDetail;
+      if (el.helpGuideDetail) el.helpGuideDetail.hidden = !showDetail;
+      if (el.helpGuideBackBtn) el.helpGuideBackBtn.hidden = !showDetail;
+      forEachNode(el.helpGuideTopicPanels, (panel) => {
+        panel.hidden = panel.dataset.helpGuideTopicPanel !== topic;
+      });
+      const activeButton = showDetail
+        ? Array.from(el.helpGuideTopicButtons || []).find((button) => button.dataset.helpGuideTopic === topic)
+        : null;
+      if (el.helpGuideKicker) el.helpGuideKicker.textContent = showDetail ? "Guide detail" : helpGuideDefaultKicker;
+      if (el.helpGuideTitle) {
+        el.helpGuideTitle.textContent = showDetail
+          ? activeButton?.querySelector("strong")?.textContent?.trim() || helpGuideDefaultTitle
+          : helpGuideDefaultTitle;
+      }
+      if (showDetail) {
+        el.helpGuideBackBtn?.focus?.({ preventScroll: true });
+      } else if (restoreFocus) {
+        lastHelpGuideTopicButton?.focus?.({ preventScroll: true });
+      }
+    };
     const setHelpGuideOpen = (open, { restoreFocus = false } = {}) => {
       if (!helpGuideElements()) return;
       el.helpGuidePanel.hidden = !open;
       el.helpGuideToggle.setAttribute("aria-expanded", String(Boolean(open)));
       if (open) {
+        setHelpGuideTopic(null);
         closeCanvasActionsMenu();
         el.helpGuidePanel.focus?.({ preventScroll: true });
-      } else if (restoreFocus) {
+      } else {
+        setHelpGuideTopic(null);
+        lastHelpGuideTopicButton = null;
+      }
+      if (!open && restoreFocus) {
         el.helpGuideToggle.focus?.({ preventScroll: true });
       }
     };
@@ -126,6 +157,13 @@
       event.stopPropagation();
       setHelpGuideOpen(!helpGuideOpen(), { restoreFocus: true });
     });
+    forEachNode(el.helpGuideTopicButtons, (button) => {
+      button.addEventListener("click", () => {
+        lastHelpGuideTopicButton = button;
+        setHelpGuideTopic(button.dataset.helpGuideTopic);
+      });
+    });
+    el.helpGuideBackBtn?.addEventListener("click", () => setHelpGuideTopic(null, { restoreFocus: true }));
     el.helpGuideCloseBtn?.addEventListener("click", () => setHelpGuideOpen(false, { restoreFocus: true }));
     el.helpGuidePanel?.addEventListener("click", (event) => event.stopPropagation());
     documentRef?.addEventListener?.("click", (event) => {
