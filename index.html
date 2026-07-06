@@ -315,6 +315,29 @@
                     <li><strong>Poynting flux</strong> is the local power-flow proxy. For quantitative work, integrate it on monitors and compare with a reference simulation.</li>
                     <li><strong>2D and 3D views</strong> render the same simulation data. Changing the view should not be interpreted as changing the electromagnetic model.</li>
                   </ul>
+                  <h3>Implemented formulas</h3>
+                  <ul>
+                    <li><strong>Yee update:</strong> the default Ez mode advances Ez, Hx, and Hy on a split-field grid for loss and CPML.
+                      <span class="help-guide-formula">H<sub>x</sub> &larr; H<sub>x</sub> - (S / &mu;<sub>x</sub>) &part;<sub>y</sub>E<sub>z</sub>, &nbsp; H<sub>y</sub> &larr; H<sub>y</sub> + (S / &mu;<sub>y</sub>) &part;<sub>x</sub>E<sub>z</sub></span>
+                      <span class="help-guide-formula">E<sub>z</sub> = E<sub>zx</sub> + E<sub>zy</sub>, with E<sub>zx</sub> driven by &part;<sub>x</sub>H<sub>y</sub> and E<sub>zy</sub> driven by -&part;<sub>y</sub>H<sub>x</sub>.</span>
+                    </li>
+                    <li><strong>Source timing:</strong> source wavelength is converted to normalized frequency before the update.
+                      <span class="help-guide-formula">f = S / (N<sub>&lambda;</sub> &middot; &lambda;<sub>s</sub>/&lambda;<sub>0</sub>)</span>
+                      Default source: sine Jz filament, &lambda;<sub>s</sub>/&lambda;<sub>0</sub> = 1.00, amplitude = 0.55, x = 1.20 &lambda;<sub>0</sub>, y = 3.00 &lambda;<sub>0</sub>, FWHM/window = 0.35 &lambda;<sub>0</sub>, angle = 0&deg;, phase = 0&deg;.
+                    </li>
+                    <li><strong>Time profiles:</strong> sine sources use a smooth ramp, while pulse sources use fixed compact envelopes.
+                      <span class="help-guide-formula">sine: A sin(2&pi;ft), ramped over max(24, 1.5/f) steps</span>
+                      <span class="help-guide-formula">Gaussian: A exp[-(t - 48)<sup>2</sup> / (2 &middot; 14<sup>2</sup>)], &nbsp; Ricker: A(1 - 2a<sup>2</sup>)exp(-a<sup>2</sup>)</span>
+                    </li>
+                    <li><strong>Guided mode source:</strong> mode launch solves a 1D finite-difference eigenproblem and injects a selected profile, not a hand-drawn line.
+                      <span class="help-guide-formula">[&Delta;<sub>y</sub> + k<sub>0</sub><sup>2</sup>&epsilon;(y)&mu;(y)]&psi; = &beta;<sup>2</sup>&psi;, &nbsp; n<sub>eff</sub> = &beta;/k<sub>0</sub></span>
+                      Mode order is limited to 0-3 and the mode window is clamped to 0.25-3.00 &lambda;<sub>0</sub>.
+                    </li>
+                    <li><strong>Poynting map:</strong> the rendered power-flow components are derived from the simulated field components.
+                      <span class="help-guide-formula">Ez mode: S<sub>x</sub> = -E<sub>z</sub>H<sub>y</sub>, &nbsp; S<sub>y</sub> = E<sub>z</sub>H<sub>x</sub></span>
+                      <span class="help-guide-formula">Hz mode: S<sub>x</sub> = H<sub>y</sub>H<sub>z</sub>, &nbsp; S<sub>y</sub> = -H<sub>x</sub>H<sub>z</sub></span>
+                    </li>
+                  </ul>
                   <p class="help-guide-topic-note">A stable-looking animation can still be under-resolved. For resonators, waveguides, plasmonics, or lossy media, inspect monitors after transients decay.</p>
                 </section>
                 <section class="help-guide-topic" data-help-guide-topic-panel="edit" hidden>
@@ -331,6 +354,33 @@
                     <li><strong>Geometry</strong> places cleaner rectangles, disks, ellipses, or rings using the selected material parameters.</li>
                     <li><strong>Material values</strong> affect the update coefficients. Loss, anisotropy, dispersion, or negative parameters are not just colors on the canvas.</li>
                   </ul>
+                  <h3>Material formulas</h3>
+                  <ul>
+                    <li><strong>Custom material:</strong> passive cells use relative material parameters in the update coefficients.
+                      <span class="help-guide-formula">&epsilon;<sub>r</sub> = &epsilon;' + i&epsilon;'', &nbsp; &mu;<sub>r</sub> = &mu;' + i&mu;''</span>
+                      Defaults: &epsilon;' = 4.00, &epsilon;'' = 0.0005, &mu;' = 1.00, &mu;'' = 0.00. When anisotropy is enabled, x and y components are stored separately.
+                    </li>
+                    <li><strong>Conductivity and loss:</strong> electric conductivity enters the finite-difference coefficient, while the loss value applies an additional decay.
+                      <span class="help-guide-formula">&sigma;<sub>damp</sub> = &sigma;S / (2|\epsilon|), &nbsp; C<sub>a</sub> = (1 - &sigma;<sub>damp</sub>) / (1 + &sigma;<sub>damp</sub>), &nbsp; C<sub>b</sub> = 1 / (1 + &sigma;<sub>damp</sub>)</span>
+                      Default conductivity is 0. Loss can be negative only through the gain controls and is saturation-limited.
+                    </li>
+                    <li><strong>Kerr and modulation:</strong> enabled cells update their effective permittivity before each field step.
+                      <span class="help-guide-formula">&epsilon;<sub>eff</sub> = &epsilon;<sub>base</sub>[1 + m cos(2&pi;(r/&Lambda;<sub>m</sub> - f<sub>m</sub>t) + &phi;)] + &chi;<sup>(3)</sup>I/(1 + I/I<sub>sat</sub>)</span>
+                      Defaults: m = 0.20, f<sub>m</sub> = 0.01, &Lambda;<sub>m</sub> = 2.00 &lambda;<sub>0</sub>, &chi;<sup>(3)</sup> = 0.50, I<sub>sat</sub> = 5.00.
+                    </li>
+                    <li><strong>Harmonic response:</strong> nonlinear polarization is converted to a current-like correction from the change in polarization.
+                      <span class="help-guide-formula">P<sub>NL</sub> = (&chi;<sup>(2)</sup>E<sup>2</sup> + &chi;<sup>(3)</sup>E<sup>3</sup>) / (1 + E<sup>2</sup>/I<sub>sat</sub>), &nbsp; J<sub>NL</sub> = P<sub>NL</sub><sup>n</sup> - P<sub>NL</sub><sup>n-1</sup></span>
+                      Defaults: &chi;<sup>(2)</sup> = 0.08, &chi;<sup>(3)</sup> = 0.00, I<sub>sat</sub> = 6.00.
+                    </li>
+                    <li><strong>Phase-change material:</strong> the internal state s moves between off and on states according to field intensity.
+                      <span class="help-guide-formula">if I &ge; I<sub>on</sub>: s &larr; s + (1 - s)(1 - e<sup>-1/&tau;<sub>on</sub></sup>); if I &le; I<sub>off</sub>: s &larr; s - s(1 - e<sup>-1/&tau;<sub>off</sub></sup>)</span>
+                      Defaults: &epsilon;<sub>on</sub> = 9.00, loss<sub>on</sub> = 0.08, I<sub>on</sub> = 0.80, I<sub>off</sub> = 0.20, &tau;<sub>on</sub> = 18, &tau;<sub>off</sub> = 180.
+                    </li>
+                    <li><strong>Dispersion, gyrotropy, and bianisotropy:</strong> dispersive cells use ADE polarization memory; tensor cells solve coupled updates.
+                      <span class="help-guide-formula">Drude/Lorentz ADE: P<sup>n+1</sup> = [(2 - &omega;<sub>0</sub><sup>2</sup>)P<sup>n</sup> - (1 - &gamma;/2)P<sup>n-1</sup> + drive&middot;E<sup>n</sup>] / (1 + &gamma;/2)</span>
+                      Defaults: &omega;<sub>p</sub> = 0.28, &gamma; = 0.018, &omega;<sub>0</sub> = 0.15, &Delta;&epsilon; = 2.00, &tau; = 18, gyrotropy g = 0.25, normalized &kappa; = 0.20 with limit 0.85.
+                    </li>
+                  </ul>
                   <p class="help-guide-topic-note">After drawing, check whether the smallest feature is actually resolved by enough cells. Visual smoothness is not the same as numerical convergence.</p>
                 </section>
                 <section class="help-guide-topic" data-help-guide-topic-panel="numerics" hidden>
@@ -340,6 +390,22 @@
                     <li><strong>Cells / &lambda;<sub>0</sub></strong> sets how finely the free-space wavelength is sampled. Inside a material, the wavelength is shorter by the refractive index.</li>
                     <li>Basic propagation may look acceptable with moderate resolution, but high-Q resonators, thin gaps, plasmonics, and phase-sensitive devices need many more cells.</li>
                     <li><strong>Subpixel smoothing</strong> reduces staircasing at material interfaces. It helps geometry errors, but it is not a substitute for convergence checks.</li>
+                  </ul>
+                  <h3>Implemented numerical values</h3>
+                  <ul>
+                    <li><strong>Grid and timestep:</strong> square cells are normalized by the free-space wavelength.
+                      <span class="help-guide-formula">&Delta;x = &lambda;<sub>0</sub> / N<sub>&lambda;</sub>, &nbsp; &Delta;t = S&Delta;x/c<sub>0</sub></span>
+                      Defaults: N<sub>&lambda;</sub> = 20, &lambda;<sub>0</sub> = 1.00 &micro;m, S = 0.10, grid = 360 x 240 cells. The hard grid limit is 1200 x 800 cells.
+                    </li>
+                    <li><strong>CPML absorbing boundary:</strong> the simulator uses graded convolutional PML coefficients.
+                      <span class="help-guide-formula">&sigma;<sub>max</sub> = -ln(R)(m + 1)/(2L), &nbsp; &kappa; = 1 + (&kappa;<sub>max</sub> - 1)u<sup>m</sup>, &nbsp; b = exp[-(&sigma;&Delta;t/&kappa; + &alpha;&Delta;t)]</span>
+                      <span class="help-guide-formula">&psi; &larr; b&psi; + a&part;F, &nbsp; &part;F<sub>CPML</sub> = &part;F/&kappa; + &psi;</span>
+                      Defaults: order m = 4, &kappa;<sub>max</sub> = 6, &alpha;<sub>max</sub> = 0.08S = 0.008, target reflection R = 1e-10.
+                    </li>
+                    <li><strong>Boundary thickness:</strong> CPML thickness is chosen from wavelength and domain size, while reflective walls use a short zeroed-field band.
+                      <span class="help-guide-formula">L<sub>CPML</sub> = min(max(18, round(0.9N<sub>&lambda;</sub>), round(0.16 min(N<sub>x</sub>, N<sub>y</sub>))), round(0.24 min(N<sub>x</sub>, N<sub>y</sub>)))</span>
+                      Reflective wall thickness is round(0.14N<sub>&lambda;</sub>) clamped to 3-10 cells.
+                    </li>
                   </ul>
                   <h3>Time step and boundaries</h3>
                   <ul>

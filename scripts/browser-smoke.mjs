@@ -6283,6 +6283,10 @@ async function runHelpGuideSmoke(page) {
       backReturnedHome: Boolean(home && !home.hidden && detail?.hidden && back?.hidden),
       titles: sections.map((section) => section.title),
       mentionsCfl: Boolean(panel?.textContent?.includes("CFL")),
+      formulaCount: panel?.querySelectorAll(".help-guide-formula").length || 0,
+      mentionsSourceFormula: Boolean(panel?.textContent?.includes("f = S /")),
+      mentionsCpmlDefaults: Boolean(panel?.textContent?.includes("target reflection R = 1e-10")),
+      mentionsMaterialDefaults: Boolean(panel?.textContent?.includes("Kerr and modulation")),
       sections,
     };
   });
@@ -6307,6 +6311,10 @@ async function runHelpGuideSmoke(page) {
   if (detailStatus.detailedSections < 4) failures.push("help guide detail views do not expose explanatory content");
   if (!detailStatus.backReturnedHome) failures.push("help guide back button did not return to the overview");
   if (!detailStatus.mentionsCfl) failures.push("help guide numerics detail does not mention CFL");
+  if (detailStatus.formulaCount < 10) failures.push("help guide does not expose the implemented formulas");
+  if (!detailStatus.mentionsSourceFormula) failures.push("help guide does not explain source frequency normalization");
+  if (!detailStatus.mentionsCpmlDefaults) failures.push("help guide does not expose CPML default parameters");
+  if (!detailStatus.mentionsMaterialDefaults) failures.push("help guide does not expose material model defaults");
   if (!openStatus.title.includes("simulator")) failures.push("help guide title is missing simulator context");
   if (!openStatus.intro.includes("FDTD")) failures.push("help guide intro does not mention the FDTD update");
   if (!openStatus.withinViewport) failures.push("help guide panel overflows the viewport");
