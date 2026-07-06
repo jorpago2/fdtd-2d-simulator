@@ -50,6 +50,7 @@
     "cellsPerWavelength",
     "boundary",
     "boundarySides",
+    "subpixelSmoothingEnabled",
     "preset",
     "gridNx",
     "gridNy",

@@ -13,6 +13,7 @@ function fdtdRecordSolverPhase(name, startedAt) {
 
 Object.assign(FDTDSim.prototype, {
   step() {
+    this.rebuildSubpixelMaterialCoefficients?.();
     const compiledMaterialStep = this.canUseCompiledMaterialStep();
     let phaseStartedAt = fdtdSolverPhaseStart();
     const phaseChangeActive = state.materialPhaseChangeEnabled;

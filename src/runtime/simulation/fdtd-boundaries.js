@@ -190,6 +190,7 @@ Object.assign(FDTDSim.prototype, {
   },
 
   refreshCpmlMaterialContinuation(resetCpmlFields = false) {
+    this.rebuildSubpixelMaterialCoefficients?.({ refreshCpml: false });
     if (!anyAbsorbingBoundarySide() || this.cpmlLayer <= 0) return;
     const minX = this.activeInteriorMinX();
     const minY = this.activeInteriorMinY();

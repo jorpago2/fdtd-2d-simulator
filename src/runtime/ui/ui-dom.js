@@ -258,6 +258,8 @@
       configBoundaryOutput: documentRef.getElementById("configBoundaryOutput"),
       configCflOutput: documentRef.getElementById("configCflOutput"),
       configStabilityOutput: documentRef.getElementById("configStabilityOutput"),
+      subpixelSmoothingInput: documentRef.getElementById("subpixelSmoothingInput"),
+      subpixelSmoothingStatus: documentRef.getElementById("subpixelSmoothingStatus"),
       exportSceneBtn: documentRef.getElementById("exportSceneBtn"),
       importSceneBtn: documentRef.getElementById("importSceneBtn"),
       importSceneFileInput: documentRef.getElementById("importSceneFileInput"),

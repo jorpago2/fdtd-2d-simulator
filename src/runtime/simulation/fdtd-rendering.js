@@ -590,6 +590,7 @@ renderMaterialImage32(pixels) {
 },
 
 render() {
+  this.rebuildSubpixelMaterialCoefficients?.();
   this.fitCanvas();
   this.clampView();
   const viewport = this.renderViewport();

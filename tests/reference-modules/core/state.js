@@ -91,6 +91,7 @@
       cellsPerWavelength: 20,
       boundary: "absorbing",
       boundarySides: contracts.clonePlainData(defaultBoundarySides),
+      subpixelSmoothingEnabled: false,
       preset: "empty",
       gridNx: contracts.positiveNumber(defaultGrid.nx, "defaultGrid.nx"),
       gridNy: contracts.positiveNumber(defaultGrid.ny, "defaultGrid.ny"),

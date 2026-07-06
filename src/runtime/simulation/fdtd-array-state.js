@@ -62,6 +62,16 @@
   ]);
 
   const AUXILIARY_ARRAY_SPECS = Object.freeze([
+    ["rawEps", Float32Array, "n"],
+    ["rawLoss", Float32Array, "n"],
+    ["rawEpsY", Float32Array, "n"],
+    ["rawLossY", Float32Array, "n"],
+    ["rawConductivity", Float32Array, "n"],
+    ["rawConductivityY", Float32Array, "n"],
+    ["rawMu", Float32Array, "n"],
+    ["rawMuLoss", Float32Array, "n"],
+    ["rawMuY", Float32Array, "n"],
+    ["rawMuLossY", Float32Array, "n"],
     ["modulatedMaterial", Uint8Array, "n"],
     ["modulationPhaseOffset", Float32Array, "n"],
     ["dispersiveMaterial", Uint8Array, "n"],

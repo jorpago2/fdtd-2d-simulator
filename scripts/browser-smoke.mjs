@@ -6286,7 +6286,7 @@ async function runControlNavigationSmoke(page) {
   if (status.numericsState?.stabilitySectionVisible) failures.push("Numerics still shows the Stability section");
   const numericsCards = status.numericsState?.numericsCards || [];
   const numericsOrder = numericsCards.map((card) => card.title).join("|");
-  if (numericsOrder !== "Grid|Reproducibility|Performance") {
+  if (numericsOrder !== "Grid|Reproducibility|Interface accuracy|Performance") {
     failures.push(`Numerics card order is ${numericsOrder || "empty"}`);
   }
   const unexpectedNumericsState = numericsCards.filter((card) => {

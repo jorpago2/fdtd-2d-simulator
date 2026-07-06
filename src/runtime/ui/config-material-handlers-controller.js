@@ -178,6 +178,14 @@
       applySimulationGridSize(nx, ny);
     }
 
+    function handleSubpixelSmoothingInput() {
+      state.subpixelSmoothingEnabled = Boolean(el.subpixelSmoothingInput?.checked);
+      sim.markSubpixelSmoothingDirty?.();
+      sim.rebuildSubpixelMaterialCoefficients?.({ force: true });
+      sim.resetFields();
+      simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });
+    }
+
     function handleBrushSizeInput() {
       state.brushSizeLambda = Number(el.brushMenuSizeInput.value);
       state.canvasMode = "brush";
@@ -271,6 +279,7 @@
       applyBoundaryMode,
       handleBoundaryMenuInput,
       applyGridSizeFromInputs,
+      handleSubpixelSmoothingInput,
       handleBrushSizeInput,
       handleBrushToolButton,
       handleBrushGeometryInput,

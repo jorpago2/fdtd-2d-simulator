@@ -19,6 +19,7 @@ class FDTDSim {
     this.renormalizedCount = 0;
     this.lastRenormalized = false;
     this.lastDiverged = false;
+    this.initializeSubpixelMaterialState?.();
     this.resize(config.nx, config.ny);
   }
 
@@ -44,6 +45,7 @@ class FDTDSim {
     this.renormalizedCount = 0;
     this.lastRenormalized = false;
     this.lastDiverged = false;
+    this.initializeSubpixelMaterialState?.();
     this.offscreen = document.createElement("canvas");
     this.offscreen.width = nx;
     this.offscreen.height = ny;

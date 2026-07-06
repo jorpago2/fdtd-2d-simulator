@@ -45,12 +45,17 @@
       dependencies.applyGridSizeFromInputs,
       "applyGridSizeFromInputs",
     );
+    const handleSubpixelSmoothingInput = requireFunction(
+      dependencies.handleSubpixelSmoothingInput,
+      "handleSubpixelSmoothingInput",
+    );
 
     bindInputAndChange(el.wavelengthInput, handleWavelengthInput);
     bindInputAndChange(el.cellsPerWavelengthInput, handleCellsPerWavelengthInput);
     el.presetInput?.addEventListener("change", applySelectedPreset);
     el.slabThicknessInput?.addEventListener("input", handleSlabThicknessInput);
     el.boundaryMenuInput?.addEventListener("change", handleBoundaryMenuInput);
+    el.subpixelSmoothingInput?.addEventListener("change", handleSubpixelSmoothingInput);
 
     [el.gridNxInput, el.gridNyInput].forEach((input) => {
       input?.addEventListener("change", applyGridSizeFromInputs);

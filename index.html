@@ -1378,6 +1378,20 @@
                 <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
               </div>
             </details>
+            <details class="panel-section interface-accuracy-panel config-detail-panel">
+              <summary>Interface accuracy</summary>
+              <div class="config-detail-body">
+                <label class="toggle-row">
+                  <input id="subpixelSmoothingInput" type="checkbox" />
+                  <span>Subpixel smoothing</span>
+                </label>
+                <div class="diagnostic-metric">
+                  <span>Status</span>
+                  <output id="subpixelSmoothingStatus">Off · passive interfaces only</output>
+                </div>
+                <p class="simulation-guide-note">Uses direction-aware effective coefficients at passive dielectric corners. PEC, dispersive, tensorial, nonlinear, gain, and phase-change cells are left unchanged.</p>
+              </div>
+            </details>
             <details class="panel-section performance-panel config-detail-panel">
               <summary>Performance</summary>
               <div class="config-detail-body">
@@ -1476,6 +1490,7 @@
     <script src="src/runtime/data/scene-catalog-loader.js?v=20260702-scene-library-1"></script>
     <script src="src/runtime/simulation/fdtd-sim.js?v=20260704-measure-policy-2"></script>
     <script src="src/runtime/simulation/fdtd-array-state.js?v=20260703-mode-dynamic-wasm-1"></script>
+    <script src="src/runtime/simulation/fdtd-subpixel-materials.js?v=20260706-subpixel-smoothing-1"></script>
     <script src="src/runtime/simulation/fdtd-engine-routing.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="src/runtime/canvas/canvas-viewport.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-field-state.js?v=20260704-measure-policy-2"></script>

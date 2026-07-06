@@ -87,6 +87,7 @@
       cellsPerWavelength: 20,
       boundary: "absorbing",
       boundarySides: { ...defaultBoundarySides },
+      subpixelSmoothingEnabled: false,
       preset: "empty",
       gridNx: defaultGrid.nx,
       gridNy: defaultGrid.ny,

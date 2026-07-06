@@ -1899,6 +1899,10 @@ function applyGridSizeFromInputs() {
   configMaterialHandlers().applyGridSizeFromInputs();
 }
 
+function handleSubpixelSmoothingInput() {
+  configMaterialHandlers().handleSubpixelSmoothingInput();
+}
+
 configControlBindingsModule.bindConfigControls({
   el,
   handleWavelengthInput,
@@ -1907,6 +1911,7 @@ configControlBindingsModule.bindConfigControls({
   handleSlabThicknessInput,
   handleBoundaryMenuInput,
   applyGridSizeFromInputs,
+  handleSubpixelSmoothingInput,
 });
 
 function handleBrushSizeInput() {

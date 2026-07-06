@@ -968,6 +968,7 @@ storeMeasuredFieldStats(key, maxAbs, energy) {
 },
 
 measureForUi({ force = false, minIntervalMs = UI_MEASURE_MIN_INTERVAL_MS } = {}) {
+  this.rebuildSubpixelMaterialCoefficients?.();
   if (force || this.lastDiverged) {
     this.measure();
     return true;
@@ -997,6 +998,7 @@ measureForUi({ force = false, minIntervalMs = UI_MEASURE_MIN_INTERVAL_MS } = {})
 },
 
 measure() {
+  this.rebuildSubpixelMaterialCoefficients?.();
   const initialCacheKey = this.measureCacheKey();
   if (!this.lastDiverged && this.measureCache?.key === initialCacheKey) {
     this.restoreMeasuredFieldStats(this.measureCache);

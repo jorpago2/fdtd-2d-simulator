@@ -90,6 +90,7 @@
       state.gridNy = clampInt(state.gridNy, 60, maxGrid.ny);
       state.boundary = normalizeBoundaryMode(state.boundary);
       normalizeBoundarySides();
+      state.subpixelSmoothingEnabled = Boolean(state.subpixelSmoothingEnabled);
       if (!knownPresetValue(state.preset)) state.preset = "empty";
       state.slabThicknessLambda = clampNumber(Number(state.slabThicknessLambda) || 0.5, 0.05, 20);
       state.customAnisotropic = Boolean(state.customAnisotropic);

@@ -57,6 +57,7 @@ clearMaterials(resetFields = true) {
   this.phaseLossYOn.fill(0);
   this.conductivity.fill(0);
   this.conductivityY.fill(0);
+  this.fillRawMaterialDefaults?.();
   this.modulationBaseEps.fill(1);
   this.modulationBaseEpsY.fill(1);
   this.dispersionOmegaP.fill(0);
@@ -96,6 +97,7 @@ clearMaterials(resetFields = true) {
   this.harmonicPrevPz.fill(0);
   this.harmonicPrevPx.fill(0);
   this.harmonicPrevPy.fill(0);
+  this.markSubpixelSmoothingDirty?.();
   this.refreshCpmlMaterialContinuation(false);
   this.markMaterialChanged();
   if (resetFields) {
@@ -182,6 +184,7 @@ copyMaterialCellByIndex(targetIdx, sourceIdx) {
   this.harmonicPrevPz[targetIdx] = this.harmonicPrevPz[sourceIdx];
   this.harmonicPrevPx[targetIdx] = this.harmonicPrevPx[sourceIdx];
   this.harmonicPrevPy[targetIdx] = this.harmonicPrevPy[sourceIdx];
+  this.copyRawMaterialCellByIndex?.(targetIdx, sourceIdx);
 },
 
 copyPassiveCpmlMaterialCellByIndex(targetIdx, sourceIdx) {
@@ -264,6 +267,7 @@ copyPassiveCpmlMaterialCellByIndex(targetIdx, sourceIdx) {
   this.harmonicPrevPz[targetIdx] = 0;
   this.harmonicPrevPx[targetIdx] = 0;
   this.harmonicPrevPy[targetIdx] = 0;
+  this.writeRawMaterialFromEffectiveAtIndex?.(targetIdx);
 },
 
 setCellModulation(idx, enabled, baseEps = this.eps[idx], baseEpsY = this.epsY[idx], phaseOffsetRad = 0) {
@@ -517,23 +521,28 @@ setMaterial(x, y, kind) {
     this.setCellBianisotropy(idx, 0);
     this.setCellPhaseChange(idx, null);
   }
+  this.writeRawMaterialFromEffectiveAtIndex?.(idx);
+  this.markSubpixelSmoothingDirtyAroundCell?.(x, y);
   this.markMaterialChanged();
 },
 
 snapshotMaterialCell(x, y) {
   const idx = this.id(x, y);
+  const rawOrEffective = (rawName, effectiveName) => (
+    this[rawName] && Number.isFinite(this[rawName][idx]) ? this[rawName][idx] : this[effectiveName][idx]
+  );
   return {
     x,
     y,
     material: this.material[idx],
-    eps: this.eps[idx],
-    loss: this.loss[idx],
-    epsY: this.epsY[idx],
-    lossY: this.lossY[idx],
-    mu: this.mu[idx],
-    muLoss: this.muLoss[idx],
-    muY: this.muY[idx],
-    muLossY: this.muLossY[idx],
+    eps: rawOrEffective("rawEps", "eps"),
+    loss: rawOrEffective("rawLoss", "loss"),
+    epsY: rawOrEffective("rawEpsY", "epsY"),
+    lossY: rawOrEffective("rawLossY", "lossY"),
+    mu: rawOrEffective("rawMu", "mu"),
+    muLoss: rawOrEffective("rawMuLoss", "muLoss"),
+    muY: rawOrEffective("rawMuY", "muY"),
+    muLossY: rawOrEffective("rawMuLossY", "muLossY"),
     modulated: this.modulatedMaterial[idx],
     modulationPhaseOffset: this.modulationPhaseOffset[idx],
     nonlinear: this.nonlinearMaterial[idx],
@@ -562,8 +571,8 @@ snapshotMaterialCell(x, y) {
     phaseLossOn: this.phaseLossOn[idx],
     phaseEpsYOn: this.phaseEpsYOn[idx],
     phaseLossYOn: this.phaseLossYOn[idx],
-    conductivity: this.conductivity[idx],
-    conductivityY: this.conductivityY[idx],
+    conductivity: rawOrEffective("rawConductivity", "conductivity"),
+    conductivityY: rawOrEffective("rawConductivityY", "conductivityY"),
     modulationBaseEps: this.modulationBaseEps[idx],
     modulationBaseEpsY: this.modulationBaseEpsY[idx],
     dispersionOmegaP: this.dispersionOmegaP[idx],
@@ -667,6 +676,8 @@ writeMaterialCell(x, y, cell) {
     this.zeroElectricCell(idx);
     this.zeroDualFieldCell(idx);
   }
+  this.writeRawMaterialFromEffectiveAtIndex?.(idx);
+  this.markSubpixelSmoothingDirtyAroundCell?.(x, y);
   this.markMaterialChanged();
   return true;
 },
@@ -750,6 +761,10 @@ writeAirCellAtIndex(idx) {
   this.harmonicPrevPz[idx] = 0;
   this.harmonicPrevPx[idx] = 0;
   this.harmonicPrevPy[idx] = 0;
+  this.writeRawMaterialFromEffectiveAtIndex?.(idx);
+  const x = idx % this.nx;
+  const y = Math.floor(idx / this.nx);
+  this.markSubpixelSmoothingDirtyAroundCell?.(x, y);
   this.markMaterialChanged();
 },
 
@@ -816,6 +831,16 @@ snapshotMaterialArrays() {
     loss: new Float32Array(this.loss),
     epsY: new Float32Array(this.epsY),
     lossY: new Float32Array(this.lossY),
+    rawEps: new Float32Array(this.rawEps),
+    rawLoss: new Float32Array(this.rawLoss),
+    rawEpsY: new Float32Array(this.rawEpsY),
+    rawLossY: new Float32Array(this.rawLossY),
+    rawConductivity: new Float32Array(this.rawConductivity),
+    rawConductivityY: new Float32Array(this.rawConductivityY),
+    rawMu: new Float32Array(this.rawMu),
+    rawMuLoss: new Float32Array(this.rawMuLoss),
+    rawMuY: new Float32Array(this.rawMuY),
+    rawMuLossY: new Float32Array(this.rawMuLossY),
     mu: new Float32Array(this.mu),
     muLoss: new Float32Array(this.muLoss),
     muY: new Float32Array(this.muY),
@@ -878,6 +903,26 @@ restoreMaterialArrays(snapshot) {
   this.loss.set(snapshot.loss);
   this.epsY.set(snapshot.epsY);
   this.lossY.set(snapshot.lossY);
+  if (snapshot.rawEps) this.rawEps.set(snapshot.rawEps);
+  else this.rawEps.set(snapshot.eps);
+  if (snapshot.rawLoss) this.rawLoss.set(snapshot.rawLoss);
+  else this.rawLoss.set(snapshot.loss);
+  if (snapshot.rawEpsY) this.rawEpsY.set(snapshot.rawEpsY);
+  else this.rawEpsY.set(snapshot.epsY);
+  if (snapshot.rawLossY) this.rawLossY.set(snapshot.rawLossY);
+  else this.rawLossY.set(snapshot.lossY);
+  if (snapshot.rawConductivity) this.rawConductivity.set(snapshot.rawConductivity);
+  else this.rawConductivity.set(snapshot.conductivity || new Float32Array(this.n));
+  if (snapshot.rawConductivityY) this.rawConductivityY.set(snapshot.rawConductivityY);
+  else this.rawConductivityY.set(snapshot.conductivityY || new Float32Array(this.n));
+  if (snapshot.rawMu) this.rawMu.set(snapshot.rawMu);
+  else this.rawMu.set(snapshot.mu);
+  if (snapshot.rawMuLoss) this.rawMuLoss.set(snapshot.rawMuLoss);
+  else this.rawMuLoss.set(snapshot.muLoss);
+  if (snapshot.rawMuY) this.rawMuY.set(snapshot.rawMuY);
+  else this.rawMuY.set(snapshot.muY);
+  if (snapshot.rawMuLossY) this.rawMuLossY.set(snapshot.rawMuLossY);
+  else this.rawMuLossY.set(snapshot.muLossY);
   this.mu.set(snapshot.mu);
   this.muLoss.set(snapshot.muLoss);
   this.muY.set(snapshot.muY);
@@ -937,6 +982,11 @@ restoreMaterialArrays(snapshot) {
   this.muDispersionOmega0.set(snapshot.muDispersionOmega0);
   this.muDispersionDeltaMu.set(snapshot.muDispersionDeltaMu);
   this.muDispersionTau.set(snapshot.muDispersionTau);
+  this.subpixelRawSynced = true;
+  this.subpixelMaterialDirty = false;
+  this.subpixelMaterialDirtyBounds = null;
+  this.subpixelLastEnabled = Boolean(state.subpixelSmoothingEnabled);
+  this.subpixelLastFieldComponent = state.fieldComponent === "hz" ? "hz" : "ez";
   this.markMaterialChanged();
 },
 
@@ -949,6 +999,16 @@ snapshotMaterialArraysWithoutRegion(region) {
     snapshot.loss[idx] = 0;
     snapshot.epsY[idx] = 1;
     snapshot.lossY[idx] = 0;
+    if (snapshot.rawEps) snapshot.rawEps[idx] = 1;
+    if (snapshot.rawLoss) snapshot.rawLoss[idx] = 0;
+    if (snapshot.rawEpsY) snapshot.rawEpsY[idx] = 1;
+    if (snapshot.rawLossY) snapshot.rawLossY[idx] = 0;
+    if (snapshot.rawConductivity) snapshot.rawConductivity[idx] = 0;
+    if (snapshot.rawConductivityY) snapshot.rawConductivityY[idx] = 0;
+    if (snapshot.rawMu) snapshot.rawMu[idx] = 1;
+    if (snapshot.rawMuLoss) snapshot.rawMuLoss[idx] = 0;
+    if (snapshot.rawMuY) snapshot.rawMuY[idx] = 1;
+    if (snapshot.rawMuLossY) snapshot.rawMuLossY[idx] = 0;
     snapshot.mu[idx] = 1;
     snapshot.muLoss[idx] = 0;
     snapshot.muY[idx] = 1;
@@ -1081,7 +1141,9 @@ updateCustomMaterialCells(resetFields = true) {
     this.muLoss[i] = state.customMuImag;
     this.muY[i] = state.customAnisotropic ? state.customMuYReal : state.customMuReal;
     this.muLossY[i] = state.customAnisotropic ? state.customMuYImag : state.customMuImag;
+    this.writeRawMaterialFromEffectiveAtIndex?.(i);
   }
+  this.markSubpixelSmoothingDirty?.();
   this.refreshCpmlMaterialContinuation(false);
   this.markMaterialChanged({ texture: false, values: true });
   if (resetFields) {

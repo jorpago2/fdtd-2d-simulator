@@ -111,6 +111,14 @@
     if (el.configCflOutput) {
       el.configCflOutput.textContent = `S = ${Number(courant).toFixed(2)}`;
     }
+    if (el.subpixelSmoothingInput) {
+      el.subpixelSmoothingInput.checked = Boolean(state.subpixelSmoothingEnabled);
+    }
+    if (el.subpixelSmoothingStatus) {
+      el.subpixelSmoothingStatus.textContent = state.subpixelSmoothingEnabled
+        ? "On \u00b7 passive corners"
+        : "Off \u00b7 passive interfaces only";
+    }
   }
 
   global.FdtdControlSyncUi = Object.freeze({

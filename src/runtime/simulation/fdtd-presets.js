@@ -492,6 +492,7 @@ Object.assign(FDTDSim.prototype, {
         this.zeroElectricCell(idx);
         this.zeroDualFieldCell(idx);
       }
+      this.writeRawMaterialFromEffectiveAtIndex?.(idx);
     };
 
     const rectCells = (x0, y0, w, h, params) => {
@@ -2262,6 +2263,7 @@ Object.assign(FDTDSim.prototype, {
       default:
         break;
     }
+    this.markSubpixelSmoothingDirty?.();
     this.refreshCpmlMaterialContinuation(false);
     this.markMaterialChanged();
     this.resetFields();
