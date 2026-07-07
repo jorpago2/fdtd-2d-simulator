@@ -14,6 +14,7 @@
       axis: dark ? "rgba(230, 238, 245, 0.72)" : "rgba(30, 42, 50, 0.68)",
       text: dark ? "rgba(235, 241, 246, 0.86)" : "rgba(22, 32, 40, 0.82)",
       muted: dark ? "rgba(224, 232, 238, 0.56)" : "rgba(51, 65, 74, 0.56)",
+      emptyBg: dark ? "rgba(13, 17, 22, 0.82)" : "rgba(255, 255, 255, 0.78)",
       blue: "rgb(13, 107, 245)",
       green: "rgb(18, 143, 91)",
       red: "rgb(220, 72, 92)",
@@ -34,6 +35,52 @@
     }
     const ctx = canvas.getContext("2d");
     return ctx ? { ctx, width, height, dpr } : null;
+  }
+
+  function emptyChartMessageLines(ctx, text, maxWidth) {
+    const words = String(text || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (words.length === 0) return [];
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const next = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(next).width > maxWidth && lines.length < 1) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = next;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.slice(0, 2);
+  }
+
+  function drawEmptyChartMessage(ctx, text, x, y, maxWidth, dpr, colors) {
+    ctx.save();
+    ctx.fillStyle = colors.muted;
+    ctx.font = `${10.5 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const lines = emptyChartMessageLines(ctx, text, Math.max(48 * dpr, maxWidth));
+    if (lines.length === 0) {
+      ctx.restore();
+      return;
+    }
+    const lineHeight = 13 * dpr;
+    const maxLineWidth = Math.max(0, ...lines.map((line) => ctx.measureText(line).width));
+    const boxW = Math.min(Math.max(maxLineWidth + 16 * dpr, 86 * dpr), Math.max(86 * dpr, maxWidth));
+    const boxH = Math.max(22 * dpr, lines.length * lineHeight + 8 * dpr);
+    ctx.fillStyle = colors.emptyBg;
+    ctx.fillRect(x - boxW / 2, y - boxH / 2, boxW, boxH);
+    ctx.fillStyle = colors.muted;
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, index) => {
+      ctx.fillText(line, x, startY + index * lineHeight);
+    });
+    ctx.restore();
   }
 
   function canvasRelativePoint(canvas, event) {
@@ -83,6 +130,7 @@
       const padB = 32 * dpr;
       const plotW = Math.max(1, width - padL - padR);
       const plotH = Math.max(1, height - padT - padB);
+      const hasSweepResults = results.length > 0;
       const branchResultsAvailable = results.some((point) => point.branch);
       const xValues = results.map((point) => point.x);
       const xMin = results.length ? Math.min(...xValues) : sweepStart;
@@ -147,7 +195,7 @@
         ctx.restore();
       };
 
-      if (reference) {
+      if (hasSweepResults && reference) {
         drawReferenceCurve("tm", colors.reference);
         if (reference.comparePolarizations) {
           drawReferenceCurve("te", colors.referenceAlt);
@@ -224,36 +272,38 @@
       ctx.textBaseline = "middle";
       ctx.fillStyle = colors.text;
       ctx.textAlign = "left";
-      if (dualPolarization) {
-        ctx.fillText("R_TM", padL + 8 * dpr, padT + 12 * dpr);
-        ctx.fillStyle = rColor;
-        ctx.fillRect(padL + 42 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
-        ctx.fillStyle = colors.text;
-        ctx.fillText("R_TE", padL + 64 * dpr, padT + 12 * dpr);
-        ctx.fillStyle = tColor;
-        ctx.fillRect(padL + 98 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
-      } else if (auxMetric) {
-        const labelX = auxMetric.only ? 8 : 48;
-        if (!auxMetric.only) {
-          ctx.fillText("T", padL + 8 * dpr, padT + 12 * dpr);
+      if (hasSweepResults) {
+        if (dualPolarization) {
+          ctx.fillText("R_TM", padL + 8 * dpr, padT + 12 * dpr);
+          ctx.fillStyle = rColor;
+          ctx.fillRect(padL + 42 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+          ctx.fillStyle = colors.text;
+          ctx.fillText("R_TE", padL + 64 * dpr, padT + 12 * dpr);
           ctx.fillStyle = tColor;
+          ctx.fillRect(padL + 98 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+        } else if (auxMetric) {
+          const labelX = auxMetric.only ? 8 : 48;
+          if (!auxMetric.only) {
+            ctx.fillText("T", padL + 8 * dpr, padT + 12 * dpr);
+            ctx.fillStyle = tColor;
+            ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+            ctx.fillStyle = colors.text;
+          }
+          ctx.fillText(auxMetric.label, padL + labelX * dpr, padT + 12 * dpr);
+          ctx.fillStyle = auxColor;
+          ctx.fillRect(padL + (labelX + 24) * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
+        } else {
+          ctx.fillText("R", padL + 8 * dpr, padT + 12 * dpr);
+          ctx.fillStyle = rColor;
           ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
           ctx.fillStyle = colors.text;
+          ctx.fillText("T", padL + 48 * dpr, padT + 12 * dpr);
+          ctx.fillStyle = tColor;
+          ctx.fillRect(padL + 64 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
         }
-        ctx.fillText(auxMetric.label, padL + labelX * dpr, padT + 12 * dpr);
-        ctx.fillStyle = auxColor;
-        ctx.fillRect(padL + (labelX + 24) * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
-      } else {
-        ctx.fillText("R", padL + 8 * dpr, padT + 12 * dpr);
-        ctx.fillStyle = rColor;
-        ctx.fillRect(padL + 24 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
-        ctx.fillStyle = colors.text;
-        ctx.fillText("T", padL + 48 * dpr, padT + 12 * dpr);
-        ctx.fillStyle = tColor;
-        ctx.fillRect(padL + 64 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
       }
 
-      if (reference && !compact) {
+      if (hasSweepResults && reference && !compact) {
         ctx.fillStyle = colors.text;
         const refX = dualPolarization ? 124 : 88;
         ctx.fillText("TM ref", padL + refX * dpr, padT + 12 * dpr);
@@ -290,9 +340,8 @@
       ctx.textAlign = "center";
       ctx.fillText(sweepAxisLabel, padL + plotW / 2, height - 12 * dpr);
 
-      if (results.length === 0) {
-        ctx.fillStyle = colors.muted;
-        ctx.fillText(emptyMessage, padL + plotW / 2, padT + plotH / 2);
+      if (!hasSweepResults) {
+        drawEmptyChartMessage(ctx, emptyMessage, padL + plotW / 2, padT + plotH / 2, plotW - 12 * dpr, dpr, colors);
       }
       if (el?.sweepChartReadout) {
         el.sweepChartReadout.textContent = latestReadout;
@@ -450,11 +499,7 @@
         });
         ctx.stroke();
       } else {
-        ctx.fillStyle = colors.muted;
-        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Collecting probe samples", padL + plotW / 2, padT + plotH / 2);
+        drawEmptyChartMessage(ctx, "Collecting probe samples", padL + plotW / 2, padT + plotH / 2, plotW - 12 * dpr, dpr, colors);
       }
 
       if (plottedPortPoints.length <= 0) {
@@ -514,11 +559,8 @@
         ctx.fill();
         ctx.stroke();
       } else {
-        ctx.fillStyle = colors.muted;
-        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(scatteringMode ? "Collecting scattering phasors" : "Collecting NTFF contour phasors", cx, cy);
+        const text = scatteringMode ? "Collecting scattering phasors" : "Collecting NTFF contour phasors";
+        drawEmptyChartMessage(ctx, text, cx, cy, Math.min(width - 24 * dpr, radius * 1.8), dpr, colors);
       }
 
       ctx.fillStyle = colors.text;
