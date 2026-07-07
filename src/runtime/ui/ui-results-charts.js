@@ -77,7 +77,9 @@
       const auxColor = colors.red;
       const padL = 42 * dpr;
       const padR = 16 * dpr;
-      const padT = 18 * dpr;
+      const compact = width / dpr < 420;
+      const roomy = width / dpr >= 560;
+      const padT = (compact ? 26 : 18) * dpr;
       const padB = 32 * dpr;
       const plotW = Math.max(1, width - padL - padR);
       const plotH = Math.max(1, height - padT - padB);
@@ -164,7 +166,10 @@
           ctx.font = `${10 * dpr}px ui-sans-serif, system-ui, sans-serif`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillText(`thetaB ${reference.thetaB.toFixed(1)}${unitLabel}`, xb, padT + 3 * dpr);
+          if (!compact) {
+            const label = `thetaB ${reference.thetaB.toFixed(1)}${unitLabel ? ` ${unitLabel}` : ""}`;
+            ctx.fillText(label, Math.min(width - padR - 8 * dpr, Math.max(padL + 60 * dpr, xb)), padT + 3 * dpr);
+          }
           ctx.restore();
         }
       }
@@ -248,7 +253,7 @@
         ctx.fillRect(padL + 64 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
       }
 
-      if (reference) {
+      if (reference && !compact) {
         ctx.fillStyle = colors.text;
         const refX = dualPolarization ? 124 : 88;
         ctx.fillText("TM ref", padL + refX * dpr, padT + 12 * dpr);
@@ -273,7 +278,7 @@
         }
       }
 
-      if (branchResultsAvailable) {
+      if (branchResultsAvailable && roomy) {
         ctx.fillStyle = colors.text;
         ctx.textAlign = "right";
         ctx.fillText("solid forward / dashed reverse", width - padR, padT + 12 * dpr);

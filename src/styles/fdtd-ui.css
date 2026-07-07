@@ -2269,6 +2269,19 @@ label.scene-select-fallback,
   font-size: 0.72rem;
 }
 
+.chart-readout {
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .legend-swatch {
   display: inline-block;
   width: 10px;
@@ -2294,11 +2307,16 @@ label.scene-select-fallback,
 
 .analysis-chart,
 .sweep-chart {
+  display: block;
   width: 100%;
   min-height: 150px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--panel-2);
+}
+
+.analysis-chart-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .share-url-output {
