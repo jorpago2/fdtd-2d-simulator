@@ -241,6 +241,18 @@ async function auditScene(page, scene) {
         nonlinearCells: countNonZero(sim.nonlinearMaterial),
         phaseChangeCells: countNonZero(sim.phaseChangeMaterial),
       };
+      if (sceneId === "andersonLocalization" || sceneId === "diffusiveRandomMedium") {
+        let boundaryMaterialCells = 0;
+        for (let x = minX; x <= maxX; x += 1) {
+          if (sim.material[sim.id(x, minY)] !== 0) boundaryMaterialCells += 1;
+          if (sim.material[sim.id(x, maxY)] !== 0) boundaryMaterialCells += 1;
+        }
+        for (let y = minY + 1; y < maxY; y += 1) {
+          if (sim.material[sim.id(minX, y)] !== 0) boundaryMaterialCells += 1;
+          if (sim.material[sim.id(maxX, y)] !== 0) boundaryMaterialCells += 1;
+        }
+        if (boundaryMaterialCells > 0) failures.push(`${boundaryMaterialCells} disorder cells touch the CPML interface`);
+      }
 
       const beforeTime = sim.time;
       const startedAt = performance.now();

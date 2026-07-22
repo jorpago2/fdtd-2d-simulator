@@ -730,10 +730,11 @@ Object.assign(FDTDSim.prototype, {
         seed = (seed * 1664525 + 1013904223) >>> 0;
         return seed / 4294967296;
       };
-      const x0 = options.x0 ?? 2.35;
-      const x1 = options.x1 ?? Math.max(x0 + 0.5, domainXLambda - 1.15);
-      const y0 = options.y0 ?? 0.72;
-      const y1 = options.y1 ?? Math.max(y0 + 0.5, domainYLambda - 0.72);
+      const maxRadius = Math.max(0.025, radiusL * (1 + Math.abs(Number(options.radiusJitter) || 0)));
+      const x0 = Math.max(options.x0 ?? 2.35, cellsToLambda(minX + 1) + maxRadius);
+      const x1 = Math.max(x0, Math.min(options.x1 ?? domainXLambda - 1.15, cellsToLambda(maxX - 1) - maxRadius));
+      const y0 = Math.max(options.y0 ?? 0.72, cellsToLambda(minY + 1) + maxRadius);
+      const y1 = Math.max(y0, Math.min(options.y1 ?? domainYLambda - 0.72, cellsToLambda(maxY - 1) - maxRadius));
       for (let i = 0; i < count; i += 1) {
         const x = x0 + rand() * Math.max(0.2, x1 - x0);
         const y = y0 + rand() * Math.max(0.2, y1 - y0);
