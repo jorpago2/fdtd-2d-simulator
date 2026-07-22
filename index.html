@@ -392,58 +392,85 @@
                   <ul>
                     <li><strong>Custom &epsilon;, &mu;:</strong> writes the user-defined relative permittivity and permeability into the selected cells. This is the only preset that can carry anisotropy, conductivity, gain, modulation, nonlinearity, phase-change, gyrotropy, bianisotropy, or ADE dispersion.</li>
                     <li><strong>PEC:</strong> creates a perfect electric conductor mask. The cell material code is PEC, electric fields in that cell are zeroed, and advanced material states are cleared for those cells.</li>
-                    <li><strong>Loss preset:</strong> writes a simple lossy dielectric with &epsilon;' = 2.6, &epsilon;'' = 0.028, &mu;' = 1, and &mu;'' = 0. It is a convenient absorber/scatterer material, not a CPML replacement.</li>
-                    <li><strong>Erase:</strong> returns cells to air, with &epsilon;' = 1, &epsilon;'' = 0, &mu;' = 1, &mu;'' = 0, and no dynamic material state.</li>
+                    <li><strong>Loss preset:</strong> writes a simple dielectric with &epsilon;<sub>r</sub> = 2.6, &ell;<sub>&epsilon;</sub> = 0.028, &mu;<sub>r</sub> = 1, and &ell;<sub>&mu;</sub> = 0. It is a convenient normalized absorber/scatterer, not a measured complex permittivity or a CPML replacement.</li>
+                    <li><strong>Erase:</strong> returns cells to air, with &epsilon;<sub>r</sub> = 1, &ell;<sub>&epsilon;</sub> = 0, &mu;<sub>r</sub> = 1, &ell;<sub>&mu;</sub> = 0, and no dynamic material state.</li>
                     <li><strong>Clear medium / Clear field:</strong> Clear medium removes drawn material from the scene. Clear field resets the electromagnetic field arrays while keeping the geometry and material parameters.</li>
                   </ul>
-                  <h3>Custom material parameters</h3>
+                  <h3 id="materialParameterReference">Material parameter units</h3>
                   <ul>
-                    <li><strong>Isotropic custom material:</strong> the visible 2 x 2 grid stores real and imaginary parts of &epsilon;<sub>r</sub> and &mu;<sub>r</sub>. Defaults are &epsilon;' = 4.00, &epsilon;'' = 0.00, &mu;' = 1.00, and &mu;'' = 0.00.</li>
-                    <li><strong>Anisotropic custom material:</strong> enables separate x and y entries: &epsilon;<sub>x</sub>, &epsilon;<sub>y</sub>, &mu;<sub>x</sub>, and &mu;<sub>y</sub>, each with real and imaginary parts. The ranges are -30 to 30 for the stored real/loss values.</li>
-                    <li><strong>Imaginary parts:</strong> positive &epsilon;'' or &mu;'' adds loss. Negative values represent gain and can diverge unless the setup is physically and numerically constrained.</li>
-                    <li><strong>Stability warnings:</strong> near-zero &epsilon;' or &mu;' can amplify fields strongly. The simulator warns about near-zero, gain, strong modulation, and high coupling cases, but those warnings are not a convergence proof.</li>
+                    <li><strong>Normalized grid:</strong> &Delta;x = &lambda;<sub>0</sub>/N<sub>&lambda;</sub> and &Delta;t = S&Delta;x/c<sub>0</sub>, where S = 0.10 and N<sub>&lambda;</sub> is Cells / &lambda;<sub>0</sub>. Lengths are ratios to &lambda;<sub>0</sub>; field amplitude and intensity remain simulator units unless externally calibrated.</li>
+                    <li><strong>Conversion to SI:</strong> use the configured &lambda;<sub>0</sub> in metres. Then &omega;<sub>SI</sub> = &omega;<sub>step</sub>/&Delta;t, &gamma;<sub>SI</sub> = &gamma;<sub>step</sub>/&Delta;t, f<sub>SI</sub> = f<sub>step</sub>/&Delta;t, &tau;<sub>SI</sub> = &tau;<sub>steps</sub>&Delta;t, and &sigma;<sub>SI</sub> = &sigma;<sub>n</sub>&epsilon;<sub>0</sub>c<sub>0</sub>/&Delta;x.</li>
+                    <li><strong>&epsilon;<sub>r,x/y</sub>:</strong> dimensionless relative permittivity in the electric update; isotropic default 4.00. <strong>&mu;<sub>r,x/y</sub>:</strong> dimensionless relative permeability in the magnetic update; isotropic default 1.00.</li>
+                    <li><strong>&ell;<sub>&epsilon;,x/y</sub>:</strong> dimensionless electric loss per time step. <strong>&ell;<sub>&mu;,x/y</sub>:</strong> equivalent magnetic loss. The update multiplies the field by 1/(1 + &ell;); positive values damp and negative values add normalized gain.</li>
+                    <li><strong>Do not enter tabulated &epsilon;'' or &mu;'':</strong> the &ell; fields are discrete damping coefficients, not frequency-independent imaginary constitutive parameters. Use normalized conductivity or a causal ADE fit for measured loss.</li>
+                    <li><strong>Anisotropic &epsilon;, &mu;:</strong> exposes grid-aligned y entries; it does not rotate the principal axes. Real values and loss coefficients are clamped to -30...30. Near-zero or negative nondispersive values need particular care.</li>
                   </ul>
-                  <h3>Advanced material options</h3>
+                  <h3>Advanced material options: tensor, coupling, and conductivity</h3>
                   <ul>
-                    <li><strong>Anisotropic &epsilon;, &mu;:</strong> exposes y-axis material components. Use it for principal-axis anisotropy on the grid; it is not a general rotated tensor unless combined with a dedicated tensor model.</li>
-                    <li><strong>Gyrotropic &epsilon; tensor:</strong> applies in Hz mode and uses g<sub>&epsilon;</sub> in the off-diagonal tensor terms. The parameter range is -5 to 5 and the default is 0.25.
+                    <li><strong>g<sub>&epsilon;</sub>:</strong> dimensionless antisymmetric electric-tensor coupling, active only in Hz mode; default 0.25, range -5...5.
                       <span class="help-guide-formula">&epsilon;<sub>xy</sub> = +g<sub>&epsilon;</sub>, &nbsp; &epsilon;<sub>yx</sub> = -g<sub>&epsilon;</sub></span>
+                      It is an instantaneous real teaching proxy, not the causal complex &plusmn;ig tensor required for calibrated Faraday rotation.
                     </li>
-                    <li><strong>Magnetoelectric coupling:</strong> uses normalized &kappa;<sub>n</sub> = &kappa;/&radic;(&epsilon;&mu;) to locally couple electric and magnetic updates. It is clamped to -0.85 to 0.85, with default 0.20, to avoid obviously non-passive coupling.</li>
-                    <li><strong>Finite conductivity:</strong> adds a conduction current J = &sigma;E. &sigma;<sub>x</sub> is always available; &sigma;<sub>y</sub> appears only for anisotropic material. Both are normalized, non-negative, and clamped to 0-5.</li>
-                    <li><strong>Saturable gain:</strong> only matters when electric loss is negative. I<sub>sat,g</sub> limits the gain at high intensity; default I<sub>sat,g</sub> = 4.00 and range 0.05-100.</li>
-                    <li><strong>Space-time modulation:</strong> modulates the stored real permittivity. Parameters are depth m, normalized modulation frequency f<sub>m</sub>, spatial period &Lambda;<sub>m</sub>/&lambda;<sub>0</sub>, direction &theta;<sub>m</sub>, and phase &phi;<sub>m</sub>. Defaults are m = 0.20, f<sub>m</sub> = 0.010, &Lambda;<sub>m</sub> = 2.0 &lambda;<sub>0</sub>, &theta;<sub>m</sub> = 0&deg;, &phi;<sub>m</sub> = 0&deg;.</li>
-                    <li><strong>Kerr &chi;<sup>(3)</sup>:</strong> changes &epsilon;' according to local intensity. &chi;<sup>(3)</sup> is clamped to -20 to 20, I<sub>sat</sub> to 0.05-50, with defaults &chi;<sup>(3)</sup> = 0.50 and I<sub>sat</sub> = 5.00.</li>
-                    <li><strong>Harmonic polarization:</strong> adds nonlinear polarization memory for harmonic generation. Parameters are &chi;<sup>(2)</sup>, &chi;<sup>(3)</sup><sub>H</sub>, and I<sub>sat,H</sub>, with defaults 0.08, 0.00, and 6.00.</li>
-                    <li><strong>Phase-change memory:</strong> stores an internal state s between 0 and 1. Parameters are &epsilon;<sub>on</sub>', &epsilon;<sub>on</sub>'', I<sub>on</sub>, I<sub>off</sub>, &tau;<sub>on</sub>, and &tau;<sub>off</sub>. I<sub>off</sub> is kept below I<sub>on</sub>.</li>
-                    <li><strong>Dispersive model:</strong> uses ADE material memory. Drude and plasma expose &omega;<sub>p</sub> and &gamma;; Lorentz exposes &gamma;, &omega;<sub>0</sub>, and &Delta;&epsilon;; Debye exposes &Delta;&epsilon; and &tau;. The defaults are &omega;<sub>p</sub> = 0.28, &gamma; = 0.018, &omega;<sub>0</sub> = 0.15, &Delta;&epsilon; = 2.00, and &tau; = 18.</li>
-                    <li><strong>Subpixel note:</strong> subpixel smoothing is intentionally restricted to passive dielectric interfaces. PEC, dispersive, tensorial, nonlinear, gain, modulation, and phase-change cells keep their explicit cell masks.</li>
+                    <li><strong>&kappa;<sub>n</sub>:</strong> dimensionless normalized magnetoelectric coupling &kappa;/&radic;(|&epsilon;&mu;|). Its sign controls coupling handedness; range -0.85...0.85, default 0.20. The editor uses a reduced local constitutive proxy; curated bianisotropic scenes can enable the six-field route.</li>
+                    <li><strong>&sigma;<sub>n,x</sub>, &sigma;<sub>n,y</sub>:</strong> non-negative normalized electric conductivity, range 0...5. The y value appears with anisotropy; otherwise x is used for both axes.
+                      <span class="help-guide-formula">q = &sigma;<sub>n</sub>S/(2|&epsilon;<sub>r</sub>|), &nbsp; C<sub>a</sub> = (1 - q)/(1 + q), &nbsp; C<sub>b</sub> = 1/(1 + q)</span>
+                      This is the J = &sigma;E damping route for a nondispersive conductor; use ADE for metallic dispersion.
+                    </li>
+                    <li><strong>I<sub>sat,g</sub>:</strong> simulator intensity at which negative &ell;<sub>&epsilon;</sub> is reduced by one half. Units are normalized field amplitude squared; range 0.05...100, default 4.00. It has no effect for non-negative loss.
+                      <span class="help-guide-formula">&ell;<sub>gain,eff</sub> = &ell;<sub>gain</sub>/(1 + I/I<sub>sat,g</sub>)</span>
+                    </li>
                   </ul>
-                  <h3>Material formulas</h3>
+                  <h3>Space-time and nonlinear response</h3>
                   <ul>
-                    <li><strong>Custom material:</strong> passive cells use relative material parameters in the update coefficients.
-                      <span class="help-guide-formula">&epsilon;<sub>r</sub> = &epsilon;' + i&epsilon;'', &nbsp; &mu;<sub>r</sub> = &mu;' + i&mu;''</span>
-                      Defaults: &epsilon;' = 4.00, &epsilon;'' = 0.00, &mu;' = 1.00, &mu;'' = 0.00. When anisotropy is enabled, x and y components are stored separately.
+                    <li><strong>m:</strong> dimensionless fractional modulation depth of the base real permittivity, range 0...0.95, default 0.20.</li>
+                    <li><strong>f<sub>m</sub>:</strong> signed modulation frequency in cycles per FDTD time step, range -0.2...0.2, default 0.010. Its sign reverses temporal phase progression.</li>
+                    <li><strong>&Lambda;<sub>m</sub>/&lambda;<sub>0</sub>:</strong> modulation period normalized to the configured free-space wavelength, range 0.1...20, default 2.0.</li>
+                    <li><strong>&theta;<sub>m</sub>:</strong> modulation-wavevector direction from +x in degrees, 0...360&deg;, default 0&deg;. <strong>&phi;<sub>m</sub>:</strong> initial phase in degrees, -180...180&deg;, default 0&deg;.</li>
+                    <li><strong>Kerr &chi;<sup>(3)</sup>:</strong> normalized coefficient in inverse simulator intensity, range -20...20, default 0.50. Positive values increase &epsilon; in this scalar model. <strong>I<sub>sat</sub>:</strong> saturation intensity in simulator field-squared units, range 0.05...50, default 5.00.
+                      <span class="help-guide-formula">&Delta;&epsilon;<sub>Kerr</sub> = &chi;<sup>(3)</sup>I/(1 + I/I<sub>sat</sub>)</span>
                     </li>
-                    <li><strong>Conductivity and loss:</strong> electric conductivity enters the finite-difference coefficient, while the loss value applies an additional decay.
-                      <span class="help-guide-formula">&sigma;<sub>damp</sub> = &sigma;S / (2|\epsilon|), &nbsp; C<sub>a</sub> = (1 - &sigma;<sub>damp</sub>) / (1 + &sigma;<sub>damp</sub>), &nbsp; C<sub>b</sub> = 1 / (1 + &sigma;<sub>damp</sub>)</span>
-                      Default conductivity is 0. Loss can be negative only through the gain controls and is saturation-limited.
+                    <li><strong>Harmonic &chi;<sup>(2)</sup>, &chi;<sup>(3)</sup><sub>H</sub>:</strong> normalized polarization coefficients, each in -2...2; defaults 0.08 and 0.00. They are not SI susceptibilities. <strong>I<sub>sat,H</sub>:</strong> saturation intensity in simulator field-squared units, range 0.05...50, default 6.00.
+                      <span class="help-guide-formula">P<sub>NL</sub> = [&chi;<sup>(2)</sup>E<sup>2</sup> + &chi;<sup>(3)</sup><sub>H</sub>E<sup>3</sup>]/(1 + E<sup>2</sup>/I<sub>sat,H</sub>)</span>
+                    </li>
+                    <li><strong>Phase-change &epsilon;<sub>on</sub>:</strong> relative permittivity at state s = 1; default 9.00. <strong>&ell;<sub>&epsilon;,on</sub>:</strong> per-step electric loss at s = 1; default 0.08. The s = 0 values are the base &epsilon;<sub>r</sub> and &ell;<sub>&epsilon;</sub>.</li>
+                    <li><strong>I<sub>on</sub>, I<sub>off</sub>:</strong> switching and recovery thresholds in simulator field-squared units; defaults 0.80 and 0.20, with I<sub>off</sub> &le; I<sub>on</sub>. <strong>&tau;<sub>on</sub>, &tau;<sub>off</sub>:</strong> exponential time constants in FDTD steps; defaults 18 and 180.
+                      <span class="help-guide-formula">I &ge; I<sub>on</sub>: s &larr; s + (1 - s)(1 - e<sup>-1/&tau;<sub>on</sub></sup>); &nbsp; I &le; I<sub>off</sub>: s &larr; s - s(1 - e<sup>-1/&tau;<sub>off</sub></sup>)</span>
+                    </li>
+                  </ul>
+                  <h3>Dispersive ADE parameters</h3>
+                  <ul>
+                    <li><strong>Model:</strong> None disables material memory. Drude and plasma expose the same free-carrier ADE parameters but use different teaching labels. Lorentz uses a bound resonance; Debye uses first-order relaxation. Base &epsilon;<sub>r</sub> is the high-frequency/background permittivity.</li>
+                    <li><strong>&omega;<sub>p</sub>:</strong> plasma angular frequency in radians per FDTD step; used by Drude/Plasma, range 0...1.2, default 0.28. <strong>&gamma;:</strong> damping rate per step, range 0...0.5, default 0.018; used by Drude/Plasma and Lorentz.</li>
+                    <li><strong>&omega;<sub>0</sub>:</strong> Lorentz resonance angular frequency in radians per step, range 0...1.2, default 0.15. <strong>&Delta;&epsilon;:</strong> dimensionless Lorentz oscillator strength or Debye static-to-high-frequency increment, range -20...20, default 2.00.</li>
+                    <li><strong>&tau;:</strong> Debye relaxation time in FDTD steps, range 1...200, default 18.</li>
+                  </ul>
+                  <h3>Model scope</h3>
+                  <ul>
+                    <li>PEC is ideal and lossless. Tensor coupling, Kerr, harmonic, phase-change, gain, and time modulation are reduced normalized models; fit and validate them independently before mapping to measured materials.</li>
+                    <li>Subpixel smoothing is restricted to passive dielectric interfaces. PEC, dispersive, tensorial, nonlinear, gain, modulation, and phase-change cells retain explicit masks.</li>
+                    <li>Near-zero values, gain, large ADE poles, strong modulation, and high coupling can destabilize the solver. Finite fields and UI warnings are not a convergence proof.</li>
+                  </ul>
+                  <h3>Implementation formulas</h3>
+                  <ul>
+                    <li><strong>Base and loss:</strong> constitutive values scale the Yee curl terms; the separate &ell; coefficients apply per-step decay.
+                      <span class="help-guide-formula">E<sup>n+1</sup> = E<sub>curl</sub><sup>n+1</sup>/(1 + &ell;<sub>&epsilon;</sub>), &nbsp; H<sup>n+1</sup> = H<sub>curl</sub><sup>n+1</sup>/(1 + &ell;<sub>&mu;</sub>)</span>
+                    </li>
+                    <li><strong>Conductivity:</strong> normalized conductivity modifies both the stored field and the curl drive.
+                      <span class="help-guide-formula">q = &sigma;<sub>n</sub>S/(2|&epsilon;<sub>r</sub>|), &nbsp; C<sub>a</sub> = (1 - q)/(1 + q), &nbsp; C<sub>b</sub> = 1/(1 + q)</span>
                     </li>
                     <li><strong>Kerr and modulation:</strong> enabled cells update their effective permittivity before each field step.
-                      <span class="help-guide-formula">&epsilon;<sub>eff</sub> = &epsilon;<sub>base</sub>[1 + m cos(2&pi;(r/&Lambda;<sub>m</sub> - f<sub>m</sub>t) + &phi;)] + &chi;<sup>(3)</sup>I/(1 + I/I<sub>sat</sub>)</span>
-                      Defaults: m = 0.20, f<sub>m</sub> = 0.01, &Lambda;<sub>m</sub> = 2.00 &lambda;<sub>0</sub>, &chi;<sup>(3)</sup> = 0.50, I<sub>sat</sub> = 5.00.
+                      <span class="help-guide-formula">&epsilon;<sub>eff</sub> = &epsilon;<sub>base</sub>{1 + m cos[2&pi;((x cos&theta;<sub>m</sub> + y sin&theta;<sub>m</sub>)/&Lambda;<sub>m</sub> - f<sub>m</sub>t) + &phi;<sub>m</sub>]} + &chi;<sup>(3)</sup>I/(1 + I/I<sub>sat</sub>)</span>
                     </li>
-                    <li><strong>Harmonic response:</strong> nonlinear polarization is converted to a current-like correction from the change in polarization.
-                      <span class="help-guide-formula">P<sub>NL</sub> = (&chi;<sup>(2)</sup>E<sup>2</sup> + &chi;<sup>(3)</sup>E<sup>3</sup>) / (1 + E<sup>2</sup>/I<sub>sat</sub>), &nbsp; J<sub>NL</sub> = P<sub>NL</sub><sup>n</sup> - P<sub>NL</sub><sup>n-1</sup></span>
-                      Defaults: &chi;<sup>(2)</sup> = 0.08, &chi;<sup>(3)</sup> = 0.00, I<sub>sat</sub> = 6.00.
+                    <li><strong>Harmonic response:</strong> nonlinear polarization is converted to a current-like correction from its discrete change.
+                      <span class="help-guide-formula">P<sub>NL</sub> = [&chi;<sup>(2)</sup>E<sup>2</sup> + &chi;<sup>(3)</sup><sub>H</sub>E<sup>3</sup>]/(1 + E<sup>2</sup>/I<sub>sat,H</sub>), &nbsp; J<sub>NL</sub> = P<sub>NL</sub><sup>n</sup> - P<sub>NL</sub><sup>n-1</sup></span>
                     </li>
                     <li><strong>Phase-change material:</strong> the internal state s moves between off and on states according to field intensity.
                       <span class="help-guide-formula">if I &ge; I<sub>on</sub>: s &larr; s + (1 - s)(1 - e<sup>-1/&tau;<sub>on</sub></sup>); if I &le; I<sub>off</sub>: s &larr; s - s(1 - e<sup>-1/&tau;<sub>off</sub></sup>)</span>
-                      Defaults: &epsilon;<sub>on</sub> = 9.00, loss<sub>on</sub> = 0.08, I<sub>on</sub> = 0.80, I<sub>off</sub> = 0.20, &tau;<sub>on</sub> = 18, &tau;<sub>off</sub> = 180.
+                      &epsilon;<sub>r</sub> and &ell;<sub>&epsilon;</sub> are linearly interpolated between their off/on values using s.
                     </li>
-                    <li><strong>Dispersion, gyrotropy, and bianisotropy:</strong> dispersive cells use ADE polarization memory; tensor cells solve coupled updates.
+                    <li><strong>Dispersion:</strong> Drude and Lorentz cells use second-order ADE polarization memory; Debye uses exponential relaxation.
                       <span class="help-guide-formula">Drude/Lorentz ADE: P<sup>n+1</sup> = [(2 - &omega;<sub>0</sub><sup>2</sup>)P<sup>n</sup> - (1 - &gamma;/2)P<sup>n-1</sup> + drive&middot;E<sup>n</sup>] / (1 + &gamma;/2)</span>
-                      Defaults: &omega;<sub>p</sub> = 0.28, &gamma; = 0.018, &omega;<sub>0</sub> = 0.15, &Delta;&epsilon; = 2.00, &tau; = 18, gyrotropy g = 0.25, normalized &kappa; = 0.20 with limit 0.85.
+                      Drude sets &omega;<sub>0</sub> = 0 and drive = &omega;<sub>p</sub><sup>2</sup>; Lorentz uses drive = &Delta;&epsilon;&omega;<sub>0</sub><sup>2</sup>; Debye uses exp(-1/&tau;).
                     </li>
                   </ul>
                   <p class="help-guide-topic-note">After drawing, check whether the smallest feature is actually resolved by enough cells. Visual smoothness is not the same as numerical convergence.</p>
@@ -784,27 +811,27 @@
                     <input id="customMuYRealInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="1.00" />
                   </label>
                 </div>
-                <div class="material-tensor-part material-tensor-imag" aria-label="Imaginary material components">
-                  <span class="material-tensor-title">Imag.</span>
+                <div class="material-tensor-part material-tensor-imag" aria-label="Normalized per-step material loss coefficients">
+                  <span class="material-tensor-title">Loss / step</span>
                   <span class="material-tensor-axis" aria-hidden="true"></span>
                   <span class="material-tensor-axis">x</span>
                   <span class="material-tensor-axis brush-anisotropic-params" hidden>y</span>
                   <span class="material-tensor-row">&epsilon;</span>
                   <label class="material-tensor-cell material-cell-eps-imag">
-                    <span id="customEpsImagLabel">&epsilon;&Prime;</span>
+                    <span id="customEpsImagLabel">&ell;&epsilon;</span>
                     <input id="customEpsImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <label class="material-tensor-cell material-cell-eps-y-imag brush-anisotropic-params" hidden>
-                    <span>&epsilon;<sub>y</sub>&Prime;</span>
+                    <span>&ell;&epsilon;,y</span>
                     <input id="customEpsYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <span class="material-tensor-row">&mu;</span>
                   <label class="material-tensor-cell material-cell-mu-imag">
-                    <span id="customMuImagLabel">&mu;&Prime;</span>
+                    <span id="customMuImagLabel">&ell;&mu;</span>
                     <input id="customMuImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                   <label class="material-tensor-cell material-cell-mu-y-imag brush-anisotropic-params" hidden>
-                    <span>&mu;<sub>y</sub>&Prime;</span>
+                    <span>&ell;&mu;,y</span>
                     <input id="customMuYImagInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0000" />
                   </label>
                 </div>
@@ -819,7 +846,7 @@
               <div class="modulation-panel gyrotropy-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="gyrotropyEnabledInput" type="checkbox" />
-                  <span>Gyrotropic &epsilon; tensor (Hz mode)</span>
+                  <span>Antisymmetric &epsilon; coupling (Hz proxy)</span>
                 </label>
                 <label class="gyrotropy-params">
                   <span><i>g</i><sub>&epsilon;</sub></span>
@@ -855,7 +882,7 @@
               <div class="modulation-panel saturable-gain-panel">
                 <label class="toggle-row modulation-toggle">
                   <input id="saturableGainEnabledInput" type="checkbox" />
-                  <span>Saturable gain for negative &epsilon;&Prime;</span>
+                  <span>Saturable gain for negative &ell;<sub>&epsilon;</sub></span>
                 </label>
                 <label class="saturable-gain-params">
                   <span><i>I</i><sub>sat,g</sub></span>
@@ -939,7 +966,7 @@
                     <input id="phaseEpsOnInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.05" value="9.00" />
                   </label>
                   <label>
-                    <span>&epsilon;<sub>on</sub>&Prime;</span>
+                    <span>&ell;<sub>&epsilon;,on</sub></span>
                     <input id="phaseLossOnInput" type="number" inputmode="decimal" autocomplete="off" min="-30" max="30" step="0.0005" value="0.0800" />
                   </label>
                 </div>
@@ -1842,7 +1869,7 @@
     <script src="src/runtime/core/scene-codec.js?v=20260703-overlay-modes-1"></script>
     <script src="src/runtime/ui/source-monitor-model.js?v=20260702-courant-01-1"></script>
     <script src="src/runtime/ui/material-editor-model.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/material-editor-ui.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/ui/material-editor-ui.js?v=20260722-material-help-1"></script>
     <script src="src/runtime/ui/material-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/entity-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/visual-layer-model.js?v=20260703-overlay-modes-1"></script>
@@ -1881,10 +1908,10 @@
     <script src="src/runtime/app/app-performance.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/app/runtime-session-controller.js?v=20260706-runtime-session-1"></script>
     <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260705-port-observables-1"></script>
-    <script src="src/runtime/ui/material-stability-controller.js?v=20260704-numerics-simplify-1"></script>
+    <script src="src/runtime/ui/material-stability-controller.js?v=20260722-material-help-1"></script>
     <script src="src/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/brush-controls-controller.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/app/control-text-controller.js?v=20260704-numerics-simplify-1"></script>
+    <script src="src/runtime/app/control-text-controller.js?v=20260722-material-help-1"></script>
     <script src="src/runtime/app/scene-state-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-edit-actions-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-gesture-actions-controller.js?v=20260703-runtime-cleanup-1"></script>

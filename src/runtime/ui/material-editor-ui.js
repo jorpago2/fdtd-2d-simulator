@@ -36,13 +36,13 @@
       el.customEpsRealLabel.innerHTML = anisotropic ? "&epsilon;<sub>x</sub>&prime;" : "&epsilon;&prime;";
     }
     if (el.customEpsImagLabel) {
-      el.customEpsImagLabel.innerHTML = anisotropic ? "&epsilon;<sub>x</sub>&Prime;" : "&epsilon;&Prime;";
+      el.customEpsImagLabel.innerHTML = anisotropic ? "&ell;&epsilon;,x" : "&ell;&epsilon;";
     }
     if (el.customMuRealLabel) {
       el.customMuRealLabel.innerHTML = anisotropic ? "&mu;<sub>x</sub>&prime;" : "&mu;&prime;";
     }
     if (el.customMuImagLabel) {
-      el.customMuImagLabel.innerHTML = anisotropic ? "&mu;<sub>x</sub>&Prime;" : "&mu;&Prime;";
+      el.customMuImagLabel.innerHTML = anisotropic ? "&ell;&mu;,x" : "&ell;&mu;";
     }
   }
 

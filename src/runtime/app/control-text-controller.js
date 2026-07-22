@@ -71,10 +71,6 @@
       if (el.wavelengthInput) el.wavelengthInput.value = state.wavelengthUm.toFixed(2);
       if (el.cellsPerWavelengthInput) el.cellsPerWavelengthInput.value = String(state.cellsPerWavelength);
       el.customAnisotropyInput.checked = state.customAnisotropic;
-      el.customEpsRealLabel.innerHTML = state.customAnisotropic ? "ε<sub>x</sub>′" : "ε′";
-      el.customEpsImagLabel.innerHTML = state.customAnisotropic ? "ε<sub>x</sub>″" : "ε″";
-      el.customMuRealLabel.innerHTML = state.customAnisotropic ? "μ<sub>x</sub>′" : "μ′";
-      el.customMuImagLabel.innerHTML = state.customAnisotropic ? "μ<sub>x</sub>″" : "μ″";
       materialEditorUi.syncCustomMaterialLabels({ el, state });
       materialEditorUi.syncCustomMaterialEditorValues({ el, normalizeDispersionModel, state });
       controlSyncUi.syncSceneAndGridControls({ el, formatLambdaOutput, sceneDescriptions, state });

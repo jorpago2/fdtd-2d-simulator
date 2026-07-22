@@ -50,8 +50,8 @@
       if (state.customEpsImag < 0) {
         notes.push(
           state.materialSaturableGainEnabled
-            ? "Negative ε″ adds gain; saturable gain limits growth at high intensity."
-            : "Negative ε″ adds gain and may keep growing."
+            ? "Negative electric loss ℓε adds gain; saturation limits growth at high intensity."
+            : "Negative electric loss ℓε adds gain and may keep growing."
         );
       }
       if (state.customAnisotropic && Math.abs(state.customEpsYReal) < 0.5) {
@@ -68,7 +68,7 @@
         notes.push("Near-zero μ′ can create very large magnetic fields; auto-normalization is active.");
       }
       if (state.customMuImag < 0) {
-        notes.push("Negative μ″ adds magnetic gain and may keep growing.");
+        notes.push("Negative magnetic loss ℓμ adds gain and may keep growing.");
       }
       if (state.customAnisotropic && Math.abs(state.customMuYReal) < 0.5) {
         notes.push("Near-zero μy′ can create very large magnetic fields; auto-normalization is active.");
