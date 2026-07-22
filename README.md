@@ -8,7 +8,7 @@ prototyping: choose a scene, run the time-domain simulation, inspect fields and
 observables, then export the result for discussion, reports, or reproducible
 follow-up.
 
-![2D FDTD Browser Simulator feature summary](assets/readme-summary.png)
+![2D FDTD Browser Simulator feature summary](assets/readme-hero.png)
 
 ## Why It Exists
 
