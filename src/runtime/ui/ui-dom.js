@@ -106,6 +106,8 @@
       materialPartButtons: documentRef.querySelectorAll("[data-material-part]"),
       playPauseBtn: documentRef.getElementById("playPauseBtn"),
       playPauseIcon: documentRef.getElementById("playPauseIcon"),
+      runPlayPauseBtn: documentRef.getElementById("runPlayPauseBtn"),
+      runPlayPauseIcon: documentRef.getElementById("runPlayPauseIcon"),
       stepBtn: documentRef.getElementById("stepBtn"),
       resetBtn: documentRef.getElementById("resetBtn"),
       runStepBtn: documentRef.getElementById("runStepBtn"),

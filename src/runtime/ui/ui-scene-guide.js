@@ -299,7 +299,7 @@
       const header = documentRef.createElement("div");
       header.className = "scene-guide-header";
       const eyebrow = documentRef.createElement("span");
-      eyebrow.textContent = record.index == null ? "Custom scene" : `Atlas ${record.index}`;
+      eyebrow.textContent = record.index == null ? "Custom scene" : `Example ${record.index}`;
       const title = documentRef.createElement("strong");
       title.textContent = record.title || guide.phenomenon;
       header.append(eyebrow, title);

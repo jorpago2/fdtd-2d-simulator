@@ -1,6 +1,6 @@
 # Scene Teaching Guide
 
-This guide translates the validation audit into teaching use. It does not claim that every Atlas scene is publication-grade. It tells an instructor what each family can safely demonstrate, which observables are reliable, and where a scene uses bounded diagnostics rather than calibrated device metrics.
+This guide translates the validation audit into teaching use. It does not claim that every Example scene is publication-grade. It tells an instructor what each family can safely demonstrate, which observables are reliable, and where a scene uses bounded diagnostics rather than calibrated device metrics.
 
 ## Confidence Levels
 

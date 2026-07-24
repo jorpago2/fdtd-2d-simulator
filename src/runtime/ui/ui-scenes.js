@@ -44,9 +44,6 @@
     if (/(pt-symmetric|exceptional|non-hermitian|skin-effect|balanced gain)/.test(haystack)) add("Gain/loss");
     if (/(ntff|far-field|rcs|scattering|kerker|mie)/.test(haystack)) add("NTFF");
     if (/(pml|cpml|absorbing)/.test(haystack)) add("CPML");
-    if (/(tez|hz solver|in-plane|magnetic mz)/.test(haystack)) add("TEz");
-    if (/(tm|jz|ez|electric dipole)/.test(haystack) && !badges.includes("TEz")) add("TMz");
-
     return badges.length > 0 ? badges.slice(0, 4) : ["FDTD"];
   }
 
@@ -316,7 +313,7 @@
       const terms = sceneSearchTerms();
       ensureActiveFilter();
       return state.records.filter((record) => {
-        if (record.groupLabel !== state.filter) return false;
+        if (terms.length === 0 && record.groupLabel !== state.filter) return false;
         return sceneRecordMatchesSearch(record, terms);
       });
     }
@@ -376,17 +373,20 @@
 
     function updateSceneBrowserMeta(records = visibleSceneRecords()) {
       const visibleCount = records.length;
-      const groupTotal = state.records.filter((record) => record.groupLabel === state.filter).length;
       const searchActive = Boolean((el.sceneSearchInput?.value || "").trim());
       const groupName = cleanSceneGroupLabel(state.filter || "Group");
       if (el.sceneBrowserCount) {
         el.sceneBrowserCount.textContent = searchActive
-          ? `${visibleCount} of ${groupCountLabel(groupTotal)} in ${groupName}`
+          ? `${groupCountLabel(visibleCount)} across all families`
           : `${groupCountLabel(visibleCount)} in ${groupName}`;
       }
       if (el.sceneBrowserActive) {
         const current = sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.());
-        el.sceneBrowserActive.textContent = current ? `Family: ${current.group}` : "Family: custom";
+        el.sceneBrowserActive.textContent = searchActive
+          ? "Search: all families"
+          : current
+            ? `Family: ${current.group}`
+            : "Family: custom";
       }
       updateSceneSpotlight(sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.()));
     }
@@ -412,14 +412,14 @@
       el.sceneFilterBar.replaceChildren();
       filters.forEach((filter) => {
         const button = documentRef.createElement("button");
-        const active = state.filter === filter.value;
+        const active = terms.length === 0 && state.filter === filter.value;
         button.type = "button";
         button.className = `scene-filter-button${active ? " is-active" : ""}`;
         button.dataset.sceneFilter = filter.value;
         button.setAttribute("role", "radio");
         button.setAttribute("aria-checked", String(active));
         const filterCount = counts.get(filter.value) || 0;
-        button.disabled = !active && filterCount === 0;
+        button.disabled = terms.length === 0 && !active && filterCount === 0;
         button.setAttribute("aria-label", `${filter.label}: ${filterCount} scenes`);
         const label = documentRef.createElement("span");
         label.className = "scene-filter-label";
@@ -431,6 +431,7 @@
         button.addEventListener("click", () => {
           const shouldRestoreFocus = documentRef.activeElement === button;
           state.filter = filter.value;
+          if (el.sceneSearchInput) el.sceneSearchInput.value = "";
           renderSceneFilterBar();
           renderSceneCards();
           if (shouldRestoreFocus) {
@@ -453,7 +454,7 @@
       if (records.length === 0) {
         const emptyState = documentRef.createElement("p");
         emptyState.className = "scene-empty-state";
-        emptyState.textContent = "No matching scenes in this group. Clear the search or choose another group.";
+        emptyState.textContent = "No matching scenes. Clear the search and try another term.";
         el.sceneCards.appendChild(emptyState);
         return;
       }

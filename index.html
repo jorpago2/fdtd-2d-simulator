@@ -1118,7 +1118,6 @@
               <label class="scene-select-fallback">
                 <span>Example</span>
                 <select id="presetInput">
-                  <option value="empty">Empty</option>
                   <optgroup label="1. Maxwell and propagation">
                     <option value="planeWaveAir">1 · Plane wave in air</option>
                     <option value="planeWaveDielectric">2 · Plane wave in dielectric</option>
@@ -1136,8 +1135,8 @@
                   <optgroup label="2. Interfaces and multilayers">
                     <option value="normalInterface">13 · Normal air-dielectric interface</option>
                     <option value="obliqueRefraction">14 · Oblique refraction</option>
-                    <option value="brewsterTm">15 · Brewster TM minimum</option>
-                    <option value="brewsterTeTm">16 · TE/TM Brewster comparison</option>
+                    <option value="brewsterTm">15 · Brewster p/TM minimum</option>
+                    <option value="brewsterTeTm">16 · s/TE-p/TM Brewster comparison</option>
                     <option value="totalInternalReflection">17 · Total internal reflection</option>
                     <option value="frustratedTir">18 · Frustrated TIR</option>
                     <option value="quarterWaveCoating">19 · Quarter-wave coating</option>
@@ -1285,6 +1284,7 @@
                     <option value="nonreciprocalValleyHall">139 · Traveling-modulated Valley-Hall guide</option>
                     <option value="spaceTimeCrystal">140 · Traveling-modulated stripe lattice</option>
                   </optgroup>
+                  <option value="empty">Empty</option>
                 </select>
               </label>
               <div class="scene-view-toggle canvas-mode-toggle" role="tablist" aria-label="Scene menu view">
@@ -1323,12 +1323,12 @@
                     <span class="scene-card-thumb scene-spotlight-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
                     <div class="scene-spotlight-body">
                       <span class="scene-spotlight-kicker">
-                        <span id="sceneSpotlightNumber" class="scene-card-number">Example</span>
-                        <span id="sceneSpotlightGroup" class="scene-spotlight-group">General</span>
+                        <span id="sceneSpotlightNumber" class="scene-card-number">Example 1</span>
+                        <span id="sceneSpotlightGroup" class="scene-spotlight-group">Maxwell and propagation</span>
                       </span>
-                      <h3 id="sceneSpotlightTitle" class="scene-spotlight-title">Empty</h3>
+                      <h3 id="sceneSpotlightTitle" class="scene-spotlight-title">Plane wave in air</h3>
                       <span id="sceneSpotlightDescription" class="scene-spotlight-description">
-                        Blank domain with CPML boundaries, ready for a custom source or material layout.
+                        Homogeneous air with a continuous line source: a basic scene for observing propagation, wavelength, and absorbing boundaries.
                       </span>
                       <span id="sceneSpotlightBadges" class="scene-card-badges scene-spotlight-badges"></span>
                     </div>
@@ -1360,7 +1360,7 @@
                   <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
                 </div>
               </div>
-              <p id="sceneNote" class="scene-note">Select an Atlas example to load its geometry, material parameters, and source setup.</p>
+              <p id="sceneNote" class="scene-note">Select an Example to load its geometry, material parameters, and source setup.</p>
             </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
@@ -1374,11 +1374,16 @@
                   <button class="mode-toggle-button" type="button" role="radio" data-field-component="hz" aria-checked="false" title="TEz: solve Hz, Ex, Ey"><i>H</i><sub>z</sub></button>
                 </fieldset>
               </div>
+              <p class="results-insight-note">Solver convention: <i>E</i><sub>z</sub> is TMz and <i>H</i><sub>z</sub> is TEz. At interfaces, p/TM uses the <i>H</i><sub>z</sub> solver; s/TE uses <i>E</i><sub>z</sub>.</p>
               <div class="control-row">
-                <span>Engine</span>
-                <output id="engineValue">JS</output>
+                <span title="Implementation route; it does not change the physical model.">Compute engine</span>
+                <output id="engineValue" title="Implementation route; it does not change the physical model.">JS</output>
               </div>
               <div class="button-row run-actions-row" aria-label="Secondary run controls">
+                <button id="runPlayPauseBtn" class="text-button primary-button" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
+                  <span id="runPlayPauseIcon" aria-hidden="true">▶</span>
+                  <span>Run / pause</span>
+                </button>
                 <button id="runStepBtn" class="text-button" type="button" title="Advance one FDTD step">
                   <span aria-hidden="true">⏭</span>
                   <span>Step</span>
@@ -1388,13 +1393,13 @@
                   <span>Reset</span>
                 </button>
               </div>
-              <label class="control-row">
-                <span>Time rate</span>
+              <label class="control-row" title="Changes animation pacing, not the CFL time step.">
+                <span>Playback speed</span>
                 <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
                 <output id="speedOutput" for="speedInput">1x</output>
               </label>
               <label class="control-row">
-                <span>Render FPS</span>
+                <span>Display FPS</span>
                 <select id="renderFpsInput">
                   <option value="0">Auto</option>
                   <option value="60">60</option>
@@ -1403,14 +1408,14 @@
                 </select>
                 <output id="renderFpsOutput" for="renderFpsInput">Auto</output>
               </label>
-              <label class="control-row">
-                <span>Gain</span>
+              <label class="control-row" title="Visual scaling only; it does not change the electromagnetic fields.">
+                <span>Display gain</span>
                 <input id="gainInput" type="range" min="20" max="260" step="5" value="100" />
                 <output id="gainOutput" for="gainInput">1.00</output>
               </label>
               <label class="toggle-row">
                 <input id="autoScaleInput" type="checkbox" />
-                <span>Autoscale</span>
+                <span>Automatic display scale</span>
               </label>
             </section>
 <section class="panel-section visual-field-section">
@@ -1493,15 +1498,15 @@
               <div class="results-summary-grid" aria-label="Results summary">
                 <div class="results-summary-card reflectance is-primary">
                   <span><i>R</i><sub>est</sub></span>
-                  <output id="summaryReflectanceOutput">0</output>
+                  <output id="summaryReflectanceOutput">—</output>
                 </div>
                 <div class="results-summary-card transmittance is-primary">
                   <span><i>T</i><sub>est</sub></span>
-                  <output id="summaryTransmittanceOutput">0</output>
+                  <output id="summaryTransmittanceOutput">—</output>
                 </div>
                 <div class="results-summary-card balance is-secondary">
                   <span>1-R-T</span>
-                  <output id="summaryBalanceOutput">0</output>
+                  <output id="summaryBalanceOutput">—</output>
                 </div>
                 <div class="results-summary-card angle is-secondary">
                   <span>&theta;<sub>k</sub></span>
@@ -1547,23 +1552,23 @@
                     </div>
                     <div class="diagnostic-metric">
                       <span><i>P</i><sub>inc</sub></span>
-                      <output id="fluxLeftOutput">0</output>
+                      <output id="fluxLeftOutput">—</output>
                     </div>
                     <div class="diagnostic-metric">
                       <span><i>P</i><sub>ref</sub></span>
-                      <output id="reflectedPowerOutput">0</output>
+                      <output id="reflectedPowerOutput">—</output>
                     </div>
                     <div class="diagnostic-metric">
                       <span><i>P</i><sub>trn</sub></span>
-                      <output id="fluxRightOutput">0</output>
+                      <output id="fluxRightOutput">—</output>
                     </div>
                     <div class="diagnostic-metric">
                       <span><i>R</i><sub>est</sub></span>
-                      <output id="reflectanceOutput">0</output>
+                      <output id="reflectanceOutput">—</output>
                     </div>
                     <div class="diagnostic-metric">
                       <span><i>T</i><sub>est</sub></span>
-                      <output id="transmittanceOutput">0</output>
+                      <output id="transmittanceOutput">—</output>
                     </div>
                   </div>
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
@@ -1573,7 +1578,7 @@
                 <summary>Custom monitors</summary>
                 <div class="results-detail-body">
                   <div id="customMonitorResults" class="custom-monitor-results" aria-live="polite">
-                    <p class="results-insight-note">Right-click the canvas to add a monitor.</p>
+                    <p class="results-insight-note">Right-click or long-press the canvas to add a monitor.</p>
                   </div>
                 </div>
               </details>
@@ -1670,7 +1675,7 @@
                   <p class="panel-kicker">Numerics</p>
                   <h2>Numerics</h2>
                 </div>
-                <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">stable</output>
+                <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">CFL stable</output>
               </div>
               <div class="config-summary-grid" aria-label="Configuration summary">
                 <div class="config-summary-card">

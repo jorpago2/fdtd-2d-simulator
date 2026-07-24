@@ -89,7 +89,7 @@
       boundary: "absorbing",
       boundarySides: { ...defaultBoundarySides },
       subpixelSmoothingEnabled: false,
-      preset: "empty",
+      preset: "planeWaveAir",
       gridNx: defaultGrid.nx,
       gridNy: defaultGrid.ny,
       slabThicknessLambda: 0.5,

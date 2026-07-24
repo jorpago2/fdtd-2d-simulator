@@ -26,6 +26,9 @@
     el.playPauseBtn?.addEventListener("click", () => {
       runtimeController.toggleRunning();
     });
+    el.runPlayPauseBtn?.addEventListener("click", () => {
+      runtimeController.toggleRunning();
+    });
 
     el.stepBtn?.addEventListener("click", () => {
       runtimeController.advanceOneStep();

@@ -93,7 +93,7 @@
       boundary: "absorbing",
       boundarySides: contracts.clonePlainData(defaultBoundarySides),
       subpixelSmoothingEnabled: false,
-      preset: "empty",
+      preset: "planeWaveAir",
       gridNx: contracts.positiveNumber(defaultGrid.nx, "defaultGrid.nx"),
       gridNy: contracts.positiveNumber(defaultGrid.ny, "defaultGrid.ny"),
       slabThicknessLambda: 0.5,

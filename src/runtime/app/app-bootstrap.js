@@ -31,7 +31,8 @@
     buildSceneBrowser();
     const sceneLoadedFromUrl = sceneRepro?.loadSceneFromUrlParam() ?? false;
     if (!sceneLoadedFromUrl) {
-      applyResponsiveGridOrientation({ render: false });
+      const gridChanged = applyResponsiveGridOrientation({ render: false });
+      if (!gridChanged) sim.applyPreset(state.preset);
     }
     sim.measure();
     updateControlPanelContext();

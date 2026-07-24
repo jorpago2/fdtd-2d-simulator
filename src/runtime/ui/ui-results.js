@@ -290,7 +290,7 @@
       if (monitorCount <= 0) {
         const note = documentRef.createElement("p");
         note.className = "results-insight-note";
-        note.textContent = "Right-click the canvas to add a monitor.";
+        note.textContent = "Right-click or long-press the canvas to add a monitor.";
         el.customMonitorResults.appendChild(note);
         return;
       }
@@ -343,17 +343,18 @@
       engineText,
       maxwellCheckEnabled,
     }) {
-      setOutputText(el?.summaryReflectanceOutput, formatDiagnosticRatio(reflectance));
-      setOutputText(el?.summaryTransmittanceOutput, formatDiagnosticRatio(transmittance));
-      setOutputText(el?.summaryBalanceOutput, formatDiagnosticRatio(balance));
+      const monitorDataReady = diagnosticsEnabled && samples > 0 && !lastDiverged;
+      setOutputText(el?.summaryReflectanceOutput, monitorDataReady ? formatDiagnosticRatio(reflectance) : "\u2014");
+      setOutputText(el?.summaryTransmittanceOutput, monitorDataReady ? formatDiagnosticRatio(transmittance) : "\u2014");
+      setOutputText(el?.summaryBalanceOutput, monitorDataReady ? formatDiagnosticRatio(balance) : "\u2014");
       setOutputText(el?.summaryAngleOutput, angleText);
       updateInsight({ balance, diagnosticsEnabled, lastDiverged, reflectance, samples, transmittance });
-      setOutputText(el?.fluxLeftOutput, formatFieldValue(incidentPower || 0));
+      setOutputText(el?.fluxLeftOutput, monitorDataReady ? formatFieldValue(incidentPower || 0) : "\u2014");
       setOutputText(el?.diagnosticAngleOutput, angleText);
-      setOutputText(el?.reflectedPowerOutput, formatFieldValue(reflectedPower || 0));
-      setOutputText(el?.fluxRightOutput, formatFieldValue(transmittedPower || 0));
-      setOutputText(el?.reflectanceOutput, formatDiagnosticRatio(reflectance));
-      setOutputText(el?.transmittanceOutput, formatDiagnosticRatio(transmittance));
+      setOutputText(el?.reflectedPowerOutput, monitorDataReady ? formatFieldValue(reflectedPower || 0) : "\u2014");
+      setOutputText(el?.fluxRightOutput, monitorDataReady ? formatFieldValue(transmittedPower || 0) : "\u2014");
+      setOutputText(el?.reflectanceOutput, monitorDataReady ? formatDiagnosticRatio(reflectance) : "\u2014");
+      setOutputText(el?.transmittanceOutput, monitorDataReady ? formatDiagnosticRatio(transmittance) : "\u2014");
       renderSceneObservables();
       renderMaxwellCheckResults({ maxwellCheckEnabled });
       renderCustomMonitorResults({ monitorCount });

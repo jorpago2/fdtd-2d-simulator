@@ -49,7 +49,7 @@
       "title": "Plane wave in air",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 1: homogeneous air with a continuous line source.",
+      "description": "Example 1: homogeneous air with a continuous line source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -82,7 +82,7 @@
       "title": "Plane wave in dielectric",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 2: full dielectric domain, n = 1.5, to show shorter wavelength and slower phase velocity.",
+      "description": "Example 2: full dielectric domain, n = 1.5, to show shorter wavelength and slower phase velocity.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -115,7 +115,7 @@
       "title": "Gaussian pulse in free space",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 3: Gaussian pulse in free space with absorbing boundaries.",
+      "description": "Example 3: Gaussian pulse in free space with absorbing boundaries.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -148,7 +148,7 @@
       "title": "Two-source interference",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 4: two coherent point Jz sources separated by about 1.5 lambda0.",
+      "description": "Example 4: two coherent point Jz sources separated by about 1.5 lambda0.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -181,7 +181,7 @@
       "title": "Two-frequency beat",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 5: two nearby CW frequencies to reveal a beat envelope.",
+      "description": "Example 5: two nearby CW frequencies to reveal a beat envelope.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -214,7 +214,7 @@
       "title": "Single slit diffraction",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 6: PEC screen with one subwavelength slit.",
+      "description": "Example 6: PEC screen with one subwavelength slit.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -247,7 +247,7 @@
       "title": "Double slit",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 7: PEC screen with two slits for Young-type interference.",
+      "description": "Example 7: PEC screen with two slits for Young-type interference.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -280,7 +280,7 @@
       "title": "Circular aperture",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 8: 2D circular aperture cut into a PEC screen.",
+      "description": "Example 8: 2D circular aperture cut into a PEC screen.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -313,7 +313,7 @@
       "title": "TEz/TMz comparison",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 9: TEz/TMz comparison on the same air-dielectric interface, using a dual-polarization angular sweep.",
+      "description": "Example 9: TEz/TMz comparison on the same air-dielectric interface, using a dual-polarization angular sweep.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -346,7 +346,7 @@
       "title": "Poynting vector",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 10: oblique plane wave shown as Poynting flux with vector arrows.",
+      "description": "Example 10: oblique plane wave shown as Poynting flux with vector arrows.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -379,7 +379,7 @@
       "title": "Evanescent isolated wave",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 11: isolated evanescent wave with explicit k_parallel/k0 > 1 and exponential decay away from the source line.",
+      "description": "Example 11: isolated evanescent wave with explicit k_parallel/k0 > 1 and exponential decay away from the source line.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -413,7 +413,7 @@
       "title": "CPML absorption check",
       "groupId": "maxwell-and-propagation",
       "groupLabel": "1. Maxwell and propagation",
-      "description": "Atlas 12: pulsed source aimed at the absorbing boundary for reflection checks.",
+      "description": "Example 12: pulsed source aimed at the absorbing boundary for reflection checks.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -446,7 +446,7 @@
       "title": "Normal air-dielectric interface",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 13: air to n = 1.5 vertical interface.",
+      "description": "Example 13: air to n = 1.5 vertical interface.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -480,7 +480,7 @@
       "title": "Oblique refraction",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 14: oblique Gaussian beam on an air-dielectric interface.",
+      "description": "Example 14: oblique Gaussian beam on an air-dielectric interface.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -510,10 +510,10 @@
     {
       "id": "brewsterTm",
       "index": 15,
-      "title": "Brewster TM minimum",
+      "title": "Brewster p/TM minimum",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 15: p/TM-polarized incidence on an air-dielectric interface near the Brewster angle.",
+      "description": "Example 15: p/TM-polarized incidence on an air-dielectric interface near the Brewster angle.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -543,10 +543,10 @@
     {
       "id": "brewsterTeTm",
       "index": 16,
-      "title": "TE/TM Brewster comparison",
+      "title": "s/TE-p/TM Brewster comparison",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 16: TE/TM Brewster comparison with dual numerical angular sweeps and analytic Fresnel references.",
+      "description": "Example 16: s/TE-p/TM Brewster comparison with dual numerical angular sweeps and analytic Fresnel references.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -580,7 +580,7 @@
       "title": "Total internal reflection",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 17: beam incident from n = 1.5 toward air above the critical angle.",
+      "description": "Example 17: beam incident from n = 1.5 toward air above the critical angle.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -613,7 +613,7 @@
       "title": "Frustrated TIR",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 18: two high-index regions separated by a narrow air gap.",
+      "description": "Example 18: two high-index regions separated by a narrow air gap.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -646,7 +646,7 @@
       "title": "Quarter-wave coating",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 19: air, quarter-wave coating, and n = 1.5 substrate.",
+      "description": "Example 19: air, quarter-wave coating, and n = 1.5 substrate.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -679,7 +679,7 @@
       "title": "1D Bragg mirror",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 20: six-pair n = 1.5 / n = 2.5 Bragg mirror.",
+      "description": "Example 20: six-pair n = 1.5 / n = 2.5 Bragg mirror.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -712,7 +712,7 @@
       "title": "Lossy interface",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 21: air to n = 1.5 + 0.1i interface.",
+      "description": "Example 21: air to n = 1.5 + 0.1i interface.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -745,7 +745,7 @@
       "title": "Anisotropic interface",
       "groupId": "interfaces-and-multilayers",
       "groupLabel": "2. Interfaces and multilayers",
-      "description": "Atlas 22: right-hand medium with eps_x != eps_y.",
+      "description": "Example 22: right-hand medium with eps_x != eps_y.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -778,7 +778,7 @@
       "title": "Point electric dipole Jz",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 23: localized electric Jz dipole in air.",
+      "description": "Example 23: localized electric Jz dipole in air.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -811,7 +811,7 @@
       "title": "In-plane electric dipole Jx/Jy",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 24: localized in-plane electric-current dipole Jx/Jy using the Hz solver.",
+      "description": "Example 24: localized in-plane electric-current dipole Jx/Jy using the Hz solver.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -844,7 +844,7 @@
       "title": "Effective magnetic dipole Mz",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 25: localized magnetic Mz dipole using the Hz solver.",
+      "description": "Example 25: localized magnetic Mz dipole using the Hz solver.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -877,7 +877,7 @@
       "title": "Dipole over substrate",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 26: Jz dipole close to a dielectric substrate.",
+      "description": "Example 26: Jz dipole close to a dielectric substrate.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -910,7 +910,7 @@
       "title": "Dipole near PEC mirror",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 27: Jz dipole close to a PEC mirror.",
+      "description": "Example 27: Jz dipole close to a PEC mirror.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -943,7 +943,7 @@
       "title": "Huygens source",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 28: analytic Huygens-like source for directional radiation.",
+      "description": "Example 28: analytic Huygens-like source for directional radiation.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -976,7 +976,7 @@
       "title": "Circular dipole",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 29: quadrature circular dipole source.",
+      "description": "Example 29: quadrature circular dipole source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1009,7 +1009,7 @@
       "title": "Janus dipole",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 30: Janus source near a dielectric waveguide.",
+      "description": "Example 30: Janus source near a dielectric waveguide.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1042,7 +1042,7 @@
       "title": "Equal-phase dipole array",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 31: equal-phase dipole array.",
+      "description": "Example 31: equal-phase dipole array.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1075,7 +1075,7 @@
       "title": "Progressive-phase dipole array",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 32: progressive temporal phase per dipole, with phase step derived from a target steering angle.",
+      "description": "Example 32: progressive temporal phase per dipole, with phase step derived from a target steering angle.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1108,7 +1108,7 @@
       "title": "Slot aperture radiator",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 33: source behind a PEC slot aperture.",
+      "description": "Example 33: source behind a PEC slot aperture.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1141,7 +1141,7 @@
       "title": "Near-field / far-field NTFF",
       "groupId": "sources-and-radiation",
       "groupLabel": "3. Sources and radiation",
-      "description": "Atlas 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
+      "description": "Example 34: near-field dipole radiation with normalized equivalence-principle NTFF angular pattern.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1174,7 +1174,7 @@
       "title": "Single-mode slab waveguide",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 35: high-index slab guide excited by a finite-difference fundamental mode profile.",
+      "description": "Example 35: high-index slab guide excited by a finite-difference fundamental mode profile.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1207,7 +1207,7 @@
       "title": "Multimode slab waveguide",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating.",
+      "description": "Example 36: wider slab guide excited by two finite-difference mode profiles to show multimode beating.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1240,7 +1240,7 @@
       "title": "Lossy waveguide",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 37: lossy high-index guide driven by its finite-difference mode profile.",
+      "description": "Example 37: lossy high-index guide driven by its finite-difference mode profile.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1273,7 +1273,7 @@
       "title": "Waveguide bend",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path.",
+      "description": "Example 38: 90-degree dielectric waveguide bend using a modal launch into a quarter-ring path.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1306,7 +1306,7 @@
       "title": "Tapered waveguide",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 39: width taper from narrow to wide guide with a modal input field.",
+      "description": "Example 39: width taper from narrow to wide guide with a modal input field.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1339,7 +1339,7 @@
       "title": "Width step waveguide",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 40: abrupt waveguide width step driven by the input-guide mode.",
+      "description": "Example 40: abrupt waveguide width step driven by the input-guide mode.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1372,7 +1372,7 @@
       "title": "Directional coupler",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 41: two parallel guides separated by a small gap, launched from one local guided mode.",
+      "description": "Example 41: two parallel guides separated by a small gap, launched from one local guided mode.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1405,7 +1405,7 @@
       "title": "MMI section",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 42: narrow modal input feeding a wider multimode section.",
+      "description": "Example 42: narrow modal input feeding a wider multimode section.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1438,7 +1438,7 @@
       "title": "Mach-Zehnder interferometer",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 43: 2D Mach-Zehnder interferometer with two dielectric arms, a phase-shifter section, and a modal input.",
+      "description": "Example 43: 2D Mach-Zehnder interferometer with two dielectric arms, a phase-shifter section, and a modal input.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1471,7 +1471,7 @@
       "title": "Waveguide with scatterer",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 44: small dielectric scatterer beside a mode-launched guide.",
+      "description": "Example 44: small dielectric scatterer beside a mode-launched guide.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1504,7 +1504,7 @@
       "title": "Microstrip cross-section",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 45: 2D microstrip cross-section with PEC strip, dielectric substrate, ground plane, and Hz excitation.",
+      "description": "Example 45: 2D microstrip cross-section with PEC strip, dielectric substrate, ground plane, and Hz excitation.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization"
@@ -1537,7 +1537,7 @@
       "title": "Stub resonator",
       "groupId": "guided-optics",
       "groupLabel": "4. Guided optics",
-      "description": "Atlas 46: side stub attached to a mode-launched straight guide.",
+      "description": "Example 46: side stub attached to a mode-launched straight guide.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1570,7 +1570,7 @@
       "title": "Fabry-Perot cavity",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 47: dielectric cavity placed between two Bragg reflectors.",
+      "description": "Example 47: dielectric cavity placed between two Bragg reflectors.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1603,7 +1603,7 @@
       "title": "Fabry-Perot standing field",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 48: Fabry-Perot resonator driven near a standing-wave condition.",
+      "description": "Example 48: Fabry-Perot resonator driven near a standing-wave condition.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1636,7 +1636,7 @@
       "title": "Ring resonator",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 49: dielectric ring side-coupled to one bus and driven by a near-resonant modal source.",
+      "description": "Example 49: dielectric ring side-coupled to one bus and driven by a near-resonant modal source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1669,7 +1669,7 @@
       "title": "Add-drop ring",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 50: dielectric ring side-coupled to input/drop buses and driven by a near-resonant modal source.",
+      "description": "Example 50: dielectric ring side-coupled to input/drop buses and driven by a near-resonant modal source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1702,7 +1702,7 @@
       "title": "Racetrack resonator",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 51: elongated racetrack resonator side-coupled to a mode-launched bus waveguide.",
+      "description": "Example 51: elongated racetrack resonator side-coupled to a mode-launched bus waveguide.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1735,7 +1735,7 @@
       "title": "Dielectric defect cavity",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 52: high-index disk with an internal dipole source.",
+      "description": "Example 52: high-index disk with an internal dipole source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1768,7 +1768,7 @@
       "title": "PEC half-wave cavity",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 53: PEC half-wave box cavity with a point source.",
+      "description": "Example 53: PEC half-wave box cavity with a point source.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1801,7 +1801,7 @@
       "title": "Quarter-wave cavity",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 54: shorted quarter-wave stub cavity coupled to a mode-launched dielectric guide.",
+      "description": "Example 54: shorted quarter-wave stub cavity coupled to a mode-launched dielectric guide.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1834,7 +1834,7 @@
       "title": "Q by ringdown",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 55: pulsed cavity ringdown with an estimated decay Q from the analysis energy trace.",
+      "description": "Example 55: pulsed cavity ringdown with an estimated decay Q from the analysis energy trace.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1867,7 +1867,7 @@
       "title": "2D cavity Q/Aeff metric",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 56: dipole in a nested dielectric 2D cavity with a bounded Q/Aeff teaching metric.",
+      "description": "Example 56: dipole in a nested dielectric 2D cavity with a bounded Q/Aeff teaching metric.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1900,7 +1900,7 @@
       "title": "Dipole-to-guide flux ratio",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 57: 2D dipole coupled to a slab guide with a bounded guided-flux ratio readout.",
+      "description": "Example 57: 2D dipole coupled to a slab guide with a bounded guided-flux ratio readout.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1933,7 +1933,7 @@
       "title": "Dual-dipole disk spectrum",
       "groupId": "resonators-and-cavities",
       "groupLabel": "5. Resonators and cavities",
-      "description": "Atlas 58: symmetric disk cavity driven by two off-center dipoles with a bounded spectral-split readout.",
+      "description": "Example 58: symmetric disk cavity driven by two off-center dipoles with a bounded spectral-split readout.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1966,7 +1966,7 @@
       "title": "PEC cylinder scattering",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 59: PEC cylinder under plane-wave illumination.",
+      "description": "Example 59: PEC cylinder under plane-wave illumination.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -1999,7 +1999,7 @@
       "title": "Dielectric cylinder scattering",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 60: n = 2 cylinder scattering.",
+      "description": "Example 60: n = 2 cylinder scattering.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2032,7 +2032,7 @@
       "title": "High-index Mie cylinder",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 61: high-index cylinder for Mie-like resonances.",
+      "description": "Example 61: high-index cylinder for Mie-like resonances.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2065,7 +2065,7 @@
       "title": "2D NTFF scattering width",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 62: PEC cylinder with incident-background subtraction and finite 2D NTFF scattering-width readout.",
+      "description": "Example 62: PEC cylinder with incident-background subtraction and finite 2D NTFF scattering-width readout.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2098,7 +2098,7 @@
       "title": "Absorbing dielectric cylinder",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 63: absorbing dielectric cylinder with finite in-object field energy and downstream attenuation.",
+      "description": "Example 63: absorbing dielectric cylinder with finite in-object field energy and downstream attenuation.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2131,7 +2131,7 @@
       "title": "Dielectric dimer",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 64: two high-index cylinders with a narrow gap.",
+      "description": "Example 64: two high-index cylinders with a narrow gap.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2164,7 +2164,7 @@
       "title": "Forward/backward contrast",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 65: high-index cylinder showing strong 2D NTFF forward/backward scattering contrast.",
+      "description": "Example 65: high-index cylinder showing strong 2D NTFF forward/backward scattering contrast.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2197,7 +2197,7 @@
       "title": "Multiple scattering",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 66: deterministic random cluster of cylinders.",
+      "description": "Example 66: deterministic random cluster of cylinders.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2230,7 +2230,7 @@
       "title": "Weak-localization disorder",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 67: many weak inclusions for multiple scattering.",
+      "description": "Example 67: many weak inclusions for multiple scattering.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2263,7 +2263,7 @@
       "title": "Dense-disorder trapping",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 68: dense deterministic high-contrast disorder with bounded transport and lateral field trapping.",
+      "description": "Example 68: dense deterministic high-contrast disorder with bounded transport and lateral field trapping.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2296,7 +2296,7 @@
       "title": "Diffusive random medium",
       "groupId": "scattering-and-disorder",
       "groupLabel": "6. Scattering and disorder",
-      "description": "Atlas 69: extended weak random medium for diffusive transport and speckle-like field structure.",
+      "description": "Example 69: extended weak random medium for diffusive transport and speckle-like field structure.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2329,7 +2329,7 @@
       "title": "Finite-conductivity damping",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 70: conductive half-space using an explicit J = sigma E update to show finite-conductivity damping.",
+      "description": "Example 70: conductive half-space using an explicit J = sigma E update to show finite-conductivity damping.",
       "status": "PASS",
       "contractTags": [
         "conductive material"
@@ -2362,7 +2362,7 @@
       "title": "Drude metal",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 71: Drude ADE metal with plasma frequency and damping.",
+      "description": "Example 71: Drude ADE metal with plasma frequency and damping.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2396,7 +2396,7 @@
       "title": "Lorentz resonant medium",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 72: Lorentz ADE resonant dielectric slab.",
+      "description": "Example 72: Lorentz ADE resonant dielectric slab.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2429,7 +2429,7 @@
       "title": "Debye dielectric",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 73: Debye relaxation dielectric slab.",
+      "description": "Example 73: Debye relaxation dielectric slab.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2462,7 +2462,7 @@
       "title": "Plasma cutoff",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 74: collisionless plasma slab near cutoff.",
+      "description": "Example 74: collisionless plasma slab near cutoff.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2495,7 +2495,7 @@
       "title": "ENZ slab",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 75: passive Drude ADE epsilon-near-zero slab tuned near the source frequency.",
+      "description": "Example 75: passive Drude ADE epsilon-near-zero slab tuned near the source frequency.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2528,7 +2528,7 @@
       "title": "Anisotropic medium",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 76: anisotropic block, eps_x = 4, eps_y = 2.",
+      "description": "Example 76: anisotropic block, eps_x = 4, eps_y = 2.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2561,7 +2561,7 @@
       "title": "Indefinite Drude tensor",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 77: passive anisotropic Drude block with eps_x > 0 and effective eps_y < 0 at the source frequency.",
+      "description": "Example 77: passive anisotropic Drude block with eps_x > 0 and effective eps_y < 0 at the source frequency.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -2594,7 +2594,7 @@
       "title": "6-field bianisotropic coupling",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 78: six-component 2D bianisotropic coupling block with passivity-limited local magnetoelectric response.",
+      "description": "Example 78: six-component 2D bianisotropic coupling block with passivity-limited local magnetoelectric response.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -2629,7 +2629,7 @@
       "title": "6-field bianisotropic medium",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 79: six-component 2D bianisotropic block with anisotropic eps/mu and local magnetoelectric coupling.",
+      "description": "Example 79: six-component 2D bianisotropic block with anisotropic eps/mu and local magnetoelectric coupling.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -2663,7 +2663,7 @@
       "title": "Gyrotropic tensor block",
       "groupId": "material-models-and-tensors",
       "groupLabel": "7. Material models and tensors",
-      "description": "Atlas 80: Hz gyrotropic tensor block using eps_xy = +g and eps_yx = -g with finite field overlap.",
+      "description": "Example 80: Hz gyrotropic tensor block using eps_xy = +g and eps_yx = -g with finite field overlap.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -2697,7 +2697,7 @@
       "title": "1D Bragg stack",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 81: 1D periodic Bragg stack.",
+      "description": "Example 81: 1D periodic Bragg stack.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2730,7 +2730,7 @@
       "title": "2D photonic crystal",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 82: square lattice of high-index rods with a compact plane-wave Bloch-k band estimate.",
+      "description": "Example 82: square lattice of high-index rods with a compact plane-wave Bloch-k band estimate.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2763,7 +2763,7 @@
       "title": "PhC point defect",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 83: photonic crystal with one missing central rod, point-dipole excitation, local defect-field overlap, and compact Bloch/PWE reference.",
+      "description": "Example 83: photonic crystal with one missing central rod, point-dipole excitation, local defect-field overlap, and compact Bloch/PWE reference.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2796,7 +2796,7 @@
       "title": "PhC line-defect waveguide",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 84: photonic crystal line-defect waveguide with localized channel excitation and compact Bloch/PWE reference.",
+      "description": "Example 84: photonic crystal line-defect waveguide with localized channel excitation and compact Bloch/PWE reference.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2829,7 +2829,7 @@
       "title": "Shifted L3 PhC cavity",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 85: shifted/tapered L3 photonic-crystal cavity with local field overlap and compact Bloch/PWE reference.",
+      "description": "Example 85: shifted/tapered L3 photonic-crystal cavity with local field overlap and compact Bloch/PWE reference.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2862,7 +2862,7 @@
       "title": "Disordered photonic crystal",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 86: photonic crystal with deterministic positional disorder.",
+      "description": "Example 86: photonic crystal with deterministic positional disorder.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -2895,7 +2895,7 @@
       "title": "Antisymmetric PhC defect",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 87: symmetric PhC defect excited by equal-amplitude opposite-phase dipoles with local field and compact leakage/PWE diagnostics.",
+      "description": "Example 87: symmetric PhC defect excited by equal-amplitude opposite-phase dipoles with local field and compact leakage/PWE diagnostics.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2928,7 +2928,7 @@
       "title": "Asymmetric PhC defect",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 88: weakly asymmetric PhC defect with source imbalance, geometry offset, local field overlap, and compact leakage/PWE diagnostics.",
+      "description": "Example 88: weakly asymmetric PhC defect with source imbalance, geometry offset, local field overlap, and compact leakage/PWE diagnostics.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2961,7 +2961,7 @@
       "title": "Symmetric L3 PhC cavity",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 89: symmetric shifted L3 PhC cavity using equal-amplitude opposite-phase dipoles with compact leakage/PWE diagnostics.",
+      "description": "Example 89: symmetric shifted L3 PhC cavity using equal-amplitude opposite-phase dipoles with compact leakage/PWE diagnostics.",
       "status": "PASS",
       "contractTags": [
         "blochK sweep"
@@ -2994,7 +2994,7 @@
       "title": "Fano side resonator",
       "groupId": "periodic-photonics-and-bics",
       "groupLabel": "8. Periodic photonics and BICs",
-      "description": "Atlas 90: mode-launched straight guide with a side-coupled dielectric resonator.",
+      "description": "Example 90: mode-launched straight guide with a side-coupled dielectric resonator.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3027,7 +3027,7 @@
       "title": "SSH chain, trivial",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 91: SSH chain with d1 > d2 and analytic Bloch winding/gap reference.",
+      "description": "Example 91: SSH chain with d1 > d2 and analytic Bloch winding/gap reference.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3060,7 +3060,7 @@
       "title": "SSH chain, topological",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 92: SSH chain with d1 < d2 and analytic Bloch winding/gap reference.",
+      "description": "Example 92: SSH chain with d1 < d2 and analytic Bloch winding/gap reference.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3093,7 +3093,7 @@
       "title": "SSH interface",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 93: interface between two SSH dimerizations with expected edge-state reference.",
+      "description": "Example 93: interface between two SSH dimerizations with expected edge-state reference.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3126,7 +3126,7 @@
       "title": "SSH with disorder",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 94: SSH interface with deterministic positional disorder and analytic clean-limit Bloch reference.",
+      "description": "Example 94: SSH interface with deterministic positional disorder and analytic clean-limit Bloch reference.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3159,7 +3159,7 @@
       "title": "Non-Hermitian SSH",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 95: SSH chain with alternating gain/loss, saturable-gain stabilization, and finite non-Hermitian gap estimate.",
+      "description": "Example 95: SSH chain with alternating gain/loss, saturable-gain stabilization, and finite non-Hermitian gap estimate.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3193,7 +3193,7 @@
       "title": "Honeycomb lattice",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 96: honeycomb-like dimer lattice for valley-photonic demonstrations.",
+      "description": "Example 96: honeycomb-like dimer lattice for valley-photonic demonstrations.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3226,7 +3226,7 @@
       "title": "Valley Hall interface",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 97: two inverted honeycomb domains forming a straight Valley-Hall interface.",
+      "description": "Example 97: two inverted honeycomb domains forming a straight Valley-Hall interface.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3259,7 +3259,7 @@
       "title": "Valley Hall bend",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 98: Valley-Hall interface with a 90-degree bend.",
+      "description": "Example 98: Valley-Hall interface with a 90-degree bend.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3292,7 +3292,7 @@
       "title": "Modulated SSH chain",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 99: modulated SSH chain with sinusoidal site offset, active material modulation, analysis sampling, and finite local field overlap.",
+      "description": "Example 99: modulated SSH chain with sinusoidal site offset, active material modulation, analysis sampling, and finite local field overlap.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -3325,7 +3325,7 @@
       "title": "Topology with strong defect",
       "groupId": "topological-photonics",
       "groupLabel": "9. Topological photonics",
-      "description": "Atlas 100: Valley-Hall interface with a strong defect placed on the channel.",
+      "description": "Example 100: Valley-Hall interface with a strong defect placed on the channel.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3358,7 +3358,7 @@
       "title": "SPP metal-dielectric interface",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 101: Drude metal-dielectric interface excited by a near-field dipole.",
+      "description": "Example 101: Drude metal-dielectric interface excited by a near-field dipole.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -3392,7 +3392,7 @@
       "title": "SPP grating launcher",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 102: shallow Drude grating that launches measurable interface-localized Hz field under oblique illumination.",
+      "description": "Example 102: shallow Drude grating that launches measurable interface-localized Hz field under oblique illumination.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -3426,7 +3426,7 @@
       "title": "Localized plasmon disk",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 103: localized plasmon on a Drude nanodisk.",
+      "description": "Example 103: localized plasmon on a Drude nanodisk.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -3459,7 +3459,7 @@
       "title": "Plasmonic dimer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 104: two Drude disks with a narrow hot gap.",
+      "description": "Example 104: two Drude disks with a narrow hot gap.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -3492,7 +3492,7 @@
       "title": "Phase-gradient metasurface",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 105: phase-gradient metasurface approximated by dielectric bars.",
+      "description": "Example 105: phase-gradient metasurface approximated by dielectric bars.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3525,7 +3525,7 @@
       "title": "Near-perfect backed absorber",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 106: graded lossy sheet backed by PEC with near-unity line-monitor absorption estimate.",
+      "description": "Example 106: graded lossy sheet backed by PEC with near-unity line-monitor absorption estimate.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -3558,7 +3558,7 @@
       "title": "Double-negative Drude slab",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 107: passive Drude ADE slab with epsilon and mu tuned near -1 at the source frequency.",
+      "description": "Example 107: passive Drude ADE slab with epsilon and mu tuned near -1 at the source frequency.",
       "status": "PASS",
       "contractTags": [
         "dispersive material",
@@ -3593,7 +3593,7 @@
       "title": "DNG slab image transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 108: passive double-negative Drude slab with finite point-source image-plane transfer.",
+      "description": "Example 108: passive double-negative Drude slab with finite point-source image-plane transfer.",
       "status": "PASS",
       "contractTags": [
         "dispersive material",
@@ -3627,7 +3627,7 @@
       "title": "2D hyperbolic annular transfer",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 109: passive 2D hyperbolic annular-transfer scene using radial/tangential Drude tensor material in the Hz solver.",
+      "description": "Example 109: passive 2D hyperbolic annular-transfer scene using radial/tangential Drude tensor material in the Hz solver.",
       "status": "PASS",
       "contractTags": [
         "HZ polarization",
@@ -3663,7 +3663,7 @@
       "title": "Dipole near ENZ slab",
       "groupId": "plasmonics-and-metamaterials",
       "groupLabel": "10. Plasmonics and metamaterials",
-      "description": "Atlas 110: dipole close to a passive Drude ENZ slab.",
+      "description": "Example 110: dipole close to a passive Drude ENZ slab.",
       "status": "PASS",
       "contractTags": [
         "dispersive material"
@@ -3696,7 +3696,7 @@
       "title": "Kerr nonlinear slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 111: instantaneous Kerr slab with epsilon updated from physical field-scaled intensity.",
+      "description": "Example 111: instantaneous Kerr slab with epsilon updated from physical field-scaled intensity.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material"
@@ -3729,7 +3729,7 @@
       "title": "SHG χ² slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 112: chi2 nonlinear slab using a physical field-scaled polarization-current source for second-harmonic generation.",
+      "description": "Example 112: chi2 nonlinear slab using a physical field-scaled polarization-current source for second-harmonic generation.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3764,7 +3764,7 @@
       "title": "Chi3 harmonic slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 113: chi3 nonlinear slab using a physical field-scaled polarization-current source with finite H3 readout.",
+      "description": "Example 113: chi3 nonlinear slab using a physical field-scaled polarization-current source with finite H3 readout.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3799,7 +3799,7 @@
       "title": "Kerr SPM pulse",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 114: pulsed Kerr guide/slab with nonlinear active-section overlap and finite spectral sideband response.",
+      "description": "Example 114: pulsed Kerr guide/slab with nonlinear active-section overlap and finite spectral sideband response.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3834,7 +3834,7 @@
       "title": "Kerr ring-cavity overlap",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 115: mode-launched Kerr ring cavity with finite nonlinear active-section overlap.",
+      "description": "Example 115: mode-launched Kerr ring cavity with finite nonlinear active-section overlap.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3868,7 +3868,7 @@
       "title": "VO₂ switching slab",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
+      "description": "Example 116: VO2-like phase-change slab with intensity threshold, hysteresis, and finite switching time.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3902,7 +3902,7 @@
       "title": "PCM memory cell",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared.",
+      "description": "Example 117: small phase-change memory cell embedded in a mode-launched guide; the switched state persists after the field is cleared.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3936,7 +3936,7 @@
       "title": "Saturable absorber",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 118: bleachable absorber state model using a phase-state variable to reduce loss above threshold.",
+      "description": "Example 118: bleachable absorber state model using a phase-state variable to reduce loss above threshold.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -3970,7 +3970,7 @@
       "title": "All-optical active section",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 119: mode-launched Mach-Zehnder-like guide with a Kerr/phase-change active control section and output-arm readout.",
+      "description": "Example 119: mode-launched Mach-Zehnder-like guide with a Kerr/phase-change active control section and output-arm readout.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -4004,7 +4004,7 @@
       "title": "Nonlinear limiter",
       "groupId": "nonlinear-and-active-media",
       "groupLabel": "11. Nonlinear and active media",
-      "description": "Atlas 120: intensity-triggered lossy phase-change section with active limiter-region field overlap.",
+      "description": "Example 120: intensity-triggered lossy phase-change section with active limiter-region field overlap.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -4038,7 +4038,7 @@
       "title": "Temporal interface",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 121: dielectric interface with uniform temporal epsilon modulation, phase-coherent material mask, and sideband diagnostics.",
+      "description": "Example 121: dielectric interface with uniform temporal epsilon modulation, phase-coherent material mask, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4071,7 +4071,7 @@
       "title": "Temporal slab",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 122: finite slab with uniform-in-space sinusoidal epsilon modulation, field overlap, and sideband diagnostics.",
+      "description": "Example 122: finite slab with uniform-in-space sinusoidal epsilon modulation, field overlap, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4104,7 +4104,7 @@
       "title": "Temporal epsilon modulation",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 123: compact region with sinusoidal epsilon modulation, uniform phase, and sideband diagnostics.",
+      "description": "Example 123: compact region with sinusoidal epsilon modulation, uniform phase, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4138,7 +4138,7 @@
       "title": "Temporal crystal",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 124: extended time-periodic dielectric lattice with embedded high-index ribs and sideband diagnostics.",
+      "description": "Example 124: extended time-periodic dielectric lattice with embedded high-index ribs and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4171,7 +4171,7 @@
       "title": "Temporally modulated guide",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 125: mode-launched slab waveguide with a finite temporally modulated section and sideband diagnostics.",
+      "description": "Example 125: mode-launched slab waveguide with a finite temporally modulated section and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4204,7 +4204,7 @@
       "title": "Traveling epsilon modulation",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 126: guide section tagged with traveling epsilon modulation and forward/reverse transmission check.",
+      "description": "Example 126: guide section tagged with traveling epsilon modulation and forward/reverse transmission check.",
       "status": "PASS",
       "contractTags": [
         "time modulation",
@@ -4238,7 +4238,7 @@
       "title": "Traveling-modulated lossy guide",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 127: mode-launched traveling-modulation guide with downstream lossy section, output-guide overlap, and sideband diagnostics.",
+      "description": "Example 127: mode-launched traveling-modulation guide with downstream lossy section, output-guide overlap, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation",
@@ -4272,7 +4272,7 @@
       "title": "Modulated ring",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband diagnostics.",
+      "description": "Example 128: mode-launched side-coupled ring resonator with temporally modulated refractive index and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4305,7 +4305,7 @@
       "title": "Floquet resonators",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 129: mode-launched coupled modulated resonators with staggered local phases and sideband diagnostics.",
+      "description": "Example 129: mode-launched coupled modulated resonators with staggered local phases and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4338,7 +4338,7 @@
       "title": "Five-phase modulated resonator chain",
       "groupId": "time-varying-and-floquet-media",
       "groupLabel": "12. Time-varying and Floquet media",
-      "description": "Atlas 130: mode-launched five-phase modulated resonator chain with guide overlap and sideband diagnostics.",
+      "description": "Example 130: mode-launched five-phase modulated resonator chain with guide overlap and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation"
@@ -4371,7 +4371,7 @@
       "title": "PT-symmetric gain/loss guides",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 131: PT-balanced coupled guides with saturable gain/loss, gamma sweep, and unbroken-phase modal diagnostic.",
+      "description": "Example 131: PT-balanced coupled guides with saturable gain/loss, gamma sweep, and unbroken-phase modal diagnostic.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -4406,7 +4406,7 @@
       "title": "Near-EP gain/loss coupler",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 132: gain/loss coupled guides tuned near gamma/kappa = 1 with a 2x2 near-EP modal diagnostic.",
+      "description": "Example 132: gain/loss coupled guides tuned near gamma/kappa = 1 with a 2x2 near-EP modal diagnostic.",
       "status": "PASS",
       "contractTags": [
         "gain/loss",
@@ -4440,7 +4440,7 @@
       "title": "Biased non-Hermitian SSH chain",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 133: biased gain/loss SSH chain with edge-energy and gain/loss localization diagnostics.",
+      "description": "Example 133: biased gain/loss SSH chain with edge-energy and gain/loss localization diagnostics.",
       "status": "PASS",
       "contractTags": [
         "gain/loss"
@@ -4474,7 +4474,7 @@
       "title": "Kerr PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 134: Kerr nonlinear defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
+      "description": "Example 134: Kerr nonlinear defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
       "status": "PASS",
       "contractTags": [
         "nonlinear material",
@@ -4508,7 +4508,7 @@
       "title": "ENZ PhC defect cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 135: passive Drude ENZ defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
+      "description": "Example 135: passive Drude ENZ defect in a PhC cavity excited by anti-phase dipoles with leakage and overlap diagnostics.",
       "status": "PASS",
       "contractTags": [
         "dispersive material",
@@ -4542,7 +4542,7 @@
       "title": "Janus source in Valley-Hall lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 136: Janus dipole launched into a Valley-Hall-like structured guide with material and source-overlap diagnostics.",
+      "description": "Example 136: Janus dipole launched into a Valley-Hall-like structured guide with material and source-overlap diagnostics.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -4575,7 +4575,7 @@
       "title": "Huygens source near cavity",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 137: Huygens source coupled to a dielectric side cavity with guide, cavity, and source-overlap diagnostics.",
+      "description": "Example 137: Huygens source coupled to a dielectric side cavity with guide, cavity, and source-overlap diagnostics.",
       "status": "PASS",
       "contractTags": [
         "static Maxwell/FDTD scene"
@@ -4608,7 +4608,7 @@
       "title": "Valley-Hall temporal segment",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 138: Valley-Hall-like channel with an input-side temporally modulated segment and Floquet/coupled-region diagnostics.",
+      "description": "Example 138: Valley-Hall-like channel with an input-side temporally modulated segment and Floquet/coupled-region diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation",
@@ -4642,7 +4642,7 @@
       "title": "Traveling-modulated Valley-Hall guide",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 139: Valley-Hall-like channel with an input-side traveling-modulated segment, phase, material-overlap, and sideband diagnostics.",
+      "description": "Example 139: Valley-Hall-like channel with an input-side traveling-modulated segment, phase, material-overlap, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation",
@@ -4676,7 +4676,7 @@
       "title": "Traveling-modulated stripe lattice",
       "groupId": "coupled-and-non-hermitian-workflows",
       "groupLabel": "13. Coupled and non-Hermitian workflows",
-      "description": "Atlas 140: traveling-modulated dielectric stripe lattice with phase-coherence, active-material, and sideband diagnostics.",
+      "description": "Example 140: traveling-modulated dielectric stripe lattice with phase-coherence, active-material, and sideband diagnostics.",
       "status": "PASS",
       "contractTags": [
         "time modulation",

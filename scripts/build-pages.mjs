@@ -30,7 +30,7 @@ const blockedEntries = [
   "tmp",
   "native/fdtd-core",
   "AGENTS.md",
-  "ATLAS_SCENES_NOT_IMPLEMENTED.md",
+  "EXAMPLE_SCENES_NOT_IMPLEMENTED.md",
   "package.json",
   "README.md",
 ];

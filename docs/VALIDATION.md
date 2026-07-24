@@ -6,7 +6,7 @@ This project now separates three levels of confidence:
 2. Browser smoke checks.
 3. Physics validation and convergence checks.
 
-The goal is not to claim that every Atlas scene is publication-grade. The goal is to make clear which teaching claims have an executable validation path and which stronger research claims still need independent references or convergence.
+The goal is not to claim that every Example scene is publication-grade. The goal is to make clear which teaching claims have an executable validation path and which stronger research claims still need independent references or convergence.
 
 ## Quick Commands
 
@@ -130,7 +130,7 @@ For research-grade use, browser smoke checks are not enough. Use the matrix as a
 ## Current Limitations
 
 - The browser smoke test is intentionally short; it is a regression guard, not a full physical proof.
-- Some Atlas scenes use bounded diagnostic contracts by design; those contracts are suitable for teaching but not for publication-grade device metrics.
+- Some Example scenes use bounded diagnostic contracts by design; those contracts are suitable for teaching but not for publication-grade device metrics.
 - The first-pass source-physics scenes still need analytic source-pattern regression tests for phase, envelope, and steering-angle sign.
 - The source/radiation P1 checks verify source route, solver polarization, source count, array phase progression, substrate/PEC/slot/guide geometry, finite source-neighborhood energy, and NTFF sample generation. They do not replace analytic radiation-pattern fits, aperture antenna theory, or grid-converged far-field calibration.
 - The monitor/observable scenes now use separated forward/backward power estimates, carrier DFT power normalization, finite-window spectral R/T/A bins, and optional reference-normalized line-port S21/S11 where line diagnostics are enabled. They still need analytic angular-sweep regression, reference runs with matched setup, and grid convergence before publication-grade quantitative claims.

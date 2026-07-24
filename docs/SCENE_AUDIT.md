@@ -37,8 +37,8 @@ No `FIX_REQUIRED` scenes were found in this pass.
 | 12 | `pmlAbsorption` CPML absorption check | 1. Maxwell and propagation | PASS | static Maxwell/FDTD scene | WASM CPML, 24 steps, E=9.98e-6 | pml_reflection:P0/physics | OK |
 | 13 | `normalInterface` Normal air-dielectric interface | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | normal_interface_fresnel:P0/physics, json_reproducibility:P1/smoke | OK |
 | 14 | `obliqueRefraction` Oblique refraction | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=2.73e-7 | oblique_refraction_gaussian_interface:P1/physics | OK |
-| 15 | `brewsterTm` Brewster TM minimum | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_tm_minimum:P0/physics | OK |
-| 16 | `brewsterTeTm` TE/TM Brewster comparison | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_te_tm_angle_sweep:P1/physics, monitor_observable_first_pass:P1/physics | OK |
+| 15 | `brewsterTm` Brewster p/TM minimum | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_tm_minimum:P0/physics | OK |
+| 16 | `brewsterTeTm` s/TE-p/TM Brewster comparison | 2. Interfaces and multilayers | PASS | HZ polarization | WASM CPML+TFSF, 24 steps, E=3.97e-4 | brewster_te_tm_angle_sweep:P1/physics, monitor_observable_first_pass:P1/physics | OK |
 | 17 | `totalInternalReflection` Total internal reflection | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | total_internal_reflection_evanescent:P1/physics | OK |
 | 18 | `frustratedTir` Frustrated TIR | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=5.07e-6 | frustrated_tir_tunneling:P1/physics | OK |
 | 19 | `quarterWaveCoating` Quarter-wave coating | 2. Interfaces and multilayers | PASS | static Maxwell/FDTD scene | WASM CPML+TFSF, 24 steps, E=6.96e-8 | quarter_wave_coating_low_reflection:P1/physics | OK |

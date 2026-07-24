@@ -108,6 +108,12 @@
         el.playPauseBtn.title = label;
         el.playPauseBtn.setAttribute("aria-label", label);
         uiCore.setPressed(el.playPauseBtn, running);
+        if (el.runPlayPauseBtn) {
+          el.runPlayPauseBtn.title = label;
+          el.runPlayPauseBtn.setAttribute("aria-label", label);
+          el.runPlayPauseBtn.setAttribute("aria-pressed", String(running));
+        }
+        if (el.runPlayPauseIcon) el.runPlayPauseIcon.textContent = running ? "\u2161" : "\u25b6";
       }
     }
 

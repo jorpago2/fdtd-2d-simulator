@@ -7046,7 +7046,9 @@ async function runSceneMenuSelectionSmoke(browser, url) {
         activeFilter: document.querySelector("[data-scene-filter].is-active")?.dataset.sceneFilter || "",
         activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
         activeCard: document.querySelector(".scene-card.is-active")?.dataset.sceneCard || "",
+        browserCount: document.getElementById("sceneBrowserCount")?.textContent?.trim() || "",
         preset: document.getElementById("presetInput")?.value || "",
+        searchValue: document.getElementById("sceneSearchInput")?.value || "",
         spotlightTitle: document.getElementById("sceneSpotlightTitle")?.textContent?.trim() || "",
         visibleCards,
       };
@@ -7070,6 +7072,12 @@ async function runSceneMenuSelectionSmoke(browser, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
+    const initialStatus = await page.evaluate(() => ({
+      preset: document.getElementById("presetInput")?.value || "",
+      reflectance: document.getElementById("summaryReflectanceOutput")?.textContent?.trim() || "",
+    }));
+    if (initialStatus.preset !== "planeWaveAir") failures.push(`Initial scene should be planeWaveAir; got ${initialStatus.preset || "none"}`);
+    if (initialStatus.reflectance !== "\u2014") failures.push(`Pending reflectance should use an em dash; got ${initialStatus.reflectance || "empty"}`);
     await page.locator("#controlDrawerToggle").click();
     await page.waitForTimeout(120);
     await page.evaluate(() => {
@@ -7091,6 +7099,15 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     await page.waitForTimeout(120);
     await openBrowseView();
 
+    await page.locator("#sceneSearchInput").fill("Brewster");
+    await page.waitForTimeout(80);
+    const globalSearch = await snapshotSceneMenu("global search");
+    if (!globalSearch.visibleCards.includes("brewsterTm") || !globalSearch.visibleCards.includes("brewsterTeTm")) {
+      failures.push("Global scene search did not reveal Brewster scenes outside the current family");
+    }
+    if (globalSearch.activeFilter) failures.push(`Global search should not show an active family; got ${globalSearch.activeFilter}`);
+    if (!globalSearch.browserCount.includes("across all families")) failures.push(`Global search scope was not explained; got ${globalSearch.browserCount}`);
+
     if (!(await clickIfPresent('[data-scene-filter="3. Sources and radiation"]'))) {
       failures.push("Sources and radiation filter button was not found");
     }
@@ -7099,6 +7116,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     if (sourcesFilter.activeFilter !== "3. Sources and radiation") {
       failures.push(`Sources filter did not stay active; got ${sourcesFilter.activeFilter || "none"}`);
     }
+    if (sourcesFilter.searchValue) failures.push("Choosing a family did not clear the global search");
     if (!sourcesFilter.visibleCards.includes("jzDipole")) {
       failures.push("Sources filter did not reveal the Jz dipole scene card");
     }
@@ -7214,6 +7232,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
         header: rect(header),
         nav: rect(nav),
         run: rect(run),
+        runButton: rect(document.getElementById("runPlayPauseBtn")),
         activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         viewportHeight: window.innerHeight,
@@ -7225,7 +7244,14 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     if (!status.header || status.header.top < 0 || status.header.bottom <= 0) failures.push("control panel header is not visible after tapping Simulate");
     if (!status.nav || status.nav.top < 0 || status.nav.bottom <= 0) failures.push("mobile layer navigation is not visible after tapping Simulate");
     if (!status.run || !status.nav || status.run.top < status.nav.bottom - 1) failures.push("Run controls overlap or precede the mobile layer navigation");
+    if (!status.runButton) failures.push("Simulate panel does not expose a Run / pause control");
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
+    await page.locator("#runPlayPauseBtn").click();
+    const runState = await page.evaluate(() => ({
+      running: Boolean(state.running),
+      pressed: document.getElementById("runPlayPauseBtn")?.getAttribute("aria-pressed") || "",
+    }));
+    if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
     return {
       id: "mobile_simulate_panel_scroll",
       preset: "current",

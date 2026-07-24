@@ -1,6 +1,6 @@
-# Atlas FDTD 2D: scenes not currently implemented
+# Example FDTD 2D: scenes not currently implemented
 
-This file tracks catalog experiments from `Atlas_FDTD_2D_Catalogo_Experimentos_Simulables.md`
+This file tracks catalog experiments from `Example_FDTD_2D_Catalogo_Experimentos_Simulables.md`
 that are not present in the Scene dropdown yet.
 
 Implemented dropdown scenes are geometry/source/material presets for the current 2D
@@ -21,14 +21,14 @@ matrix as the executable acceptance plan.
 
 - 9 TEz/TMz comparison: implemented as an air-dielectric interface preset that reuses the `Ez`/`Hz` solvers and the dual-polarization angular sweep to compare TE and TM reflectance.
 - 10 Poynting vector: implemented as a `S` view with `Sx`, `Sy`, `|S|`, vector quiver, and two line-flux monitors.
-- 15 Brewster TM and 16 TE/TM Brewster comparison: implemented as air-to-dielectric interface presets with preconfigured angular sweeps, analytic Fresnel/Brewster references, and a dual numerical TE/TM sweep for Atlas 16.
+- 15 Brewster TM and 16 s/TE-p/TM Brewster comparison: implemented as air-to-dielectric interface presets with preconfigured angular sweeps, analytic Fresnel/Brewster references, and a dual numerical TE/TM sweep for Example 16.
 - Normal-incidence CW line monitors now estimate `Pinc`, `Pref`, `Ptrn`, `R`, and `T` by decomposing the fields into forward/backward waves using local impedance.
 - Oblique CW line monitors project flux and field decomposition onto the incident source direction `theta_k`; R/T now uses time-smoothed separated forward/backward powers so transverse phase variation along a vertical monitor does not cancel the measurement.
 - A generic sweep runner can now scan incident angle, source frequency, source amplitude, PT gain/loss magnitude `gamma`, local BIC symmetry-breaking strength, finite-geometry Bloch wavevector `k/pi a`, or forward/reverse source direction. Depending on the scene, it plots `R`, `T`, TE/TM reflectance, nonlinear transfer proxies, BIC leakage, reduced plane-wave Bloch band/leakage proxies, reduced Floquet sideband `S_m` estimates, approximate isolation, or EP-style spectral splitting. Amplitude sweeps can optionally run a forward/reverse hysteresis cycle, estimate per-point steady drift from the last monitor windows, and export the measured rows as CSV.
 - The spectral/near-to-far analysis panel records a time probe, plots a probe spectrum, and computes a normalized 2D equivalence-principle NTFF angular pattern from scalar-field and normal-derivative phasors on a closed contour.
 - 34 Near-field/far-field: implemented as a dipole-radiation preset that exercises the normalized equivalence-principle NTFF analysis panel.
 - 62 RCS 2D and 65 Kerker 2D: implemented as line-source scattering presets that subtract an analytic incident plane-wave reference from the NTFF contour phasors and report estimated 2D scattering width metrics, including `sigma/lambda0` and forward/backward contrast.
-- 68 Anderson-localization disorder and 69 diffusive random medium are implemented as deterministic random-scattering presets. They complete the Atlas numbering gap between weak localization and finite-conductivity materials. The scenes are intended for qualitative/comparative 2D FDTD transport demonstrations; publication-grade localization analysis would still require ensemble averaging, mean-free-path extraction, and finite-size scaling.
+- 68 Anderson-localization disorder and 69 diffusive random medium are implemented as deterministic random-scattering presets. They complete the Example numbering gap between weak localization and finite-conductivity materials. The scenes are intended for qualitative/comparative 2D FDTD transport demonstrations; publication-grade localization analysis would still require ensemble averaging, mean-free-path extraction, and finite-size scaling.
 - 107 Negative-index slab and 108 superlens now expose first-pass quantitative FDTD observables: incident/slab/transmitted beam-centroid angles, a field-gradient phase-front proxy with coherence, a negative-refraction sign score, a beam-case power-balance residual, and image-transfer/width metrics for the superlens. These metrics are shown in the analysis panel, can drive frequency/amplitude sweeps, and are exported to CSV.
 - The scattering-width normalization is suitable for comparative 2D scalar studies. It is still an estimate because it has not yet been calibrated against analytic cylindrical Mie-series cross sections.
 - The analysis panel now also stores a field-energy ringdown trace, contour Poynting flux estimates, and source-cell intensity for comparative resonator metrics.
@@ -102,7 +102,7 @@ matrix as the executable acceptance plan.
 
 ## Not implemented because the geometry/workflow is still too specific
 
-- No geometry-only Atlas dropdown scenes remain in this bucket. Remaining gaps require calibrated monitors, post-processing, or modal/sweep workflows rather than missing FDTD update physics.
+- No geometry-only Example dropdown scenes remain in this bucket. Remaining gaps require calibrated monitors, post-processing, or modal/sweep workflows rather than missing FDTD update physics.
 
 ## Implemented with idealized constant-material approximations
 

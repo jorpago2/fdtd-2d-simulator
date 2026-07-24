@@ -2474,9 +2474,10 @@ label.scene-select-fallback,
     display: none;
   }
 
+  .scene-browse-panel .scene-filter-bar,
   .scene-browse-panel .scene-cards {
-    max-height: min(42dvh, 420px);
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .theme-toggle {
@@ -2490,11 +2491,20 @@ label.scene-select-fallback,
     --edge: 10px;
     --toolbar: 42px;
     --control: 38px;
-    --touch: 40px;
+    --touch: 44px;
     --help-guide-edge-gap: max(8px, env(safe-area-inset-bottom));
     --help-guide-top-gap: max(8px, env(safe-area-inset-top));
     --help-guide-toggle-size: 46px;
     --help-guide-panel-gap: 10px;
+  }
+
+  #controlPanel .text-button,
+  #controlPanel .primary-button,
+  #controlPanel .mobile-layer-button,
+  #controlPanel .control-tab-button,
+  #controlPanel .scene-filter-button,
+  #controlPanel .toggle-row {
+    min-height: 44px;
   }
 
   .canvas-toolbar {

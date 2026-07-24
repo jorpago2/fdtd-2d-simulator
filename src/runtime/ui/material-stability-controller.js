@@ -275,7 +275,7 @@
     
     function applyHealthState(output, level, reason) {
       if (!output) return;
-      output.textContent = level;
+      output.textContent = level === "stable" ? "CFL stable" : level === "caution" ? "Review" : "Unstable";
       output.title = reason;
       output.dataset.healthLevel = level;
       output.setAttribute("aria-label", `Numerical health: ${level}. ${reason}`);

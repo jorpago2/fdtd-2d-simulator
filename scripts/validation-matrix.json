@@ -2895,7 +2895,7 @@
       "acceptance": {
         "status": "first-source-physics-pass-implemented; analytic-pattern-regression-and-convergence-pending"
       },
-      "rationale": "Tracks Atlas 11, 24, and 32 after replacing ambiguous source parameters with explicit physics metadata."
+      "rationale": "Tracks Example 11, 24, and 32 after replacing ambiguous source parameters with explicit physics metadata."
     },
     {
       "id": "jz_dipole_localized_source",
@@ -3245,7 +3245,7 @@
       "acceptance": {
         "status": "first-monitor-observable-pass-implemented; analytic-sweep-regression-and-grid-convergence-pending"
       },
-      "rationale": "Tracks the shared monitor and sweep infrastructure used by Atlas 9, 10, 15, 16, 34, 62, 65, and related observable-heavy scenes."
+      "rationale": "Tracks the shared monitor and sweep infrastructure used by Example 9, 10, 15, 16, 34, 62, 65, and related observable-heavy scenes."
     },
     {
       "id": "nonlinear_material_first_pass",
@@ -3263,7 +3263,7 @@
       "acceptance": {
         "status": "first-nonlinear-material-pass-field-scale-corrected; calibrated-transfer-curves-and-convergence-pending"
       },
-      "rationale": "Tracks Atlas 111-120 and 131-132 after making nonlinear intensity, harmonic polarization, phase-state thresholds, and saturable gain consistent with field renormalization."
+      "rationale": "Tracks Example 111-120 and 131-132 after making nonlinear intensity, harmonic polarization, phase-state thresholds, and saturable gain consistent with field renormalization."
     },
     {
       "id": "double_negative_slab_reference_scope",
@@ -3939,7 +3939,7 @@
       "acceptance": {
         "status": "first-coupled-workflow-diagnostic-pass; calibrated eigenmode, non-Bloch, and device-level validation pending"
       },
-      "rationale": "Tracks Atlas 133-140 after adding scene-level diagnostics for composite workflows rather than relying only on reused component diagnostics."
+      "rationale": "Tracks Example 133-140 after adding scene-level diagnostics for composite workflows rather than relying only on reused component diagnostics."
     },
     {
       "id": "hyperbolic_annular_mtf_reference_scope",
