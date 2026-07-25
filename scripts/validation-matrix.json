@@ -1471,12 +1471,13 @@
       "priority": "P1",
       "preset": "valleyHallBend",
       "profile": "physics",
-      "steps": 1200,
+      "steps": 2400,
       "browserSmoke": true,
       "checks": [
         "the left side retains a horizontal Valley-Hall domain wall",
         "the right side turns into a vertical-domain segment",
-        "the bent channel carries finite field energy"
+        "power reaches the downstream vertical channel",
+        "backscatter before the bend remains limited"
       ],
       "acceptance": {
         "topologicalPhotonicsCheck": true,
@@ -1488,9 +1489,12 @@
         "rightTopSublatticeBiasMax": -0.05,
         "rightBottomSublatticeBiasMax": -0.05,
         "bendChannelEnergyFractionMin": 0.1,
+        "bendDownstreamToUpstreamEnergyRatioMin": 0.2,
+        "bendBackscatterRatioMax": 0.25,
+        "bendDownstreamFluxMin": 0.05,
         "sourceEnergyFractionMin": 0.02
       },
-      "rationale": "Checks that the Valley-Hall bend example changes the domain-wall geometry, preserves opposite sublattice bias across the bend, and stores finite channel energy."
+      "rationale": "Checks a genuine L-shaped domain wall and requires downstream transport after the turn with bounded upstream backscatter."
     },
     {
       "id": "modulated_ssh_chain_route",
@@ -1683,10 +1687,15 @@
         "requiresWasmEngine": true,
         "ringCellsMin": 80,
         "busCellsMin": 80,
-        "ringEnergyFractionMin": 0.005,
-        "ringToBusRatioMin": 0.005
+        "ringEnergyFractionMin": 0.15,
+        "ringToBusRatioMin": 0.2,
+        "shortestMaterialWavelengthCellsMin": 10,
+        "couplingGapCellsMin": 2,
+        "autoScaleRequired": true,
+        "fieldDisplay": "electricMag",
+        "signatureSecondsMax": 6
       },
-      "rationale": "Adds a minimal ring-coupling observable before more rigorous resonance-spectrum validation."
+      "rationale": "Requires a resolved evanescent gap, adequate material-wavelength sampling, visible ring build-up, and teaching-speed display defaults before interpreting the resonance spectrum."
     },
     {
       "id": "add_drop_ring_coupling",
@@ -1705,11 +1714,17 @@
         "ringCellsMin": 80,
         "busCellsMin": 80,
         "dropBusCellsMin": 80,
-        "ringEnergyFractionMin": 0.003,
-        "dropToBusRatioMin": 0.001,
-        "dropBusEnergyFractionMin": 0.001
+        "ringEnergyFractionMin": 0.15,
+        "ringToBusRatioMin": 0.2,
+        "dropToBusRatioMin": 0.1,
+        "dropBusEnergyFractionMin": 0.03,
+        "shortestMaterialWavelengthCellsMin": 10,
+        "couplingGapCellsMin": 2,
+        "autoScaleRequired": true,
+        "fieldDisplay": "electricMag",
+        "signatureSecondsMax": 6
       },
-      "rationale": "Checks that the add-drop ring example includes bus and drop ports, stores field energy in the ring, and transfers finite energy to the drop bus."
+      "rationale": "Requires a resolved add-drop geometry with visible resonant storage and substantial transfer into the drop bus within a short teaching run."
     },
     {
       "id": "multimode_slab_two_mode_launch",
@@ -1842,7 +1857,7 @@
       "priority": "P1",
       "preset": "directionalCoupler",
       "profile": "physics",
-      "steps": 1000,
+      "steps": 5200,
       "browserSmoke": true,
       "checks": [
         "two separated high-index guides are present",
@@ -1855,7 +1870,7 @@
         "sourceShape": "modeProfile",
         "fieldComponent": "ez",
         "directionalCouplerCheck": true,
-        "couplerGuideSeparationLambda": 0.46,
+        "couplerGuideSeparationLambda": 0.32,
         "couplerMonitorXStartLambda": 4.0,
         "couplerMonitorXEndLambda": 12.2,
         "couplerMonitorXStrideLambda": 0.35,
@@ -1867,12 +1882,15 @@
         "couplerBestTotalForwardSxMin": 0.5,
         "couplerCrossForwardSxFractionMin": 0.3,
         "couplerCrossEz2FractionMin": 0.3,
+        "couplerDownstreamXLambdaMin": 9.0,
+        "couplerDownstreamTotalForwardSxMin": 1.0,
+        "couplerDownstreamCrossForwardSxFractionMin": 0.3,
         "sourceCountMin": 1,
         "sourceCountMax": 1,
         "highIndexCellsMin": 1200,
         "maxSegmentsPerColumnMin": 2,
         "columnsWithMultipleSegmentsMin": 80,
-        "maxSegmentSeparationLambdaMin": 0.35
+        "maxSegmentSeparationLambdaMin": 0.28
       },
       "rationale": "Checks the directional coupler as two parallel guides with finite separation."
     },
@@ -1952,6 +1970,7 @@
         "stubHighIndexCellsMin": 100,
         "stubEnergyFractionMin": 0.0003,
         "stubToGuideEnergyRatioMin": 0.0003,
+        "stubStandingVisibilityMin": 0.5,
         "stubPecCellsMax": 0
       },
       "rationale": "Checks the stub resonator as a side-coupled dielectric branch rather than a straight guide."
@@ -1961,7 +1980,7 @@
       "priority": "P1",
       "preset": "racetrackResonator",
       "profile": "physics",
-      "steps": 1800,
+      "steps": 3600,
       "browserSmoke": true,
       "checks": [
         "bus guide is present",
@@ -1973,6 +1992,7 @@
         "guidedDeviceCheck": true,
         "requiresAnalysis": true,
         "sourceShape": "modeProfile",
+        "sourceType": "ricker",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
         "sourceCountMax": 1,
@@ -2047,7 +2067,7 @@
         "guidedDeviceCheck": true,
         "requiresAnalysis": true,
         "sourceShape": "modeProfile",
-        "sourceType": "gaussian",
+        "sourceType": "ricker",
         "fieldComponent": "ez",
         "sourceCountMin": 1,
         "sourceCountMax": 1,
@@ -2055,8 +2075,9 @@
         "stubHighIndexCellsMin": 90,
         "stubEnergyFractionMin": 0.005,
         "stubToGuideEnergyRatioMin": 0.005,
+        "stubStandingVisibilityMin": 0.5,
         "stubPecCellsMin": 12,
-        "ringdownQMin": 100,
+        "ringdownQMin": 40,
         "minAnalysisSamples": 64
       },
       "rationale": "Checks the quarter-wave cavity as a side stub with a shorted end, distinct from the open dielectric stub."

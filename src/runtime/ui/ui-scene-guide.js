@@ -158,7 +158,7 @@
     nonlinear: {
       phenomenon: "Intensity-dependent or state-dependent optical response",
       geometry: "Nonlinear slab, guide, resonator, phase-change region, or switching cell.",
-      expected: "Field-dependent phase shift, harmonic content, bistability, saturation, or persistent material-state changes.",
+      expected: "After the initial warm-up, open Results and verify harmonic hierarchy, hysteresis, saturation, or persistent material-state changes rather than judging a single field frame.",
       explanation: "The material update depends on local field intensity or state variables, so response changes during the run.",
     },
     tensor: {
@@ -170,7 +170,7 @@
     temporal: {
       phenomenon: "Time-varying media, Floquet sidebands, and space-time modulation",
       geometry: "A finite region whose material parameters vary in time, sometimes with a traveling modulation phase.",
-      expected: "Frequency conversion, sidebands, asymmetric transmission, or synthetic-frequency coupling.",
+      expected: "After the DFT warm-up, open Results and verify sidebands or forward/reverse contrast; the canvas remains the qualitative propagation view.",
       explanation: "Time modulation exchanges energy with the wave and breaks the assumptions of a static medium.",
     },
     periodic: {
@@ -182,7 +182,7 @@
     nonhermitian: {
       phenomenon: "Gain/loss, PT symmetry, exceptional points, or non-Hermitian transport",
       geometry: "Coupled guides or resonators with balanced/unbalanced gain and loss regions.",
-      expected: "Mode coalescence proxies, asymmetric amplification/attenuation, or skin-effect-like field accumulation.",
+      expected: "After the analysis warm-up, open Results and verify eigenvalue splitting/coalescence or localization against the passive/trivial reference.",
       explanation: "Non-conservative material updates make modal amplitudes grow or decay, changing the effective spectrum.",
     },
     empty: {
@@ -192,6 +192,34 @@
       explanation: "Use this as a controlled starting point to build custom scenes.",
     },
   };
+
+  const sceneGuideOverrides = Object.freeze({
+    stubResonator: {
+      phenomenon: "Odd-quarter-wave side-stub resonance",
+      expected: "Within about 4 s, |E| should build up along the side stub while the through guide shows a resonant transmission minimum.",
+      explanation: "The stub length is an odd multiple of the guided quarter wavelength. Its reflected wave returns out of phase and suppresses the through channel near resonance; confirm the notch in Results.",
+    },
+    ringResonator: {
+      phenomenon: "Side-coupled ring build-up and destructive through-port interference",
+      expected: "Within about 4 s, the bus mode should reach the coupler, circulate around the ring, and leave a visibly weaker through field near resonance.",
+      explanation: "The direct bus field interferes with the field coupled back from the ring. Use Results to compare ring/bus energy and run the frequency sweep to distinguish on- from off-resonance behavior.",
+    },
+    addDropRing: {
+      phenomenon: "Resonant transfer from the input bus to the drop bus",
+      expected: "Within about 5 s, |E| should build up in the ring and the lower drop guide should brighten while the through channel is suppressed.",
+      explanation: "At resonance, circulating energy couples into the second bus. Results should show substantial ring storage and a drop/bus energy ratio above the off-resonant background.",
+    },
+    racetrackResonator: {
+      phenomenon: "Pulsed racetrack excitation and ringdown",
+      expected: "The Gaussian guided pulse should enter the racetrack, circulate, and then decay after the incident pulse has passed.",
+      explanation: "The post-pulse energy trace provides the loaded-Q proxy. Inspect |E| for the circulating mode and Results for the fitted ringdown rather than treating a single frame as a Q measurement.",
+    },
+    quarterWaveCavity: {
+      phenomenon: "PEC-terminated odd-quarter-wave stub ringdown",
+      expected: "The pulse should excite a standing pattern in the terminated stub, followed by a measurable decay after the launch has passed.",
+      explanation: "The guided stub is tuned to an odd quarter-wave condition. Results reports its stored-energy fraction and loaded-Q proxy; the field map should reveal the standing antinode pattern.",
+    },
+  });
 
   function sceneGuideTemplate(record, context = {}) {
     const family = sceneGuideFamily(record);
@@ -245,7 +273,10 @@
 
   function buildSceneGuide(record, context = {}) {
     if (record?.value === "pecCylinder") return pecCylinderSceneGuide(record, context);
-    return sceneGuideTemplate(record || {}, context);
+    return {
+      ...sceneGuideTemplate(record || {}, context),
+      ...(sceneGuideOverrides[record?.value] || {}),
+    };
   }
 
   function createSceneGuideRenderer(documentRef) {

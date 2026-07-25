@@ -19,7 +19,22 @@ const rootDir = rootArg ? path.resolve(process.cwd(), rootArg) : path.resolve(__
 const matrix = JSON.parse(fs.readFileSync(path.join(__dirname, "validation-matrix.json"), "utf8"));
 const mode = process.argv.includes("--physics") ? "physics" : "smoke";
 const includeAllCases = process.argv.includes("--all");
+const summaryMode = process.argv.includes("--summary");
+const runConfiguredSweep = process.argv.includes("--run-sweep");
+const sweepSamplesOverride = Number(argumentValue("--sweep-samples"));
 const selectedCase = argumentValue("--case");
+const sourceFrequencyScale = Number(argumentValue("--source-frequency-scale"));
+const sourceTypeOverride = argumentValue("--source-type");
+const sourceXLambdaOverride = Number(argumentValue("--source-x-lambda") || Number.NaN);
+const sourceAmplitudeOverride = Number(argumentValue("--source-amplitude") || Number.NaN);
+const stepOverride = Number(argumentValue("--steps"));
+const cellsPerWavelengthOverride = Number(argumentValue("--cells-per-wavelength"));
+const preservePhysicalDomain = process.argv.includes("--preserve-domain");
+const jsonOutput = argumentValue("--out-json");
+const markdownOutput = argumentValue("--out-markdown");
+const screenshotDirectory = argumentValue("--screenshot-dir");
+const viewportWidth = Number(argumentValue("--viewport-width")) || 1280;
+const viewportHeight = Number(argumentValue("--viewport-height")) || 840;
 const selectedCaseIds = new Set(
   selectedCase
     .split(",")
@@ -34,6 +49,8 @@ const smokeCases = matrix.cases.filter(
     (mode === "physics" ? testCase.profile === "physics" : testCase.profile === "smoke"),
 );
 const report = {
+  generatedAt: new Date().toISOString(),
+  environment: { node: process.version, platform: process.platform, arch: process.arch },
   status: "PASS",
   mode,
   cases: [],
@@ -55,6 +72,44 @@ function mimeType(filePath) {
     ".svg": "image/svg+xml; charset=utf-8",
     ".webp": "image/webp",
   }[ext] || "application/octet-stream";
+}
+
+function compactMeasuredSignature(status) {
+  const values = [`max|F|=${Number(status.maxField || 0).toPrecision(4)}`, `energy=${Number(status.energy || 0).toPrecision(4)}`];
+  if (status.ring) {
+    values.push(`Ering=${Number(status.ring.ringEnergyFraction || 0).toFixed(3)}`);
+    if (status.ring.dropToBusRatio > 0) values.push(`Edrop/Ebus=${Number(status.ring.dropToBusRatio).toFixed(3)}`);
+  }
+  if (status.guidedDevice) {
+    const guided = status.guidedDevice;
+    if (guided.stubEnergyFraction > 0) values.push(`Estub=${Number(guided.stubEnergyFraction).toFixed(3)}`);
+    if (guided.racetrackRingEnergyFraction > 0) values.push(`Erace=${Number(guided.racetrackRingEnergyFraction).toFixed(3)}`);
+    if (Number.isFinite(guided.ringdownQ)) values.push(`Q=${Number(guided.ringdownQ).toFixed(1)}`);
+  }
+  return values.join(", ");
+}
+
+function renderPhysicalValidationMarkdown(validationReport) {
+  const escapeCell = (value) => String(value ?? "").replaceAll("|", "\\|").replaceAll("\n", " ");
+  const lines = [
+    "# Physical validation report",
+    "",
+    `Generated: ${validationReport.generatedAt}`,
+    `Environment: ${validationReport.environment.node} / ${validationReport.environment.platform}/${validationReport.environment.arch}`,
+    `Status: ${validationReport.status}`,
+    `Cases: ${validationReport.cases.length}`,
+    "",
+    "Signature time is the measured first-observation time when instrumented; otherwise it is the simulated display-time upper bound at the validation checkpoint.",
+    "",
+    "| Case | Preset | Expected signature | Measured | Signature by (s) | Status |",
+    "|---|---|---|---|---:|---|",
+  ];
+  validationReport.cases.filter((testCase) => testCase.expectedSignature).forEach((testCase) => {
+    lines.push(
+      `| ${escapeCell(testCase.id)} | ${escapeCell(testCase.preset)} | ${escapeCell((testCase.expectedSignature || []).join("; "))} | ${escapeCell(testCase.measuredSignature)} | ${Number(testCase.signatureTimeSeconds || 0).toFixed(2)} | ${testCase.passed ? "PASS" : "FAIL"} |`,
+    );
+  });
+  return `${lines.join("\n")}\n`;
 }
 
 function startStaticServer() {
@@ -729,6 +784,9 @@ async function guidedDeviceMetrics(page) {
     let stubHighIndexCells = 0;
     let stubEnergy = 0;
     let stubPecCells = 0;
+    let stubLineMax = 0;
+    let stubLineMin = Infinity;
+    let stubLineSamples = 0;
     let offsetScattererHighIndexCells = 0;
     let centralDiskHighIndexCells = 0;
     let centralDiskEnergy = 0;
@@ -817,6 +875,12 @@ async function guidedDeviceMetrics(page) {
         if (Math.abs(x - midX) <= Math.round(0.28 * cpw) && y < sourceY - Math.round(0.12 * cpw) && y > sourceY - Math.round(1.25 * cpw)) {
           stubHighIndexCells += 1;
           stubEnergy += energy;
+          if (x === midX) {
+            const field = Math.abs(state.fieldComponent === "hz" ? finite(sim.hz?.[idx]) : finite(sim.ez?.[idx]));
+            stubLineMax = Math.max(stubLineMax, field);
+            stubLineMin = Math.min(stubLineMin, field);
+            stubLineSamples += 1;
+          }
         }
         if (Math.hypot(x - (midX + Math.round(0.9 * cpw)), y - (midY - Math.round(0.32 * cpw))) <= Math.round(0.18 * cpw)) {
           offsetScattererHighIndexCells += 1;
@@ -940,6 +1004,10 @@ async function guidedDeviceMetrics(page) {
       stubHighIndexCells,
       stubEnergyFraction: stubEnergy / Math.max(1e-30, totalEnergy),
       stubToGuideEnergyRatio: stubEnergy / Math.max(1e-30, guideBandEnergy),
+      stubStandingVisibility:
+        stubLineSamples > 2
+          ? (stubLineMax - stubLineMin) / Math.max(1e-30, stubLineMax + stubLineMin)
+          : 0,
       stubPecCells,
       offsetScattererHighIndexCells,
       centralDiskHighIndexCells,
@@ -984,6 +1052,8 @@ async function guidedDeviceMetrics(page) {
       modalReflectionProxy: finiteOrNull(modePort?.modalReflectionProxy),
       modalS11Power: finiteOrNull(modePort?.sParameters?.reflectance),
       modalS21Power: finiteOrNull(modePort?.sParameters?.transmittance),
+      modalInputPower: finiteOrNull(modePort?.sParameters?.inputPower),
+      modalTransmittedPower: finiteOrNull(modePort?.sParameters?.transmittedPower),
       modalSPowerResidual: finiteOrNull(modePort?.sParameters?.balanceResidual),
       modalSSamples: finiteOrNull(modePort?.sParameters?.sampleCount),
     };
@@ -1178,6 +1248,20 @@ async function directionalCouplerMetrics(page, testCase) {
       (current, candidate) => (!current || candidate.totalForwardSx > current.totalForwardSx ? candidate : current),
       null,
     );
+    const downstreamStartLambda = finite(acceptance.couplerDownstreamXLambdaMin, 9);
+    const downstreamPorts = eligible.filter((port) => port.xLambda >= downstreamStartLambda);
+    const downstreamStrongest = downstreamPorts.reduce(
+      (current, candidate) => (!current || candidate.totalForwardSx > current.totalForwardSx ? candidate : current),
+      null,
+    );
+    const downstreamSignalFloor = Math.max(1e-30, finite(downstreamStrongest?.totalForwardSx) * 0.05);
+    const downstream = downstreamPorts
+      .filter((port) => port.totalForwardSx >= downstreamSignalFloor)
+      .reduce(
+        (current, candidate) =>
+          !current || candidate.crossForwardSxFraction > current.crossForwardSxFraction ? candidate : current,
+        null,
+      );
     return {
       preset: state.preset,
       guideSeparationLambda,
@@ -1188,6 +1272,10 @@ async function directionalCouplerMetrics(page, testCase) {
       monitorCount: evaluatedPorts.length,
       best,
       strongest,
+      downstreamStartLambda,
+      downstreamSignalFloor,
+      downstreamStrongest,
+      downstream,
       ports: evaluatedPorts,
     };
   }, testCase.acceptance || {});
@@ -3185,6 +3273,7 @@ async function fabryPerotCavityMetrics(page) {
 
 async function ringResonatorMetrics(page) {
   return page.evaluate(() => {
+    const modePort = typeof sim.modePortAnalysisEstimate === "function" ? sim.modePortAnalysisEstimate() : null;
     const cpw = Math.max(8, Math.round(state.cellsPerWavelength || 24));
     const minX = sim.activeInteriorMinX();
     const maxX = sim.activeInteriorMaxX();
@@ -3210,9 +3299,10 @@ async function ringResonatorMetrics(page) {
     const outerRy = Math.max(1, Math.round(1.1 * cpw));
     const innerRx = Math.max(1, Math.round(0.84 * cpw));
     const innerRy = Math.max(1, Math.round(0.84 * cpw));
-    const busHalf = Math.max(2, Math.round(0.18 * cpw));
-    const busY = midY + Math.round(1.2 * cpw);
-    const dropY = midY - Math.round(1.2 * cpw);
+    const busHalf = Math.max(2, Math.round(0.12 * cpw));
+    const busY = Math.round((state.sources?.[0]?.yLambda ?? (midY / cpw + 1.2)) * cpw);
+    const dropY = 2 * midY - busY;
+    let maxMaterialIndex = 1;
     for (let y = minY; y <= maxY; y += 1) {
       for (let x = minX; x <= maxX; x += 1) {
         const idx = sim.id(x, y);
@@ -3221,6 +3311,12 @@ async function ringResonatorMetrics(page) {
         const dx = x - cx;
         const dy = y - cy;
         const highIndex = Math.max(Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx])) > 5;
+        if (sim.material[idx] !== 2) {
+          maxMaterialIndex = Math.max(
+            maxMaterialIndex,
+            Math.sqrt(Math.max(1, Math.abs(sim.eps[idx]), Math.abs(sim.epsY[idx]))),
+          );
+        }
         const outer = (dx / outerRx) * (dx / outerRx) + (dy / outerRy) * (dy / outerRy) <= 1;
         const inner = (dx / innerRx) * (dx / innerRx) + (dy / innerRy) * (dy / innerRy) < 1;
         if (highIndex && outer && !inner) {
@@ -3237,6 +3333,9 @@ async function ringResonatorMetrics(page) {
         }
       }
     }
+    const sourceFrequency = Number(state.sources?.[0]?.frequency) || COURANT / cpw;
+    const shortestMaterialWavelengthCells = COURANT / Math.max(1e-30, sourceFrequency * maxMaterialIndex);
+    const couplingGapCells = Math.max(0, Math.abs(busY - cy) - outerRy - busHalf);
     return {
       ringEnergy,
       busEnergy,
@@ -3248,6 +3347,17 @@ async function ringResonatorMetrics(page) {
       ringEnergyFraction: ringEnergy / Math.max(1e-30, totalEnergy),
       ringToBusRatio: ringEnergy / Math.max(1e-30, busEnergy),
       dropToBusRatio: dropBusEnergy / Math.max(1e-30, busEnergy),
+      dropBusEnergyFraction: dropBusEnergy / Math.max(1e-30, totalEnergy),
+      sourceFrequency,
+      maxMaterialIndex,
+      shortestMaterialWavelengthCells,
+      couplingGapCells,
+      autoScale: Boolean(state.autoScale),
+      fieldDisplay: state.fieldDisplay,
+      timeRate: Number(state.timeRate) || 1,
+      reflectance: Number(sim.diagnosticReflectance) || 0,
+      transmittance: Number(sim.diagnosticTransmittance) || 0,
+      modePortSParameters: modePort?.sParameters || null,
     };
   });
 }
@@ -3718,6 +3828,11 @@ async function topologicalPhotonicsMetrics(page) {
     let highIndexEnergy = 0;
     let interfaceEnergy = 0;
     let bendChannelEnergy = 0;
+    let bendUpstreamEnergy = 0;
+    let bendDownstreamEnergy = 0;
+    let bendUpstreamForwardFlux = 0;
+    let bendUpstreamBackwardFlux = 0;
+    let bendDownstreamFlux = 0;
     let defectHighIndexCells = 0;
     let defectPecCells = 0;
     let defectEnergy = 0;
@@ -3732,10 +3847,28 @@ async function topologicalPhotonicsMetrics(page) {
         const inBendChannel =
           (x <= cornerX && Math.abs(y - midY) <= Math.round(0.34 * cpw)) ||
           (x >= cornerX - Math.round(0.14 * cpw) && Math.abs(x - cornerX) <= Math.round(0.34 * cpw));
+        const inBendUpstream =
+          x >= cornerX - Math.round(2 * cpw) &&
+          x <= cornerX - Math.round(0.5 * cpw) &&
+          Math.abs(y - midY) <= Math.round(0.34 * cpw);
+        const inBendDownstream =
+          Math.abs(x - cornerX) <= Math.round(0.34 * cpw) &&
+          y <= midY - Math.round(0.55 * cpw) &&
+          y >= midY - Math.round(2.5 * cpw);
         const inDefect = Math.hypot(x - (midX + Math.round(0.15 * cpw)), y - midY) <= Math.round(0.44 * cpw);
         totalEnergy += energy;
         if (inStraightInterface) interfaceEnergy += energy;
         if (inBendChannel) bendChannelEnergy += energy;
+        const poynting = typeof sim.poyntingAt === "function" ? sim.poyntingAt(idx) : null;
+        if (inBendUpstream) {
+          bendUpstreamEnergy += energy;
+          bendUpstreamForwardFlux += Math.max(0, Number(poynting?.x) || 0);
+          bendUpstreamBackwardFlux += Math.max(0, -(Number(poynting?.x) || 0));
+        }
+        if (inBendDownstream) {
+          bendDownstreamEnergy += energy;
+          bendDownstreamFlux += Math.abs(Number(poynting?.y) || 0);
+        }
         if (inDefect) defectEnergy += energy;
         if (sim.material[idx] !== 0) materialCells += 1;
         if (sim.material[idx] === 2) {
@@ -3850,6 +3983,13 @@ async function topologicalPhotonicsMetrics(page) {
       interfaceEnergyFraction: interfaceEnergy / Math.max(1e-30, totalEnergy),
       bendChannelEnergy,
       bendChannelEnergyFraction: bendChannelEnergy / Math.max(1e-30, totalEnergy),
+      bendUpstreamEnergy,
+      bendDownstreamEnergy,
+      bendDownstreamToUpstreamEnergyRatio: bendDownstreamEnergy / Math.max(1e-30, bendUpstreamEnergy),
+      bendUpstreamForwardFlux,
+      bendUpstreamBackwardFlux,
+      bendBackscatterRatio: bendUpstreamBackwardFlux / Math.max(1e-30, bendUpstreamForwardFlux),
+      bendDownstreamFlux,
       defectHighIndexCells,
       defectPecCells,
       defectEnergy,
@@ -3859,9 +3999,65 @@ async function topologicalPhotonicsMetrics(page) {
 }
 
 async function runSmokeCase(page, testCase) {
-  const steps = Math.trunc(Number(testCase.steps) || Number(matrix.profiles[testCase.profile]?.steps) || 8);
+  const steps = Math.trunc(
+    (Number.isFinite(stepOverride) && stepOverride > 0 ? stepOverride : 0) ||
+      Number(testCase.steps) ||
+      Number(matrix.profiles[testCase.profile]?.steps) ||
+      8,
+  );
   const startedAt = Date.now();
   await selectPreset(page, testCase.preset);
+  if (Number.isFinite(cellsPerWavelengthOverride) && cellsPerWavelengthOverride >= 8) {
+    await page.evaluate(({ cellsPerWavelength, preserveDomain }) => {
+      const previousCellsPerWavelength = Math.max(8, state.cellsPerWavelength);
+      if (preserveDomain) {
+        const scale = cellsPerWavelength / previousCellsPerWavelength;
+        const nxInput = document.getElementById("gridNxInput");
+        const nyInput = document.getElementById("gridNyInput");
+        nxInput.value = String(Math.round(state.gridNx * scale));
+        nyInput.value = String(Math.round(state.gridNy * scale));
+        nxInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      const input = document.getElementById("cellsPerWavelengthInput");
+      input.value = String(cellsPerWavelength);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (preserveDomain) {
+        const sweepStepsInput = document.getElementById("sweepStepsInput");
+        sweepStepsInput.value = String(Math.round(state.sweepSteps * (cellsPerWavelength / previousCellsPerWavelength)));
+        sweepStepsInput.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }, { cellsPerWavelength: cellsPerWavelengthOverride, preserveDomain: preservePhysicalDomain });
+  }
+  if (
+    (Number.isFinite(sourceFrequencyScale) && sourceFrequencyScale > 0) ||
+    sourceTypeOverride ||
+    Number.isFinite(sourceXLambdaOverride) ||
+    Number.isFinite(sourceAmplitudeOverride)
+  ) {
+    await page.evaluate(({ frequencyScale, sourceType, xLambda, amplitude }) => {
+      const frequency = (COURANT / Math.max(8, state.cellsPerWavelength)) * frequencyScale;
+      state.sources.forEach((source) => {
+        if (Number.isFinite(frequency) && frequency > 0) source.frequency = frequency;
+        if (["sine", "gaussian", "ricker"].includes(sourceType)) source.type = sourceType;
+        if (Number.isFinite(xLambda)) source.xLambda = xLambda;
+        if (Number.isFinite(amplitude) && amplitude > 0) source.amplitude = amplitude;
+      });
+      sim.resetFields();
+      sim.resetDiagnostics();
+    }, {
+      frequencyScale: sourceFrequencyScale,
+      sourceType: sourceTypeOverride,
+      xLambda: sourceXLambdaOverride,
+      amplitude: sourceAmplitudeOverride,
+    });
+  }
+  if (Number.isFinite(sweepSamplesOverride) && sweepSamplesOverride >= 3 && sweepSamplesOverride <= 41) {
+    await page.evaluate((samples) => {
+      const input = document.getElementById("sweepSamplesInput");
+      input.value = String(Math.trunc(samples));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }, sweepSamplesOverride);
+  }
   if (mode === "physics") await preparePhysicsCase(page, testCase);
   const before = await simulationSnapshot(page);
   const stepResult = mode === "physics"
@@ -4024,6 +4220,10 @@ async function runSmokeCase(page, testCase) {
             modalReflectionProxy: Number.isFinite(metric.modalReflectionProxy) ? metric.modalReflectionProxy : null,
             modalS11Power: Number.isFinite(metric.sParameters?.reflectance) ? metric.sParameters.reflectance : null,
             modalS21Power: Number.isFinite(metric.sParameters?.transmittance) ? metric.sParameters.transmittance : null,
+            modalInputPower: Number.isFinite(metric.sParameters?.inputPower) ? metric.sParameters.inputPower : null,
+            modalTransmittedPower: Number.isFinite(metric.sParameters?.transmittedPower)
+              ? metric.sParameters.transmittedPower
+              : null,
             modalSPowerResidual: Number.isFinite(metric.sParameters?.balanceResidual) ? metric.sParameters.balanceResidual : null,
             modalSSamples: Number.isFinite(metric.sParameters?.sampleCount) ? metric.sParameters.sampleCount : null,
           }
@@ -5287,6 +5487,8 @@ async function runSmokeCase(page, testCase) {
     const minTotalForwardSx = Number(testCase.acceptance?.couplerBestTotalForwardSxMin);
     const minCrossForwardFraction = Number(testCase.acceptance?.couplerCrossForwardSxFractionMin);
     const minCrossEz2Fraction = Number(testCase.acceptance?.couplerCrossEz2FractionMin);
+    const minDownstreamTotalForwardSx = Number(testCase.acceptance?.couplerDownstreamTotalForwardSxMin);
+    const minDownstreamCrossFraction = Number(testCase.acceptance?.couplerDownstreamCrossForwardSxFractionMin);
     if (Number.isFinite(minTemporalSamples) && metrics.temporalSamples < minTemporalSamples) {
       status.failures.push(`directional-coupler temporal samples ${metrics.temporalSamples} below ${minTemporalSamples}`);
     }
@@ -5312,6 +5514,22 @@ async function runSmokeCase(page, testCase) {
       !(metrics.best && Number.isFinite(metrics.best.crossEz2Fraction) && metrics.best.crossEz2Fraction >= minCrossEz2Fraction)
     ) {
       status.failures.push(`directional-coupler cross Ez^2 fraction ${metrics.best?.crossEz2Fraction} below ${minCrossEz2Fraction}`);
+    }
+    if (
+      Number.isFinite(minDownstreamTotalForwardSx) &&
+      !(metrics.downstream && metrics.downstream.totalForwardSx >= minDownstreamTotalForwardSx)
+    ) {
+      status.failures.push(
+        `directional-coupler downstream forward Sx ${metrics.downstream?.totalForwardSx} below ${minDownstreamTotalForwardSx}`,
+      );
+    }
+    if (
+      Number.isFinite(minDownstreamCrossFraction) &&
+      !(metrics.downstream && metrics.downstream.crossForwardSxFraction >= minDownstreamCrossFraction)
+    ) {
+      status.failures.push(
+        `directional-coupler downstream cross fraction ${metrics.downstream?.crossForwardSxFraction} below ${minDownstreamCrossFraction}`,
+      );
     }
   }
   if (testCase.acceptance?.guidedDeviceCheck) {
@@ -5343,6 +5561,7 @@ async function runSmokeCase(page, testCase) {
     const minStubCells = Number(testCase.acceptance?.stubHighIndexCellsMin);
     const minStubFraction = Number(testCase.acceptance?.stubEnergyFractionMin);
     const minStubToGuide = Number(testCase.acceptance?.stubToGuideEnergyRatioMin);
+    const minStubVisibility = Number(testCase.acceptance?.stubStandingVisibilityMin);
     const minStubPecCells = Number(testCase.acceptance?.stubPecCellsMin);
     const maxStubPecCells = Number(testCase.acceptance?.stubPecCellsMax);
     const minScattererCells = Number(testCase.acceptance?.offsetScattererHighIndexCellsMin);
@@ -5422,6 +5641,7 @@ async function runSmokeCase(page, testCase) {
     if (Number.isFinite(minStubCells) && metrics.stubHighIndexCells < minStubCells) status.failures.push(`stub high-index cells ${metrics.stubHighIndexCells} below ${minStubCells}`);
     if (Number.isFinite(minStubFraction) && metrics.stubEnergyFraction < minStubFraction) status.failures.push(`stub energy fraction ${metrics.stubEnergyFraction} below ${minStubFraction}`);
     if (Number.isFinite(minStubToGuide) && metrics.stubToGuideEnergyRatio < minStubToGuide) status.failures.push(`stub/guide energy ratio ${metrics.stubToGuideEnergyRatio} below ${minStubToGuide}`);
+    if (Number.isFinite(minStubVisibility) && metrics.stubStandingVisibility < minStubVisibility) status.failures.push(`stub standing visibility ${metrics.stubStandingVisibility} below ${minStubVisibility}`);
     if (Number.isFinite(minStubPecCells) && metrics.stubPecCells < minStubPecCells) status.failures.push(`stub PEC cells ${metrics.stubPecCells} below ${minStubPecCells}`);
     if (Number.isFinite(maxStubPecCells) && metrics.stubPecCells > maxStubPecCells) status.failures.push(`stub PEC cells ${metrics.stubPecCells} exceeds ${maxStubPecCells}`);
     if (Number.isFinite(minScattererCells) && metrics.offsetScattererHighIndexCells < minScattererCells) status.failures.push(`offset scatterer cells ${metrics.offsetScattererHighIndexCells} below ${minScattererCells}`);
@@ -5788,6 +6008,9 @@ async function runSmokeCase(page, testCase) {
     const maxRightBottomBias = Number(testCase.acceptance?.rightBottomSublatticeBiasMax);
     const minInterfaceFraction = Number(testCase.acceptance?.interfaceEnergyFractionMin);
     const minBendFraction = Number(testCase.acceptance?.bendChannelEnergyFractionMin);
+    const minBendTransport = Number(testCase.acceptance?.bendDownstreamToUpstreamEnergyRatioMin);
+    const maxBendBackscatter = Number(testCase.acceptance?.bendBackscatterRatioMax);
+    const minBendDownstreamFlux = Number(testCase.acceptance?.bendDownstreamFluxMin);
     const minDefectPecCells = Number(testCase.acceptance?.defectPecCellsMin);
     const maxDefectHighIndexCells = Number(testCase.acceptance?.defectHighIndexCellsMax);
     const minSourceFraction = Number(testCase.acceptance?.sourceEnergyFractionMin);
@@ -5888,6 +6111,17 @@ async function runSmokeCase(page, testCase) {
     }
     if (Number.isFinite(minBendFraction) && metrics.bendChannelEnergyFraction < minBendFraction) {
       status.failures.push(`bend-channel energy fraction ${metrics.bendChannelEnergyFraction} below ${minBendFraction}`);
+    }
+    if (Number.isFinite(minBendTransport) && metrics.bendDownstreamToUpstreamEnergyRatio < minBendTransport) {
+      status.failures.push(
+        `bend downstream/upstream energy ${metrics.bendDownstreamToUpstreamEnergyRatio} below ${minBendTransport}`,
+      );
+    }
+    if (Number.isFinite(maxBendBackscatter) && metrics.bendBackscatterRatio > maxBendBackscatter) {
+      status.failures.push(`bend backscatter ratio ${metrics.bendBackscatterRatio} exceeds ${maxBendBackscatter}`);
+    }
+    if (Number.isFinite(minBendDownstreamFlux) && metrics.bendDownstreamFlux < minBendDownstreamFlux) {
+      status.failures.push(`bend downstream flux ${metrics.bendDownstreamFlux} below ${minBendDownstreamFlux}`);
     }
     if (Number.isFinite(minDefectPecCells) && metrics.defectPecCells < minDefectPecCells) {
       status.failures.push(`topological defect PEC cells ${metrics.defectPecCells} below ${minDefectPecCells}`);
@@ -6012,6 +6246,9 @@ async function runSmokeCase(page, testCase) {
     const minRingToBus = Number(testCase.acceptance?.ringToBusRatioMin);
     const minDropToBus = Number(testCase.acceptance?.dropToBusRatioMin);
     const minDropFraction = Number(testCase.acceptance?.dropBusEnergyFractionMin);
+    const minMaterialWavelengthCells = Number(testCase.acceptance?.shortestMaterialWavelengthCellsMin);
+    const minCouplingGapCells = Number(testCase.acceptance?.couplingGapCellsMin);
+    const maxSignatureSeconds = Number(testCase.acceptance?.signatureSecondsMax);
     if (Number.isFinite(minRingCells) && status.ring.ringCells < minRingCells) {
       status.failures.push(`ring cells ${status.ring.ringCells} below ${minRingCells}`);
     }
@@ -6037,6 +6274,30 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(
         `drop-bus energy fraction ${status.ring.dropBusEnergy / Math.max(1e-30, status.ring.totalEnergy)} below ${minDropFraction}`,
       );
+    }
+    if (
+      Number.isFinite(minMaterialWavelengthCells) &&
+      status.ring.shortestMaterialWavelengthCells < minMaterialWavelengthCells
+    ) {
+      status.failures.push(
+        `shortest material wavelength ${status.ring.shortestMaterialWavelengthCells} cells below ${minMaterialWavelengthCells}`,
+      );
+    }
+    if (Number.isFinite(minCouplingGapCells) && status.ring.couplingGapCells < minCouplingGapCells) {
+      status.failures.push(`ring/bus coupling gap ${status.ring.couplingGapCells} cells below ${minCouplingGapCells}`);
+    }
+    if (testCase.acceptance?.autoScaleRequired && !status.ring.autoScale) {
+      status.failures.push("ring preset does not enable automatic display scaling");
+    }
+    if (testCase.acceptance?.fieldDisplay && status.ring.fieldDisplay !== testCase.acceptance.fieldDisplay) {
+      status.failures.push(`ring field display ${status.ring.fieldDisplay} does not match ${testCase.acceptance.fieldDisplay}`);
+    }
+    if (Number.isFinite(maxSignatureSeconds) && !Number.isFinite(stepOverride) && !Number.isFinite(cellsPerWavelengthOverride)) {
+      const targetStepsPerSecond = status.ring.timeRate * (0.48 / 0.1) * 60;
+      status.ring.signatureSeconds = steps / Math.max(1e-30, targetStepsPerSecond);
+      if (status.ring.signatureSeconds > maxSignatureSeconds) {
+        status.failures.push(`ring signature time ${status.ring.signatureSeconds}s exceeds ${maxSignatureSeconds}s`);
+      }
     }
   }
   if (
@@ -6169,10 +6430,69 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`random-scattering analysis has ${status.randomScattering.analysisSamples} samples, expected at least ${minSamples}`);
     }
   }
+  if (runConfiguredSweep) {
+    await page.evaluate(() => {
+      state.analysisEnabled = true;
+      document.getElementById("sweepRunBtn")?.click();
+    });
+    await page.waitForFunction(
+      () => !state.sweepRunning && Array.isArray(state.sweepResults) && state.sweepResults.length > 0,
+      null,
+      { timeout: 1200000 },
+    );
+    status.configuredSweep = await page.evaluate(() => ({
+      selectedFrequency: state.sources?.[0]?.frequency ?? null,
+      points: state.sweepResults.map((point) => ({
+        frequency: point.x,
+        transmission: point.modalTransmittance ?? point.t,
+        transmittedPower: point.modalTransmittedPower,
+        inputPower: point.modalInputPower,
+        ringEnergy: point.resonatorRingEnergyFraction,
+        dropEnergy: point.resonatorDropEnergyFraction,
+        storedEnergy: point.storedEnergy,
+        steady: point.steady,
+        steadyDrift: point.steadyDrift,
+        steadyMetric: point.steadyMetric,
+        shortestMaterialWavelengthCells: point.resonatorShortestMaterialWavelengthCells,
+        modalS21Re: point.modalS21Re,
+        modalS21Im: point.modalS21Im,
+        cancellationCosine:
+          [point.modalS21Re, point.modalS21Im, point.modalReferenceRe, point.modalReferenceIm].every(Number.isFinite)
+            ? ((point.modalS21Re - point.modalReferenceRe) * point.modalReferenceRe +
+                (point.modalS21Im - point.modalReferenceIm) * point.modalReferenceIm) /
+              Math.max(
+                1e-30,
+                Math.hypot(point.modalS21Re - point.modalReferenceRe, point.modalS21Im - point.modalReferenceIm) *
+                  Math.hypot(point.modalReferenceRe, point.modalReferenceIm),
+              )
+            : null,
+      })),
+    }));
+  }
   const budget = matrix.profiles[testCase.profile]?.maxMsPerStep;
   if (budget && status.msPerStep > budget) status.failures.push(`step cost ${status.msPerStep} ms exceeds budget ${budget} ms`);
 
   status.durationMs = Date.now() - startedAt;
+  const runMetadata = await page.evaluate(() => ({
+    gridNx: sim.nx,
+    gridNy: sim.ny,
+    cellsPerWavelength: state.cellsPerWavelength,
+    timeRate: state.timeRate,
+  }));
+  status.discretization = runMetadata;
+  status.expectedSignature = testCase.checks || [];
+  status.measuredSignature = compactMeasuredSignature(status);
+  status.signatureTimeSeconds = Number(
+    (status.ring?.signatureSeconds ?? steps / (288 * Math.max(0.1, Number(runMetadata.timeRate) || 1))).toFixed(3),
+  );
+  if (screenshotDirectory) {
+    const outputDirectory = path.resolve(rootDir, screenshotDirectory);
+    fs.mkdirSync(outputDirectory, { recursive: true });
+    const filename = `${testCase.id}-${viewportWidth}x${viewportHeight}.png`;
+    await page.evaluate(() => sim.render());
+    await page.screenshot({ path: path.join(outputDirectory, filename), fullPage: false });
+    status.screenshot = path.relative(rootDir, path.join(outputDirectory, filename)).replaceAll("\\", "/");
+  }
   status.passed = status.failures.length === 0;
   return status;
 }
@@ -8310,7 +8630,7 @@ async function main() {
   const port = server.address().port;
   const url = `http://127.0.0.1:${port}/index.html`;
   const browser = await launchBrowser(chromium);
-  const page = await browser.newPage({ viewport: { width: 1280, height: 840 } });
+  const page = await browser.newPage({ viewport: { width: viewportWidth, height: viewportHeight } });
 
   page.on("console", (message) => {
     if (message.type() === "error") report.consoleErrors.push(message.text());
@@ -8367,7 +8687,33 @@ async function main() {
       return values[Math.floor(values.length / 2)];
     })(),
   };
-  console.log(JSON.stringify(report, null, 2));
+  if (jsonOutput) {
+    const outputPath = path.resolve(rootDir, jsonOutput);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`);
+  }
+  if (markdownOutput) {
+    const outputPath = path.resolve(rootDir, markdownOutput);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, renderPhysicalValidationMarkdown(report));
+  }
+  console.log(
+    JSON.stringify(
+      summaryMode
+        ? {
+            status: report.status,
+            mode: report.mode,
+            cases: report.cases.length,
+            failed: report.cases.filter((testCase) => !testCase.passed).map((testCase) => ({ id: testCase.id, failures: testCase.failures })),
+            consoleErrors: report.consoleErrors,
+            pageErrors: report.pageErrors,
+            performance: report.performance,
+          }
+        : report,
+      null,
+      2,
+    ),
+  );
   process.exit(report.status === "PASS" ? 0 : 1);
 }
 

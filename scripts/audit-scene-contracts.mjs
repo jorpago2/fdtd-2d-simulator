@@ -18,6 +18,7 @@ function argValue(name, fallback = "") {
 
 const jsonMode = process.argv.includes("--json");
 const writeReports = process.argv.includes("--write");
+const warmupMode = process.argv.includes("--warmup");
 const stepsPerScene = Math.max(1, Math.trunc(Number(argValue("--steps", process.env.SCENE_AUDIT_STEPS || "24"))));
 const markdownOutput = path.resolve(rootDir, argValue("--out-md", "docs/SCENE_AUDIT.md"));
 const jsonOutput = path.resolve(rootDir, argValue("--out-json", "docs/scene-audit-report.json"));
@@ -293,6 +294,10 @@ function evaluateScene(scene, contract, runtime) {
   const cases = validationByPreset.get(scene.id) || [];
 
   if (state.preset !== scene.id) blockers.push(`preset mismatch: state=${state.preset}`);
+  if (scene.id !== "empty" && !state.autoScale) blockers.push("automatic display scaling is disabled");
+  if (scene.id === "empty" && state.autoScale) blockers.push("empty scene should keep a fixed display scale");
+  if (!Number.isFinite(state.timeRate) || state.timeRate < 0.1 || state.timeRate > 10) blockers.push(`invalid playback rate: ${state.timeRate}`);
+  if (!Number.isFinite(state.gain) || state.gain <= 0) blockers.push(`invalid display gain: ${state.gain}`);
   if (expected.source && runtime.sources.length === 0) blockers.push("no source configured");
   if (!expected.source && runtime.sources.length !== 0) blockers.push("empty scene has sources");
   for (const [index, source] of runtime.sources.entries()) {
@@ -367,7 +372,7 @@ function evaluateScene(scene, contract, runtime) {
   };
 }
 
-async function auditScene(page, scene) {
+async function auditScene(page, scene, requestedSteps = stepsPerScene) {
   await selectPreset(page, scene.id);
   return page.evaluate(
     async ({ sceneId, stepCount }) => {
@@ -438,6 +443,9 @@ async function auditScene(page, scene) {
           fieldComponent: state.fieldComponent,
           fieldDisplay: state.fieldDisplay,
           viewMode: state.viewMode,
+          autoScale: state.autoScale,
+          gain: state.gain,
+          timeRate: state.timeRate,
           analysisEnabled: state.analysisEnabled,
           analysisSampleEvery: state.analysisSampleEvery,
           sweepMode: state.sweepMode,
@@ -502,7 +510,7 @@ async function auditScene(page, scene) {
         uiHasNonFiniteText: /\b(NaN|Infinity|undefined)\b/.test(document.body?.innerText || ""),
       };
     },
-    { sceneId: scene.id, stepCount: stepsPerScene },
+    { sceneId: scene.id, stepCount: requestedSteps },
   );
 }
 
@@ -541,7 +549,8 @@ function renderMarkdown(report) {
   lines.push(`Generated: ${report.generatedAt}`);
   lines.push(`Git commit: ${report.gitCommit}`);
   lines.push(`Scenes audited: ${report.sceneCount}`);
-  lines.push(`Steps per scene: ${report.stepsPerScene}`);
+  lines.push(report.warmupMode ? "Steps per scene: validation-matrix warm-up" : `Steps per scene: ${report.stepsPerScene}`);
+  if (report.warmupMode) lines.push(`Warm-up range: ${report.warmupSteps.min}–${report.warmupSteps.max} steps (mean ${report.warmupSteps.average.toFixed(1)})`);
   lines.push("");
   lines.push("## Summary");
   lines.push("");
@@ -580,7 +589,7 @@ function renderMarkdown(report) {
   lines.push("- This audit checks whether each example is educationally coherent and runnable, not whether it is publication-grade.");
   lines.push("- `WARN` scenes are runnable, but carry a teaching/modeling caveat, reduced/proxy observable, or missing calibrated reference for stronger claims.");
   lines.push("- `VALIDATION_GAP` marks a scene that still needs an executable targeted metric before stronger claims are made.");
-  lines.push("- Use `scripts/audit-scene-contracts.mjs --write` to regenerate this report after preset changes.");
+  lines.push("- Use `scripts/audit-scene-contracts.mjs --warmup --write` to regenerate this report with each scene's validation-matrix warm-up.");
   lines.push("");
   return `${lines.join("\n")}\n`;
 }
@@ -603,7 +612,12 @@ async function main() {
   const rows = [];
   for (const scene of catalog.scenes) {
     const contract = inferContract(scene);
-    const runtime = await auditScene(page, scene);
+    const sceneCases = validationByPreset.get(scene.id) || [];
+    const validationWarmupSteps = Math.max(
+      stepsPerScene,
+      ...sceneCases.map((testCase) => Number(testCase.steps) || Number(matrix.profiles?.[testCase.profile]?.steps) || stepsPerScene),
+    );
+    const runtime = await auditScene(page, scene, warmupMode ? validationWarmupSteps : stepsPerScene);
     const evaluation = evaluateScene(scene, contract, runtime);
     rows.push({
       id: scene.id,
@@ -620,7 +634,10 @@ async function main() {
       gaps: evaluation.gaps,
       runtime: {
         fieldComponent: runtime.state.fieldComponent,
+        fieldDisplay: runtime.state.fieldDisplay,
         viewMode: runtime.state.viewMode,
+        autoScale: runtime.state.autoScale,
+        timeRate: runtime.state.timeRate,
         sweepMode: runtime.state.sweepMode,
         engine: runtime.after.engine,
         advancedSteps: runtime.after.advancedSteps,
@@ -643,6 +660,12 @@ async function main() {
     generatedAt: new Date().toISOString(),
     gitCommit: gitShortHead(),
     stepsPerScene,
+    warmupMode,
+    warmupSteps: {
+      min: Math.min(...rows.map((row) => row.runtime.advancedSteps)),
+      max: Math.max(...rows.map((row) => row.runtime.advancedSteps)),
+      average: rows.reduce((sum, row) => sum + row.runtime.advancedSteps, 0) / Math.max(1, rows.length),
+    },
     sceneCount: rows.length,
     summary: countStatus(rows),
     consoleErrors,
@@ -665,7 +688,8 @@ async function main() {
         {
           status: report.status,
           scenes: report.sceneCount,
-          stepsPerScene: report.stepsPerScene,
+          stepsPerScene: report.warmupMode ? "validation-matrix warm-up" : report.stepsPerScene,
+          warmupSteps: report.warmupSteps,
           summary: report.summary,
           consoleErrors: report.consoleErrors.length,
           pageErrors: report.pageErrors.length,

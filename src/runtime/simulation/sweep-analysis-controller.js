@@ -112,7 +112,7 @@
     }
     
     function formatSweepValue(value) {
-      if (state.sweepMode === "frequency") return Number(value).toFixed(3);
+      if (state.sweepMode === "frequency") return Number(value).toFixed(5);
       if (state.sweepMode === "amplitude") return Number(value).toFixed(2);
       if (state.sweepMode === "symmetry") return Number(value).toFixed(3);
       if (state.sweepMode === "blochK") return Number(value).toFixed(3);
@@ -127,7 +127,7 @@
       state.sweepEnd = clampSweepRangeForMode(state.sweepMode, el.sweepEndInput?.value);
       state.sweepSamples = clampInt(Number(el.sweepSamplesInput?.value) || 9, 3, 41);
       if (state.sweepMode === "direction") state.sweepSamples = 2;
-      state.sweepSteps = clampInt(Number(el.sweepStepsInput?.value) || 720, 120, 4000);
+      state.sweepSteps = clampInt(Number(el.sweepStepsInput?.value) || 720, 120, 8000);
       state.sweepBidirectional =
         state.sweepMode === "amplitude" && Boolean(el.sweepBidirectionalInput?.checked);
     }
@@ -142,7 +142,7 @@
       const directionMode = state.sweepMode === "direction";
       const bidirectionalEnabled = amplitudeMode && state.sweepBidirectional;
       const sweepInputRange = () => {
-        if (frequencyMode) return { min: "0.001", max: "0.020", step: "0.001", decimals: 3 };
+        if (frequencyMode) return { min: "0.001", max: "0.020", step: "any", decimals: 5 };
         if (amplitudeMode) return { min: "0.05", max: "1.2", step: "0.05", decimals: 2 };
         if (gainLossMode) return { min: "0", max: "0.1", step: "0.002", decimals: 3 };
         if (symmetryMode) return { min: "0", max: "0.25", step: "0.005", decimals: 3 };
@@ -414,9 +414,15 @@
     }
     
     function sweepSteadyObservation(metrics = null) {
+      const ringCoupling =
+        state.sweepMode === "frequency" ? global.FdtdSceneObservables?.ringCouplingEstimate?.(state, sim) : null;
+      if (ringCoupling) {
+        return { ringToBus: ringCoupling.ringToBusRatio, ringEnergy: ringCoupling.ringEnergyFraction };
+      }
+      const modalS = metrics?.modePort?.sParameters;
       const observation = {
-        r: sim.diagnosticReflectance || 0,
-        t: sim.diagnosticTransmittance || 0,
+        r: Number.isFinite(modalS?.reflectance) ? modalS.reflectance : sim.diagnosticReflectance || 0,
+        t: Number.isFinite(modalS?.transmittance) ? modalS.transmittance : sim.diagnosticTransmittance || 0,
       };
       const auxMetric = sweepAuxMetric();
       if (auxMetric) observation[auxMetric.key] = sweepMetricValue(metrics, auxMetric.key);
@@ -501,6 +507,33 @@
         tForward,
         tReverse,
         isolationDb: Number.isFinite(isolationDb) ? isolationDb : 0,
+      };
+    }
+
+    function resonatorSweepSelection(results = state.sweepResults) {
+      const notchTargets = {
+        stubResonator: 0.25,
+        ringResonator: 0.3,
+        addDropRing: 0.3,
+        racetrackResonator: 0.2,
+        quarterWaveCavity: 0.25,
+      };
+      const notchTarget = notchTargets[state.preset];
+      if (state.sweepMode !== "frequency" || !notchTarget || results.length < 3) return null;
+      const settled = results.filter((point) => point.steady !== false);
+      const measured = settled.length >= 3 ? settled : results;
+      const transmission = (point) => Number(point.modalTransmittedPower ?? point.modalTransmittance ?? point.t) || 0;
+      const resolved = measured.filter((point) => (Number(point.resonatorShortestMaterialWavelengthCells) || Infinity) >= 10);
+      const pool = resolved.length >= 3 ? resolved : measured;
+      const off = pool.reduce((best, point) => (transmission(point) > transmission(best) ? point : best));
+      const candidates = pool.filter((point) => transmission(point) <= (1 - notchTarget) * transmission(off));
+      if (!candidates.length) return null;
+      const storedEnergy = (point) => Number(point.resonatorRingEnergyFraction ?? point.storedEnergy) || 0;
+      const on = candidates.reduce((best, point) => (storedEnergy(point) > storedEnergy(best) ? point : best));
+      return {
+        frequency: on.x,
+        notch: 1 - transmission(on) / Math.max(1e-30, transmission(off)),
+        provisional: settled.length < 3,
       };
     }
     
@@ -1010,9 +1043,11 @@
     
           let stepsDone = 0;
           const steadyHistory = [];
+          const steadySamplePeriod = state.sweepMode === "frequency" ? Math.max(36, Math.round(1 / activeTarget.frequency)) : 36;
+          let nextSteadySample = steadySamplePeriod;
           while (stepsDone < state.sweepSteps) {
             if (state.sweepCancelRequested) break;
-            const chunk = Math.min(36, state.sweepSteps - stepsDone);
+            const chunk = Math.min(36, state.sweepSteps - stepsDone, Math.max(1, nextSteadySample - stepsDone));
             timeStepBatch(chunk, () => {
               for (let step = 0; step < chunk; step += 1) {
                 sim.step();
@@ -1022,7 +1057,10 @@
             if (typeof sim.measureForUi === "function") sim.measureForUi();
             else sim.measure();
             const steadyMetrics = state.analysisEnabled ? sim.analysisMetricEstimate() : null;
-            steadyHistory.push(sweepSteadyObservation(steadyMetrics));
+            if (stepsDone >= nextSteadySample) {
+              steadyHistory.push(sweepSteadyObservation(steadyMetrics));
+              nextSteadySample += steadySamplePeriod;
+            }
             updateStats();
             if (stepsDone % 144 === 0 || stepsDone >= state.sweepSteps) {
               sim.render();
@@ -1033,6 +1071,13 @@
           if (state.sweepCancelRequested) return null;
           sim.measure();
           const metrics = sim.analysisMetricEstimate();
+          const modePort = metrics?.modePort;
+          const modalS = modePort?.sParameters || null;
+          const modalReferencePhase =
+            -(Number(modePort?.directionSign) || 1) *
+            (Number(modePort?.betaCells) || 0) *
+            Math.abs((Number(modePort?.positions?.outputX) || 0) - (Number(modePort?.positions?.inputX) || 0));
+          const resonator = global.FdtdSceneObservables?.ringCouplingEstimate?.(state, sim) || null;
           const steadyEstimate = sweepSteadyEstimate(steadyHistory);
           const floquetOrders = metrics?.floquet?.orders || [];
           const floquetOrder = (order) => floquetOrders.find((channel) => channel.order === order);
@@ -1043,6 +1088,20 @@
             pInc: sim.diagnosticIncidentPower || 0,
             pRef: sim.diagnosticReflectedPower || 0,
             pTrn: sim.diagnosticTransmittedPower || 0,
+            storedEnergy: sim.analysisEnergyEwma || 0,
+            modalReflectance: modalS?.reflectance ?? null,
+            modalTransmittance: modalS?.transmittance ?? null,
+            modalInputPower: modalS?.inputPower ?? null,
+            modalTransmittedPower: modalS?.transmittedPower ?? null,
+            modalS21Re: modalS?.s21?.re ?? null,
+            modalS21Im: modalS?.s21?.im ?? null,
+            modalReferenceRe: modalS ? Math.cos(modalReferencePhase) : null,
+            modalReferenceIm: modalS ? Math.sin(modalReferencePhase) : null,
+            resonatorRingEnergyFraction: resonator?.ringEnergyFraction ?? null,
+            resonatorRingToBusRatio: resonator?.ringToBusRatio ?? null,
+            resonatorDropEnergyFraction: resonator?.dropEnergyFraction ?? null,
+            resonatorDropToBusRatio: resonator?.dropToBusRatio ?? null,
+            resonatorShortestMaterialWavelengthCells: resonator?.shortestMaterialWavelengthCells ?? null,
             h2: metrics?.harmonic2 || 0,
             h3: metrics?.harmonic3 || 0,
             sideband: metrics?.sidebandRatio || 0,
@@ -1215,12 +1274,20 @@
         }
       } finally {
         const cancelled = state.sweepCancelRequested;
+        const resonatorSelection = cancelled ? null : resonatorSweepSelection();
         const pointLabel = state.sweepResults.length === 1 ? "point" : "points";
         restoreGainLossSweepSnapshot(lossSweepSnapshot);
         restoreSymmetrySweepSnapshot(symmetryMaterialSnapshot);
         state.sources = sourceSnapshots.map((source) => ({ ...source }));
         state.selectedSourceId = selectedSourceId;
         state.sourceDefaults = { ...sourceDefaults };
+        if (resonatorSelection) {
+          state.sources.forEach((source) => {
+            source.frequency = resonatorSelection.frequency;
+            normalizeSource(source);
+          });
+          state.sourceDefaults.frequency = resonatorSelection.frequency;
+        }
         state.diagnosticsEnabled = diagnosticsEnabled;
         state.fieldComponent = fieldComponentSnapshot;
         state.running = wasRunning && !cancelled;
@@ -1253,10 +1320,13 @@
               isolation.tReverse,
             )}).`
           : "";
+        const resonanceText = resonatorSelection
+          ? ` ${resonatorSelection.provisional ? "Provisional" : "Selected"} f=${formatSweepValue(resonatorSelection.frequency)} at notch=${formatDiagnosticRatio(resonatorSelection.notch)}.`
+          : "";
         setSweepStatus(
           cancelled
             ? `Sweep cancelled. ${state.sweepResults.length} ${pointLabel} recorded.${driftText}${isolationText}`
-            : `Sweep complete. ${state.sweepResults.length} ${pointLabel} recorded.${driftText}${isolationText}`,
+            : `Sweep complete. ${state.sweepResults.length} ${pointLabel} recorded.${driftText}${isolationText}${resonanceText}`,
         );
       }
     }

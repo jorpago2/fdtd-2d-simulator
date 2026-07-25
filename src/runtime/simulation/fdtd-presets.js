@@ -222,6 +222,9 @@ Object.assign(FDTDSim.prototype, {
     state.fieldDisplay = "scalar";
     state.fieldQuiver = false;
     state.viewMode = "field";
+    state.gain = 1;
+    state.autoScale = true;
+    state.timeRate = 1;
     state.materialPart = "real";
     state.analysisEnabled = true;
     state.analysisSampleEvery = 4;
@@ -271,6 +274,7 @@ Object.assign(FDTDSim.prototype, {
     state.modulationPhaseDeg = 0;
 
     if (name === "empty") {
+      state.autoScale = false;
       this.refreshCpmlMaterialContinuation(false);
       this.markMaterialChanged();
       this.resetFields();
@@ -286,6 +290,12 @@ Object.assign(FDTDSim.prototype, {
     const midXLambda = domainXLambda * 0.5;
     const midYLambda = domainYLambda * 0.5;
     const sourceFrequency = COURANT / Math.max(8, state.cellsPerWavelength);
+    const resonatorFrequencyScale = 0.45;
+    const resonatorFrequency = sourceFrequency * resonatorFrequencyScale;
+    const stubResonatorFrequencyScale = 0.5;
+    const resonatorCouplingGapLambda = 0.1;
+    const resonatorGuideEffectiveIndex = 2.7;
+    const resonatorStubLengthLambda = (5 / 4) / (stubResonatorFrequencyScale * resonatorGuideEffectiveIndex);
     const sourceOmega = 2 * Math.PI * sourceFrequency;
     const enzGamma = 0.014;
     const enzTargetEpsilon = 0.04;
@@ -789,7 +799,7 @@ Object.assign(FDTDSim.prototype, {
       const cornerX = midXLambda + 0.7;
       const domainSign = (x, y) => {
         if (!bend) return y < midYLambda ? 1 : -1;
-        return x < cornerX ? (y < midYLambda ? 1 : -1) : (x < cornerX + 0.18 ? 1 : -1);
+        return y >= midYLambda || x >= cornerX ? -1 : 1;
       };
       honeycombLattice({
         rows: 9,
@@ -1063,9 +1073,11 @@ Object.assign(FDTDSim.prototype, {
         modalGuideSource(midYLambda, { widthLambda: 1.05 });
         break;
       case "directionalCoupler":
-        guide(midYLambda - 0.23, 0.22, mat.n34, 0.6, domainXLambda - 0.6);
-        guide(midYLambda + 0.23, 0.22, mat.n34, 1.4, domainXLambda - 0.6);
-        modalGuideSource(midYLambda - 0.23, { widthLambda: 0.72 });
+        state.viewMode = "poynting";
+        state.timeRate = 4;
+        guide(midYLambda - 0.16, 0.22, mat.n34, 0.6, domainXLambda - 0.6);
+        guide(midYLambda + 0.16, 0.22, mat.n34, 1.4, domainXLambda - 0.6);
+        modalGuideSource(midYLambda - 0.16, { widthLambda: 0.72 });
         break;
       case "mmiWaveguide":
         guide(midYLambda, 0.24, mat.n34, 0.5, 2.2);
@@ -1104,9 +1116,18 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(1.0), yLambda: sourceY(midYLambda - 0.12), widthLambda: 0.34, amplitude: 0.55 }]);
         break;
       case "stubResonator":
+        state.fieldDisplay = "electricMag";
+        state.gain = 4;
+        state.timeRate = Math.min(10, (4 * state.cellsPerWavelength) / 20);
+        configureFrequencySweep(sourceFrequency * 0.45, sourceFrequency * 0.65, 13, 4000);
         guide(midYLambda, 0.25, mat.n34);
-        rectL(midXLambda - 0.16, midYLambda - 1.08, 0.32, 1.08, mat.n34);
-        modalGuideSource(midYLambda, { xLambda: sourceX(midXLambda - 2.25), widthLambda: 1.05, frequency: 0.013, amplitude: 0.56 });
+        rectL(midXLambda - 0.14, midYLambda - resonatorStubLengthLambda, 0.28, resonatorStubLengthLambda, mat.n34);
+        modalGuideSource(midYLambda, {
+          xLambda: sourceX(midXLambda - 1.5),
+          widthLambda: 1.05,
+          frequency: sourceFrequency * stubResonatorFrequencyScale,
+          amplitude: 0.56,
+        });
         break;
       case "fabryPerot":
         braggLayers(midXLambda - 2.0, 4, 0, domainYLambda);
@@ -1123,22 +1144,48 @@ Object.assign(FDTDSim.prototype, {
         setSources([{ type: "sine", shape: "line", xLambda: sourceX(0.9), yLambda: sourceY(midYLambda), amplitude: 0.42 }]);
         break;
       case "ringResonator":
-        guide(midYLambda + 1.2, 0.24, mat.n34);
+        state.fieldDisplay = "electricMag";
+        state.gain = 6;
+        state.timeRate = 10;
+        configureFrequencySweep(sourceFrequency * 0.45, sourceFrequency * 0.65, 13, 4000);
+        guide(midYLambda + 1.1 + 0.24 / 2 + resonatorCouplingGapLambda, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        modalGuideSource(midYLambda + 1.2, { widthLambda: 1.05, frequency: 0.013 });
+        modalGuideSource(midYLambda + 1.1 + 0.24 / 2 + resonatorCouplingGapLambda, {
+          xLambda: sourceX(midXLambda - 1.5),
+          widthLambda: 1.05,
+          frequency: resonatorFrequency,
+        });
         break;
       case "addDropRing":
-        guide(midYLambda + 1.2, 0.24, mat.n34);
-        guide(midYLambda - 1.2, 0.24, mat.n34);
+        state.fieldDisplay = "electricMag";
+        state.gain = 6;
+        state.timeRate = 10;
+        configureFrequencySweep(sourceFrequency * 0.45, sourceFrequency * 0.65, 13, 4000);
+        guide(midYLambda + 1.1 + 0.24 / 2 + resonatorCouplingGapLambda, 0.24, mat.n34);
+        guide(midYLambda - 1.1 - 0.24 / 2 - resonatorCouplingGapLambda, 0.24, mat.n34);
         ringL(midXLambda + 0.5, midYLambda, 1.1, 1.1, 0.84, 0.84, mat.n34);
-        modalGuideSource(midYLambda + 1.2, { widthLambda: 1.05, frequency: 0.013 });
+        modalGuideSource(midYLambda + 1.1 + 0.24 / 2 + resonatorCouplingGapLambda, {
+          xLambda: sourceX(midXLambda - 2.25),
+          widthLambda: 1.05,
+          frequency: resonatorFrequency,
+        });
         break;
       case "racetrackResonator":
         state.analysisEnabled = true;
         state.analysisSampleEvery = 3;
-        guide(midYLambda + 0.98, 0.26, mat.n34, 0.6, domainXLambda - 0.6);
+        state.fieldDisplay = "electricMag";
+        state.gain = 5;
+        state.timeRate = Math.min(10, (5 * state.cellsPerWavelength) / 20);
+        configureFrequencySweep(sourceFrequency * 0.45, sourceFrequency * 0.65, 13, 4000);
+        guide(midYLambda + 0.82 + 0.26 / 2 + resonatorCouplingGapLambda, 0.26, mat.n34, 0.6, domainXLambda - 0.6);
         ringL(midXLambda + 0.45, midYLambda, 1.55, 0.82, 1.26, 0.55, mat.n34);
-        modalGuideSource(midYLambda + 0.98, { xLambda: sourceX(midXLambda - 2.35), widthLambda: 1.05, frequency: 0.013, amplitude: 0.52 });
+        modalGuideSource(midYLambda + 0.82 + 0.26 / 2 + resonatorCouplingGapLambda, {
+          type: "ricker",
+          xLambda: sourceX(midXLambda - 2.35),
+          widthLambda: 1.05,
+          frequency: resonatorFrequency,
+          amplitude: 0.52,
+        });
         break;
       case "dielectricCavity":
         ellipseL(midXLambda, midYLambda, 0.42, 0.42, mat.n34);
@@ -1151,10 +1198,20 @@ Object.assign(FDTDSim.prototype, {
       case "quarterWaveCavity":
         state.analysisEnabled = true;
         state.analysisSampleEvery = 2;
+        state.fieldDisplay = "electricMag";
+        state.gain = 4;
+        state.timeRate = Math.min(10, (4 * state.cellsPerWavelength) / 20);
+        configureFrequencySweep(sourceFrequency * 0.45, sourceFrequency * 0.65, 13, 4000);
         guide(midYLambda, 0.24, mat.n34, 0.55, domainXLambda - 0.55);
-        rectL(midXLambda - 0.14, midYLambda - 0.96, 0.28, 0.96, mat.n34);
-        rectL(midXLambda - 0.2, midYLambda - 1.03, 0.4, 0.09, mat.pec);
-        modalGuideSource(midYLambda, { type: "gaussian", xLambda: sourceX(midXLambda - 2.35), widthLambda: 1.05, amplitude: 0.82, frequency: 0.013 });
+        rectL(midXLambda - 0.16, midYLambda - resonatorStubLengthLambda, 0.32, resonatorStubLengthLambda, mat.n34);
+        rectL(midXLambda - 0.2, midYLambda - resonatorStubLengthLambda - 0.07, 0.4, 0.09, mat.pec);
+        modalGuideSource(midYLambda, {
+          type: "ricker",
+          xLambda: sourceX(midXLambda - 2.35),
+          widthLambda: 1.05,
+          amplitude: 0.82,
+          frequency: resonatorFrequency,
+        });
         break;
       case "qRingdown":
         state.analysisEnabled = true;
@@ -1472,13 +1529,14 @@ Object.assign(FDTDSim.prototype, {
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
         valleyHallLattice();
-        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.58 }]);
+        setSources([{ type: "ricker", shape: "gaussianProfile", xLambda: sourceX(midXLambda - 4.05), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.58 }]);
         break;
       case "valleyHallBend":
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
+        state.timeRate = 2;
         valleyHallLattice({ bend: true });
-        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.58 }]);
+        setSources([{ type: "ricker", shape: "gaussianProfile", xLambda: sourceX(midXLambda - 4.05), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.58 }]);
         break;
       case "topologicalPumping":
         state.materialModulationEnabled = true;
@@ -1499,7 +1557,7 @@ Object.assign(FDTDSim.prototype, {
         state.viewMode = "poynting";
         state.fieldDisplay = "scalar";
         valleyHallLattice({ strongDefect: true });
-        setSources([{ type: "gaussian", shape: "gaussianProfile", xLambda: sourceX(0.95), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.62 }]);
+        setSources([{ type: "ricker", shape: "gaussianProfile", xLambda: sourceX(midXLambda - 4.05), yLambda: sourceY(midYLambda), widthLambda: 0.32, amplitude: 0.62 }]);
         break;
       case "sppInterface": {
         state.fieldComponent = "hz";
@@ -2263,6 +2321,15 @@ Object.assign(FDTDSim.prototype, {
       case "empty":
       default:
         break;
+    }
+    if (
+      state.materialModulationEnabled ||
+      state.materialNonlinearEnabled ||
+      state.materialHarmonicEnabled ||
+      state.materialPhaseChangeEnabled ||
+      state.materialSaturableGainEnabled
+    ) {
+      state.timeRate = Math.max(state.timeRate, 2);
     }
     this.markSubpixelSmoothingDirty?.();
     this.refreshCpmlMaterialContinuation(false);

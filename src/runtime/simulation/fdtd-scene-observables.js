@@ -419,6 +419,103 @@
     );
   }
 
+  function ringCouplingEstimate(state, sim) {
+    if (state.preset !== "ringResonator" && state.preset !== "addDropRing") return null;
+    const cpw = Math.max(8, Math.round(finiteNumber(state.cellsPerWavelength, 20)));
+    const minX = sim.activeInteriorMinX();
+    const maxX = sim.activeInteriorMaxX();
+    const minY = sim.activeInteriorMinY();
+    const maxY = sim.activeInteriorMaxY();
+    const midX = Math.round(0.5 * (minX + maxX));
+    const midY = Math.round(0.5 * (minY + maxY));
+    const ringX = midX + Math.round(0.5 * cpw);
+    const outerRadius = Math.max(1, Math.round(1.1 * cpw));
+    const innerRadius = Math.max(1, Math.round(0.84 * cpw));
+    const busHalfWidth = Math.max(2, Math.round(0.12 * cpw));
+    const busY = Math.round((state.sources?.[0]?.yLambda ?? (midY / cpw + 1.2)) * cpw);
+    const dropY = 2 * midY - busY;
+    let ringEnergy = 0;
+    let busEnergy = 0;
+    let dropEnergy = 0;
+    let totalEnergy = 0;
+    let maxMaterialIndex = 1;
+
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const idx = sim.id(x, y);
+        const energy = fieldEnergyAt(sim, idx);
+        const epsilon = Math.max(Math.abs(finiteNumber(sim.eps?.[idx], 1)), Math.abs(finiteNumber(sim.epsY?.[idx], 1)));
+        const highIndex = epsilon > 5;
+        totalEnergy += energy;
+        if (sim.material?.[idx] !== 2) maxMaterialIndex = Math.max(maxMaterialIndex, Math.sqrt(Math.max(1, epsilon)));
+        const dx = (x - ringX) / outerRadius;
+        const dy = (y - midY) / outerRadius;
+        const innerDx = (x - ringX) / innerRadius;
+        const innerDy = (y - midY) / innerRadius;
+        if (highIndex && dx * dx + dy * dy <= 1 && innerDx * innerDx + innerDy * innerDy >= 1) ringEnergy += energy;
+        if (highIndex && Math.abs(y - busY) <= busHalfWidth) busEnergy += energy;
+        if (state.preset === "addDropRing" && highIndex && Math.abs(y - dropY) <= busHalfWidth) dropEnergy += energy;
+      }
+    }
+
+    const sourceFrequency = Math.max(1e-30, finiteNumber(state.sources?.[0]?.frequency, 0));
+    return {
+      ringEnergyFraction: ringEnergy / Math.max(1e-30, totalEnergy),
+      ringToBusRatio: ringEnergy / Math.max(1e-30, busEnergy),
+      dropToBusRatio: dropEnergy / Math.max(1e-30, busEnergy),
+      dropEnergyFraction: dropEnergy / Math.max(1e-30, totalEnergy),
+      shortestMaterialWavelengthCells: COURANT / (sourceFrequency * maxMaterialIndex),
+      couplingGapCells: Math.max(0, Math.abs(busY - midY) - outerRadius - busHalfWidth),
+    };
+  }
+
+  function resonatorSweepEstimate(state) {
+    const measuredPoints = (state.sweepResults || []).filter((point) => {
+      const transmission = finiteNumber(point.modalTransmittance, finiteNumber(point.t, NaN));
+      return Number.isFinite(point.x) && Number.isFinite(transmission) && transmission >= 0;
+    });
+    const settledPoints = measuredPoints.filter((point) => point.steady !== false);
+    const rawPoints = settledPoints.length >= 3 ? settledPoints : measuredPoints;
+    const resolvedPoints = rawPoints.filter(
+      (point) => finiteNumber(point.resonatorShortestMaterialWavelengthCells, Infinity) >= 10,
+    );
+    const points = resolvedPoints.length >= 3 ? resolvedPoints : rawPoints;
+    if (points.length < 3) return null;
+    const transmission = (point) => finiteNumber(
+      point.modalTransmittedPower,
+      finiteNumber(point.modalTransmittance, finiteNumber(point.t, 0)),
+    );
+    const off = points.reduce((best, point) => (transmission(point) > transmission(best) ? point : best));
+    const notched = points.filter((point) => transmission(point) <= 0.7 * transmission(off));
+    const candidates = notched.length ? notched : points;
+    const storedEnergy = (point) => finiteNumber(point.resonatorRingEnergyFraction, finiteNumber(point.storedEnergy, 0));
+    const on = candidates.reduce((best, point) => (storedEnergy(point) > storedEnergy(best) ? point : best));
+    const offTransmission = transmission(off);
+    const onTransmission = transmission(on);
+    const direct = { re: finiteNumber(on.modalReferenceRe, NaN), im: finiteNumber(on.modalReferenceIm, NaN) };
+    const through = { re: finiteNumber(on.modalS21Re, NaN), im: finiteNumber(on.modalS21Im, NaN) };
+    let cancellationCosine = null;
+    let emittedMagnitude = null;
+    if ([direct.re, direct.im, through.re, through.im].every(Number.isFinite)) {
+      const emitted = { re: through.re - direct.re, im: through.im - direct.im };
+      const denominator = Math.hypot(emitted.re, emitted.im) * Math.hypot(direct.re, direct.im);
+      emittedMagnitude = Math.hypot(emitted.re, emitted.im);
+      if (denominator > 1e-30) cancellationCosine = (emitted.re * direct.re + emitted.im * direct.im) / denominator;
+    }
+    return {
+      on,
+      off,
+      notch: 1 - onTransmission / Math.max(1e-30, offTransmission),
+      storedEnergyContrast: storedEnergy(on) / Math.max(1e-30, storedEnergy(off)),
+      dropContrast:
+        finiteNumber(on.resonatorDropEnergyFraction, 0) /
+        Math.max(1e-30, finiteNumber(off.resonatorDropEnergyFraction, 0)),
+      cancellationCosine,
+      emittedMagnitude,
+      provisional: settledPoints.length < 3,
+    };
+  }
+
   function electricMagnitudeSquaredAt(state, sim, idx) {
     if (state.fieldComponent === "hz") {
       return finiteNumber(sim.hx?.[idx], 0) ** 2 + finiteNumber(sim.hy?.[idx], 0) ** 2;
@@ -1331,6 +1428,64 @@
 
   function addResonatorRows(rows, state, sim) {
     if (!RESONATOR_PRESETS.has(state.preset)) return false;
+    const coupling = ringCouplingEstimate(state, sim);
+    if (coupling) {
+      rows.push(row({
+        metric: "Resolved ring coupling",
+        measured: `Ering/Ebus=${formatRatio(coupling.ringToBusRatio)}, Ering=${formatRatio(coupling.ringEnergyFraction)}`,
+        expected: "Ering/Ebus >= 0.20",
+        error: `gap=${formatField(coupling.couplingGapCells)} cells`,
+        level: coupling.ringToBusRatio >= 0.2 && coupling.couplingGapCells >= 2 ? "ok" : finiteNumber(sim.time, 0) > 0 ? "caution" : "pending",
+        note: "This checks visible resonant storage in a spatially resolved side-coupler; the frequency sweep is needed to identify the through-port notch.",
+      }));
+      rows.push(row({
+        metric: "Shortest material wavelength",
+        measured: `${formatField(coupling.shortestMaterialWavelengthCells)} cells`,
+        expected: ">= 10 cells",
+        level: coupling.shortestMaterialWavelengthCells >= 10 ? "ok" : "caution",
+        note: "The displayed resonance is not trusted when the guided wavelength is under-resolved.",
+      }));
+      if (state.preset === "addDropRing") {
+        rows.push(row({
+          metric: "Drop-bus transfer",
+          measured: `Edrop/Ebus=${formatRatio(coupling.dropToBusRatio)}`,
+          expected: ">= 0.10 near resonance",
+          error: `Edrop=${formatRatio(coupling.dropEnergyFraction)}`,
+          level: coupling.dropToBusRatio >= 0.1 ? "ok" : finiteNumber(sim.time, 0) > 0 ? "caution" : "pending",
+          note: "Use the frequency sweep to verify that the drop enhancement coincides with through-port suppression.",
+        }));
+      }
+    }
+    const sweep = resonatorSweepEstimate(state);
+    if (sweep) {
+      rows.push(row({
+        metric: "On/off resonance contrast",
+        measured: `notch=${formatRatio(sweep.notch)}, Eon/Eoff=${formatRatio(sweep.storedEnergyContrast)}`,
+        expected: state.preset === "racetrackResonator" ? "notch >= 0.20" : "notch >= 0.25",
+        error: `fon=${formatField(sweep.on.x)}, foff=${formatField(sweep.off.x)}`,
+        level: sweep.notch >= (state.preset === "racetrackResonator" ? 0.2 : 0.25) ? "ok" : "caution",
+        note: `${sweep.provisional ? "Provisional: fewer than three sweep points reached steady state. " : ""}The highest stored-energy candidate is compared with maximum through transmission; automatic tuning is applied only when the notch target is met.`,
+      }));
+      if (sweep.cancellationCosine != null) {
+        rows.push(row({
+          metric: "Through-port cancellation phase",
+          measured: `cos(dphi)=${formatRatio(sweep.cancellationCosine)}`,
+          expected: state.preset === "ringResonator" ? "<= -0.70" : "negative interference",
+          error: `|Ering,out|~${formatRatio(sweep.emittedMagnitude)}`,
+          level: sweep.cancellationCosine <= (state.preset === "ringResonator" ? -0.7 : 0) ? "ok" : "caution",
+          note: "The ring-emitted component is the measured through phasor minus the same-frequency lossless modal propagation reference.",
+        }));
+      }
+      if (state.preset === "addDropRing") {
+        rows.push(row({
+          metric: "Drop on/off enhancement",
+          measured: formatRatio(sweep.dropContrast),
+          expected: ">= 3",
+          level: sweep.dropContrast >= 3 ? "ok" : "caution",
+          note: "Drop-guide energy is compared at the selected on- and off-resonance sweep points.",
+        }));
+      }
+    }
     const metrics = analysisMetrics(state, sim);
     if (!metrics || finiteNumber(sim.analysisSamples, 0) < 32) {
       rows.push(row({
@@ -1862,10 +2017,10 @@
       rows.push(row({
         metric: "Measured-order power balance",
         measured: `Pout=${formatRatio(floquet.scatteringMatrix.totalOutgoingPower)}`,
-        expected: "bounded truncated residual",
+        expected: "diagnostic only; modulation work omitted",
         error: `|dP|=${formatRatio(floquet.scatteringMatrix.powerBalanceAbsResidual)}`,
-        level: floquet.scatteringMatrix.powerBalanceAbsResidual < 0.75 ? "ok" : "caution",
-        note: "Large residuals can mean missing higher orders, absorption, or insufficient sampling.",
+        level: "info",
+        note: "This residual excludes work exchanged with the temporal modulation and must not be interpreted as passive power closure.",
       }));
     }
     return true;
@@ -2304,5 +2459,6 @@
     fresnelNormalReflectance,
     brewsterAngleDeg,
     criticalAngleDeg,
+    ringCouplingEstimate,
   });
 })(window);

@@ -54,8 +54,7 @@
     }
 
     function responsiveDefaultGrid() {
-      if (viewportPrefersPhonePortraitGrid()) return constants.PHONE_PORTRAIT_GRID;
-      return viewportPrefersPortraitGrid() ? constants.PORTRAIT_GRID : constants.DEFAULT_GRID;
+      return constants.DEFAULT_GRID;
     }
 
     function cssPixelValue(value) {
