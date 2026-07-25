@@ -121,10 +121,18 @@
       uiCore.setExclusiveButtonState(el.fieldDisplayButtons, "fieldDisplay", state.fieldDisplay, {
         selectedAttribute: "aria-pressed",
       });
-      const fieldDisplayVisible = state.viewMode === "field";
+      const materialView = state.viewMode === "epsilon" || state.viewMode === "mu";
+      const materialOverlayAvailable = materialView && state.viewProjection === "2d";
+      const fieldDisplayVisible = state.viewMode === "field" || (materialOverlayAvailable && state.materialFieldOverlay);
       if (el.fieldDisplayControl) el.fieldDisplayControl.hidden = !fieldDisplayVisible;
       el.visualComponentRows?.forEach?.((row) => {
         row.hidden = !fieldDisplayVisible;
+      });
+      el.materialFieldOverlayInputs?.forEach?.((input) => {
+        input.checked = Boolean(state.materialFieldOverlay);
+      });
+      el.materialFieldOverlayControls?.forEach?.((control) => {
+        control.hidden = !materialOverlayAvailable;
       });
       el.fieldQuiverInputs?.forEach?.((input) => {
         input.checked = Boolean(state.fieldQuiver);

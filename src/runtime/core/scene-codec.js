@@ -12,6 +12,7 @@
     "fieldComponent",
     "fieldDisplay",
     "fieldQuiver",
+    "materialFieldOverlay",
     "diagnosticsEnabled",
     "visualLayerBoundaries",
     "visualLayerMonitors",

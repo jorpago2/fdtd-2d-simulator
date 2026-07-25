@@ -51,6 +51,7 @@
       fieldComponent: "ez",
       fieldDisplay: "scalar",
       fieldQuiver: false,
+      materialFieldOverlay: false,
       diagnosticsEnabled: false,
       maxwellCheckEnabled: false,
       visualLayerBoundaries: true,

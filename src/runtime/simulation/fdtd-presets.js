@@ -1,5 +1,26 @@
 "use strict";
 
+const MATERIAL_FIELD_OVERLAY_PRESETS = new Set([
+  "topologicalPumping",
+  "kerrSlab",
+  "spmKerrPulse",
+  "kerrBistableCavity",
+  "vo2SwitchingSlab",
+  "pcmMemoryCell",
+  "nonlinearLimiter",
+  "temporalInterface",
+  "temporalSlab",
+  "temporalModulation",
+  "temporalCrystal",
+  "modulatedGuide",
+  "travelingModulation",
+  "modulatedRing",
+  "floquetResonators",
+  "syntheticFrequency",
+  "bicKerr",
+  "spaceTimeCrystal",
+]);
+
 function pointSegmentDistanceSquared(px, py, x0, y0, x1, y1) {
   const dx = x1 - x0;
   const dy = y1 - y0;
@@ -221,6 +242,7 @@ Object.assign(FDTDSim.prototype, {
     state.fieldComponent = "ez";
     state.fieldDisplay = "scalar";
     state.fieldQuiver = false;
+    state.materialFieldOverlay = false;
     state.viewMode = "field";
     state.gain = 1;
     state.autoScale = true;
@@ -2321,6 +2343,11 @@ Object.assign(FDTDSim.prototype, {
       case "empty":
       default:
         break;
+    }
+    if (MATERIAL_FIELD_OVERLAY_PRESETS.has(name)) {
+      state.viewMode = "epsilon";
+      state.fieldDisplay = state.fieldComponent === "hz" ? "magneticMag" : "electricMag";
+      state.materialFieldOverlay = true;
     }
     if (
       state.materialModulationEnabled ||

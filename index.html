@@ -126,6 +126,10 @@
                 <button class="mode-toggle-button is-active" type="button" role="radio" data-material-part="real" aria-checked="true">Re</button>
                 <button class="mode-toggle-button" type="button" role="radio" data-material-part="imag" aria-checked="false">Im</button>
               </fieldset>
+              <label class="toolbar-switch" title="Overlay a selectable electric or magnetic field on the material map" data-material-field-overlay-control hidden>
+                <input type="checkbox" data-material-field-overlay-input />
+                <span><i>E</i>/<i>H</i> overlay</span>
+              </label>
               <span class="visual-options-divider" aria-hidden="true"></span>
               <div class="visual-layer-grid canvas-overlay-grid" aria-label="Canvas overlay layers">
                 <label class="toolbar-switch visual-layer-switch" title="Show CPML and reflective boundary overlays">
@@ -316,6 +320,7 @@
                   <ul>
                     <li><strong>Field maps</strong> show instantaneous field components. They are excellent for intuition, but not enough for quantitative reflection or transmission.</li>
                     <li><strong>Poynting flux</strong> is the local power-flow proxy. For quantitative work, integrate it on monitors and compare with a reference simulation.</li>
+                    <li><strong>Material + field:</strong> in a 2D &epsilon; or &mu; view, enable the E/H overlay and choose a field component to compare the excitation with a time-varying or field-driven material response. The material colorbar remains the quantitative scale; the field overlay is independently auto-scaled.</li>
                     <li><strong>2D and 3D views</strong> render the same simulation data. Changing the view should not be interpreted as changing the electromagnetic model.</li>
                   </ul>
                   <h3>Implemented formulas</h3>
@@ -1439,6 +1444,10 @@
                     <button class="mode-toggle-button" type="button" role="radio" data-view-mode="mu" aria-checked="false" title="Show permeability map">&mu;</button>
                   </fieldset>
                 </div>
+                <label class="toggle-row" title="Overlay a selectable electric or magnetic field on the material map" data-material-field-overlay-control hidden>
+                  <input type="checkbox" data-material-field-overlay-input />
+                  <span>Overlay field on &epsilon;/&mu;</span>
+                </label>
                 <div class="visual-control-row visual-component-row">
                   <span>Component</span>
                   <fieldset class="canvas-mode-toggle field-display-toggle" role="radiogroup" aria-label="Visual panel field component">
@@ -1840,7 +1849,7 @@
     <script src="src/runtime/simulation/fdtd-materials.js?v=20260703-mode-dynamic-wasm-1"></script>
     <script src="src/runtime/simulation/fdtd-field-observables.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-boundaries.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-presets.js?v=20260722-scene-boundary-1"></script>
+    <script src="src/runtime/simulation/fdtd-presets.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/simulation/fdtd-incident-field.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-mode-solver.js?v=20260702-mode-source-1"></script>
     <script src="src/runtime/simulation/fdtd-sources.js?v=20260703-runtime-cleanup-1"></script>
@@ -1856,14 +1865,14 @@
     <script src="src/runtime/simulation/fdtd-yee.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/canvas/canvas-surface-three-renderer.js?v=20260703-surface-orbit-1"></script>
     <script src="src/runtime/canvas/canvas-field-webgl-renderer.js?v=20260704-field-webgl-1"></script>
-    <script src="src/runtime/simulation/fdtd-rendering.js?v=20260703-2d-render-1"></script>
+    <script src="src/runtime/simulation/fdtd-rendering.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/canvas/canvas-reference-overlays.js?v=20260703-source-k-arrow-1"></script>
     <script src="src/runtime/canvas/canvas-source-overlays.js?v=20260704-source-k-direction-1"></script>
     <script src="src/runtime/canvas/canvas-monitor-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-dom.js?v=20260706-walkthrough-1"></script>
+    <script src="src/runtime/ui/ui-dom.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
     <script src="src/runtime/ui/ui-scene-guide.js?v=20260704-collapsed-menu-cards-1"></script>
@@ -1871,21 +1880,21 @@
     <script src="src/runtime/ui/ui-results-charts.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/control-sync-ui.js?v=20260703-time-rate-fps-1"></script>
-    <script src="src/runtime/core/scene-codec.js?v=20260703-overlay-modes-1"></script>
+    <script src="src/runtime/core/scene-codec.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/ui/source-monitor-model.js?v=20260702-courant-01-1"></script>
     <script src="src/runtime/ui/material-editor-model.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/material-editor-ui.js?v=20260722-material-help-1"></script>
     <script src="src/runtime/ui/material-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/entity-selection-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/visual-layer-model.js?v=20260703-overlay-modes-1"></script>
-    <script src="src/runtime/core/state-normalizer.js?v=20260704-poynting-components-1"></script>
+    <script src="src/runtime/core/state-normalizer.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/app/simulation-effects.js?v=20260704-measure-policy-1"></script>
     <script src="src/runtime/app/runtime-controller.js?v=20260704-runtime-pacing-1"></script>
     <script src="src/runtime/canvas/canvas-colorbar.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-export.js?v=20260703-three-surface-1"></script>
     <script src="src/runtime/canvas/canvas-render-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/runtime-control-bindings.js?v=20260704-runtime-pacing-1"></script>
-    <script src="src/runtime/ui/visual-control-bindings.js?v=20260704-measure-policy-1"></script>
+    <script src="src/runtime/ui/visual-control-bindings.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/ui/results-control-bindings.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/ui/source-monitor-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/material-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
@@ -1904,7 +1913,7 @@
     <script src="src/runtime/canvas/canvas-interactions.js?v=20260703-delete-key-1"></script>
     <script src="src/runtime/canvas/canvas-surface-orbit-controller.js?v=20260703-surface-orbit-1"></script>
     <script src="src/runtime/canvas/canvas-draw-preview-overlay.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/core/app-state.js?v=20260703-overlay-modes-1"></script>
+    <script src="src/runtime/core/app-state.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/core/app-formatters.js?v=20260703-time-rate-fps-1"></script>
     <script src="src/runtime/ui/source-monitor-operations.js?v=20260703-overlay-modes-1"></script>
     <script src="src/runtime/ui/material-operations.js?v=20260703-runtime-cleanup-1"></script>
@@ -1922,7 +1931,7 @@
     <script src="src/runtime/canvas/canvas-gesture-actions-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/config-material-handlers-controller.js?v=20260704-measure-policy-1"></script>
     <script src="src/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/app/control-ui-state-controller.js?v=20260704-poynting-components-1"></script>
+    <script src="src/runtime/app/control-ui-state-controller.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/app/main.js?v=20260706-walkthrough-1"></script>
   </body>

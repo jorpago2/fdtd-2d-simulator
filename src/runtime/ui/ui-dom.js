@@ -99,6 +99,8 @@
       fieldQuiverControls: documentRef.querySelectorAll("[data-field-quiver-control]"),
       fieldQuiverInputs: documentRef.querySelectorAll("[data-field-quiver-input]"),
       fieldQuiverLabels: documentRef.querySelectorAll("[data-field-quiver-label]"),
+      materialFieldOverlayControls: documentRef.querySelectorAll("[data-material-field-overlay-control]"),
+      materialFieldOverlayInputs: documentRef.querySelectorAll("[data-material-field-overlay-input]"),
       visualLayerInputs: documentRef.querySelectorAll("[data-visual-layer]"),
       visualComponentRows: documentRef.querySelectorAll(".visual-component-row"),
       viewProjectionButtons: documentRef.querySelectorAll("[data-view-projection]"),

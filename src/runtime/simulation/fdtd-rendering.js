@@ -589,6 +589,57 @@ renderMaterialImage32(pixels) {
   }
 },
 
+drawMaterialFieldOverlay(viewport) {
+  if (!state.materialFieldOverlay || (state.viewMode !== "epsilon" && state.viewMode !== "mu") || state.viewProjection !== "2d") return;
+
+  if (!this.materialFieldOverlayCanvas || this.materialFieldOverlayCanvas.width !== this.nx || this.materialFieldOverlayCanvas.height !== this.ny) {
+    this.materialFieldOverlayCanvas = document.createElement("canvas");
+    this.materialFieldOverlayCanvas.width = this.nx;
+    this.materialFieldOverlayCanvas.height = this.ny;
+    this.materialFieldOverlayCtx = this.materialFieldOverlayCanvas.getContext("2d", { alpha: true });
+    this.materialFieldOverlayImage = this.materialFieldOverlayCtx.createImageData(this.nx, this.ny);
+  }
+
+  // ponytail: CPU compositing keeps Canvas2D and WebGL visually identical; move this blend into the shader only if large-grid profiling requires it.
+  const scale = this.fieldRenderScale();
+  const magnitude = this.fieldDisplayIsMagnitude();
+  const colorLut = cmasherColorLut(currentFieldColormapName(magnitude), !magnitude);
+  const data = this.materialFieldOverlayImage.data;
+  const useScalarField = state.fieldDisplay === "scalar";
+  for (let i = 0; i < this.n; i += 1) {
+    const value = useScalarField ? this.ez[i] : this.fieldValueAt(i);
+    const rawMapped = Number.isFinite(value) ? value * scale : 0;
+    const mapped = magnitude ? clamp(rawMapped, 0, 1) : clamp(rawMapped, -1, 1);
+    const colorT = magnitude ? mapped : 0.5 + 0.5 * mapped;
+    const colorIndex = clamp(Math.round(colorT * CMASHER_LUT_LAST), 0, CMASHER_LUT_LAST) * 3;
+    const p = i * 4;
+    data[p] = colorLut[colorIndex];
+    data[p + 1] = colorLut[colorIndex + 1];
+    data[p + 2] = colorLut[colorIndex + 2];
+    data[p + 3] = Math.round(184 * Math.abs(mapped));
+  }
+  this.materialFieldOverlayCtx.putImageData(this.materialFieldOverlayImage, 0, 0);
+
+  this.ctx.save();
+  this.ctx.imageSmoothingEnabled = false;
+  this.ctx.drawImage(
+    this.materialFieldOverlayCanvas,
+    this.viewX,
+    this.viewY,
+    this.visibleGridWidth(),
+    this.visibleGridHeight(),
+    viewport.left,
+    viewport.top,
+    viewport.width,
+    viewport.height,
+  );
+  this.ctx.restore();
+
+  const label = `${fieldDisplayConfig().key} overlay · ${state.autoScale ? "auto" : `gain ${state.gain.toFixed(2)}`}`;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  this.drawOverlayLabel?.(label, viewport.left + 12 * dpr, viewport.top + 18 * dpr, "left");
+},
+
 render() {
   this.rebuildSubpixelMaterialCoefficients?.();
   this.fitCanvas();
@@ -672,6 +723,7 @@ render() {
     perf.record("renderPresentMs", perf.now() - renderPhaseStart);
     renderPhaseStart = perf.now();
   }
+  this.drawMaterialFieldOverlay(viewport);
   if (visualLayerEnabled("boundaries")) {
     this.drawCpmlOverlay();
   }

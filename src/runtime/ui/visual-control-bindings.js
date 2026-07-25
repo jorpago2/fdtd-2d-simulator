@@ -67,6 +67,15 @@
       });
     });
 
+    forEachNode(el.materialFieldOverlayInputs, (input) => {
+      input.addEventListener("change", () => {
+        state.materialFieldOverlay = input.checked;
+        measureVisualState();
+        updateControlText();
+        sim.render();
+      });
+    });
+
     forEachNode(el.visualLayerInputs, (input) => {
       input.addEventListener("change", () => {
         setCustomVisualLayer(input.dataset.visualLayer, input.checked);

@@ -70,6 +70,7 @@
       state.fieldComponent = state.fieldComponent === "hz" ? "hz" : "ez";
       state.fieldDisplay = normalizeChoice(state.fieldDisplay, FIELD_DISPLAY_VALUES, "scalar");
       state.fieldQuiver = Boolean(state.fieldQuiver);
+      state.materialFieldOverlay = Boolean(state.materialFieldOverlay);
       state.diagnosticsEnabled = Boolean(state.diagnosticsEnabled);
       delete state.visualProfile;
       normalizeVisualLayerFlags();
