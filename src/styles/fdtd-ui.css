@@ -151,6 +151,22 @@ p {
   margin: 0;
 }
 
+sub,
+sup {
+  position: relative;
+  vertical-align: baseline;
+  font-size: 0.85em;
+  line-height: 0;
+}
+
+sub {
+  bottom: -0.18em;
+}
+
+sup {
+  top: -0.42em;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
