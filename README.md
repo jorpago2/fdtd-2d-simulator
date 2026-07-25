@@ -1,105 +1,147 @@
-# 2D FDTD Browser Simulator
+# Maxwell FDTD Lab
 
-An interactive web simulator for exploring electromagnetic waves, photonics, and
-Maxwell-equation intuition directly in the browser.
+An interactive 2D electromagnetic teaching laboratory that runs entirely in a
+modern browser. It uses finite-difference time-domain (FDTD) simulation to help
+students connect Maxwell-equation concepts with visible wave behavior and
+measurable device response.
 
-It is designed for teaching, rapid visual exploration, and early-stage research
-prototyping: choose a scene, run the time-domain simulation, inspect fields and
-observables, then export the result for discussion, reports, or reproducible
-follow-up.
+The project is built for guided learning, classroom demonstrations, and
+reproducible numerical exploration. Its central workflow is simple: select a
+physical example, observe the relevant field or material response, inspect the
+quantitative evidence, and then modify the scene to test an idea.
 
-![2D FDTD Browser Simulator feature summary](assets/readme-hero.png)
+![Maxwell FDTD Lab interface](assets/readme-hero.png)
 
-## Why It Exists
+## Project Objective
 
-Electromagnetic simulation is often locked behind heavy desktop tools, long
-setup steps, or black-box workflows. This simulator focuses on the opposite:
-fast access, clear visual feedback, editable scenes, and enough numerical
-guardrails to make the results useful for learning and exploratory work.
+Maxwell FDTD Lab aims to bridge four parts of electromagnetics education that
+are often taught separately:
 
-It is not meant to replace full commercial FEM/FDTD solvers. It is meant to make
-wave physics visible.
+1. **Theory:** wave propagation, boundary conditions, constitutive relations,
+   resonances, dispersion, and energy flow.
+2. **Physical intuition:** animated fields make interference, confinement,
+   coupling, scattering, and switching directly observable.
+3. **Numerical method:** the simulation exposes grid resolution, FDTD time
+   stepping, boundaries, sources, materials, and numerical diagnostics.
+4. **Evidence:** field maps are paired with monitors, spectra, port metrics,
+   sweeps, and scene-specific checks in the Results panel.
 
-## What You Can Explore
+The examples are not intended as decorative animations. Each one is designed
+to reveal a characteristic physical signature and, where available, provide a
+quantitative observable that supports its interpretation.
 
-- Free-space propagation, interference, diffraction, and scattering.
-- Normal and oblique incidence at dielectric interfaces.
-- CPML absorbing boundaries and finite-domain effects.
-- Waveguides, directional couplers, resonators, add-drop rings, and ringdown
-  observables.
-- Dispersive, conductive, anisotropic, nonlinear, phase-change, and gain/loss
-  media.
-- Photonic-crystal, SSH, Valley-Hall, and selected non-Hermitian/topological
-  teaching examples.
-- Poynting flow, field maps, line monitors, port-like metrics, sweeps, plots,
-  and exported scene snapshots.
+## Intended Users
 
-## Main Features
+- Students learning electromagnetics, optics, photonics, or numerical methods.
+- Instructors preparing interactive lectures, laboratory activities, or
+  concept checks.
+- Researchers using a lightweight 2D model for qualitative exploration before
+  moving to a calibrated full-wave workflow.
+- Developers studying browser-based scientific simulation and visualization.
 
-- Runs in a browser with no desktop simulation package.
-- Includes a curated scene library with more than 100 electromagnetic and
-  photonic examples.
-- Provides editable sources, materials, monitors, boundaries, and numerical
-  settings.
-- Shows real-time field evolution with overlays, colorbars, scale references,
-  and diagnostic panels.
-- Supports reproducible scene export/import through JSON snapshots.
-- Exports figures and data for teaching notes, reports, and notebooks.
-- Uses JavaScript and WebAssembly simulation paths where available.
-- Includes automated validation checks for selected reference scenes.
+## What You Can Study
 
-## Who It Is For
+The library contains **140 numbered examples**, plus an empty editable domain,
+organized as a progressive syllabus:
 
-- Students learning wave propagation, boundary conditions, resonators, and
-  photonic devices.
-- Instructors preparing interactive demonstrations or visual explanations.
-- Researchers sketching qualitative behavior before moving to a full solver.
-- Developers experimenting with browser-based scientific visualization.
+- Maxwell equations, propagation, interference, and diffraction.
+- Dielectric interfaces, Fresnel effects, multilayers, and Bragg structures.
+- Electric and magnetic sources, arrays, radiation, and near-to-far analysis.
+- Waveguides, bends, couplers, interferometers, and microwave cross sections.
+- Fabry-Perot cavities, ring resonators, add-drop filters, and ringdown.
+- Dielectric and metallic scattering, dimers, disorder, and localization.
+- Conductive, dispersive, anisotropic, gyrotropic, and bianisotropic media.
+- Photonic crystals, defect cavities, Fano resonances, and BIC analogues.
+- SSH and Valley-Hall teaching models and selected topological workflows.
+- Plasmonics, ENZ media, negative-index structures, metasurfaces, and hyperlenses.
+- Kerr, harmonic, phase-change, gain/loss, VO2-like, and PCM-like media.
+- Time-varying materials, traveling modulation, and Floquet sidebands.
+- PT-symmetric, exceptional-point, non-Hermitian, and coupled advanced examples.
 
-## What It Is Not
+## Learning Workflow
 
-This is a 2D educational and exploratory simulator. Strong quantitative claims
-still require care.
+1. Open **Scenes** and choose an example.
+2. Read its guide to identify what should appear and which result confirms it.
+3. Run or step the Yee-grid update and follow the transient behavior.
+4. Compare electric or magnetic fields with `epsilon`/`mu`, material overlays,
+   or Poynting flow as appropriate to the phenomenon.
+5. Open **Results** for spectra, power, Q, port, switching, sideband, or sweep
+   diagnostics.
+6. Change one parameter at a time, repeat the run, and export the scene or data
+   for comparison.
 
-Use full validation before treating results as publication-grade:
+This sequence is suitable for an instructor-led demonstration, an individual
+student exercise, or the first stage of a more rigorous numerical study.
 
-- grid-refinement studies,
-- longer runs to reduce transient effects,
-- power-balance checks,
-- analytical or independent numerical references,
-- documented source, monitor, material, and sweep settings.
+## Main Capabilities
 
-Advanced scenes should be read as reduced 2D analogues unless a specific
-validation case supports the stronger physical claim.
+- Two-dimensional `Ez` and `Hz` FDTD formulations on a Yee grid.
+- Configurable continuous-wave and pulsed sources, dipoles, mode-like launches,
+  arrays, and custom monitors.
+- CPML absorbing boundaries and selectable boundary conditions.
+- Editable dielectric, magnetic, lossy, conductive, dispersive, tensor,
+  nonlinear, active, phase-change, and time-modulated materials.
+- Real-time scalar and magnitude fields, Poynting flow, vector overlays, 3D
+  surface views, colorbars, and simultaneous field/material visualization.
+- Scene guides, line and port diagnostics, spectra, sweeps, NTFF results, and
+  device-specific observables.
+- PNG figure export, CSV sweep export, and reproducible JSON scene
+  export/import.
+- JavaScript solver path with a WebAssembly backend where supported.
+- Responsive desktop and mobile interface with no server-side simulation.
+
+## Scientific Scope and Limitations
+
+This is a **2D educational and exploratory solver**, not a replacement for a
+validated commercial or research-grade FEM/FDTD package. Advanced scenes may
+use reduced-dimensional or phenomenological models to make the governing idea
+inspectable within an interactive browser simulation.
+
+A visually plausible field pattern is not, by itself, quantitative validation.
+Before using a result to support a research claim, perform at least:
+
+- grid-refinement and time-window convergence studies,
+- wavelength and smallest-feature resolution checks,
+- source and monitor calibration or background-reference runs,
+- energy or power-balance checks where physically applicable,
+- comparison with an analytical result or an independent solver, and
+- explicit documentation of units, material parameters, boundaries, and
+  post-processing assumptions.
+
+The executable validation matrix distinguishes bounded teaching checks from
+stronger claims that still require calibration or convergence. See
+[`docs/VALIDATION.md`](docs/VALIDATION.md) before interpreting advanced results.
 
 ## Run Locally
 
 Requirements:
 
-- Node.js on `PATH`.
-- A modern browser.
+- Node.js.
+- A modern browser with Canvas and WebGL support.
 
-Start the local server:
+Start the static server:
 
 ```powershell
 npm run serve
 ```
 
-Open:
+Then open:
 
 ```text
 http://127.0.0.1:8768/index.html
 ```
 
+No application build or backend service is required for normal use.
+
 ## Validation
 
-For a quick repository check:
+Run the dependency-free repository checks:
 
 ```powershell
 npm test
 ```
 
-For browser-level checks, install Playwright once and run the smoke test:
+Install the browser-test dependency and Chromium once to run the smoke suite:
 
 ```powershell
 npm install
@@ -107,26 +149,36 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-For the full validation protocol and current limitations, see
-`docs/VALIDATION.md`.
+Run the complete browser-executable physics matrix after changing presets,
+material models, or observables:
+
+```powershell
+npm run test:browser:physics:all
+```
+
+The full protocol, interpretation of `PASS`/`WARN`/`BLOCK`, and current model
+limitations are documented in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Deployment
 
-The project can be published as a static GitHub Pages site. Build the deployable
-artifact with:
+The repository includes a GitHub Pages workflow. To build the same static
+artifact locally:
 
 ```powershell
 npm run build:pages
 ```
 
-The GitHub Pages workflow publishes `dist/`.
+The deployable site is written to `dist/`.
 
-## Further Documentation
+## Contributor Documentation
 
-- `docs/VALIDATION.md`: validation protocol and interpretation.
-- `docs/SCENE_AUDIT.md`: scene coverage and current caveats.
-- `docs/PROJECT_MAP.md`: technical map for contributors.
+- [`docs/PROJECT_MAP.md`](docs/PROJECT_MAP.md): canonical files and code
+  ownership.
+- [`docs/SCENE_AUDIT.md`](docs/SCENE_AUDIT.md): scene coverage and current
+  caveats.
+- [`docs/VALIDATION.md`](docs/VALIDATION.md): numerical and physical validation
+  protocol.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [`LICENSE`](LICENSE).
