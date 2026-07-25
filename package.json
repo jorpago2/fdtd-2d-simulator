@@ -26,6 +26,7 @@
     "audit:ui": "node scripts/audit-ui.mjs",
     "audit:scenes": "node scripts/audit-scene-contracts.mjs --write",
     "audit:guides": "node scripts/audit-scene-guides.mjs --write",
+    "audit:guides:doi": "node scripts/audit-scene-guides.mjs --write --check-doi",
     "validate:mmi": "node scripts/validate-mmi-split.mjs",
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:smoke": "node scripts/browser-smoke.mjs",
