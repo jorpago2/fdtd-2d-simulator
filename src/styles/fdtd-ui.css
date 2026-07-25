@@ -1565,8 +1565,8 @@ body.controls-drawer-open {
 .mobile-layer-nav,
 .control-tab-panels {
   min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 0;
+  border-radius: 0;
   background: var(--panel);
 }
 
@@ -1576,6 +1576,7 @@ body.controls-drawer-open {
   align-items: center;
   gap: 10px;
   padding: 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .control-panel-title-block {
@@ -1600,6 +1601,7 @@ body.controls-drawer-open {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-rows: minmax(var(--control), auto);
   padding: 4px;
+  border-bottom: 1px solid var(--border);
   background: var(--panel-2);
 }
 
@@ -1691,6 +1693,13 @@ details[open] > summary::after {
   display: grid;
   gap: 10px;
   align-content: start;
+}
+
+.scene-section {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
 }
 
 label.scene-select-fallback,
@@ -1797,12 +1806,6 @@ label.scene-select-fallback,
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-height: min(28dvh, 220px);
-  overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  background: var(--panel-2);
 }
 
 .scene-filter-button {
@@ -1838,8 +1841,6 @@ label.scene-select-fallback,
   display: grid;
   gap: 8px;
   min-height: 0;
-  max-height: min(48vh, 680px);
-  overflow: auto;
 }
 
 .scene-card {
@@ -1945,6 +1946,13 @@ label.scene-select-fallback,
   gap: 8px;
 }
 
+.scene-guide-panel {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .scene-guide-header span {
   color: var(--accent-strong);
   font-size: 0.65rem;
@@ -1954,10 +1962,8 @@ label.scene-select-fallback,
 
 .scene-guide-item {
   align-content: start;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-  background: var(--panel-2);
+  padding: 2px 0 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .scene-guide-item h3 {
@@ -2406,8 +2412,6 @@ label.scene-select-fallback,
 
   #tab-scenes .scene-current-panel .scene-guide-panel {
     grid-column: 1;
-    max-height: calc(100dvh - 350px);
-    overflow: auto;
   }
 
   #tab-scenes .scene-browse-panel {
@@ -2423,7 +2427,6 @@ label.scene-select-fallback,
   #tab-scenes .scene-browse-panel .scene-filter-bar {
     grid-column: 1;
     grid-row: 2 / span 2;
-    max-height: min(48vh, calc(100dvh - 390px));
   }
 
   #tab-scenes .scene-browse-panel .scene-browser-meta {
@@ -2434,7 +2437,6 @@ label.scene-select-fallback,
   #tab-scenes .scene-browse-panel .scene-cards {
     grid-column: 2;
     grid-row: 3;
-    max-height: min(430px, calc(100dvh - 500px));
   }
 
   #tab-results .diagnostics-section,
@@ -2472,12 +2474,6 @@ label.scene-select-fallback,
 
   .topbar .brand-lockup {
     display: none;
-  }
-
-  .scene-browse-panel .scene-filter-bar,
-  .scene-browse-panel .scene-cards {
-    max-height: none;
-    overflow: visible;
   }
 
   .theme-toggle {
@@ -2686,8 +2682,7 @@ label.scene-select-fallback,
 
   .panel-section,
   .results-detail-panel,
-  .config-detail-panel,
-  .scene-guide-panel {
+  .config-detail-panel {
     padding: 10px;
   }
 
