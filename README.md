@@ -176,6 +176,8 @@ The deployable site is written to `dist/`.
   ownership.
 - [`docs/SCENE_AUDIT.md`](docs/SCENE_AUDIT.md): scene coverage and current
   caveats.
+- [`docs/SCENE_DOCUMENTATION_AUDIT.md`](docs/SCENE_DOCUMENTATION_AUDIT.md):
+  per-example guide specificity and DOI-link coverage.
 - [`docs/VALIDATION.md`](docs/VALIDATION.md): numerical and physical validation
   protocol.
 

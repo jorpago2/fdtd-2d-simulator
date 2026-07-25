@@ -31,6 +31,65 @@
     return "propagation";
   }
 
+  const sceneGuideReferenceDois = Object.freeze({
+    "K. S. Yee, IEEE Trans. Antennas Propag. 14, 302-307 (1966).": "10.1109/TAP.1966.1138693",
+    "J.-P. Berenger, J. Comput. Phys. 114, 185-200 (1994).": "10.1006/jcph.1994.1159",
+    "A. F. Oskooi et al., Comput. Phys. Commun. 181, 687-702 (2010).": "10.1016/j.cpc.2009.11.008",
+    "A. Y. Piggott et al., Sci. Rep. 5, 11327 (2015).": "10.1038/srep11327",
+    "H. Kogelnik, Bell Syst. Tech. J. 48, 2909-2947 (1969).": "10.1002/j.1538-7305.1969.tb01198.x",
+    "N. Yu and F. Capasso, Nat. Mater. 13, 139-150 (2014).": "10.1038/nmat3839",
+    "L. Rayleigh, Philos. Mag. 41, 107-120 (1871).": "10.1080/14786447108640452",
+    "P. Biagioni, J.-S. Huang, and B. Hecht, Rep. Prog. Phys. 75, 024402 (2012).": "10.1088/0034-4885/75/2/024402",
+    "M. Decker and I. Staude, J. Opt. 18, 103001 (2016).": "10.1088/2040-8978/18/10/103001",
+    "E. A. J. Marcatili, Bell Syst. Tech. J. 48, 2071-2102 (1969).": "10.1002/j.1538-7305.1969.tb01166.x",
+    "L. B. Soldano and E. C. M. Pennings, J. Lightwave Technol. 13, 615-627 (1995).": "10.1109/50.372474",
+    "D. Thomson et al., J. Opt. 18, 073003 (2016).": "10.1088/2040-8978/18/7/073003",
+    "D. Dai, J. Lightwave Technol. 35, 572-587 (2017).": "10.1109/JLT.2016.2587727",
+    "E. M. Purcell, Phys. Rev. 69, 681 (1946).": "10.1103/PhysRev.69.674.2",
+    "A. Yariv, Electron. Lett. 36, 321-322 (2000).": "10.1049/el:20000340",
+    "K. J. Vahala, Nature 424, 839-846 (2003).": "10.1038/nature01939",
+    "M. Notomi, Rep. Prog. Phys. 73, 096501 (2010).": "10.1088/0034-4885/73/9/096501",
+    "G. Mie, Ann. Phys. 330, 377-445 (1908).": "10.1002/andp.19083300302",
+    "M. Kerker, D.-S. Wang, and C. L. Giles, J. Opt. Soc. Am. 73, 765-767 (1983).": "10.1364/JOSA.73.000765",
+    "A. I. Kuznetsov et al., Science 354, aag2472 (2016).": "10.1126/science.aag2472",
+    "Y. Kivshar and A. Miroshnichenko, Opt. Photon. News 28, 24-31 (2017).": "10.1364/OPN.28.1.000024",
+    "J. B. Pendry, Phys. Rev. Lett. 85, 3966-3969 (2000).": "10.1103/PhysRevLett.85.3966",
+    "R. A. Shelby, D. R. Smith, and S. Schultz, Science 292, 77-79 (2001).": "10.1126/science.1058847",
+    "N. I. Zheludev and Y. S. Kivshar, Nat. Mater. 11, 917-924 (2012).": "10.1038/nmat3431",
+    "M. Silveirinha and N. Engheta, Phys. Rev. Lett. 97, 157403 (2006).": "10.1103/PhysRevLett.97.157403",
+    "Z. Jacob, L. V. Alekseyev, and E. Narimanov, Opt. Express 14, 8247-8256 (2006).": "10.1364/OE.14.008247",
+    "Z. Liu et al., Science 315, 1686 (2007).": "10.1126/science.1137368",
+    "D. L. Jaggard, A. R. Mickelson, and C. H. Papas, Appl. Phys. 18, 211-216 (1979).": "10.1007/BF00886864",
+    "C. Caloz and A. Sihvola, IEEE Antennas Propag. Mag. 62, 58-71 (2020).": "10.1109/MAP.2019.2955698",
+    "P. A. Franken et al., Phys. Rev. Lett. 7, 118-119 (1961).": "10.1103/PhysRevLett.7.118",
+    "J. A. Armstrong et al., Phys. Rev. 127, 1918-1939 (1962).": "10.1103/PhysRev.127.1918",
+    "D. N. Neshev and I. Aharonovich, Light Sci. Appl. 7, 58 (2018).": "10.1038/s41377-018-0058-1",
+    "M. Wuttig, H. Bhaskaran, and T. Taubner, Nat. Photonics 11, 465-476 (2017).": "10.1038/nphoton.2017.126",
+    "A. Shaltout, V. Shalaev, and M. Brongersma, Science 364, eaat3100 (2019).": "10.1126/science.aat3100",
+    "F. R. Morgenthaler, IRE Trans. Microwave Theory Tech. 6, 167-172 (1958).": "10.1109/TMTT.1958.1124533",
+    "J. R. Zurita-Sanchez, P. Halevi, and J. C. Cervantes-Gonzalez, Phys. Rev. A 79, 053821 (2009).": "10.1103/PhysRevA.79.053821",
+    "D. L. Sounas and A. Alu, Nat. Photonics 11, 774-783 (2017).": "10.1038/nphoton.2017.155",
+    "A. Shaltout et al., Science 364, eaat3100 (2019).": "10.1126/science.aat3100",
+    "E. Galiffi et al., Adv. Photonics 4, 014002 (2022).": "10.1117/1.AP.4.1.014002",
+    "E. Yablonovitch, Phys. Rev. Lett. 58, 2059-2062 (1987).": "10.1103/PhysRevLett.58.2059",
+    "S. John, Phys. Rev. Lett. 58, 2486-2489 (1987).": "10.1103/PhysRevLett.58.2486",
+    "S. G. Johnson and J. D. Joannopoulos, Opt. Express 8, 173-190 (2001).": "10.1364/OE.8.000173",
+    "L. Lu, J. D. Joannopoulos, and M. Soljacic, Nat. Photonics 8, 821-829 (2014).": "10.1038/nphoton.2014.248",
+    "T. Ozawa et al., Rev. Mod. Phys. 91, 015006 (2019).": "10.1103/RevModPhys.91.015006",
+    "C. W. Hsu et al., Nat. Rev. Mater. 1, 16048 (2016).": "10.1038/natrevmats.2016.48",
+    "M. I. Shalaev et al., Nat. Nanotechnol. 14, 31-34 (2019).": "10.1038/s41565-018-0297-6",
+    "C. M. Bender and S. Boettcher, Phys. Rev. Lett. 80, 5243-5246 (1998).": "10.1103/PhysRevLett.80.5243",
+    "C. E. Ruter et al., Nat. Phys. 6, 192-195 (2010).": "10.1038/nphys1515",
+    "M.-A. Miri and A. Alu, Science 363, eaar7709 (2019).": "10.1126/science.aar7709",
+    "S. K. Ozdemir et al., Nat. Mater. 18, 783-798 (2019).": "10.1038/s41563-019-0304-9",
+    "S. Weidemann et al., Science 368, 311-314 (2020).": "10.1126/science.aaz8727",
+  });
+
+  function sceneGuideReferenceDoiUrl(reference) {
+    const doi = sceneGuideReferenceDois[reference];
+    return doi ? `https://doi.org/${doi}` : "";
+  }
+
   const sceneGuideReferenceSets = {
     propagation: {
       books: ["A. Taflove and S. Hagness, Computational Electrodynamics, 3rd ed.", "J. D. Jackson, Classical Electrodynamics."],
@@ -299,7 +358,18 @@
       const list = documentRef.createElement("ul");
       (items || []).forEach((text) => {
         const li = documentRef.createElement("li");
-        li.textContent = text;
+        li.appendChild(documentRef.createTextNode(text));
+        const doiUrl = sceneGuideReferenceDoiUrl(text);
+        if (doiUrl) {
+          li.appendChild(documentRef.createTextNode(" "));
+          const link = documentRef.createElement("a");
+          link.href = doiUrl;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "DOI";
+          link.setAttribute("aria-label", `Open DOI for ${text}`);
+          li.appendChild(link);
+        }
         list.appendChild(li);
       });
       item.append(title, list);
@@ -383,6 +453,7 @@
   global.FdtdUiSceneGuide = Object.freeze({
     buildSceneGuide,
     createSceneGuideController,
+    sceneGuideReferenceDoiUrl,
     sceneGuideFamily,
   });
 })(window);
