@@ -63,6 +63,12 @@ function assertEqual(actual, expected, label) {
   }
 }
 
+function assertClose(actual, expected, label, tolerance = 1e-12) {
+  if (!Number.isFinite(actual) || Math.abs(actual - expected) > tolerance) {
+    throw new Error(`${label} mismatch: ${actual} !== ${expected}`);
+  }
+}
+
 function sampleStateOptions() {
   return {
     defaultSourceConfig: {
@@ -427,12 +433,113 @@ function compareViewportModules(runtime, next) {
   assertDeepEqual(snapshotViewportSim(nextSim), snapshotViewportSim(runtimeSim), "viewport mutating methods");
 }
 
+function checkMonitorResults(runtime) {
+  const collecting = runtime.FdtdUiResults.resultsInsightText(
+    { balanceReady: false, diagnosticsEnabled: true, samples: 20 },
+    String,
+  );
+  if (!collecting.text.startsWith("Collecting monitor samples")) {
+    throw new Error(`results readiness exposed an unready balance: ${collecting.text}`);
+  }
+  const ready = runtime.FdtdUiResults.resultsInsightText(
+    {
+      balance: 0.1,
+      balanceMethod: "transverse line-integrated power",
+      balanceReady: true,
+      diagnosticsEnabled: true,
+      reflectance: 0.2,
+      samples: 20,
+      transmittance: 0.7,
+    },
+    String,
+  );
+  if (!ready.text.includes("transverse line-integrated power")) {
+    throw new Error(`results readiness omitted the estimator method: ${ready.text}`);
+  }
+
+  const spectralReadout = runtime.FdtdUiResultsCharts.spectrumReadoutText(
+    {
+      mode: "rta",
+      points: [
+        { frequency: 0.01, reflectance: 0.1, transmittance: 0.8, balanceResidual: 0.1 },
+        { frequency: 0.02, reflectance: 0.3, transmittance: 0.8, balanceResidual: -0.1 },
+      ],
+    },
+    0.019,
+    String,
+    String,
+  );
+  assertEqual(spectralReadout, "f=0.02 | R=0.3 | T=0.8 | residual=-0.1", "R/T/residual spectrum readout");
+
+  runtime.state.fieldComponent = "ez";
+  runtime.state.cellsPerWavelength = 20;
+  const sim = new runtime.FDTDSim();
+  sim.nx = 3;
+  sim.ny = 4;
+  sim.material = new Uint8Array(12);
+  sim.ez = new Float64Array(12);
+  sim.hx = new Float64Array(12);
+  sim.hy = new Float64Array(12);
+  sim.eps = new Float64Array(12).fill(1);
+  sim.epsY = new Float64Array(12).fill(1);
+  sim.mu = new Float64Array(12).fill(1);
+  sim.muY = new Float64Array(12).fill(1);
+  sim.id = (x, y) => y * sim.nx + x;
+  sim.activeInteriorMinY = () => 0;
+  sim.activeInteriorMaxY = () => 3;
+  sim.fieldPowerScale = () => 1;
+  [1, 2, 3, 4].forEach((field, y) => {
+    for (let x = 0; x < sim.nx; x += 1) {
+      const index = sim.id(x, y);
+      sim.ez[index] = field;
+      sim.hy[index] = -field;
+    }
+  });
+  const separated = sim.lineWaveSeparationAt(1, { cos: 1, sin: 0 });
+  assertClose(separated.forward, 2.5, "transverse mean forward field");
+  assertClose(separated.backward, 0, "transverse mean backward field");
+  assertClose(separated.forwardPower, 1.5, "transverse integrated forward power");
+
+  sim.diagnosticDftSummary = { carrierIncidentPower: 9, orders: [{ order: 0, reflectedPowerRatio: 0.9, powerRatio: 0.05 }] };
+  sim.diagnosticDftSampleCount = 64;
+  sim.diagnosticSamples = 20;
+  sim.diagnosticIncidentPowerEwma = 2;
+  sim.diagnosticReflectedPowerEwma = 0.5;
+  sim.diagnosticTransmittedPowerEwma = 1;
+  sim.diagnosticIncidentPhasorPower = 9;
+  sim.diagnosticReflectedPhasorPower = 8;
+  sim.diagnosticTransmittedPhasorPower = 0.5;
+  const integratedBalance = sim.diagnosticPowerBalanceEstimate();
+  assertEqual(integratedBalance.method, "transverse line-integrated power", "steady-state balance method");
+  assertClose(integratedBalance.reflectance, 0.25, "integrated reflectance");
+  assertClose(integratedBalance.transmittance, 0.5, "integrated transmittance");
+
+  sim.diagnosticDftSummary = {
+    carrierFrequency: 0.01,
+    carrierIncidentPower: 1,
+    orders: [
+      { order: 0, reflectedPowerRatio: 0.1, powerRatio: 0.6 },
+      { order: 1, reflectedPowerRatio: 0.1, powerRatio: 0.1 },
+    ],
+    scatteringMatrix: { totalReflectedPower: 0.2, totalTransmittedPower: 0.7 },
+  };
+  const floquetBalance = sim.diagnosticPowerBalanceEstimate();
+  assertEqual(floquetBalance.method, "line-mean DFT all measured orders", "Floquet balance method");
+  assertClose(floquetBalance.reflectance, 0.2, "Floquet reflectance");
+  assertClose(floquetBalance.transmittance, 0.7, "Floquet transmittance");
+}
+
 function main() {
   const runtime = createBrowserContext();
   runtime.devicePixelRatio = 2;
   runtime.FDTDSim = function FDTDSim() {};
   runtime.clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   runtime.clampInt = (value, min, max) => Math.round(runtime.clamp(Number(value) || 0, min, max));
+  runtime.state = { cellsPerWavelength: 20, fieldComponent: "ez", sources: [] };
+  runtime.defaultSourceConfig = { angleDeg: 0, frequency: 0.005, shape: "line", type: "sine" };
+  runtime.incidentFieldSourceShapes = new Set(["line", "gaussianProfile", "modeProfile", "tfsf"]);
+  runtime.temporalFloquetAnalysisPresets = new Set();
+  runtime.DIAGNOSTIC_DFT_WINDOW = 512;
   loadScripts(runtime, [
     ["src", "runtime", "core", "app-state.js"],
     ["src", "runtime", "core", "app-formatters.js"],
@@ -440,6 +547,9 @@ function main() {
     ["src", "runtime", "ui", "ui-core.js"],
     ["src", "runtime", "core", "state-normalizer.js"],
     ["src", "runtime", "canvas", "canvas-viewport.js"],
+    ["src", "runtime", "simulation", "fdtd-line-diagnostics.js"],
+    ["src", "runtime", "ui", "ui-results.js"],
+    ["src", "runtime", "ui", "ui-results-charts.js"],
   ]);
 
   const next = createBrowserContext();
@@ -460,6 +570,7 @@ function main() {
   compareUiCoreModules(runtime, next);
   compareStateNormalizerModules(runtime, next);
   compareViewportModules(runtime, next);
+  checkMonitorResults(runtime);
   console.log("Runtime core validation: PASS");
 }
 

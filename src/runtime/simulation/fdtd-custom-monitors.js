@@ -42,16 +42,30 @@
       const count = clampInt(Math.ceil(segment.length) + 1, 2, Math.max(this.nx, this.ny) * 2);
       const cells = [];
       const seen = new Set();
+      let duplicateSamples = 0;
+      let pecSamples = 0;
+      const clipped =
+        Math.min(segment.x0, segment.x1) < this.activeInteriorMinX() + 0.5 ||
+        Math.max(segment.x0, segment.x1) > this.activeInteriorMaxX() + 0.5 ||
+        Math.min(segment.y0, segment.y1) < this.activeInteriorMinY() + 0.5 ||
+        Math.max(segment.y0, segment.y1) > this.activeInteriorMaxY() + 0.5;
       for (let sample = 0; sample < count; sample += 1) {
         const t = count <= 1 ? 0.5 : sample / (count - 1);
         const x = clampInt(Math.round(segment.x0 + (segment.x1 - segment.x0) * t - 0.5), this.activeInteriorMinX(), this.activeInteriorMaxX());
         const y = clampInt(Math.round(segment.y0 + (segment.y1 - segment.y0) * t - 0.5), this.activeInteriorMinY(), this.activeInteriorMaxY());
         const idx = this.id(x, y);
-        if (seen.has(idx) || this.material[idx] === 2) continue;
+        if (seen.has(idx)) {
+          duplicateSamples += 1;
+          continue;
+        }
         seen.add(idx);
+        if (this.material[idx] === 2) {
+          pecSamples += 1;
+          continue;
+        }
         cells.push({ idx, x, y });
       }
-      return { segment, cells };
+      return { segment, cells, requestedSamples: count, duplicateSamples, pecSamples, clipped };
     },
 
     monitorFieldMagnitudeAt(idx) {
@@ -60,7 +74,7 @@
 
     measureCustomMonitor(monitor) {
       const normalized = typeof normalizeMonitor === "function" ? normalizeMonitor({ ...monitor }) : monitor;
-      const { segment, cells } = this.monitorSampleCells(normalized);
+      const { segment, cells, requestedSamples, duplicateSamples, pecSamples, clipped } = this.monitorSampleCells(normalized);
       const amplitudeScale = this.fieldScale;
       const powerScale = this.fieldPowerScale();
       let sum = 0;
@@ -102,6 +116,12 @@
         monitor: normalized,
         segment,
         samples,
+        requestedSamples,
+        duplicateSamples,
+        pecSamples,
+        clipped,
+        samplingWarning: samples === 0 || pecSamples > 0 || clipped,
+        time: this.time,
         value,
         mean,
         absMean,

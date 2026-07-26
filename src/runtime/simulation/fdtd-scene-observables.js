@@ -997,22 +997,22 @@
       const carrierPoint = spectrum?.carrierPoint || null;
       if (spectrum?.validPointCount > 0 && carrierPoint?.valid) {
         rows.push(row({
-          metric: "Spectral R/T/A",
+          metric: "Spectral R/T/residual",
           measured: `f0=${formatField(spectrum.carrierFrequency)}, R=${formatRatio(carrierPoint.reflectance)}, T=${formatRatio(
             carrierPoint.transmittance,
-          )}, A~${formatRatio(carrierPoint.absorption)}`,
+          )}, residual=${formatRatio(carrierPoint.balanceResidual)}`,
           expected: `${spectrum.validPointCount} normalized DFT bins`,
           error: `resid=${formatRatio(carrierPoint.balanceResidual)}`,
           level: spectrum.validPointCount >= 3 ? "ok" : "info",
-          note: "The spectrum is normalized frequency by frequency to the incident line-port DFT window.",
+          note: "The spectrum is normalized frequency by frequency to the incident transverse-line mean-field DFT window.",
         }));
         const referenceCarrier = spectrum.referenceCarrierPoint?.referenceNormalized || null;
         if (referenceCarrier?.valid) {
           rows.push(row({
-            metric: "Reference R/T/A",
-            measured: `R=${formatRatio(referenceCarrier.reflectance)}, T=${formatRatio(referenceCarrier.transmittance)}, A~${formatRatio(
-              referenceCarrier.absorption,
-            )}`,
+            metric: "Reference R/T/residual",
+            measured: `R=${formatRatio(referenceCarrier.reflectance)}, T=${formatRatio(
+              referenceCarrier.transmittance,
+            )}, residual=${formatRatio(referenceCarrier.balanceResidual)}`,
             expected: `${spectrum.reference?.validPointCount || 0} reference-normalized bins`,
             error: `resid=${formatRatio(referenceCarrier.balanceResidual)}`,
             level: "info",
@@ -1021,29 +1021,30 @@
         }
       } else {
         rows.push(row({
-          metric: "Spectral R/T/A",
+          metric: "Spectral R/T/residual",
           measured: `${finiteNumber(sim.diagnosticDftSampleCount, 0)} DFT samples`,
           expected: ">=64 samples with finite incident spectrum",
           level: "pending",
-          note: "Run longer to populate broadband R/T/A bins; continuous-wave scenes will mainly validate the carrier bin.",
+          note: "Run longer to populate broadband R/T/residual bins; continuous-wave scenes will mainly validate the carrier bin.",
         }));
       }
     };
     if (!state.diagnosticsEnabled) {
       rows.push(row({
-        metric: "Line-port R/T/A",
+        metric: "Line-monitor R/T/residual",
         measured: "disabled",
         expected: target.label || "enable line monitors",
         level: "pending",
-        note: "The line-port observable is quantitative only after line monitors are enabled and have collected samples.",
+        note: "The line-monitor observable is quantitative only after its transverse power integrals are ready.",
       }));
       appendSpectralRow();
       return;
     }
     const samples = finiteNumber(sim.diagnosticSamples, 0);
-    if (samples < 20) {
+    const balance = safeSimEstimate(sim, "diagnosticPowerBalanceEstimate");
+    if (!balance?.ready) {
       rows.push(row({
-        metric: "Line-port R/T/A",
+        metric: "Line-monitor R/T/residual",
         measured: `${samples} samples`,
         expected: target.label || ">=20 samples",
         level: "pending",
@@ -1052,10 +1053,8 @@
       appendSpectralRow();
       return;
     }
-    const balance = safeSimEstimate(sim, "diagnosticPowerBalanceEstimate");
     const r = finiteNumber(balance?.reflectance, finiteNumber(sim.diagnosticReflectance, 0));
     const t = finiteNumber(balance?.transmittance, finiteNumber(sim.diagnosticTransmittance, 0));
-    const a = finiteNumber(balance?.absorption, 1 - r - t);
     const residual = finiteNumber(balance?.balanceResidual, 1 - r - t);
     let level = "info";
     let error = "-";
@@ -1072,12 +1071,12 @@
       error = `limit=${formatRatio(target.minReflectance)}`;
     }
     rows.push(row({
-      metric: "Line-port R/T/A",
-      measured: `R=${formatRatio(r)}, T=${formatRatio(t)}, A~${formatRatio(a)}`,
+      metric: "Line-monitor R/T/residual",
+      measured: `R=${formatRatio(r)}, T=${formatRatio(t)}, residual=${formatRatio(residual)}`,
       expected: target.label || "power balance",
       error: error === "-" ? `resid=${formatRatio(residual)}` : error,
       level,
-      note: `Line-port values use ${balance?.method || "the built-in incident/reflected/transmitted phasor separation"}.`,
+      note: `Line-monitor values use ${balance?.method || "the built-in incident/reflected/transmitted wave separation"}.`,
     }));
     appendSpectralRow();
   }
@@ -2001,7 +2000,7 @@
         measured: `${finiteNumber(sim.analysisSamples, 0)} analysis, ${finiteNumber(sim.diagnosticDftSampleCount, 0)} DFT samples`,
         expected: "finite +/-1 sideband readout",
         level: "pending",
-        note: "Run longer so probe or line-port DFT samples can resolve modulation sidebands.",
+        note: "Run longer so probe or line-monitor DFT samples can resolve modulation sidebands.",
       }));
       return true;
     }
@@ -2428,7 +2427,7 @@
           note: "This scene has not yet been mapped to a stronger theory-specific observable.",
         }));
         if (lineDiagnosticsReady(state, sim)) {
-          addLineMonitorRows(rows, state, sim, { label: "line-port power balance" });
+          addLineMonitorRows(rows, state, sim, { label: "line-monitor power balance" });
         }
       }
 

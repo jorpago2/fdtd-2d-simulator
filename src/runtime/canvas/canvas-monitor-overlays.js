@@ -23,11 +23,14 @@
         this.drawOverlayLabel(label, x + 12 * dpr, viewport.top + 24 * dpr, "left");
         ctx.restore();
       };
-      if (visualLayerEnabled("monitors") && state.diagnosticsEnabled) {
-        drawLine(monitors.left, "L", "rgba(11, 98, 232, 0.74)");
-        drawLine(monitors.right, "R", "rgba(16, 136, 82, 0.74)");
+      if (visualLayerEnabled("monitors")) {
+        if (state.diagnosticsEnabled) {
+          const rightIncident = this.diagnosticDirection().cos < 0;
+          drawLine(monitors.left, rightIncident ? "OUT" : "IN", "rgba(11, 98, 232, 0.74)");
+          drawLine(monitors.right, rightIncident ? "IN" : "OUT", "rgba(16, 136, 82, 0.74)");
+        }
+        this.drawCustomMonitorMarkers();
       }
-      this.drawCustomMonitorMarkers();
     },
 
     drawCustomMonitorMarkers() {
@@ -62,6 +65,9 @@
       const nx = -segment.uy;
       const ny = segment.ux;
       const normalLength = Math.max(12 * dpr, 0.08 * Math.hypot(x1 - x0, y1 - y0));
+      const normalX = cx + nx * normalLength;
+      const normalY = cy + ny * normalLength;
+      const headLength = 4 * dpr;
 
       this.ctx.save();
       this.ctx.lineCap = "round";
@@ -77,9 +83,14 @@
       this.ctx.strokeStyle = "rgba(255, 255, 255, 0.78)";
       this.ctx.beginPath();
       this.ctx.moveTo(cx, cy);
-      this.ctx.lineTo(cx + nx * normalLength, cy + ny * normalLength);
+      this.ctx.lineTo(normalX, normalY);
+      this.ctx.moveTo(normalX, normalY);
+      this.ctx.lineTo(normalX - nx * headLength + segment.ux * headLength * 0.65, normalY - ny * headLength + segment.uy * headLength * 0.65);
+      this.ctx.moveTo(normalX, normalY);
+      this.ctx.lineTo(normalX - nx * headLength - segment.ux * headLength * 0.65, normalY - ny * headLength - segment.uy * headLength * 0.65);
       this.ctx.stroke();
       this.drawOverlayLabel(label, cx + 10 * dpr, cy - 12 * dpr, "left");
+      this.drawOverlayLabel("+n", normalX + 5 * dpr, normalY - 5 * dpr, "left");
       this.ctx.restore();
     },
 

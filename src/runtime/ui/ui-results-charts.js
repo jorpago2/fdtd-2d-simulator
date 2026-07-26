@@ -93,12 +93,29 @@
     };
   }
 
+  function spectrumReadoutText(state, targetFrequency, formatFieldValue, formatDiagnosticRatio) {
+    if (!state || state.mode === "empty" || !Array.isArray(state.points) || state.points.length === 0) {
+      return "Collecting spectrum samples";
+    }
+    const nearest = state.points.reduce((best, item) =>
+      Math.abs((item.f ?? item.frequency) - targetFrequency) < Math.abs((best.f ?? best.frequency) - targetFrequency) ? item : best,
+    );
+    if (state.mode === "rta") {
+      return `f=${formatFieldValue(nearest.frequency)} | R=${formatDiagnosticRatio(nearest.reflectance)} | T=${formatDiagnosticRatio(
+        nearest.transmittance,
+      )} | residual=${formatDiagnosticRatio(nearest.balanceResidual)}`;
+    }
+    return `Probe f=${formatFieldValue(nearest.f)} | ${nearest.db.toFixed(1)} dB`;
+  }
+
   function createResultsChartsController({
     el,
     formatDiagnosticRatio = (value) => String(value),
     formatFieldValue = (value) => String(value),
     formatSweepValue = (value) => String(value),
   } = {}) {
+    let spectrumReadoutState = { mode: "empty", points: [] };
+
     function drawSweepChart({
       auxMetric = null,
       dualPolarization = false,
@@ -442,18 +459,20 @@
               ...point,
               reflectance: point.referenceNormalized.reflectance,
               transmittance: point.referenceNormalized.transmittance,
-              absorption: point.referenceNormalized.absorption,
+              balanceResidual: point.referenceNormalized.balanceResidual,
             }))
         : portPoints;
       if (plottedPortPoints.length > 0) {
         const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
         const fMax = Math.max(...plottedPortPoints.map((point) => point.frequency));
+        const yMin = Math.min(0, ...plottedPortPoints.map((point) => point.balanceResidual || 0));
         const yMax = Math.max(
           1,
-          ...plottedPortPoints.map((point) => Math.max(point.reflectance || 0, point.transmittance || 0, point.absorption || 0)),
+          ...plottedPortPoints.map((point) => Math.max(point.reflectance || 0, point.transmittance || 0, point.balanceResidual || 0)),
         );
         const xFor = (frequency) => padL + ((frequency - fMin) / Math.max(1e-9, fMax - fMin)) * plotW;
-        const yFor = (value) => padT + plotH - (clampNumber(value, 0, yMax) / yMax) * plotH;
+        const yFor = (value) =>
+          padT + plotH - ((clampNumber(value, yMin, yMax) - yMin) / Math.max(1e-9, yMax - yMin)) * plotH;
         const drawCurve = (key, color) => {
           ctx.strokeStyle = color;
           ctx.lineWidth = Math.max(2 * dpr, 1.5);
@@ -468,24 +487,47 @@
         };
         drawCurve("reflectance", colors.blue);
         drawCurve("transmittance", colors.green);
-        drawCurve("absorption", colors.reference);
+        drawCurve("balanceResidual", colors.reference);
+        if (yMin < 0) {
+          ctx.strokeStyle = colors.axis;
+          ctx.lineWidth = Math.max(1 * dpr, 1);
+          ctx.beginPath();
+          ctx.moveTo(padL, yFor(0));
+          ctx.lineTo(width - padR, yFor(0));
+          ctx.stroke();
+        }
         ctx.fillStyle = colors.text;
         ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
-        ctx.fillText(referenceActive ? "Reference-normalized R/T/A" : "Line-port R/T/A", padL, 11 * dpr);
+        ctx.fillText(referenceActive ? "Reference-normalized R/T/residual" : "Line-monitor R/T/residual", padL, 11 * dpr);
         ctx.fillStyle = colors.blue;
         ctx.fillText("R", width - padR - 58 * dpr, 11 * dpr);
         ctx.fillStyle = colors.green;
         ctx.fillText("T", width - padR - 38 * dpr, 11 * dpr);
         ctx.fillStyle = colors.reference;
-        ctx.fillText("A", width - padR - 18 * dpr, 11 * dpr);
+        ctx.fillText("res", width - padR - 18 * dpr, 11 * dpr);
         ctx.fillStyle = colors.text;
         ctx.textAlign = "right";
         ctx.fillText(formatDiagnosticRatio(yMax), padL - 6 * dpr, padT + 2 * dpr);
-        ctx.fillText("0", padL - 6 * dpr, padT + plotH);
+        ctx.fillText(formatDiagnosticRatio(yMin), padL - 6 * dpr, padT + plotH);
         ctx.textAlign = "center";
         ctx.fillText("f", padL + plotW / 2, height - 11 * dpr);
+        spectrumReadoutState = { fMax, fMin, mode: "rta", points: plottedPortPoints };
+        const carrierFrequency = Number.isFinite(Number(portSpectrum?.carrierFrequency))
+          ? Number(portSpectrum.carrierFrequency)
+          : plottedPortPoints[0].frequency;
+        const carrier = plottedPortPoints.reduce((nearest, point) =>
+          Math.abs(point.frequency - carrierFrequency) < Math.abs(nearest.frequency - carrierFrequency)
+            ? point
+            : nearest,
+        );
+        el?.spectrumChart?.setAttribute(
+          "aria-label",
+          `${referenceActive ? "Reference-normalized" : "Line-monitor"} spectrum. Carrier R ${formatDiagnosticRatio(
+            carrier.reflectance,
+          )}, T ${formatDiagnosticRatio(carrier.transmittance)}, residual ${formatDiagnosticRatio(carrier.balanceResidual)}.`,
+        );
       } else if (bins.length > 0 && maxMag > 1e-12) {
         ctx.strokeStyle = colors.blue;
         ctx.lineWidth = Math.max(2 * dpr, 1.5);
@@ -498,8 +540,18 @@
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
+        spectrumReadoutState = {
+          fMax: maxFrequency,
+          fMin: 0,
+          mode: "probe",
+          points: bins.map((bin) => ({ ...bin, db: Math.max(-54, 20 * Math.log10(bin.mag / maxMag)) })),
+        };
+        const peak = bins.reduce((best, bin) => (bin.mag > best.mag ? bin : best), bins[0]);
+        el?.spectrumChart?.setAttribute("aria-label", `Probe spectrum. Peak frequency ${formatFieldValue(peak.f)}.`);
       } else {
         drawEmptyChartMessage(ctx, "Collecting probe samples", padL + plotW / 2, padT + plotH / 2, plotW - 12 * dpr, dpr, colors);
+        spectrumReadoutState = { mode: "empty", points: [] };
+        el?.spectrumChart?.setAttribute("aria-label", "Probe spectrum. Collecting samples.");
       }
 
       if (plottedPortPoints.length <= 0) {
@@ -558,9 +610,21 @@
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+        const peak = data.reduce((best, point) => (point.value > best.value ? point : best), data[0]);
+        el?.farFieldChart?.setAttribute(
+          "aria-label",
+          `${scatteringMode ? "Scattering" : "Near-to-far"} angular pattern. Peak at ${(
+            (((peak.theta * 180) / Math.PI) % 360 + 360) %
+            360
+          ).toFixed(1)} degrees.`,
+        );
       } else {
         const text = scatteringMode ? "Collecting scattering phasors" : "Collecting NTFF contour phasors";
         drawEmptyChartMessage(ctx, text, cx, cy, Math.min(width - 24 * dpr, radius * 1.8), dpr, colors);
+        el?.farFieldChart?.setAttribute(
+          "aria-label",
+          scatteringMode ? "Scattering angular pattern. Collecting phasors." : "Near-to-far angular pattern. Collecting phasors.",
+        );
       }
 
       ctx.fillStyle = colors.text;
@@ -582,9 +646,15 @@
     function updateSpectrumReadout(event) {
       if (!el?.analysisChartReadout || !el?.spectrumChart) return;
       const point = canvasRelativePoint(el.spectrumChart, event);
-      const f = clampNumber(point.x / point.width, 0, 1) * 0.1;
-      const db = -54 + (1 - clampNumber(point.y / point.height, 0, 1)) * 54;
-      el.analysisChartReadout.textContent = `Spectrum f=${formatFieldValue(f)} | ${db.toFixed(1)} dB`;
+      const plotFraction = clampNumber((point.x - 38) / Math.max(1, point.width - 52), 0, 1);
+      const targetFrequency =
+        spectrumReadoutState.fMin + plotFraction * (spectrumReadoutState.fMax - spectrumReadoutState.fMin);
+      el.analysisChartReadout.textContent = spectrumReadoutText(
+        spectrumReadoutState,
+        targetFrequency,
+        formatFieldValue,
+        formatDiagnosticRatio,
+      );
     }
 
     function updateFarFieldReadout(event, { scatteringMode = false } = {}) {
@@ -615,5 +685,6 @@
     chartPalette,
     createResultsChartsController,
     prepareChartCanvas,
+    spectrumReadoutText,
   });
 })(window);

@@ -2041,8 +2041,13 @@ label.scene-select-fallback,
 .diagnostic-metric output,
 .config-status-grid output {
   min-width: 0;
+  min-height: 0;
   overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
   color: var(--text);
+  background: transparent;
   font-size: 0.86rem;
   font-weight: 850;
   line-height: 1.2;
@@ -2066,6 +2071,36 @@ label.scene-select-fallback,
   display: grid;
   gap: 10px;
   min-width: 0;
+}
+
+.custom-monitor-results,
+.custom-monitor-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.custom-monitor-card + .custom-monitor-card {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.custom-monitor-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.custom-monitor-card h3 {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.monitor-kind {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
 }
 
 .scene-observable-card,
@@ -2820,8 +2855,6 @@ label.scene-select-fallback,
   }
 
   .config-summary-grid,
-  .results-summary-grid,
-  .diagnostics-grid,
   .performance-grid {
     grid-template-columns: 1fr;
   }

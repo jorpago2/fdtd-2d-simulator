@@ -1126,21 +1126,25 @@ function updateStats() {
   const engineText = runtimeEngineLabel();
   const diagnosticAngle = sim.diagnosticSamples > 0 ? sim.diagnosticAngleDeg : sim.diagnosticDirection().angleDeg;
   const diagnosticAngleText = `${formatMonitorAngle(diagnosticAngle)}°`;
-  const diagnosticReflectance = sim.diagnosticReflectance || 0;
-  const diagnosticTransmittance = sim.diagnosticTransmittance || 0;
-  const diagnosticBalance = sim.diagnosticSamples > 0 ? 1 - diagnosticReflectance - diagnosticTransmittance : 0;
+  const powerBalance = sim.diagnosticPowerBalanceSummary || sim.diagnosticPowerBalanceEstimate?.() || null;
+  const diagnosticReflectance = powerBalance?.reflectance ?? sim.diagnosticReflectance ?? 0;
+  const diagnosticTransmittance = powerBalance?.transmittance ?? sim.diagnosticTransmittance ?? 0;
+  const diagnosticBalance =
+    powerBalance?.balanceResidual ?? (sim.diagnosticSamples > 0 ? 1 - diagnosticReflectance - diagnosticTransmittance : 0);
   resultsView.updateDiagnostics({
     angleText: diagnosticAngleText,
     balance: diagnosticBalance,
+    balanceMethod: powerBalance?.method || "collecting samples",
+    balanceReady: Boolean(powerBalance?.ready),
     diagnosticsEnabled: state.diagnosticsEnabled,
     engineText,
-    incidentPower: sim.diagnosticIncidentPower || 0,
+    incidentPower: powerBalance?.incidentPower ?? sim.diagnosticIncidentPower ?? 0,
     lastDiverged: sim.lastDiverged,
     monitorCount: state.monitors.length,
-    reflectedPower: sim.diagnosticReflectedPower || 0,
+    reflectedPower: powerBalance?.reflectedPower ?? sim.diagnosticReflectedPower ?? 0,
     reflectance: diagnosticReflectance,
     samples: sim.diagnosticSamples || 0,
-    transmittedPower: sim.diagnosticTransmittedPower || 0,
+    transmittedPower: powerBalance?.transmittedPower ?? sim.diagnosticTransmittedPower ?? 0,
     transmittance: diagnosticTransmittance,
     maxwellCheckEnabled: state.maxwellCheckEnabled,
   });
@@ -1162,9 +1166,10 @@ function finalizeDeferredResults({ render = true } = {}) {
 function formatDiagnosticRatio(value) {
   if (!Number.isFinite(value)) return "0";
   if (Math.abs(value) < 1e-12) return "0";
-  if (value >= 10) return value.toFixed(1);
-  if (value >= 1) return value.toFixed(2);
-  if (value >= 0.01) return value.toFixed(3);
+  const magnitude = Math.abs(value);
+  if (magnitude >= 10) return value.toFixed(1);
+  if (magnitude >= 1) return value.toFixed(2);
+  if (magnitude >= 0.01) return value.toFixed(3);
   return value.toExponential(1);
 }
 

@@ -354,7 +354,7 @@
       "interface",
       "Normal-incidence Fresnel reflection and transmission",
       "after the line wave reaches the n = 1.5 half-space, a weak reflected wave and a shorter transmitted wavelength should be visible.",
-      "the carrier DFT should populate R/T/A and place reflectance within 0.08 of the analytical R = 0.04 reference.",
+      "the carrier spectrum should populate R/T/residual and place reflectance within 0.08 of the analytical R = 0.04 reference.",
       "Continuity of tangential fields at the impedance step fixes the reflected and transmitted amplitudes; quantitative power requires the DFT port normalization.",
     ),
     obliqueRefraction: sceneGuideEntry(

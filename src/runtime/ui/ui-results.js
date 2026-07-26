@@ -49,7 +49,19 @@
     return Math.round(number).toLocaleString("en-US");
   }
 
-  function resultsInsightText({ balance = 0, diagnosticsEnabled = true, lastDiverged = false, reflectance = 0, samples = 0, transmittance = 0 }, formatDiagnosticRatio) {
+  function resultsInsightText(
+    {
+      balance = 0,
+      balanceMethod = "",
+      balanceReady = false,
+      diagnosticsEnabled = true,
+      lastDiverged = false,
+      reflectance = 0,
+      samples = 0,
+      transmittance = 0,
+    },
+    formatDiagnosticRatio,
+  ) {
     if (lastDiverged) {
       return {
         text: "Field diverged. Reset the field or reduce gain/material contrast before trusting R/T.",
@@ -68,7 +80,7 @@
         warning: false,
       };
     }
-    if (samples < 20) {
+    if (!balanceReady) {
       return {
         text: `Collecting monitor samples (${samples}). R/T will stabilize after a few wave periods.`,
         warning: false,
@@ -76,7 +88,9 @@
     }
     const residual = Math.abs(balance);
     return {
-      text: `R=${formatDiagnosticRatio(reflectance)}, T=${formatDiagnosticRatio(transmittance)}, residual=${formatDiagnosticRatio(balance)} from ${samples} samples.`,
+      text: `R=${formatDiagnosticRatio(reflectance)}, T=${formatDiagnosticRatio(transmittance)}, residual=${formatDiagnosticRatio(
+        balance,
+      )} from ${samples} samples (${balanceMethod || "line monitors"}).`,
       warning: residual > 0.25,
     };
   }
@@ -300,6 +314,7 @@
         const monitor = measurement.monitor;
         const card = documentRef.createElement("article");
         card.className = "custom-monitor-card";
+        if (measurement.samplingWarning) card.dataset.healthLevel = "caution";
 
         const header = documentRef.createElement("header");
         const title = documentRef.createElement("h3");
@@ -309,21 +324,36 @@
         kind.textContent = monitorQuantityLabel(monitor.quantity);
         header.append(title, kind);
 
+        const component = monitorQuantityLabel("scalar").replace(/\s+mean$/i, "");
+        const meta = documentRef.createElement("p");
+        meta.className = "results-insight-note";
+        const samplingNotes = [
+          `${measurement.samples} cells`,
+          measurement.pecSamples > 0 ? `${measurement.pecSamples} PEC skipped` : null,
+          measurement.clipped ? "clipped at interior" : null,
+        ].filter(Boolean);
+        meta.textContent = `Instantaneous t=${formatFieldValue(measurement.time)} | L=${Number(monitor.lengthLambda).toFixed(
+          2,
+        )} \u03bb0 | \u03b8=${Number(monitor.angleDeg).toFixed(1)}\u00b0 | ${samplingNotes.join(" | ")}`;
+
         const grid = documentRef.createElement("div");
         grid.className = "diagnostics-grid";
-        [
-          ["Value", formatFieldValue(measurement.value)],
-          ["Mean", formatFieldValue(measurement.mean)],
-          ["Mean |F|", formatFieldValue(measurement.magnitude)],
-          ["RMS", formatFieldValue(measurement.rms)],
-          ["Flux n", formatFieldValue(measurement.normalFlux)],
-          ["Flux t", formatFieldValue(measurement.tangentFlux)],
-          ["Samples", String(measurement.samples)],
-        ].forEach(([label, value]) => {
+        const fieldMetrics = [
+          ["Selected", formatFieldValue(measurement.value)],
+          [`Mean ${component}`, formatFieldValue(measurement.mean)],
+          [`Mean |${component}|`, formatFieldValue(measurement.magnitude)],
+          [`RMS ${component}`, formatFieldValue(measurement.rms)],
+        ];
+        const fluxMetrics = [
+          ["Selected", formatFieldValue(measurement.value)],
+          ["Mean S\u00b7n", formatFieldValue(measurement.normalFlux)],
+          ["Mean S\u00b7t", formatFieldValue(measurement.tangentFlux)],
+        ];
+        (monitor.quantity === "normalFlux" || monitor.quantity === "tangentFlux" ? fluxMetrics : fieldMetrics).forEach(([label, value]) => {
           grid.appendChild(createMetricNode(documentRef, label, value));
         });
 
-        card.append(header, grid);
+        card.append(header, meta, grid);
         el.customMonitorResults.appendChild(card);
       });
     }
@@ -331,6 +361,8 @@
     function updateDiagnostics({
       angleText,
       balance,
+      balanceMethod,
+      balanceReady,
       diagnosticsEnabled,
       incidentPower,
       lastDiverged,
@@ -343,12 +375,12 @@
       engineText,
       maxwellCheckEnabled,
     }) {
-      const monitorDataReady = diagnosticsEnabled && samples > 0 && !lastDiverged;
+      const monitorDataReady = diagnosticsEnabled && balanceReady && !lastDiverged;
       setOutputText(el?.summaryReflectanceOutput, monitorDataReady ? formatDiagnosticRatio(reflectance) : "\u2014");
       setOutputText(el?.summaryTransmittanceOutput, monitorDataReady ? formatDiagnosticRatio(transmittance) : "\u2014");
       setOutputText(el?.summaryBalanceOutput, monitorDataReady ? formatDiagnosticRatio(balance) : "\u2014");
       setOutputText(el?.summaryAngleOutput, angleText);
-      updateInsight({ balance, diagnosticsEnabled, lastDiverged, reflectance, samples, transmittance });
+      updateInsight({ balance, balanceMethod, balanceReady, diagnosticsEnabled, lastDiverged, reflectance, samples, transmittance });
       setOutputText(el?.fluxLeftOutput, monitorDataReady ? formatFieldValue(incidentPower || 0) : "\u2014");
       setOutputText(el?.diagnosticAngleOutput, angleText);
       setOutputText(el?.reflectedPowerOutput, monitorDataReady ? formatFieldValue(reflectedPower || 0) : "\u2014");

@@ -79,7 +79,7 @@
         return;
       }
       const status = typeof sim.linePortReferenceStatus === "function" ? sim.linePortReferenceStatus() : null;
-      el.lineReferenceStatus.textContent = status?.message || "No line-port reference captured.";
+      el.lineReferenceStatus.textContent = status?.message || "No line-monitor reference captured.";
     }
 
     function measureResultsUi() {
@@ -143,7 +143,7 @@
       const result =
         typeof sim.captureLinePortReference === "function"
           ? sim.captureLinePortReference()
-          : { ok: false, message: "Line-port reference capture is unavailable." };
+          : { ok: false, message: "Line-monitor reference capture is unavailable." };
       refreshLineReferenceStatus(result.message);
       updateStats();
       sim.render();
@@ -153,7 +153,7 @@
       const result =
         typeof sim.clearLinePortReference === "function"
           ? sim.clearLinePortReference()
-          : { ok: false, message: "Line-port reference capture is unavailable." };
+          : { ok: false, message: "Line-monitor reference capture is unavailable." };
       refreshLineReferenceStatus(result.message);
       updateStats();
       sim.render();
@@ -164,8 +164,11 @@
     el.spectrumChart?.addEventListener("pointermove", updateSpectrumReadout);
     el.farFieldChart?.addEventListener("pointermove", updateFarFieldReadout);
     forEachNode([el.spectrumChart, el.farFieldChart], (canvas) => {
+      canvas?.addEventListener("focus", () => {
+        if (el.analysisChartReadout) el.analysisChartReadout.textContent = canvas.getAttribute("aria-label") || "Chart";
+      });
       canvas?.addEventListener("pointerleave", () => {
-        if (el.analysisChartReadout) el.analysisChartReadout.textContent = "Move over a chart";
+        if (el.analysisChartReadout) el.analysisChartReadout.textContent = "Focus or move over a chart";
       });
     });
 

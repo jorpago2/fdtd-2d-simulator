@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260725-scientific-indices-1" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260726-monitor-results-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -343,7 +343,7 @@
                     </li>
                     <li><strong>Poynting map:</strong> the rendered power-flow components are derived from the simulated field components.
                       <span class="help-guide-formula">Ez mode: S<sub>x</sub> = -E<sub>z</sub>H<sub>y</sub>, &nbsp; S<sub>y</sub> = E<sub>z</sub>H<sub>x</sub></span>
-                      <span class="help-guide-formula">Hz mode: S<sub>x</sub> = H<sub>y</sub>H<sub>z</sub>, &nbsp; S<sub>y</sub> = -H<sub>x</sub>H<sub>z</sub></span>
+                      <span class="help-guide-formula">Hz mode: S<sub>x</sub> = E<sub>y</sub>H<sub>z</sub>, &nbsp; S<sub>y</sub> = -E<sub>x</sub>H<sub>z</sub></span>
                     </li>
                     <li><strong>Maxwell checker:</strong> Results &gt; Maxwell equations compares two consecutive Yee states with the update equations actually used by the simulator.
                       <span class="help-guide-formula">residual = RMS(LHS - RHS) / RMS(LHS, RHS)</span>
@@ -374,17 +374,18 @@
                     <li><strong>Sampling:</strong> a contextual monitor is a discrete line segment, not a continuous analytical port. Its center is converted to a cell, its length is converted to cells, and the segment is sampled by rounding points back to Yee cells. Duplicate cells and PEC cells are skipped.
                       <span class="help-guide-formula">N<sub>s</sub> = number of accepted cells after rounding, clamping, duplicate removal, and PEC rejection</span>
                     </li>
-                    <li><strong>Scalar readouts:</strong> each accepted cell contributes the scaled out-of-plane electric field.
-                      <span class="help-guide-formula">e<sub>i</sub> = E<sub>z,i</sub> &middot; fieldScale</span>
-                      <span class="help-guide-formula">Mean = (1/N<sub>s</sub>)&Sigma;e<sub>i</sub>, &nbsp; RMS = sqrt[(1/N<sub>s</sub>)&Sigma;e<sub>i</sub><sup>2</sup>], &nbsp; Mean |F| = (1/N<sub>s</sub>)&Sigma;|e<sub>i</sub>|</span>
-                      In the current Ez engine, Mean |F| is the mean of |E<sub>z</sub>|, not a full vector norm of E and H.
+                    <li><strong>Scalar readouts:</strong> each accepted cell contributes the scaled out-of-plane simulated field F<sub>z</sub>.
+                      <span class="help-guide-formula">f<sub>i</sub> = F<sub>z,i</sub> &middot; fieldScale, &nbsp; F<sub>z</sub> = E<sub>z</sub> (TMz) or H<sub>z</sub> (TEz)</span>
+                      <span class="help-guide-formula">Mean = (1/N<sub>s</sub>)&Sigma;f<sub>i</sub>, &nbsp; RMS = sqrt[(1/N<sub>s</sub>)&Sigma;f<sub>i</sub><sup>2</sup>], &nbsp; Mean |F<sub>z</sub>| = (1/N<sub>s</sub>)&Sigma;|f<sub>i</sub>|</span>
+                      Mean |F<sub>z</sub>| is the magnitude of the scalar simulated component, not a full vector norm of E and H.
                     </li>
                     <li><strong>Flux readouts:</strong> the simulator first computes the local Poynting proxy from the simulated fields, then projects it onto the monitor normal and tangent.
                       <span class="help-guide-formula">Ez mode: S = (-E<sub>z</sub>H<sub>y</sub>, E<sub>z</sub>H<sub>x</sub>)</span>
+                      <span class="help-guide-formula">Hz mode: S = (E<sub>y</sub>H<sub>z</sub>, -E<sub>x</sub>H<sub>z</sub>)</span>
                       <span class="help-guide-formula">Flux n = (1/N<sub>s</sub>)&Sigma;(S<sub>i</sub>&middot;n)&middot;fieldScale<sup>2</sup>, &nbsp; Flux t = (1/N<sub>s</sub>)&Sigma;(S<sub>i</sub>&middot;u)&middot;fieldScale<sup>2</sup></span>
                     </li>
-                    <li><strong>Selected value:</strong> the highlighted Value follows the monitor quantity: Scalar returns Mean, Field magnitude returns Mean |F|, Normal flux returns Flux n, and Tangent flux returns Flux t. The other values stay visible to help diagnose sign, phase, and sampling issues.</li>
-                    <li><strong>Interpretation:</strong> these are line averages in simulator units. They are useful for local probes, qualitative flux direction, and relative comparisons. For quantitative R/T/A, use the diagnostic line-port results or compare contextual monitor readings against a reference scene with the same grid, source, scale, and monitor placement.</li>
+                    <li><strong>Selected value:</strong> the highlighted Value follows the monitor quantity: Scalar returns Mean, scalar-field magnitude returns Mean |F<sub>z</sub>|, and the flux options return the mean normal or tangential Poynting component. Values are instantaneous at the reported FDTD time unless a scene-specific Results observable states otherwise.</li>
+                    <li><strong>Interpretation:</strong> these are line averages in simulator units. They are useful for local probes, qualitative flux direction, and relative comparisons. For quantitative R/T and signed power-balance residual, use the diagnostic line-monitor results or compare contextual monitor readings against a reference scene with the same grid, source, scale, and monitor placement. Interpret absorption only for passive, stationary scenes.</li>
                   </ul>
                   <h3>Draw</h3>
                   <ul>
@@ -692,9 +693,9 @@
                   <span>Quantity</span>
                   <select id="monitorQuantityInput">
                     <option value="scalar">Scalar field</option>
-                    <option value="magnitude">Field magnitude</option>
-                    <option value="normalFlux">Normal flux</option>
-                    <option value="tangentFlux">Tangential flux</option>
+                    <option value="magnitude">Scalar-field magnitude |Fz|</option>
+                    <option value="normalFlux">Mean normal Poynting flux</option>
+                    <option value="tangentFlux">Mean tangential Poynting flux</option>
                   </select>
                 </label>
                 <fieldset class="two-col">
@@ -1514,7 +1515,7 @@
                   <output id="summaryTransmittanceOutput">—</output>
                 </div>
                 <div class="results-summary-card balance is-secondary">
-                  <span>1-R-T</span>
+                  <span title="Signed power-balance residual 1-R-T">&Delta;<i>P</i><sub>bal</sub></span>
                   <output id="summaryBalanceOutput">—</output>
                 </div>
                 <div class="results-summary-card angle is-secondary">
@@ -1580,6 +1581,7 @@
                       <output id="transmittanceOutput">—</output>
                     </div>
                   </div>
+                  <p class="results-insight-note">Steady-state powers use a discrete transverse line integral and single-direction wave separation; Floquet orders use a transverse-line mean-field DFT. For bends, multimode guides, or multiple sources, prefer the scene-specific port observable.</p>
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
               </details>
@@ -1660,18 +1662,18 @@
                     <button id="lineReferenceCaptureBtn" class="text-button" type="button">Capture reference</button>
                     <button id="lineReferenceClearBtn" class="text-button" type="button">Clear reference</button>
                   </div>
-                  <p id="lineReferenceStatus" class="sweep-status">No line-port reference captured.</p>
+                  <p id="lineReferenceStatus" class="sweep-status">No line-monitor reference captured.</p>
                   <p id="analysisStatus" class="sweep-status">Waiting for samples.</p>
                   <div class="analysis-chart-grid">
-                    <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" aria-label="Probe spectrum chart"></canvas>
-                    <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" aria-label="Near-to-far angular chart"></canvas>
+                    <canvas id="spectrumChart" class="analysis-chart" width="420" height="160" role="img" tabindex="0" aria-describedby="analysisChartReadout" aria-label="Probe spectrum. Collecting samples."></canvas>
+                    <canvas id="farFieldChart" class="analysis-chart" width="420" height="160" role="img" tabindex="0" aria-describedby="analysisChartReadout" aria-label="Near-to-far angular pattern. Collecting phasors."></canvas>
                   </div>
                   <div class="chart-footer">
                     <div class="chart-legend" aria-hidden="true">
                       <span><i class="legend-swatch spectrum"></i>Spectrum</span>
                       <span><i class="legend-swatch farfield"></i>Far field</span>
                     </div>
-                    <output id="analysisChartReadout" class="chart-readout">Move over a chart</output>
+                    <output id="analysisChartReadout" class="chart-readout">Focus or move over a chart</output>
                   </div>
                 </div>
               </details>
@@ -1855,10 +1857,10 @@
     <script src="src/runtime/simulation/fdtd-sources.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-modal-analysis.js?v=20260705-port-observables-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-sampling.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-custom-monitors.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/simulation/fdtd-custom-monitors.js?v=20260726-monitor-results-1"></script>
+    <script src="src/runtime/simulation/fdtd-line-diagnostics.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/simulation/fdtd-analysis-observables.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/simulation/fdtd-scene-observables.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/simulation/fdtd-material-diagnostics.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/simulation/fdtd-maxwell-checker.js?v=20260706-maxwell-check-1"></script>
     <script src="src/runtime/simulation/fdtd-diagnostics.js?v=20260705-port-observables-1"></script>
@@ -1868,16 +1870,16 @@
     <script src="src/runtime/simulation/fdtd-rendering.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/canvas/canvas-reference-overlays.js?v=20260703-source-k-arrow-1"></script>
     <script src="src/runtime/canvas/canvas-source-overlays.js?v=20260704-source-k-direction-1"></script>
-    <script src="src/runtime/canvas/canvas-monitor-overlays.js?v=20260703-runtime-cleanup-1"></script>
+    <script src="src/runtime/canvas/canvas-monitor-overlays.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/canvas/canvas-material-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/canvas/canvas-boundary-overlays.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-core.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/ui-dom.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/ui/ui-drawer.js?v=20260704-collapsed-menu-cards-1"></script>
     <script src="src/runtime/ui/ui-scenes.js?v=20260704-scene-views-1"></script>
-    <script src="src/runtime/ui/ui-scene-guide.js?v=20260725-scene-guide-content-2"></script>
-    <script src="src/runtime/ui/ui-results.js?v=20260703-runtime-cleanup-1"></script>
-    <script src="src/runtime/ui/ui-results-charts.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/ui/ui-scene-guide.js?v=20260726-monitor-results-1"></script>
+    <script src="src/runtime/ui/ui-results.js?v=20260726-monitor-results-1"></script>
+    <script src="src/runtime/ui/ui-results-charts.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/ui/numeric-input-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/control-sync-ui.js?v=20260703-time-rate-fps-1"></script>
     <script src="src/runtime/core/scene-codec.js?v=20260725-material-field-overlay-1"></script>
@@ -1895,7 +1897,7 @@
     <script src="src/runtime/canvas/canvas-render-controller.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/runtime-control-bindings.js?v=20260704-runtime-pacing-1"></script>
     <script src="src/runtime/ui/visual-control-bindings.js?v=20260725-material-field-overlay-1"></script>
-    <script src="src/runtime/ui/results-control-bindings.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/ui/results-control-bindings.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/ui/source-monitor-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/material-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/ui/config-control-bindings.js?v=20260703-runtime-cleanup-1"></script>
@@ -1921,7 +1923,7 @@
     <script src="src/runtime/app/app-layout.js?v=20260706-responsive-threshold-1"></script>
     <script src="src/runtime/app/app-performance.js?v=20260704-validation-profile-1"></script>
     <script src="src/runtime/app/runtime-session-controller.js?v=20260706-runtime-session-1"></script>
-    <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260705-port-observables-1"></script>
+    <script src="src/runtime/simulation/sweep-analysis-controller.js?v=20260726-monitor-results-1"></script>
     <script src="src/runtime/ui/material-stability-controller.js?v=20260722-material-help-1"></script>
     <script src="src/runtime/ui/source-monitor-editor-controller.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/ui/brush-controls-controller.js?v=20260703-runtime-cleanup-1"></script>
@@ -1933,6 +1935,6 @@
     <script src="src/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1"></script>
     <script src="src/runtime/app/control-ui-state-controller.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
-    <script src="src/runtime/app/main.js?v=20260706-walkthrough-1"></script>
+    <script src="src/runtime/app/main.js?v=20260726-monitor-results-1"></script>
   </body>
 </html>

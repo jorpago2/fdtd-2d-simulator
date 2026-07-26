@@ -137,7 +137,8 @@
         flux += s.x * direction.cos + s.y * direction.sin;
         samples += 1;
       }
-      return samples > 0 ? (flux / samples) * this.fieldPowerScale() : 0;
+      const dlLambda = 1 / Math.max(1, finiteNumber(state.cellsPerWavelength, 1));
+      return samples > 0 ? flux * dlLambda * this.fieldPowerScale() : 0;
     },
 
     staggeredAverageX(array, x, y) {
@@ -179,10 +180,6 @@
       let backwardPower = 0;
       let impedance = 0;
       let samples = 0;
-      const centerY = clampInt(Math.round((y0 + y1) * 0.5), y0, y1);
-      let centerForward = 0;
-      let centerBackward = 0;
-      let centerDistance = Infinity;
       for (let y = y0; y <= y1; y += 1) {
         const idx = this.id(x, y);
         if (this.material[idx] === 2) continue;
@@ -193,12 +190,6 @@
         const tangential = this.directionalTangentialFieldsAtCell(x, y, direction);
         const forwardField = 0.5 * (tangential.electric + z * tangential.magnetic);
         const backwardField = 0.5 * (tangential.electric - z * tangential.magnetic);
-        const distance = Math.abs(y - centerY);
-        if (distance < centerDistance) {
-          centerDistance = distance;
-          centerForward = forwardField;
-          centerBackward = backwardField;
-        }
         forward += forwardField;
         backward += backwardField;
         forwardPower += (forwardField * forwardField) / z;
@@ -208,13 +199,14 @@
       }
       if (samples <= 0) return { forward: 0, backward: 0, forwardPower: 0, backwardPower: 0, impedance: 1 };
       const powerScale = this.fieldPowerScale();
+      const dlLambda = 1 / Math.max(1, finiteNumber(state.cellsPerWavelength, 1));
       return {
-        forward: Number.isFinite(centerForward) ? centerForward : forward / samples,
-        backward: Number.isFinite(centerBackward) ? centerBackward : backward / samples,
+        forward: forward / samples,
+        backward: backward / samples,
         forwardMean: forward / samples,
         backwardMean: backward / samples,
-        forwardPower: (forwardPower / samples) * powerScale,
-        backwardPower: (backwardPower / samples) * powerScale,
+        forwardPower: forwardPower * dlLambda * powerScale,
+        backwardPower: backwardPower * dlLambda * powerScale,
         impedance: impedance / samples,
       };
     },
@@ -438,7 +430,7 @@
           compatible: false,
           stale: false,
           validPointCount: 0,
-          message: "No line-port reference captured.",
+          message: "No line-monitor reference captured.",
         };
       }
       const compatible = reference.key === this.linePortReferenceKey();
@@ -471,7 +463,7 @@
         carrierFrequency: finiteNumber(summary.carrierFrequency, this.diagnosticFrequency()),
         sampleCount: finiteNumber(summary.sampleCount, 0),
         points: validPoints.map(cloneScatteringPoint),
-        normalization: "stored background line-port S11/S21 from a reference run",
+        normalization: "stored background line-monitor S11/S21 from a reference run",
       };
       this.linePortReferenceStatusCache = this.linePortReferenceStatus();
       this.applyLinePortReferenceToSpectrum(summary);
@@ -489,7 +481,7 @@
         this.diagnosticSpectrumSummary.referenceCarrierPoint = null;
         for (const point of this.diagnosticSpectrumSummary.points || []) point.referenceNormalized = null;
       }
-      return { ok: true, message: "Line-port reference cleared." };
+      return { ok: true, message: "Line-monitor reference cleared." };
     },
 
     applyLinePortReferenceToSpectrum(summary) {
@@ -630,7 +622,7 @@
         validPointCount,
         points,
         carrierPoint,
-        normalization: "line-port DFT power normalized to the incident spectrum at the same frequency",
+        normalization: "transverse-line mean-field DFT normalized to the incident spectrum at the same frequency",
       };
       this.applyLinePortReferenceToSpectrum(this.diagnosticSpectrumSummary);
     },
@@ -639,7 +631,7 @@
       const summary = this.diagnosticDftSummary;
       const carrierOrder = summary?.orders?.find?.((channel) => channel.order === 0) || null;
       const scattering = summary?.scatteringMatrix || null;
-      if (summary && carrierOrder && summary.carrierIncidentPower > 1e-18) {
+      if (summary?.orders?.length > 1 && carrierOrder && summary.carrierIncidentPower > 1e-18) {
         const reflectance = clamp(
           Number.isFinite(scattering?.totalReflectedPower) ? scattering.totalReflectedPower : carrierOrder.reflectedPowerRatio,
           0,
@@ -653,7 +645,7 @@
         const balanceResidual = 1 - reflectance - transmittance;
         return {
           ready: true,
-          method: summary.orders.length > 1 ? "line-port DFT all measured orders" : "line-port carrier DFT",
+          method: "line-mean DFT all measured orders",
           samples: this.diagnosticDftSampleCount,
           incidentPower: summary.carrierIncidentPower,
           reflectedPower: reflectance * summary.carrierIncidentPower,
@@ -667,15 +659,20 @@
         };
       }
 
-      const incidentPower = this.diagnosticIncidentPhasorPower || this.diagnosticIncidentPowerEwma || 0;
-      const reflectedPower = this.diagnosticReflectedPhasorPower || this.diagnosticReflectedPowerEwma || 0;
-      const transmittedPower = this.diagnosticTransmittedPhasorPower || this.diagnosticTransmittedPowerEwma || 0;
+      const hasIntegratedPower = this.diagnosticIncidentPowerEwma > 1e-12;
+      const incidentPower = hasIntegratedPower ? this.diagnosticIncidentPowerEwma : this.diagnosticIncidentPhasorPower || 0;
+      const reflectedPower = hasIntegratedPower ? this.diagnosticReflectedPowerEwma : this.diagnosticReflectedPhasorPower || 0;
+      const transmittedPower = hasIntegratedPower ? this.diagnosticTransmittedPowerEwma : this.diagnosticTransmittedPhasorPower || 0;
       const reflectance = incidentPower > 1e-12 ? clamp(reflectedPower / incidentPower, 0, 9.999) : 0;
       const transmittance = incidentPower > 1e-12 ? clamp(transmittedPower / incidentPower, 0, 9.999) : 0;
       const balanceResidual = 1 - reflectance - transmittance;
       return {
         ready: incidentPower > 1e-12 && this.diagnosticSamples >= 20,
-        method: this.diagnosticSamples >= 20 ? "phasor monitor fallback" : "collecting samples",
+        method: this.diagnosticSamples >= 20
+          ? hasIntegratedPower
+            ? "transverse line-integrated power"
+            : "line-mean phasor fallback"
+          : "collecting samples",
         samples: this.diagnosticSamples,
         incidentPower,
         reflectedPower,
@@ -685,7 +682,9 @@
         absorption: clamp(balanceResidual, 0, 9.999),
         balanceResidual,
         carrierFrequency: this.diagnosticFrequency(),
-        normalization: "single-frequency wave separation at the input/output monitor lines",
+        normalization: hasIntegratedPower
+          ? "discrete transverse line integral of the separated forward/backward power"
+          : "single-frequency mean-field wave separation at the input/output monitor lines",
       };
     },
 
@@ -822,7 +821,7 @@
           powerBalanceAbsResidual: Math.abs(powerBalanceResidual),
           transmittedSidebandPower,
           reflectedSidebandPower,
-          normalization: "carrier incident DFT phasor at the input monitor",
+          normalization: "carrier incident transverse-line mean-field DFT phasor at the input monitor",
           balanceNote:
             "Pout/Pinc - 1 for the measured orders; temporal modulation, loss/gain, truncation, and de-embedding error can all contribute.",
         },
@@ -876,7 +875,7 @@
       }
       const balance = this.diagnosticPowerBalanceEstimate();
       this.diagnosticPowerBalanceSummary = balance;
-      if (balance.ready && balance.method.includes("DFT")) {
+      if (balance.ready) {
         this.diagnosticIncidentPower = balance.incidentPower;
         this.diagnosticReflectedPower = balance.reflectedPower;
         this.diagnosticTransmittedPower = balance.transmittedPower;

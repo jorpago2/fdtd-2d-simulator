@@ -4141,10 +4141,11 @@ async function runSmokeCase(page, testCase) {
       status.failures.push(`raw line-monitor T ${status.diagnostics.transmittance} is outside [0, ${rawTransmittanceMax}]`);
     }
     if (Number.isFinite(minSpectrumBins) && status.diagnostics.spectrumValidPointCount < minSpectrumBins) {
-      status.failures.push(`spectral R/T/A has ${status.diagnostics.spectrumValidPointCount} valid bins, expected at least ${minSpectrumBins}`);
+      status.failures.push(`spectral R/T/residual has ${status.diagnostics.spectrumValidPointCount} valid bins, expected at least ${minSpectrumBins}`);
     }
-    if (testCase.acceptance?.powerBalanceRequiresDft && !String(status.diagnostics.powerBalanceMethod || "").includes("DFT")) {
-      status.failures.push(`line-port power balance did not use DFT normalization: ${status.diagnostics.powerBalanceMethod}`);
+    const expectedBalanceMethod = String(testCase.acceptance?.powerBalanceMethod || "");
+    if (expectedBalanceMethod && status.diagnostics.powerBalanceMethod !== expectedBalanceMethod) {
+      status.failures.push(`line-monitor power balance used ${status.diagnostics.powerBalanceMethod}, expected ${expectedBalanceMethod}`);
     }
   }
   if (testCase.id === "brewster_tm_minimum") {
@@ -8142,7 +8143,9 @@ async function runSceneObservablesSmoke(page) {
   if (!status.doubleSlit.panelText.includes("Diffraction scale")) failures.push("doubleSlit does not expose the diffraction-scale observable");
   if (!status.phasedDipoleArray.panelText.includes("Array phase law")) failures.push("phasedDipoleArray does not expose the array phase-law observable");
   if (!status.normalInterface.panelText.includes("R_theory=0.040")) failures.push("normalInterface does not expose the Fresnel R_theory reference");
-  if (!status.normalInterface.panelText.includes("Spectral R/T/A")) failures.push("normalInterface does not expose the spectral R/T/A observable");
+  if (!status.normalInterface.panelText.includes("Spectral R/T/residual")) {
+    failures.push("normalInterface does not expose the spectral R/T/residual observable");
+  }
   if ((status.normalInterface.rowCount || 0) < 1) failures.push("normalInterface did not render scene observable rows");
   if (!status.slabWaveguide.panelText.includes("Mode-port overlap")) failures.push("slabWaveguide does not expose the mode-port observable");
   if (!status.slabWaveguide.panelText.includes("Guided-flux beta")) failures.push("slabWaveguide does not expose the guided beta observable");

@@ -86,14 +86,14 @@
       "checks": [
         "finite fields",
         "line-monitor R is bounded",
-        "line-port T remains finite and documented as a finite-scene port observable",
-        "carrier DFT R/T/A is populated",
+        "line-monitor T remains finite and documented as a finite-scene observable",
+        "carrier spectrum R/T/residual is populated",
         "compare R against normal-incidence Fresnel reference"
       ],
       "acceptance": {
         "reflectanceAbsTolerance": 0.08,
         "rawTransmittanceMax": 2.25,
-        "powerBalanceRequiresDft": true,
+        "powerBalanceMethod": "transverse line-integrated power",
         "spectralRtaMinBins": 1
       },
       "reference": {

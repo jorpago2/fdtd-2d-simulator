@@ -683,7 +683,7 @@
       drawFarFieldChart();
       if (el.lineReferenceStatus) {
         const referenceStatus = typeof sim.linePortReferenceStatus === "function" ? sim.linePortReferenceStatus() : null;
-        el.lineReferenceStatus.textContent = referenceStatus?.message || "No line-port reference captured.";
+        el.lineReferenceStatus.textContent = referenceStatus?.message || "No line-monitor reference captured.";
       }
       if (el.analysisStatus) {
         const sampleText = `${sim.analysisSamples || 0} samples`;
@@ -758,16 +758,16 @@
             : "";
         const portSpectrumText =
           sim.diagnosticSpectrumSummary?.carrierPoint?.valid && sim.diagnosticSpectrumSummary.validPointCount > 0
-            ? ` | RTA(f0)=${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.reflectance)}/${formatDiagnosticRatio(
+            ? ` | RTres(f0)=${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.reflectance)}/${formatDiagnosticRatio(
                 sim.diagnosticSpectrumSummary.carrierPoint.transmittance,
-              )}/${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.absorption)}`
+              )}/${formatDiagnosticRatio(sim.diagnosticSpectrumSummary.carrierPoint.balanceResidual)}`
             : "";
         const referenceCarrier = sim.diagnosticSpectrumSummary?.referenceCarrierPoint?.referenceNormalized || null;
         const referenceSpectrumText =
           referenceCarrier?.valid
-            ? ` | RTAref(f0)=${formatDiagnosticRatio(referenceCarrier.reflectance)}/${formatDiagnosticRatio(
+            ? ` | RTres-ref(f0)=${formatDiagnosticRatio(referenceCarrier.reflectance)}/${formatDiagnosticRatio(
                 referenceCarrier.transmittance,
-              )}/${formatDiagnosticRatio(referenceCarrier.absorption)}`
+              )}/${formatDiagnosticRatio(referenceCarrier.balanceResidual)}`
             : "";
         const modePort = metrics?.modePort;
         const modalS = modePort?.sParameters || null;
