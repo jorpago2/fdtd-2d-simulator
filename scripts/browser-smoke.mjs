@@ -7923,9 +7923,17 @@ async function runSourceWaveVectorOverlaySmoke(page) {
     const source = state.sources?.[0] || null;
     const direction = source ? sim.sourceIncidentCanvasDirection(source) : null;
     const descriptor = source ? sim.tfsfSourceParams(source) : null;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const sourceX = source ? sim.gridToCanvasX(sim.sourceXCell(source) + 0.5) : null;
+    const sourceY = source ? sim.gridToCanvasY(sim.sourceYCell(source) + 0.5) : null;
+    const identityPosition = source
+      ? sim.sourceIdentityLabelPosition(sourceX, sourceY, 18 * dpr)
+      : null;
     return {
       angleDeg: source?.angleDeg ?? null,
       direction,
+      identityPosition,
+      sourcePosition: source ? { x: sourceX, y: sourceY } : null,
       descriptor: descriptor
         ? {
             cosTheta: descriptor.cosTheta,
@@ -7947,6 +7955,9 @@ async function runSourceWaveVectorOverlaySmoke(page) {
     }
     if (status.angleDeg > 0 && status.angleDeg < 90 && !(status.direction.x > 0 && status.direction.y > 0)) {
       failures.push(`positive oblique incidence should draw k down-right in canvas coordinates; got (${status.direction.x}, ${status.direction.y})`);
+    }
+    if (!status.identityPosition || !status.sourcePosition || !(status.identityPosition.y < status.sourcePosition.y)) {
+      failures.push("source identity label is not reserved above the source marker");
     }
   }
   return {

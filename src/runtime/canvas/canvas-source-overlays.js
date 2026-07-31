@@ -104,6 +104,29 @@
       };
     },
 
+    sourceIdentityLabelPosition(x, y, radius) {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const viewport = this.renderViewport();
+      const edgeMarginX = Math.min(52 * dpr, viewport.width * 0.45);
+      const edgeMarginY = Math.min(18 * dpr, viewport.height * 0.45);
+      const labelGap = 18 * dpr;
+      const aboveY = y - radius - labelGap;
+      const belowY = y + radius + labelGap;
+      return {
+        x: clamp(x, viewport.left + edgeMarginX, viewport.right - edgeMarginX),
+        y: clamp(
+          aboveY >= viewport.top + edgeMarginY ? aboveY : belowY,
+          viewport.top + edgeMarginY,
+          viewport.bottom - edgeMarginY,
+        ),
+      };
+    },
+
+    drawSourceIdentityLabel(text, x, y, radius) {
+      const position = this.sourceIdentityLabelPosition(x, y, radius);
+      this.drawOverlayLabel(text, position.x, position.y, "center");
+    },
+
     drawSourceSelectionHalo(x, y, source) {
       const ctx = this.ctx;
       const dpr = Math.max(1, window.devicePixelRatio || 1);
@@ -127,7 +150,7 @@
       ctx.strokeStyle = isMoving ? "rgba(255, 238, 198, 0.7)" : "rgba(255, 255, 255, 0.58)";
       ctx.lineWidth = 1 * dpr;
       ctx.stroke();
-      this.drawOverlayLabel(isMoving ? `moving S${source.id}` : `S${source.id}`, x + radius + 10 * dpr, y, "left");
+      this.drawSourceIdentityLabel(isMoving ? `moving S${source.id}` : `S${source.id}`, x, y, radius);
       ctx.restore();
     },
 
@@ -144,7 +167,7 @@
       ctx.strokeStyle = "rgba(69, 192, 201, 0.78)";
       ctx.lineWidth = 1.5 * dpr;
       ctx.stroke();
-      this.drawOverlayLabel(`S${source.id}`, x + radius + 10 * dpr, y, "left");
+      this.drawSourceIdentityLabel(`S${source.id}`, x, y, radius);
       ctx.restore();
     },
 
