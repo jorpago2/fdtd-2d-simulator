@@ -6918,9 +6918,10 @@ async function runCanvasFooterSmoke(browser, url) {
   const failures = [];
   for (const state of states) {
     if (!state.text.includes("Jorge Parra")) failures.push(`${state.viewport}: footer does not show Jorge Parra`);
+    if (!state.text.includes("Online Simulators & Tools")) failures.push(`${state.viewport}: footer tools label missing`);
     if (state.text.toLowerCase().includes("github")) failures.push(`${state.viewport}: footer should not expose GitHub text`);
-    if (!state.links.some((link) => link.href === "https://jorpago2.blogs.uv.es/")) failures.push(`${state.viewport}: footer blog link missing`);
-    if (!state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer apps link missing`);
+    if (!state.links.some((link) => link.href === "https://www.uv.es/jorpago2")) failures.push(`${state.viewport}: footer university profile link missing`);
+    if (!state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer tools link missing`);
     if (!state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
     if (!state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
     if (!state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
