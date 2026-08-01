@@ -1427,74 +1427,11 @@
             </section>
 <section class="panel-section visual-field-section">
               <h2>Field map</h2>
-              <div class="visual-control-stack">
-                <div class="visual-control-row">
-                  <span>Projection</span>
-                  <fieldset class="canvas-mode-toggle projection-toggle" role="radiogroup" aria-label="Visual panel projection">
-                    <legend class="sr-only">Visual panel projection</legend>
-                    <button class="mode-toggle-button is-active" type="button" role="radio" data-view-projection="2d" aria-checked="true" title="Show flat 2D map">2D</button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-view-projection="3d" aria-checked="false" title="Show 3D surface">3D</button>
-                  </fieldset>
-                </div>
-                <div class="visual-control-row">
-                  <span>Quantity</span>
-                  <fieldset class="canvas-mode-toggle view-toggle" role="radiogroup" aria-label="Visual panel quantity">
-                    <legend class="sr-only">Visual panel quantity</legend>
-                    <button class="mode-toggle-button is-active" type="button" role="radio" data-view-mode="field" aria-checked="true" title="Show electromagnetic fields"><i>E</i>/<i>H</i></button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="poynting" aria-checked="false" title="Show Poynting vector flux"><i>S</i></button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="epsilon" aria-checked="false" title="Show permittivity map">&epsilon;</button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-view-mode="mu" aria-checked="false" title="Show permeability map">&mu;</button>
-                  </fieldset>
-                </div>
-                <label class="toggle-row" title="Overlay a selectable electric or magnetic field on the material map" data-material-field-overlay-control hidden>
-                  <input type="checkbox" data-material-field-overlay-input />
-                  <span>Overlay field on &epsilon;/&mu;</span>
-                </label>
-                <div class="visual-control-row visual-component-row">
-                  <span>Component</span>
-                  <fieldset class="canvas-mode-toggle field-display-toggle" role="radiogroup" aria-label="Visual panel field component">
-                    <legend class="sr-only">Visual panel field component</legend>
-                    <button class="mode-toggle-button is-active" type="button" role="radio" data-field-display="scalar" aria-checked="true" title="Show out-of-plane field"><i>E</i><sub>z</sub></button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseX" aria-checked="false" title="Show transverse x component"><i>H</i><sub>x</sub></button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="transverseY" aria-checked="false" title="Show transverse y component"><i>H</i><sub>y</sub></button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="electricMag" aria-checked="false" title="Show electric-field magnitude">|<i>E</i>|</button>
-                    <button class="mode-toggle-button" type="button" role="radio" data-field-display="magneticMag" aria-checked="false" title="Show magnetic-field magnitude">|<i>H</i>|</button>
-                  </fieldset>
-                </div>
-                <label class="toggle-row visual-quiver-row" title="Overlay vector arrows" data-field-quiver-control>
-                  <input type="checkbox" data-field-quiver-input />
-                  <span data-field-quiver-label><i>H</i> quiver</span>
-                </label>
-              </div>
+              <div id="reactVisualFieldRoot"></div>
             </section>
             <section class="panel-section visual-overlays-section">
               <h2>Overlays</h2>
-              <div class="visual-layer-grid" aria-label="Canvas overlay layers">
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show CPML and reflective boundary overlays">
-                  <input type="checkbox" data-visual-layer="boundaries" checked />
-                  <span>CPML/bounds</span>
-                </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show fixed L/R line-monitor markers">
-                  <input type="checkbox" data-visual-layer="monitors" />
-                  <span>line monitors</span>
-                </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show x and y axis glyph">
-                  <input type="checkbox" data-visual-layer="axes" checked />
-                  <span>axes</span>
-                </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show wavelength scale bar">
-                  <input type="checkbox" data-visual-layer="scale" checked />
-                  <span>scale</span>
-                </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show source markers">
-                  <input type="checkbox" data-visual-layer="sources" checked />
-                  <span>sources</span>
-                </label>
-                <label class="toolbar-switch visual-layer-switch visual-panel-layer" title="Show color scale">
-                  <input type="checkbox" data-visual-layer="colorbar" checked />
-                  <span>colorbar</span>
-                </label>
-              </div>
+              <div id="reactVisualOverlaysRoot"></div>
             </section>
             </div>
             <div id="tab-results" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-results-button" data-control-panel="results" hidden>

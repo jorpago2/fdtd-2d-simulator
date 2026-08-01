@@ -1,8 +1,14 @@
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import legacyRuntimeScripts from "./legacy-runtime.json";
+import "./core/app-state";
 import "./core/boundary-state";
+import "./core/state-normalizer";
 import "./data/scene-catalog-loader";
+import "./ui/entity-selection-controller";
+import "./ui/material-selection-controller";
 import "./ui/visual-layer-model";
+import { VisualFieldControls, VisualOverlayControls } from "./ui/visual-controls";
 
 declare const __FDTD_BUILD_VERSION__: string;
 
@@ -56,8 +62,12 @@ async function startLegacyRuntime(): Promise<void> {
   for (const source of legacyRuntimeScripts) await loadClassicScript(source);
 }
 
-createRoot(requiredElement("reactBrandRoot")).render(<Brand />);
-createRoot(requiredElement("reactFooterRoot")).render(<FooterLinks />);
+flushSync(() => {
+  createRoot(requiredElement("reactBrandRoot")).render(<Brand />);
+  createRoot(requiredElement("reactFooterRoot")).render(<FooterLinks />);
+  createRoot(requiredElement("reactVisualFieldRoot")).render(<VisualFieldControls />);
+  createRoot(requiredElement("reactVisualOverlaysRoot")).render(<VisualOverlayControls />);
+});
 void startLegacyRuntime().catch((error: unknown) => {
   console.error("FDTD runtime startup failed", error);
 });

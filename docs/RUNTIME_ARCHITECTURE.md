@@ -16,10 +16,15 @@
 ```text
 src/
   core/
+    app-state.ts
     boundary-state.ts
+    state-normalizer.ts
   data/
     scene-catalog-loader.ts
   ui/
+    entity-selection-controller.ts
+    material-selection-controller.ts
+    visual-controls.tsx
     visual-layer-model.ts
   legacy-runtime.json
   main.tsx
@@ -65,8 +70,8 @@ tests/
 ## Current Status
 
 - Vite and TypeScript are the canonical build path.
-- React owns the migrated brand and footer islands; subsequent UI regions move only with browser parity coverage.
-- Boundary state, scene-catalog loading, and the visual-layer state model are TypeScript.
+- React owns the brand, footer, and Visual-panel markup; subsequent UI regions move only with browser parity coverage.
+- Initial/boundary state and state normalization, scene-catalog loading, entity/material selection, and the visual-layer model are TypeScript.
 - `main.tsx` loads the remaining classic scripts sequentially from `legacy-runtime.json`.
 - `src/runtime/` remains the canonical numerical and interaction runtime during the transition.
 - Reference modules with comparison coverage:

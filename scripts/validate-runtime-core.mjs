@@ -529,7 +529,7 @@ function checkMonitorResults(runtime) {
   assertClose(floquetBalance.transmittance, 0.7, "Floquet transmittance");
 }
 
-function main() {
+async function main() {
   const runtime = createBrowserContext();
   runtime.devicePixelRatio = 2;
   runtime.FDTDSim = function FDTDSim() {};
@@ -540,17 +540,17 @@ function main() {
   runtime.incidentFieldSourceShapes = new Set(["line", "gaussianProfile", "modeProfile", "tfsf"]);
   runtime.temporalFloquetAnalysisPresets = new Set();
   runtime.DIAGNOSTIC_DFT_WINDOW = 512;
+  runtime.FdtdAppState = await import("../src/core/app-state.ts");
   loadScripts(runtime, [
-    ["src", "runtime", "core", "app-state.js"],
     ["src", "runtime", "core", "app-formatters.js"],
     ["src", "runtime", "core", "scene-codec.js"],
     ["src", "runtime", "ui", "ui-core.js"],
-    ["src", "runtime", "core", "state-normalizer.js"],
     ["src", "runtime", "canvas", "canvas-viewport.js"],
     ["src", "runtime", "simulation", "fdtd-line-diagnostics.js"],
     ["src", "runtime", "ui", "ui-results.js"],
     ["src", "runtime", "ui", "ui-results-charts.js"],
   ]);
+  runtime.FdtdStateNormalizer = await import("../src/core/state-normalizer.ts");
 
   const next = createBrowserContext();
   next.devicePixelRatio = 2;
@@ -574,4 +574,4 @@ function main() {
   console.log("Runtime core validation: PASS");
 }
 
-main();
+await main();
