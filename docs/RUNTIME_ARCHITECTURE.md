@@ -15,6 +15,9 @@
 
 ```text
 src/
+  data/
+    scene-catalog-loader.ts
+  legacy-runtime.json
   main.tsx
   runtime/
     app/
@@ -38,7 +41,7 @@ tests/
 1. `src/main.tsx` owns migrated React UI; `src/runtime/` remains the stable simulation implementation until parity migration is complete.
 2. Each runtime file owns one clear responsibility and exposes its public API through explicit `window.Fdtd...` globals.
 3. Do not duplicate active files wholesale. Reference modules belong in `tests/reference-modules/` and must be covered by `validate-runtime-core.mjs`.
-4. Keep legacy load order explicit until a layer is converted to typed ES modules.
+4. Keep legacy load order explicit in `legacy-runtime.json` until a layer is converted to typed ES modules.
 5. After a module is wired into `index.html`, run the project static validator before continuing.
 6. Delete inactive code after the replacement is verified.
 
@@ -59,6 +62,8 @@ tests/
 
 - Vite and TypeScript are the canonical build path.
 - React owns the migrated brand and footer islands; subsequent UI regions move only with browser parity coverage.
+- The scene-catalog loader and its normalized data contract are TypeScript.
+- `main.tsx` loads the remaining classic scripts sequentially from `legacy-runtime.json`.
 - `src/runtime/` remains the canonical numerical and interaction runtime during the transition.
 - Reference modules with comparison coverage:
   - `tests/reference-modules/core/contracts.js`

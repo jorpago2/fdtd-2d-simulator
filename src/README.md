@@ -15,18 +15,20 @@ This folder contains only browser assets that are loaded by the simulator.
 ## Active Layout
 
 ```text
-main.tsx  Typed React entry for migrated UI regions.
-runtime/  Ordered classic-script runtime retained during migration.
-styles/   Canonical stylesheet processed by Vite.
+data/                Typed data loaders and contracts.
+legacy-runtime.json  Temporary ordered inventory of classic scripts.
+main.tsx             Typed React and runtime bootstrap entry.
+runtime/             Classic simulation/runtime modules retained during migration.
+styles/              Canonical stylesheet processed by Vite.
 ```
 
 ## Load Pattern
 
-Vite builds `main.tsx`; the numerical runtime remains ordered classic JavaScript until each layer has typed parity coverage. Do not import those files as ES modules before removing their shared global contracts.
+Vite builds `main.tsx`, which registers typed modules and then loads `legacy-runtime.json` sequentially. The numerical runtime remains classic JavaScript until each layer has typed parity coverage.
 
 ## Runtime
 
-`index.html` loads the React entry and `src/runtime/`. The React entry currently owns isolated shell regions while the canonical simulation path remains in `src/runtime/`.
+`index.html` loads only the React/TypeScript entry. That entry owns isolated shell regions, typed data modules, and the temporary ordered bootstrap for the canonical simulation path in `src/runtime/`.
 
 When `main.js` depends on a new runtime module, add it to `src/runtime/app/runtime-dependencies.js` instead of adding ad hoc load checks.
 

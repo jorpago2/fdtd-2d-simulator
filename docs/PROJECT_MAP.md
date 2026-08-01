@@ -6,7 +6,7 @@ Use this map to find the canonical files for UI, runtime, simulation, and valida
 
 - New UI/CSS work goes in `src/styles/fdtd-ui.css`.
 - The active app loads one stylesheet only: `src/styles/fdtd-ui.css`.
-- Typed React UI starts at `src/main.tsx`; the validated numerical runtime remains in `src/runtime/` during migration.
+- Typed React UI and bootstrap start at `src/main.tsx`; `src/legacy-runtime.json` orders the validated numerical runtime during migration.
 - Reference modules used by validators live in `tests/reference-modules/`; they are not browser load path.
 
 ## Active CSS Ownership
@@ -19,12 +19,13 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 
 ## Active JavaScript Ownership
 
-Vite builds `src/main.tsx`, while `index.html` still loads `src/runtime/` in explicit order for numerical parity.
+Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in the order declared by `src/legacy-runtime.json`.
 
 | Group | Active path | Purpose |
 | --- | --- | --- |
 | React UI | `src/main.tsx` | Typed entry and migrated shell regions. |
-| Core/data | `src/runtime/core`, `src/runtime/data` | Constants, numerics, catalog, colormaps, state, formatters, scene import/export. |
+| Typed data | `src/data` | Typed catalog loading, normalization, and data contracts. |
+| Core/data | `src/runtime/core`, `src/runtime/data` | Legacy constants, numerics, catalog metadata, colormaps, state, formatters, scene import/export. |
 | Simulation | `src/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
 | Canvas | `src/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |
 | UI/controllers | `src/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |

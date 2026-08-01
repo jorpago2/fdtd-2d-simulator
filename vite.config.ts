@@ -34,6 +34,9 @@ function serveLegacyRuntime(): Plugin {
 
 export default defineConfig({
   base: "./",
+  define: {
+    __FDTD_BUILD_VERSION__: JSON.stringify(process.env.FDTD_BUILD_VERSION || "dev"),
+  },
   plugins: [serveLegacyRuntime(), react()],
   server: {
     host: "127.0.0.1",

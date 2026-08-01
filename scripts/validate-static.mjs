@@ -43,14 +43,22 @@ function assetPath(assetUrl) {
   return pathname.replace(/^\.\//, "").replace(/\\/g, "/");
 }
 
+function runtimeScriptUrls() {
+  const scripts = JSON.parse(readText("src", "legacy-runtime.json"));
+  if (!Array.isArray(scripts) || scripts.some((source) => typeof source !== "string")) {
+    throw new Error("src/legacy-runtime.json must be an array of script URLs");
+  }
+  return scripts;
+}
+
 function scriptPathMap(indexHtml) {
-  const scripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml).map(assetPath);
+  const scripts = [...runtimeScriptUrls(), ...extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)].map(assetPath);
   return new Map(scripts.map((scriptPath) => [path.posix.basename(scriptPath), scriptPath]));
 }
 
 function activeScriptPath(scriptMap, basename) {
   const activePath = scriptMap.get(basename);
-  if (!activePath) throw new Error(`Missing active script ${basename} in index.html`);
+  if (!activePath) throw new Error(`Missing active script ${basename} in the runtime manifest or index.html`);
   return activePath;
 }
 
@@ -142,7 +150,7 @@ function loadCatalog(constantsJs, catalogJs) {
 }
 
 function validateHtmlAssets(indexHtml) {
-  const scripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml);
+  const scripts = [...runtimeScriptUrls(), ...extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)];
   const stylesheets = extractAll(/<link\s+[^>]*rel="stylesheet"\s+href="([^"]+)"/g, indexHtml);
   const missing = [...scripts, ...stylesheets].filter((asset) => !fileExistsFromUrl(asset));
   const unversioned = [...scripts, ...stylesheets].filter((asset) => !String(asset).includes("?v="));
@@ -669,9 +677,7 @@ function main() {
   const fdtdDiagnosticsJs = readActiveScript(activeScripts, "fdtd-diagnostics.js");
   const wasmBackendJs = readActiveScript(activeScripts, "wasm-backend.js");
   const wasmCpp = readText("native/fdtd-core", "fdtd-core.cpp");
-  const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
-    .map(assetPath)
-    .filter((file) => /\.m?js$/i.test(file));
+  const linkedJsFiles = [...activeScripts.values()].filter((file) => /\.m?js$/i.test(file));
   const srcFiles = listFilesRecursive("src", ".js");
   const referenceFiles = listFilesRecursive("tests/reference-modules", ".js");
   const jsFiles = unique([

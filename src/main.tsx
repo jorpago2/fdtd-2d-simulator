@@ -1,4 +1,8 @@
 import { createRoot } from "react-dom/client";
+import legacyRuntimeScripts from "./legacy-runtime.json";
+import "./data/scene-catalog-loader";
+
+declare const __FDTD_BUILD_VERSION__: string;
 
 function requiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -32,5 +36,26 @@ function FooterLinks() {
   );
 }
 
+function loadClassicScript(source: string): Promise<void> {
+  const scriptUrl = new URL(source, document.baseURI);
+  scriptUrl.searchParams.set("v", __FDTD_BUILD_VERSION__);
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = scriptUrl.href;
+    script.async = false;
+    script.dataset.runtimeScript = "";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Could not load runtime script: ${scriptUrl.pathname}`));
+    document.body.append(script);
+  });
+}
+
+async function startLegacyRuntime(): Promise<void> {
+  for (const source of legacyRuntimeScripts) await loadClassicScript(source);
+}
+
 createRoot(requiredElement("reactBrandRoot")).render(<Brand />);
 createRoot(requiredElement("reactFooterRoot")).render(<FooterLinks />);
+void startLegacyRuntime().catch((error: unknown) => {
+  console.error("FDTD runtime startup failed", error);
+});

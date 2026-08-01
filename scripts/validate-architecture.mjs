@@ -44,7 +44,14 @@ function addCheck(name, passed, details = "") {
 }
 
 function scriptSources(indexHtml) {
-  return [...indexHtml.matchAll(/<script\s+[^>]*src="([^"]+)"/g)].map((match) => match[1].split("?")[0]);
+  const runtimeScripts = JSON.parse(readText("src", "legacy-runtime.json"));
+  if (!Array.isArray(runtimeScripts) || runtimeScripts.some((source) => typeof source !== "string")) {
+    throw new Error("src/legacy-runtime.json must be an array of script URLs");
+  }
+  return [
+    ...runtimeScripts.map((source) => source.split("?")[0]),
+    ...[...indexHtml.matchAll(/<script\s+[^>]*src="([^"]+)"/g)].map((match) => match[1].split("?")[0]),
+  ];
 }
 
 function stylesheetSources(indexHtml) {
@@ -86,13 +93,13 @@ function validatePackageScripts(packageJson) {
 }
 
 function validateSourceRootShape() {
-  const allowedEntries = new Set(["README.md", "main.tsx", "runtime", "styles"]);
+  const allowedEntries = new Set(["README.md", "data", "legacy-runtime.json", "main.tsx", "runtime", "styles"]);
   const srcEntries = fs.readdirSync(repoPath("src"), { withFileTypes: true }).map((entry) => entry.name);
   const unexpectedEntries = srcEntries.filter((entry) => !allowedEntries.has(entry));
   addCheck(
     "src contains only active browser assets",
     unexpectedEntries.length === 0,
-    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains the React entry, runtime, styles, and README only",
+    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains typed data/UI entries, runtime manifest, runtime, styles, and README only",
   );
 }
 

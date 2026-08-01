@@ -50,13 +50,14 @@ function removeDist() {
   fs.mkdirSync(resolvedDist, { recursive: true });
 }
 
-function runViteBuild() {
+function runViteBuild(assetVersion) {
   const viteCli = path.join(rootDir, "node_modules", "vite", "bin", "vite.js");
   if (!fs.existsSync(viteCli)) {
     throw new Error("Missing Vite. Run npm install before building the Pages artifact.");
   }
   const result = spawnSync(process.execPath, [viteCli, "build"], {
     cwd: rootDir,
+    env: { ...process.env, FDTD_BUILD_VERSION: assetVersion },
     stdio: "inherit",
     windowsHide: true,
   });
@@ -90,16 +91,6 @@ function buildAssetVersion() {
   });
   const localSha = String(result.stdout || "").trim();
   return /^[0-9a-f]{7,12}$/i.test(localSha) ? `sha-${localSha}` : `build-${Date.now()}`;
-}
-
-function stampLinkedAssetVersions(version) {
-  const indexPath = path.join(distDir, "index.html");
-  const html = fs.readFileSync(indexPath, "utf8");
-  const stamped = html.replace(
-    /(<(?:link|script)\b[^>]+(?:href|src)="[^"]+\?v=)[^"]+(")/g,
-    `$1${version}$2`,
-  );
-  fs.writeFileSync(indexPath, stamped);
 }
 
 function walkFiles(dir) {
@@ -139,11 +130,10 @@ function validateDist() {
   return { bytes, files: files.length, thumbnails: thumbnailFiles.length };
 }
 
-removeDist();
-runViteBuild();
-for (const entry of publicEntries) copyEntry(entry);
 const assetVersion = buildAssetVersion();
-stampLinkedAssetVersions(assetVersion);
+removeDist();
+runViteBuild(assetVersion);
+for (const entry of publicEntries) copyEntry(entry);
 
 const summary = validateDist();
 console.log(
