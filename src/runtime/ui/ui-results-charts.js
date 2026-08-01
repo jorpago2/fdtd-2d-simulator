@@ -232,7 +232,7 @@
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           if (!compact) {
-            const label = `thetaB ${reference.thetaB.toFixed(1)}${unitLabel ? ` ${unitLabel}` : ""}`;
+            const label = `Brewster θ ${reference.thetaB.toFixed(1)}${unitLabel ? ` ${unitLabel}` : ""}`;
             ctx.fillText(label, Math.min(width - padR - 8 * dpr, Math.max(padL + 60 * dpr, xb)), padT + 3 * dpr);
           }
           ctx.restore();
@@ -291,11 +291,11 @@
       ctx.textAlign = "left";
       if (hasSweepResults) {
         if (dualPolarization) {
-          ctx.fillText("R_TM", padL + 8 * dpr, padT + 12 * dpr);
+          ctx.fillText("Rₜₘ", padL + 8 * dpr, padT + 12 * dpr);
           ctx.fillStyle = rColor;
           ctx.fillRect(padL + 42 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
           ctx.fillStyle = colors.text;
-          ctx.fillText("R_TE", padL + 64 * dpr, padT + 12 * dpr);
+          ctx.fillText("Rₜₑ", padL + 64 * dpr, padT + 12 * dpr);
           ctx.fillStyle = tColor;
           ctx.fillRect(padL + 98 * dpr, padT + 8 * dpr, 14 * dpr, 3 * dpr);
         } else if (auxMetric) {
@@ -746,16 +746,16 @@
       ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
-      ctx.fillText(scatteringMode ? "Scattering width / lambda0" : "NTFF angular pattern", 12 * dpr, 11 * dpr);
+      ctx.fillText(scatteringMode ? "Scattering width / λ₀" : "NTFF angular pattern", 12 * dpr, 11 * dpr);
       if (scatteringMode && scatteringTotalText) {
         ctx.fillStyle = colors.muted;
         ctx.textAlign = "right";
-        ctx.fillText(`sigma/lambda0 ${scatteringTotalText}`, width - 12 * dpr, 11 * dpr);
+        ctx.fillText(`σ/λ₀ ${scatteringTotalText}`, width - 12 * dpr, 11 * dpr);
         ctx.fillStyle = colors.text;
       }
       ctx.textAlign = "center";
-      ctx.fillText("0 deg", cx + radius + 10 * dpr, cy);
-      ctx.fillText("90 deg", cx, cy + radius + 12 * dpr);
+      ctx.fillText("0°", cx + radius + 10 * dpr, cy);
+      ctx.fillText("90°", cx, cy + radius + 12 * dpr);
     }
 
     function updateSpectrumReadout(event) {
@@ -779,7 +779,7 @@
       const cy = point.height * 0.56;
       const theta = (Math.atan2(point.y - cy, point.x - cx) * 180) / Math.PI;
       const normalized = ((theta % 360) + 360) % 360;
-      el.analysisChartReadout.textContent = `${scatteringMode ? "Scattering" : "NTFF"} theta=${normalized.toFixed(1)} deg`;
+      el.analysisChartReadout.textContent = `${scatteringMode ? "Scattering" : "NTFF"} θ=${normalized.toFixed(1)}°`;
     }
 
     return {
