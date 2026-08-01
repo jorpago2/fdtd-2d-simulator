@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import legacyRuntimeScripts from "./legacy-runtime.json";
+import "./core/boundary-state";
 import "./data/scene-catalog-loader";
 import "./ui/visual-layer-model";
 

@@ -93,7 +93,6 @@
   "src/runtime/canvas/canvas-edit-actions-controller.js?v=20260703-runtime-cleanup-1",
   "src/runtime/canvas/canvas-gesture-actions-controller.js?v=20260703-runtime-cleanup-1",
   "src/runtime/ui/config-material-handlers-controller.js?v=20260704-measure-policy-1",
-  "src/runtime/core/boundary-state.js?v=20260703-runtime-cleanup-1",
   "src/runtime/app/control-ui-state-controller.js?v=20260725-material-field-overlay-1",
   "src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1",
   "src/runtime/app/main.js?v=20260726-monitor-results-1"

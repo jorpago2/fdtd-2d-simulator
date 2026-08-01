@@ -15,6 +15,7 @@ This folder contains only browser assets that are loaded by the simulator.
 ## Active Layout
 
 ```text
+core/                Typed runtime state and domain models.
 data/                Typed data loaders and contracts.
 legacy-runtime.json  Temporary ordered inventory of classic scripts.
 main.tsx             Typed React and runtime bootstrap entry.
