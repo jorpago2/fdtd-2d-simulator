@@ -59,7 +59,7 @@ function loadClassicScript(source: string): Promise<void> {
 }
 
 async function startLegacyRuntime(): Promise<void> {
-  for (const source of legacyRuntimeScripts) await loadClassicScript(source);
+  await Promise.all(legacyRuntimeScripts.map(loadClassicScript));
 }
 
 flushSync(() => {
