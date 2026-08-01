@@ -93,7 +93,7 @@ function validatePackageScripts(packageJson) {
 }
 
 function validateSourceRootShape() {
-  const allowedEntries = new Set(["README.md", "data", "legacy-runtime.json", "main.tsx", "runtime", "styles"]);
+  const allowedEntries = new Set(["README.md", "data", "legacy-runtime.json", "main.tsx", "runtime", "styles", "ui"]);
   const srcEntries = fs.readdirSync(repoPath("src"), { withFileTypes: true }).map((entry) => entry.name);
   const unexpectedEntries = srcEntries.filter((entry) => !allowedEntries.has(entry));
   addCheck(

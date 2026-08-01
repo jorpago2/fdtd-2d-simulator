@@ -17,6 +17,8 @@
 src/
   data/
     scene-catalog-loader.ts
+  ui/
+    visual-layer-model.ts
   legacy-runtime.json
   main.tsx
   runtime/
@@ -62,7 +64,7 @@ tests/
 
 - Vite and TypeScript are the canonical build path.
 - React owns the migrated brand and footer islands; subsequent UI regions move only with browser parity coverage.
-- The scene-catalog loader and its normalized data contract are TypeScript.
+- The scene-catalog loader and visual-layer state model are TypeScript.
 - `main.tsx` loads the remaining classic scripts sequentially from `legacy-runtime.json`.
 - `src/runtime/` remains the canonical numerical and interaction runtime during the transition.
 - Reference modules with comparison coverage:

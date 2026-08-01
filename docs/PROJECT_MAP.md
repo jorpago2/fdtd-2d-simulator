@@ -25,6 +25,7 @@ Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in th
 | --- | --- | --- |
 | React UI | `src/main.tsx` | Typed entry and migrated shell regions. |
 | Typed data | `src/data` | Typed catalog loading, normalization, and data contracts. |
+| Typed UI models | `src/ui` | Typed visual-layer state and view-model logic. |
 | Core/data | `src/runtime/core`, `src/runtime/data` | Legacy constants, numerics, catalog metadata, colormaps, state, formatters, scene import/export. |
 | Simulation | `src/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
 | Canvas | `src/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |

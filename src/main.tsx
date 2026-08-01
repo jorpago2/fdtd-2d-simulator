@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import legacyRuntimeScripts from "./legacy-runtime.json";
 import "./data/scene-catalog-loader";
+import "./ui/visual-layer-model";
 
 declare const __FDTD_BUILD_VERSION__: string;
 

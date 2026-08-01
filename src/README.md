@@ -18,6 +18,7 @@ This folder contains only browser assets that are loaded by the simulator.
 data/                Typed data loaders and contracts.
 legacy-runtime.json  Temporary ordered inventory of classic scripts.
 main.tsx             Typed React and runtime bootstrap entry.
+ui/                  Typed UI state and view models.
 runtime/             Classic simulation/runtime modules retained during migration.
 styles/              Canonical stylesheet processed by Vite.
 ```

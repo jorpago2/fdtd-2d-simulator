@@ -50,7 +50,6 @@
   "src/runtime/ui/material-editor-ui.js?v=20260722-material-help-1",
   "src/runtime/ui/material-selection-controller.js?v=20260703-runtime-cleanup-1",
   "src/runtime/canvas/entity-selection-controller.js?v=20260703-runtime-cleanup-1",
-  "src/runtime/ui/visual-layer-model.js?v=20260703-overlay-modes-1",
   "src/runtime/core/state-normalizer.js?v=20260725-material-field-overlay-1",
   "src/runtime/app/simulation-effects.js?v=20260704-measure-policy-1",
   "src/runtime/app/runtime-controller.js?v=20260704-runtime-pacing-1",
