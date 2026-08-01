@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software in research, please cite it using these metadata."
+title: "Maxwell FDTD Lab"
+type: software
+version: "0.1.0"
+date-released: "2026-07-25"
+authors:
+  - family-names: "Parra G?mez"
+    given-names: "Jorge"
+    orcid: "https://orcid.org/0000-0003-4610-3411"
+repository-code: "https://github.com/jorpago2/fdtd-2d-simulator"
+url: "https://jorpago2.github.io/fdtd-2d-simulator/"
+license: MIT
