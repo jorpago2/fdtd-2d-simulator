@@ -116,13 +116,14 @@ stronger claims that still require calibration or convergence. See
 
 Requirements:
 
-- Node.js.
+- Node.js 24 and npm.
 - A modern browser with Canvas and WebGL support.
 
-Start the static server:
+Install dependencies and start the Vite development server:
 
 ```powershell
-npm run serve
+npm install
+npm run dev
 ```
 
 Then open:
@@ -131,11 +132,11 @@ Then open:
 http://127.0.0.1:8768/index.html
 ```
 
-No application build or backend service is required for normal use.
+Vite provides the development and production builds; no backend service is required.
 
 ## Validation
 
-Run the dependency-free repository checks:
+Run the TypeScript and repository checks:
 
 ```powershell
 npm test

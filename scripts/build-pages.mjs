@@ -12,11 +12,10 @@ const distDir = path.join(rootDir, "dist");
 
 const publicEntries = [
   ".nojekyll",
-  "index.html",
-  "src/styles/fdtd-ui.css",
   "assets",
   path.join("src", "runtime"),
 ];
+const requiredOutputEntries = ["index.html", ...publicEntries];
 
 const blockedEntries = [
   ".git",
@@ -49,6 +48,20 @@ function removeDist() {
     fs.rmSync(resolvedDist, { recursive: true, force: true });
   }
   fs.mkdirSync(resolvedDist, { recursive: true });
+}
+
+function runViteBuild() {
+  const viteCli = path.join(rootDir, "node_modules", "vite", "bin", "vite.js");
+  if (!fs.existsSync(viteCli)) {
+    throw new Error("Missing Vite. Run npm install before building the Pages artifact.");
+  }
+  const result = spawnSync(process.execPath, [viteCli, "build"], {
+    cwd: rootDir,
+    stdio: "inherit",
+    windowsHide: true,
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`Vite build failed with exit code ${result.status}`);
 }
 
 function copyEntry(relativePath) {
@@ -103,7 +116,7 @@ function walkFiles(dir) {
 }
 
 function validateDist() {
-  const missing = publicEntries.filter((entry) => !fs.existsSync(path.join(distDir, entry)));
+  const missing = requiredOutputEntries.filter((entry) => !fs.existsSync(path.join(distDir, entry)));
   if (missing.length) {
     throw new Error(`dist is missing public entries: ${missing.join(", ")}`);
   }
@@ -127,6 +140,7 @@ function validateDist() {
 }
 
 removeDist();
+runViteBuild();
 for (const entry of publicEntries) copyEntry(entry);
 const assetVersion = buildAssetVersion();
 stampLinkedAssetVersions(assetVersion);

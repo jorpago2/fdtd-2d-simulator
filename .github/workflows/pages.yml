@@ -26,12 +26,16 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
       - name: Validate static site
-        run: node scripts/validate-static.mjs
+        run: npm test
 
       - name: Build public artifact
         run: node scripts/build-pages.mjs

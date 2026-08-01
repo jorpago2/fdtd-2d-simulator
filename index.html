@@ -28,7 +28,7 @@
       <header class="topbar">
         <div class="brand-lockup">
           <p class="eyebrow">2D-FDTD</p>
-          <div class="brand-main">
+          <div id="reactBrandRoot" class="brand-main">
             <div class="brand-heading">
               <h1 class="brand-title"><span class="brand-emblem">EM Wave</span> Simulator</h1>
             </div>
@@ -1066,7 +1066,7 @@
               </div>
             </div>
           </div>
-          <footer class="canvas-footer" aria-label="Author links">
+          <footer id="reactFooterRoot" class="canvas-footer" aria-label="Author links">
             <a class="canvas-footer-author" href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
             <span class="canvas-footer-separator" aria-hidden="true">·</span>
             <nav class="canvas-footer-links" aria-label="Jorge Parra resources">
@@ -1937,5 +1937,6 @@
     <script src="src/runtime/app/control-ui-state-controller.js?v=20260725-material-field-overlay-1"></script>
     <script src="src/runtime/app/runtime-dependencies.js?v=20260703-numeric-inputs-1"></script>
     <script src="src/runtime/app/main.js?v=20260726-monitor-results-1"></script>
+    <script type="module" src="src/main.tsx?v=20260801-react-vite-1"></script>
   </body>
 </html>

@@ -9,22 +9,24 @@ This folder contains only browser assets that are loaded by the simulator.
 - Use explicit dependency checks at module boundaries.
 - Keep pure data/formatting logic away from DOM code.
 - Keep UI code away from FDTD stepping and numerical kernels.
-- Do not add frameworks or a build system.
+- Move UI ownership into typed React components incrementally.
+- Preserve physical behavior and validation coverage while replacing legacy modules.
 
 ## Active Layout
 
 ```text
-runtime/  Ordered classic-script JavaScript loaded by index.html.
-styles/   Canonical stylesheet loaded by index.html.
+main.tsx  Typed React entry for migrated UI regions.
+runtime/  Ordered classic-script runtime retained during migration.
+styles/   Canonical stylesheet processed by Vite.
 ```
 
 ## Load Pattern
 
-These are classic browser scripts, not ES modules, so they remain compatible with the current validator and deployment model. A future switch to `type="module"` should be made only if the whole app changes together.
+Vite builds `main.tsx`; the numerical runtime remains ordered classic JavaScript until each layer has typed parity coverage. Do not import those files as ES modules before removing their shared global contracts.
 
 ## Runtime
 
-`index.html` loads `src/runtime/` as the active application path. That folder is grouped by responsibility and is the canonical runtime used by the page.
+`index.html` loads the React entry and `src/runtime/`. The React entry currently owns isolated shell regions while the canonical simulation path remains in `src/runtime/`.
 
 When `main.js` depends on a new runtime module, add it to `src/runtime/app/runtime-dependencies.js` instead of adding ad hoc load checks.
 

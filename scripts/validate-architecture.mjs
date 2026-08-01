@@ -55,7 +55,9 @@ function validateActiveAssets(indexHtml) {
   const scripts = scriptSources(indexHtml);
   const stylesheets = stylesheetSources(indexHtml);
   const retiredAssetRefs = [...scripts, ...stylesheets].filter((asset) => asset.startsWith("legacy/") || asset.startsWith("js-next/"));
-  const nonRuntimeScripts = scripts.filter((asset) => !asset.startsWith("src/runtime/") && !asset.startsWith("assets/vendor/"));
+  const nonRuntimeScripts = scripts.filter(
+    (asset) => asset !== "src/main.tsx" && !asset.startsWith("src/runtime/") && !asset.startsWith("assets/vendor/"),
+  );
   addCheck(
     "active assets avoid retired paths",
     retiredAssetRefs.length === 0,
@@ -64,7 +66,7 @@ function validateActiveAssets(indexHtml) {
   addCheck(
     "active scripts stay in canonical runtime",
     nonRuntimeScripts.length === 0,
-    nonRuntimeScripts.length ? nonRuntimeScripts.join(", ") : "all active scripts load from src/runtime",
+    nonRuntimeScripts.length ? nonRuntimeScripts.join(", ") : "scripts use the typed React entry or canonical runtime",
   );
   addCheck(
     "single canonical stylesheet",
@@ -84,13 +86,13 @@ function validatePackageScripts(packageJson) {
 }
 
 function validateSourceRootShape() {
-  const allowedEntries = new Set(["README.md", "runtime", "styles"]);
+  const allowedEntries = new Set(["README.md", "main.tsx", "runtime", "styles"]);
   const srcEntries = fs.readdirSync(repoPath("src"), { withFileTypes: true }).map((entry) => entry.name);
   const unexpectedEntries = srcEntries.filter((entry) => !allowedEntries.has(entry));
   addCheck(
     "src contains only active browser assets",
     unexpectedEntries.length === 0,
-    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains runtime, styles, and README only",
+    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains the React entry, runtime, styles, and README only",
   );
 }
 

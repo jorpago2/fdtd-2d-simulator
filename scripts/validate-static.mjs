@@ -671,7 +671,7 @@ function main() {
   const wasmCpp = readText("native/fdtd-core", "fdtd-core.cpp");
   const linkedJsFiles = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)
     .map(assetPath)
-    .filter(Boolean);
+    .filter((file) => /\.m?js$/i.test(file));
   const srcFiles = listFilesRecursive("src", ".js");
   const referenceFiles = listFilesRecursive("tests/reference-modules", ".js");
   const jsFiles = unique([

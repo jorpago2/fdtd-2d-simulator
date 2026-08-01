@@ -145,6 +145,26 @@ function startStaticServer() {
   });
 }
 
+async function startBrowserServer() {
+  if (rootArg) return startStaticServer();
+  const { createServer } = await import("vite");
+  const viteServer = await createServer({
+    root: rootDir,
+    logLevel: "error",
+    server: { host: "127.0.0.1", port: 0, strictPort: false },
+  });
+  await viteServer.listen();
+  const address = viteServer.httpServer?.address();
+  if (!address || typeof address === "string") {
+    await viteServer.close();
+    throw new Error("Vite test server did not expose a TCP port");
+  }
+  return {
+    address: () => address,
+    close: () => viteServer.close(),
+  };
+}
+
 async function importPlaywright() {
   try {
     return await import("playwright");
@@ -6516,6 +6536,24 @@ async function runReproducibilitySmoke(page) {
   };
 }
 
+async function runReactBootstrapSmoke(page) {
+  const status = await page.evaluate(() => ({
+    brandMounted: Boolean(document.querySelector('[data-react-ui="brand"]')),
+    footerMounted: Boolean(document.querySelector('[data-react-ui="footer"]')),
+  }));
+  const failures = [];
+  if (!status.brandMounted) failures.push("React brand did not mount");
+  if (!status.footerMounted) failures.push("React footer did not mount");
+  return {
+    id: "react_ui_bootstrap",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runCanvasActionMenuSmoke(page) {
   const status = await page.evaluate(() => {
     const toggle = document.getElementById("canvasActionToggle");
@@ -8641,7 +8679,7 @@ async function runSourceMutationStability(page) {
 
 async function main() {
   const { chromium } = await importPlaywright();
-  const server = await startStaticServer();
+  const server = await startBrowserServer();
   const port = server.address().port;
   const url = `http://127.0.0.1:${port}/index.html`;
   const browser = await launchBrowser(chromium);
@@ -8663,6 +8701,7 @@ async function main() {
       report.cases.push(await runSourceMutationStability(page));
     }
     if (mode === "smoke") {
+      report.cases.push(await runReactBootstrapSmoke(page));
       report.cases.push(await runReproducibilitySmoke(page));
       report.cases.push(await runCanvasActionMenuSmoke(page));
       report.cases.push(await runHelpGuideSmoke(page));
@@ -8688,7 +8727,7 @@ async function main() {
     }
   } finally {
     await browser.close();
-    server.close();
+    await server.close();
   }
 
   const failedCases = report.cases.filter((testCase) => !testCase.passed);
