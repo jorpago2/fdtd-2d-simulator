@@ -391,7 +391,7 @@
         .join(" | ");
     }
 
-    function drawSpectrumChart({ maxFrequency = 0.1, portSpectrum = null, sampleEvery = 1, theme = "light", values = [] } = {}) {
+    function drawSpectrumCanvasChart({ maxFrequency = 0.1, portSpectrum = null, sampleEvery = 1, theme = "light", values = [] } = {}) {
       const prepared = prepareChartCanvas(el?.spectrumChart, 260, 126);
       if (!prepared) return;
       const { ctx, width, height, dpr } = prepared;
@@ -566,6 +566,121 @@
         ctx.textAlign = "center";
         ctx.fillText("f", padL + plotW / 2, height - 11 * dpr);
       }
+    }
+
+    function drawSpectrumChart({ maxFrequency = 0.1, portSpectrum = null, sampleEvery = 1, theme = "light", values = [] } = {}) {
+      const chart = el?.spectrumChart;
+      const Plotly = global.Plotly;
+      if (!chart || !Plotly) return;
+      const colors = chartPalette(theme);
+      const referenceActive = Boolean(portSpectrum?.reference?.active);
+      const portPoints = Array.isArray(portSpectrum?.points) ? portSpectrum.points.filter((point) => point?.valid) : [];
+      const plottedPortPoints = referenceActive
+        ? portPoints
+            .filter((point) => point.referenceNormalized?.valid)
+            .map((point) => ({
+              ...point,
+              reflectance: point.referenceNormalized.reflectance,
+              transmittance: point.referenceNormalized.transmittance,
+              balanceResidual: point.referenceNormalized.balanceResidual,
+            }))
+        : portPoints;
+      let traces = [];
+      let yAxis = { title: { text: "Normalized power" }, gridcolor: colors.grid, zerolinecolor: colors.axis };
+      let annotation = null;
+
+      if (plottedPortPoints.length > 0) {
+        traces = [
+          ["R", "reflectance", colors.blue],
+          ["T", "transmittance", colors.green],
+          ["Residual", "balanceResidual", colors.reference],
+        ].map(([name, key, color]) => ({
+          type: "scatter",
+          mode: "lines",
+          name,
+          x: plottedPortPoints.map((point) => point.frequency),
+          y: plottedPortPoints.map((point) => point[key]),
+          line: { color, width: 2 },
+          hovertemplate: `${name}: %{y:.4g}<extra></extra>`,
+        }));
+        const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
+        const fMax = Math.max(...plottedPortPoints.map((point) => point.frequency));
+        spectrumReadoutState = { fMax, fMin, mode: "rta", points: plottedPortPoints };
+        const carrierFrequency = Number.isFinite(Number(portSpectrum?.carrierFrequency))
+          ? Number(portSpectrum.carrierFrequency)
+          : plottedPortPoints[0].frequency;
+        const carrier = plottedPortPoints.reduce((nearest, point) =>
+          Math.abs(point.frequency - carrierFrequency) < Math.abs(nearest.frequency - carrierFrequency) ? point : nearest,
+        );
+        chart.setAttribute(
+          "aria-label",
+          `${referenceActive ? "Reference-normalized" : "Line-monitor"} spectrum. Carrier R ${formatDiagnosticRatio(
+            carrier.reflectance,
+          )}, T ${formatDiagnosticRatio(carrier.transmittance)}, residual ${formatDiagnosticRatio(carrier.balanceResidual)}.`,
+        );
+      } else {
+        const binCount = 44;
+        const bins = [];
+        let maxMagnitude = 0;
+        if (values.length >= 16) {
+          const dt = Math.max(1, sampleEvery);
+          for (let binIndex = 0; binIndex < binCount; binIndex += 1) {
+            const frequency = (maxFrequency * binIndex) / (binCount - 1);
+            let real = 0;
+            let imaginary = 0;
+            for (let sampleIndex = 0; sampleIndex < values.length; sampleIndex += 1) {
+              const windowValue = 0.5 - 0.5 * Math.cos((2 * Math.PI * sampleIndex) / Math.max(1, values.length - 1));
+              const phase = 2 * Math.PI * frequency * dt * sampleIndex;
+              real += windowValue * values[sampleIndex] * Math.cos(phase);
+              imaginary -= windowValue * values[sampleIndex] * Math.sin(phase);
+            }
+            const magnitude = Math.hypot(real, imaginary) / values.length;
+            maxMagnitude = Math.max(maxMagnitude, magnitude);
+            bins.push({ f: frequency, mag: magnitude });
+          }
+        }
+        if (bins.length > 0 && maxMagnitude > 1e-12) {
+          const points = bins.map((bin) => ({ ...bin, db: Math.max(-54, 20 * Math.log10(bin.mag / maxMagnitude)) }));
+          traces = [{
+            type: "scatter",
+            mode: "lines",
+            name: "Probe spectrum",
+            x: points.map((point) => point.f),
+            y: points.map((point) => point.db),
+            line: { color: colors.blue, width: 2 },
+            hovertemplate: "%{x:.4g}: %{y:.2f} dB<extra></extra>",
+          }];
+          yAxis = { title: { text: "Relative magnitude (dB)" }, range: [-54, 0], gridcolor: colors.grid, zerolinecolor: colors.axis };
+          spectrumReadoutState = { fMax: maxFrequency, fMin: 0, mode: "probe", points };
+          const peak = bins.reduce((best, bin) => (bin.mag > best.mag ? bin : best), bins[0]);
+          chart.setAttribute("aria-label", `Probe spectrum. Peak frequency ${formatFieldValue(peak.f)}.`);
+        } else {
+          spectrumReadoutState = { mode: "empty", points: [] };
+          annotation = { text: "Collecting probe samples", showarrow: false, font: { color: colors.muted } };
+          chart.setAttribute("aria-label", "Probe spectrum. Collecting samples.");
+        }
+      }
+
+      void Plotly.react(chart, traces, {
+        autosize: true,
+        height: Math.max(150, chart.clientHeight || 160),
+        margin: { l: 56, r: 18, t: 30, b: 46 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: colors.bg,
+        font: { family: "ui-sans-serif, system-ui, sans-serif", size: 10, color: colors.text },
+        hovermode: "x unified",
+        dragmode: "pan",
+        uirevision: "fdtd-spectrum-monitor",
+        xaxis: { title: { text: "Frequency" }, gridcolor: colors.grid, zerolinecolor: colors.axis },
+        yaxis: yAxis,
+        legend: { orientation: "h", x: 0, y: 1.2 },
+        annotations: annotation ? [annotation] : [],
+      }, {
+        displaylogo: false,
+        responsive: true,
+        scrollZoom: true,
+        toImageButtonOptions: { format: "png", filename: "fdtd-monitor-spectrum", width: 1200, height: 650, scale: 1 },
+      });
     }
 
     function drawFarFieldChart({ data = [], scatteringMode = false, scatteringTotalText = "", theme = "light" } = {}) {

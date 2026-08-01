@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
+import Plotly from "plotly.js-basic-dist-min";
 import legacyRuntimeScripts from "./legacy-runtime.json";
 import "./core/app-state";
 import "./core/boundary-state";
@@ -11,6 +12,8 @@ import "./ui/visual-layer-model";
 import { VisualFieldControls, VisualOverlayControls } from "./ui/visual-controls";
 
 declare const __FDTD_BUILD_VERSION__: string;
+
+(globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
 
 function requiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
