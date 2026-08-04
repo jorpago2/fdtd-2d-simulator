@@ -698,6 +698,16 @@ function main() {
   validateRuntimeCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
+  const missingAccessibilityHooks = [
+    'class="skip-link" href="#simulatorWorkspace"',
+    'id="simulatorWorkspace"',
+    'tabindex="-1"',
+  ].filter((fragment) => !indexHtml.includes(fragment));
+  addCheck(
+    "workspace accessibility hooks",
+    missingAccessibilityHooks.length === 0 ? "PASS" : "BLOCK",
+    missingAccessibilityHooks.length === 0 ? "skip link and focus target found" : missingAccessibilityHooks.join(", "),
+  );
   const { catalog, constants } = loadCatalog(
     readActiveScript(activeScripts, "constants.js"),
     readActiveScript(activeScripts, "catalog.js"),

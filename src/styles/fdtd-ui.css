@@ -183,6 +183,19 @@ sup {
   display: none;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 1000;
+  top: 8px;
+  left: 8px;
+  padding: 10px 14px;
+  color: #fff;
+  background: var(--text);
+  transform: translateY(-150%);
+}
+
+.skip-link:focus { transform: translateY(0); }
+
 /* 02. Canvas shell and floating chrome */
 
 .app-shell,
