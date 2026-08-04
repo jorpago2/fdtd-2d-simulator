@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": { "node": ">=24" },
   "description": "Browser-based 2D FDTD teaching and research simulator.",
   "scripts": {
     "start": "vite --host 127.0.0.1",
@@ -45,13 +47,13 @@
     "build:wasm:cpp": "powershell -ExecutionPolicy Bypass -File scripts/build-wasm-cpp.ps1"
   },
   "devDependencies": {
-    "@types/node": "26.1.2",
+    "@types/node": "24.13.3",
     "@types/plotly.js": "^3.0.10",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
     "playwright": "^1.55.0",
-    "typescript": "7.0.2",
+    "typescript": "6.0.2",
     "vite": "8.2.0"
   },
   "dependencies": {
