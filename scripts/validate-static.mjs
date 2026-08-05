@@ -667,6 +667,13 @@ function validateWasmStepContract(wasmBackendJs, wasmCpp) {
 
 function main() {
   const indexHtml = readText("index.html");
+  const requiredMetadata = ["theme-color", "canonical", "og:site_name", "og:title", "og:description", "og:type", "og:url", "og:image:alt", "twitter:card", "twitter:title", "twitter:description", "twitter:image:alt"];
+  const missingMetadata = requiredMetadata.filter((metadata) => !indexHtml.includes(metadata));
+  addCheck(
+    "public metadata",
+    missingMetadata.length === 0 ? "PASS" : "BLOCK",
+    missingMetadata.length === 0 ? "Canonical, Open Graph, Twitter, theme, and image metadata are present" : `Missing ${missingMetadata.join(", ")}`,
+  );
   const activeScripts = scriptPathMap(indexHtml);
   const appFile = activeScriptPath(activeScripts, "main.js");
   const appJs = readText(...appFile.split("/"));
