@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
+const siteRoot = path.join(rootDir, "dist");
 
 function argValue(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -123,8 +124,8 @@ function startStaticServer() {
       return;
     }
     const relPath = requestUrl.pathname === "/" ? "index.html" : decodeURIComponent(requestUrl.pathname.slice(1));
-    const resolved = path.resolve(rootDir, relPath);
-    if (resolved !== rootDir && !resolved.startsWith(`${rootDir}${path.sep}`)) {
+    const resolved = path.resolve(siteRoot, relPath);
+    if (resolved !== siteRoot && !resolved.startsWith(`${siteRoot}${path.sep}`)) {
       response.writeHead(403);
       response.end("Forbidden");
       return;
@@ -372,10 +373,11 @@ function evaluateScene(scene, contract, runtime) {
   };
 }
 
-async function auditScene(page, scene, requestedSteps = stepsPerScene) {
+async function auditScene(page, runtime, scene, requestedSteps = stepsPerScene) {
   await selectPreset(page, scene.id);
   return page.evaluate(
-    async ({ sceneId, stepCount }) => {
+    async ({ runtime, sceneId, stepCount }) => {
+      const { sim, state } = runtime;
       const countWhere = (array, predicate) => {
         if (!array || typeof array.length !== "number") return 0;
         let count = 0;
@@ -510,7 +512,7 @@ async function auditScene(page, scene, requestedSteps = stepsPerScene) {
         uiHasNonFiniteText: /\b(NaN|Infinity|undefined)\b/.test(document.body?.innerText || ""),
       };
     },
-    { sceneId: scene.id, stepCount: requestedSteps },
+    { runtime, sceneId: scene.id, stepCount: requestedSteps },
   );
 }
 
@@ -607,7 +609,8 @@ async function main() {
   });
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "load" });
-  await page.waitForFunction(() => typeof state !== "undefined" && typeof sim !== "undefined" && document.getElementById("presetInput"));
+  await page.waitForFunction(() => typeof window.exportSceneState === "function");
+  const runtimeHandle = await page.evaluateHandle("({ sim, state })");
 
   const rows = [];
   for (const scene of catalog.scenes) {
@@ -617,7 +620,7 @@ async function main() {
       stepsPerScene,
       ...sceneCases.map((testCase) => Number(testCase.steps) || Number(matrix.profiles?.[testCase.profile]?.steps) || stepsPerScene),
     );
-    const runtime = await auditScene(page, scene, warmupMode ? validationWarmupSteps : stepsPerScene);
+    const runtime = await auditScene(page, runtimeHandle, scene, warmupMode ? validationWarmupSteps : stepsPerScene);
     const evaluation = evaluateScene(scene, contract, runtime);
     rows.push({
       id: scene.id,

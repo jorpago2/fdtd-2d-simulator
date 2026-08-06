@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
+const siteRoot = path.join(rootDir, "dist");
 const stepsPerScene = Math.max(1, Number(process.env.SCENE_STEPS || 24));
 const jsonMode = process.argv.includes("--json");
 
@@ -51,8 +52,8 @@ function startStaticServer() {
       return;
     }
     const relPath = requestUrl.pathname === "/" ? "index.html" : decodeURIComponent(requestUrl.pathname.slice(1));
-    const resolved = path.resolve(rootDir, relPath);
-    if (resolved !== rootDir && !resolved.startsWith(`${rootDir}${path.sep}`)) {
+    const resolved = path.resolve(siteRoot, relPath);
+    if (resolved !== siteRoot && !resolved.startsWith(`${siteRoot}${path.sep}`)) {
       response.writeHead(403);
       response.end("Forbidden");
       return;
@@ -135,10 +136,11 @@ function summarizeFailures(groupReports) {
   );
 }
 
-async function auditScene(page, scene) {
+async function auditScene(page, runtime, scene) {
   await selectPreset(page, scene.id);
   return page.evaluate(
-    ({ sceneId, expectedIndex, expectedTitle, expectedGroupLabel, stepCount }) => {
+    ({ runtime, sceneId, expectedIndex, expectedTitle, expectedGroupLabel, stepCount }) => {
+      const { sim, state } = runtime;
       const finiteStats = (array) => {
         if (!array || typeof array.length !== "number") return null;
         let nonFinite = 0;
@@ -301,6 +303,7 @@ async function auditScene(page, scene) {
       };
     },
     {
+      runtime,
       expectedGroupLabel: scene.groupLabel,
       expectedIndex: scene.index,
       expectedTitle: scene.title,
@@ -327,7 +330,8 @@ async function main() {
 
   try {
     await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "networkidle" });
-    await page.waitForSelector("#presetInput", { state: "attached", timeout: 15000 });
+    await page.waitForFunction(() => typeof window.exportSceneState === "function");
+    const runtime = await page.evaluateHandle("({ sim, state })");
     const sceneById = new Map(catalog.scenes.map((scene) => [scene.id, scene]));
     for (const group of catalog.groups) {
       const groupReport = {
@@ -347,7 +351,7 @@ async function main() {
           });
           continue;
         }
-        const sceneReport = await auditScene(page, scene);
+        const sceneReport = await auditScene(page, runtime, scene);
         groupReport.scenes.push(sceneReport);
       }
       groupReport.passed = groupReport.scenes.every((scene) => scene.failures.length === 0);
