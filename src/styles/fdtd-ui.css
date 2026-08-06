@@ -25,6 +25,30 @@
 
 /* 01. Foundation, theme tokens, and base elements */
 
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-ui-canvas: var(--color-paper);
+  --color-ui-canvas-muted: var(--color-paper-2);
+  --color-ui-surface: var(--color-surface);
+  --color-ui-surface-raised: var(--color-surface-raised);
+  --color-ui-ink: var(--color-ink);
+  --color-ui-muted: var(--color-muted);
+  --color-ui-border: var(--color-rule);
+  --color-ui-border-strong: var(--color-rule-strong);
+  --color-ui-accent: var(--color-accent);
+  --color-ui-focus: var(--color-focus);
+  --color-ui-danger: var(--color-danger);
+  --color-ui-success: var(--color-success);
+  --font-ui-body: var(--font-body);
+  --font-ui-display: var(--font-display);
+  --radius-ui-control: var(--radius-control);
+  --radius-ui-panel: var(--radius-panel);
+  --shadow-ui-raised: var(--shadow-float);
+}
+
 *,
 *::before,
 *::after {
@@ -198,31 +222,6 @@ sup {
 
 /* 02. Canvas shell and floating chrome */
 
-.app-shell,
-.workspace,
-.stage {
-  width: 100%;
-  min-height: 100dvh;
-}
-
-.workspace,
-.stage {
-  height: 100dvh;
-}
-
-.app-shell,
-.workspace,
-.stage {
-  position: relative;
-  overflow: hidden;
-}
-
-.stage {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  background: var(--canvas-bg);
-}
-
 .canvas-frame {
   position: relative;
   display: grid;
@@ -338,19 +337,9 @@ sup {
 
 .topbar,
 .canvas-toolbar {
-  position: fixed;
-  z-index: 70;
   top: max(var(--edge), env(safe-area-inset-top));
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 6px;
   color: var(--text);
-  background: var(--panel);
-  box-shadow: var(--shadow-sm);
 }
 
 .topbar {
@@ -1565,23 +1554,13 @@ body.controls-drawer-open {
 }
 
 .control-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
-  width: 100dvw;
-  min-height: 100dvh;
   padding:
     max(10px, env(safe-area-inset-top))
     max(10px, env(safe-area-inset-right))
     max(10px, env(safe-area-inset-bottom))
     max(10px, env(safe-area-inset-left));
   border: 1px solid var(--border);
-  background: var(--panel);
-  box-shadow: var(--shadow);
-  overflow: hidden;
 }
 
 .app-shell:not(.controls-open) .control-panel {
@@ -2448,7 +2427,6 @@ label.scene-select-fallback,
     min-height: 0;
     height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 88px);
     max-height: calc(100dvh - max(var(--edge), env(safe-area-inset-top)) - 88px);
-    border-radius: var(--radius-lg);
   }
 
   .app-shell:not(.controls-open) .control-panel {
@@ -3007,9 +2985,6 @@ canvas:focus-visible {
 .topbar,
 .canvas-toolbar {
   border-color: var(--color-rule);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-whisper);
 }
 
 .topbar {
@@ -3157,9 +3132,6 @@ output,
 .control-panel {
   gap: 0;
   border-color: var(--color-rule);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-float);
 }
 
 .control-panel-header {
@@ -3412,7 +3384,7 @@ details > summary::after {
   --color-warning: oklch(47% 0.105 70);
   --color-danger: oklch(45% 0.15 25);
 
-  --font-display: "IBM Plex Sans", Arial, sans-serif;
+  --font-display: "Space Grotesk", Arial, sans-serif;
   --font-body: "IBM Plex Sans", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", Consolas, monospace;
   --font-math: "STIX Two Math", "Cambria Math", serif;
@@ -3424,8 +3396,8 @@ details > summary::after {
   --space-md: 1.5rem;
   --space-lg: 2rem;
 
-  --radius-control: 6px;
-  --radius-panel: 8px;
+  --radius-control: 0.5rem;
+  --radius-panel: 0.875rem;
   --radius-status: 999px;
   --shadow-whisper: 0 1px 2px oklch(22% 0.025 205 / 0.06);
   --shadow-float: 0 14px 36px oklch(22% 0.025 205 / 0.14);

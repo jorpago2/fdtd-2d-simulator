@@ -166,6 +166,19 @@ function validateHtmlAssets(indexHtml) {
   );
 }
 
+function validateTailwindUi(indexHtml) {
+  const styles = readText("src", "styles", "fdtd-ui.css");
+  const missing = ["tailwindcss/theme.css", "tailwindcss/utilities.css", "@theme inline"]
+    .filter((fragment) => !styles.includes(fragment));
+  if (/tailwindcss\/preflight|@import\s+["']tailwindcss["']/.test(styles)) missing.push("Preflight must stay disabled");
+  if (!indexHtml.includes("bg-ui-surface")) missing.push("semantic utility class");
+  addCheck(
+    "semantic Tailwind UI without Preflight",
+    missing.length === 0 ? "PASS" : "BLOCK",
+    missing.length === 0 ? "theme and utilities imports found" : missing.join(", "),
+  );
+}
+
 function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
   const presetSelect = indexHtml.match(/<select\s+id="presetInput"[\s\S]*?<\/select>/)?.[0] || "";
   const dropdownPresets = unique(extractAll(/<option\s+value="([^"]+)"/g, presetSelect));
@@ -705,6 +718,7 @@ function main() {
   validateRuntimeCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
+  validateTailwindUi(indexHtml);
   const missingAccessibilityHooks = [
     'class="skip-link" href="#simulatorWorkspace"',
     'id="simulatorWorkspace"',
