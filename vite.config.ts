@@ -3,7 +3,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const legacyRuntimeRoot = path.join(projectRoot, "src", "runtime");
@@ -38,7 +37,7 @@ export default defineConfig({
   define: {
     __FDTD_BUILD_VERSION__: JSON.stringify(process.env.FDTD_BUILD_VERSION || "dev"),
   },
-  plugins: [serveLegacyRuntime(), react(), tailwindcss()],
+  plugins: [serveLegacyRuntime(), react()],
   server: {
     host: "127.0.0.1",
     port: 8768,

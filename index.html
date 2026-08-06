@@ -42,12 +42,13 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=STIX+Two+Math&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260806-hallmark-2" />
+    <link rel="stylesheet" href="src/styles/carbon.scss?v=20260806-carbon-1" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260806-carbon-1" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
-    <main class="app-shell relative min-h-dvh w-full overflow-hidden bg-ui-canvas font-ui-body text-ui-ink">
-      <header class="topbar fixed z-[70] flex min-w-0 items-center gap-2 rounded-ui-panel bg-ui-surface p-1.5 shadow-ui-raised">
+    <main class="app-shell cds--grid">
+      <header class="topbar">
         <div class="brand-lockup">
           <p class="eyebrow">2D-FDTD</p>
           <div id="reactBrandRoot" class="brand-main">
@@ -69,9 +70,9 @@
         </button>
       </header>
 
-      <section id="simulatorWorkspace" class="workspace relative h-dvh min-h-dvh w-full overflow-hidden" aria-label="Simulator" tabindex="-1">
-        <div class="stage relative grid h-dvh min-h-dvh w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-ui-surface">
-          <div class="canvas-toolbar fixed z-[70] flex min-w-0 items-center gap-2 rounded-ui-panel bg-ui-surface p-1.5 shadow-ui-raised">
+      <section id="simulatorWorkspace" class="workspace" aria-label="Simulator" tabindex="-1">
+        <div class="stage">
+          <div class="canvas-toolbar">
             <div class="tool-group compact">
               <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
@@ -1097,7 +1098,7 @@
           </footer>
         </div>
 
-        <aside id="controlPanel" class="control-panel fixed inset-0 z-[110] grid min-h-dvh w-dvw grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-ui-panel bg-ui-surface shadow-ui-raised" aria-label="Scene setup controls" tabindex="-1" data-mobile-layer="scenes">
+        <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" tabindex="-1" data-mobile-layer="scenes">
           <div class="control-panel-header">
             <div class="control-panel-title-block">
               <p id="controlPanelKicker" class="panel-kicker">Step 1 · Scene</p>

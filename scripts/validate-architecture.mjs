@@ -76,8 +76,8 @@ function validateActiveAssets(indexHtml) {
     nonRuntimeScripts.length ? nonRuntimeScripts.join(", ") : "scripts use the typed React entry or canonical runtime",
   );
   addCheck(
-    "single canonical stylesheet",
-    stylesheets.length === 1 && stylesheets[0] === "src/styles/fdtd-ui.css",
+    "Carbon foundation and canonical UI stylesheet",
+    stylesheets.length === 2 && stylesheets[0] === "src/styles/carbon.scss" && stylesheets[1] === "src/styles/fdtd-ui.css",
     stylesheets.length ? stylesheets.join(", ") : "no stylesheet linked",
   );
 }

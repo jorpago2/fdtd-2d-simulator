@@ -25,30 +25,6 @@
 
 /* 01. Foundation, theme tokens, and base elements */
 
-@layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
-
-@theme inline {
-  --color-ui-canvas: var(--color-paper);
-  --color-ui-canvas-muted: var(--color-paper-2);
-  --color-ui-surface: var(--color-surface);
-  --color-ui-surface-raised: var(--color-surface-raised);
-  --color-ui-ink: var(--color-ink);
-  --color-ui-muted: var(--color-muted);
-  --color-ui-border: var(--color-rule);
-  --color-ui-border-strong: var(--color-rule-strong);
-  --color-ui-accent: var(--color-accent);
-  --color-ui-focus: var(--color-focus);
-  --color-ui-danger: var(--color-danger);
-  --color-ui-success: var(--color-success);
-  --font-ui-body: var(--font-body);
-  --font-ui-display: var(--font-display);
-  --radius-ui-control: var(--radius-control);
-  --radius-ui-panel: var(--radius-panel);
-  --shadow-ui-raised: var(--shadow-float);
-}
-
 *,
 *::before,
 *::after {
@@ -89,7 +65,7 @@
   --help-guide-top-gap: max(12px, env(safe-area-inset-top));
   --help-guide-toggle-size: 50px;
   --help-guide-panel-gap: 12px;
-  --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --serif: Georgia, "Times New Roman", serif;
   --drawer-width: clamp(720px, 38vw, 1080px);
   --switch-w: 42px;
@@ -98,6 +74,36 @@
   --switch-border: 1px;
   --switch-inset: 2px;
 }
+
+:root,
+.cds--g10 {
+  --bg: var(--cds-background);
+  --canvas-bg: var(--cds-background);
+  --panel: var(--cds-layer-01);
+  --panel-2: var(--cds-layer-02);
+  --panel-3: var(--cds-layer-03);
+  --text: var(--cds-text-primary);
+  --muted: var(--cds-text-secondary);
+  --border: var(--cds-border-subtle);
+  --border-strong: var(--cds-border-strong);
+  --accent: var(--cds-link-primary);
+  --accent-strong: var(--cds-link-primary-hover);
+  --accent-soft: var(--cds-layer-accent-01);
+  --good: var(--cds-support-success);
+  --warn: var(--cds-support-warning);
+  --bad: var(--cds-support-error);
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --pill: 0;
+}
+
+.app-shell { position: relative; min-height: 100dvh; width: 100%; max-width: none; padding: 0; overflow: hidden; color: var(--text); background: var(--bg); font-family: var(--font); }
+.workspace { position: relative; width: 100%; height: 100dvh; min-height: 100dvh; overflow: hidden; }
+.stage { width: 100%; height: 100dvh; min-height: 100dvh; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; background: var(--panel); }
+.topbar, .canvas-toolbar { position: fixed; z-index: 70; min-width: 0; display: flex; align-items: center; gap: .5rem; padding: .375rem; border-radius: 0; background: var(--panel); box-shadow: var(--shadow-sm); }
+.control-panel { position: fixed; z-index: 110; inset: 0; width: 100dvw; min-height: 100dvh; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; border-radius: 0; background: var(--panel); box-shadow: var(--shadow); }
 
 html[data-theme="dark"] {
   color-scheme: dark;

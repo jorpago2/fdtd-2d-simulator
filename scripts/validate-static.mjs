@@ -166,16 +166,17 @@ function validateHtmlAssets(indexHtml) {
   );
 }
 
-function validateTailwindUi(indexHtml) {
+function validateCarbonUi(indexHtml) {
   const styles = readText("src", "styles", "fdtd-ui.css");
-  const missing = ["tailwindcss/theme.css", "tailwindcss/utilities.css", "@theme inline"]
-    .filter((fragment) => !styles.includes(fragment));
-  if (/tailwindcss\/preflight|@import\s+["']tailwindcss["']/.test(styles)) missing.push("Preflight must stay disabled");
-  if (!indexHtml.includes("bg-ui-surface")) missing.push("semantic utility class");
+  const carbon = readText("src", "styles", "carbon.scss");
+  const missing = [];
+  if (!carbon.includes('@use "@carbon/styles"')) missing.push("Carbon Sass entry");
+  if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
+  if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
   addCheck(
-    "semantic Tailwind UI without Preflight",
+    "Carbon UI contract",
     missing.length === 0 ? "PASS" : "BLOCK",
-    missing.length === 0 ? "theme and utilities imports found" : missing.join(", "),
+    missing.length === 0 ? "Carbon Sass and grid shell found" : missing.join(", "),
   );
 }
 
@@ -718,7 +719,7 @@ function main() {
   validateRuntimeCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
-  validateTailwindUi(indexHtml);
+  validateCarbonUi(indexHtml);
   const missingAccessibilityHooks = [
     'class="skip-link" href="#simulatorWorkspace"',
     'id="simulatorWorkspace"',
