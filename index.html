@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
       content="Interactive 2D FDTD electromagnetics simulator with CPML boundaries, configurable sources, material drawing, and field diagnostics."
@@ -35,8 +35,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
-    <meta name="theme-color" content="#101820" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260726-monitor-results-1" />
+    <meta name="theme-color" content="#eef5f3" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=STIX+Two+Math&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260806-hallmark-2" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -59,7 +65,7 @@
           aria-label="Open controls"
           title="Open controls"
         >
-          ☰
+          <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         </button>
       </header>
 
@@ -71,7 +77,7 @@
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
               </button>
               <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">
-                <span aria-hidden="true">↻</span>
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M19 11a7 7 0 1 0 .3 4" /></svg>
               </button>
               <button
                 id="canvasActionToggle"
@@ -82,15 +88,15 @@
                 aria-label="More simulation actions"
                 title="More simulation actions"
               >
-                ⋮
+                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" /></svg>
               </button>
               <div id="canvasActionMenu" class="canvas-action-menu" aria-label="Simulation actions">
                 <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">
-                  <span aria-hidden="true">⏭</span>
+                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 8 7-8 7V5Zm9 0 8 7-8 7V5Z" /></svg>
                   <span class="canvas-action-label">Step</span>
                 </button>
                 <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">
-                  <span aria-hidden="true">⇩</span>
+                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 20h14" /></svg>
                   <span class="canvas-action-label">PNG</span>
                 </button>
               </div>
