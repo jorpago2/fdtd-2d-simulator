@@ -53,17 +53,17 @@
   "devDependencies": {
     "@carbon/styles": "1.112.0",
     "@ibm/plex": "6.4.1",
+    "@storybook/react-vite": "^10.5.7",
     "@types/node": "24.13.3",
     "@types/plotly.js": "^3.0.10",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
-    "playwright": "^1.55.0",
+    "playwright": "^1.62.1",
     "sass": "1.102.0",
-    "typescript": "6.0.2",
-    "vite": "8.2.0",
     "storybook": "^10.5.7",
-    "@storybook/react-vite": "^10.5.7"
+    "typescript": "6.0.2",
+    "vite": "8.2.0"
   },
   "dependencies": {
     "plotly.js-basic-dist-min": "^3.7.0",
