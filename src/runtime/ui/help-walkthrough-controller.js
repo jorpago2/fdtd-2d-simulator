@@ -143,6 +143,14 @@
       const margin = 12;
       const gap = 14;
       const pad = 7;
+      const panelViewportBottom = [".status-strip", ".workflow-rail"].reduce((bottom, selector) => {
+        const obstruction = documentRef.querySelector(selector);
+        const obstructionRect = obstruction?.getBoundingClientRect?.();
+        if (!obstructionRect || obstructionRect.width < viewportWidth - margin * 2 || obstructionRect.top < viewportHeight / 2) {
+          return bottom;
+        }
+        return Math.min(bottom, obstructionRect.top);
+      }, viewportHeight);
       const highlightLeft = clampNumber(rect.left - pad, margin, Math.max(margin, viewportWidth - margin));
       const highlightTop = clampNumber(rect.top - pad, margin, Math.max(margin, viewportHeight - margin));
       const highlightRight = clampNumber(rect.right + pad, margin, Math.max(margin, viewportWidth - margin));
@@ -155,7 +163,7 @@
 
       const panelRect = el.walkthroughPanel.getBoundingClientRect();
       const panelWidth = Math.min(panelRect.width || 340, viewportWidth - margin * 2);
-      const panelHeight = Math.min(panelRect.height || 220, viewportHeight - margin * 2);
+      const panelHeight = Math.min(panelRect.height || 220, Math.max(1, panelViewportBottom - margin * 2));
       let left = rect.right + gap;
       if (left + panelWidth > viewportWidth - margin) {
         left = rect.left - panelWidth - gap;
@@ -164,14 +172,14 @@
         left = clampNumber((viewportWidth - panelWidth) / 2, margin, Math.max(margin, viewportWidth - panelWidth - margin));
       }
 
-      let top = clampNumber(rect.top, margin, Math.max(margin, viewportHeight - panelHeight - margin));
+      let top = clampNumber(rect.top, margin, Math.max(margin, panelViewportBottom - panelHeight - margin));
       if (viewportWidth <= 760) {
         const lowerTop = rect.bottom + gap;
         const upperTop = rect.top - panelHeight - gap;
         top =
-          lowerTop + panelHeight <= viewportHeight - margin
+          lowerTop + panelHeight <= panelViewportBottom - margin
             ? lowerTop
-            : clampNumber(upperTop, margin, Math.max(margin, viewportHeight - panelHeight - margin));
+            : clampNumber(upperTop, margin, Math.max(margin, panelViewportBottom - panelHeight - margin));
       }
 
       el.walkthroughPanel.style.left = `${left}px`;

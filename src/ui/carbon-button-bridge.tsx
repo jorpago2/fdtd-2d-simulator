@@ -43,7 +43,7 @@ function keepCustom(button: HTMLButtonElement) {
 
 function buttonKind(button: HTMLButtonElement) {
   if (/delete|remove|clear/i.test(`${button.id} ${button.textContent}`)) return "danger--tertiary" as const;
-  if (button.classList.contains("primary-button")) return "primary" as const;
+  if (button.classList.contains("primary-button") || button.classList.contains("help-guide-toggle")) return "primary" as const;
   return "ghost" as const;
 }
 

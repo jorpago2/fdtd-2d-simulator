@@ -45,6 +45,8 @@
     function updateThemeControls() {
       state.theme = normalizeTheme(state.theme);
       documentElement.dataset.theme = state.theme;
+      documentElement.classList.toggle("cds--g100", state.theme === "dark");
+      documentElement.classList.toggle("cds--white", state.theme !== "dark");
       uiCore.setExclusiveButtonState(el.themeButtons, "themeChoice", state.theme, {
         selectedAttribute: "aria-pressed",
       });

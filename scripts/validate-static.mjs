@@ -175,6 +175,10 @@ function validateCarbonUi(indexHtml) {
   }
   if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
   if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
+  if (!indexHtml.includes("cds--g100") || !indexHtml.includes("cds--white")) missing.push("Carbon theme context");
+  if (!styles.includes(".icon-button:not(.cds--btn)") || !styles.includes(".toolbar-switch:not(.cds--form-item):not([data-carbon-field-shell])")) {
+    missing.push("legacy control styles isolated from Carbon components");
+  }
   addCheck(
     "Carbon UI contract",
     missing.length === 0 ? "PASS" : "BLOCK",

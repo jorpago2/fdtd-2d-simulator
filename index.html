@@ -26,9 +26,12 @@
     <title>EM Wave Simulator · 2D FDTD</title>
     <script>
       try {
-        document.documentElement.dataset.theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
+        const theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--white");
       } catch {
         document.documentElement.dataset.theme = "light";
+        document.documentElement.classList.add("cds--white");
       }
     </script>
     <link rel="icon" href="assets/favicon.ico" sizes="any" />
@@ -36,8 +39,8 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#eef5f3" />
-    <link rel="stylesheet" href="src/styles/carbon.scss?v=20260807-carbon-2" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260807-carbon-2" />
+    <link rel="stylesheet" href="src/styles/carbon.scss?v=20260807-carbon-5" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260807-carbon-5" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
