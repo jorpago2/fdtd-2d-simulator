@@ -8289,7 +8289,7 @@ async function runFloatingContextMenuDragSmoke(page) {
       draggable: menu.dataset.floatingMenuDraggable,
       movedX: Number((after.left - before.left).toFixed(1)),
       movedY: Number((after.top - before.top).toFixed(1)),
-      rightAligned: Math.abs(window.innerWidth - after.right) < 1,
+      rightAligned: Math.abs(frame.right - after.right) < 1,
       withinFrame:
         after.left >= frame.left - 0.5 &&
         after.top >= frame.top - 0.5 &&
