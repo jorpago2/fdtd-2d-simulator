@@ -152,7 +152,15 @@
       button.addEventListener("keydown", handleControlTabKeydown);
     });
     forEachNode(el.mobileLayerButtons, (button) => {
-      button.addEventListener("click", () => activateMobileLayer(button.dataset.mobileLayer));
+      button.addEventListener("click", () => {
+        const panelIsOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+        if (panelIsOpen && button.classList.contains("is-active")) {
+          closeControlDrawer();
+          return;
+        }
+        activateMobileLayer(button.dataset.mobileLayer);
+        if (!panelIsOpen) toggleControlDrawer();
+      });
     });
 
     el.sceneSearchInput?.addEventListener("input", refreshSceneSearch);

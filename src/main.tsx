@@ -24,9 +24,8 @@ function requiredElement(id: string): HTMLElement {
 function Brand() {
   return (
     <div className="brand-heading" data-react-ui="brand">
-      <h1 className="brand-title">
-        <span className="brand-emblem">EM Wave</span> Simulator
-      </h1>
+      <h1 className="brand-title">EM Wave Simulator</h1>
+      <p className="brand-descriptor">2D FDTD laboratory</p>
     </div>
   );
 }
@@ -34,15 +33,15 @@ function Brand() {
 function FooterLinks() {
   return (
     <>
-      <a className="canvas-footer-author" data-react-ui="footer" href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">
-        Jorge Parra
-      </a>
-      <span className="canvas-footer-separator" aria-hidden="true">·</span>
-      <nav className="canvas-footer-links" aria-label="Jorge Parra resources">
-        <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">
-          Online Simulators &amp; Tools <span aria-hidden="true">↗</span>
-        </a>
-      </nav>
+      <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
+      <span><b>Step</b> <output id="statusStepOutput">0</output></span>
+      <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
+      <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
+      <span className="status-strip-author" data-react-ui="footer">
+        <a href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
+        <span aria-hidden="true">{"\u00b7"}</span>
+        <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</a>
+      </span>
     </>
   );
 }

@@ -46,6 +46,7 @@
     const compactCanvasActive = createMediaMatcher(compactCanvasMediaQuery);
     const compactControlsActive = createMediaMatcher(compactControlsMediaQuery);
     const compactPanelTitleActive = createMediaMatcher(compactPanelTitleMediaQuery);
+    let controlDrawerTrigger = null;
 
     function controlTabLayerName(tabName) {
       return tabLayers[tabName] || "scenes";
@@ -134,9 +135,19 @@
 
     function setControlDrawerOpen(open) {
       const isOpen = Boolean(open) && controlDrawerOverlayActive();
+      const wasOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+      if (isOpen && !wasOpen) {
+        const activeElement = documentRef.activeElement;
+        controlDrawerTrigger = activeElement?.matches?.("button, [href], input, select, textarea")
+          ? activeElement
+          : el.controlDrawerToggle;
+      }
       uiCore.setClass(el.appShell, "controls-open", isOpen);
       uiCore.setClass(documentRef.body, "controls-drawer-open", isOpen);
       uiCore.setExpanded(el.controlDrawerToggle, isOpen);
+      el.mobileLayerButtons?.forEach?.((button) => {
+        button.setAttribute("aria-expanded", String(isOpen && button.classList.contains("is-active")));
+      });
       uiCore.setHidden(el.controlDrawerBackdrop, !isOpen);
       if (isOpen) {
         closeCanvasActionsMenu();
@@ -146,6 +157,9 @@
         }
         refreshControlPanelData();
         el.controlPanel?.focus?.({ preventScroll: true });
+      } else if (wasOpen && controlDrawerTrigger?.isConnected) {
+        controlDrawerTrigger.focus?.({ preventScroll: true });
+        controlDrawerTrigger = null;
       }
     }
 

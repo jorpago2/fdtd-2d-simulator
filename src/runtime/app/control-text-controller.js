@@ -89,6 +89,16 @@
         populateMonitorEditor(editorMonitor);
       }
       const boundary = boundarySummaryLabel();
+      if (el.headerSimulationStatus) {
+        const status = sim.lastDiverged ? "Unstable" : state.running ? "Running" : sim.time > 0 ? "Paused" : "Ready";
+        el.headerSimulationStatus.dataset.state = status.toLowerCase();
+        const statusLabel = el.headerSimulationStatus.querySelector(".header-status-label");
+        if (statusLabel) statusLabel.textContent = status;
+      }
+      if (el.statusGridOutput) el.statusGridOutput.textContent = `${sim.nx} \u00d7 ${sim.ny}`;
+      if (el.statusStepOutput) el.statusStepOutput.textContent = String(sim.time);
+      if (el.statusCourantOutput) el.statusCourantOutput.textContent = COURANT.toFixed(2);
+      if (el.statusBoundaryOutput) el.statusBoundaryOutput.textContent = boundary;
       controlSyncUi.syncConfigSummaryControls({
         boundary,
         cellsToLambda,

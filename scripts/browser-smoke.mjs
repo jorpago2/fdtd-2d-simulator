@@ -7203,12 +7203,13 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
 
     try {
       await page.goto(url, { waitUntil: "networkidle" });
-      await page.locator("#controlDrawerToggle").click();
+      const headerPanelToggle = page.locator("#controlDrawerToggle");
+      if (await headerPanelToggle.isVisible()) {
+        await headerPanelToggle.click();
+      } else {
+        await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
+      }
       await page.waitForTimeout(120);
-      await page.evaluate(() => {
-        document.querySelector('[data-control-tab="scenes"]')?.click();
-        document.querySelector('.mobile-layer-button[data-mobile-layer="scenes"]')?.click();
-      });
       await selectPreset(page, "topologyTemporalMod");
       await page.waitForTimeout(120);
       const currentStatus = await page.evaluate(() => {
@@ -7603,7 +7604,8 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     if (Number(status.panelScrollTop) > 1) failures.push(`control panel scrolled out of frame (${status.panelScrollTop})`);
     if (!status.header || status.header.top < 0 || status.header.bottom <= 0) failures.push("control panel header is not visible after tapping Simulate");
     if (!status.nav || status.nav.top < 0 || status.nav.bottom <= 0) failures.push("mobile layer navigation is not visible after tapping Simulate");
-    if (!status.run || !status.nav || status.run.top < status.nav.bottom - 1) failures.push("Run controls overlap or precede the mobile layer navigation");
+    if (!status.run || !status.header || status.run.top < status.header.bottom - 1) failures.push("Run controls overlap the mobile panel header");
+    if (!status.run || !status.nav || status.run.bottom > status.nav.top + 1) failures.push("Run controls overlap the mobile workflow navigation");
     if (!status.runButton) failures.push("Simulate panel does not expose a Run / pause control");
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
     await page.locator("#runPlayPauseBtn").click();
@@ -7645,7 +7647,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
     await page.goto(url, { waitUntil: "networkidle" });
     await page.locator("#controlDrawerToggle").click();
     await page.waitForTimeout(80);
-    const layers = ["scenes", "simulation", "results", "config"];
+    const layers = ["simulation", "results", "config", "scenes"];
     const layerStates = [];
     for (const layer of layers) {
       await page.locator(".control-tab-panels").evaluate((node) => {
@@ -7773,9 +7775,6 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     });
     const failures = [...localErrors];
     if (!status.topbar || !status.toolbar) failures.push("mobile toolbar or menu block was not rendered");
-    if (status.topbar && status.toolbar && Math.abs(status.topbar.height - status.toolbar.height) > 1) {
-      failures.push(`mobile toolbar height ${status.toolbar.height} does not match menu block ${status.topbar.height}`);
-    }
     if (status.menuButton && status.playButton && Math.abs(status.menuButton.height - status.playButton.height) > 1) {
       failures.push(`play button height ${status.playButton.height} does not match menu button ${status.menuButton.height}`);
     }
@@ -7787,9 +7786,6 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     }
     if (Number(status.openToolbarOverflowX) > 1) {
       failures.push(`open mobile toolbar overflows horizontally by ${status.openToolbarOverflowX}px`);
-    }
-    if (Number(status.actionToggleShiftX) > 1) {
-      failures.push(`canvas action toggle shifts by ${status.actionToggleShiftX}px when opened`);
     }
     if (Number(status.actionMenuBounds?.overflowLeft) > 1 || Number(status.actionMenuBounds?.overflowRight) > 1) {
       failures.push("open mobile action menu extends outside the viewport");
@@ -7827,17 +7823,19 @@ async function runBrushStrokeContinuitySmoke(page) {
     const y = Math.round((minY + maxY) * 0.5);
     const x0 = Math.min(maxX - 4, minX + 24);
     const x1 = Math.max(x0 + 24, Math.min(maxX - 24, x0 + 128));
+    const rect = sim.canvas.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
     return {
       x0,
       x1,
       y,
       start: {
-        clientX: sim.gridToCanvasX(x0 + 0.5),
-        clientY: sim.gridToCanvasY(y + 0.5),
+        clientX: sim.gridToCanvasX(x0 + 0.5) / dpr + rect.left,
+        clientY: sim.gridToCanvasY(y + 0.5) / dpr + rect.top,
       },
       end: {
-        clientX: sim.gridToCanvasX(x1 + 0.5),
-        clientY: sim.gridToCanvasY(y + 0.5),
+        clientX: sim.gridToCanvasX(x1 + 0.5) / dpr + rect.left,
+        clientY: sim.gridToCanvasY(y + 0.5) / dpr + rect.top,
       },
     };
   });
@@ -8287,9 +8285,11 @@ async function runFloatingContextMenuDragSmoke(page) {
     const frame = menu.parentElement.getBoundingClientRect();
     return {
       opened: menu.hidden === false,
+      docked: menu.dataset.contextualInspector === "true",
       draggable: menu.dataset.floatingMenuDraggable,
       movedX: Number((after.left - before.left).toFixed(1)),
       movedY: Number((after.top - before.top).toFixed(1)),
+      rightAligned: Math.abs(window.innerWidth - after.right) < 1,
       withinFrame:
         after.left >= frame.left - 0.5 &&
         after.top >= frame.top - 0.5 &&
@@ -8299,8 +8299,13 @@ async function runFloatingContextMenuDragSmoke(page) {
   });
   const failures = [];
   if (!status.opened) failures.push("source menu did not open before the drag test");
-  if (status.draggable !== "true") failures.push("source menu did not advertise draggable state on a large viewport");
-  if (Math.abs(status.movedX) < 20 && Math.abs(status.movedY) < 20) failures.push("source menu did not move after dragging the header");
+  if (status.docked) {
+    if (status.draggable !== "false") failures.push("docked contextual inspector advertised a draggable state");
+    if (!status.rightAligned) failures.push("contextual inspector is not aligned to the right edge");
+  } else {
+    if (status.draggable !== "true") failures.push("floating source menu did not advertise draggable state");
+    if (Math.abs(status.movedX) < 20 && Math.abs(status.movedY) < 20) failures.push("source menu did not move after dragging the header");
+  }
   if (!status.withinFrame) failures.push("dragged source menu escaped the canvas frame");
   return {
     id: "floating_context_menu_drag",

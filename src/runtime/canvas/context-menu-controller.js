@@ -23,6 +23,7 @@
     const validateEditScope = optionalFunction(dependencies.validateEditScope, () => true);
     const floatingMenuPad = 10;
     const minimumDragRoom = 12;
+    const contextualInspectorQuery = "(min-width: 80rem) and (min-height: 40rem)";
     let activeMenuDrag = null;
     const state = {
       sourceMenuMode: "add",
@@ -109,7 +110,15 @@
 
     function updateFloatingMenuDragAvailability(menu, bounds = floatingMenuBounds(menu)) {
       if (!menu || menu.hidden) return;
+      if (contextualInspectorActive(menu)) {
+        menu.dataset.floatingMenuDraggable = "false";
+        return;
+      }
       menu.dataset.floatingMenuDraggable = String(Boolean(bounds?.canDragX || bounds?.canDragY));
+    }
+
+    function contextualInspectorActive(menu) {
+      return menu !== el.canvasContextMenu && (global.matchMedia?.(contextualInspectorQuery)?.matches ?? false);
     }
 
     function clampFloatingMenuPosition(menu, desiredLeft, desiredTop) {
@@ -125,6 +134,16 @@
 
     function refreshFloatingMenuPosition(menu) {
       if (!menu || menu.hidden) return;
+      if (contextualInspectorActive(menu)) {
+        if (menu.dataset.contextualInspector !== "true") {
+          positionFloatingMenu(menu, global.innerWidth, floatingMenuPad);
+        }
+        return;
+      }
+      if (menu.dataset.contextualInspector === "true") {
+        positionFloatingMenu(menu, global.innerWidth / 2, global.innerHeight / 3);
+        return;
+      }
       const left = Number.parseFloat(menu.style.left);
       const top = Number.parseFloat(menu.style.top);
       if (!Number.isFinite(left) || !Number.isFinite(top)) return;
@@ -138,6 +157,16 @@
     function positionFloatingMenu(menu, clientX, clientY) {
       const frame = menu?.parentElement;
       if (!frame || !menu) return;
+      if (contextualInspectorActive(menu)) {
+        menu.dataset.contextualInspector = "true";
+        menu.dataset.floatingMenuDraggable = "false";
+        menu.style.removeProperty("left");
+        menu.style.removeProperty("top");
+        menu.style.removeProperty("max-height");
+        menu.style.removeProperty("overflow-y");
+        return;
+      }
+      delete menu.dataset.contextualInspector;
       const frameRect = frame.getBoundingClientRect();
       menu.style.removeProperty("max-height");
       menu.style.removeProperty("overflow-y");
@@ -191,7 +220,7 @@
       if (isInteractiveDragTarget(event.target)) return;
       const header = event.currentTarget;
       const menu = header.closest?.(".source-menu");
-      if (!menu || menu.hidden) return;
+      if (!menu || menu.hidden || contextualInspectorActive(menu)) return;
       const currentLeft = Number.parseFloat(menu.style.left);
       const currentTop = Number.parseFloat(menu.style.top);
       const bounds = floatingMenuBounds(menu);

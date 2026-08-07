@@ -365,6 +365,7 @@
       }
       if (el.sceneSpotlightGroup) el.sceneSpotlightGroup.textContent = current.group || cleanSceneGroupLabel(current.groupLabel);
       if (el.sceneSpotlightTitle) el.sceneSpotlightTitle.textContent = current.title || "Custom scene";
+      if (el.headerSceneTitle) el.headerSceneTitle.textContent = current.title || "Custom scene";
       if (el.sceneSpotlightDescription) {
         el.sceneSpotlightDescription.textContent = current.description || sceneDescriptions.empty || "Custom FDTD scene.";
       }

@@ -48,29 +48,58 @@
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
     <main class="app-shell cds--grid">
-      <header class="topbar">
+      <header class="topbar" aria-label="EM Wave Simulator application header">
         <div class="brand-lockup">
-          <p class="eyebrow">2D-FDTD</p>
+          <span class="brand-mark" aria-hidden="true">EM</span>
           <div id="reactBrandRoot" class="brand-main">
             <div class="brand-heading">
-              <h1 class="brand-title"><span class="brand-emblem">EM Wave</span> Simulator</h1>
+              <h1 class="brand-title">EM Wave Simulator</h1>
+              <p class="brand-descriptor">2D FDTD laboratory</p>
             </div>
           </div>
         </div>
-        <button
-          id="controlDrawerToggle"
-          class="icon-button control-drawer-toggle"
-          type="button"
-          aria-controls="controlPanel"
-          aria-expanded="false"
-          aria-label="Open controls"
-          title="Open controls"
-        >
-          <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-        </button>
+        <div class="header-context" aria-label="Current simulation">
+          <span class="header-context-label">Simulation</span>
+          <strong id="headerSceneTitle" class="header-scene-title">Plane wave in air</strong>
+          <span id="headerSimulationStatus" class="header-status" role="status" aria-live="polite" data-state="ready">
+            <span class="header-status-indicator" aria-hidden="true"></span><span class="header-status-label">Ready</span>
+          </span>
+        </div>
+        <div class="header-actions" role="group" aria-label="Global actions">
+          <fieldset class="canvas-mode-toggle theme-toggle header-theme-toggle" role="radiogroup" aria-label="Color theme">
+            <legend class="sr-only">Color theme</legend>
+            <button class="mode-toggle-button is-active" type="button" role="radio" data-theme-choice="light" aria-checked="true" title="Use light theme">Light</button>
+            <button class="mode-toggle-button" type="button" role="radio" data-theme-choice="dark" aria-checked="false" title="Use dark theme">Dark</button>
+          </fieldset>
+          <button
+            id="controlDrawerToggle"
+            class="icon-button control-drawer-toggle cds--btn cds--btn--ghost cds--btn--sm cds--btn--icon-only"
+            type="button"
+            aria-controls="controlPanel"
+            aria-expanded="false"
+            aria-label="Open current workflow panel"
+            title="Open current workflow panel"
+          >
+            <svg class="ui-icon cds--btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+        </div>
       </header>
 
       <section id="simulatorWorkspace" class="workspace" aria-label="Simulator" tabindex="-1">
+        <nav class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow">
+          <button class="mobile-layer-button is-active cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="scenes" aria-current="page" aria-controls="controlPanel" aria-expanded="false">
+            <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
+          </button>
+          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="simulation" aria-controls="controlPanel" aria-expanded="false">
+            <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
+          </button>
+          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="results" aria-controls="controlPanel" aria-expanded="false">
+            <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
+          </button>
+          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="config" aria-controls="controlPanel" aria-expanded="false">
+            <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
+          </button>
+        </nav>
         <div class="stage">
           <div class="canvas-toolbar">
             <div class="tool-group compact">
@@ -1089,12 +1118,16 @@
               </div>
             </div>
           </div>
-          <footer id="reactFooterRoot" class="canvas-footer" aria-label="Author links">
-            <a class="canvas-footer-author" href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
-            <span class="canvas-footer-separator" aria-hidden="true">·</span>
-            <nav class="canvas-footer-links" aria-label="Jorge Parra resources">
-              <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools <span aria-hidden="true">↗</span></a>
-            </nav>
+          <footer id="reactFooterRoot" class="canvas-footer status-strip" aria-label="Simulation status">
+            <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
+            <span><b>Step</b> <output id="statusStepOutput">0</output></span>
+            <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
+            <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
+            <span class="status-strip-author">
+              <a href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
+              <span aria-hidden="true">&middot;</span>
+              <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</a>
+            </span>
           </footer>
         </div>
 
@@ -1105,27 +1138,8 @@
               <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
             <div class="control-panel-actions">
-              <fieldset class="canvas-mode-toggle theme-toggle" role="radiogroup" aria-label="Color theme">
-                <legend class="sr-only">Color theme</legend>
-                <button class="mode-toggle-button is-active" type="button" role="radio" data-theme-choice="light" aria-checked="true" title="Use light theme">Light</button>
-                <button class="mode-toggle-button" type="button" role="radio" data-theme-choice="dark" aria-checked="false" title="Use dark theme">Dark</button>
-              </fieldset>
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
-          </div>
-          <div class="mobile-layer-nav" role="navigation" aria-label="Workspace layers">
-            <button class="mobile-layer-button is-active" type="button" data-mobile-layer="scenes" aria-current="page" aria-label="Scene layer">
-              <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
-            </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="simulation" aria-label="Simulate layer">
-              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
-            </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="results" aria-label="Results layer">
-              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
-            </button>
-            <button class="mobile-layer-button" type="button" data-mobile-layer="config" aria-label="Numerics layer">
-              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
-            </button>
           </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
             <button class="control-tab-button is-active" type="button" role="tab" id="tab-scenes-button" aria-controls="tab-scenes" aria-selected="true" data-control-tab="scenes">

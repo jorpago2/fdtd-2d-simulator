@@ -205,6 +205,7 @@
       if (el.performanceLiveStepsOutput) el.performanceLiveStepsOutput.textContent = liveStepsText;
       if (el.performanceFpsOutput) el.performanceFpsOutput.textContent = fpsText;
       if (el.performanceStatus) el.performanceStatus.textContent = statusText;
+      if (el.statusStepOutput) el.statusStepOutput.textContent = String(sim.time);
     }
 
     function reset() {
