@@ -9,6 +9,14 @@ import "./data/scene-catalog-loader";
 import "./ui/entity-selection-controller";
 import "./ui/material-selection-controller";
 import "./ui/visual-layer-model";
+import { CarbonButtonBridge, prepareCarbonButtonBridge } from "./ui/carbon-button-bridge";
+import {
+  ApplicationHeader,
+  CanvasPrimaryControls,
+  SceneSearch,
+  StatusFooter,
+  WorkflowNavigation,
+} from "./ui/carbon-shell";
 import { VisualFieldControls, VisualOverlayControls } from "./ui/visual-controls";
 
 declare const __FDTD_BUILD_VERSION__: string;
@@ -19,31 +27,6 @@ function requiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
   if (!element) throw new Error(`Missing React mount point: #${id}`);
   return element;
-}
-
-function Brand() {
-  return (
-    <div className="brand-heading" data-react-ui="brand">
-      <h1 className="brand-title">EM Wave Simulator</h1>
-      <p className="brand-descriptor">2D FDTD laboratory</p>
-    </div>
-  );
-}
-
-function FooterLinks() {
-  return (
-    <>
-      <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
-      <span><b>Step</b> <output id="statusStepOutput">0</output></span>
-      <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
-      <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
-      <span className="status-strip-author" data-react-ui="footer">
-        <a href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
-        <span aria-hidden="true">{"\u00b7"}</span>
-        <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</a>
-      </span>
-    </>
-  );
 }
 
 function loadClassicScript(source: string): Promise<void> {
@@ -65,11 +48,24 @@ async function startLegacyRuntime(): Promise<void> {
 }
 
 flushSync(() => {
-  createRoot(requiredElement("reactBrandRoot")).render(<Brand />);
-  createRoot(requiredElement("reactFooterRoot")).render(<FooterLinks />);
+  createRoot(requiredElement("reactHeaderRoot")).render(<ApplicationHeader />);
+  createRoot(requiredElement("reactWorkflowRoot")).render(<WorkflowNavigation />);
+  createRoot(requiredElement("reactCanvasPrimaryControlsRoot")).render(<CanvasPrimaryControls />);
+  createRoot(requiredElement("reactSceneSearchRoot")).render(<SceneSearch />);
+  createRoot(requiredElement("reactFooterRoot")).render(<StatusFooter />);
   createRoot(requiredElement("reactVisualFieldRoot")).render(<VisualFieldControls />);
   createRoot(requiredElement("reactVisualOverlaysRoot")).render(<VisualOverlayControls />);
 });
+
+const bridgedButtons = prepareCarbonButtonBridge();
+const bridgeHost = document.createElement("div");
+bridgeHost.className = "carbon-portal-host";
+bridgeHost.setAttribute("aria-hidden", "true");
+document.body.append(bridgeHost);
+flushSync(() => {
+  createRoot(bridgeHost).render(<CarbonButtonBridge buttons={bridgedButtons} />);
+});
+
 void startLegacyRuntime().catch((error: unknown) => {
   console.error("FDTD runtime startup failed", error);
 });

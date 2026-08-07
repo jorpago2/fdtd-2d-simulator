@@ -3391,10 +3391,10 @@ details > summary::after {
   --color-warning: oklch(47% 0.105 70);
   --color-danger: oklch(45% 0.15 25);
 
-  --font-display: "Space Grotesk", Arial, sans-serif;
+  --font-display: "IBM Plex Sans", Arial, sans-serif;
   --font-body: "IBM Plex Sans", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", Consolas, monospace;
-  --font-math: "STIX Two Math", "Cambria Math", serif;
+  --font-math: "IBM Plex Serif", "Cambria Math", serif;
 
   --space-3xs: 0.25rem;
   --space-2xs: 0.5rem;
@@ -3473,6 +3473,17 @@ html[data-theme="dark"] {
   overflow: clip;
 }
 
+#reactHeaderRoot,
+.react-control-root,
+.carbon-button-mount,
+.carbon-button-content {
+  display: contents;
+}
+
+.carbon-portal-host {
+  display: none;
+}
+
 .topbar {
   position: relative;
   inset: auto;
@@ -3484,6 +3495,7 @@ html[data-theme="dark"] {
   width: 100%;
   max-width: none;
   min-height: 64px;
+  height: 64px;
   padding: 0 var(--space-xs);
   border: 0;
   border-bottom: 1px solid var(--cds-border-subtle-01, var(--color-rule));
@@ -3594,6 +3606,18 @@ html[data-theme="dark"] {
 
 .header-theme-toggle {
   width: 9rem;
+}
+
+.control-drawer-toggle {
+  width: var(--touch);
+  min-width: var(--touch);
+  height: var(--touch);
+  min-height: var(--touch);
+}
+
+.canvas-toolbar .interaction-toggle {
+  height: var(--touch);
+  min-height: var(--touch);
 }
 
 .workspace {

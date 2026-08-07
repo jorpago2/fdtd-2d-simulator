@@ -36,19 +36,13 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#eef5f3" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=STIX+Two+Math&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260806-carbon-1" />
     <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260806-carbon-1" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
     <main class="app-shell cds--grid">
-      <header class="topbar" aria-label="EM Wave Simulator application header">
+      <div id="reactHeaderRoot" data-carbon-react-root="header">
         <div class="brand-lockup">
           <span class="brand-mark" aria-hidden="true">EM</span>
           <div id="reactBrandRoot" class="brand-main">
@@ -83,10 +77,10 @@
             <svg class="ui-icon cds--btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
           </button>
         </div>
-      </header>
+      </div>
 
       <section id="simulatorWorkspace" class="workspace" aria-label="Simulator" tabindex="-1">
-        <nav class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow">
+        <nav id="reactWorkflowRoot" class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow" data-carbon-react-root="workflow">
           <button class="mobile-layer-button is-active cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="scenes" aria-current="page" aria-controls="controlPanel" aria-expanded="false">
             <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
           </button>
@@ -102,6 +96,7 @@
         </nav>
         <div class="stage">
           <div class="canvas-toolbar">
+            <div id="reactCanvasPrimaryControlsRoot" class="react-control-root" data-carbon-react-root="canvas-primary">
             <div class="tool-group compact">
               <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
@@ -136,6 +131,7 @@
               <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" role="radio" aria-checked="true" title="Select and move canvas objects">Select</button>
               <button id="brushModeBtn" class="mode-toggle-button" type="button" role="radio" aria-checked="false" title="Draw materials and geometries">Draw</button>
             </fieldset>
+            </div>
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
@@ -1118,7 +1114,7 @@
               </div>
             </div>
           </div>
-          <footer id="reactFooterRoot" class="canvas-footer status-strip" aria-label="Simulation status">
+          <footer id="reactFooterRoot" class="canvas-footer status-strip" aria-label="Simulation status" data-carbon-react-root="status">
             <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
             <span><b>Step</b> <output id="statusStepOutput">0</output></span>
             <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
@@ -1380,10 +1376,7 @@
                   <section id="sceneGuidePanel" class="scene-guide-panel" aria-live="polite"></section>
                 </div>
                 <div id="sceneBrowsePanel" class="scene-view-panel scene-browse-panel" data-scene-view-panel="browse" hidden>
-                  <label class="scene-search-label">
-                    <span>Search</span>
-                    <input id="sceneSearchInput" type="search" autocomplete="off" placeholder="Bragg, Kerr, TEz..." />
-                  </label>
+                  <div id="reactSceneSearchRoot" class="scene-search-label" data-carbon-react-root="scene-search"></div>
                   <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
                   <div class="scene-browser-meta" aria-live="polite">
                     <output id="sceneBrowserCount">1 scene in General</output>

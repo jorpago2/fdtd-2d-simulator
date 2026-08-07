@@ -170,7 +170,9 @@ function validateCarbonUi(indexHtml) {
   const styles = readText("src", "styles", "fdtd-ui.css");
   const carbon = readText("src", "styles", "carbon.scss");
   const missing = [];
-  if (!carbon.includes('@use "@carbon/styles"')) missing.push("Carbon Sass entry");
+  if (!["@carbon/styles", "@carbon/react"].some((entry) => carbon.includes(`@use "${entry}"`))) {
+    missing.push("Carbon Sass entry");
+  }
   if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
   if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
   addCheck(
