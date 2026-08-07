@@ -3945,6 +3945,17 @@ html[data-theme="dark"] {
   }
 }
 
+@media (max-width: 63.99rem), (max-height: 39.99rem) {
+  .canvas-toolbar .icon-button {
+    width: var(--touch);
+    min-width: var(--touch);
+    height: var(--touch);
+    min-height: var(--touch);
+    max-inline-size: var(--touch);
+    padding: 0;
+  }
+}
+
 @media (min-width: 64rem) and (min-height: 40rem) {
   .topbar {
     grid-template-columns: minmax(15rem, 1fr) minmax(20rem, 36rem) minmax(15rem, 1fr);
@@ -3994,8 +4005,15 @@ html[data-theme="dark"] {
     inset: auto;
     grid-area: panel;
     width: auto;
-    height: 100%;
+    height: calc(100% - 32px);
+    max-height: none;
+    align-self: start;
     border-right: 1px solid var(--cds-border-subtle-01, var(--color-rule));
+  }
+
+  .canvas-toolbar .interaction-toggle {
+    height: 2rem;
+    min-height: 2rem;
   }
 
   .control-drawer-backdrop {
