@@ -1,4 +1,0 @@
-interface:
-  display_name: "PIC Data Management Plan"
-  short_description: "Operational DMPs for integrated photonics"
-  default_prompt: "Use $pic-data-management-plan to draft an operational data management plan for an integrated photonics research group."
