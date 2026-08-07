@@ -166,18 +166,19 @@
         el.sweepEndInput.step = inputRange.step;
         el.sweepEndInput.value = formatSweepInput(state.sweepEnd);
       }
-      setControlDisabled(el.sweepStartInput?.closest("label"), el.sweepStartInput, directionMode);
-      setControlDisabled(el.sweepEndInput?.closest("label"), el.sweepEndInput, directionMode);
+      const controlShell = (input) => input?.closest?.("[data-carbon-field-shell]") || input?.closest?.("label");
+      setControlDisabled(controlShell(el.sweepStartInput), el.sweepStartInput, directionMode);
+      setControlDisabled(controlShell(el.sweepEndInput), el.sweepEndInput, directionMode);
       if (el.sweepSamplesInput) {
         el.sweepSamplesInput.min = directionMode ? "2" : "3";
         el.sweepSamplesInput.max = directionMode ? "2" : "41";
         el.sweepSamplesInput.value = String(state.sweepSamples);
-        setControlDisabled(el.sweepSamplesInput.closest("label"), el.sweepSamplesInput, directionMode);
+        setControlDisabled(controlShell(el.sweepSamplesInput), el.sweepSamplesInput, directionMode);
       }
       if (el.sweepStepsInput) el.sweepStepsInput.value = String(state.sweepSteps);
       if (el.sweepBidirectionalInput) {
         el.sweepBidirectionalInput.checked = bidirectionalEnabled;
-        setControlDisabled(el.sweepBidirectionalInput.closest("label"), el.sweepBidirectionalInput, !amplitudeMode || state.sweepRunning);
+        setControlDisabled(controlShell(el.sweepBidirectionalInput), el.sweepBidirectionalInput, !amplitudeMode || state.sweepRunning);
       }
       if (el.sweepRunBtn) el.sweepRunBtn.textContent = state.sweepRunning ? "Cancel sweep" : "Run sweep";
       if (el.sweepExportBtn) el.sweepExportBtn.disabled = state.sweepRunning || state.sweepResults.length === 0;

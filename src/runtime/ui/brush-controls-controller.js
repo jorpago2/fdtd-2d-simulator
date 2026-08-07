@@ -52,6 +52,10 @@
       return Array.from(control?.querySelectorAll?.("input, select, textarea") || []);
     }
 
+    function controlShell(input) {
+      return input?.closest?.("[data-carbon-field-shell]") || input?.closest?.("label");
+    }
+
     function syncDependentControl(control, visible) {
       if (!control) return;
       control.hidden = !visible;
@@ -65,7 +69,7 @@
     }
 
     function syncChildControlGroupVisibility(control) {
-      const childControls = Array.from(control?.children || []).filter((child) => child.matches?.("label"));
+      const childControls = Array.from(control?.children || []).filter((child) => child.matches?.("label, [data-carbon-field-shell]"));
       if (childControls.length === 0) return;
       const visible = childControls.some((child) => !child.hidden);
       control.hidden = !visible;
@@ -115,30 +119,30 @@
       syncDependentControl(el.geometryRadiusControl, !editsRegion && geometryUsesRadius());
       syncDependentControl(el.geometryInnerRadiusControl, !editsRegion && geometryUsesInnerRadius());
       document.querySelectorAll(".geometry-params").forEach(syncChildControlGroupVisibility);
-      setControlDisabled(el.customAnisotropyInput?.closest("label"), el.customAnisotropyInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.customAnisotropyInput), el.customAnisotropyInput, !isCustomBrush);
       el.brushMaterialGrid?.classList.toggle("is-anisotropic", isCustomBrush && state.customAnisotropic);
       document.querySelectorAll(".brush-material-params").forEach((control) => {
         setControlDisabled(control, [...control.querySelectorAll("input")], !isCustomBrush);
       });
       syncDependentControls(".brush-anisotropic-params", isCustomBrush && state.customAnisotropic);
-      setControlDisabled(el.gyrotropyEnabledInput?.closest("label"), el.gyrotropyEnabledInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.gyrotropyEnabledInput), el.gyrotropyEnabledInput, !isCustomBrush);
       syncDependentControls(".gyrotropy-params", isCustomBrush && state.materialGyrotropyEnabled);
-      setControlDisabled(el.bianisotropyEnabledInput?.closest("label"), el.bianisotropyEnabledInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.bianisotropyEnabledInput), el.bianisotropyEnabledInput, !isCustomBrush);
       syncDependentControls(".bianisotropy-params", isCustomBrush && state.materialBianisotropyEnabled);
       const modulationControlsDisabled = !isCustomBrush;
-      setControlDisabled(el.modulationEnabledInput?.closest("label"), el.modulationEnabledInput, modulationControlsDisabled);
+      setControlDisabled(controlShell(el.modulationEnabledInput), el.modulationEnabledInput, modulationControlsDisabled);
       syncDependentControls(".modulation-params", isCustomBrush && state.materialModulationEnabled);
       syncDependentControl(el.modulationPhaseInput?.closest("label"), isCustomBrush && state.materialModulationEnabled);
-      setControlDisabled(el.nonlinearEnabledInput?.closest("label"), el.nonlinearEnabledInput, modulationControlsDisabled);
+      setControlDisabled(controlShell(el.nonlinearEnabledInput), el.nonlinearEnabledInput, modulationControlsDisabled);
       syncDependentControls(".nonlinear-params", isCustomBrush && state.materialNonlinearEnabled);
-      setControlDisabled(el.harmonicEnabledInput?.closest("label"), el.harmonicEnabledInput, modulationControlsDisabled);
+      setControlDisabled(controlShell(el.harmonicEnabledInput), el.harmonicEnabledInput, modulationControlsDisabled);
       syncDependentControls(".harmonic-params", isCustomBrush && state.materialHarmonicEnabled);
-      setControlDisabled(el.phaseChangeEnabledInput?.closest("label"), el.phaseChangeEnabledInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.phaseChangeEnabledInput), el.phaseChangeEnabledInput, !isCustomBrush);
       syncDependentControls(".phase-change-params", isCustomBrush && state.materialPhaseChangeEnabled);
-      setControlDisabled(el.conductivityEnabledInput?.closest("label"), el.conductivityEnabledInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.conductivityEnabledInput), el.conductivityEnabledInput, !isCustomBrush);
       syncDependentControls(".conductivity-params", isCustomBrush && state.materialConductivityEnabled);
       syncDependentControl(el.conductivitySigmaYControl, isCustomBrush && state.materialConductivityEnabled && state.customAnisotropic);
-      setControlDisabled(el.saturableGainEnabledInput?.closest("label"), el.saturableGainEnabledInput, !isCustomBrush);
+      setControlDisabled(controlShell(el.saturableGainEnabledInput), el.saturableGainEnabledInput, !isCustomBrush);
       syncDependentControls(".saturable-gain-params", isCustomBrush && state.materialSaturableGainEnabled);
       const dispersionModel = normalizeDispersionModel(state.dispersionModel);
       const dispersionActive = isCustomBrush && dispersionModel !== "none";

@@ -9,7 +9,12 @@ import "./data/scene-catalog-loader";
 import "./ui/entity-selection-controller";
 import "./ui/material-selection-controller";
 import "./ui/visual-layer-model";
-import { CarbonButtonBridge, prepareCarbonButtonBridge } from "./ui/carbon-button-bridge";
+import {
+  CarbonButtonBridge,
+  CarbonFormBridge,
+  prepareCarbonButtonBridge,
+  prepareCarbonFormBridge,
+} from "./ui/carbon-button-bridge";
 import {
   ApplicationHeader,
   CanvasPrimaryControls,
@@ -58,12 +63,18 @@ flushSync(() => {
 });
 
 const bridgedButtons = prepareCarbonButtonBridge();
+const bridgedFormControls = prepareCarbonFormBridge();
 const bridgeHost = document.createElement("div");
 bridgeHost.className = "carbon-portal-host";
 bridgeHost.setAttribute("aria-hidden", "true");
 document.body.append(bridgeHost);
 flushSync(() => {
-  createRoot(bridgeHost).render(<CarbonButtonBridge buttons={bridgedButtons} />);
+  createRoot(bridgeHost).render(
+    <>
+      <CarbonButtonBridge buttons={bridgedButtons} />
+      <CarbonFormBridge controls={bridgedFormControls} />
+    </>,
+  );
 });
 
 void startLegacyRuntime().catch((error: unknown) => {
