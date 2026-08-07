@@ -20,3 +20,10 @@ allowBuilds:
   '@ibm/plex-serif': false
   '@parcel/watcher': false
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@storybook/builder-vite@10.5.7'
+  - '@storybook/csf-plugin@10.5.7'
+  - '@storybook/react-dom-shim@10.5.7'
+  - '@storybook/react-vite@10.5.7'
+  - '@storybook/react@10.5.7'
+  - storybook@10.5.7
