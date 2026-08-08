@@ -1,6 +1,8 @@
 (function initFdtdCanvasBoundaryOverlays() {
   "use strict";
 
+  const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
+
   Object.assign(FDTDSim.prototype, {
     drawCpmlOverlay() {
       normalizeBoundarySides();
@@ -23,7 +25,7 @@
       const drawCpmlLabel = (rect) => {
         const fontPx = this.overlayTextFontPx(0.92);
         const label = "CPML";
-        ctx.font = `600 ${fontPx}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.font = `600 ${fontPx}px ${CARBON_SANS_FONT}`;
         const metrics = ctx.measureText(label);
         const padX = Math.max(6 * dpr, fontPx * 0.45);
         const padY = Math.max(3 * dpr, fontPx * 0.24);

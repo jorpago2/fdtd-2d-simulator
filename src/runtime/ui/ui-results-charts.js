@@ -1,6 +1,8 @@
 (function initFdtdUiResultsCharts(global) {
   "use strict";
 
+  const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
+
   function clampNumber(value, min, max) {
     return Math.min(max, Math.max(min, Number(value) || 0));
   }
@@ -61,7 +63,7 @@
   function drawEmptyChartMessage(ctx, text, x, y, maxWidth, dpr, colors) {
     ctx.save();
     ctx.fillStyle = colors.muted;
-    ctx.font = `${10.5 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+    ctx.font = `${10.5 * dpr}px ${CARBON_SANS_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const lines = emptyChartMessageLines(ctx, text, Math.max(48 * dpr, maxWidth));
@@ -228,7 +230,7 @@
           ctx.lineTo(xb, padT + plotH);
           ctx.stroke();
           ctx.fillStyle = colors.text;
-          ctx.font = `${10 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+          ctx.font = `${10 * dpr}px ${CARBON_SANS_FONT}`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           if (!compact) {
@@ -285,7 +287,7 @@
         drawSeries("t", tColor);
       }
 
-      ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `${11 * dpr}px ${CARBON_SANS_FONT}`;
       ctx.textBaseline = "middle";
       ctx.fillStyle = colors.text;
       ctx.textAlign = "left";
@@ -497,7 +499,7 @@
           ctx.stroke();
         }
         ctx.fillStyle = colors.text;
-        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.font = `${11 * dpr}px ${CARBON_SANS_FONT}`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         ctx.fillText(referenceActive ? "Reference-normalized R/T/residual" : "Line-monitor R/T/residual", padL, 11 * dpr);
@@ -556,7 +558,7 @@
 
       if (plottedPortPoints.length <= 0) {
         ctx.fillStyle = colors.text;
-        ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.font = `${11 * dpr}px ${CARBON_SANS_FONT}`;
         ctx.textBaseline = "middle";
         ctx.textAlign = "left";
         ctx.fillText("Probe spectrum", padL, 11 * dpr);
@@ -667,7 +669,7 @@
         margin: { l: 56, r: 18, t: 30, b: 46 },
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: colors.bg,
-        font: { family: "ui-sans-serif, system-ui, sans-serif", size: 10, color: colors.text },
+        font: { family: CARBON_SANS_FONT, size: 10, color: colors.text },
         hovermode: "x unified",
         dragmode: "pan",
         uirevision: "fdtd-spectrum-monitor",
@@ -743,7 +745,7 @@
       }
 
       ctx.fillStyle = colors.text;
-      ctx.font = `${11 * dpr}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `${11 * dpr}px ${CARBON_SANS_FONT}`;
       ctx.textBaseline = "middle";
       ctx.textAlign = "left";
       ctx.fillText(scatteringMode ? "Scattering width / λ₀" : "NTFF angular pattern", 12 * dpr, 11 * dpr);

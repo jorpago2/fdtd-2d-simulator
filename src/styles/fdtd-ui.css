@@ -66,8 +66,8 @@
   --help-guide-top-gap: max(12px, env(safe-area-inset-top));
   --help-guide-toggle-size: 50px;
   --help-guide-panel-gap: 12px;
-  --font: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --serif: Georgia, "Times New Roman", serif;
+  --font: var(--font-body);
+  --serif: var(--font-display);
   --drawer-width: clamp(720px, 38vw, 1080px);
   --switch-w: 42px;
   --switch-h: 24px;
@@ -1177,7 +1177,7 @@ html[data-theme="dark"] .control-tab-button.is-active .nav-step {
   overflow-wrap: anywhere;
   color: var(--accent-strong);
   background: var(--panel);
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-math);
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1.35;
@@ -2234,7 +2234,7 @@ label.scene-select-fallback,
 .maxwell-equation-formula {
   margin: 0;
   color: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-math);
   font-size: 0.68rem;
   font-weight: 750;
   line-height: 1.32;
@@ -2413,7 +2413,7 @@ label.scene-select-fallback,
 .share-url-output {
   width: 100%;
   min-height: 72px;
-  font: 0.74rem/1.35 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font: 0.74rem/1.35 var(--font-mono);
   overflow-wrap: anywhere;
 }
 
@@ -3428,10 +3428,10 @@ details > summary::after {
   --color-danger: var(--cds-support-error);
   --color-shadow: color-mix(in srgb, var(--cds-text-primary) 16%, transparent);
 
-  --font-display: "IBM Plex Sans", Arial, sans-serif;
-  --font-body: "IBM Plex Sans", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", Consolas, monospace;
-  --font-math: "IBM Plex Serif", "Cambria Math", serif;
+  --font-display: "IBM Plex Sans", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-math: "IBM Plex Serif", serif;
 
   --space-3xs: 0.125rem;
   --space-2xs: 0.25rem;

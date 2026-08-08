@@ -170,6 +170,11 @@ function validateCarbonUi(indexHtml) {
   const styles = readText("src", "styles", "fdtd-ui.css");
   const carbon = readText("src", "styles", "carbon.scss");
   const missing = [];
+  const inheritedFontPattern = /Nunito Sans|Helvetica Neue|SFMono|ui-monospace|ui-sans-serif|system-ui|Consolas|Menlo|Liberation Mono|Georgia|Times New Roman|Cambria Math|Arial/i;
+  const typographyFiles = [".css", ".scss", ".js", ".ts", ".tsx"]
+    .flatMap((extension) => listFilesRecursive("src", extension))
+    .concat(".storybook/preview.tsx");
+  const inheritedFontFiles = typographyFiles.filter((file) => inheritedFontPattern.test(readText(...file.split("/"))));
   if (!["@carbon/styles", "@carbon/react"].some((entry) => carbon.includes(`@use "${entry}"`))) {
     missing.push("Carbon Sass entry");
   }
@@ -179,10 +184,11 @@ function validateCarbonUi(indexHtml) {
   if (!styles.includes(".icon-button:not(.cds--btn)") || !styles.includes(".toolbar-switch:not(.cds--form-item):not([data-carbon-field-shell])")) {
     missing.push("legacy control styles isolated from Carbon components");
   }
+  if (inheritedFontFiles.length > 0) missing.push(`inherited typography in ${inheritedFontFiles.join(", ")}`);
   addCheck(
     "Carbon UI contract",
     missing.length === 0 ? "PASS" : "BLOCK",
-    missing.length === 0 ? "Carbon Sass and grid shell found" : missing.join(", "),
+    missing.length === 0 ? "Carbon Sass, grid shell, and IBM Plex typography found" : missing.join(", "),
   );
 }
 

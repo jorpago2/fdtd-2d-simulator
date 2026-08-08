@@ -1,6 +1,8 @@
 (function initFdtdCanvasColorbar(global) {
   "use strict";
 
+  const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
+
   function requireObject(value, name) {
     if (!value || typeof value !== "object") {
       throw new Error(`Canvas colorbar dependency must provide ${name}.`);
@@ -251,11 +253,11 @@
       ctx.fillStyle = textColor;
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
-      ctx.font = `700 ${titleFont}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `700 ${titleFont}px ${CARBON_SANS_FONT}`;
       ctx.fillText(snapshot.titleText || "", x + barWidth / 2, y + pad + titleFont * 0.55);
 
       ctx.textAlign = "left";
-      ctx.font = `${labelFont}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `${labelFont}px ${CARBON_SANS_FONT}`;
       const labelX = gradientX + gradientWidth + Math.max(7 * dpr, barWidth * 0.08);
       ctx.fillText(snapshot.maxText || "", labelX, gradientTop + labelFont * 0.2);
       ctx.fillText(snapshot.midText || "", labelX, gradientTop + gradientHeight * 0.5);

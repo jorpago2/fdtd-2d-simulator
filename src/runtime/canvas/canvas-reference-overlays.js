@@ -1,6 +1,8 @@
 (function initFdtdCanvasReferenceOverlays() {
   "use strict";
 
+  const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
+
   Object.assign(FDTDSim.prototype, {
     drawReferenceOverlay() {
       if (visualLayerEnabled("scale")) {
@@ -131,7 +133,7 @@
       const ctx = this.ctx;
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       const fontPx = this.overlayTextFontPx();
-      ctx.font = `${fontPx}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.font = `${fontPx}px ${CARBON_SANS_FONT}`;
       const metrics = ctx.measureText(text);
       const padX = Math.max(5 * dpr, fontPx * 0.42);
       const padY = Math.max(3 * dpr, fontPx * 0.24);
