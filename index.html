@@ -40,7 +40,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#eef5f3" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260807-carbon-5" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260808-harmony-7" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260808-instrument-6" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -65,8 +65,9 @@
         <div class="header-actions" role="group" aria-label="Global actions">
           <div class="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
             <div class="tool-group compact">
-              <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
+              <button id="playPauseBtn" class="icon-button primary simulation-run-button" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                 <span id="playPauseIcon" aria-hidden="true">▶</span>
+                <span class="simulation-run-label" aria-hidden="true"></span>
               </button>
               <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
               <button
@@ -1797,6 +1798,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/main.tsx?v=20260808-harmony-7"></script>
+    <script type="module" src="src/main.tsx?v=20260808-instrument-1"></script>
   </body>
 </html>

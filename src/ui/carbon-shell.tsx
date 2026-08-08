@@ -96,7 +96,7 @@ export function CanvasPrimaryControls() {
       <div className="tool-group compact">
         <Button
           id="playPauseBtn"
-          className="icon-button primary"
+          className="icon-button primary simulation-run-button"
           type="button"
           kind="primary"
           size="sm"
@@ -106,6 +106,7 @@ export function CanvasPrimaryControls() {
           data-carbon-react="true"
         >
           <span id="playPauseIcon" aria-hidden="true">▶</span>
+          <span className="simulation-run-label" aria-hidden="true" />
         </Button>
         <Button
           id="resetBtn"
