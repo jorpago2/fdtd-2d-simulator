@@ -1368,7 +1368,6 @@
       const grid = documentRef.createElement("div");
       grid.className = "scene-guide-grid";
       appendSceneGuideField(grid, "Phenomenon", guide.phenomenon);
-      appendSceneGuideField(grid, "FDTD simulation", guide.fdtd);
       appendSceneGuideField(grid, "Expected results", guide.expected);
 
       const modelDetails = documentRef.createElement("section");
@@ -1377,6 +1376,7 @@
       modelDetails.dataset.title = "Model details";
       const modelBody = documentRef.createElement("div");
       modelBody.className = "scene-guide-grid";
+      appendSceneGuideField(modelBody, "FDTD simulation", guide.fdtd);
       appendSceneGuideField(modelBody, "Description", guide.description);
       appendSceneGuideField(modelBody, "Geometry", guide.geometry);
       appendSceneGuideField(modelBody, "Source", guide.source);

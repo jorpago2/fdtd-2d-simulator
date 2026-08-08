@@ -221,7 +221,7 @@
         event.stopPropagation();
         setHelpGuideOpen(false, { restoreFocus: true });
       }
-    });
+    }, true);
   }
 
   global.FdtdShellControlBindings = Object.freeze({

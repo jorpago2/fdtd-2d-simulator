@@ -40,7 +40,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260808-carbon-workbench-2" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260808-carbon-workbench-10" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -691,6 +691,7 @@
                 </div>
                 <button id="brushMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close draw editor">×</button>
               </div>
+              <div class="source-menu-body">
               <fieldset id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="radiogroup" aria-label="Draw tool">
                 <legend class="sr-only">Draw tool</legend>
                 <button class="mode-toggle-button is-active" type="button" role="radio" data-brush-tool="paint" aria-checked="true">Brush</button>
@@ -984,7 +985,8 @@
               </div>
                 </div>
               </section>
-              <div class="button-row">
+              </div>
+              <div class="button-row source-menu-actions">
                 <button id="brushMenuClearMaterialsBtn" class="text-button" type="button">Clear medium</button>
                 <button id="brushMenuClearFieldsBtn" class="text-button" type="button">Clear field</button>
               </div>
@@ -1028,7 +1030,7 @@
           </footer>
         </div>
 
-        <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" tabindex="-1" data-mobile-layer="scenes">
+        <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
           <div class="control-panel-header">
             <div class="control-panel-title-block">
               <p id="controlPanelKicker" class="panel-kicker">Step 1 · Scene</p>
@@ -1280,20 +1282,18 @@
                   <div id="reactSceneSearchRoot" class="scene-search-label" data-carbon-react-root="scene-search"></div>
                   <div id="sceneFilterBar" class="scene-filter-bar"></div>
                   <div class="scene-browser-meta" aria-live="polite">
-                    <output id="sceneBrowserCount">1 scene in General</output>
-                    <output id="sceneBrowserActive">Family: General</output>
+                    <output id="sceneBrowserCount" hidden>0 scenes across all families</output>
                   </div>
                   <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
                 </div>
               </div>
-              <p id="sceneNote" class="scene-note">Select an Example to load its geometry, material parameters, and source setup.</p>
             </section>
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
 <section class="panel-section run-section">
-              <h2>Run</h2>
+              <h2>Field and playback</h2>
               <div class="solver-row">
-                <span>Simulate</span>
+                <span>Field component</span>
                 <fieldset class="canvas-mode-toggle solver-toggle" role="radiogroup" aria-label="Simulated field component">
                   <legend class="sr-only">Simulated field component</legend>
                   <button class="mode-toggle-button is-active" type="button" role="radio" data-field-component="ez" aria-checked="true" title="TMz: solve Ez, Hx, Hy"><i>E</i><sub>z</sub></button>
@@ -1305,20 +1305,6 @@
                 <span title="Implementation route; it does not change the physical model.">Compute engine</span>
                 <output id="engineValue" title="Implementation route; it does not change the physical model.">JS</output>
               </div>
-              <div class="button-row run-actions-row" aria-label="Secondary run controls">
-                <button id="runPlayPauseBtn" class="text-button primary-button" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
-                  <span id="runPlayPauseIcon" aria-hidden="true">▶</span>
-                  <span>Run</span>
-                </button>
-                <button id="runStepBtn" class="text-button" type="button" title="Advance one FDTD step">
-                  <span aria-hidden="true">⏭</span>
-                  <span>Step</span>
-                </button>
-                <button id="runResetBtn" class="text-button" type="button" title="Reset electromagnetic fields">
-                  <span aria-hidden="true">↻</span>
-                  <span>Reset</span>
-                </button>
-              </div>
               <div id="reactSpeedSliderRoot" class="control-row scientific-slider-row" title="Changes animation pacing, not the CFL time step."></div>
               <output id="speedOutput" class="scientific-slider-output" for="speedInput">1x</output>
               <label class="control-row">
@@ -1329,7 +1315,6 @@
                   <option value="30">30</option>
                   <option value="15">15</option>
                 </select>
-                <output id="renderFpsOutput" for="renderFpsInput">Auto</output>
               </label>
               <div id="reactGainSliderRoot" class="control-row scientific-slider-row" title="Visual scaling only; it does not change the electromagnetic fields."></div>
               <output id="gainOutput" class="scientific-slider-output" for="gainInput">1.00</output>

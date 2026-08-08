@@ -319,6 +319,7 @@
       const searchActive = Boolean((el.sceneSearchInput?.value || "").trim());
       const groupName = cleanSceneGroupLabel(state.filter || "Group");
       if (el.sceneBrowserCount) {
+        el.sceneBrowserCount.hidden = !searchActive;
         el.sceneBrowserCount.textContent = searchActive
           ? `${groupCountLabel(visibleCount)} across all families`
           : `${groupCountLabel(visibleCount)} in ${groupName}`;

@@ -7650,7 +7650,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
         header: rect(header),
         nav: rect(nav),
         run: rect(run),
-        runButton: rect(document.getElementById("runPlayPauseBtn")),
+        runButton: rect(document.getElementById("playPauseBtn")),
         activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         viewportHeight: window.innerHeight,
@@ -7665,10 +7665,10 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     if (!status.run || !status.nav || status.run.bottom > status.nav.top + 1) failures.push("Run controls overlap the mobile workflow navigation");
     if (!status.runButton) failures.push("Simulate panel does not expose a Run / pause control");
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
-    await page.locator("#runPlayPauseBtn").click();
+    await page.locator("#playPauseBtn").click();
     const runState = await page.evaluate(() => ({
       running: Boolean(state.running),
-      pressed: document.getElementById("runPlayPauseBtn")?.getAttribute("aria-pressed") || "",
+      pressed: document.getElementById("playPauseBtn")?.getAttribute("aria-pressed") || "",
     }));
     if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
     await page.locator('[data-mobile-layer="results"]:visible').click();

@@ -332,6 +332,16 @@
       return closed.every(Boolean);
     }
 
+    function resetMenuScroll(menu) {
+      if (!menu) return;
+      menu.scrollTop = 0;
+      const body = menu.querySelector(".source-menu-body");
+      if (body) {
+        body.scrollTop = 0;
+        body.scrollLeft = 0;
+      }
+    }
+
     function openCanvasContextMenuAt(clientX, clientY, point) {
       if (!el.canvasContextMenu) return;
       if (!closeSourceMenu() || !closeMonitorMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
@@ -340,6 +350,7 @@
       beginEditSession(el.canvasContextMenu);
       el.canvasContextMenu.hidden = false;
       positionFloatingMenu(el.canvasContextMenu, clientX, clientY);
+      resetMenuScroll(el.canvasContextMenu);
       focusFirstMenuControl(el.canvasContextMenu);
     }
 
@@ -352,6 +363,7 @@
       beginEditSession(el.sourceMenu);
       el.sourceMenu.hidden = false;
       positionFloatingMenu(el.sourceMenu, clientX, clientY);
+      resetMenuScroll(el.sourceMenu);
       focusFirstMenuControl(el.sourceMenu);
     }
 
@@ -364,6 +376,7 @@
       beginEditSession(el.monitorMenu);
       el.monitorMenu.hidden = false;
       positionFloatingMenu(el.monitorMenu, clientX, clientY);
+      resetMenuScroll(el.monitorMenu);
       focusFirstMenuControl(el.monitorMenu);
     }
 
@@ -375,6 +388,7 @@
       beginEditSession(el.brushMenu);
       el.brushMenu.hidden = false;
       positionFloatingMenu(el.brushMenu, clientX, clientY);
+      resetMenuScroll(el.brushMenu);
       focusFirstMenuControl(el.brushMenu);
     }
 
@@ -386,6 +400,7 @@
       beginEditSession(el.boundaryMenu);
       el.boundaryMenu.hidden = false;
       positionFloatingMenu(el.boundaryMenu, clientX, clientY);
+      resetMenuScroll(el.boundaryMenu);
       focusFirstMenuControl(el.boundaryMenu);
     }
 

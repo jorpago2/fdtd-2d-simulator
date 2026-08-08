@@ -145,6 +145,14 @@
       uiCore.setClass(el.appShell, "controls-open", isOpen);
       uiCore.setClass(documentRef.body, "controls-drawer-open", isOpen);
       uiCore.setExpanded(el.controlDrawerToggle, isOpen);
+      if (el.controlPanel) {
+        el.controlPanel.setAttribute("aria-hidden", String(!isOpen));
+        if (isOpen) {
+          el.controlPanel.removeAttribute("inert");
+        } else {
+          el.controlPanel.setAttribute("inert", "");
+        }
+      }
       el.mobileLayerButtons?.forEach?.((button) => {
         button.setAttribute("aria-expanded", String(isOpen && button.classList.contains("is-active")));
       });
