@@ -17,7 +17,6 @@ import {
 } from "./ui/carbon-button-bridge";
 import {
   ApplicationHeader,
-  CanvasPrimaryControls,
   SceneSearch,
   StatusFooter,
   WorkflowNavigation,
@@ -55,7 +54,6 @@ async function startLegacyRuntime(): Promise<void> {
 flushSync(() => {
   createRoot(requiredElement("reactHeaderRoot")).render(<ApplicationHeader />);
   createRoot(requiredElement("reactWorkflowRoot")).render(<WorkflowNavigation />);
-  createRoot(requiredElement("reactCanvasPrimaryControlsRoot")).render(<CanvasPrimaryControls />);
   createRoot(requiredElement("reactSceneSearchRoot")).render(<SceneSearch />);
   createRoot(requiredElement("reactFooterRoot")).render(<StatusFooter />);
   createRoot(requiredElement("reactVisualFieldRoot")).render(<VisualFieldControls />);

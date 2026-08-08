@@ -3447,6 +3447,7 @@ details > summary::after {
   --shadow-float: 0 8px 24px var(--color-shadow);
   --ease-out: cubic-bezier(0.2, 0, 0.38, 0.9);
   --dur-short: 110ms;
+  --help-guide-toggle-size: 40px;
 
   --bg: var(--color-paper);
   --canvas-bg: var(--color-surface);
@@ -3472,9 +3473,9 @@ details > summary::after {
   --radius-md: var(--radius-panel);
   --radius-lg: 0;
   --pill: var(--radius-status);
-  --control: 44px;
-  --touch: 44px;
-  --toolbar: 44px;
+  --control: 32px;
+  --touch: 32px;
+  --toolbar: 32px;
   --drawer-width: clamp(27rem, 36vw, 39rem);
 }
 
@@ -3503,7 +3504,9 @@ html[data-theme="dark"] {
 /* 13. Scientific tool architecture */
 
 body {
+  font-size: 0.875rem;
   font-weight: 400;
+  line-height: 1.2857;
 }
 
 .app-shell {
@@ -3533,7 +3536,7 @@ body {
   inset: auto;
   z-index: var(--z-sticky, 200);
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 28rem) auto;
   align-items: center;
   gap: var(--space-xs);
   width: 100%;
@@ -3651,8 +3654,43 @@ body {
   min-width: 0;
 }
 
+.header-actions > .header-simulation-controls {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  height: 32px;
+}
+
+.header-simulation-controls .tool-group.compact {
+  position: relative;
+  gap: 0;
+  flex: 0 0 auto;
+}
+
+.header-simulation-controls .icon-button,
+.control-drawer-toggle {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  max-inline-size: 32px;
+  padding: 0;
+}
+
+.header-simulation-controls .interaction-toggle {
+  flex: 0 0 9.25rem;
+  width: 9.25rem;
+  height: 32px;
+  min-height: 32px;
+}
+
+.header-simulation-controls .interaction-toggle > button {
+  padding-inline: var(--space-xs);
+}
+
 .header-theme-toggle {
-  width: 9rem;
+  width: 8rem;
 }
 
 .control-drawer-toggle {
@@ -3662,15 +3700,36 @@ body {
   min-height: var(--touch);
 }
 
-.canvas-toolbar .interaction-toggle {
-  flex: 0 0 11rem;
-  width: 11rem;
-  height: var(--touch);
-  min-height: var(--touch);
+.canvas-action-menu {
+  position: absolute;
+  top: calc(100% + 1px);
+  right: 0;
+  z-index: var(--z-dropdown, 100);
+  grid-template-columns: 1fr;
+  gap: 1px;
+  min-width: 7.5rem;
+  padding: 1px;
+  border: 1px solid var(--cds-border-subtle-01, var(--color-rule));
+  background: var(--cds-border-subtle-01, var(--color-rule));
+  box-shadow: var(--shadow-float);
 }
 
-.canvas-toolbar .tool-group.compact {
-  flex: 0 0 auto;
+.app-shell:has(.stage.canvas-actions-open) .canvas-action-menu {
+  display: grid;
+}
+
+.canvas-action-menu .cds--btn {
+  justify-content: flex-start;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  height: 32px;
+  padding-inline: var(--space-xs);
+  background: var(--cds-layer-01, var(--color-surface));
+}
+
+.canvas-action-label {
+  display: inline;
 }
 
 .help-guide-panel,
@@ -3780,6 +3839,7 @@ body {
 }
 
 .canvas-toolbar {
+  display: none;
   position: absolute;
   top: calc(var(--space-md) + var(--space-xs));
   right: calc(var(--space-md) + var(--space-xs));
@@ -3815,7 +3875,7 @@ body {
   color: var(--cds-text-secondary, var(--color-muted));
   background: transparent;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   scrollbar-width: none;
   white-space: nowrap;
 }
@@ -3898,8 +3958,117 @@ body {
 }
 
 .control-tab-panel.is-active {
-  gap: var(--space-xs);
+  gap: 0;
   padding: var(--space-md);
+}
+
+.control-tab-panel.is-active > .panel-section {
+  padding: var(--space-md) var(--space-xs);
+}
+
+.control-tab-panel.is-active > .panel-section:first-child {
+  padding-top: var(--space-xs);
+}
+
+.panel-section h2,
+.results-panel-head h2 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.scene-section,
+.diagnostics-section,
+.config-summary-section,
+.visual-field-section,
+.visual-overlays-section,
+.run-section,
+.grid-section,
+.reproducibility-section,
+.visual-control-stack,
+.help-guide-body {
+  gap: var(--space-xs);
+}
+
+.control-row,
+.solver-row {
+  min-height: 32px;
+  gap: var(--space-xs);
+}
+
+.control-row {
+  grid-template-columns: minmax(5rem, 0.8fr) minmax(0, 1.35fr) minmax(3.5rem, auto);
+}
+
+label > span,
+.control-row > span,
+.solver-row > span,
+.visual-control-row > span {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+input[type="number"]:not([data-carbon-react]),
+input[data-numeric-input="true"]:not([data-carbon-react]),
+input[type="search"]:not([data-carbon-react]),
+select:not([data-carbon-react]),
+textarea:not([data-carbon-react]),
+output {
+  min-height: 32px;
+  padding: 6px 8px;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+}
+
+.run-actions-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 1px;
+  background: var(--cds-border-subtle-01, var(--color-rule));
+}
+
+.run-actions-row .cds--btn {
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  padding-inline: var(--space-xs);
+  white-space: nowrap;
+}
+
+#engineValue {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.toggle-row[data-carbon-field-shell] {
+  display: block;
+  min-height: 32px;
+}
+
+.toggle-row[data-carbon-field-shell] > * {
+  width: 100%;
+}
+
+.help-guide-panel,
+.walkthrough-panel,
+.source-menu {
+  font-size: 0.875rem;
+  line-height: 1.2857;
+}
+
+.help-guide-panel {
+  width: min(26rem, calc(100% - 2 * var(--space-md)));
+  padding: var(--space-md);
+}
+
+.help-guide-grid {
+  gap: 1px;
+  background: var(--cds-border-subtle-01, var(--color-rule));
+}
+
+.help-guide-card {
+  min-height: 5.5rem;
+  padding: var(--space-sm);
+  background: var(--cds-layer-01, var(--color-surface));
 }
 
 .control-drawer-backdrop {
@@ -3941,6 +4110,7 @@ body {
 @media (max-width: 47.99rem) {
   .brand-heading,
   .brand-descriptor,
+  .header-context,
   .header-context-label,
   .header-theme-toggle,
   .status-strip > .status-strip-author {
@@ -3948,37 +4118,20 @@ body {
   }
 
   .topbar {
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-inline: var(--space-xs);
   }
 
-  .header-context {
-    justify-content: flex-end;
+  .header-actions {
+    grid-column: 3;
   }
 
-  .header-scene-title {
-    max-width: min(30vw, 10rem);
+  .topbar .brand-lockup {
+    width: 32px;
   }
 
-  .header-status {
-    font-size: 0;
-  }
-
-  .header-status-indicator {
-    width: 10px;
-    height: 10px;
-  }
-
-  .canvas-toolbar .interaction-toggle {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
-  }
-
-  .stage.canvas-actions-open .canvas-toolbar {
-    left: var(--space-md);
-    right: var(--space-md);
-    width: auto;
-    max-width: none;
+  .header-simulation-controls .canvas-reset-button {
+    display: none;
   }
 
   .help-guide-panel {
@@ -3995,22 +4148,89 @@ body {
   .header-context-label {
     display: none;
   }
+
+  .header-theme-toggle {
+    display: none;
+  }
+
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .topbar .brand-lockup {
+    width: 32px;
+  }
 }
 
-@media (max-width: 63.99rem), (max-height: 39.99rem) {
-  .canvas-toolbar .icon-button {
-    width: var(--touch);
-    min-width: var(--touch);
-    height: var(--touch);
-    min-height: var(--touch);
-    max-inline-size: var(--touch);
-    padding: 0;
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .header-theme-toggle {
+    display: none;
+  }
+}
+
+@media (max-height: 39.99rem) {
+  .brand-heading,
+  .brand-descriptor,
+  .header-context-label,
+  .header-theme-toggle {
+    display: none;
+  }
+
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (pointer: coarse) {
+  .header-actions > .header-simulation-controls,
+  .header-simulation-controls .interaction-toggle {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .header-simulation-controls .icon-button,
+  .control-drawer-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    max-inline-size: 44px;
+  }
+
+  .header-simulation-controls .interaction-toggle {
+    flex-basis: 9.25rem;
+    width: 9.25rem;
+  }
+
+  .header-simulation-controls .interaction-toggle > button {
+    min-height: 44px;
+  }
+
+  .canvas-action-menu .cds--btn {
+    width: 100%;
+    max-inline-size: none;
+  }
+}
+
+@media (max-width: 22rem) {
+  .topbar .brand-lockup {
+    display: none;
+  }
+
+  .workflow-rail .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
 @media (min-width: 64rem) and (min-height: 40rem) {
   .topbar {
-    grid-template-columns: minmax(15rem, 1fr) minmax(20rem, 36rem) minmax(15rem, 1fr);
+    grid-template-columns: minmax(14rem, 1fr) minmax(12rem, 28rem) auto;
     padding: 0 var(--space-sm);
   }
 
@@ -4072,11 +4292,6 @@ body {
     max-height: none;
     align-self: start;
     border-right: 1px solid var(--cds-border-subtle-01, var(--color-rule));
-  }
-
-  .canvas-toolbar .interaction-toggle {
-    height: 2rem;
-    min-height: 2rem;
   }
 
   .canvas-toolbar {

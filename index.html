@@ -40,7 +40,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#eef5f3" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260807-carbon-5" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260807-carbon-5" />
+    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260808-harmony-7" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -63,6 +63,32 @@
           </span>
         </div>
         <div class="header-actions" role="group" aria-label="Global actions">
+          <div class="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
+            <div class="tool-group compact">
+              <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
+                <span id="playPauseIcon" aria-hidden="true">▶</span>
+              </button>
+              <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
+              <button
+                id="canvasActionToggle"
+                class="icon-button canvas-action-toggle"
+                type="button"
+                aria-controls="canvasActionMenu"
+                aria-expanded="false"
+                aria-label="More simulation actions"
+                title="More simulation actions"
+              >⋮</button>
+              <div id="canvasActionMenu" class="canvas-action-menu" aria-label="Simulation actions">
+                <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭<span class="canvas-action-label">Step</span></button>
+                <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩<span class="canvas-action-label">PNG</span></button>
+              </div>
+            </div>
+            <fieldset class="canvas-mode-toggle interaction-toggle" role="radiogroup" aria-label="Canvas interaction mode">
+              <legend class="sr-only">Canvas interaction mode</legend>
+              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" role="radio" aria-checked="true" title="Select and move canvas objects">Select</button>
+              <button id="brushModeBtn" class="mode-toggle-button" type="button" role="radio" aria-checked="false" title="Draw materials and geometries">Draw</button>
+            </fieldset>
+          </div>
           <fieldset class="canvas-mode-toggle theme-toggle header-theme-toggle" role="radiogroup" aria-label="Color theme">
             <legend class="sr-only">Color theme</legend>
             <button class="mode-toggle-button is-active" type="button" role="radio" data-theme-choice="light" aria-checked="true" title="Use light theme">Light</button>
@@ -99,42 +125,6 @@
         </nav>
         <div class="stage">
           <div class="canvas-toolbar">
-            <div id="reactCanvasPrimaryControlsRoot" class="react-control-root" data-carbon-react-root="canvas-primary">
-            <div class="tool-group compact">
-              <button id="playPauseBtn" class="icon-button primary" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
-                <span id="playPauseIcon" aria-hidden="true">▶</span>
-              </button>
-              <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">
-                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M19 11a7 7 0 1 0 .3 4" /></svg>
-              </button>
-              <button
-                id="canvasActionToggle"
-                class="icon-button canvas-action-toggle"
-                type="button"
-                aria-controls="canvasActionMenu"
-                aria-expanded="false"
-                aria-label="More simulation actions"
-                title="More simulation actions"
-              >
-                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-              </button>
-              <div id="canvasActionMenu" class="canvas-action-menu" aria-label="Simulation actions">
-                <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">
-                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 8 7-8 7V5Zm9 0 8 7-8 7V5Z" /></svg>
-                  <span class="canvas-action-label">Step</span>
-                </button>
-                <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">
-                  <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 20h14" /></svg>
-                  <span class="canvas-action-label">PNG</span>
-                </button>
-              </div>
-            </div>
-            <fieldset class="canvas-mode-toggle interaction-toggle" role="radiogroup" aria-label="Canvas interaction mode">
-              <legend class="sr-only">Canvas interaction mode</legend>
-              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" role="radio" aria-checked="true" title="Select and move canvas objects">Select</button>
-              <button id="brushModeBtn" class="mode-toggle-button" type="button" role="radio" aria-checked="false" title="Draw materials and geometries">Draw</button>
-            </fieldset>
-            </div>
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
@@ -1422,7 +1412,7 @@
               <div class="button-row run-actions-row" aria-label="Secondary run controls">
                 <button id="runPlayPauseBtn" class="text-button primary-button" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
                   <span id="runPlayPauseIcon" aria-hidden="true">▶</span>
-                  <span>Run / pause</span>
+                  <span>Run</span>
                 </button>
                 <button id="runStepBtn" class="text-button" type="button" title="Advance one FDTD step">
                   <span aria-hidden="true">⏭</span>
@@ -1807,6 +1797,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/main.tsx?v=20260801-react-vite-1"></script>
+    <script type="module" src="src/main.tsx?v=20260808-harmony-7"></script>
   </body>
 </html>

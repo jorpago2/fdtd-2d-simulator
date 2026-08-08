@@ -7720,11 +7720,11 @@ async function runMobileToolbarHeightSmoke(browser, url) {
           width: Math.round(bounds.width),
         };
       };
-      const toolbarNode = document.querySelector(".canvas-toolbar");
+      const toolbarNode = document.querySelector(".header-simulation-controls");
       const actionToggleNode = document.getElementById("canvasActionToggle");
       const actionMenuNode = document.getElementById("canvasActionMenu");
       const resetNode = document.getElementById("resetBtn");
-      const closedToolbar = rect(".canvas-toolbar");
+      const closedToolbar = rect(".header-simulation-controls");
       const boundsOf = (node) => {
         if (!node) return null;
         const bounds = node.getBoundingClientRect();
@@ -7755,7 +7755,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         menuButton: rect("#controlDrawerToggle"),
         playButton: rect("#playPauseBtn"),
         interactionToggle: rect(".interaction-toggle"),
-        openToolbar: rect(".canvas-toolbar"),
+        openToolbar: rect(".header-simulation-controls"),
         openToolbarOverflowX: toolbarNode && openToolbarBounds ? Math.round(toolbarNode.scrollWidth - openToolbarBounds.width) : null,
         actionToggleShiftX:
           closedActionToggle && openActionToggle ? Math.round(Math.abs(openActionToggle.left - closedActionToggle.left)) : null,
@@ -7766,10 +7766,10 @@ async function runMobileToolbarHeightSmoke(browser, url) {
           maxBottom: maxActionBottom,
           overflowLeft: minActionLeft === null ? null : Math.max(0, -minActionLeft),
           overflowRight: maxActionRight === null ? null : Math.max(0, maxActionRight - window.innerWidth),
-          outsideToolbar:
-            !openToolbarBounds || minActionTop === null || maxActionBottom === null
+          detachedFromTrigger:
+            !openActionToggle || minActionTop === null
               ? null
-              : minActionTop < openToolbarBounds.top - 1 || maxActionBottom > openToolbarBounds.bottom + 1,
+              : minActionTop < openActionToggle.bottom - 1,
         },
       };
     });
@@ -7790,8 +7790,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (Number(status.actionMenuBounds?.overflowLeft) > 1 || Number(status.actionMenuBounds?.overflowRight) > 1) {
       failures.push("open mobile action menu extends outside the viewport");
     }
-    if (status.actionMenuBounds?.outsideToolbar) {
-      failures.push("open mobile action buttons are not contained inside the toolbar");
+    if (status.actionMenuBounds?.detachedFromTrigger) {
+      failures.push("open mobile action menu is detached from its header trigger");
     }
     return {
       id: "mobile_toolbar_height",

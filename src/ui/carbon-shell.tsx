@@ -31,6 +31,7 @@ export function ApplicationHeader() {
         </span>
       </div>
       <HeaderGlobalBar className="header-actions" aria-label="Global actions">
+        <CanvasPrimaryControls />
         <ContentSwitcher
           className="header-theme-toggle"
           selectedIndex={themeIndex}
@@ -52,7 +53,7 @@ export function ApplicationHeader() {
           aria-expanded="false"
           data-carbon-react="true"
         >
-          <span className="menu-glyph" aria-hidden="true"><i /><i /><i /></span>
+          <SettingsAdjust size={16} aria-hidden={true} />
         </Button>
       </HeaderGlobalBar>
     </Header>
@@ -91,7 +92,7 @@ export function CanvasPrimaryControls() {
   const [modeIndex, setModeIndex] = useState(0);
 
   return (
-    <>
+    <div className="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
       <div className="tool-group compact">
         <Button
           id="playPauseBtn"
@@ -150,7 +151,7 @@ export function CanvasPrimaryControls() {
         <Switch id="selectModeBtn" name="select" text="Select" title="Select and move canvas objects" data-carbon-react="true">Select</Switch>
         <Switch id="brushModeBtn" name="draw" text="Draw" title="Draw materials and geometries" data-carbon-react="true">Draw</Switch>
       </ContentSwitcher>
-    </>
+    </div>
   );
 }
 
