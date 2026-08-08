@@ -1285,7 +1285,7 @@ fieldset {
     inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height) 0;
     width: 100%;
     border-right: 0;
-    transform: translateY(110%);
+    transform: translateY(calc(100% + var(--workbench-bottom-nav-height)));
   }
 
   .controls-open .control-panel {
@@ -1331,6 +1331,41 @@ fieldset {
 
   .control-drawer-backdrop {
     inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height);
+  }
+}
+
+@media (max-height: 39.99rem) {
+  :root {
+    --workbench-header-height: 3.5rem;
+    --workbench-rail-width: 3.5rem;
+  }
+
+  .status-strip {
+    gap: 0.5rem;
+  }
+
+  .status-strip > span + span {
+    padding-left: 0.5rem;
+  }
+
+  .status-strip-author,
+  .status-strip > span:nth-child(4) {
+    display: none;
+  }
+
+  .colorbar {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .colorbar-body {
+    height: 6rem;
+  }
+
+  .help-guide-toggle-mount {
+    right: 0.5rem;
+    bottom: 0.5rem;
   }
 }
 

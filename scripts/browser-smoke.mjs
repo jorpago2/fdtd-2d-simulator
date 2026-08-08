@@ -7929,6 +7929,111 @@ async function runMobileToolbarHeightSmoke(browser, url) {
   }
 }
 
+async function runCompactLandscapeLayoutSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 844, height: 390 },
+  });
+  const page = await context.newPage();
+  const localErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") localErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => {
+    localErrors.push(error.message);
+  });
+
+  const readLayout = () => page.evaluate(() => {
+    const bounds = (selector) => {
+      const node = document.querySelector(selector);
+      if (!node) return null;
+      const rect = node.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+      };
+    };
+    const intersectionArea = (a, b) => {
+      if (!a || !b) return 0;
+      const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+      const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      return width * height;
+    };
+    const visibleStatusItems = Array.from(document.querySelectorAll(".status-strip > span"))
+      .filter((node) => getComputedStyle(node).display !== "none");
+    const navButtonsUnobscured = Array.from(document.querySelectorAll(".mobile-layer-nav .mobile-layer-button"))
+      .every((button) => {
+        const rect = button.getBoundingClientRect();
+        const owner = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        return owner === button || button.contains(owner);
+      });
+    const panel = document.getElementById("controlPanel");
+    const help = bounds(".help-guide-toggle-mount");
+    const colorbar = bounds(".colorbar");
+    return {
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      header: bounds(".topbar"),
+      panel: bounds("#controlPanel"),
+      panelHidden: panel?.getAttribute("aria-hidden") === "true" && panel?.hasAttribute("inert"),
+      nav: bounds(".mobile-layer-nav"),
+      help,
+      colorbar,
+      helpColorbarOverlap: intersectionArea(help, colorbar),
+      navButtonsUnobscured,
+      clippedStatusItems: visibleStatusItems.filter((node) => {
+        const rect = node.getBoundingClientRect();
+        return rect.left < -1 || rect.right > window.innerWidth + 1;
+      }).length,
+    };
+  });
+
+  try {
+    await openApplication(page, url);
+    await page.waitForTimeout(250);
+    const closed = await readLayout();
+    await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
+    await page.waitForTimeout(250);
+    const open = await readLayout();
+    await page.locator("#controlDrawerCloseBtn").click();
+    await page.waitForTimeout(250);
+    const reclosed = await readLayout();
+
+    const failures = [...localErrors];
+    if (!closed.panelHidden || closed.panel?.top < closed.viewport.height - 1) {
+      failures.push("closed compact panel remains visible above the viewport bottom");
+    }
+    if (!closed.navButtonsUnobscured) failures.push("closed compact panel obscures landscape workflow navigation");
+    if (closed.helpColorbarOverlap > 1) failures.push("landscape help button overlaps the color scale");
+    if (closed.clippedStatusItems) failures.push(`${closed.clippedStatusItems} landscape status items are partially clipped`);
+    if (!open.header || !open.panel || !open.nav) failures.push("compact landscape shell is incomplete");
+    if (open.header && open.panel && Math.abs(open.panel.top - open.header.bottom) > 1) {
+      failures.push("open compact panel is not aligned below the header");
+    }
+    if (open.nav && open.panel && Math.abs(open.panel.bottom - open.nav.top) > 1) {
+      failures.push("open compact panel extends into the workflow navigation");
+    }
+    if (!reclosed.panelHidden || reclosed.panel?.top < reclosed.viewport.height - 1) {
+      failures.push("compact panel remains visible after closing");
+    }
+
+    return {
+      id: "compact_landscape_layout",
+      preset: "current",
+      priority: "P1",
+      closed,
+      open,
+      reclosed,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 async function runTouchLongPressSmoke(browser, url) {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -8996,6 +9101,7 @@ async function main() {
       await recordCase("mobile_simulate_panel_scroll", () => runMobileSimulatePanelScrollSmoke(browser, url));
       await recordCase("mobile_layer_scroll_reset", () => runMobileLayerScrollResetSmoke(browser, url));
       await recordCase("mobile_toolbar_height", () => runMobileToolbarHeightSmoke(browser, url));
+      await recordCase("compact_landscape_layout", () => runCompactLandscapeLayoutSmoke(browser, url));
       await recordCase("touch_long_press", () => runTouchLongPressSmoke(browser, url));
       await recordCase("contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url));
       await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
