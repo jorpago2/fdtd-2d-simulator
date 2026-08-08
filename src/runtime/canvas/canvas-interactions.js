@@ -378,7 +378,11 @@
     }
 
     function handleDocumentPointerDown(event) {
-      if (el.stage?.classList.contains("canvas-actions-open") && !el.canvasToolbar?.contains(event.target)) {
+      if (
+        el.stage?.classList.contains("canvas-actions-open") &&
+        !el.canvasActionMenu?.contains(event.target) &&
+        !el.canvasActionToggle?.contains(event.target)
+      ) {
         closeCanvasActionsMenu();
       }
       if (el.stage?.classList.contains("canvas-options-open") && !el.canvasToolbar?.contains(event.target)) {

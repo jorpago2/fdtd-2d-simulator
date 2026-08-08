@@ -7616,8 +7616,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.locator("#controlDrawerToggle").click();
-    await page.locator('[data-mobile-layer="simulation"]:visible').click();
+    await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="simulation"]').click();
     await page.waitForTimeout(120);
     const status = await page.evaluate(() => {
       const panel = document.getElementById("controlPanel");
@@ -7705,7 +7704,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.locator("#controlDrawerToggle").click();
+    await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(80);
     const layers = ["simulation", "results", "config", "scenes"];
     const layerStates = [];
@@ -7752,7 +7751,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
 
 async function runMobileToolbarHeightSmoke(browser, url) {
   const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
+    viewport: { width: 320, height: 568 },
     deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
@@ -7783,7 +7782,6 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       const toolbarNode = document.querySelector(".header-simulation-controls");
       const actionToggleNode = document.getElementById("canvasActionToggle");
       const actionMenuNode = document.getElementById("canvasActionMenu");
-      const resetNode = document.getElementById("resetBtn");
       const closedToolbar = rect(".header-simulation-controls");
       const boundsOf = (node) => {
         if (!node) return null;
@@ -7802,7 +7800,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       actionToggleNode?.click();
       const openToolbarBounds = toolbarNode?.getBoundingClientRect();
       const openActionToggle = boundsOf(actionToggleNode);
-      const openActionNodes = [resetNode, actionMenuNode, ...(actionMenuNode ? Array.from(actionMenuNode.querySelectorAll("button")) : [])]
+      const openActionNodes = [actionMenuNode, ...(actionMenuNode ? Array.from(actionMenuNode.querySelectorAll("button")) : [])]
         .map(boundsOf)
         .filter((bounds) => bounds && bounds.display !== "none");
       const minActionLeft = openActionNodes.length ? Math.min(...openActionNodes.map((bounds) => bounds.left)) : null;
@@ -7814,6 +7812,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         toolbar: closedToolbar,
         menuButton: rect("#controlDrawerToggle"),
         playButton: rect("#playPauseBtn"),
+        resetButton: rect("#resetBtn"),
         interactionToggle: rect(".interaction-toggle"),
         selectButton: rect("#selectModeBtn"),
         drawButton: rect("#brushModeBtn"),
@@ -7833,16 +7832,34 @@ async function runMobileToolbarHeightSmoke(browser, url) {
               ? null
               : minActionTop < openActionToggle.bottom - 1,
         },
+        workflowLabelsVisible: Array.from(document.querySelectorAll(".workflow-rail .nav-label")).every((node) => {
+          const bounds = node.getBoundingClientRect();
+          const style = getComputedStyle(node);
+          return bounds.width > 1 && bounds.height > 1 && style.display !== "none" && style.visibility !== "hidden";
+        }),
+        clippedStatusItems: Array.from(document.querySelectorAll(".status-strip > span"))
+          .filter((node) => getComputedStyle(node).display !== "none")
+          .filter((node) => {
+            const bounds = node.getBoundingClientRect();
+            return bounds.left < -1 || bounds.right > window.innerWidth + 1;
+          }).length,
       };
     });
+    await page.locator("#stepBtn").click();
+    await page.waitForTimeout(80);
+    status.stepAfterClick = await page.evaluate(() => Number(sim?.time));
     const failures = [...localErrors];
     if (!status.topbar || !status.toolbar) failures.push("mobile toolbar or menu block was not rendered");
-    if (status.menuButton && status.playButton && Math.abs(status.menuButton.height - status.playButton.height) > 1) {
+    if (status.menuButton?.height > 0 && status.playButton && Math.abs(status.menuButton.height - status.playButton.height) > 1) {
       failures.push(`play button height ${status.playButton.height} does not match menu button ${status.menuButton.height}`);
     }
-    if (status.menuButton && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
+    if (status.menuButton?.height > 0 && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
       failures.push(`Select/Draw toggle height ${status.interactionToggle.height} does not match menu button ${status.menuButton.height}`);
     }
+    if (!status.resetButton || status.resetButton.height < 44) failures.push("Reset is not a usable 44px header action");
+    if (!status.workflowLabelsVisible) failures.push("mobile workflow labels are hidden");
+    if (status.clippedStatusItems) failures.push(`${status.clippedStatusItems} status items are partially clipped`);
+    if (!(status.stepAfterClick > 0)) failures.push("physical click on the More > Step action did not advance the simulation");
     if (status.playButton && status.selectButton && Math.abs(status.playButton.height - status.selectButton.height) > 1) {
       failures.push(`Select button height ${status.selectButton.height} does not match play button ${status.playButton.height}`);
     }

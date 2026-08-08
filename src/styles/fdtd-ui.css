@@ -5271,6 +5271,14 @@ body {
     width: 9.25rem;
   }
 
+  .header-simulation-controls .canvas-reset-button {
+    display: inline-flex;
+  }
+
+  .topbar .header-actions .control-drawer-toggle {
+    display: none;
+  }
+
   .header-actions > .header-simulation-controls,
   .header-simulation-controls .interaction-toggle,
   .header-simulation-controls .interaction-toggle > button,
@@ -5306,15 +5314,34 @@ body {
 
 @media (max-width: 22rem) {
   .header-simulation-controls .simulation-run-button,
-  .header-simulation-controls .icon-button,
-  .topbar .header-actions .control-drawer-toggle {
-    width: 40px;
-    min-width: 40px;
-    max-inline-size: 40px;
+  .header-simulation-controls .icon-button {
+    width: 44px;
+    min-width: 44px;
+    max-inline-size: 44px;
   }
 
   .header-simulation-controls .interaction-toggle {
-    flex-basis: 8rem;
-    width: 8rem;
+    flex-basis: 10rem;
+    width: 10rem;
+  }
+
+  .workflow-rail .mobile-layer-button {
+    flex-direction: column;
+    gap: var(--space-2xs);
+    font-size: 0.625rem;
+  }
+
+  .workflow-rail .nav-label {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    clip: auto;
+    clip-path: none;
+    white-space: nowrap;
+  }
+
+  .status-strip > span:nth-child(4) {
+    display: none;
   }
 }
