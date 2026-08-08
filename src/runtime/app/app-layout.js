@@ -108,19 +108,6 @@
       el.canvasFrame.dataset.aspectCapped = String(Math.abs(displayAspect - physicalAspect) > 1e-6);
     }
 
-    function updateRangeProgress(input) {
-      if (!input) return;
-      const min = Number(input.min || 0);
-      const max = Number(input.max || 100);
-      const value = Number(input.value);
-      const progress = Number.isFinite(value) && max > min ? helpers.clamp(((value - min) / (max - min)) * 100, 0, 100) : 0;
-      input.style.setProperty("--range-progress", `${progress}%`);
-    }
-
-    function updateAllRangeProgress() {
-      documentRef.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
-    }
-
     function applySimulationGridSize(nx, ny, { applyPreset = true, render = true } = {}) {
       const sim = getSim();
       callbacks.clearMaterialSelection(false);
@@ -174,8 +161,6 @@
       stageLayoutChildVisible,
       availableCanvasFrameHeight,
       updateCanvasAspectRatio,
-      updateRangeProgress,
-      updateAllRangeProgress,
       applySimulationGridSize,
       applyResponsiveGridOrientation,
       compactControlDrawerActive,

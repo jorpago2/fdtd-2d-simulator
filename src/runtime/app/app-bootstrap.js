@@ -4,9 +4,7 @@
   function runAppBootstrap({
     layoutControlBindingsModule,
     windowRef,
-    documentRef,
     handleWindowResize,
-    updateRangeProgress,
     applyUiDepth,
     state,
     buildSceneBrowser,
@@ -22,9 +20,7 @@
   }) {
     layoutControlBindingsModule.bindLayoutControls({
       windowRef,
-      documentRef,
       handleWindowResize,
-      updateRangeProgress,
     });
 
     applyUiDepth(state.uiDepth, false);

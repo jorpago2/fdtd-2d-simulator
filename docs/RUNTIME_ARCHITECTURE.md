@@ -36,7 +36,8 @@ src/
     simulation/
     ui/
   styles/
-    fdtd-ui.css
+    carbon.scss
+    scientific-workbench.css
   README.md
 tests/
   reference-modules/

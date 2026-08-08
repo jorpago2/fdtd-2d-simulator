@@ -4,8 +4,8 @@ Use this map to find the canonical files for UI, runtime, simulation, and valida
 
 ## One-Minute Rule
 
-- New UI/CSS work goes in `src/styles/fdtd-ui.css`.
-- The active app loads one stylesheet only: `src/styles/fdtd-ui.css`.
+- Carbon is loaded from `src/styles/carbon.scss`; scientific layout work goes in `src/styles/scientific-workbench.css`.
+- Standard controls are owned by Carbon React. The workbench stylesheet is limited to layout and scientific visualizations.
 - Typed React UI and bootstrap start at `src/main.tsx`; `src/legacy-runtime.json` orders the validated numerical runtime during migration.
 - Reference modules used by validators live in `tests/reference-modules/`; they are not browser load path.
 
@@ -13,7 +13,8 @@ Use this map to find the canonical files for UI, runtime, simulation, and valida
 
 | File | Current role | Add new rules here? |
 | --- | --- | --- |
-| `src/styles/fdtd-ui.css` | Canonical UI layer: tokens, canvas shell, drawer, buttons, menu panels, shared cards, context menus, Visual controls, responsive rules. | Yes. |
+| `src/styles/carbon.scss` | Canonical Carbon Design System styles and IBM Plex assets. | No; configure Carbon only. |
+| `src/styles/scientific-workbench.css` | Simulator layout, canvas, plots, scientific readouts, and responsive geometry. | Yes, for layout or scientific elements only. |
 
 No historical CSS bundle is part of the active repository path. Keep the app on the single canonical stylesheet unless a deliberate architecture change is made.
 
@@ -37,7 +38,7 @@ Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in th
 
 | Task | Start here |
 | --- | --- |
-| Button/toggle/menu visual issue | `src/styles/fdtd-ui.css` |
+| Button/toggle/menu visual issue | The owning component in `src/ui/`; use Carbon React props before adding CSS. |
 | Drawer open/close or selected menu section | `src/runtime/ui/ui-drawer.js` |
 | Scene list, filters, educational guide text | `src/runtime/ui/ui-scenes.js`, `src/runtime/ui/ui-scene-guide.js`, `src/runtime/data/catalog.js` |
 | Scene JSON export/import/share behavior | `src/runtime/app/scene-state-controller.js`, `src/runtime/core/scene-codec.js`, `src/runtime/core/scene-application.js`, `src/runtime/core/scene-repro.js` |
@@ -47,7 +48,7 @@ Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in th
 | Custom monitor geometry or measurement | `src/runtime/simulation/fdtd-custom-monitors.js`, `src/runtime/canvas/canvas-monitor-overlays.js`, `src/runtime/ui/source-monitor-control-bindings.js` |
 | Canvas paint or brush geometry insertion | `src/runtime/canvas/canvas-edit-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js` |
 | Canvas keyboard, pinch/pan, touch, or drag behavior | `src/runtime/canvas/canvas-gesture-actions-controller.js`, `src/runtime/canvas/canvas-interactions.js`, `src/runtime/canvas/canvas-pointer-state.js`, `src/runtime/canvas/canvas-drag-state.js` |
-| Canvas layer stack | `index.html`, `src/styles/fdtd-ui.css`, `src/runtime/canvas/canvas-viewport.js`, `src/runtime/canvas/canvas-export.js` manage the visible WebGL field layer, optional 3D surface layer, and transparent 2D interaction/overlay layer. |
+| Canvas layer stack | `index.html`, `src/styles/scientific-workbench.css`, `src/runtime/canvas/canvas-viewport.js`, `src/runtime/canvas/canvas-export.js` manage the visible WebGL field layer, optional 3D surface layer, and transparent 2D interaction/overlay layer. |
 | Source editor or source behavior | `src/runtime/ui/source-monitor-editor-controller.js`, `src/runtime/ui/source-monitor-model.js`, `src/runtime/ui/source-monitor-control-bindings.js`, `src/runtime/simulation/fdtd-sources.js` |
 | Material selection/apply/delete operations | `src/runtime/ui/material-operations.js` |
 | Brush/material editor controls | `src/runtime/ui/brush-controls-controller.js`, `src/runtime/ui/material-editor-model.js`, `src/runtime/ui/material-editor-ui.js` |

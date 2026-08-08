@@ -167,13 +167,14 @@ function validateHtmlAssets(indexHtml) {
 }
 
 function validateCarbonUi(indexHtml) {
-  const styles = readText("src", "styles", "fdtd-ui.css");
+  const styles = readText("src", "styles", "scientific-workbench.css");
   const carbon = readText("src", "styles", "carbon.scss");
   const missing = [];
   const inheritedFontPattern = /Nunito Sans|Helvetica Neue|SFMono|ui-monospace|ui-sans-serif|system-ui|Consolas|Menlo|Liberation Mono|Georgia|Times New Roman|Cambria Math|Arial/i;
   const typographyFiles = [".css", ".scss", ".js", ".ts", ".tsx"]
     .flatMap((extension) => listFilesRecursive("src", extension))
     .concat(".storybook/preview.tsx");
+  const activeUiSource = typographyFiles.map((file) => readText(...file.split("/"))).join("\n");
   const inheritedFontFiles = typographyFiles.filter((file) => inheritedFontPattern.test(readText(...file.split("/"))));
   if (!["@carbon/styles", "@carbon/react"].some((entry) => carbon.includes(`@use "${entry}"`))) {
     missing.push("Carbon Sass entry");
@@ -181,9 +182,12 @@ function validateCarbonUi(indexHtml) {
   if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
   if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
   if (!indexHtml.includes("cds--g100") || !indexHtml.includes("cds--white")) missing.push("Carbon theme context");
-  if (!styles.includes(".icon-button:not(.cds--btn)") || !styles.includes(".toolbar-switch:not(.cds--form-item):not([data-carbon-field-shell])")) {
-    missing.push("legacy control styles isolated from Carbon components");
-  }
+  if (/\.cds--|:not\(\.cds--|Hallmark|instrument shell redesign/i.test(styles)) missing.push("inherited or Carbon-internal CSS selectors");
+  if (/input\[type=["']range["']\]/i.test(styles)) missing.push("native range styling");
+  if (/font:\s*inherit|label:not\(/i.test(styles)) missing.push("global rules that override Carbon internals");
+  if (!styles.includes("--cds-body-compact-01-") || !styles.includes("--cds-heading-compact-01-")) missing.push("Carbon typography tokens");
+  if (/<details\b|<summary\b|type=["']range["']/i.test(indexHtml)) missing.push("native disclosure or range markup");
+  if (/createElement\(["']details["']\)|input\[type=["']range["']\]/i.test(activeUiSource)) missing.push("legacy dynamic disclosure or range code");
   if (inheritedFontFiles.length > 0) missing.push(`inherited typography in ${inheritedFontFiles.join(", ")}`);
   addCheck(
     "Carbon UI contract",

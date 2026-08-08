@@ -64,6 +64,36 @@
     return safeValue ? `assets/scene-thumbnails/${safeValue}.webp` : "";
   }
 
+  function ensureSceneThumb(thumbnail, documentRef, record = null) {
+    thumbnail.className = "scene-card-thumb scene-spotlight-thumb";
+    thumbnail.setAttribute("aria-hidden", "true");
+    const src = record?.thumbnailSrc || sceneThumbnailSrc(record?.value);
+    if (!src) return;
+    const existing = thumbnail.querySelector("img.scene-thumb-image");
+    if (existing?.getAttribute("src") === src) return;
+    const image = documentRef.createElement("img");
+    image.className = "scene-thumb-image";
+    image.src = src;
+    image.alt = "";
+    image.width = 96;
+    image.height = 96;
+    image.decoding = "async";
+    image.loading = "eager";
+    image.draggable = false;
+    thumbnail.replaceChildren(image);
+  }
+
+  function fillSceneBadges(badgeRow, record, documentRef) {
+    if (!badgeRow) return;
+    badgeRow.replaceChildren();
+    record.badges.forEach((badgeLabel) => {
+      const badge = documentRef.createElement("span");
+      badge.className = "scene-card-badge";
+      badge.textContent = badgeLabel;
+      badgeRow.appendChild(badge);
+    });
+  }
+
   function createSceneRecordFromOption(option, sceneDescriptions) {
     const rawLabel = option.textContent || option.value;
     const parsed = parseSceneOptionLabel(rawLabel);
@@ -112,94 +142,6 @@
       `${record.value} ${record.index ?? ""} ${record.title} ${record.group} ${record.groupLabel} ${record.description} ${record.badges.join(" ")}`
     );
     return record;
-  }
-
-  function cloneSceneCardTemplate(documentRef) {
-    const template = typeof documentRef.getElementById === "function" ? documentRef.getElementById("sceneCardTemplate") : null;
-    const templateContent = template?.content?.firstElementChild;
-    if (templateContent) return templateContent.cloneNode(true);
-
-    const span = (className) => {
-      const node = documentRef.createElement("span");
-      node.className = className;
-      return node;
-    };
-    const card = documentRef.createElement("button");
-    card.type = "button";
-    card.className = "scene-card";
-    card.dataset.sceneCard = "";
-    const thumbnail = span("scene-card-thumb");
-    thumbnail.setAttribute("aria-hidden", "true");
-    thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
-    const header = span("scene-card-header");
-    header.append(span("scene-card-number"), span("scene-card-title"));
-    card.append(thumbnail, header, span("scene-card-group"), span("scene-card-description"), span("scene-card-badges"));
-    return card;
-  }
-
-  function ensureSceneThumb(thumbnail, documentRef, record = null) {
-    thumbnail.className = thumbnail.classList?.contains("scene-spotlight-thumb")
-      ? "scene-card-thumb scene-spotlight-thumb"
-      : "scene-card-thumb";
-    thumbnail.setAttribute("aria-hidden", "true");
-    const src = record?.thumbnailSrc || sceneThumbnailSrc(record?.value);
-    if (src) {
-      const existing = thumbnail.querySelector("img.scene-thumb-image");
-      if (existing?.getAttribute("src") === src) return;
-      const image = documentRef.createElement("img");
-      image.className = "scene-thumb-image";
-      image.src = src;
-      image.alt = "";
-      image.width = 96;
-      image.height = 96;
-      image.decoding = "async";
-      image.loading = thumbnail.classList.contains("scene-spotlight-thumb") ? "eager" : "lazy";
-      image.draggable = false;
-      thumbnail.replaceChildren(image);
-      return;
-    }
-    if (!thumbnail.childElementCount) {
-      thumbnail.append(documentRef.createElement("span"), documentRef.createElement("span"), documentRef.createElement("span"));
-    }
-  }
-
-  function fillSceneBadges(badgeRow, record, documentRef) {
-    if (!badgeRow) return;
-    badgeRow.replaceChildren();
-    record.badges.forEach((badgeLabel) => {
-      const badge = documentRef.createElement("span");
-      badge.className = "scene-card-badge";
-      badge.textContent = badgeLabel;
-      badgeRow.appendChild(badge);
-    });
-  }
-
-  function fillSceneCard(card, record, documentRef, onSelectScene, getCurrentPreset) {
-    const active = record.value === getCurrentPreset?.();
-    card.dataset.sceneCard = record.value;
-    card.dataset.sceneThumb = record.thumbnail;
-    card.setAttribute("aria-pressed", String(active));
-
-    const thumbnail = card.querySelector(".scene-card-thumb") || documentRef.createElement("span");
-    ensureSceneThumb(thumbnail, documentRef, record);
-    if (!thumbnail.parentElement) card.prepend(thumbnail);
-
-    const number = card.querySelector(".scene-card-number");
-    const title = card.querySelector(".scene-card-title");
-    const group = card.querySelector(".scene-card-group");
-    const description = card.querySelector(".scene-card-description");
-    const badgeRow = card.querySelector(".scene-card-badges");
-
-    if (number) number.textContent = record.index == null ? "-" : String(record.index);
-    if (title) title.textContent = record.title;
-    if (group) group.textContent = record.group;
-    if (description) description.textContent = record.description || "Custom FDTD scene.";
-    fillSceneBadges(badgeRow, record, documentRef);
-
-    card.addEventListener("click", () => {
-      onSelectScene?.(record.value);
-    });
-    return card;
   }
 
   function groupCountLabel(count) {
@@ -413,71 +355,39 @@
         }))
         .filter((filter) => terms.length === 0 || filter.count > 0);
 
-      el.sceneFilterBar.replaceChildren();
-      filters.forEach((filter) => {
-        const button = documentRef.createElement("button");
-        const active = terms.length === 0 && state.filter === filter.value;
-        button.type = "button";
-        button.className = `scene-filter-button${active ? " is-active" : ""}`;
-        button.dataset.sceneFilter = filter.value;
-        button.setAttribute("role", "radio");
-        button.setAttribute("aria-checked", String(active));
-        const filterCount = filter.count;
-        button.disabled = terms.length === 0 && !active && filterCount === 0;
-        button.setAttribute("aria-label", `${filter.label}: ${filterCount} scenes`);
-        const label = documentRef.createElement("span");
-        label.className = "scene-filter-label";
-        label.textContent = filter.label;
-        const count = documentRef.createElement("span");
-        count.className = "scene-filter-count";
-        count.textContent = String(filterCount);
-        button.append(label, count);
-        button.addEventListener("click", () => {
-          const shouldRestoreFocus = documentRef.activeElement === button;
-          state.filter = filter.value;
+      const renderer = global.FdtdCarbonUI?.renderSceneFilters;
+      if (typeof renderer !== "function") throw new Error("Carbon scene filter renderer is unavailable");
+      renderer({
+        target: el.sceneFilterBar,
+        filters: filters.map((filter) => ({
+          ...filter,
+          disabled: terms.length === 0 && filter.value !== state.filter && filter.count === 0,
+        })),
+        selectedValue: terms.length > 0 ? "" : state.filter,
+        onSelect(value) {
+          state.filter = value;
           if (el.sceneSearchInput) el.sceneSearchInput.value = "";
           renderSceneFilterBar();
           renderSceneCards();
-          if (shouldRestoreFocus) {
-            const replacement = Array.from(el.sceneFilterBar.querySelectorAll("[data-scene-filter]")).find(
-              (candidate) => candidate.dataset.sceneFilter === filter.value
-            );
-            replacement?.focus?.({ preventScroll: true });
-          }
-        });
-        el.sceneFilterBar.appendChild(button);
+        },
       });
     }
 
     function renderSceneCards() {
       if (!el.sceneCards) return;
       const records = visibleSceneRecords();
-      el.sceneCards.replaceChildren();
       updateSceneBrowserMeta(records);
-
-      if (records.length === 0) {
-        const emptyState = documentRef.createElement("p");
-        emptyState.className = "scene-empty-state";
-        emptyState.textContent = "No matching scenes. Clear the search and try another term.";
-        el.sceneCards.appendChild(emptyState);
-        return;
-      }
-
-      records.forEach((record) => {
-        const card = fillSceneCard(
-          cloneSceneCardTemplate(documentRef),
-          record,
-          documentRef,
-          (value) => {
-            onSelectScene?.(value);
-            setSceneView("current");
-          },
-          getCurrentPreset
-        );
-        el.sceneCards.appendChild(card);
+      const renderer = global.FdtdCarbonUI?.renderSceneCards;
+      if (typeof renderer !== "function") throw new Error("Carbon scene card renderer is unavailable");
+      renderer({
+        target: el.sceneCards,
+        records,
+        currentPreset: el.presetInput?.value || getCurrentPreset?.() || "",
+        onSelect(value) {
+          onSelectScene?.(value);
+          setSceneView("current");
+        },
       });
-
-      syncSceneBrowserSelection();
     }
 
     function syncSceneBrowserSelection({ focusCurrent = false } = {}) {
@@ -492,13 +402,7 @@
         return;
       }
       updateSceneBrowserMeta(visibleSceneRecords());
-      el.sceneCards.querySelectorAll("[data-scene-card]").forEach((card) => {
-        const active = card.dataset.sceneCard === currentPreset;
-        card.classList.toggle("is-active", active);
-        card.setAttribute("aria-pressed", String(active));
-        if (active) card.setAttribute("aria-current", "true");
-        else card.removeAttribute("aria-current");
-      });
+      renderSceneCards();
     }
 
     function rebuildSceneBrowser({ focusCurrent = false } = {}) {

@@ -33,6 +33,9 @@
     el.stepBtn?.addEventListener("click", () => {
       runtimeController.advanceOneStep();
     });
+    global.addEventListener("fdtd:simulation-step", () => {
+      runtimeController.advanceOneStep();
+    });
     el.runStepBtn?.addEventListener("click", () => {
       runtimeController.advanceOneStep();
     });
@@ -45,6 +48,9 @@
     });
 
     el.saveBtn?.addEventListener("click", () => {
+      canvasRenderController.downloadCanvasPng();
+    });
+    global.addEventListener("fdtd:save-png", () => {
       canvasRenderController.downloadCanvasPng();
     });
 

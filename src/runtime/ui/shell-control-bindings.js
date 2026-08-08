@@ -81,12 +81,13 @@
         "</ul>",
       ].join("");
 
-      const reference = documentRef.createElement("details");
+      const reference = documentRef.createElement("section");
       reference.className = "help-guide-reference scene-guide-details";
-      const summary = documentRef.createElement("summary");
-      summary.textContent = "Scientific editing reference";
-      reference.append(summary, referenceContent);
+      reference.dataset.carbonDisclosure = "";
+      reference.dataset.title = "Scientific editing reference";
+      reference.append(referenceContent);
       editHelpPanel.append(quickGuide, reference);
+      global.FdtdCarbonUI?.upgradeDisclosures?.(editHelpPanel);
     }
     let lastHelpGuideTopicButton = null;
     const helpGuideDefaultKicker = el.helpGuideKicker?.textContent || "Quick guide";
@@ -152,15 +153,6 @@
     el.controlDrawerCloseBtn?.addEventListener("click", closeControlDrawer);
     el.controlDrawerBackdrop?.addEventListener("click", closeControlDrawer);
 
-    el.canvasActionToggle?.addEventListener("click", (event) => {
-      event.stopPropagation();
-      toggleCanvasActionsMenu();
-    });
-    el.canvasActionMenu?.addEventListener("click", (event) => {
-      if (isElement(event.target) && event.target.closest("button")) {
-        windowRef.setTimeout(closeCanvasActionsMenu, 0);
-      }
-    });
     el.canvasOptionsToggle?.addEventListener("click", (event) => {
       event.stopPropagation();
       toggleCanvasOptionsMenu();

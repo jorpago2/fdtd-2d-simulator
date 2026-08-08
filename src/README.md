@@ -21,7 +21,7 @@ legacy-runtime.json  Temporary ordered inventory of classic scripts.
 main.tsx             Typed React and runtime bootstrap entry.
 ui/                  Typed UI state and view models.
 runtime/             Classic simulation/runtime modules retained during migration.
-styles/              Canonical stylesheet processed by Vite.
+styles/              Carbon entrypoint and scientific workbench layout processed by Vite.
 ```
 
 ## Load Pattern

@@ -222,10 +222,9 @@ async function selectPreset(page, preset) {
 
 async function stepSimulation(page, steps) {
   const elapsed = await page.evaluate(async (stepCount) => {
-    const button = document.getElementById("stepBtn");
     const t0 = performance.now();
     for (let i = 0; i < stepCount; i += 1) {
-      button.click();
+      window.dispatchEvent(new Event("fdtd:simulation-step"));
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
     return performance.now() - t0;
@@ -6555,25 +6554,26 @@ async function runReactBootstrapSmoke(page) {
 }
 
 async function runCanvasActionMenuSmoke(page) {
+  await page.locator("#canvasActionToggle").click();
+  await page.waitForTimeout(50);
   const status = await page.evaluate(() => {
     const toggle = document.getElementById("canvasActionToggle");
-    const menu = document.getElementById("canvasActionMenu");
-    const stage = document.querySelector(".stage");
-    if (!toggle || !menu || !stage) {
-      return { opened: false, expanded: null, menuDisplay: "", stageOpen: false };
+    const menu = document.querySelector('[role="menu"]');
+    if (!toggle || !menu) {
+      return { opened: false, expanded: toggle?.getAttribute("aria-expanded") ?? null, menuDisplay: "", itemCount: 0 };
     }
-    toggle.click();
     const style = getComputedStyle(menu);
     return {
-      opened: stage.classList.contains("canvas-actions-open") && style.display !== "none",
+      opened: style.display !== "none",
       expanded: toggle.getAttribute("aria-expanded"),
       menuDisplay: style.display,
-      stageOpen: stage.classList.contains("canvas-actions-open"),
+      itemCount: menu.querySelectorAll('[role="menuitem"]').length,
     };
   });
   const failures = [];
   if (!status.opened) failures.push("canvas action menu did not open from the toolbar toggle");
   if (status.expanded !== "true") failures.push("canvas action toggle did not report aria-expanded=true");
+  if (status.itemCount !== 2) failures.push(`canvas action menu exposed ${status.itemCount} items instead of 2`);
   return {
     id: "canvas_action_menu_toggle",
     preset: "current",
@@ -7013,9 +7013,9 @@ async function runControlNavigationSmoke(page) {
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
         openResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
           .filter((panel) => panel.open)
-          .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
+          .map((panel) => panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className),
         numericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel")).map((panel) => ({
-          title: panel.querySelector("summary")?.textContent?.trim() || panel.className,
+          title: panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className,
           open: panel.open,
         })),
       };
@@ -7266,7 +7266,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
           guide: rect("#sceneGuidePanel"),
           openGuideCards: Array.from(document.querySelectorAll("#sceneGuidePanel .scene-guide-details"))
             .filter((panel) => panel.open)
-            .map((panel) => panel.querySelector("summary")?.textContent?.trim() || panel.className),
+            .map((panel) => panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
             ? {
@@ -7336,8 +7336,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
             firstCardBounds.top < scrollerBounds.bottom &&
             firstCardBounds.bottom > scrollerBounds.top,
           scrollerOverflow: scroller ? scroller.scrollWidth - scroller.clientWidth : 0,
-          zeroCountFilters: Array.from(document.querySelectorAll("#sceneFilterBar .scene-filter-count"))
-            .filter((count) => count.textContent?.trim() === "0").length,
+          zeroCountFilters: Number(document.getElementById("sceneFilterBar")?.dataset.zeroCountFilters || 0),
         };
       });
       const status = { viewport: viewport.name, current: currentStatus, browse: browseStatus, search: searchStatus };
@@ -7452,7 +7451,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       );
       return {
         label: snapshotLabel,
-        activeFilter: document.querySelector("[data-scene-filter].is-active")?.dataset.sceneFilter || "",
+        activeFilter: document.getElementById("sceneFilterBar")?.dataset.selectedSceneFilter || "",
         activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
         activeCard: document.querySelector(".scene-card.is-active")?.dataset.sceneCard || "",
         browserCount: document.getElementById("sceneBrowserCount")?.textContent?.trim() || "",
@@ -7472,6 +7471,15 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       target.click();
       return true;
     }, selector);
+  const selectSceneFamily = async (label) => {
+    const dropdown = page.locator("#sceneFamilyFilter");
+    if (!(await dropdown.count())) return false;
+    await dropdown.click();
+    const option = page.locator('[role="option"]').filter({ hasText: label }).first();
+    if (!(await option.count())) return false;
+    await option.click();
+    return true;
+  };
   const openBrowseView = async () => {
     if (!(await clickIfPresent('[data-scene-view="browse"]'))) {
       failures.push("Browse view button was not found");
@@ -7497,7 +7505,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
       .waitForFunction(
         () =>
           document.querySelectorAll("[data-scene-view]").length >= 2 &&
-          document.querySelectorAll("[data-scene-filter]").length > 0 &&
+          document.querySelectorAll("#sceneFilterBar .cds--dropdown").length > 0 &&
           document.querySelectorAll("#sceneCards [data-scene-card]").length > 0,
         null,
         { timeout: 3000 },
@@ -7519,8 +7527,8 @@ async function runSceneMenuSelectionSmoke(browser, url) {
 
     await page.locator("#sceneSearchInput").fill("");
     await page.waitForTimeout(80);
-    if (!(await clickIfPresent('[data-scene-filter="3. Sources and radiation"]'))) {
-      failures.push("Sources and radiation filter button was not found");
+    if (!(await selectSceneFamily("Sources and radiation"))) {
+      failures.push("Sources and radiation Carbon dropdown option was not found");
     }
     await page.waitForTimeout(80);
     const sourcesFilter = await snapshotSceneMenu("sources filter");
@@ -7551,8 +7559,8 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     }
 
     await openBrowseView();
-    if (!(await clickIfPresent('[data-scene-filter="4. Guided optics"]'))) {
-      failures.push("Guided optics filter button was not found");
+    if (!(await selectSceneFamily("Guided optics"))) {
+      failures.push("Guided optics Carbon dropdown option was not found");
     }
     await page.waitForTimeout(80);
     const guidedFilter = await snapshotSceneMenu("guided filter");
@@ -7664,7 +7672,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     }));
     if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
     await page.locator('[data-mobile-layer="results"]:visible').click();
-    await page.locator("#tab-results details").evaluateAll((panels) => panels.forEach((panel) => { panel.open = true; }));
+    await page.locator("#tab-results .results-detail-panel").evaluateAll((panels) => panels.forEach((panel) => { panel.open = true; }));
     await page.waitForTimeout(160);
     const resultsOverflow = await page.evaluate(() => {
       const panel = document.getElementById("tab-results");
@@ -7767,6 +7775,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
 
   try {
     await page.goto(url, { waitUntil: "networkidle" });
+    await page.locator("#canvasActionToggle").click();
+    await page.waitForTimeout(50);
     const status = await page.evaluate(() => {
       const rect = (selector) => {
         const node = document.querySelector(selector);
@@ -7781,7 +7791,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       };
       const toolbarNode = document.querySelector(".header-simulation-controls");
       const actionToggleNode = document.getElementById("canvasActionToggle");
-      const actionMenuNode = document.getElementById("canvasActionMenu");
+      const actionMenuNode = document.querySelector('[role="menu"]');
       const closedToolbar = rect(".header-simulation-controls");
       const boundsOf = (node) => {
         if (!node) return null;
@@ -7797,7 +7807,6 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         };
       };
       const closedActionToggle = boundsOf(actionToggleNode);
-      actionToggleNode?.click();
       const openToolbarBounds = toolbarNode?.getBoundingClientRect();
       const openActionToggle = boundsOf(actionToggleNode);
       const openActionNodes = [actionMenuNode, ...(actionMenuNode ? Array.from(actionMenuNode.querySelectorAll("button")) : [])]

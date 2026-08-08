@@ -6,13 +6,13 @@ This audit records the current structural state of the simulator and the guardra
 
 ## Current Status
 
-The project is coherent enough for incremental work: the active browser runtime is under `src/runtime/`, the canonical stylesheet is `src/styles/fdtd-ui.css`, reference modules are isolated under `tests/reference-modules/`, and the validators currently cover the most important architecture boundaries.
+The project is coherent enough for incremental work: the active browser runtime is under `src/runtime/`, Carbon styles and the scientific workbench stylesheet are under `src/styles/`, reference modules are isolated under `tests/reference-modules/`, and the validators currently cover the most important architecture boundaries.
 
 The main documentation drift found in this pass was the stale claim that active modules should register under `window.FdtdNext`. The deployed runtime uses explicit `window.Fdtd...` globals; `window.FdtdNext` is reserved for reference modules used by parity validators.
 
 ## Architecture Findings
 
-- Active assets are loaded from `src/runtime/` and `src/styles/fdtd-ui.css`; retired active paths are not referenced by `index.html`.
+- Active assets are loaded from `src/runtime/`, `src/styles/carbon.scss`, and `src/styles/scientific-workbench.css`; retired active paths are not referenced by `index.html`.
 - `runtime-dependencies.js` owns required module checks before `main.js`. If `main.js` cannot run without a new module, add it there instead of introducing local one-off guards.
 - `runtime-session-controller.js` owns performance instrumentation and edit-session pause/resume state, keeping the central app file focused on composition.
 - Optional controllers can remain optional only when the feature is genuinely optional and the app has a valid fallback when the module is absent.

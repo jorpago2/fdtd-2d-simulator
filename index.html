@@ -38,92 +38,17 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
-    <meta name="theme-color" content="#eef5f3" />
-    <link rel="stylesheet" href="src/styles/carbon.scss?v=20260807-carbon-5" />
-    <link rel="stylesheet" href="src/styles/fdtd-ui.css?v=20260808-instrument-6" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260808-carbon-workbench-2" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
     <main class="app-shell cds--grid">
-      <div id="reactHeaderRoot" data-carbon-react-root="header">
-        <div class="brand-lockup">
-          <span class="brand-mark" aria-hidden="true">EM</span>
-          <div id="reactBrandRoot" class="brand-main">
-            <div class="brand-heading">
-              <h1 class="brand-title">EM Wave Simulator</h1>
-              <p class="brand-descriptor">2D FDTD laboratory</p>
-            </div>
-          </div>
-        </div>
-        <div class="header-context" aria-label="Current simulation">
-          <span class="header-context-label">Simulation</span>
-          <strong id="headerSceneTitle" class="header-scene-title">Plane wave in air</strong>
-          <span id="headerSimulationStatus" class="header-status" role="status" aria-live="polite" data-state="ready">
-            <span class="header-status-indicator" aria-hidden="true"></span><span class="header-status-label">Ready</span>
-          </span>
-        </div>
-        <div class="header-actions" role="group" aria-label="Global actions">
-          <div class="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
-            <div class="tool-group compact">
-              <button id="playPauseBtn" class="icon-button primary simulation-run-button" type="button" title="Start simulation" aria-label="Start simulation" aria-pressed="false">
-                <span id="playPauseIcon" aria-hidden="true">▶</span>
-                <span class="simulation-run-label" aria-hidden="true"></span>
-              </button>
-              <button id="resetBtn" class="icon-button canvas-reset-button" type="button" title="Reset field" aria-label="Reset field">↻</button>
-              <button
-                id="canvasActionToggle"
-                class="icon-button canvas-action-toggle"
-                type="button"
-                aria-controls="canvasActionMenu"
-                aria-expanded="false"
-                aria-label="More simulation actions"
-                title="More simulation actions"
-              >⋮</button>
-              <div id="canvasActionMenu" class="canvas-action-menu" aria-label="Simulation actions">
-                <button id="stepBtn" class="icon-button" type="button" title="Advance one step" aria-label="Advance one step">⏭<span class="canvas-action-label">Step</span></button>
-                <button id="saveBtn" class="icon-button" type="button" title="Save PNG image" aria-label="Save PNG image">⇩<span class="canvas-action-label">PNG</span></button>
-              </div>
-            </div>
-            <fieldset class="canvas-mode-toggle interaction-toggle" role="radiogroup" aria-label="Canvas interaction mode">
-              <legend class="sr-only">Canvas interaction mode</legend>
-              <button id="selectModeBtn" class="mode-toggle-button is-active" type="button" role="radio" aria-checked="true" title="Select and move canvas objects">Select</button>
-              <button id="brushModeBtn" class="mode-toggle-button" type="button" role="radio" aria-checked="false" title="Draw materials and geometries">Draw</button>
-            </fieldset>
-          </div>
-          <fieldset class="canvas-mode-toggle theme-toggle header-theme-toggle" role="radiogroup" aria-label="Color theme">
-            <legend class="sr-only">Color theme</legend>
-            <button class="mode-toggle-button is-active" type="button" role="radio" data-theme-choice="light" aria-checked="true" title="Use light theme">Light</button>
-            <button class="mode-toggle-button" type="button" role="radio" data-theme-choice="dark" aria-checked="false" title="Use dark theme">Dark</button>
-          </fieldset>
-          <button
-            id="controlDrawerToggle"
-            class="icon-button control-drawer-toggle cds--btn cds--btn--ghost cds--btn--sm cds--btn--icon-only"
-            type="button"
-            aria-controls="controlPanel"
-            aria-expanded="false"
-            aria-label="Open current workflow panel"
-            title="Open current workflow panel"
-          >
-            <svg class="ui-icon cds--btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-          </button>
-        </div>
-      </div>
+      <div id="reactHeaderRoot" data-carbon-react-root="header"></div>
 
       <section id="simulatorWorkspace" class="workspace cds--css-grid cds--css-grid--condensed cds--css-grid--full-width" aria-label="Simulator" tabindex="-1">
-        <nav id="reactWorkflowRoot" class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow" data-carbon-react-root="workflow">
-          <button class="mobile-layer-button is-active cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="scenes" aria-current="page" aria-controls="controlPanel" aria-expanded="false">
-            <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
-          </button>
-          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="simulation" aria-controls="controlPanel" aria-expanded="false">
-            <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
-          </button>
-          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="results" aria-controls="controlPanel" aria-expanded="false">
-            <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
-          </button>
-          <button class="mobile-layer-button cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="config" aria-controls="controlPanel" aria-expanded="false">
-            <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
-          </button>
-        </nav>
+        <nav id="reactWorkflowRoot" class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow" data-carbon-react-root="workflow"></nav>
         <div class="stage">
           <div class="canvas-toolbar">
             <button
@@ -654,16 +579,10 @@
                     </optgroup>
                   </select>
                 </label>
-                <label class="control-row">
-                  <span>&lambda;<sub>s</sub> / &lambda;<sub>0</sub></span>
-                  <input id="frequencyInput" type="range" min="0.25" max="5" step="any" value="1" />
-                  <output id="frequencyOutput" for="frequencyInput">1.00</output>
-                </label>
-                <label class="control-row">
-                  <span id="sourceAmplitudeLabel"><i>J</i><sub>z,0</sub></span>
-                  <input id="amplitudeInput" type="range" min="5" max="120" step="5" value="55" />
-                  <output id="amplitudeOutput" for="amplitudeInput">0.55</output>
-                </label>
+                <div id="reactFrequencySliderRoot" class="control-row scientific-slider-row"></div>
+                <output id="frequencyOutput" class="scientific-slider-output" for="frequencyInput">1.00</output>
+                <div id="reactAmplitudeSliderRoot" class="control-row scientific-slider-row"></div>
+                <output id="amplitudeOutput" class="scientific-slider-output" for="amplitudeInput">0.55</output>
                 <fieldset class="two-col">
                   <legend class="sr-only">Source position</legend>
                   <label>
@@ -675,24 +594,20 @@
                     <input id="sourceYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
                 </fieldset>
-                <label id="sourceWidthControl" class="control-row is-disabled">
-                  <span>FWHM / λ<sub>0</sub></span>
-                  <input id="sourceWidthInput" type="range" min="0.05" max="1.5" step="0.05" value="0.35" disabled />
-                  <output id="sourceWidthOutput" for="sourceWidthInput">0.35</output>
-                </label>
-                <label id="sourceAngleControl" class="control-row is-disabled">
-                  <span>J<sub>z</sub> axis θ</span>
-                  <input id="sourceAngleInput" type="range" min="0" max="360" step="1" value="0" disabled />
-                  <output id="sourceAngleOutput" for="sourceAngleInput">0°</output>
-                </label>
-                <details class="source-detail-panel context-detail-panel">
-                  <summary>Source details</summary>
+                <div id="sourceWidthControl" class="control-row scientific-slider-row is-disabled">
+                  <div id="reactSourceWidthSliderRoot"></div>
+                  <output id="sourceWidthOutput" class="scientific-slider-output" for="sourceWidthInput">0.35</output>
+                </div>
+                <div id="sourceAngleControl" class="control-row scientific-slider-row is-disabled">
+                  <div id="reactSourceAngleSliderRoot"></div>
+                  <output id="sourceAngleOutput" class="scientific-slider-output" for="sourceAngleInput">0°</output>
+                </div>
+                <section class="source-detail-panel context-detail-panel" data-carbon-disclosure data-title="Source details">
                   <div class="source-detail-body">
-                    <label id="sourceTimePhaseControl" class="control-row">
-                      <span>phase φ</span>
-                      <input id="sourceTimePhaseInput" type="range" min="-180" max="180" step="1" value="0" />
-                      <output id="sourceTimePhaseOutput" for="sourceTimePhaseInput">0°</output>
-                    </label>
+                    <div id="sourceTimePhaseControl" class="control-row scientific-slider-row">
+                      <div id="reactSourceTimePhaseSliderRoot"></div>
+                      <output id="sourceTimePhaseOutput" class="scientific-slider-output" for="sourceTimePhaseInput">0°</output>
+                    </div>
                     <fieldset class="two-col source-order-controls">
                       <legend class="sr-only">Multipole angular profile</legend>
                       <label id="sourceOrderControl" class="is-disabled">
@@ -708,7 +623,7 @@
                       </label>
                     </fieldset>
                   </div>
-                </details>
+                </section>
               </div>
               <div class="source-menu-actions">
                 <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
@@ -751,16 +666,10 @@
                     <input id="monitorYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
                 </fieldset>
-                <label class="control-row">
-                  <span>Length / λ<sub>0</sub></span>
-                  <input id="monitorLengthInput" type="range" min="0.1" max="8" step="0.05" value="2.0" />
-                  <output id="monitorLengthOutput" for="monitorLengthInput">2.00</output>
-                </label>
-                <label class="control-row">
-                  <span>Angle θ</span>
-                  <input id="monitorAngleInput" type="range" min="0" max="180" step="1" value="90" />
-                  <output id="monitorAngleOutput" for="monitorAngleInput">90°</output>
-                </label>
+                <div id="reactMonitorLengthSliderRoot" class="control-row scientific-slider-row"></div>
+                <output id="monitorLengthOutput" class="scientific-slider-output" for="monitorLengthInput">2.00</output>
+                <div id="reactMonitorAngleSliderRoot" class="control-row scientific-slider-row"></div>
+                <output id="monitorAngleOutput" class="scientific-slider-output" for="monitorAngleInput">90°</output>
               </div>
               <div class="source-menu-actions">
                 <button id="monitorDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
@@ -820,11 +729,10 @@
                   </label>
                 </fieldset>
               </div>
-              <label id="brushSizeControl" class="control-row">
-                <span>Brush size</span>
-                <input id="brushMenuSizeInput" type="range" min="0.05" max="0.8" step="0.05" value="0.2" />
-                <output id="brushMenuSizeOutput" for="brushMenuSizeInput">0.20 λ₀</output>
-              </label>
+              <div id="brushSizeControl" class="control-row scientific-slider-row">
+                <div id="reactBrushSizeSliderRoot"></div>
+                <output id="brushMenuSizeOutput" class="scientific-slider-output" for="brushMenuSizeInput">0.20 λ₀</output>
+              </div>
               <fieldset class="segmented" role="radiogroup" aria-label="Material">
                 <legend class="sr-only">Material</legend>
                 <button class="segment is-active" type="button" role="radio" data-brush="custom" aria-checked="true">Custom ε, μ</button>
@@ -884,8 +792,7 @@
                   </label>
                 </div>
               </fieldset>
-              <details class="material-detail-panel context-detail-panel">
-                <summary>Advanced material model</summary>
+              <section class="material-detail-panel context-detail-panel" data-carbon-disclosure data-title="Advanced material model">
                 <div class="source-detail-body">
                   <label class="toggle-row brush-anisotropy-toggle">
                     <input id="customAnisotropyInput" type="checkbox" />
@@ -1076,7 +983,7 @@
                 </label>
               </div>
                 </div>
-              </details>
+              </section>
               <div class="button-row">
                 <button id="brushMenuClearMaterialsBtn" class="text-button" type="button">Clear medium</button>
                 <button id="brushMenuClearFieldsBtn" class="text-button" type="button">Clear field</button>
@@ -1149,7 +1056,7 @@
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
 <section class="panel-section scene-section">
               <h2>Scene</h2>
-              <label class="scene-select-fallback">
+              <label class="scene-select-fallback" hidden>
                 <span>Example</span>
                 <select id="presetInput">
                   <optgroup label="1. Maxwell and propagation">
@@ -1371,23 +1278,11 @@
                 </div>
                 <div id="sceneBrowsePanel" class="scene-view-panel scene-browse-panel" data-scene-view-panel="browse" hidden>
                   <div id="reactSceneSearchRoot" class="scene-search-label" data-carbon-react-root="scene-search"></div>
-                  <div id="sceneFilterBar" class="scene-filter-bar" role="radiogroup" aria-label="Scene families"></div>
+                  <div id="sceneFilterBar" class="scene-filter-bar"></div>
                   <div class="scene-browser-meta" aria-live="polite">
                     <output id="sceneBrowserCount">1 scene in General</output>
                     <output id="sceneBrowserActive">Family: General</output>
                   </div>
-                  <template id="sceneCardTemplate">
-                    <button class="scene-card" type="button" data-scene-card="">
-                      <span class="scene-card-thumb" aria-hidden="true"><span></span><span></span><span></span></span>
-                      <span class="scene-card-header">
-                        <span class="scene-card-number"></span>
-                        <span class="scene-card-title"></span>
-                      </span>
-                      <span class="scene-card-group"></span>
-                      <span class="scene-card-description"></span>
-                      <span class="scene-card-badges"></span>
-                    </button>
-                  </template>
                   <div id="sceneCards" class="scene-cards" aria-live="polite"></div>
                 </div>
               </div>
@@ -1424,11 +1319,8 @@
                   <span>Reset</span>
                 </button>
               </div>
-              <label class="control-row" title="Changes animation pacing, not the CFL time step.">
-                <span>Playback speed</span>
-                <input id="speedInput" type="range" min="0.1" max="10" step="0.1" value="1" />
-                <output id="speedOutput" for="speedInput">1x</output>
-              </label>
+              <div id="reactSpeedSliderRoot" class="control-row scientific-slider-row" title="Changes animation pacing, not the CFL time step."></div>
+              <output id="speedOutput" class="scientific-slider-output" for="speedInput">1x</output>
               <label class="control-row">
                 <span>Display FPS</span>
                 <select id="renderFpsInput">
@@ -1439,11 +1331,8 @@
                 </select>
                 <output id="renderFpsOutput" for="renderFpsInput">Auto</output>
               </label>
-              <label class="control-row" title="Visual scaling only; it does not change the electromagnetic fields.">
-                <span>Display gain</span>
-                <input id="gainInput" type="range" min="20" max="260" step="5" value="100" />
-                <output id="gainOutput" for="gainInput">1.00</output>
-              </label>
+              <div id="reactGainSliderRoot" class="control-row scientific-slider-row" title="Visual scaling only; it does not change the electromagnetic fields."></div>
+              <output id="gainOutput" class="scientific-slider-output" for="gainInput">1.00</output>
               <label class="toggle-row">
                 <input id="autoScaleInput" type="checkbox" />
                 <span>Automatic display scale</span>
@@ -1485,16 +1374,14 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
-              <details class="scene-observables-panel results-detail-panel">
-                <summary>Scene observables</summary>
+              <section class="scene-observables-panel results-detail-panel" data-carbon-disclosure data-title="Scene observables">
                 <div class="results-detail-body">
                   <div id="sceneObservableResults" class="scene-observable-results" aria-live="polite">
                     <p class="results-insight-note">Select and run a scene to compare measured quantities with a physics reference.</p>
                   </div>
                 </div>
-              </details>
-              <details class="maxwell-check-panel results-detail-panel">
-                <summary>Maxwell equations</summary>
+              </section>
+              <section class="maxwell-check-panel results-detail-panel" data-carbon-disclosure data-title="Maxwell equations">
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
                     <label class="toggle-row">
@@ -1508,9 +1395,8 @@
                     <p class="results-insight-note">Enable the checker and run or step once.</p>
                   </div>
                 </div>
-              </details>
-              <details class="monitor-panel results-detail-panel">
-                <summary>Line monitors</summary>
+              </section>
+              <section class="monitor-panel results-detail-panel" data-carbon-disclosure data-title="Line monitors">
                 <div class="results-detail-body">
                   <label class="toggle-row">
                     <input id="diagnosticsInput" type="checkbox" />
@@ -1545,17 +1431,15 @@
                   <p class="results-insight-note">Steady-state powers use a discrete transverse line integral and single-direction wave separation; Floquet orders use a transverse-line mean-field DFT. For bends, multimode guides, or multiple sources, prefer the scene-specific port observable.</p>
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
-              </details>
-              <details class="custom-monitor-panel results-detail-panel">
-                <summary>Custom monitors</summary>
+              </section>
+              <section class="custom-monitor-panel results-detail-panel" data-carbon-disclosure data-title="Custom monitors">
                 <div class="results-detail-body">
                   <div id="customMonitorResults" class="custom-monitor-results" aria-live="polite">
                     <p class="results-insight-note">Right-click or long-press the canvas to add a monitor.</p>
                   </div>
                 </div>
-              </details>
-              <details class="sweep-panel results-detail-panel">
-                <summary>Parameter sweep</summary>
+              </section>
+              <section class="sweep-panel results-detail-panel" data-carbon-disclosure data-title="Parameter sweep">
                 <div class="results-detail-body">
                   <div class="two-col">
                     <label>
@@ -1608,9 +1492,8 @@
                     <output id="sweepChartReadout" class="chart-readout">No sweep point</output>
                   </div>
                 </div>
-              </details>
-              <details class="analysis-panel results-detail-panel">
-                <summary>Spectral / NTFF</summary>
+              </section>
+              <section class="analysis-panel results-detail-panel" data-carbon-disclosure data-title="Spectral / NTFF">
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
                     <label class="toggle-row">
@@ -1637,7 +1520,7 @@
                     <output id="analysisChartReadout" class="chart-readout">Focus or move over a chart</output>
                   </div>
                 </div>
-              </details>
+              </section>
             </section>
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
@@ -1663,8 +1546,7 @@
                 </div>
               </div>
             </section>
-            <details class="panel-section grid-section config-detail-panel" open>
-              <summary>Grid</summary>
+            <section class="panel-section grid-section config-detail-panel" data-carbon-disclosure data-title="Grid" data-initially-open="true">
               <div class="config-detail-body">
                 <div class="two-col">
                   <label>
@@ -1692,9 +1574,8 @@
                 </div>
                 <p class="simulation-guide-note">Cells / &lambda;<sub>0</sub> sets the normalized grid resolution. Subpixel smoothing only changes passive dielectric interface coefficients; PEC, dispersive, tensorial, nonlinear, gain, and phase-change cells are left unchanged.</p>
               </div>
-            </details>
-            <details class="panel-section reproducibility-section config-detail-panel" open>
-              <summary>Reproducibility</summary>
+            </section>
+            <section class="panel-section reproducibility-section config-detail-panel" data-carbon-disclosure data-title="Reproducibility" data-initially-open="true">
               <div class="config-detail-body">
                 <div class="button-row">
                   <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
@@ -1705,9 +1586,8 @@
                 <textarea id="shareSceneUrlOutput" class="share-url-output" readonly hidden></textarea>
                 <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
               </div>
-            </details>
-            <details class="panel-section performance-panel config-detail-panel">
-              <summary>Performance</summary>
+            </section>
+            <section class="panel-section performance-panel config-detail-panel" data-carbon-disclosure data-title="Performance">
               <div class="config-detail-body">
                 <div class="performance-grid" aria-label="Performance summary">
                   <div class="diagnostic-metric">
@@ -1788,7 +1668,7 @@
                 </div>
                 <p id="performanceStatus" class="sweep-status">Run or step the simulation to collect timing samples.</p>
               </div>
-            </details>
+            </section>
             </div>
           </div>
         </aside>
@@ -1796,6 +1676,6 @@
       </section>
     </main>
 
-    <script type="module" src="src/main.tsx?v=20260808-instrument-1"></script>
+    <script type="module" src="src/main.tsx?v=20260808-carbon-workbench-2"></script>
   </body>
 </html>

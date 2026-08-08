@@ -54,7 +54,6 @@
     const formatLambda = requireFunction(dependencies.formatLambda, "formatLambda");
     const updateMaterialWarning = requireFunction(dependencies.updateMaterialWarning, "updateMaterialWarning");
     const updateStabilitySummary = requireFunction(dependencies.updateStabilitySummary, "updateStabilitySummary");
-    const updateAllRangeProgress = requireFunction(dependencies.updateAllRangeProgress, "updateAllRangeProgress");
     const updateSweepControls = requireFunction(dependencies.updateSweepControls, "updateSweepControls");
     const updateAnalysisControls = requireFunction(dependencies.updateAnalysisControls, "updateAnalysisControls");
 
@@ -112,7 +111,6 @@
       });
       updateMaterialWarning();
       updateStabilitySummary();
-      updateAllRangeProgress();
       updateSweepControls();
       updateAnalysisControls();
     }

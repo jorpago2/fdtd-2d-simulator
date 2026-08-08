@@ -450,7 +450,7 @@
       el.canvas.addEventListener("pointercancel", handlePointerEnd);
       el.canvas.addEventListener("pointerleave", () => clearCanvasHover());
       documentRef.addEventListener("pointerdown", handleDocumentPointerDown);
-      documentRef.addEventListener("keydown", handleDocumentKeydown);
+      documentRef.addEventListener("keydown", handleDocumentKeydown, true);
     }
 
     return Object.freeze({

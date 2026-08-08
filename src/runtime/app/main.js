@@ -352,14 +352,6 @@ function updateCanvasAspectRatio(nx = state.gridNx, ny = state.gridNy) {
   return layoutController().updateCanvasAspectRatio(nx, ny);
 }
 
-function updateRangeProgress(input) {
-  return layoutController().updateRangeProgress(input);
-}
-
-function updateAllRangeProgress() {
-  return layoutController().updateAllRangeProgress();
-}
-
 function normalizeSceneText(value) {
   return uiScenesModule.normalizeSceneText(value);
 }
@@ -1566,7 +1558,6 @@ controlTextController = controlTextModule.createControlTextController({
   formatLambda,
   updateMaterialWarning,
   updateStabilitySummary,
-  updateAllRangeProgress,
   updateSweepControls,
   updateAnalysisControls,
 });
@@ -2089,9 +2080,7 @@ async function initWasmBackend() {
 appBootstrapModule.runAppBootstrap({
   layoutControlBindingsModule,
   windowRef: window,
-  documentRef: document,
   handleWindowResize,
-  updateRangeProgress,
   applyUiDepth,
   state,
   buildSceneBrowser,

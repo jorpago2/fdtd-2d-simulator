@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite'
 import '../src/styles/carbon.scss'
+import '../src/styles/scientific-workbench.css'
 
 const preview: Preview = {
   parameters: {

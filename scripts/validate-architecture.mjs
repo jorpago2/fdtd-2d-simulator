@@ -68,7 +68,7 @@ function validateActiveAssets(indexHtml) {
   addCheck(
     "active assets avoid retired paths",
     retiredAssetRefs.length === 0,
-    retiredAssetRefs.length ? retiredAssetRefs.join(", ") : "index.html loads src/runtime and src/styles/fdtd-ui.css",
+    retiredAssetRefs.length ? retiredAssetRefs.join(", ") : "index.html loads the typed entry and Carbon workbench styles",
   );
   addCheck(
     "active scripts stay in canonical runtime",
@@ -77,7 +77,7 @@ function validateActiveAssets(indexHtml) {
   );
   addCheck(
     "Carbon foundation and canonical UI stylesheet",
-    stylesheets.length === 2 && stylesheets[0] === "src/styles/carbon.scss" && stylesheets[1] === "src/styles/fdtd-ui.css",
+    stylesheets.length === 2 && stylesheets[0] === "src/styles/carbon.scss" && stylesheets[1] === "src/styles/scientific-workbench.css",
     stylesheets.length ? stylesheets.join(", ") : "no stylesheet linked",
   );
 }
@@ -218,7 +218,7 @@ validateSourceRootShape();
 validateRuntimeDependencyInventory(indexHtml);
 validateRuntimeNamespaceDocumentation();
 validateSimulationDomBoundary();
-validateUiCssBoundary(readText("src/styles/fdtd-ui.css"));
+validateUiCssBoundary(readText("src/styles/scientific-workbench.css"));
 validateCentralFileBudget();
 
 if (process.argv.includes("--json")) {

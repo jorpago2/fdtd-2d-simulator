@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cssFiles = [
-  "src/styles/fdtd-ui.css",
+  "src/styles/scientific-workbench.css",
 ];
 const cssFileRoles = {
-  "src/styles/fdtd-ui.css": "canonical",
+  "src/styles/scientific-workbench.css": "canonical",
 };
 const jsFiles = [
   "src/runtime/app/main.js",

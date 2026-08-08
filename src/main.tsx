@@ -22,10 +22,24 @@ import {
   WorkflowNavigation,
 } from "./ui/carbon-shell";
 import { VisualFieldControls, VisualOverlayControls } from "./ui/visual-controls";
+import { installCarbonSceneBrowser } from "./ui/scene-browser";
+import {
+  installCarbonDisclosureUpgrade,
+  upgradeCarbonDisclosures,
+} from "./ui/carbon-disclosure-upgrade";
+import {
+  installScientificSliderControls,
+  ScientificSliderRoot,
+  scientificSliderDefinitions,
+} from "./ui/scientific-sliders";
 
 declare const __FDTD_BUILD_VERSION__: string;
 
 (globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
+installCarbonSceneBrowser();
+installCarbonDisclosureUpgrade();
+installScientificSliderControls();
+upgradeCarbonDisclosures();
 
 function requiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -58,6 +72,9 @@ flushSync(() => {
   createRoot(requiredElement("reactFooterRoot")).render(<StatusFooter />);
   createRoot(requiredElement("reactVisualFieldRoot")).render(<VisualFieldControls />);
   createRoot(requiredElement("reactVisualOverlaysRoot")).render(<VisualOverlayControls />);
+  scientificSliderDefinitions().forEach((definition) => {
+    createRoot(requiredElement(definition.mountId)).render(<ScientificSliderRoot definition={definition} />);
+  });
 });
 
 const bridgedButtons = prepareCarbonButtonBridge();

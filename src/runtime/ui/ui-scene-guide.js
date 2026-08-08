@@ -1345,10 +1345,10 @@
     }
 
     function appendSceneGuideReferences(parent, references) {
-      const details = documentRef.createElement("details");
+      const details = documentRef.createElement("section");
       details.className = "scene-guide-details";
-      const summary = documentRef.createElement("summary");
-      summary.textContent = "References";
+      details.dataset.carbonDisclosure = "";
+      details.dataset.title = "References";
       const body = documentRef.createElement("div");
       body.className = "scene-guide-reference-grid";
       [
@@ -1357,7 +1357,7 @@
         ["Reviews", references.reviews],
         ["Recent papers", references.recent],
       ].forEach(([label, items]) => appendSceneGuideList(body, label, items));
-      details.append(summary, body);
+      details.append(body);
       parent.appendChild(details);
     }
 
@@ -1371,10 +1371,10 @@
       appendSceneGuideField(grid, "FDTD simulation", guide.fdtd);
       appendSceneGuideField(grid, "Expected results", guide.expected);
 
-      const modelDetails = documentRef.createElement("details");
+      const modelDetails = documentRef.createElement("section");
       modelDetails.className = "scene-guide-details";
-      const modelSummary = documentRef.createElement("summary");
-      modelSummary.textContent = "Model details";
+      modelDetails.dataset.carbonDisclosure = "";
+      modelDetails.dataset.title = "Model details";
       const modelBody = documentRef.createElement("div");
       modelBody.className = "scene-guide-grid";
       appendSceneGuideField(modelBody, "Description", guide.description);
@@ -1382,21 +1382,22 @@
       appendSceneGuideField(modelBody, "Source", guide.source);
       appendSceneGuideField(modelBody, "Materials", guide.materials);
       appendSceneGuideField(modelBody, "Explanation", guide.explanation);
-      modelDetails.append(modelSummary, modelBody);
+      modelDetails.append(modelBody);
 
-      const details = documentRef.createElement("details");
+      const details = documentRef.createElement("section");
       details.className = "scene-guide-details";
-      const detailsSummary = documentRef.createElement("summary");
-      detailsSummary.textContent = "More context";
+      details.dataset.carbonDisclosure = "";
+      details.dataset.title = "More context";
       const detailsBody = documentRef.createElement("div");
       detailsBody.className = "scene-guide-grid";
       appendSceneGuideList(detailsBody, "Common mistakes", guide.errors);
       appendSceneGuideField(detailsBody, "What it enables", guide.enabled);
       appendSceneGuideField(detailsBody, "Related experiments", guide.experiments);
-      details.append(detailsSummary, detailsBody);
+      details.append(detailsBody);
 
       panel.append(grid, modelDetails, details);
       appendSceneGuideReferences(panel, guide.references);
+      global.FdtdCarbonUI?.upgradeDisclosures?.(panel);
     }
 
     return { render };

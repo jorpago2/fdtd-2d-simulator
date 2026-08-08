@@ -6,6 +6,8 @@ type BridgedButton = {
   attributes: ButtonHTMLAttributes<HTMLButtonElement> & Record<string, string | boolean>;
   className: string;
   html: string;
+  iconDescription?: string;
+  iconOnly: boolean;
   key: string;
   kind: "danger--tertiary" | "primary" | "ghost";
   mount: HTMLElement;
@@ -37,7 +39,7 @@ type BridgedFormControl = {
 
 function keepCustom(button: HTMLButtonElement) {
   return Boolean(button.closest(
-    "[data-carbon-react-root], [data-react-ui], template, .scene-card",
+    "[data-carbon-react-root], [data-react-ui], template, .cds--accordion",
   ));
 }
 
@@ -121,12 +123,14 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
 
   return buttons.map((button, index): BridgedButton => {
     const mount = documentRef.createElement("span");
-    mount.className = "carbon-button-mount";
+    mount.className = `carbon-button-mount${button.classList.contains("help-guide-toggle") ? " help-guide-toggle-mount" : ""}`;
     button.replaceWith(mount);
     return {
       attributes: collectAttributes(button),
       className: button.className,
       html: button.innerHTML,
+      iconDescription: button.getAttribute("aria-label") || button.title || undefined,
+      iconOnly: button.classList.contains("icon-button") || button.classList.contains("help-guide-toggle"),
       key: button.id || `carbon-button-${index}`,
       kind: buttonKind(button),
       mount,
@@ -135,12 +139,14 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
 }
 
 export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
-  return buttons.map(({ attributes, className, html, key, kind, mount }) => createPortal(
+  return buttons.map(({ attributes, className, html, iconDescription, iconOnly, key, kind, mount }) => createPortal(
     <Button
       {...attributes}
       className={className}
       kind={kind}
       size="sm"
+      hasIconOnly={iconOnly}
+      iconDescription={iconOnly ? iconDescription : undefined}
       data-carbon-react="true"
     >
       <span className="carbon-button-content" dangerouslySetInnerHTML={{ __html: html }} />

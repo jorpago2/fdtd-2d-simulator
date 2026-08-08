@@ -143,30 +143,29 @@
       el.frequencyOutput.value = sourceWavelengthLambda.toFixed(2);
       el.amplitudeInput.value = String(Math.round(normalized.amplitude * 100));
       el.amplitudeOutput.value = normalized.amplitude.toFixed(2);
-      el.sourceAmplitudeLabel.innerHTML = sourceAmplitudeLabelHtml(normalized.shape);
+      global.FdtdScientificControls?.setLabel?.("amplitudeInput", sourceAmplitudeLabelHtml(normalized.shape));
       el.sourceXInput.min = formatLambda(minSourceXLambda());
       el.sourceYInput.min = formatLambda(minSourceYLambda());
       el.sourceXInput.max = formatLambda(maxSourceXLambda());
       el.sourceYInput.max = formatLambda(maxSourceYLambda());
       el.sourceXInput.value = formatLambda(normalized.xLambda);
       el.sourceYInput.value = formatLambda(normalized.yLambda);
-      const widthLabel = el.sourceWidthControl?.querySelector("span");
       if (normalized.shape === "evanescentLine") {
-        if (widthLabel) widthLabel.innerHTML = `<i>k</i><sub>&parallel;</sub>/<i>k</i><sub>0</sub>`;
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `<i>k</i><sub>&parallel;</sub>/<i>k</i><sub>0</sub>`);
         el.sourceWidthInput.min = "1.01";
         el.sourceWidthInput.max = "2.50";
         el.sourceWidthInput.step = "0.01";
         el.sourceWidthInput.value = normalized.widthLambda.toFixed(2);
         el.sourceWidthOutput.value = normalized.widthLambda.toFixed(2);
       } else if (normalized.shape === "modeProfile") {
-        if (widthLabel) widthLabel.innerHTML = `mode window / &lambda;<sub>0</sub>`;
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `mode window / &lambda;<sub>0</sub>`);
         el.sourceWidthInput.min = "0.25";
         el.sourceWidthInput.max = "3.00";
         el.sourceWidthInput.step = "0.05";
         el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
         el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
       } else {
-        if (widthLabel) widthLabel.innerHTML = `FWHM / &lambda;<sub>0</sub>`;
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `FWHM / &lambda;<sub>0</sub>`);
         el.sourceWidthInput.min = "0.05";
         el.sourceWidthInput.max = "1.50";
         el.sourceWidthInput.step = "0.05";
@@ -175,8 +174,7 @@
       }
       el.sourceAngleInput.value = String(Math.round(normalized.angleDeg));
       el.sourceAngleOutput.value = `${Math.round(normalized.angleDeg)}°`;
-      const angleLabel = el.sourceAngleControl?.querySelector("span");
-      if (angleLabel) angleLabel.innerHTML = sourceAngleLabelHtml(normalized.shape);
+      global.FdtdScientificControls?.setLabel?.("sourceAngleInput", sourceAngleLabelHtml(normalized.shape));
       if (el.sourceTimePhaseInput) {
         el.sourceTimePhaseInput.value = String(Math.round(normalized.phaseDeg));
       }
@@ -185,8 +183,12 @@
       }
       el.sourceOrderInput.value = String(normalized.multipoleOrder);
       el.sourcePhaseInput.value = normalized.multipolePhase;
-      syncDependentControl(el.sourceWidthControl, sourceUsesWidth(normalized.shape));
-      syncDependentControl(el.sourceAngleControl, sourceUsesAngle(normalized.shape));
+      const widthEnabled = sourceUsesWidth(normalized.shape);
+      const angleEnabled = sourceUsesAngle(normalized.shape);
+      syncDependentControl(el.sourceWidthControl, widthEnabled);
+      syncDependentControl(el.sourceAngleControl, angleEnabled);
+      el.sourceWidthInput.disabled = !widthEnabled;
+      el.sourceAngleInput.disabled = !angleEnabled;
       syncDependentControl(el.sourceOrderControl, sourceUsesMultipoleControls(normalized.shape));
       syncDependentControl(el.sourcePhaseControl, sourceUsesMultipoleControls(normalized.shape));
       syncChildControlGroupVisibility(el.sourceOrderControl?.closest(".source-order-controls"));

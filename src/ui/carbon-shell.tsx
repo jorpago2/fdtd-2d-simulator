@@ -5,11 +5,19 @@ import {
   Header,
   HeaderGlobalBar,
   Link,
+  OverflowMenu,
+  OverflowMenuItem,
   Search,
   Switch,
   Theme,
 } from "@carbon/react";
-import { Chemistry, Grid as GridIcon, Inspection, SettingsAdjust } from "@carbon/react/icons";
+import {
+  Chemistry,
+  Grid as GridIcon,
+  Inspection,
+  Reset,
+  SettingsAdjust,
+} from "@carbon/react/icons";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
@@ -119,30 +127,28 @@ export function CanvasPrimaryControls() {
           iconDescription="Reset field"
           data-carbon-react="true"
         >
-          <span aria-hidden="true">↻</span>
+          <Reset size={16} aria-hidden={true} />
         </Button>
-        <Button
+        <OverflowMenu
           id="canvasActionToggle"
           className="icon-button canvas-action-toggle"
-          type="button"
-          kind="ghost"
           size="sm"
-          hasIconOnly
           iconDescription="More simulation actions"
-          aria-controls="canvasActionMenu"
-          aria-expanded="false"
+          menuOptionsClass="canvas-action-menu"
+          flipped
           data-carbon-react="true"
         >
-          <span aria-hidden="true">⋮</span>
-        </Button>
-        <div id="canvasActionMenu" className="canvas-action-menu" aria-label="Simulation actions">
-          <Button id="stepBtn" className="icon-button" type="button" kind="ghost" size="sm" data-carbon-react="true">
-            <span aria-hidden="true">⏭</span><span className="canvas-action-label">Step</span>
-          </Button>
-          <Button id="saveBtn" className="icon-button" type="button" kind="ghost" size="sm" data-carbon-react="true">
-            <span aria-hidden="true">⇩</span><span className="canvas-action-label">PNG</span>
-          </Button>
-        </div>
+          <OverflowMenuItem
+            id="stepBtn"
+            itemText="Advance one step"
+            onClick={() => window.dispatchEvent(new Event("fdtd:simulation-step"))}
+          />
+          <OverflowMenuItem
+            id="saveBtn"
+            itemText="Save canvas as PNG"
+            onClick={() => window.dispatchEvent(new Event("fdtd:save-png"))}
+          />
+        </OverflowMenu>
       </div>
       <ContentSwitcher
         className="interaction-toggle"
