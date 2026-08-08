@@ -6562,6 +6562,43 @@ async function runReactBootstrapSmoke(page) {
   };
 }
 
+async function runCarbonTypographySmoke(page) {
+  const status = await page.evaluate(async () => {
+    await document.fonts?.ready;
+    const samples = ["body", "button", "input", "select", ".brand-heading", ".colorbar-title"]
+      .map((selector) => {
+        const element = document.querySelector(selector);
+        return { selector, family: element ? getComputedStyle(element).fontFamily : "" };
+      });
+    const monoFamilies = [".colorbar-labels", ".status-strip"].map((selector) => ({
+      selector,
+      family: getComputedStyle(document.querySelector(selector)).fontFamily,
+    }));
+    return {
+      samples,
+      monoFamilies,
+      sansLoaded: document.fonts?.check?.('16px "IBM Plex Sans"') ?? true,
+      monoLoaded: document.fonts?.check?.('12px "IBM Plex Mono"') ?? true,
+    };
+  });
+  const failures = [];
+  for (const sample of status.samples) {
+    if (!sample.family.includes("IBM Plex Sans")) failures.push(`${sample.selector} uses ${sample.family || "no font"}`);
+  }
+  for (const sample of status.monoFamilies) {
+    if (!sample.family.includes("IBM Plex Mono")) failures.push(`${sample.selector} uses ${sample.family || "no font"}`);
+  }
+  if (!status.sansLoaded || !status.monoLoaded) failures.push("IBM Plex webfonts are not loaded");
+  return {
+    id: "carbon_typography",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runCanvasActionMenuSmoke(page) {
   await page.locator("#canvasActionToggle").click();
   await page.waitForTimeout(50);
@@ -6585,6 +6622,44 @@ async function runCanvasActionMenuSmoke(page) {
   if (status.itemCount !== 2) failures.push(`canvas action menu exposed ${status.itemCount} items instead of 2`);
   return {
     id: "canvas_action_menu_toggle",
+    preset: "current",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runCanvasPngExportSmoke(page) {
+  if (await page.locator("#canvasActionToggle").getAttribute("aria-expanded") !== "true") {
+    await page.locator("#canvasActionToggle").click();
+  }
+  const expected = await page.evaluate(() => ({ width: sim.canvas.width, height: sim.canvas.height }));
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("menuitem", { name: "Save canvas as PNG" }).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const png = Buffer.concat(chunks);
+  const signature = png.subarray(0, 8).toString("hex");
+  const status = {
+    fileName: download.suggestedFilename(),
+    bytes: png.length,
+    signature,
+    width: png.length >= 24 ? png.readUInt32BE(16) : 0,
+    height: png.length >= 24 ? png.readUInt32BE(20) : 0,
+    expected,
+  };
+  const failures = [];
+  if (status.signature !== "89504e470d0a1a0a") failures.push("canvas export is not a valid PNG stream");
+  if (!status.fileName.toLowerCase().endsWith(".png")) failures.push(`canvas export filename is ${status.fileName}`);
+  if (status.width !== expected.width || status.height !== expected.height) {
+    failures.push(`canvas export dimensions ${status.width}x${status.height} do not match ${expected.width}x${expected.height}`);
+  }
+  if (status.bytes < 2048) failures.push(`canvas export is unexpectedly small (${status.bytes} bytes)`);
+  return {
+    id: "canvas_png_export",
     preset: "current",
     priority: "P1",
     ...status,
@@ -7112,6 +7187,7 @@ async function runPoyntingComponentVisibilitySmoke(page) {
       scalarSelected: scalarButton?.classList.contains("is-active") || false,
       poyntingSelected: poyntingButton?.classList.contains("is-active") || false,
       colorbarTitle: document.getElementById("colorbarTitle")?.textContent.trim() || "",
+      quiverLabel: document.querySelector("[data-field-quiver-label]")?.textContent.trim() || "",
     };
     fieldButton?.click();
     const afterField = {
@@ -7133,6 +7209,7 @@ async function runPoyntingComponentVisibilitySmoke(page) {
   if (!status.afterPoynting.scalarSelected) failures.push("Poynting quantity did not reset the hidden field display to scalar");
   if (!status.afterPoynting.poyntingSelected) failures.push("Poynting quantity button is not selected");
   if (!/S/.test(status.afterPoynting.colorbarTitle || "")) failures.push("Poynting colorbar title does not report S");
+  if (status.afterPoynting.quiverLabel !== "S quiver") failures.push("Poynting vector control is not labeled S quiver");
   if (status.afterField.componentRowHidden) failures.push("field component row did not reappear after returning to field quantity");
   if (!status.afterField.fieldSelected) failures.push("field quantity button is not selected after returning to field mode");
   return {
@@ -8000,24 +8077,40 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.locator("#controlDrawerCloseBtn").click();
     await page.waitForTimeout(250);
     const reclosed = await readLayout();
+    await page.locator('.mobile-layer-button[data-mobile-layer="simulation"]').click();
+    await page.locator('#tab-simulation [data-view-projection="3d"]').click();
+    await page.waitForFunction(() => window.FdtdCanvasSurfaceThreeRenderer?.status?.().frames > 0);
+    await page.locator("#controlDrawerCloseBtn").click();
+    await page.waitForTimeout(250);
     const threeDControls = await page.evaluate(() => {
       const orbit = document.querySelector(".surface-orbit-controls");
       const help = document.querySelector(".help-guide-toggle-mount");
-      if (!orbit || !help) return { available: false, overlap: 0 };
-      const wasHidden = orbit.hidden;
-      orbit.hidden = false;
+      const colorbar = document.querySelector(".colorbar");
+      const surface = document.querySelector("#surfaceCanvas");
+      if (!orbit || !help || !colorbar || !surface) return { available: false, overlap: 0 };
       const orbitRect = orbit.getBoundingClientRect();
       const helpRect = help.getBoundingClientRect();
-      const overlapWidth = Math.max(0, Math.min(orbitRect.right, helpRect.right) - Math.max(orbitRect.left, helpRect.left));
-      const overlapHeight = Math.max(0, Math.min(orbitRect.bottom, helpRect.bottom) - Math.max(orbitRect.top, helpRect.top));
-      orbit.hidden = wasHidden;
+      const colorbarRect = colorbar.getBoundingClientRect();
+      const intersectionArea = (a, b) =>
+        Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+        Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
       return {
         available: true,
-        overlap: overlapWidth * overlapHeight,
+        overlap: intersectionArea(orbitRect, helpRect),
+        colorbarOverlap: intersectionArea(orbitRect, colorbarRect),
+        surfaceSize: `${surface.width}x${surface.height}`,
+        renderer: window.FdtdCanvasSurfaceThreeRenderer?.status?.() || null,
         orbit: { left: orbitRect.left, right: orbitRect.right, top: orbitRect.top, bottom: orbitRect.bottom },
         help: { left: helpRect.left, right: helpRect.right, top: helpRect.top, bottom: helpRect.bottom },
+        colorbar: { left: colorbarRect.left, right: colorbarRect.right, top: colorbarRect.top, bottom: colorbarRect.bottom },
       };
     });
+    await page.locator("#helpGuideToggle").click();
+    const threeDGuide = await page.evaluate(() => ({
+      open: !document.getElementById("helpGuidePanel")?.hidden,
+      orbitVisibility: getComputedStyle(document.querySelector(".surface-orbit-controls")).visibility,
+    }));
+    await page.locator("#helpGuideCloseBtn").click();
 
     const failures = [...localErrors];
     if (!closed.panelHidden || closed.panel?.top < closed.viewport.height - 1) {
@@ -8039,6 +8132,15 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     if (!threeDControls.available || threeDControls.overlap > 1) {
       failures.push("3D orbit controls overlap the help action in compact landscape");
     }
+    if (threeDControls.colorbarOverlap > 1) failures.push("3D orbit controls overlap the colorbar in compact landscape");
+    if (threeDControls.renderer?.lastDrawingBuffer !== threeDControls.surfaceSize) {
+      failures.push(
+        `3D drawing buffer ${threeDControls.renderer?.lastDrawingBuffer || "unavailable"} does not match surface ${threeDControls.surfaceSize}`,
+      );
+    }
+    if (!threeDGuide.open || threeDGuide.orbitVisibility !== "hidden") {
+      failures.push("3D orbit controls remain visible behind the compact help guide");
+    }
 
     return {
       id: "compact_landscape_layout",
@@ -8048,6 +8150,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       open,
       reclosed,
       threeDControls,
+      threeDGuide,
       passed: failures.length === 0,
       failures,
     };
@@ -8179,6 +8282,116 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
       priority: "P1",
       ...status,
       classClosed,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runContextEditorResponsiveSmoke(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 1024, height: 640 } });
+  const page = await context.newPage();
+  const failures = [];
+
+  const openMonitorEditor = async () => {
+    const canvas = page.locator("#simCanvas");
+    const bounds = await canvas.boundingBox();
+    if (!bounds) throw new Error("simulation canvas is not visible");
+    await canvas.click({
+      button: "right",
+      position: { x: Math.round(bounds.width * 0.48), y: Math.round(bounds.height * 0.42) },
+    });
+    await page.waitForTimeout(80);
+    const choice = await page.evaluate(() => {
+      const menu = document.getElementById("canvasContextMenu");
+      const rect = menu?.getBoundingClientRect();
+      const active = document.activeElement;
+      return {
+        hidden: Boolean(menu?.hidden),
+        height: rect?.height || 0,
+        activeText: active?.textContent?.trim() || "",
+        activeIsClose: active?.id === "canvasContextCloseBtn",
+        documentOverflowX: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    await page.locator('#canvasContextMenu [data-canvas-add="monitor"]').click();
+    await page.waitForTimeout(120);
+    return choice;
+  };
+
+  try {
+    await openApplication(page, url);
+    await selectPreset(page, "empty");
+    const desktopChoice = await openMonitorEditor();
+    const desktop = await page.evaluate(() => {
+      const menu = document.getElementById("monitorMenu");
+      const rect = menu.getBoundingClientRect();
+      const frame = document.querySelector(".canvas-frame").getBoundingClientRect();
+      const header = document.querySelector(".topbar").getBoundingClientRect();
+      const body = menu.querySelector(".source-menu-body");
+      return {
+        position: getComputedStyle(menu).position,
+        contextual: menu.dataset.contextualInspector || "",
+        activeId: document.activeElement?.id || "",
+        bodyOverflowX: body.scrollWidth - body.clientWidth,
+        contained:
+          rect.left >= frame.left - 1 &&
+          rect.right <= frame.right + 1 &&
+          rect.top >= frame.top - 1 &&
+          rect.bottom <= frame.bottom + 1,
+        belowHeader: rect.top >= header.bottom - 1,
+      };
+    });
+
+    await page.keyboard.press("Escape");
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.waitForTimeout(220);
+    const mobileChoice = await openMonitorEditor();
+    const mobile = await page.evaluate(() => {
+      const menu = document.getElementById("monitorMenu");
+      const rect = menu.getBoundingClientRect();
+      const body = menu.querySelector(".source-menu-body");
+      const actions = menu.querySelector(".source-menu-actions").getBoundingClientRect();
+      const header = document.querySelector(".topbar").getBoundingClientRect();
+      const nav = document.querySelector(".mobile-layer-nav").getBoundingClientRect();
+      return {
+        position: getComputedStyle(menu).position,
+        contextual: menu.dataset.contextualInspector || "",
+        activeId: document.activeElement?.id || "",
+        bodyOverflowX: body.scrollWidth - body.clientWidth,
+        menuOverflowX: menu.scrollWidth - menu.clientWidth,
+        documentOverflowX: document.documentElement.scrollWidth - window.innerWidth,
+        aligned: Math.abs(rect.top - header.bottom) <= 1 && Math.abs(rect.bottom - nav.top) <= 1,
+        actionsVisible: actions.top >= rect.top && actions.bottom <= rect.bottom + 1,
+        fullWidth: rect.left <= 1 && rect.right >= window.innerWidth - 1,
+      };
+    });
+
+    if (desktopChoice.hidden || desktopChoice.height > 180) failures.push("desktop add-element menu is not compact");
+    if (desktopChoice.activeIsClose || desktopChoice.activeText !== "Source") failures.push("add-element menu focuses its close action instead of the first choice");
+    if (desktopChoice.documentOverflowX > 1) failures.push("desktop add-element menu causes horizontal document overflow");
+    if (desktop.position !== "absolute" || desktop.contextual) failures.push("mid-width monitor editor is not canvas-relative");
+    if (!desktop.contained || !desktop.belowHeader) failures.push("mid-width monitor editor escapes the scientific canvas frame");
+    if (desktop.activeId !== "monitorQuantityInput") failures.push("monitor editor does not focus its first field");
+    if (desktop.bodyOverflowX > 1) failures.push("mid-width monitor editor body overflows horizontally");
+    if (mobileChoice.activeIsClose || mobileChoice.activeText !== "Source") failures.push("mobile add-element menu focuses its close action");
+    if (mobile.position !== "fixed" || mobile.contextual !== "true") failures.push("mobile monitor editor is not a contextual sheet");
+    if (!mobile.aligned || !mobile.fullWidth || !mobile.actionsVisible) failures.push("mobile monitor sheet is clipped or misaligned");
+    if (mobile.activeId !== "monitorQuantityInput") failures.push("mobile monitor editor does not focus its first field");
+    if (mobile.bodyOverflowX > 1 || mobile.menuOverflowX > 1 || mobile.documentOverflowX > 1) {
+      failures.push("320px monitor editor overflows horizontally");
+    }
+
+    return {
+      id: "context_editor_responsive",
+      preset: "empty",
+      priority: "P1",
+      desktopChoice,
+      desktop,
+      mobileChoice,
+      mobile,
       passed: failures.length === 0,
       failures,
     };
@@ -8391,6 +8604,19 @@ async function runSourceThemeContrastSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(() => {
     const colorDistance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const parseRgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const relativeLuminance = (rgb) => {
+      const channels = rgb.map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+    };
+    const contrastRatio = (foreground, background) => {
+      const a = relativeLuminance(parseRgb(foreground));
+      const b = relativeLuminance(parseRgb(background));
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    };
     const sampleTheme = (theme) => {
       state.theme = theme;
       document.documentElement.dataset.theme = theme;
@@ -8405,6 +8631,7 @@ async function runSourceThemeContrastSmoke(page) {
       const x = Math.round(sim.gridToCanvasX(sim.sourceXCell(source) + 0.5));
       const y = Math.round(viewport.top + viewport.height * 0.24);
       const ctx = sim.canvas.getContext("2d", { willReadFrequently: true });
+      const colorbarStyle = getComputedStyle(document.querySelector(".colorbar"));
       const pixel = (px, py) => Array.from(ctx.getImageData(px, py, 1, 1).data.slice(0, 3));
       const background = pixel(Math.round(x + 12 * dpr), y);
       let contrast = 0;
@@ -8417,6 +8644,7 @@ async function runSourceThemeContrastSmoke(page) {
         contrast,
         background,
         marker: pixel(x, y),
+        colorbarContrast: contrastRatio(colorbarStyle.color, colorbarStyle.backgroundColor),
       };
     };
 
@@ -8443,6 +8671,12 @@ async function runSourceThemeContrastSmoke(page) {
   }
   if (Number(status.dark.contrast) < 80) {
     failures.push(`dark-theme source contrast is too low (${Number(status.dark.contrast).toFixed(1)})`);
+  }
+  if (Number(status.light.colorbarContrast) < 4.5) {
+    failures.push(`light-theme colorbar contrast is too low (${Number(status.light.colorbarContrast).toFixed(2)})`);
+  }
+  if (Number(status.dark.colorbarContrast) < 4.5) {
+    failures.push(`dark-theme colorbar contrast is too low (${Number(status.dark.colorbarContrast).toFixed(2)})`);
   }
   if (!status.palette?.accent || !status.palette?.contrast || !status.palette?.outer) {
     failures.push("source overlay palette is incomplete");
@@ -9181,9 +9415,11 @@ async function main() {
     }
     if (mode === "smoke") {
       await recordCase("react_carbon_bootstrap", () => runReactBootstrapSmoke(page));
+      await recordCase("carbon_typography", () => runCarbonTypographySmoke(page));
       await recordCase("scene_observables_panel", () => runSceneObservablesSmoke(browser, url));
       await recordCase("scene_state_round_trip", () => runReproducibilitySmoke(page));
       await recordCase("canvas_action_menu", () => runCanvasActionMenuSmoke(page));
+      await recordCase("canvas_png_export", () => runCanvasPngExportSmoke(page));
       await recordCase("help_guide", () => runHelpGuideSmoke(page));
       await recordCase("help_guide_responsive_layout", () => runHelpGuideResponsiveSmoke(browser, url));
       await recordCase("guided_walkthrough_responsive", () => runWalkthroughSmoke(browser, url));
@@ -9199,6 +9435,7 @@ async function main() {
       await recordCase("compact_landscape_layout", () => runCompactLandscapeLayoutSmoke(browser, url));
       await recordCase("touch_long_press", () => runTouchLongPressSmoke(browser, url));
       await recordCase("contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url));
+      await recordCase("context_editor_responsive", () => runContextEditorResponsiveSmoke(browser, url));
       await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
       await recordCase("draw_preview", () => runDrawPreviewSmoke(page));
       await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));

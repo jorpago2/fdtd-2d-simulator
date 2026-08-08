@@ -44,7 +44,7 @@ export function VisualFieldControls() {
 
 const overlayLayers = [
   ["boundaries", "CPML/bounds", "Show CPML and reflective boundary overlays", true],
-  ["monitors", "line monitors", "Show fixed L/R line-monitor markers", false],
+  ["monitors", "monitor markers", "Show diagnostic and custom monitor markers", false],
   ["axes", "axes", "Show x and y axis glyph", true],
   ["scale", "scale", "Show wavelength scale bar", true],
   ["sources", "sources", "Show source markers", true],

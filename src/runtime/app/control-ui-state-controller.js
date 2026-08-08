@@ -139,6 +139,12 @@
       el.fieldQuiverInputs?.forEach?.((input) => {
         input.checked = Boolean(state.fieldQuiver);
       });
+      const quiverSymbol = state.viewMode === "poynting" ? "S" : state.fieldComponent === "hz" ? "E" : "H";
+      el.fieldQuiverLabels?.forEach?.((label) => {
+        const symbol = global.document.createElement("i");
+        symbol.textContent = quiverSymbol;
+        label.replaceChildren(symbol, global.document.createTextNode(" quiver"));
+      });
       const quiverAvailable =
         state.viewProjection === "2d" && (state.viewMode === "field" || state.viewMode === "poynting");
       el.fieldQuiverControls?.forEach?.((control) => {

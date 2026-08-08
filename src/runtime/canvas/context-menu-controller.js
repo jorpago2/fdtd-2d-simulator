@@ -80,7 +80,8 @@
       ].join(",");
       const schedule = global.requestAnimationFrame || ((callback) => global.setTimeout(callback, 0));
       schedule(() => {
-        const target = menu.querySelector(selector);
+        const content = menu.querySelector(".source-menu-body, .context-choice-grid");
+        const target = content?.querySelector(selector) || menu.querySelector(selector);
         target?.focus?.({ preventScroll: true });
       });
     }

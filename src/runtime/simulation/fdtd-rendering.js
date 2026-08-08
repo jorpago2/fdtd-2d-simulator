@@ -796,13 +796,16 @@ drawFieldQuiverOverlay() {
     const y1 = cy + uy * length * 0.65;
     const head = Math.max(3.8 * dpr, length * 0.28);
     const angle = Math.atan2(y1 - y0, x1 - x0);
-    const alpha = 0.26 + 0.52 * normalized;
+    const alpha = 0.48 + 0.5 * Math.sqrt(normalized);
 
-    ctx.lineWidth = Math.max(3.2 * dpr, 3);
-    ctx.strokeStyle = `rgba(255, 255, 255, ${0.38 * alpha})`;
+    ctx.lineWidth = Math.max(4.6 * dpr, 4);
+    ctx.strokeStyle = `rgba(5, 11, 15, ${0.92 * alpha})`;
+    this.strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head);
+    ctx.lineWidth = Math.max(2.8 * dpr, 2.4);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.94 * alpha})`;
     this.strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head);
     ctx.lineWidth = Math.max(1.25 * dpr, 1);
-    ctx.strokeStyle = `rgba(5, 13, 18, ${alpha})`;
+    ctx.strokeStyle = `rgba(69, 192, 201, ${alpha})`;
     this.strokeQuiverArrow(ctx, x0, y0, x1, y1, angle, head);
   }
   ctx.restore();

@@ -17,6 +17,7 @@
     frames: 0,
     reusedFrames: 0,
     lastGrid: "",
+    lastDrawingBuffer: "",
     lastError: "",
   };
 
@@ -162,6 +163,8 @@
       this.shapeKey = "";
       this.lastFrameKey = "";
       this.runningReuseCounter = 0;
+      this.renderWidth = 0;
+      this.renderHeight = 0;
     }
 
     startLoading(sim) {
@@ -196,6 +199,8 @@
         this.positions = null;
         this.colors = null;
         this.shapeKey = "";
+        this.renderWidth = 0;
+        this.renderHeight = 0;
       }
       this.canvas = nextCanvas;
       return this.canvas;
@@ -268,8 +273,10 @@
 
       const renderWidth = Math.max(1, Math.floor(width));
       const renderHeight = Math.max(1, Math.floor(height));
-      if (this.canvas.width !== renderWidth || this.canvas.height !== renderHeight) {
+      if (this.renderWidth !== renderWidth || this.renderHeight !== renderHeight) {
         this.renderer.setSize(renderWidth, renderHeight, false);
+        this.renderWidth = renderWidth;
+        this.renderHeight = renderHeight;
       }
 
       const aspect = renderWidth / Math.max(1, renderHeight);
@@ -368,8 +375,10 @@
       if (!renderingToDisplayCanvas) {
         sim.ctx.drawImage(this.canvas, 0, 0, width, height);
       }
+      const drawingBuffer = this.renderer.getDrawingBufferSize(new this.THREE.Vector2());
       rendererStats.frames += 1;
       rendererStats.lastGrid = `${cols}x${rows}`;
+      rendererStats.lastDrawingBuffer = `${Math.round(drawingBuffer.x)}x${Math.round(drawingBuffer.y)}`;
       this.lastFrameKey = this.frameKey(sim);
       this.runningReuseCounter = 0;
       return true;

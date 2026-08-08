@@ -1,8 +1,6 @@
 (function initFdtdCanvasMaterialOverlays() {
   "use strict";
 
-  const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
-
   Object.assign(FDTDSim.prototype, {
     drawMaterialSelectionOverlay() {
       const selectedRegion = materialSelection?.region;
@@ -28,12 +26,8 @@
       ctx.strokeStyle = isMoving ? "rgba(255, 238, 198, 0.72)" : "rgba(255, 255, 255, 0.58)";
       ctx.lineWidth = Math.max(1 * dpr, 1);
       ctx.strokeRect(rect.left + 3 * dpr, rect.top + 3 * dpr, Math.max(0, rect.width - 6 * dpr), Math.max(0, rect.height - 6 * dpr));
-      ctx.fillStyle = isMoving ? "rgba(95, 52, 6, 0.9)" : "rgba(0, 52, 58, 0.86)";
-      ctx.font = `${this.overlayTextFontPx()}px ${CARBON_SANS_FONT}`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
       const label = isMoving ? `moving \u00b7 ${selectedRegion.cells.length} cells` : `${selectedRegion.cells.length} cells`;
-      ctx.fillText(label, rect.left + 6 * dpr, Math.max(14 * dpr, rect.top - 5 * dpr));
+      this.drawOverlayLabel(label, rect.left + 6 * dpr, Math.max(14 * dpr, rect.top - 5 * dpr), "left");
       ctx.restore();
     },
 
@@ -57,11 +51,7 @@
       ctx.strokeStyle = "rgba(69, 192, 201, 0.78)";
       ctx.lineWidth = Math.max(1.25 * dpr, 1);
       ctx.strokeRect(rect.left, rect.top, rect.width, rect.height);
-      ctx.fillStyle = "rgba(11, 31, 36, 0.84)";
-      ctx.font = `${this.overlayTextFontPx(0.95)}px ${CARBON_SANS_FONT}`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      ctx.fillText("material", rect.left + 6 * dpr, Math.max(13 * dpr, rect.top - 4 * dpr));
+      this.drawOverlayLabel("material", rect.left + 6 * dpr, Math.max(13 * dpr, rect.top - 4 * dpr), "left");
       ctx.restore();
     },
   });

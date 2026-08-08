@@ -449,7 +449,7 @@ fieldset {
   gap: 0.5rem;
   min-width: 5.5rem;
   padding: 0.75rem;
-  color: var(--cds-text-on-color);
+  color: var(--cds-text-inverse);
   background: var(--cds-background-inverse);
 }
 
@@ -468,7 +468,7 @@ fieldset {
 }
 
 .colorbar-gradient {
-  border: 1px solid rgb(255 255 255 / 0.35);
+  border: 1px solid var(--cds-border-strong-01);
   background: linear-gradient(to bottom, #b40426, #f7f7f7 50%, #3b4cc0);
 }
 
@@ -1067,7 +1067,6 @@ fieldset {
 .source-menu,
 .help-guide-panel,
 .walkthrough-panel {
-  position: fixed;
   z-index: 700;
   display: grid;
   min-width: 0;
@@ -1079,9 +1078,15 @@ fieldset {
 }
 
 .source-menu {
-  inset: var(--workbench-header-height) 1rem 0 auto;
+  position: absolute;
+  inset: auto;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(var(--workbench-inspector-width), calc(100vw - var(--workbench-rail-width)));
+}
+
+.source-menu[data-contextual-inspector="true"] {
+  position: fixed;
+  inset: var(--workbench-header-height) 1rem 0 auto;
   max-height: none;
 }
 
@@ -1104,7 +1109,7 @@ fieldset {
 
 .context-choice-menu,
 .boundary-menu {
-  inset: auto auto 3rem 5rem;
+  grid-template-rows: auto auto;
   width: min(20rem, calc(100vw - 6rem));
   max-height: min(24rem, calc(100vh - 8rem));
 }
@@ -1207,6 +1212,7 @@ fieldset {
 }
 
 .walkthrough-panel {
+  position: fixed;
   z-index: 950;
   top: 1rem;
   left: 1rem;
@@ -1330,7 +1336,7 @@ fieldset {
     position: static;
   }
 
-  .source-menu {
+  .source-menu[data-contextual-inspector="true"] {
     inset: var(--workbench-header-height) 1rem var(--workbench-bottom-nav-height) auto;
     width: calc(100% - var(--workbench-rail-width) - 1rem);
   }
@@ -1369,9 +1375,18 @@ fieldset {
     height: 6rem;
   }
 
+  .canvas-frame:has(.surface-orbit-controls:not([hidden])) .colorbar {
+    right: 10rem;
+  }
+
   .help-guide-toggle-mount {
     right: 0.5rem;
     bottom: 0.5rem;
+  }
+
+  .help-guide-panel {
+    top: 0;
+    height: auto;
   }
 }
 
@@ -1481,7 +1496,7 @@ fieldset {
     border: 0;
   }
 
-  .source-menu {
+  .source-menu[data-contextual-inspector="true"] {
     inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height);
     width: 100%;
   }
@@ -1528,6 +1543,10 @@ fieldset {
   left: 0.5rem;
 }
 
+.canvas-frame:has(.help-guide-panel:not([hidden])) .surface-orbit-controls {
+  visibility: hidden;
+}
+
 @media (max-width: 22rem) {
   .interaction-toggle {
     min-width: 9.5rem;
@@ -1541,6 +1560,10 @@ fieldset {
     flex-basis: 2.5rem;
     width: 2.5rem;
     height: 2.5rem;
+  }
+
+  .source-menu-body {
+    padding-inline: 0.5rem;
   }
 
   .header-simulation-controls .simulation-run-button,
