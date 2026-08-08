@@ -77,22 +77,22 @@
       }[type] || "sine";
     }
     
-    function sourceAmplitudeLabelHtml(shape) {
+    function sourceAmplitudeLabel(shape) {
       if (inPlaneElectricCurrentShapes.has(shape)) {
-        return `<i>J</i><sub>&parallel;,0</sub>`;
+        return "J∥,0";
       }
       if (currentSourceShapes.has(shape)) {
-        return `<i>${currentSourceLetter()}</i><sub>z,0</sub>`;
+        return `${currentSourceLetter()}z,0`;
       }
-      return `<i>${simulatedFieldLetter()}</i><sub>inc,0</sub>`;
+      return `${simulatedFieldLetter()}inc,0`;
     }
     
-    function sourceAngleLabelHtml(shape) {
-      if (incidentFieldSourceShapes.has(shape)) return `incidence &theta;`;
-      if (inPlaneElectricCurrentShapes.has(shape)) return `<i>J</i><sub>&parallel;</sub> angle &theta;`;
-      if (shape === "huygens" || shape === "janusDipole") return `direction &theta;`;
-      if (circularDipoleSourceShapes.has(shape)) return `spin axis &theta;`;
-      return `${currentSourceLetter()}<sub>z</sub> axis &theta;`;
+    function sourceAngleLabel(shape) {
+      if (incidentFieldSourceShapes.has(shape)) return "incidence θ";
+      if (inPlaneElectricCurrentShapes.has(shape)) return "J∥ angle θ";
+      if (shape === "huygens" || shape === "janusDipole") return "direction θ";
+      if (circularDipoleSourceShapes.has(shape)) return "spin axis θ";
+      return `${currentSourceLetter()}z axis θ`;
     }
 
     function controlInputs(control) {
@@ -143,7 +143,7 @@
       el.frequencyOutput.value = sourceWavelengthLambda.toFixed(2);
       el.amplitudeInput.value = String(Math.round(normalized.amplitude * 100));
       el.amplitudeOutput.value = normalized.amplitude.toFixed(2);
-      global.FdtdScientificControls?.setLabel?.("amplitudeInput", sourceAmplitudeLabelHtml(normalized.shape));
+      global.FdtdScientificControls?.setLabel?.("amplitudeInput", sourceAmplitudeLabel(normalized.shape));
       el.sourceXInput.min = formatLambda(minSourceXLambda());
       el.sourceYInput.min = formatLambda(minSourceYLambda());
       el.sourceXInput.max = formatLambda(maxSourceXLambda());
@@ -151,21 +151,21 @@
       el.sourceXInput.value = formatLambda(normalized.xLambda);
       el.sourceYInput.value = formatLambda(normalized.yLambda);
       if (normalized.shape === "evanescentLine") {
-        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `<i>k</i><sub>&parallel;</sub>/<i>k</i><sub>0</sub>`);
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "k∥/k₀");
         el.sourceWidthInput.min = "1.01";
         el.sourceWidthInput.max = "2.50";
         el.sourceWidthInput.step = "0.01";
         el.sourceWidthInput.value = normalized.widthLambda.toFixed(2);
         el.sourceWidthOutput.value = normalized.widthLambda.toFixed(2);
       } else if (normalized.shape === "modeProfile") {
-        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `mode window / &lambda;<sub>0</sub>`);
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "mode window / λ₀");
         el.sourceWidthInput.min = "0.25";
         el.sourceWidthInput.max = "3.00";
         el.sourceWidthInput.step = "0.05";
         el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
         el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
       } else {
-        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", `FWHM / &lambda;<sub>0</sub>`);
+        global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "FWHM / λ₀");
         el.sourceWidthInput.min = "0.05";
         el.sourceWidthInput.max = "1.50";
         el.sourceWidthInput.step = "0.05";
@@ -174,7 +174,7 @@
       }
       el.sourceAngleInput.value = String(Math.round(normalized.angleDeg));
       el.sourceAngleOutput.value = `${Math.round(normalized.angleDeg)}°`;
-      global.FdtdScientificControls?.setLabel?.("sourceAngleInput", sourceAngleLabelHtml(normalized.shape));
+      global.FdtdScientificControls?.setLabel?.("sourceAngleInput", sourceAngleLabel(normalized.shape));
       if (el.sourceTimePhaseInput) {
         el.sourceTimePhaseInput.value = String(Math.round(normalized.phaseDeg));
       }

@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { useLayoutEffect, type ReactNode } from "react";
 import Plotly from "plotly.js-basic-dist-min";
-import legacyRuntimeScripts from "./legacy-runtime.json";
 import "./core/app-state";
 import "./core/boundary-state";
 import "./core/state-normalizer";
@@ -24,22 +23,19 @@ import {
 import { VisualFieldControls, VisualOverlayControls } from "./ui/visual-controls";
 import { installCarbonSceneBrowser } from "./ui/scene-browser";
 import {
-  installCarbonDisclosureUpgrade,
+  installCarbonDisclosures,
   upgradeCarbonDisclosures,
-} from "./ui/carbon-disclosure-upgrade";
+} from "./ui/carbon-disclosures";
 import {
   installScientificSliderControls,
   ScientificSliderRoot,
   scientificSliderDefinitions,
 } from "./ui/scientific-sliders";
 
-declare const __FDTD_BUILD_VERSION__: string;
-
 (globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
 installCarbonSceneBrowser();
-installCarbonDisclosureUpgrade();
+installCarbonDisclosures();
 installScientificSliderControls();
-upgradeCarbonDisclosures();
 
 function requiredElement(id: string): HTMLElement {
   const element = document.getElementById(id);
@@ -47,51 +43,55 @@ function requiredElement(id: string): HTMLElement {
   return element;
 }
 
-function loadClassicScript(source: string): Promise<void> {
-  const scriptUrl = new URL(source, document.baseURI);
-  scriptUrl.searchParams.set("v", __FDTD_BUILD_VERSION__);
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = scriptUrl.href;
-    script.async = false;
-    script.dataset.runtimeScript = "";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Could not load runtime script: ${scriptUrl.pathname}`));
-    document.body.append(script);
+function RootCommit({ onCommit }: { onCommit: () => void }) {
+  useLayoutEffect(onCommit, [onCommit]);
+  return null;
+}
+
+function renderReactRoot(mount: HTMLElement, content: ReactNode): Promise<void> {
+  return new Promise((resolve) => {
+    createRoot(mount).render(
+      <>
+        <RootCommit onCommit={resolve} />
+        {content}
+      </>,
+    );
   });
 }
 
-async function startLegacyRuntime(): Promise<void> {
-  await Promise.all(legacyRuntimeScripts.map(loadClassicScript));
-}
+async function startApplication() {
+  await upgradeCarbonDisclosures();
+  await Promise.all([
+    renderReactRoot(requiredElement("reactHeaderRoot"), <ApplicationHeader />),
+    renderReactRoot(requiredElement("reactWorkflowRoot"), <WorkflowNavigation />),
+    renderReactRoot(requiredElement("reactSceneSearchRoot"), <SceneSearch />),
+    renderReactRoot(requiredElement("reactFooterRoot"), <StatusFooter />),
+    renderReactRoot(requiredElement("reactVisualFieldRoot"), <VisualFieldControls />),
+    renderReactRoot(requiredElement("reactVisualOverlaysRoot"), <VisualOverlayControls />),
+    ...scientificSliderDefinitions().map((definition) => renderReactRoot(
+      requiredElement(definition.mountId),
+      <ScientificSliderRoot definition={definition} />,
+    )),
+  ]);
 
-flushSync(() => {
-  createRoot(requiredElement("reactHeaderRoot")).render(<ApplicationHeader />);
-  createRoot(requiredElement("reactWorkflowRoot")).render(<WorkflowNavigation />);
-  createRoot(requiredElement("reactSceneSearchRoot")).render(<SceneSearch />);
-  createRoot(requiredElement("reactFooterRoot")).render(<StatusFooter />);
-  createRoot(requiredElement("reactVisualFieldRoot")).render(<VisualFieldControls />);
-  createRoot(requiredElement("reactVisualOverlaysRoot")).render(<VisualOverlayControls />);
-  scientificSliderDefinitions().forEach((definition) => {
-    createRoot(requiredElement(definition.mountId)).render(<ScientificSliderRoot definition={definition} />);
-  });
-});
-
-const bridgedButtons = prepareCarbonButtonBridge();
-const bridgedFormControls = prepareCarbonFormBridge();
-const bridgeHost = document.createElement("div");
-bridgeHost.className = "carbon-portal-host";
-bridgeHost.setAttribute("aria-hidden", "true");
-document.body.append(bridgeHost);
-flushSync(() => {
-  createRoot(bridgeHost).render(
+  const bridgedButtons = prepareCarbonButtonBridge();
+  const bridgedFormControls = prepareCarbonFormBridge();
+  const bridgeHost = document.createElement("div");
+  bridgeHost.className = "carbon-portal-host";
+  bridgeHost.setAttribute("aria-hidden", "true");
+  document.body.append(bridgeHost);
+  await renderReactRoot(bridgeHost,
     <>
       <CarbonButtonBridge buttons={bridgedButtons} />
       <CarbonFormBridge controls={bridgedFormControls} />
     </>,
   );
-});
 
-void startLegacyRuntime().catch((error: unknown) => {
+  await import("./runtime-entry");
+}
+
+const applicationReady = startApplication();
+(window as typeof window & { FdtdReady: Promise<void> }).FdtdReady = applicationReady;
+void applicationReady.catch((error: unknown) => {
   console.error("FDTD runtime startup failed", error);
 });

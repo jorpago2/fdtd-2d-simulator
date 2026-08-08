@@ -35,7 +35,6 @@
       dependencies.handleCellsPerWavelengthInput,
       "handleCellsPerWavelengthInput",
     );
-    const applySelectedPreset = requireFunction(dependencies.applySelectedPreset, "applySelectedPreset");
     const handleSlabThicknessInput = requireFunction(
       dependencies.handleSlabThicknessInput,
       "handleSlabThicknessInput",
@@ -52,7 +51,6 @@
 
     bindInputAndChange(el.wavelengthInput, handleWavelengthInput);
     bindInputAndChange(el.cellsPerWavelengthInput, handleCellsPerWavelengthInput);
-    el.presetInput?.addEventListener("change", applySelectedPreset);
     el.slabThicknessInput?.addEventListener("input", handleSlabThicknessInput);
     el.boundaryMenuInput?.addEventListener("change", handleBoundaryMenuInput);
     el.subpixelSmoothingInput?.addEventListener("change", handleSubpixelSmoothingInput);

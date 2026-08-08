@@ -1,4 +1,4 @@
-declare const __FDTD_BUILD_VERSION__: string;
+import rawSceneCatalog from "../runtime/data/scene-catalog.json";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -28,8 +28,6 @@ export interface SceneCatalog {
   scenes: readonly SceneRecord[];
   descriptions: Readonly<Record<string, string>>;
 }
-
-export const CATALOG_URL = `src/runtime/data/scene-catalog.json?v=${encodeURIComponent(__FDTD_BUILD_VERSION__)}`;
 
 let catalogPromise: Promise<SceneCatalog> | null = null;
 
@@ -98,22 +96,15 @@ export function normalizeSceneCatalog(rawCatalog: unknown): SceneCatalog {
   });
 }
 
-export function loadSceneCatalog(fetchRef: typeof fetch = window.fetch.bind(window)): Promise<SceneCatalog> {
+export const sceneCatalog = normalizeSceneCatalog(rawSceneCatalog);
+
+export function loadSceneCatalog(): Promise<SceneCatalog> {
   if (catalogPromise) return catalogPromise;
-  if (typeof fetchRef !== "function") {
-    catalogPromise = Promise.reject(new Error("Scene catalog loader requires fetch()."));
-    return catalogPromise;
-  }
-  catalogPromise = fetchRef(CATALOG_URL)
-    .then((response) => {
-      if (!response.ok) throw new Error(`Could not load scene catalog: HTTP ${response.status}`);
-      return response.json() as Promise<unknown>;
-    })
-    .then(normalizeSceneCatalog);
+  catalogPromise = Promise.resolve(sceneCatalog);
   return catalogPromise;
 }
 
-const sceneCatalogLoader = Object.freeze({ CATALOG_URL, loadSceneCatalog, normalizeSceneCatalog });
+const sceneCatalogLoader = Object.freeze({ loadSceneCatalog, normalizeSceneCatalog, sceneCatalog });
 
 declare global {
   interface Window {

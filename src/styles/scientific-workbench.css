@@ -659,8 +659,7 @@ fieldset {
 
 /* Scene library */
 
-.scene-section > h2:first-child,
-.scene-select-fallback {
+.scene-section > h2:first-child {
   display: none;
 }
 
@@ -1193,7 +1192,7 @@ fieldset {
   overflow-x: auto;
   color: var(--cds-text-primary);
   background: var(--cds-layer-02);
-  font-family: "IBM Plex Serif", serif;
+  font-family: "IBM Plex Mono", monospace;
 }
 
 .walkthrough-panel {
@@ -1347,6 +1346,10 @@ fieldset {
     flex-basis: 2.75rem;
     width: 2.75rem;
     height: 2.75rem;
+  }
+
+  .workflow-rail .nav-step {
+    display: none;
   }
 
   .brand-heading,

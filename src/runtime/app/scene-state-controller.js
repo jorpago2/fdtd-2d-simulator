@@ -41,8 +41,8 @@
     }
 
     function knownPresetValue(value) {
-      if (!el.presetInput) return false;
-      return Array.from(el.presetInput.options).some((option) => option.value === value);
+      const scenes = global.FdtdSceneCatalogLoader?.sceneCatalog?.scenes;
+      return Array.isArray(scenes) && scenes.some((scene) => scene.id === value);
     }
 
     function serializableStateSnapshot() {

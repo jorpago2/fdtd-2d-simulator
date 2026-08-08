@@ -21,7 +21,7 @@ Interpret these as profiling guides, not publication metrics. Browser scheduling
 For repeatable JS/WASM comparisons, run:
 
 ```powershell
-npm run benchmark:perf -- --browser-channel=msedge
+npm run benchmark -- --browser-channel=msedge
 ```
 
 The benchmark opens the app in a browser, tests the default static TMz path on several grids, and reports separate costs for:
@@ -36,13 +36,13 @@ The benchmark opens the app in a browser, tests the default static TMz path on s
 Use custom grids when profiling a target device:
 
 ```powershell
-npm run benchmark:perf -- --browser-channel=msedge --grids=180x120,360x240,720x480 --steps=240 --json
+npm run benchmark -- --browser-channel=msedge --grids=180x120,360x240,720x480 --steps=240 --json
 ```
 
 Benchmark a specific scene, for example the finite-conductivity skin-depth case:
 
 ```powershell
-npm run benchmark:perf -- --browser-channel=msedge --preset=finiteConductivity
+npm run benchmark -- --browser-channel=msedge --preset=finiteConductivity
 ```
 
 The reported WASM/JS speedup is meaningful for the static Yee update only. Dynamic materials that force the JavaScript path must be benchmarked separately before moving them to C++/WASM.

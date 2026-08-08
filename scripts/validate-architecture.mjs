@@ -44,12 +44,12 @@ function addCheck(name, passed, details = "") {
 }
 
 function scriptSources(indexHtml) {
-  const runtimeScripts = JSON.parse(readText("src", "legacy-runtime.json"));
-  if (!Array.isArray(runtimeScripts) || runtimeScripts.some((source) => typeof source !== "string")) {
-    throw new Error("src/legacy-runtime.json must be an array of script URLs");
-  }
+  const runtimeEntry = readText("src", "runtime-entry.ts");
+  const runtimeModules = [...runtimeEntry.matchAll(/import\s+["']\.\/(runtime\/[^"']+\.js)["'];/g)]
+    .map((match) => `src/${match[1]}`);
+  if (!runtimeModules.length) throw new Error("src/runtime-entry.ts must import the runtime modules");
   return [
-    ...runtimeScripts.map((source) => source.split("?")[0]),
+    ...runtimeModules,
     ...[...indexHtml.matchAll(/<script\s+[^>]*src="([^"]+)"/g)].map((match) => match[1].split("?")[0]),
   ];
 }
@@ -97,9 +97,9 @@ function validateSourceRootShape() {
     "README.md",
     "core",
     "data",
-    "legacy-runtime.json",
     "main.tsx",
     "runtime",
+    "runtime-entry.ts",
     "stories",
     "stories.d.ts",
     "styles",
@@ -112,7 +112,7 @@ function validateSourceRootShape() {
     unexpectedEntries.length === 0,
     unexpectedEntries.length
       ? unexpectedEntries.join(", ")
-      : "src contains typed core/data/UI entries, Storybook stories, runtime manifest, runtime, styles, and README only",
+      : "src contains typed core/data/UI entries, the bundled runtime entry, runtime modules, styles, and README only",
   );
 }
 
@@ -199,6 +199,39 @@ function validateUiCssBoundary(cssText) {
   addCheck("canonical CSS avoids !important", importantCount === 0, `${importantCount} !important occurrences`);
 }
 
+function validateCarbonAdapterBoundary(indexHtml) {
+  const adapterText = readText("src", "ui", "carbon-button-bridge.tsx");
+  const disclosureText = readText("src", "ui", "carbon-disclosures.tsx");
+  const adapterViolations = [];
+  if (/dangerouslySetInnerHTML|\.innerHTML\b/.test(adapterText)) adapterViolations.push("HTML injection");
+  if (/\.cds--/.test(adapterText)) adapterViolations.push("Carbon internal-class selector");
+  if (/\/delete\|remove\|clear\//i.test(adapterText)) adapterViolations.push("label-based control semantics");
+  if (!disclosureText.includes('const disclosureSelector = "[data-carbon-disclosure]"')) {
+    adapterViolations.push("class-based disclosure discovery");
+  }
+  if (!disclosureText.includes('data-carbon-react="true"')) {
+    adapterViolations.push("unmarked Carbon accordion toggle");
+  }
+
+  const buttonTags = [...indexHtml.matchAll(/<button\b([^>]*)>/gi)].map((match) => match[1]);
+  const missingKind = buttonTags.filter(
+    (attributes) => /\b(?:primary-button|danger-button)\b/.test(attributes) && !/data-carbon-kind=/.test(attributes),
+  );
+  const missingIconContract = buttonTags.filter(
+    (attributes) => /\b(?:icon-button|help-guide-toggle)\b/.test(attributes) && !/data-carbon-icon-only="true"/.test(attributes),
+  );
+  if (missingKind.length) adapterViolations.push(`${missingKind.length} buttons lack explicit Carbon kind`);
+  if (missingIconContract.length) adapterViolations.push(`${missingIconContract.length} icon buttons lack explicit icon-only semantics`);
+
+  addCheck(
+    "Carbon adapters avoid inherited DOM heuristics",
+    adapterViolations.length === 0,
+    adapterViolations.length
+      ? adapterViolations.join(", ")
+      : "explicit data contracts; no HTML injection, internal-class selectors, or label heuristics",
+  );
+}
+
 function validateCentralFileBudget() {
   const hardBudget = 2000;
   const mainLines = readText("src", "runtime", "app", "main.js")
@@ -219,6 +252,7 @@ validateRuntimeDependencyInventory(indexHtml);
 validateRuntimeNamespaceDocumentation();
 validateSimulationDomBoundary();
 validateUiCssBoundary(readText("src/styles/scientific-workbench.css"));
+validateCarbonAdapterBoundary(indexHtml);
 validateCentralFileBudget();
 
 if (process.argv.includes("--json")) {

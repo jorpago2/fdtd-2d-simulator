@@ -118,10 +118,10 @@
       simulationEffects.commit({ measure: true, controls: true, stats: true, render: true });
     }
 
-    function applySelectedPreset() {
+    function applySelectedPreset(preset = state.preset) {
       clearMaterialSelection(false);
       clearCanvasHover(false);
-      state.preset = el.presetInput.value;
+      state.preset = preset;
       if (gridSizeIsAutoOrientable()) {
         enableResponsiveGridOrientation();
       }
@@ -251,7 +251,7 @@
       state.materialPhaseChangeEnabled = false;
       state.materialGyrotropyEnabled = false;
       state.materialBianisotropyEnabled = false;
-      el.presetInput.value = "empty";
+      state.preset = "empty";
       simulationEffects.commit({ measure: "ui", controls: true, stats: true, render: true });
     }
 

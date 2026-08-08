@@ -38,6 +38,7 @@
     },
 
     drawMaterialHoverOverlay() {
+      const hoveredMaterialRegion = state.hoveredMaterialRegion;
       if (!hoveredMaterialRegion || hoveredMaterialRegion.cells.length === 0) return;
       const selectedRegion = materialSelection?.region;
       if (selectedRegion && materialRegionSignature(hoveredMaterialRegion) === materialRegionSignature(selectedRegion)) return;

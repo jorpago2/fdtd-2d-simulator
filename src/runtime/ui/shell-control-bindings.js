@@ -46,6 +46,10 @@
       dependencies.toggleCanvasOptionsMenu,
       "toggleCanvasOptionsMenu",
     );
+    const closeCanvasOptionsMenu = requireFunction(
+      dependencies.closeCanvasOptionsMenu,
+      "closeCanvasOptionsMenu",
+    );
     const activateControlTab = requireFunction(dependencies.activateControlTab, "activateControlTab");
     const handleControlTabKeydown = requireFunction(
       dependencies.handleControlTabKeydown,
@@ -72,14 +76,21 @@
 
       const quickGuide = documentRef.createElement("div");
       quickGuide.className = "help-guide-quick-steps";
-      quickGuide.innerHTML = [
-        "<p>Edit changes the numerical experiment. Reset fields and recollect monitor data after changing geometry or materials.</p>",
-        "<ul>",
-        "<li><strong>Select:</strong> tap an object to select it; drag to move it.</li>",
-        "<li><strong>Add or edit:</strong> right-click on desktop or long-press on touch to open the contextual editor.</li>",
-        "<li><strong>Draw:</strong> tap to paint one point, drag for a stroke, or long-press to configure the brush and material.</li>",
-        "</ul>",
-      ].join("");
+      const quickGuideIntro = documentRef.createElement("p");
+      quickGuideIntro.textContent = "Edit changes the numerical experiment. Reset fields and recollect monitor data after changing geometry or materials.";
+      const quickGuideList = documentRef.createElement("ul");
+      [
+        ["Select:", " tap an object to select it; drag to move it."],
+        ["Add or edit:", " right-click on desktop or long-press on touch to open the contextual editor."],
+        ["Draw:", " tap to paint one point, drag for a stroke, or long-press to configure the brush and material."],
+      ].forEach(([label, description]) => {
+        const item = documentRef.createElement("li");
+        const term = documentRef.createElement("strong");
+        term.textContent = label;
+        item.append(term, description);
+        quickGuideList.append(item);
+      });
+      quickGuide.append(quickGuideIntro, quickGuideList);
 
       const reference = documentRef.createElement("section");
       reference.className = "help-guide-reference scene-guide-details";

@@ -26,8 +26,8 @@ src/
     material-selection-controller.ts
     visual-controls.tsx
     visual-layer-model.ts
-  legacy-runtime.json
   main.tsx
+  runtime-entry.ts
   runtime/
     app/
     canvas/
@@ -49,9 +49,9 @@ tests/
 ## Refactor Rules
 
 1. `src/main.tsx` owns migrated React UI; `src/runtime/` remains the stable simulation implementation until parity migration is complete.
-2. Each runtime file owns one clear responsibility and exposes its public API through explicit `window.Fdtd...` globals.
+2. Each runtime file owns one clear responsibility; new boundaries should prefer typed module contracts over ambient globals.
 3. Do not duplicate active files wholesale. Reference modules belong in `tests/reference-modules/` and must be covered by `validate-runtime-core.mjs`.
-4. Keep legacy load order explicit in `legacy-runtime.json` until a layer is converted to typed ES modules.
+4. Keep runtime initialization order explicit in `runtime-entry.ts` while individual global contracts are converted to typed module exports.
 5. After a module is wired into `index.html`, run the project static validator before continuing.
 6. Delete inactive code after the replacement is verified.
 
@@ -73,8 +73,8 @@ tests/
 - Vite and TypeScript are the canonical build path.
 - React owns the brand, footer, and Visual-panel markup; subsequent UI regions move only with browser parity coverage.
 - Initial/boundary state and state normalization, scene-catalog loading, entity/material selection, and the visual-layer model are TypeScript.
-- `main.tsx` loads the remaining classic scripts sequentially from `legacy-runtime.json`.
-- `src/runtime/` remains the canonical numerical and interaction runtime during the transition.
+- `main.tsx` mounts the React shell and then imports the Vite-managed runtime graph from `runtime-entry.ts`.
+- `src/runtime/` remains the canonical numerical and interaction runtime, bundled as modules rather than copied as source scripts.
 - Reference modules with comparison coverage:
   - `tests/reference-modules/core/contracts.js`
   - `tests/reference-modules/core/state.js`
@@ -86,7 +86,7 @@ tests/
 
 ## Runtime Ownership
 
-- `src/runtime/` temporarily preserves explicit public globals required by the ordered classic-script app.
+- `src/runtime/` temporarily preserves explicit public globals required by controllers not yet converted to typed imports.
 - `tests/reference-modules/` uses `window.FdtdNext` for parity modules only; it is not the namespace of the deployed runtime.
 - New runtime changes should keep dependency checks local and update `runtime-dependencies.js` when a new controller module is required before `main.js`.
 - The simulator advances on the main browser runtime, using the C++/WASM backend when the active material/source configuration supports it.

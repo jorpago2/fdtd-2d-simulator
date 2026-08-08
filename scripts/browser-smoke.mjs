@@ -20,9 +20,16 @@ const matrix = JSON.parse(fs.readFileSync(path.join(__dirname, "validation-matri
 const mode = process.argv.includes("--physics") ? "physics" : "smoke";
 const includeAllCases = process.argv.includes("--all");
 const summaryMode = process.argv.includes("--summary");
+const progressMode = process.argv.includes("--progress");
 const runConfiguredSweep = process.argv.includes("--run-sweep");
 const sweepSamplesOverride = Number(argumentValue("--sweep-samples"));
 const selectedCase = argumentValue("--case");
+const selectedUiCaseIds = new Set(
+  argumentValue("--ui-case")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+);
 const sourceFrequencyScale = Number(argumentValue("--source-frequency-scale"));
 const sourceTypeOverride = argumentValue("--source-type");
 const sourceXLambdaOverride = Number(argumentValue("--source-x-lambda") || Number.NaN);
@@ -200,22 +207,24 @@ async function importPlaywright() {
 
 async function launchBrowser(chromium) {
   const launchOptions = { headless: true };
-  if (process.platform === "win32") launchOptions.channel = "msedge";
   try {
     return await chromium.launch(launchOptions);
-  } catch (channelError) {
-    if (!launchOptions.channel) throw channelError;
-    return chromium.launch({ headless: true });
+  } catch (bundledBrowserError) {
+    if (process.platform !== "win32") throw bundledBrowserError;
+    return chromium.launch({ headless: true, channel: "msedge" });
   }
+}
+
+async function openApplication(page, url) {
+  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.waitForFunction(() => Boolean(window.FdtdReady), null, { timeout: 60_000 });
+  await page.evaluate(() => window.FdtdReady);
 }
 
 async function selectPreset(page, preset) {
   await page.evaluate((nextPreset) => {
-    const input = document.getElementById("presetInput");
-    if (!input) throw new Error("presetInput not found");
-    input.value = nextPreset;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (!window.FdtdApp?.selectScenePreset) throw new Error("FdtdApp.selectScenePreset() is unavailable");
+    window.FdtdApp.selectScenePreset(nextPreset);
   }, preset);
   await page.waitForTimeout(40);
 }
@@ -6556,7 +6565,7 @@ async function runReactBootstrapSmoke(page) {
 async function runCanvasActionMenuSmoke(page) {
   await page.locator("#canvasActionToggle").click();
   await page.waitForTimeout(50);
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
     const toggle = document.getElementById("canvasActionToggle");
     const menu = document.querySelector('[role="menu"]');
     if (!toggle || !menu) {
@@ -6721,7 +6730,7 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
   for (const viewport of viewports) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
     try {
-      await page.goto(url, { waitUntil: "networkidle" });
+      await openApplication(page, url);
       await page.click("#helpGuideToggle");
       const layoutState = await page.evaluate((name) => {
         const rect = (node) => {
@@ -6767,7 +6776,7 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
         const reference = document.querySelector(".help-guide-reference");
         return {
           editScrollHeight: panel?.scrollHeight || 0,
-          referenceCollapsed: Boolean(reference && !reference.open),
+          referenceCollapsed: reference?.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "false",
         };
       });
       states.push({ ...layoutState, ...editState });
@@ -6805,7 +6814,7 @@ async function runWalkthroughSmoke(browser, url) {
   for (const viewport of viewports) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
     try {
-      await page.goto(url, { waitUntil: "networkidle" });
+      await openApplication(page, url);
       await page.click("#helpGuideToggle");
       await page.click("#walkthroughStartBtn");
       for (let stepIndex = 0; stepIndex < 7; stepIndex += 1) {
@@ -6919,7 +6928,7 @@ async function runCanvasFooterSmoke(browser, url) {
   for (const viewport of viewports) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
     try {
-      await page.goto(url, { waitUntil: "networkidle" });
+      await openApplication(page, url);
       states.push(await page.evaluate((name) => {
         const rect = (node) => {
           if (!node) return null;
@@ -7012,11 +7021,11 @@ async function runControlNavigationSmoke(page) {
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
         openResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
-          .filter((panel) => panel.open)
+          .filter((panel) => panel.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "true")
           .map((panel) => panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className),
         numericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel")).map((panel) => ({
           title: panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className,
-          open: panel.open,
+          open: panel.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "true",
         })),
       };
     };
@@ -7138,17 +7147,19 @@ async function runPoyntingComponentVisibilitySmoke(page) {
 
 async function runMaxwellCheckerSmoke(page) {
   await selectPreset(page, "planeWaveAir");
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
     const savedMaxwellCheckEnabled = Boolean(state.maxwellCheckEnabled);
     document.querySelector('[data-control-tab="results"]')?.click();
     const panel = document.querySelector(".maxwell-check-panel");
-    if (panel) panel.open = true;
+    const panelHeading = panel?.querySelector(".cds--accordion__heading");
+    if (panelHeading?.getAttribute("aria-expanded") !== "true") panelHeading?.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const input = document.getElementById("maxwellCheckInput");
     if (input && !input.checked) input.click();
     for (let i = 0; i < 6; i += 1) {
       if (typeof sim !== "undefined" && typeof sim.step === "function") sim.step();
     }
-    if (typeof updateStats === "function") updateStats();
+    window.FdtdApp?.updateStats?.();
     const results = document.getElementById("maxwellCheckResults");
     const report = typeof sim !== "undefined" && typeof sim.maxwellCheckReport === "function" ? sim.maxwellCheckReport() : null;
     state.maxwellCheckEnabled = savedMaxwellCheckEnabled;
@@ -7215,7 +7226,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
     });
 
     try {
-      await page.goto(url, { waitUntil: "networkidle" });
+      await openApplication(page, url);
       const headerPanelToggle = page.locator("#controlDrawerToggle");
       if (await headerPanelToggle.isVisible()) {
         await headerPanelToggle.click();
@@ -7244,7 +7255,6 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
         const spotlightImage = document.querySelector("#sceneSpotlight img.scene-thumb-image");
         const title = document.getElementById("sceneSpotlightTitle");
         const description = document.getElementById("sceneSpotlightDescription");
-        const fallback = document.querySelector(".scene-select-fallback");
         const panelOverflow = panel ? panel.scrollWidth - panel.clientWidth : 0;
         return {
           activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
@@ -7253,7 +7263,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
           currentPanelHidden: document.getElementById("sceneCurrentPanel")?.hidden ?? true,
           descriptionText: description?.textContent?.trim() || "",
           documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          fallbackDisplay: fallback ? getComputedStyle(fallback).display : "",
+          fallbackPresent: Boolean(document.getElementById("presetInput") || document.querySelector(".scene-select-fallback")),
           family: document.getElementById("sceneSpotlightGroup")?.textContent?.trim() || "",
           panel: panelBounds
             ? {
@@ -7265,7 +7275,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
           panelOverflow,
           guide: rect("#sceneGuidePanel"),
           openGuideCards: Array.from(document.querySelectorAll("#sceneGuidePanel .scene-guide-details"))
-            .filter((panel) => panel.open)
+            .filter((panel) => panel.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "true")
             .map((panel) => panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className),
           spotlight: rect("#sceneSpotlight"),
           spotlightImage: spotlightImage
@@ -7369,7 +7379,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (!browseStatus.activeCardImageSrc.endsWith("/topologyTemporalMod.webp")) {
         failures.push(`${viewport.name}: active scene card thumbnail does not match the selected scene`);
       }
-      if (currentStatus.fallbackDisplay !== "none") failures.push(`${viewport.name}: fallback select is still visible`);
+      if (currentStatus.fallbackPresent) failures.push(`${viewport.name}: inherited preset select is still present`);
       if (!browseStatus.search || browseStatus.search.height <= 0) failures.push(`${viewport.name}: scene search is not visible in Browse view`);
       if (!browseStatus.filterBar || browseStatus.filterBar.height <= 0) failures.push(`${viewport.name}: scene groups are not visible in Browse view`);
       if (!browseStatus.cards || browseStatus.cards.height <= 0) failures.push(`${viewport.name}: scene card scroll area is not visible in Browse view`);
@@ -7455,7 +7465,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
         activeView: document.querySelector("[data-scene-view].is-active")?.dataset.sceneView || "",
         activeCard: document.querySelector(".scene-card.is-active")?.dataset.sceneCard || "",
         browserCount: document.getElementById("sceneBrowserCount")?.textContent?.trim() || "",
-        preset: document.getElementById("presetInput")?.value || "",
+        preset: window.FdtdApp?.state?.preset || "",
         searchValue: document.getElementById("sceneSearchInput")?.value || "",
         spotlightTitle: document.getElementById("sceneSpotlightTitle")?.textContent?.trim() || "",
         visibleCards,
@@ -7488,9 +7498,9 @@ async function runSceneMenuSelectionSmoke(browser, url) {
   };
 
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     const initialStatus = await page.evaluate(() => ({
-      preset: document.getElementById("presetInput")?.value || "",
+      preset: window.FdtdApp?.state?.preset || "",
       reflectance: document.getElementById("summaryReflectanceOutput")?.textContent?.trim() || "",
     }));
     if (initialStatus.preset !== "planeWaveAir") failures.push(`Initial scene should be planeWaveAir; got ${initialStatus.preset || "none"}`);
@@ -7623,7 +7633,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
   });
 
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="simulation"]').click();
     await page.waitForTimeout(120);
     const status = await page.evaluate(() => {
@@ -7672,7 +7682,11 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     }));
     if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
     await page.locator('[data-mobile-layer="results"]:visible').click();
-    await page.locator("#tab-results .results-detail-panel").evaluateAll((panels) => panels.forEach((panel) => { panel.open = true; }));
+    await page.locator("#tab-results .results-detail-panel .cds--accordion__heading").evaluateAll((headings) => {
+      headings.forEach((heading) => {
+        if (heading.getAttribute("aria-expanded") !== "true") heading.click();
+      });
+    });
     await page.waitForTimeout(160);
     const resultsOverflow = await page.evaluate(() => {
       const panel = document.getElementById("tab-results");
@@ -7711,7 +7725,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
   });
 
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(80);
     const layers = ["simulation", "results", "config", "scenes"];
@@ -7774,7 +7788,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
   });
 
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     await page.locator("#canvasActionToggle").click();
     await page.waitForTimeout(50);
     const status = await page.evaluate(() => {
@@ -7910,7 +7924,7 @@ async function runTouchLongPressSmoke(browser, url) {
   const page = await context.newPage();
   const failures = [];
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     await selectPreset(page, "empty");
     const canvas = page.locator("#simCanvas");
     const bounds = await canvas.boundingBox();
@@ -7983,7 +7997,7 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
   const page = await context.newPage();
   const failures = [];
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
     await selectPreset(page, "empty");
     await page.locator("#brushModeBtn").click();
     const canvas = page.locator("#simCanvas");
@@ -8233,10 +8247,13 @@ async function runSourceWaveVectorOverlaySmoke(page) {
 
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
+    const app = window.FdtdApp;
+    if (!app?.populateSourceEditor) throw new Error("FdtdApp.populateSourceEditor() is unavailable");
     const sourceMenu = document.getElementById("sourceMenu");
     if (sourceMenu) sourceMenu.hidden = false;
     const sourceDetailPanel = document.querySelector(".source-detail-panel");
+    const sourceDetailHeading = sourceDetailPanel?.querySelector(".cds--accordion__heading");
     const isRendered = (control) => {
       if (!control) return false;
       const style = getComputedStyle(control);
@@ -8257,7 +8274,7 @@ async function runSourceDependentParamsSmoke(page) {
       multipolePhase: "cos",
     };
     const shapeControlState = (shape) => {
-      populateSourceEditor({
+      app.populateSourceEditor({
         ...sourceTemplate,
         shape,
         widthLambda: shape === "evanescentLine" ? 1.25 : shape === "modeProfile" ? 1.15 : sourceTemplate.widthLambda,
@@ -8279,10 +8296,12 @@ async function runSourceDependentParamsSmoke(page) {
         timePhaseVisible: timePhaseControl?.hidden === false && isRendered(timePhaseControl),
       };
     };
-    if (sourceDetailPanel) sourceDetailPanel.open = false;
+    window.FdtdCarbonUI?.closeDisclosures?.(sourceMenu || document);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const closedAdvanced = shapeControlState("multipole");
-    const sourceDetailsClosed = sourceDetailPanel?.open === false;
-    if (sourceDetailPanel) sourceDetailPanel.open = true;
+    const sourceDetailsClosed = sourceDetailHeading?.getAttribute("aria-expanded") === "false";
+    if (sourceDetailHeading?.getAttribute("aria-expanded") !== "true") sourceDetailHeading?.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     return {
       sourceDetailsClosed,
       closedAdvanced,
@@ -8332,56 +8351,44 @@ async function runSourceDependentParamsSmoke(page) {
   };
 }
 
-async function runSceneObservablesSmoke(page) {
-  const status = await page.evaluate(async () => {
-    const selectAndRead = async (preset) => {
-      const input = document.getElementById("presetInput");
-      if (!input || typeof updateStats !== "function" || typeof FdtdSceneObservables === "undefined") {
-        return { preset, loaded: false, panelText: "", rowCount: 0, report: null };
+async function runSceneObservablesSmoke(browser, url) {
+  const presetNames = [
+    "planeWaveAir", "pmlAbsorption", "doubleSlit", "phasedDipoleArray", "normalInterface",
+    "slabWaveguide", "sppGrating", "phcWaveguide", "kerker2d", "drudeMetal", "valleyHall",
+    "metasurfacePhaseBars", "microstrip", "pecCavity", "quarterWaveCavity", "fanoResonator",
+    "sshInterface", "ptSymmetricCoupler", "perfectAbsorber", "negativeIndexSlab", "chiralMedium",
+    "shgSlab", "temporalModulation",
+  ];
+  const status = {};
+  const batchSize = 4;
+  for (let batchStart = 0; batchStart < presetNames.length; batchStart += batchSize) {
+    const context = await browser.newContext({ viewport: { width: viewportWidth, height: viewportHeight } });
+    const page = await context.newPage();
+    try {
+      await openApplication(page, url);
+      for (const preset of presetNames.slice(batchStart, batchStart + batchSize)) {
+        if (progressMode) console.error(`[browser-smoke] OBS   ${preset}`);
+        status[preset] = await page.evaluate((nextPreset) => {
+          const app = window.FdtdApp;
+          if (!app?.selectScenePreset || !app?.updateStats || typeof FdtdSceneObservables === "undefined") {
+            return { preset: nextPreset, loaded: false, panelText: "", rowCount: 0, report: null };
+          }
+          app.selectScenePreset(nextPreset);
+          app.updateStats();
+          return {
+            preset: app.state.preset,
+            loaded: true,
+            panelText: document.getElementById("sceneObservableResults")?.textContent || "",
+            rowCount: document.querySelectorAll(".scene-observable-row").length,
+            report: app.buildSceneObservables?.() || null,
+          };
+        }, preset);
+        await page.waitForTimeout(10);
       }
-      input.value = preset;
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      updateStats();
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      return {
-        preset: state.preset,
-        loaded: true,
-        panelText: document.getElementById("sceneObservableResults")?.textContent || "",
-        rowCount: document.querySelectorAll(".scene-observable-row").length,
-        report:
-          typeof sceneObservables !== "undefined" && typeof sceneObservables.buildSceneObservables === "function"
-            ? sceneObservables.buildSceneObservables()
-            : null,
-      };
-    };
-    return {
-      planeWaveAir: await selectAndRead("planeWaveAir"),
-      pmlAbsorption: await selectAndRead("pmlAbsorption"),
-      doubleSlit: await selectAndRead("doubleSlit"),
-      phasedDipoleArray: await selectAndRead("phasedDipoleArray"),
-      normalInterface: await selectAndRead("normalInterface"),
-      slabWaveguide: await selectAndRead("slabWaveguide"),
-      sppGrating: await selectAndRead("sppGrating"),
-      phcWaveguide: await selectAndRead("phcWaveguide"),
-      kerker2d: await selectAndRead("kerker2d"),
-      drudeMetal: await selectAndRead("drudeMetal"),
-      valleyHall: await selectAndRead("valleyHall"),
-      metasurfacePhaseBars: await selectAndRead("metasurfacePhaseBars"),
-      microstrip: await selectAndRead("microstrip"),
-      pecCavity: await selectAndRead("pecCavity"),
-      quarterWaveCavity: await selectAndRead("quarterWaveCavity"),
-      fanoResonator: await selectAndRead("fanoResonator"),
-      sshInterface: await selectAndRead("sshInterface"),
-      ptSymmetricCoupler: await selectAndRead("ptSymmetricCoupler"),
-      perfectAbsorber: await selectAndRead("perfectAbsorber"),
-      negativeIndexSlab: await selectAndRead("negativeIndexSlab"),
-      chiralMedium: await selectAndRead("chiralMedium"),
-      shgSlab: await selectAndRead("shgSlab"),
-      temporalModulation: await selectAndRead("temporalModulation"),
-    };
-  });
+    } finally {
+      await context.close();
+    }
+  }
   const failures = [];
   if (
     !status.planeWaveAir.loaded ||
@@ -8462,14 +8469,15 @@ async function runSceneObservablesSmoke(page) {
 async function runFloatingContextMenuDragSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(async () => {
+    const app = window.FdtdApp;
     const canvas = document.getElementById("simCanvas");
     const menu = document.getElementById("sourceMenu");
     const header = menu?.querySelector(".source-menu-header");
-    if (!canvas || !menu || !header || typeof openSourceMenuAt !== "function") {
+    if (!canvas || !menu || !header || !app?.openSourceMenuAt) {
       return { opened: false, draggable: null, movedX: 0, movedY: 0, withinFrame: false };
     }
     const canvasRect = canvas.getBoundingClientRect();
-    openSourceMenuAt(canvasRect.left + canvasRect.width * 0.38, canvasRect.top + canvasRect.height * 0.28, null);
+    app.openSourceMenuAt(canvasRect.left + canvasRect.width * 0.38, canvasRect.top + canvasRect.height * 0.28, null);
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const before = menu.getBoundingClientRect();
     const headerRect = header.getBoundingClientRect();
@@ -8627,10 +8635,13 @@ async function runReflectiveBoundaryWallSmoke(page) {
 
 async function runBrushDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
+    const app = window.FdtdApp;
+    if (!app?.updateControlText) throw new Error("FdtdApp.updateControlText() is unavailable");
     const brushMenu = document.getElementById("brushMenu");
     if (brushMenu) brushMenu.hidden = false;
     const materialDetailPanel = document.querySelector(".material-detail-panel");
+    const materialDetailHeading = materialDetailPanel?.querySelector(".cds--accordion__heading");
     const isRendered = (control) => {
       if (!control) return false;
       const style = getComputedStyle(control);
@@ -8673,9 +8684,10 @@ async function runBrushDependentParamsSmoke(page) {
       materialPhaseChangeEnabled: false,
       materialSaturableGainEnabled: false,
     });
-    if (materialDetailPanel) materialDetailPanel.open = false;
-    updateControlText();
-    const advancedMaterialClosedByDefault = materialDetailPanel?.open === false;
+    window.FdtdCarbonUI?.closeDisclosures?.(brushMenu || document);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    app.updateControlText();
+    const advancedMaterialClosedByDefault = materialDetailHeading?.getAttribute("aria-expanded") === "false";
     const hiddenWhenOff = dependentSelectors.every(allHidden);
     const modulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
     const modulationPhaseHiddenWhenOff = modulationPhaseControl?.hidden === true && !isRendered(modulationPhaseControl);
@@ -8692,7 +8704,7 @@ async function runBrushDependentParamsSmoke(page) {
     const geometryControlShape = (geometry) => {
       state.brushTool = "geometry";
       state.brushGeometry = geometry;
-      updateControlText();
+      app.updateControlText();
       const visibleGeometryIds = [
         "geometryWidthControl",
         "geometryHeightControl",
@@ -8722,8 +8734,9 @@ async function runBrushDependentParamsSmoke(page) {
       materialGyrotropyEnabled: true,
       materialModulationEnabled: true,
     });
-    if (materialDetailPanel) materialDetailPanel.open = true;
-    updateControlText();
+    if (materialDetailHeading?.getAttribute("aria-expanded") !== "true") materialDetailHeading?.click();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    app.updateControlText();
     const gyrotropyVisibleWhenOn = allVisible(".gyrotropy-params");
     const modulationVisibleWhenOn = allVisible(".modulation-params");
     const visibleModulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
@@ -8752,7 +8765,7 @@ async function runBrushDependentParamsSmoke(page) {
       !isRendered(document.getElementById("dispersionTauControl"));
 
     state.brush = "pec";
-    updateControlText();
+    app.updateControlText();
     const hiddenWhenNonCustom = dependentSelectors.every(allHidden) && allHidden(".dispersion-params");
 
     return {
@@ -8927,39 +8940,56 @@ async function main() {
   });
 
   try {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await openApplication(page, url);
+    const recordCase = async (id, run) => {
+      if (selectedUiCaseIds.size > 0 && !selectedUiCaseIds.has(id)) return;
+      const startedAt = performance.now();
+      if (progressMode) console.error(`[browser-smoke] START ${id}`);
+      let timeoutId;
+      const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`Browser smoke case timed out: ${id}`)), 120_000);
+      });
+      let result;
+      try {
+        result = await Promise.race([run(), timeout]);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      report.cases.push(result);
+      if (progressMode) console.error(`[browser-smoke] DONE  ${id} ${Math.round(performance.now() - startedAt)}ms`);
+    };
     for (const testCase of smokeCases) {
-      report.cases.push(await runSmokeCase(page, testCase));
+      await recordCase(testCase.id, () => runSmokeCase(page, testCase));
     }
     if (mode === "physics" && selectedCaseIds.size === 0) {
-      report.cases.push(await runSourceMutationStability(page));
+      await recordCase("source_mutation_split_stability", () => runSourceMutationStability(page));
     }
     if (mode === "smoke") {
-      report.cases.push(await runReactBootstrapSmoke(page));
-      report.cases.push(await runReproducibilitySmoke(page));
-      report.cases.push(await runCanvasActionMenuSmoke(page));
-      report.cases.push(await runHelpGuideSmoke(page));
-      report.cases.push(await runHelpGuideResponsiveSmoke(browser, url));
-      report.cases.push(await runWalkthroughSmoke(browser, url));
-      report.cases.push(await runCanvasFooterSmoke(browser, url));
-      report.cases.push(await runControlNavigationSmoke(page));
-      report.cases.push(await runPoyntingComponentVisibilitySmoke(page));
-      report.cases.push(await runMaxwellCheckerSmoke(page));
-      report.cases.push(await runSceneMenuResponsiveSmoke(browser, url));
-      report.cases.push(await runSceneMenuSelectionSmoke(browser, url));
-      report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
-      report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
-      report.cases.push(await runMobileToolbarHeightSmoke(browser, url));
-      report.cases.push(await runTouchLongPressSmoke(browser, url));
-      report.cases.push(await runContextualInspectorLayoutSmoke(browser, url));
-      report.cases.push(await runBrushStrokeContinuitySmoke(page));
-      report.cases.push(await runDrawPreviewSmoke(page));
-      report.cases.push(await runSourceWaveVectorOverlaySmoke(page));
-      report.cases.push(await runSourceDependentParamsSmoke(page));
-      report.cases.push(await runSceneObservablesSmoke(page));
-      report.cases.push(await runFloatingContextMenuDragSmoke(page));
-      report.cases.push(await runReflectiveBoundaryWallSmoke(page));
-      report.cases.push(await runBrushDependentParamsSmoke(page));
+      await recordCase("react_carbon_bootstrap", () => runReactBootstrapSmoke(page));
+      await recordCase("scene_observables_panel", () => runSceneObservablesSmoke(browser, url));
+      await recordCase("scene_state_round_trip", () => runReproducibilitySmoke(page));
+      await recordCase("canvas_action_menu", () => runCanvasActionMenuSmoke(page));
+      await recordCase("help_guide", () => runHelpGuideSmoke(page));
+      await recordCase("help_guide_responsive_layout", () => runHelpGuideResponsiveSmoke(browser, url));
+      await recordCase("guided_walkthrough_responsive", () => runWalkthroughSmoke(browser, url));
+      await recordCase("canvas_footer_links", () => runCanvasFooterSmoke(browser, url));
+      await recordCase("control_navigation_four_sections", () => runControlNavigationSmoke(page));
+      await recordCase("poynting_component_visibility", () => runPoyntingComponentVisibilitySmoke(page));
+      await recordCase("maxwell_checker_ui", () => runMaxwellCheckerSmoke(page));
+      await recordCase("scene_menu_responsive_layout", () => runSceneMenuResponsiveSmoke(browser, url));
+      await recordCase("scene_menu_selection", () => runSceneMenuSelectionSmoke(browser, url));
+      await recordCase("mobile_simulate_panel_scroll", () => runMobileSimulatePanelScrollSmoke(browser, url));
+      await recordCase("mobile_layer_scroll_reset", () => runMobileLayerScrollResetSmoke(browser, url));
+      await recordCase("mobile_toolbar_height", () => runMobileToolbarHeightSmoke(browser, url));
+      await recordCase("touch_long_press", () => runTouchLongPressSmoke(browser, url));
+      await recordCase("contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url));
+      await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
+      await recordCase("draw_preview", () => runDrawPreviewSmoke(page));
+      await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));
+      await recordCase("source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page));
+      await recordCase("floating_context_menu_drag", () => runFloatingContextMenuDragSmoke(page));
+      await recordCase("reflective_boundary_wall", () => runReflectiveBoundaryWallSmoke(page));
+      await recordCase("brush_dependent_params_visibility", () => runBrushDependentParamsSmoke(page));
     }
   } finally {
     await browser.close();

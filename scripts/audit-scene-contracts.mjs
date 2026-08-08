@@ -192,11 +192,8 @@ async function launchBrowser(chromium) {
 
 async function selectPreset(page, preset) {
   await page.evaluate((nextPreset) => {
-    const input = document.getElementById("presetInput");
-    if (!input) throw new Error("presetInput not found");
-    input.value = nextPreset;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (!window.FdtdApp?.selectScenePreset) throw new Error("FdtdApp.selectScenePreset() is unavailable");
+    window.FdtdApp.selectScenePreset(nextPreset);
   }, preset);
   await page.waitForTimeout(25);
 }
@@ -610,7 +607,7 @@ async function main() {
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "load" });
   await page.waitForFunction(() => typeof window.exportSceneState === "function");
-  const runtimeHandle = await page.evaluateHandle("({ sim, state })");
+  const runtimeHandle = await page.evaluateHandle("({ sim: window.FdtdApp.sim, state: window.FdtdApp.state })");
 
   const rows = [];
   for (const scene of catalog.scenes) {

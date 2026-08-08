@@ -18,8 +18,8 @@ Runs `scripts/validate-static.mjs`. It checks:
 
 - JavaScript syntax for the ordered browser scripts.
 - HTML script/CSS links.
-- Scene dropdown values against `applyPreset`.
-- Scene dropdown values against `sceneDescriptions`.
+- Scene catalog values against `applyPreset`.
+- Scene catalog values against `sceneDescriptions`.
 - Validation matrix presets.
 - 2D Yee CFL condition, `S < 1 / sqrt(2)`.
 - Reproducibility UI and scene snapshot functions.

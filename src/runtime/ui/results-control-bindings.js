@@ -172,8 +172,8 @@
       });
     });
     forEachNode(el.resultsDetailPanels, (panel) => {
-      panel?.addEventListener("toggle", () => {
-        if (panel.open) global.requestAnimationFrame(updateStats);
+      panel?.addEventListener("toggle", (event) => {
+        if (event.detail?.open) global.requestAnimationFrame(updateStats);
       });
     });
 

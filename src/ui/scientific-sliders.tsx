@@ -3,7 +3,7 @@ import { Slider } from "@carbon/react";
 
 type SliderConfiguration = {
   disabled: boolean;
-  labelHtml: string;
+  labelText: string;
   max: number;
   min: number;
   step: number;
@@ -15,7 +15,7 @@ export type ScientificSliderControl = {
   disabled: boolean;
   dispatchEvent: HTMLElement["dispatchEvent"];
   focus: HTMLElement["focus"];
-  labelHtml: string;
+  labelText: string;
   max: string;
   min: string;
   removeEventListener: HTMLElement["removeEventListener"];
@@ -31,16 +31,16 @@ type ScientificSliderDefinition = {
 };
 
 const definitions: ScientificSliderDefinition[] = [
-  { mountId: "reactFrequencySliderRoot", controlId: "frequencyInput", initial: { labelHtml: "λ<sub>s</sub> / λ<sub>0</sub>", min: 0.25, max: 5, step: 0.01, value: 1, disabled: false } },
-  { mountId: "reactAmplitudeSliderRoot", controlId: "amplitudeInput", labelId: "sourceAmplitudeLabel", initial: { labelHtml: "<i>J</i><sub>z,0</sub>", min: 5, max: 120, step: 5, value: 55, disabled: false } },
-  { mountId: "reactSourceWidthSliderRoot", controlId: "sourceWidthInput", initial: { labelHtml: "FWHM / λ<sub>0</sub>", min: 0.05, max: 1.5, step: 0.05, value: 0.35, disabled: true } },
-  { mountId: "reactSourceAngleSliderRoot", controlId: "sourceAngleInput", initial: { labelHtml: "J<sub>z</sub> axis θ", min: 0, max: 360, step: 1, value: 0, disabled: true } },
-  { mountId: "reactSourceTimePhaseSliderRoot", controlId: "sourceTimePhaseInput", initial: { labelHtml: "phase φ", min: -180, max: 180, step: 1, value: 0, disabled: false } },
-  { mountId: "reactMonitorLengthSliderRoot", controlId: "monitorLengthInput", initial: { labelHtml: "Length / λ<sub>0</sub>", min: 0.1, max: 8, step: 0.05, value: 2, disabled: false } },
-  { mountId: "reactMonitorAngleSliderRoot", controlId: "monitorAngleInput", initial: { labelHtml: "Angle θ", min: 0, max: 180, step: 1, value: 90, disabled: false } },
-  { mountId: "reactBrushSizeSliderRoot", controlId: "brushMenuSizeInput", initial: { labelHtml: "Brush size", min: 0.05, max: 0.8, step: 0.05, value: 0.2, disabled: false } },
-  { mountId: "reactSpeedSliderRoot", controlId: "speedInput", initial: { labelHtml: "Playback speed", min: 0.1, max: 10, step: 0.1, value: 1, disabled: false } },
-  { mountId: "reactGainSliderRoot", controlId: "gainInput", initial: { labelHtml: "Display gain", min: 20, max: 260, step: 5, value: 100, disabled: false } },
+  { mountId: "reactFrequencySliderRoot", controlId: "frequencyInput", initial: { labelText: "λs / λ₀", min: 0.25, max: 5, step: 0.01, value: 1, disabled: false } },
+  { mountId: "reactAmplitudeSliderRoot", controlId: "amplitudeInput", labelId: "sourceAmplitudeLabel", initial: { labelText: "Jz,0", min: 5, max: 120, step: 5, value: 55, disabled: false } },
+  { mountId: "reactSourceWidthSliderRoot", controlId: "sourceWidthInput", initial: { labelText: "FWHM / λ₀", min: 0.05, max: 1.5, step: 0.05, value: 0.35, disabled: true } },
+  { mountId: "reactSourceAngleSliderRoot", controlId: "sourceAngleInput", initial: { labelText: "Jz axis θ", min: 0, max: 360, step: 1, value: 0, disabled: true } },
+  { mountId: "reactSourceTimePhaseSliderRoot", controlId: "sourceTimePhaseInput", initial: { labelText: "phase φ", min: -180, max: 180, step: 1, value: 0, disabled: false } },
+  { mountId: "reactMonitorLengthSliderRoot", controlId: "monitorLengthInput", initial: { labelText: "Length / λ₀", min: 0.1, max: 8, step: 0.05, value: 2, disabled: false } },
+  { mountId: "reactMonitorAngleSliderRoot", controlId: "monitorAngleInput", initial: { labelText: "Angle θ", min: 0, max: 180, step: 1, value: 90, disabled: false } },
+  { mountId: "reactBrushSizeSliderRoot", controlId: "brushMenuSizeInput", initial: { labelText: "Brush size", min: 0.05, max: 0.8, step: 0.05, value: 0.2, disabled: false } },
+  { mountId: "reactSpeedSliderRoot", controlId: "speedInput", initial: { labelText: "Playback speed", min: 0.1, max: 10, step: 0.1, value: 1, disabled: false } },
+  { mountId: "reactGainSliderRoot", controlId: "gainInput", initial: { labelText: "Display gain", min: 20, max: 260, step: 5, value: 100, disabled: false } },
 ];
 
 const controls = new Map<string, ScientificSliderControl>();
@@ -49,7 +49,7 @@ declare global {
   interface Window {
     FdtdScientificControls?: {
       get: (id: string) => ScientificSliderControl | null;
-      setLabel: (id: string, labelHtml: string) => void;
+      setLabel: (id: string, labelText: string) => void;
     };
   }
 }
@@ -100,9 +100,9 @@ function ScientificSlider({ definition }: { definition: ScientificSliderDefiniti
         get: () => configurationRef.current.disabled,
         set: (disabled: boolean) => update({ disabled: Boolean(disabled) }),
       },
-      labelHtml: {
-        get: () => configurationRef.current.labelHtml,
-        set: (labelHtml: string) => update({ labelHtml }),
+      labelText: {
+        get: () => configurationRef.current.labelText,
+        set: (labelText: string) => update({ labelText }),
       },
     });
 
@@ -122,12 +122,7 @@ function ScientificSlider({ definition }: { definition: ScientificSliderDefiniti
       value={configuration.value}
       disabled={configuration.disabled}
       hideTextInput
-      labelText={(
-        <span
-          id={definition.labelId}
-          dangerouslySetInnerHTML={{ __html: configuration.labelHtml }}
-        />
-      )}
+      labelText={<span id={definition.labelId}>{configuration.labelText}</span>}
       onChange={({ value }) => {
         const nextValue = numericValue(value as number, configurationRef.current.value);
         update({ value: nextValue });
@@ -149,9 +144,9 @@ export function scientificSliderControl(id: string) {
   return controls.get(id) ?? null;
 }
 
-export function setScientificSliderLabel(id: string, labelHtml: string) {
+export function setScientificSliderLabel(id: string, labelText: string) {
   const control = controls.get(id);
-  if (control) control.labelHtml = labelHtml;
+  if (control) control.labelText = labelText;
 }
 
 export function installScientificSliderControls() {

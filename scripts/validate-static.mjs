@@ -43,22 +43,22 @@ function assetPath(assetUrl) {
   return pathname.replace(/^\.\//, "").replace(/\\/g, "/");
 }
 
-function runtimeScriptUrls() {
-  const scripts = JSON.parse(readText("src", "legacy-runtime.json"));
-  if (!Array.isArray(scripts) || scripts.some((source) => typeof source !== "string")) {
-    throw new Error("src/legacy-runtime.json must be an array of script URLs");
-  }
-  return scripts;
+function runtimeModulePaths() {
+  const entry = readText("src", "runtime-entry.ts");
+  const modules = extractAll(/import\s+["']\.\/(runtime\/[^"']+\.js)["'];/g, entry)
+    .map((source) => `src/${source}`);
+  if (!modules.length) throw new Error("src/runtime-entry.ts must import the runtime modules");
+  return modules;
 }
 
 function scriptPathMap(indexHtml) {
-  const scripts = [...runtimeScriptUrls(), ...extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)].map(assetPath);
+  const scripts = [...runtimeModulePaths(), ...extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)].map(assetPath);
   return new Map(scripts.map((scriptPath) => [path.posix.basename(scriptPath), scriptPath]));
 }
 
 function activeScriptPath(scriptMap, basename) {
   const activePath = scriptMap.get(basename);
-  if (!activePath) throw new Error(`Missing active script ${basename} in the runtime manifest or index.html`);
+  if (!activePath) throw new Error(`Missing active script ${basename} in runtime-entry.ts or index.html`);
   return activePath;
 }
 
@@ -150,10 +150,12 @@ function loadCatalog(constantsJs, catalogJs) {
 }
 
 function validateHtmlAssets(indexHtml) {
-  const scripts = [...runtimeScriptUrls(), ...extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml)];
+  const runtimeModules = runtimeModulePaths();
+  const linkedScripts = extractAll(/<script\s+[^>]*src="([^"]+)"/g, indexHtml);
+  const scripts = [...runtimeModules, ...linkedScripts];
   const stylesheets = extractAll(/<link\s+[^>]*rel="stylesheet"\s+href="([^"]+)"/g, indexHtml);
   const missing = [...scripts, ...stylesheets].filter((asset) => !fileExistsFromUrl(asset));
-  const unversioned = [...scripts, ...stylesheets].filter((asset) => !String(asset).includes("?v="));
+  const unversioned = [...linkedScripts, ...stylesheets].filter((asset) => !String(asset).includes("?v="));
   addCheck(
     "html linked assets",
     missing.length === 0 ? "PASS" : "BLOCK",
@@ -162,7 +164,9 @@ function validateHtmlAssets(indexHtml) {
   addCheck(
     "html cache-busted assets",
     unversioned.length === 0 ? "PASS" : "BLOCK",
-    unversioned.length === 0 ? `${scripts.length + stylesheets.length} linked scripts/styles include ?v tokens` : unversioned.join(", "),
+    unversioned.length === 0
+      ? `${linkedScripts.length + stylesheets.length} HTML-linked assets include ?v tokens; ${runtimeModules.length} modules are versioned by Vite`
+      : unversioned.join(", "),
   );
 }
 
@@ -196,24 +200,23 @@ function validateCarbonUi(indexHtml) {
   );
 }
 
-function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
-  const presetSelect = indexHtml.match(/<select\s+id="presetInput"[\s\S]*?<\/select>/)?.[0] || "";
-  const dropdownPresets = unique(extractAll(/<option\s+value="([^"]+)"/g, presetSelect));
+function validatePresets(sceneCatalog, sceneDescriptions, presetSourceJs) {
+  const catalogPresets = unique((sceneCatalog.scenes || []).map((scene) => scene.id).filter(Boolean));
   const presetCases = unique(extractAll(/case\s+"([^"]+)"/g, presetSourceJs));
   const descriptions = unique(Object.keys(sceneDescriptions));
-  const missingPresetCases = dropdownPresets.filter((preset) => preset !== "empty" && !presetCases.includes(preset));
-  const missingDescriptions = dropdownPresets.filter((preset) => !descriptions.includes(preset));
-  const orphanDescriptions = descriptions.filter((preset) => !dropdownPresets.includes(preset));
+  const missingPresetCases = catalogPresets.filter((preset) => preset !== "empty" && !presetCases.includes(preset));
+  const missingDescriptions = catalogPresets.filter((preset) => !descriptions.includes(preset));
+  const orphanDescriptions = descriptions.filter((preset) => !catalogPresets.includes(preset));
 
   addCheck(
-    "preset dropdown maps to applyPreset",
+    "scene catalog maps to applyPreset",
     missingPresetCases.length === 0 ? "PASS" : "BLOCK",
-    missingPresetCases.length === 0 ? `${dropdownPresets.length} dropdown presets checked` : missingPresetCases.join(", "),
+    missingPresetCases.length === 0 ? `${catalogPresets.length} catalog presets checked` : missingPresetCases.join(", "),
   );
   addCheck(
     "preset descriptions",
     missingDescriptions.length === 0 ? "PASS" : "BLOCK",
-    missingDescriptions.length === 0 ? "Every dropdown preset has a catalog description" : missingDescriptions.join(", "),
+    missingDescriptions.length === 0 ? "Every catalog preset has a runtime description" : missingDescriptions.join(", "),
   );
   addCheck(
     "orphan catalog descriptions",
@@ -221,96 +224,30 @@ function validatePresets(indexHtml, sceneDescriptions, presetSourceJs) {
     orphanDescriptions.length === 0 ? "No orphan descriptions" : orphanDescriptions.join(", "),
   );
 
-  return dropdownPresets;
+  return catalogPresets;
 }
 
-function decodeHtmlText(value) {
-  return String(value || "")
-    .replace(/&quot;/g, "\"")
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .trim();
-}
-
-function parseSceneOptionLabel(label) {
-  const text = decodeHtmlText(label);
-  const match = text.match(/^(\d+)\s*[\u00b7.-]\s*(.+)$/);
-  if (!match) return { index: null, title: text || "Untitled scene" };
-  return {
-    index: Number(match[1]),
-    title: match[2].trim(),
-  };
-}
-
-function parsePresetSelect(indexHtml) {
-  const presetSelect = indexHtml.match(/<select\s+id="presetInput"[\s\S]*?<\/select>/)?.[0] || "";
-  const scenes = [];
-  const groups = new Map();
-  let currentGroupLabel = "General";
-  const tokenPattern = /<optgroup\s+label="([^"]+)"\s*>|<\/optgroup>|<option\s+value="([^"]+)">([\s\S]*?)<\/option>/g;
-  for (const match of presetSelect.matchAll(tokenPattern)) {
-    if (match[1]) {
-      currentGroupLabel = decodeHtmlText(match[1]);
-      if (!groups.has(currentGroupLabel)) groups.set(currentGroupLabel, []);
-      continue;
-    }
-    if (match[0].startsWith("</optgroup")) {
-      currentGroupLabel = "General";
-      continue;
-    }
-    const id = match[2];
-    const parsed = parseSceneOptionLabel(match[3]);
-    if (!groups.has(currentGroupLabel)) groups.set(currentGroupLabel, []);
-    groups.get(currentGroupLabel).push(id);
-    scenes.push({ id, groupLabel: currentGroupLabel, ...parsed });
-  }
-  return { groups, scenes };
-}
-
-function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions) {
+function validateSceneCatalogJson(catalog, catalogPresets, sceneDescriptions) {
   const catalogPath = repoPath("src", "runtime", "data", "scene-catalog.json");
   if (!fs.existsSync(catalogPath)) {
     addCheck("scene catalog JSON", "BLOCK", "Missing src/runtime/data/scene-catalog.json");
     return;
   }
 
-  let catalog = null;
-  try {
-    catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
-  } catch (error) {
-    addCheck("scene catalog JSON", "BLOCK", error.message);
-    return;
-  }
-
   const groups = Array.isArray(catalog.groups) ? catalog.groups : [];
   const scenes = Array.isArray(catalog.scenes) ? catalog.scenes : [];
-  const htmlPresetData = parsePresetSelect(indexHtml);
-  const htmlSceneById = new Map(htmlPresetData.scenes.map((scene) => [scene.id, scene]));
   const jsonSceneIds = scenes.map((scene) => scene.id).filter(Boolean);
   const duplicateJsonIds = jsonSceneIds.filter((id, index) => jsonSceneIds.indexOf(id) !== index);
   const groupIds = new Set(groups.map((group) => group.id));
   const scenesWithoutGroup = scenes.filter((scene) => scene.groupId && !groupIds.has(scene.groupId)).map((scene) => scene.id);
-  const missingFromJson = dropdownPresets.filter((preset) => !jsonSceneIds.includes(preset));
-  const orphanJsonScenes = jsonSceneIds.filter((preset) => !dropdownPresets.includes(preset));
+  const missingFromJson = catalogPresets.filter((preset) => !jsonSceneIds.includes(preset));
+  const orphanJsonScenes = jsonSceneIds.filter((preset) => !catalogPresets.includes(preset));
   const missingJsonDescriptions = jsonSceneIds.filter((preset) => !String(scenes.find((scene) => scene.id === preset)?.description || "").trim());
-  const mismatchedMetadata = scenes
-    .map((scene) => ({ scene, htmlScene: htmlSceneById.get(scene.id) }))
-    .filter(({ scene, htmlScene }) => {
-      if (!htmlScene) return false;
-      return (
-        String(scene.groupLabel || "") !== htmlScene.groupLabel ||
-        (scene.id !== "empty" && Number(scene.index) !== htmlScene.index) ||
-        String(scene.title || "") !== htmlScene.title
-      );
-    })
-    .map(({ scene, htmlScene }) => `${scene.id}: JSON ${scene.index ?? "-"} / ${scene.title || "-"} / ${scene.groupLabel || "-"} != HTML ${htmlScene.index ?? "-"} / ${htmlScene.title} / ${htmlScene.groupLabel}`);
   const mismatchedGroupMembership = groups
     .map((group) => {
-      const htmlIds = htmlPresetData.groups.get(group.label) || [];
+      const sceneIds = scenes.filter((scene) => scene.groupId === group.id).map((scene) => scene.id);
       const jsonIds = Array.isArray(group.sceneIds) ? group.sceneIds : [];
-      return htmlIds.join("|") === jsonIds.join("|") ? "" : `${group.label}: JSON ${jsonIds.length} scene(s), HTML ${htmlIds.length} scene(s)`;
+      return sceneIds.join("|") === jsonIds.join("|") ? "" : `${group.label}: group lists ${jsonIds.length} scene(s), records provide ${sceneIds.length}`;
     })
     .filter(Boolean);
   const oversizedGroups = groups
@@ -329,7 +266,6 @@ function validateSceneCatalogJson(indexHtml, dropdownPresets, sceneDescriptions)
     ...missingFromJson.map((id) => `missing ${id}`),
     ...orphanJsonScenes.map((id) => `orphan ${id}`),
     ...missingJsonDescriptions.map((id) => `empty description for ${id}`),
-    ...mismatchedMetadata,
     ...mismatchedGroupMembership,
   ];
   addCheck(
@@ -459,14 +395,14 @@ function validateSceneThumbnails(sceneIds) {
   );
 }
 
-function validateValidationMatrix(dropdownPresets) {
+function validateValidationMatrix(catalogPresets) {
   const matrix = JSON.parse(readText("scripts", "validation-matrix.json"));
   const ids = matrix.cases.map((testCase) => testCase.id);
   const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
   const missingRequired = matrix.requiredP0Cases.filter((id) => !ids.includes(id));
   const unknownPresets = matrix.cases
     .map((testCase) => testCase.preset)
-    .filter((preset) => !dropdownPresets.includes(preset));
+    .filter((preset) => !catalogPresets.includes(preset));
   const p0Cases = matrix.cases.filter((testCase) => testCase.priority === "P0");
   const p0WithoutSmoke = p0Cases.filter((testCase) => !testCase.browserSmoke).map((testCase) => testCase.id);
 
@@ -483,7 +419,7 @@ function validateValidationMatrix(dropdownPresets) {
   addCheck(
     "validation matrix presets",
     unknownPresets.length === 0 ? "PASS" : "BLOCK",
-    unknownPresets.length === 0 ? "All validation presets exist in the scene dropdown" : unique(unknownPresets).join(", "),
+    unknownPresets.length === 0 ? "All validation presets exist in the scene catalog" : unique(unknownPresets).join(", "),
   );
   addCheck(
     "P0 browser smoke coverage",
@@ -750,13 +686,14 @@ function main() {
     readActiveScript(activeScripts, "constants.js"),
     readActiveScript(activeScripts, "catalog.js"),
   );
-  const dropdownPresets = validatePresets(
-    indexHtml,
+  const sceneCatalog = JSON.parse(readText("src", "runtime", "data", "scene-catalog.json"));
+  const catalogPresets = validatePresets(
+    sceneCatalog,
     catalog.sceneDescriptions,
     readActiveScript(activeScripts, "fdtd-presets.js"),
   );
-  validateSceneCatalogJson(indexHtml, dropdownPresets, catalog.sceneDescriptions);
-  validateValidationMatrix(dropdownPresets);
+  validateSceneCatalogJson(sceneCatalog, catalogPresets, catalog.sceneDescriptions);
+  validateValidationMatrix(catalogPresets);
   validateNumerics(constants);
   validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
   const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js");

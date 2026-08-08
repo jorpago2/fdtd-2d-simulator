@@ -68,3 +68,5 @@ class FDTDSim {
     return x + y * this.nx;
   }
 }
+
+globalThis.FDTDSim = FDTDSim;

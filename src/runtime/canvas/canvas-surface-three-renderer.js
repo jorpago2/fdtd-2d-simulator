@@ -1,8 +1,7 @@
 "use strict";
 
 (function initFdtdCanvasSurfaceThreeRenderer(global) {
-  const scriptUrl = global.document?.currentScript?.src || global.location?.href || "./";
-  const THREE_MODULE_URL = new URL("../../../assets/vendor/three/three.module.min.js?v=0.185.1", scriptUrl).href;
+  const THREE_MODULE_URL = new URL("assets/vendor/three/three.module.min.js?v=0.185.1", global.document?.baseURI || global.location?.href || "./").href;
   const SURFACE_TARGET = Object.freeze({ colDivisor: 8, rowDivisor: 8, minCols: 64, minRows: 46, maxCols: 176, maxRows: 128 });
   const SURFACE_X_SCALE = 1.34;
   const SURFACE_Y_SCALE = 0.82;

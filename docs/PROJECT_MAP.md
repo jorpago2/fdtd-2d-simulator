@@ -6,7 +6,7 @@ Use this map to find the canonical files for UI, runtime, simulation, and valida
 
 - Carbon is loaded from `src/styles/carbon.scss`; scientific layout work goes in `src/styles/scientific-workbench.css`.
 - Standard controls are owned by Carbon React. The workbench stylesheet is limited to layout and scientific visualizations.
-- Typed React UI and bootstrap start at `src/main.tsx`; `src/legacy-runtime.json` orders the validated numerical runtime during migration.
+- Typed React UI and bootstrap start at `src/main.tsx`; `src/runtime-entry.ts` defines the validated numerical runtime dependency order.
 - Reference modules used by validators live in `tests/reference-modules/`; they are not browser load path.
 
 ## Active CSS Ownership
@@ -20,7 +20,7 @@ No historical CSS bundle is part of the active repository path. Keep the app on 
 
 ## Active JavaScript Ownership
 
-Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in the order declared by `src/legacy-runtime.json`.
+Vite builds `src/main.tsx` and the ordered module graph declared by `src/runtime-entry.ts`.
 
 | Group | Active path | Purpose |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Vite builds `src/main.tsx`, which loads the remaining `src/runtime/` files in th
 | Typed core | `src/core` | Typed runtime state and domain models. |
 | Typed data | `src/data` | Typed catalog loading, normalization, and data contracts. |
 | Typed UI models | `src/ui` | Typed visual-layer state and view-model logic. |
-| Core/data | `src/runtime/core`, `src/runtime/data` | Legacy constants, numerics, catalog metadata, colormaps, state, formatters, scene import/export. |
+| Core/data | `src/runtime/core`, `src/runtime/data` | Constants, numerics, catalog metadata, colormaps, state, formatters, scene import/export. |
 | Simulation | `src/runtime/simulation` | FDTD state, Yee stepping, materials, sources, CPML, diagnostics, and JS/WASM backend routing. |
 | Canvas | `src/runtime/canvas` | Viewport, rendering overlays, colorbar, PNG export, gestures, drag, and context menus. |
 | UI/controllers | `src/runtime/ui` | Drawer, scenes, results, controls, material/source/monitor editors, operations and bindings. |

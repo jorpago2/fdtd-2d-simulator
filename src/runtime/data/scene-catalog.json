@@ -1,9 +1,5 @@
 {
   "schemaVersion": 2,
-  "generatedFrom": [
-    "index.html#presetInput",
-    "src/runtime/data/catalog.js#sceneDescriptions"
-  ],
   "groups": [
     {
       "id": "general",

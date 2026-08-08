@@ -117,10 +117,6 @@
       if (documentElement) {
         documentElement.dataset.theme = state.theme;
       }
-      if (el.presetInput) {
-        el.presetInput.value = state.preset;
-      }
-
       clearMaterialSelection(false);
       clearCanvasHover(false);
       closeContextMenus();

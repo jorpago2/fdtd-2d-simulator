@@ -93,3 +93,12 @@ function lerp(a, b, t) {
 function clampInt(value, min, max) {
   return Math.round(clamp(Number(value) || 0, min, max));
 }
+
+Object.assign(globalThis, {
+  complexPhasorRatio,
+  symmetricJacobiEigenvalues,
+  planeWaveBasis,
+  clamp,
+  lerp,
+  clampInt,
+});

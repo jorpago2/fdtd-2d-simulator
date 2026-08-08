@@ -222,15 +222,13 @@
     }
 
     function collectSceneRecords() {
-      if (state.catalog?.scenes?.length) {
-        return state.catalog.scenes.map(createSceneRecordFromCatalogScene);
-      }
-      if (!el.presetInput) return [];
-      return Array.from(el.presetInput.querySelectorAll("option")).map((option) => createSceneRecordFromOption(option, sceneDescriptions));
+      return state.catalog?.scenes?.length
+        ? state.catalog.scenes.map(createSceneRecordFromCatalogScene)
+        : [];
     }
 
     function currentSceneGroupLabel() {
-      return sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.())?.groupLabel || "";
+      return sceneRecordByValue(getCurrentPreset?.())?.groupLabel || "";
     }
 
     function firstAvailableGroupLabel(records = state.records) {
@@ -265,39 +263,22 @@
     }
 
     function currentSceneRecordFallback(value = getCurrentPreset?.()) {
-      const option = Array.from(el.presetInput?.options || []).find((candidate) => candidate.value === value);
-      if (!option) {
-        return {
-          badges: ["FDTD"],
-          description: sceneDescriptions.empty,
-          group: "General",
-          groupLabel: "General",
-          index: null,
-          thumbnail: "wave",
-          thumbnailSrc: sceneThumbnailSrc(value),
-          title: "Custom scene",
-          value,
-        };
-      }
-      const parsed = parseSceneOptionLabel(option.textContent || option.value);
-      const groupLabel = option.parentElement?.tagName === "OPTGROUP" ? option.parentElement.label : "General";
-      const record = {
-        description: sceneDescriptions[value] || sceneDescriptions.empty,
-        group: cleanSceneGroupLabel(groupLabel),
-        groupLabel,
-        index: parsed.index,
-        title: parsed.title,
+      return {
+        badges: ["FDTD"],
+        description: sceneDescriptions.empty,
+        group: "General",
+        groupLabel: "General",
+        index: null,
+        thumbnail: "wave",
+        thumbnailSrc: sceneThumbnailSrc(value),
+        title: "Custom scene",
         value,
       };
-      record.badges = sceneBadgeLabels(record);
-      record.thumbnail = sceneThumbnailKind(record);
-      record.thumbnailSrc = sceneThumbnailSrc(record.value);
-      return record;
     }
 
     function updateSceneSpotlight(record) {
       if (!el.sceneSpotlight) return;
-      const current = record || sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.()) || currentSceneRecordFallback();
+      const current = record || sceneRecordByValue(getCurrentPreset?.()) || currentSceneRecordFallback();
       const thumbnailKind = current.thumbnail || sceneThumbnailKind(current);
       el.sceneSpotlight.dataset.sceneThumb = thumbnailKind;
       const thumb = el.sceneSpotlight.querySelector(".scene-spotlight-thumb");
@@ -325,14 +306,14 @@
           : `${groupCountLabel(visibleCount)} in ${groupName}`;
       }
       if (el.sceneBrowserActive) {
-        const current = sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.());
+        const current = sceneRecordByValue(getCurrentPreset?.());
         el.sceneBrowserActive.textContent = searchActive
           ? "Search: all families"
           : current
             ? `Family: ${current.group}`
             : "Family: custom";
       }
-      updateSceneSpotlight(sceneRecordByValue(el.presetInput?.value || getCurrentPreset?.()));
+      updateSceneSpotlight(sceneRecordByValue(getCurrentPreset?.()));
     }
 
     function renderSceneFilterBar() {
@@ -383,7 +364,7 @@
       renderer({
         target: el.sceneCards,
         records,
-        currentPreset: el.presetInput?.value || getCurrentPreset?.() || "",
+        currentPreset: getCurrentPreset?.() || "",
         onSelect(value) {
           onSelectScene?.(value);
           setSceneView("current");
@@ -393,7 +374,7 @@
 
     function syncSceneBrowserSelection({ focusCurrent = false } = {}) {
       if (!el.sceneCards) return;
-      const currentPreset = el.presetInput?.value || getCurrentPreset?.();
+      const currentPreset = getCurrentPreset?.();
       const currentRecord = sceneRecordByValue(currentPreset);
       if (!state.filter) ensureActiveFilter();
       if (focusCurrent && currentRecord?.groupLabel && state.filter !== currentRecord.groupLabel) {

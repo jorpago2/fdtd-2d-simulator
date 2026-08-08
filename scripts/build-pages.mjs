@@ -13,7 +13,6 @@ const distDir = path.join(rootDir, "dist");
 const publicEntries = [
   ".nojekyll",
   "assets",
-  path.join("src", "runtime"),
 ];
 const requiredOutputEntries = ["index.html", ...publicEntries];
 

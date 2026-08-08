@@ -54,6 +54,7 @@
             <button
               id="canvasOptionsToggle"
               class="icon-button canvas-options-toggle"
+              data-carbon-icon-only="true"
               type="button"
               aria-controls="canvasViewControls"
               aria-expanded="false"
@@ -195,6 +196,8 @@
             <button
               id="helpGuideToggle"
               class="help-guide-toggle"
+              data-carbon-kind="primary"
+              data-carbon-icon-only="true"
               type="button"
               aria-controls="helpGuidePanel"
               aria-expanded="false"
@@ -216,6 +219,7 @@
                 <button
                   id="helpGuideBackBtn"
                   class="icon-button compact-button help-guide-back"
+                  data-carbon-icon-only="true"
                   type="button"
                   title="Back to guide"
                   aria-label="Back to guide overview"
@@ -227,13 +231,13 @@
                   <p id="helpGuideKicker" class="panel-kicker">Quick guide</p>
                   <h2 id="helpGuideTitle">How to use the simulator</h2>
                 </div>
-                <button id="helpGuideCloseBtn" class="icon-button compact-button" type="button" title="Close guide" aria-label="Close guide">&times;</button>
+                <button id="helpGuideCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close guide" aria-label="Close guide">&times;</button>
               </div>
               <div id="helpGuideHome" class="help-guide-body help-guide-view">
                 <p id="helpGuideIntro" class="help-guide-intro">
                   Choose a scene, run the FDTD update, then inspect fields, materials, flux, or numerical settings.
                 </p>
-                <button id="walkthroughStartBtn" class="text-button primary-button help-guide-walkthrough-button" type="button">
+                <button id="walkthroughStartBtn" class="text-button primary-button help-guide-walkthrough-button" data-carbon-kind="primary" type="button">
                   Start walkthrough
                 </button>
                 <div class="help-guide-grid">
@@ -500,13 +504,13 @@
             >
               <div class="walkthrough-header">
                 <output id="walkthroughProgress" class="panel-kicker">Step 1 of 7</output>
-                <button id="walkthroughSkipBtn" class="icon-button compact-button" type="button" title="Close walkthrough" aria-label="Close walkthrough">&times;</button>
+                <button id="walkthroughSkipBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close walkthrough" aria-label="Close walkthrough">&times;</button>
               </div>
               <h2 id="walkthroughTitle">Open the controls</h2>
               <p id="walkthroughText">Use the menu button to open the simulation controls.</p>
               <div class="walkthrough-actions">
                 <button id="walkthroughPrevBtn" class="text-button" type="button">Back</button>
-                <button id="walkthroughNextBtn" class="text-button primary-button" type="button">Next</button>
+                <button id="walkthroughNextBtn" class="text-button primary-button" data-carbon-kind="primary" type="button">Next</button>
               </div>
             </section>
             <div
@@ -522,7 +526,7 @@
                   <p id="canvasContextMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
                   <h2 id="canvasContextMenuTitle">Add element</h2>
                 </div>
-                <button id="canvasContextCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close canvas menu">×</button>
+                <button id="canvasContextCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close canvas menu">×</button>
               </div>
               <div class="context-choice-grid" role="group" aria-label="Canvas element type">
                 <button class="text-button" type="button" data-canvas-add="source">Source</button>
@@ -542,7 +546,7 @@
                   <p id="sourceMenuHint" class="source-menu-hint">x / λ<sub>0</sub> 1.20, y / λ<sub>0</sub> 3.00</p>
                   <h2 id="sourceMenuTitle">Add source</h2>
                 </div>
-                <button id="sourceCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close source editor">×</button>
+                <button id="sourceCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close source editor">×</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -626,8 +630,8 @@
                 </section>
               </div>
               <div class="source-menu-actions">
-                <button id="sourceDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
-                <button id="sourceApplyBtn" class="text-button primary-button" type="button">Add source</button>
+                <button id="sourceDeleteBtn" class="text-button danger-button" data-carbon-kind="danger--tertiary" type="button" hidden>Delete</button>
+                <button id="sourceApplyBtn" class="text-button primary-button" data-carbon-kind="primary" type="button">Add source</button>
               </div>
             </div>
             <div
@@ -643,7 +647,7 @@
                   <p id="monitorMenuHint" class="source-menu-hint">Line monitor</p>
                   <h2 id="monitorMenuTitle">Add monitor</h2>
                 </div>
-                <button id="monitorCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close monitor editor">×</button>
+                <button id="monitorCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close monitor editor">×</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -672,8 +676,8 @@
                 <output id="monitorAngleOutput" class="scientific-slider-output" for="monitorAngleInput">90°</output>
               </div>
               <div class="source-menu-actions">
-                <button id="monitorDeleteBtn" class="text-button danger-button" type="button" hidden>Delete</button>
-                <button id="monitorApplyBtn" class="text-button primary-button" type="button">Add monitor</button>
+                <button id="monitorDeleteBtn" class="text-button danger-button" data-carbon-kind="danger--tertiary" type="button" hidden>Delete</button>
+                <button id="monitorApplyBtn" class="text-button primary-button" data-carbon-kind="primary" type="button">Add monitor</button>
               </div>
             </div>
             <div
@@ -689,7 +693,7 @@
                   <p id="brushMenuHint" class="source-menu-hint">Draw medium</p>
                   <h2 id="brushMenuTitle">Draw</h2>
                 </div>
-                <button id="brushMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close draw editor">×</button>
+                <button id="brushMenuCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close draw editor">×</button>
               </div>
               <div class="source-menu-body">
               <fieldset id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="radiogroup" aria-label="Draw tool">
@@ -1004,7 +1008,7 @@
                   <p id="boundaryMenuHint" class="source-menu-hint">CPML region</p>
                   <h2 id="boundaryMenuTitle">Boundary</h2>
                 </div>
-                <button id="boundaryMenuCloseBtn" class="icon-button compact-button" type="button" title="Close" aria-label="Close boundary editor">&times;</button>
+                <button id="boundaryMenuCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close boundary editor">&times;</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -1037,7 +1041,7 @@
               <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
             <div class="control-panel-actions">
-              <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" type="button" aria-label="Close controls" title="Close controls">&times;</button>
+              <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" data-carbon-icon-only="true" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
           </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
@@ -1058,178 +1062,6 @@
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
 <section class="panel-section scene-section">
               <h2>Scene</h2>
-              <label class="scene-select-fallback" hidden>
-                <span>Example</span>
-                <select id="presetInput">
-                  <optgroup label="1. Maxwell and propagation">
-                    <option value="planeWaveAir">1 · Plane wave in air</option>
-                    <option value="planeWaveDielectric">2 · Plane wave in dielectric</option>
-                    <option value="gaussianPulseAir">3 · Gaussian pulse in free space</option>
-                    <option value="twoSourceInterference">4 · Two-source interference</option>
-                    <option value="frequencyBeat">5 · Two-frequency beat</option>
-                    <option value="singleSlit">6 · Single slit diffraction</option>
-                    <option value="doubleSlit">7 · Double slit</option>
-                    <option value="circularAperture">8 · Circular aperture</option>
-                    <option value="teTmComparison">9 · TEz/TMz comparison</option>
-                    <option value="poyntingPlaneWave">10 · Poynting vector</option>
-                    <option value="evanescentWave">11 · Evanescent isolated wave</option>
-                    <option value="pmlAbsorption">12 · CPML absorption check</option>
-                  </optgroup>
-                  <optgroup label="2. Interfaces and multilayers">
-                    <option value="normalInterface">13 · Normal air-dielectric interface</option>
-                    <option value="obliqueRefraction">14 · Oblique refraction</option>
-                    <option value="brewsterTm">15 · Brewster p/TM minimum</option>
-                    <option value="brewsterTeTm">16 · s/TE-p/TM Brewster comparison</option>
-                    <option value="totalInternalReflection">17 · Total internal reflection</option>
-                    <option value="frustratedTir">18 · Frustrated TIR</option>
-                    <option value="quarterWaveCoating">19 · Quarter-wave coating</option>
-                    <option value="braggMirror">20 · 1D Bragg mirror</option>
-                    <option value="lossyInterface">21 · Lossy interface</option>
-                    <option value="anisotropicInterface">22 · Anisotropic interface</option>
-                  </optgroup>
-                  <optgroup label="3. Sources and radiation">
-                    <option value="jzDipole">23 · Point electric dipole Jz</option>
-                    <option value="inPlaneDipole">24 · In-plane electric dipole Jx/Jy</option>
-                    <option value="mzDipole">25 · Effective magnetic dipole Mz</option>
-                    <option value="dipoleSubstrate">26 · Dipole over substrate</option>
-                    <option value="dipoleNearPec">27 · Dipole near PEC mirror</option>
-                    <option value="huygensRadiator">28 · Huygens source</option>
-                    <option value="circularDipole">29 · Circular dipole</option>
-                    <option value="janusDipole">30 · Janus dipole</option>
-                    <option value="dipoleArray">31 · Equal-phase dipole array</option>
-                    <option value="phasedDipoleArray">32 · Progressive-phase dipole array</option>
-                    <option value="apertureRadiator">33 · Slot aperture radiator</option>
-                    <option value="nearFarFieldNtff">34 · Near-field / far-field NTFF</option>
-                  </optgroup>
-                  <optgroup label="4. Guided optics">
-                    <option value="slabWaveguide">35 · Single-mode slab waveguide</option>
-                    <option value="multimodeSlab">36 · Multimode slab waveguide</option>
-                    <option value="lossyGuide">37 · Lossy waveguide</option>
-                    <option value="waveguideBend">38 · Waveguide bend</option>
-                    <option value="taperWaveguide">39 · Tapered waveguide</option>
-                    <option value="widthStepWaveguide">40 · Width step waveguide</option>
-                    <option value="directionalCoupler">41 · Directional coupler</option>
-                    <option value="mmiWaveguide">42 · MMI section</option>
-                    <option value="machZehnder">43 · Mach-Zehnder interferometer</option>
-                    <option value="guideScatterer">44 · Waveguide with scatterer</option>
-                    <option value="microstrip">45 · Microstrip cross-section</option>
-                    <option value="stubResonator">46 · Stub resonator</option>
-                  </optgroup>
-                  <optgroup label="5. Resonators and cavities">
-                    <option value="fabryPerot">47 · Fabry-Perot cavity</option>
-                    <option value="fabryPerotStanding">48 · Fabry-Perot standing field</option>
-                    <option value="ringResonator">49 · Ring resonator</option>
-                    <option value="addDropRing">50 · Add-drop ring</option>
-                    <option value="racetrackResonator">51 · Racetrack resonator</option>
-                    <option value="dielectricCavity">52 · Dielectric defect cavity</option>
-                    <option value="pecCavity">53 · PEC half-wave cavity</option>
-                    <option value="quarterWaveCavity">54 · Quarter-wave cavity</option>
-                    <option value="qRingdown">55 · Q by ringdown</option>
-                    <option value="purcell2d">56 · 2D cavity Q/Aeff metric</option>
-                    <option value="betaFactor">57 · Dipole-to-guide flux ratio</option>
-                    <option value="degenerateModes">58 · Dual-dipole disk spectrum</option>
-                  </optgroup>
-                  <optgroup label="6. Scattering and disorder">
-                    <option value="pecCylinder">59 · PEC cylinder scattering</option>
-                    <option value="dielectricCylinder">60 · Dielectric cylinder scattering</option>
-                    <option value="mieCylinder">61 · High-index Mie cylinder</option>
-                    <option value="rcsCylinder">62 · 2D NTFF scattering width</option>
-                    <option value="lossyCylinder">63 · Absorbing dielectric cylinder</option>
-                    <option value="dielectricDimer">64 · Dielectric dimer</option>
-                    <option value="kerker2d">65 · Forward/backward contrast</option>
-                    <option value="multipleScattering">66 · Multiple scattering</option>
-                    <option value="weakLocalization">67 · Weak-localization disorder</option>
-                    <option value="andersonLocalization">68 · Dense-disorder trapping</option>
-                    <option value="diffusiveRandomMedium">69 · Diffusive random medium</option>
-                  </optgroup>
-                  <optgroup label="7. Material models and tensors">
-                    <option value="finiteConductivity">70 · Finite-conductivity damping</option>
-                    <option value="drudeMetal">71 · Drude metal</option>
-                    <option value="lorentzMedium">72 · Lorentz resonant medium</option>
-                    <option value="debyeDielectric">73 · Debye dielectric</option>
-                    <option value="plasmaCutoff">74 · Plasma cutoff</option>
-                    <option value="enzSlab">75 · ENZ slab</option>
-                    <option value="anisotropicMedium">76 · Anisotropic medium</option>
-                    <option value="hyperbolicMedium">77 · Indefinite Drude tensor</option>
-                    <option value="chiralMedium">78 · 6-field bianisotropic coupling</option>
-                    <option value="bianisotropicMedium">79 · 6-field bianisotropic medium</option>
-                    <option value="gyrotropicMedium">80 · Gyrotropic tensor block</option>
-                  </optgroup>
-                  <optgroup label="8. Periodic photonics and BICs">
-                    <option value="braggStack">81 · 1D Bragg stack</option>
-                    <option value="photonicCrystal">82 · 2D photonic crystal</option>
-                    <option value="phcPointDefect">83 · PhC point defect</option>
-                    <option value="phcWaveguide">84 · PhC line-defect waveguide</option>
-                    <option value="phcOptimizedCavity">85 · Shifted L3 PhC cavity</option>
-                    <option value="phcDisorder">86 · Disordered photonic crystal</option>
-                    <option value="phcDarkMode">87 · Antisymmetric PhC defect</option>
-                    <option value="quasiBic">88 · Asymmetric PhC defect</option>
-                    <option value="symmetryProtectedBic">89 · Symmetric L3 PhC cavity</option>
-                    <option value="fanoResonator">90 · Fano side resonator</option>
-                  </optgroup>
-                  <optgroup label="9. Topological photonics">
-                    <option value="sshTrivial">91 · SSH chain, trivial</option>
-                    <option value="sshTopological">92 · SSH chain, topological</option>
-                    <option value="sshInterface">93 · SSH interface</option>
-                    <option value="sshDisorder">94 · SSH with disorder</option>
-                    <option value="nonHermitianSsh">95 · Non-Hermitian SSH</option>
-                    <option value="honeycombLattice">96 · Honeycomb lattice</option>
-                    <option value="valleyHall">97 · Valley Hall interface</option>
-                    <option value="valleyHallBend">98 · Valley Hall bend</option>
-                    <option value="topologicalPumping">99 · Modulated SSH chain</option>
-                    <option value="topologyDefect">100 · Topology with strong defect</option>
-                  </optgroup>
-                  <optgroup label="10. Plasmonics and metamaterials">
-                    <option value="sppInterface">101 · SPP metal-dielectric interface</option>
-                    <option value="sppGrating">102 · SPP grating launcher</option>
-                    <option value="localizedPlasmon">103 · Localized plasmon disk</option>
-                    <option value="plasmonicDimer">104 · Plasmonic dimer</option>
-                    <option value="metasurfacePhaseBars">105 · Phase-gradient metasurface</option>
-                    <option value="perfectAbsorber">106 · Near-perfect backed absorber</option>
-                    <option value="negativeIndexSlab">107 · Double-negative Drude slab</option>
-                    <option value="superlensSlab">108 · DNG slab image transfer</option>
-                    <option value="hyperlens">109 · 2D hyperbolic annular transfer</option>
-                    <option value="enzEmitter">110 · Dipole near ENZ slab</option>
-                  </optgroup>
-                  <optgroup label="11. Nonlinear and active media">
-                    <option value="kerrSlab">111 · Kerr nonlinear slab</option>
-                    <option value="shgSlab">112 · SHG χ² slab</option>
-                    <option value="thgSlab">113 · Chi3 harmonic slab</option>
-                    <option value="spmKerrPulse">114 · Kerr SPM pulse</option>
-                    <option value="kerrBistableCavity">115 · Kerr ring-cavity overlap</option>
-                    <option value="vo2SwitchingSlab">116 · VO₂ switching slab</option>
-                    <option value="pcmMemoryCell">117 · PCM memory cell</option>
-                    <option value="saturableAbsorber">118 · Saturable absorber</option>
-                    <option value="allOpticalSwitch">119 · All-optical active section</option>
-                    <option value="nonlinearLimiter">120 · Nonlinear limiter</option>
-                  </optgroup>
-                  <optgroup label="12. Time-varying and Floquet media">
-                    <option value="temporalInterface">121 · Temporal interface</option>
-                    <option value="temporalSlab">122 · Temporal slab</option>
-                    <option value="temporalModulation">123 · Temporal epsilon modulation</option>
-                    <option value="temporalCrystal">124 · Temporal crystal</option>
-                    <option value="modulatedGuide">125 · Temporally modulated guide</option>
-                    <option value="travelingModulation">126 · Traveling epsilon modulation</option>
-                    <option value="temporalIsolator">127 · Traveling-modulated lossy guide</option>
-                    <option value="modulatedRing">128 · Modulated ring</option>
-                    <option value="floquetResonators">129 · Floquet resonators</option>
-                    <option value="syntheticFrequency">130 · Five-phase modulated resonator chain</option>
-                  </optgroup>
-                  <optgroup label="13. Coupled and non-Hermitian workflows">
-                    <option value="ptSymmetricCoupler">131 · PT-symmetric gain/loss guides</option>
-                    <option value="exceptionalPointCoupler">132 · Near-EP gain/loss coupler</option>
-                    <option value="nonHermitianSkin">133 · Biased non-Hermitian SSH chain</option>
-                    <option value="bicKerr">134 · Kerr PhC defect cavity</option>
-                    <option value="bicEnz">135 · ENZ PhC defect cavity</option>
-                    <option value="janusTopologicalGuide">136 · Janus source in Valley-Hall lattice</option>
-                    <option value="huygensCavity">137 · Huygens source near cavity</option>
-                    <option value="topologyTemporalMod">138 · Valley-Hall temporal segment</option>
-                    <option value="nonreciprocalValleyHall">139 · Traveling-modulated Valley-Hall guide</option>
-                    <option value="spaceTimeCrystal">140 · Traveling-modulated stripe lattice</option>
-                  </optgroup>
-                  <option value="empty">Empty</option>
-                </select>
-              </label>
               <div class="scene-view-toggle canvas-mode-toggle" role="tablist" aria-label="Scene menu view">
                 <button
                   id="sceneCurrentViewBtn"
@@ -1463,7 +1295,7 @@
                     <span>Bidirectional</span>
                   </label>
                   <div class="sweep-actions">
-                    <button id="sweepRunBtn" class="text-button primary-button" type="button">Run sweep</button>
+                    <button id="sweepRunBtn" class="text-button primary-button" data-carbon-kind="primary" type="button">Run sweep</button>
                     <button id="sweepExportBtn" class="text-button" type="button" disabled>Export CSV</button>
                   </div>
                   <p id="sweepStatus" class="sweep-status" role="status" aria-live="polite">No sweep yet.</p>

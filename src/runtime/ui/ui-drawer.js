@@ -120,9 +120,7 @@
     }
 
     function syncResultsDetailPanels() {
-      el.resultsDetailPanels?.forEach((panel) => {
-        panel.open = false;
-      });
+      global.FdtdCarbonUI?.closeDisclosures?.(el.controlPanel || documentRef);
     }
 
     function controlDrawerOverlayActive() {

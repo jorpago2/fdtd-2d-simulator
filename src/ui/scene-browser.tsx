@@ -41,6 +41,7 @@ type SceneCardRenderOptions = {
 };
 
 type CarbonSceneBrowserApi = {
+  closeDisclosures?: (root?: ParentNode) => void;
   renderSceneCards: (options: SceneCardRenderOptions) => void;
   renderSceneFilters: (options: SceneFilterRenderOptions) => void;
   upgradeDisclosures?: (root?: ParentNode) => void;

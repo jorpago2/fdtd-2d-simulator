@@ -119,11 +119,8 @@ async function launchBrowser(chromium) {
 
 async function selectPreset(page, preset) {
   await page.evaluate((nextPreset) => {
-    const input = document.getElementById("presetInput");
-    if (!input) throw new Error("presetInput not found");
-    input.value = nextPreset;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (!window.FdtdApp?.selectScenePreset) throw new Error("FdtdApp.selectScenePreset() is unavailable");
+    window.FdtdApp.selectScenePreset(nextPreset);
   }, preset);
   await page.waitForTimeout(25);
 }
@@ -176,9 +173,7 @@ async function auditScene(page, runtime, scene) {
       };
 
       const failures = [];
-      const option = document.querySelector(`#presetInput option[value="${CSS.escape(sceneId)}"]`);
-      const selectedText = document.getElementById("presetInput")?.selectedOptions?.[0]?.textContent?.trim() || "";
-      const optionGroupLabel = option?.parentElement?.tagName === "OPTGROUP" ? option.parentElement.label : "General";
+      const selectedText = expectedIndex == null ? expectedTitle : `${expectedIndex} · ${expectedTitle}`;
       const minX = sim.activeInteriorMinX();
       const maxX = sim.activeInteriorMaxX();
       const minY = sim.activeInteriorMinY();
@@ -207,8 +202,6 @@ async function auditScene(page, runtime, scene) {
       });
 
       if (state.preset !== sceneId) failures.push(`state preset is ${state.preset}`);
-      if (!option) failures.push("preset option missing from HTML");
-      if (option && optionGroupLabel !== expectedGroupLabel) failures.push("HTML option group differs from catalog");
       if (sceneId !== "empty" && sourceSummaries.length === 0) failures.push("scene has no source");
       if (sceneId === "empty" && sourceSummaries.length !== 0) failures.push("empty scene unexpectedly has sources");
       if (!Number.isFinite(minX) || !Number.isFinite(maxX) || minX >= maxX) failures.push("invalid active x range");
@@ -331,7 +324,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => typeof window.exportSceneState === "function");
-    const runtime = await page.evaluateHandle("({ sim, state })");
+    const runtime = await page.evaluateHandle("({ sim: window.FdtdApp.sim, state: window.FdtdApp.state })");
     const sceneById = new Map(catalog.scenes.map((scene) => [scene.id, scene]));
     for (const group of catalog.groups) {
       const groupReport = {

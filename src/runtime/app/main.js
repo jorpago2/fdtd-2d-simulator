@@ -135,10 +135,34 @@ const {
   formatTimeRate,
 } = appFormatters;
 
+Object.assign(globalThis, {
+  simulatedFieldLetter,
+  simulatedFieldComponentHtml,
+  simulatedFieldUnitHtml,
+  scalarFieldComponentKey,
+  solverModeLabel,
+  transverseFieldLetter,
+  transverseFieldUnitHtml,
+  fieldComponentHtml,
+  fieldDisplayConfig,
+  currentSourceLetter,
+  sourceShapeLabel,
+  sourceCouplingLabel,
+  currentBrushLabel,
+  monitorQuantityLabel,
+  niceScaleLength,
+  formatScaleBarValue,
+  trimFixed,
+  formatLambda,
+  formatCompactLambda,
+  formatLambdaOutput,
+  formatTimeRate,
+});
+
 let materialSelectionController = null;
 let materialSelection = { region: null };
 let entitySelection = null;
-let hoveredMaterialRegion = null;
+state.hoveredMaterialRegion = null;
 
 function normalizeBoundaryMode(mode) {
   return boundaryStateModule.normalizeBoundaryMode(mode);
@@ -218,6 +242,8 @@ const SCENE_SHARE_URL_LIMIT = sceneCodec.SCENE_SHARE_URL_LIMIT;
 const SERIALIZABLE_STATE_KEYS = sceneCodec.SERIALIZABLE_STATE_KEYS;
 const el = uiDom.validateDomRefs(uiDom.collectDomRefs(document));
 const numericInputs = numericInputModule.createNumericInputController({ documentRef: document });
+
+Object.assign(globalThis, { state, el });
 numericInputs.bind();
 const runtimeSession = runtimeSessionModule.createRuntimeSessionController({
   state,
@@ -443,9 +469,8 @@ function loadSceneCatalogForUi() {
 }
 
 function selectScenePreset(value) {
-  if (!el.presetInput || !value) return;
-  el.presetInput.value = value;
-  applySelectedPreset();
+  if (!value) return;
+  applySelectedPreset(value);
 }
 
 function materialRegionSignature(region) {
@@ -455,10 +480,10 @@ function materialRegionSignature(region) {
 }
 
 function clearCanvasHover(render = true) {
-  if (state.hoveredSourceId == null && state.hoveredMonitorId == null && !hoveredMaterialRegion && !state.drawPreviewCell) return;
+  if (state.hoveredSourceId == null && state.hoveredMonitorId == null && !state.hoveredMaterialRegion && !state.drawPreviewCell) return;
   state.hoveredSourceId = null;
   state.hoveredMonitorId = null;
-  hoveredMaterialRegion = null;
+  state.hoveredMaterialRegion = null;
   state.drawPreviewCell = null;
   if (render) sim.render();
 }
@@ -467,7 +492,7 @@ function updateCanvasHover(event) {
   if (state.canvasMode === "brush") {
     state.hoveredSourceId = null;
     state.hoveredMonitorId = null;
-    hoveredMaterialRegion = null;
+    state.hoveredMaterialRegion = null;
     const point = sim.clientToGridCell(event.clientX, event.clientY);
     const previous = state.drawPreviewCell;
     if (!previous || previous.x !== point.x || previous.y !== point.y) {
@@ -491,21 +516,21 @@ function updateCanvasHover(event) {
   const monitor = source ? null : sim.monitorAtClientPoint(event.clientX, event.clientY);
   const previousSourceId = state.hoveredSourceId;
   const previousMonitorId = state.hoveredMonitorId;
-  const previousRegionKey = materialRegionSignature(hoveredMaterialRegion);
+  const previousRegionKey = materialRegionSignature(state.hoveredMaterialRegion);
   if (source) {
     state.hoveredSourceId = source.id;
     state.hoveredMonitorId = null;
-    hoveredMaterialRegion = null;
+    state.hoveredMaterialRegion = null;
   } else if (monitor) {
     state.hoveredSourceId = null;
     state.hoveredMonitorId = monitor.id;
-    hoveredMaterialRegion = null;
+    state.hoveredMaterialRegion = null;
   } else {
     state.hoveredSourceId = null;
     state.hoveredMonitorId = null;
-    hoveredMaterialRegion = sim.findMaterialRegionAtClientPoint(event.clientX, event.clientY);
+    state.hoveredMaterialRegion = sim.findMaterialRegionAtClientPoint(event.clientX, event.clientY);
   }
-  const nextRegionKey = materialRegionSignature(hoveredMaterialRegion);
+  const nextRegionKey = materialRegionSignature(state.hoveredMaterialRegion);
   if (previousSourceId !== state.hoveredSourceId || previousMonitorId !== state.hoveredMonitorId || previousRegionKey !== nextRegionKey) {
     sim.render();
   }
@@ -1364,7 +1389,44 @@ function insertGeometryFromEvent(event) {
   canvasEditActions().insertGeometryFromEvent(event);
 }
 
+Object.assign(globalThis, {
+  // Transitional solver/UI contract. These names were implicit globals in the
+  // former classic-script runtime; keeping the boundary explicit makes every
+  // remaining dependency searchable while the solver prototypes are modularized.
+  updateCanvasAspectRatio,
+  lambdaToCells,
+  cellsToLambda,
+  minSourceXLambda,
+  minSourceYLambda,
+  maxSourceXLambda,
+  maxSourceYLambda,
+  normalizeSource,
+  normalizeMonitor,
+  fieldDisplayConfig,
+  normalizeBoundarySides,
+  boundarySideMode,
+  boundarySideIsAbsorbing,
+  anyAbsorbingBoundarySide,
+  setBoundarySideMode,
+  dispersionAxesMask,
+  normalizeBianisotropyKappa,
+  brushDispersionParams,
+  brushConductivityParams,
+  brushGyrotropyValue,
+  brushBianisotropyValue,
+  brushPhaseChangeParams,
+  clampSweepRangeForMode,
+  visualLayerEnabled,
+  updateColorbar,
+  updateControlText,
+  updateFarFieldReadout,
+  updateMaterialWarning,
+  updateSpectrumReadout,
+  updateStats,
+});
+
 sim = new FDTDSim(el.canvas, DEFAULT_GRID);
+globalThis.sim = sim;
 sceneObservables = sceneObservablesModule.createSceneObservableController({
   state,
   getSim: () => sim,
@@ -1730,6 +1792,7 @@ shellControlBindingsModule.bindShellControls({
   toggleCanvasActionsMenu,
   closeCanvasActionsMenu,
   toggleCanvasOptionsMenu,
+  closeCanvasOptionsMenu,
   activateControlTab,
   handleControlTabKeydown,
   activateMobileLayer,
@@ -1843,8 +1906,8 @@ materialControlBindingsModule.bindMaterialControls({
   handleCustomMaterialInput,
 });
 
-function applySelectedPreset() {
-  configMaterialHandlers().applySelectedPreset();
+function applySelectedPreset(preset = state.preset) {
+  configMaterialHandlers().applySelectedPreset(preset);
 }
 
 function handleSlabThicknessInput() {
@@ -1871,7 +1934,6 @@ configControlBindingsModule.bindConfigControls({
   el,
   handleWavelengthInput,
   handleCellsPerWavelengthInput,
-  applySelectedPreset,
   handleSlabThicknessInput,
   handleBoundaryMenuInput,
   applyGridSizeFromInputs,
@@ -2076,6 +2138,23 @@ async function initWasmBackend() {
     updateStats();
   }
 }
+
+Object.assign(globalThis, {
+  materialSelection,
+  materialRegionSignature,
+  dragState,
+});
+
+window.FdtdApp = Object.freeze({
+  buildSceneObservables: () => sceneObservables?.buildSceneObservables?.() || null,
+  openSourceMenuAt,
+  populateSourceEditor,
+  selectScenePreset,
+  sim,
+  state,
+  updateControlText,
+  updateStats,
+});
 
 appBootstrapModule.runAppBootstrap({
   layoutControlBindingsModule,

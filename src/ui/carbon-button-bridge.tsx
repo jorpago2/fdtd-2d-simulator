@@ -1,3 +1,4 @@
+import { createElement, Fragment } from "react";
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button, Checkbox, Select, TextArea, TextInput } from "@carbon/react";
@@ -5,7 +6,7 @@ import { Button, Checkbox, Select, TextArea, TextInput } from "@carbon/react";
 type BridgedButton = {
   attributes: ButtonHTMLAttributes<HTMLButtonElement> & Record<string, string | boolean>;
   className: string;
-  html: string;
+  content: ReactNode;
   iconDescription?: string;
   iconOnly: boolean;
   key: string;
@@ -31,7 +32,8 @@ type BridgedFormControl = {
   defaultValue?: string;
   key: string;
   kind: "checkbox" | "select" | "text" | "textarea";
-  labelHtml: string;
+  labelContent: ReactNode;
+  labelText: string;
   mount: HTMLElement;
   options?: Array<SelectOption | SelectGroup>;
   type?: string;
@@ -39,20 +41,20 @@ type BridgedFormControl = {
 
 function keepCustom(button: HTMLButtonElement) {
   return Boolean(button.closest(
-    "[data-carbon-react-root], [data-react-ui], template, .cds--accordion",
+    "[data-carbon-react-root], [data-react-ui], template, [data-carbon-react]",
   ));
 }
 
 function buttonKind(button: HTMLButtonElement) {
-  if (/delete|remove|clear/i.test(`${button.id} ${button.textContent}`)) return "danger--tertiary" as const;
-  if (button.classList.contains("primary-button") || button.classList.contains("help-guide-toggle")) return "primary" as const;
+  if (button.dataset.carbonKind === "danger--tertiary") return "danger--tertiary" as const;
+  if (button.dataset.carbonKind === "primary") return "primary" as const;
   return "ghost" as const;
 }
 
 function collectAttributes(button: HTMLButtonElement) {
   const attributes: Record<string, string | boolean> = {};
   for (const attribute of Array.from(button.attributes)) {
-    if (["class", "disabled", "hidden"].includes(attribute.name)) continue;
+    if (["class", "disabled", "hidden", "data-carbon-kind", "data-carbon-icon-only"].includes(attribute.name)) continue;
     attributes[attribute.name] = attribute.value;
   }
   if (button.disabled) attributes.disabled = true;
@@ -81,8 +83,32 @@ function collectControlAttributes(element: HTMLInputElement | HTMLSelectElement 
   return attributes;
 }
 
-function labelHtml(element: Element) {
-  return element.closest("label")?.querySelector(":scope > span")?.innerHTML || "";
+const supportedInlineTags = new Set(["b", "br", "code", "em", "i", "small", "span", "strong", "sub", "sup"]);
+
+function domAttributes(element: Element) {
+  const attributes: Record<string, string | boolean> = {};
+  for (const attribute of Array.from(element.attributes)) {
+    if (attribute.name === "class") attributes.className = attribute.value;
+    else if (attribute.name !== "style") attributes[attribute.name] = attribute.value;
+  }
+  return attributes;
+}
+
+function domNodeToReact(node: Node, key: string): ReactNode {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+  if (!(node instanceof Element)) return null;
+  const children = Array.from(node.childNodes).map((child, index) => domNodeToReact(child, `${key}-${index}`));
+  const tag = node.tagName.toLowerCase();
+  if (!supportedInlineTags.has(tag)) return createElement(Fragment, { key }, children);
+  return createElement(tag, { ...domAttributes(node), key }, children);
+}
+
+function domChildrenToReact(element: Element): ReactNode {
+  return Array.from(element.childNodes).map((node, index) => domNodeToReact(node, String(index)));
+}
+
+function labelElement(element: Element) {
+  return element.closest("label")?.querySelector(":scope > span") || null;
 }
 
 function checkboxMount(input: HTMLInputElement, documentRef: Document) {
@@ -128,9 +154,9 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
     return {
       attributes: collectAttributes(button),
       className: button.className,
-      html: button.innerHTML,
+      content: domChildrenToReact(button),
       iconDescription: button.getAttribute("aria-label") || button.title || undefined,
-      iconOnly: button.classList.contains("icon-button") || button.classList.contains("help-guide-toggle"),
+      iconOnly: button.dataset.carbonIconOnly === "true",
       key: button.id || `carbon-button-${index}`,
       kind: buttonKind(button),
       mount,
@@ -139,7 +165,7 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
 }
 
 export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
-  return buttons.map(({ attributes, className, html, iconDescription, iconOnly, key, kind, mount }) => createPortal(
+  return buttons.map(({ attributes, className, content, iconDescription, iconOnly, key, kind, mount }) => createPortal(
     <Button
       {...attributes}
       className={className}
@@ -149,7 +175,7 @@ export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
       iconDescription={iconOnly ? iconDescription : undefined}
       data-carbon-react="true"
     >
-      <span className="carbon-button-content" dangerouslySetInnerHTML={{ __html: html }} />
+      <span className="carbon-button-content">{content}</span>
     </Button>,
     mount,
     key,
@@ -159,7 +185,7 @@ export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
 export function prepareCarbonFormBridge(documentRef: Document = document) {
   const selector = "input[type='number'], input[type='checkbox'], select, textarea";
   const controls = Array.from(documentRef.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selector))
-    .filter((control) => !control.closest("[data-carbon-react-root], [data-react-ui], template, .cds--form-item, .cds--search"));
+    .filter((control) => !control.closest("[data-carbon-react-root], [data-react-ui], template, [data-carbon-react]"));
 
   return controls.map((control, index): BridgedFormControl => {
     const isCheckbox = control instanceof HTMLInputElement && control.type === "checkbox";
@@ -168,22 +194,20 @@ export function prepareCarbonFormBridge(documentRef: Document = document) {
       mount.className = control instanceof HTMLTextAreaElement ? "carbon-textarea-mount" : "carbon-control-mount";
       control.replaceWith(mount);
     }
+    const label = labelElement(control);
     return {
       attributes: collectControlAttributes(control),
       defaultChecked: isCheckbox ? (control as HTMLInputElement).checked : undefined,
       defaultValue: isCheckbox ? undefined : control.value,
       key: control.id || `carbon-form-control-${index}`,
       kind: isCheckbox ? "checkbox" : control instanceof HTMLSelectElement ? "select" : control instanceof HTMLTextAreaElement ? "textarea" : "text",
-      labelHtml: labelHtml(control),
+      labelContent: label ? domChildrenToReact(label) : control.getAttribute("aria-label") || "",
+      labelText: label?.textContent?.trim() || control.getAttribute("aria-label") || control.id || "Control",
       mount,
       options: control instanceof HTMLSelectElement ? selectOptions(control) : undefined,
       type: control instanceof HTMLInputElement ? control.type : undefined,
     };
   });
-}
-
-function CarbonLabel({ html }: { html: string }): ReactNode {
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function SelectChildren({ options = [] }: { options?: Array<SelectOption | SelectGroup> }) {
@@ -195,7 +219,7 @@ function SelectChildren({ options = [] }: { options?: Array<SelectOption | Selec
 }
 
 export function CarbonFormBridge({ controls }: { controls: BridgedFormControl[] }) {
-  return controls.map(({ attributes, defaultChecked, defaultValue, key, kind, labelHtml: html, mount, options, type }) => {
+  return controls.map(({ attributes, defaultChecked, defaultValue, key, kind, labelContent, labelText, mount, options, type }) => {
     let control: ReactNode;
     if (kind === "checkbox") {
       control = (
@@ -203,7 +227,7 @@ export function CarbonFormBridge({ controls }: { controls: BridgedFormControl[] 
           {...(attributes as unknown as ComponentProps<typeof Checkbox>)}
           data-carbon-react="true"
           defaultChecked={defaultChecked}
-          labelText={<CarbonLabel html={html} />}
+          labelText={<>{labelContent}</>}
         />
       );
     } else if (kind === "select") {
@@ -228,7 +252,8 @@ export function CarbonFormBridge({ controls }: { controls: BridgedFormControl[] 
           {...(attributes as unknown as ComponentProps<typeof TextInput>)}
           data-carbon-react="true"
           defaultValue={defaultValue}
-          labelText={null as unknown as string}
+          hideLabel
+          labelText={labelText}
           size="sm"
           type={type}
         />

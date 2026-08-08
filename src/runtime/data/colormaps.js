@@ -139,3 +139,17 @@ function cmasherGradient(name) {
     .map((stop) => `rgb(${stop.c[0]}, ${stop.c[1]}, ${stop.c[2]}) ${((1 - stop.t) * 100).toFixed(1)}%`);
   return `linear-gradient(to bottom, ${parts.join(", ")})`;
 }
+
+Object.assign(globalThis, {
+  CMASHER_COLORMAPS,
+  CMASHER_LUT_SIZE,
+  CMASHER_LUT_LAST,
+  CMASHER_LUT_CACHE,
+  interpolateColorStops,
+  cmasherMap,
+  currentFieldColormapName,
+  currentMaterialColormapName,
+  cmasherColor,
+  cmasherColorLut,
+  cmasherGradient,
+});
