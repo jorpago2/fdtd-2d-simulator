@@ -6,6 +6,8 @@
   --workbench-panel-width: 24rem;
   --workbench-status-height: 1.75rem;
   --workbench-inspector-width: 22rem;
+  --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --workbench-bottom-nav-height: calc(var(--workbench-rail-width) + var(--workbench-safe-bottom));
 }
 
 * {
@@ -71,6 +73,8 @@ fieldset {
   display: grid;
   grid-template-rows: var(--workbench-header-height) minmax(0, 1fr);
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
   max-width: none;
   min-height: 0;
   padding: 0;
@@ -272,6 +276,7 @@ fieldset {
   max-width: none;
   min-height: 0;
   height: calc(100vh - var(--workbench-header-height));
+  height: calc(100dvh - var(--workbench-header-height));
   padding: 0;
   background: var(--cds-background);
 }
@@ -1277,7 +1282,7 @@ fieldset {
   }
 
   .control-panel {
-    inset: var(--workbench-header-height) 0 var(--workbench-rail-width) 0;
+    inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height) 0;
     width: 100%;
     border-right: 0;
     transform: translateY(110%);
@@ -1289,7 +1294,7 @@ fieldset {
 
   .workspace {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) var(--workbench-rail-width);
+    grid-template-rows: minmax(0, 1fr) var(--workbench-bottom-nav-height);
   }
 
   .workflow-rail {
@@ -1298,6 +1303,7 @@ fieldset {
     grid-template-rows: none;
     border-top: 1px solid var(--cds-border-subtle-01);
     border-right: 0;
+    padding-bottom: var(--workbench-safe-bottom);
   }
 
   .stage {
@@ -1319,12 +1325,12 @@ fieldset {
   }
 
   .source-menu {
-    inset: var(--workbench-header-height) 1rem var(--workbench-rail-width) auto;
+    inset: var(--workbench-header-height) 1rem var(--workbench-bottom-nav-height) auto;
     width: calc(100% - var(--workbench-rail-width) - 1rem);
   }
 
   .control-drawer-backdrop {
-    inset: var(--workbench-header-height) 0 var(--workbench-rail-width);
+    inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height);
   }
 }
 
@@ -1427,7 +1433,7 @@ fieldset {
   }
 
   .help-guide-panel {
-    inset: 0 0 4.5rem;
+    inset: 0 0 calc(4.5rem + var(--workbench-safe-bottom));
     width: 100%;
     height: auto;
     max-height: none;
@@ -1435,7 +1441,7 @@ fieldset {
   }
 
   .source-menu {
-    inset: var(--workbench-header-height) 0 var(--workbench-rail-width);
+    inset: var(--workbench-header-height) 0 var(--workbench-bottom-nav-height);
     width: 100%;
   }
 

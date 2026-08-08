@@ -7789,6 +7789,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
 
   try {
     await openApplication(page, url);
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty("--workbench-safe-bottom", "34px");
+    });
     await page.locator("#canvasActionToggle").click();
     await page.waitForTimeout(50);
     const status = await page.evaluate(() => {
@@ -7855,6 +7858,12 @@ async function runMobileToolbarHeightSmoke(browser, url) {
               ? null
               : minActionTop < openActionToggle.bottom - 1,
         },
+        mobileNav: rect(".mobile-layer-nav"),
+        mobileNavButtonBottom: Math.max(
+          ...Array.from(document.querySelectorAll(".mobile-layer-nav .mobile-layer-button"))
+            .map((node) => Math.round(node.getBoundingClientRect().bottom)),
+        ),
+        safeBottom: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--workbench-safe-bottom")) || 0,
         workflowLabelsVisible: Array.from(document.querySelectorAll(".workflow-rail .nav-label")).every((node) => {
           const bounds = node.getBoundingClientRect();
           const style = getComputedStyle(node);
@@ -7881,6 +7890,12 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     }
     if (!status.resetButton || status.resetButton.height < 44) failures.push("Reset is not a usable 44px header action");
     if (!status.workflowLabelsVisible) failures.push("mobile workflow labels are hidden");
+    if (!status.mobileNav || status.mobileNav.height < 56 + status.safeBottom - 1) {
+      failures.push("mobile workflow navigation does not reserve the bottom safe area");
+    }
+    if (568 - status.mobileNavButtonBottom < status.safeBottom - 1) {
+      failures.push("mobile workflow actions extend into the bottom safe area");
+    }
     if (status.clippedStatusItems) failures.push(`${status.clippedStatusItems} status items are partially clipped`);
     if (!(status.stepAfterClick > 0)) failures.push("physical click on the More > Step action did not advance the simulation");
     if (status.playButton && status.selectButton && Math.abs(status.playButton.height - status.selectButton.height) > 1) {
