@@ -2,6 +2,29 @@
   "use strict";
 
   Object.assign(FDTDSim.prototype, {
+    sourceOverlayPalette() {
+      const darkCanvas = state.theme === "dark" || state.viewProjection === "3d";
+      return {
+        outer: darkCanvas ? "rgba(5, 11, 15, 0.92)" : "rgba(255, 255, 255, 0.94)",
+        contrast: darkCanvas ? "rgba(255, 255, 255, 0.98)" : "rgba(5, 11, 15, 0.98)",
+        accent: darkCanvas ? "rgba(255, 131, 43, 0.98)" : "rgba(138, 56, 0, 0.98)",
+      };
+    },
+
+    strokeSourcePath(outerWidth, contrastWidth, accentWidth) {
+      const ctx = this.ctx;
+      const palette = this.sourceOverlayPalette();
+      ctx.strokeStyle = palette.outer;
+      ctx.lineWidth = outerWidth;
+      ctx.stroke();
+      ctx.strokeStyle = palette.contrast;
+      ctx.lineWidth = contrastWidth;
+      ctx.stroke();
+      ctx.strokeStyle = palette.accent;
+      ctx.lineWidth = accentWidth;
+      ctx.stroke();
+    },
+
     drawSourceMarkers() {
       for (const source of state.sources) {
         this.drawSourceMarker(source);
@@ -20,12 +43,15 @@
       if (isLineLike && (x < viewport.left - margin || x > viewport.right + margin)) return;
       if (!isLineLike && (x < viewport.left - margin || x > viewport.right + margin || y < viewport.top - margin || y > viewport.bottom + margin)) return;
       this.ctx.save();
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-      this.ctx.lineWidth = Math.max(1, dpr);
+      this.ctx.lineCap = "round";
+      this.ctx.lineJoin = "round";
+      let identityLabel = null;
       if (source.id === state.selectedSourceId) {
-        this.drawSourceSelectionHalo(x, y, source);
+        const radius = this.drawSourceSelectionHalo(x, y, source);
+        const isMoving = dragState.source.pointerId != null && dragState.source.entityId === source.id;
+        identityLabel = { text: isMoving ? `moving S${source.id}` : `S${source.id}`, radius };
       } else if (source.id === state.hoveredSourceId) {
-        this.drawSourceHoverHalo(x, y, source);
+        identityLabel = { text: `S${source.id}`, radius: this.drawSourceHoverHalo(x, y, source) };
       }
       if (source.shape === "line" || source.shape === "evanescentLine") {
         const markerMarginY = Math.min(36 * dpr, Math.max(0, viewport.height * 0.36));
@@ -33,7 +59,7 @@
         this.ctx.beginPath();
         this.ctx.moveTo(x, viewport.top + 8 * dpr);
         this.ctx.lineTo(x, viewport.bottom - 8 * dpr);
-        this.ctx.stroke();
+        this.strokeSourcePath(6 * dpr, 3.8 * dpr, 2 * dpr);
         if (source.shape === "line") {
           this.drawSourceWaveVectorArrow(x, markerY, source);
         }
@@ -51,10 +77,10 @@
         this.ctx.beginPath();
         this.ctx.moveTo(x, y - halfHeight);
         this.ctx.lineTo(x, y + halfHeight);
-        this.ctx.stroke();
+        this.strokeSourcePath(6 * dpr, 3.8 * dpr, 2 * dpr);
         this.ctx.beginPath();
         this.ctx.arc(x, y, 3 * Math.max(1, window.devicePixelRatio || 1), 0, Math.PI * 2);
-        this.ctx.stroke();
+        this.strokeSourcePath(6 * dpr, 3.8 * dpr, 2 * dpr);
         if (source.shape === "gaussianProfile") {
           this.drawSourceWaveVectorArrow(x, y, source, {
             startPad: Math.max(8 * dpr, Math.min(18 * dpr, halfHeight * 0.14)),
@@ -65,6 +91,9 @@
         this.drawAnalyticSourceGlyph(x, y, source);
       } else {
         this.drawPointSourceGlyph(x, y);
+      }
+      if (identityLabel) {
+        this.drawSourceIdentityLabel(identityLabel.text, x, y, identityLabel.radius);
       }
       this.ctx.restore();
     },
@@ -150,8 +179,8 @@
       ctx.strokeStyle = isMoving ? "rgba(255, 238, 198, 0.7)" : "rgba(255, 255, 255, 0.58)";
       ctx.lineWidth = 1 * dpr;
       ctx.stroke();
-      this.drawSourceIdentityLabel(isMoving ? `moving S${source.id}` : `S${source.id}`, x, y, radius);
       ctx.restore();
+      return radius;
     },
 
     drawSourceHoverHalo(x, y, source) {
@@ -167,8 +196,8 @@
       ctx.strokeStyle = "rgba(69, 192, 201, 0.78)";
       ctx.lineWidth = 1.5 * dpr;
       ctx.stroke();
-      this.drawSourceIdentityLabel(`S${source.id}`, x, y, radius);
       ctx.restore();
+      return radius;
     },
 
     drawPointSourceGlyph(x, y) {
@@ -187,14 +216,15 @@
       ctx.lineTo(x, y - radius - 2 * dpr);
       ctx.moveTo(x, y + radius + 2 * dpr);
       ctx.lineTo(x, y + arm);
-      this.strokeOverlayPath(5 * dpr, 2 * dpr);
+      this.strokeSourcePath(7 * dpr, 4.2 * dpr, 2.2 * dpr);
 
       ctx.beginPath();
       ctx.arc(x, y, 2.2 * dpr, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(5, 11, 15, 0.94)";
+      const palette = this.sourceOverlayPalette();
+      ctx.fillStyle = palette.accent;
       ctx.fill();
       ctx.lineWidth = 1.5 * dpr;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.82)";
+      ctx.strokeStyle = palette.contrast;
       ctx.stroke();
     },
 
@@ -206,11 +236,11 @@
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
-      this.strokeOverlayPath(5 * dpr, 2 * dpr);
+      this.strokeSourcePath(7 * dpr, 4.2 * dpr, 2.2 * dpr);
 
       ctx.beginPath();
       ctx.arc(x, y, 2.3 * dpr, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(5, 11, 15, 0.94)";
+      ctx.fillStyle = this.sourceOverlayPalette().accent;
       ctx.fill();
 
       if (source.shape === "gaussianSpot") return;
@@ -240,7 +270,7 @@
         ctx.lineTo(x + crossDx, y + crossDy);
       }
 
-      this.strokeOverlayPath(5 * dpr, 2 * dpr);
+      this.strokeSourcePath(7 * dpr, 4.2 * dpr, 2.2 * dpr);
 
       if (circularDipoleSourceShapes.has(source.shape)) {
         const spinRadius = Math.max(8 * dpr, radius * 0.42);
@@ -256,7 +286,7 @@
         ctx.lineTo(hx - 6 * dpr * Math.cos(headAngle - 0.45), hy + 6 * dpr * Math.sin(headAngle - 0.45));
         ctx.moveTo(hx, hy);
         ctx.lineTo(hx - 6 * dpr * Math.cos(headAngle + 0.45), hy + 6 * dpr * Math.sin(headAngle + 0.45));
-        this.strokeOverlayPath(4 * dpr, 1.6 * dpr);
+        this.strokeSourcePath(6 * dpr, 3.6 * dpr, 1.8 * dpr);
         this.drawOverlayLabel(source.shape === "circularDipoleCw" ? "+90" : "-90", x + radius + 14 * dpr, y, "left");
         return;
       }

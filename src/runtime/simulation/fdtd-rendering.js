@@ -734,10 +734,10 @@ render() {
   this.drawMaterialSelectionOverlay();
   this.drawDrawPreviewOverlay();
   this.drawFieldQuiverOverlay();
-  this.drawReferenceOverlay();
   if (visualLayerEnabled("sources")) {
     this.drawSourceMarkers();
   }
+  this.drawReferenceOverlay();
   if (canRecordRenderBreakdown) {
     perf.record("renderOverlayMs", perf.now() - renderPhaseStart);
   }

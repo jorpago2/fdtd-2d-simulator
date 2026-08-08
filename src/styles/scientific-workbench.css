@@ -361,9 +361,15 @@ fieldset {
   touch-action: none;
 }
 
+#simCanvas {
+  position: relative;
+  z-index: 2;
+}
+
 .field-canvas,
 .surface-canvas {
   position: absolute;
+  z-index: 1;
   inset: 0;
   pointer-events: none;
 }
@@ -1515,6 +1521,11 @@ fieldset {
   .control-row > :nth-child(2):not(output) {
     grid-column: 1 / -1;
   }
+}
+
+.canvas-frame:has(.surface-orbit-controls:not([hidden])) .help-guide-toggle-mount {
+  right: auto;
+  left: 0.5rem;
 }
 
 @media (max-width: 22rem) {

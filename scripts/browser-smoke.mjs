@@ -8000,6 +8000,24 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.locator("#controlDrawerCloseBtn").click();
     await page.waitForTimeout(250);
     const reclosed = await readLayout();
+    const threeDControls = await page.evaluate(() => {
+      const orbit = document.querySelector(".surface-orbit-controls");
+      const help = document.querySelector(".help-guide-toggle-mount");
+      if (!orbit || !help) return { available: false, overlap: 0 };
+      const wasHidden = orbit.hidden;
+      orbit.hidden = false;
+      const orbitRect = orbit.getBoundingClientRect();
+      const helpRect = help.getBoundingClientRect();
+      const overlapWidth = Math.max(0, Math.min(orbitRect.right, helpRect.right) - Math.max(orbitRect.left, helpRect.left));
+      const overlapHeight = Math.max(0, Math.min(orbitRect.bottom, helpRect.bottom) - Math.max(orbitRect.top, helpRect.top));
+      orbit.hidden = wasHidden;
+      return {
+        available: true,
+        overlap: overlapWidth * overlapHeight,
+        orbit: { left: orbitRect.left, right: orbitRect.right, top: orbitRect.top, bottom: orbitRect.bottom },
+        help: { left: helpRect.left, right: helpRect.right, top: helpRect.top, bottom: helpRect.bottom },
+      };
+    });
 
     const failures = [...localErrors];
     if (!closed.panelHidden || closed.panel?.top < closed.viewport.height - 1) {
@@ -8018,6 +8036,9 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     if (!reclosed.panelHidden || reclosed.panel?.top < reclosed.viewport.height - 1) {
       failures.push("compact panel remains visible after closing");
     }
+    if (!threeDControls.available || threeDControls.overlap > 1) {
+      failures.push("3D orbit controls overlap the help action in compact landscape");
+    }
 
     return {
       id: "compact_landscape_layout",
@@ -8026,6 +8047,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       closed,
       open,
       reclosed,
+      threeDControls,
       passed: failures.length === 0,
       failures,
     };
@@ -8358,6 +8380,79 @@ async function runSourceWaveVectorOverlaySmoke(page) {
   return {
     id: "source_wave_vector_overlay_direction",
     preset: "poyntingPlaneWave",
+    priority: "P1",
+    ...status,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runSourceThemeContrastSmoke(page) {
+  await selectPreset(page, "planeWaveAir");
+  const status = await page.evaluate(() => {
+    const colorDistance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const sampleTheme = (theme) => {
+      state.theme = theme;
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle("cds--g100", theme === "dark");
+      document.documentElement.classList.toggle("cds--white", theme !== "dark");
+      state.running = false;
+      sim.render();
+      const source = state.sources?.[0];
+      if (!source) return { theme, available: false, contrast: 0 };
+      const viewport = sim.renderViewport();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const x = Math.round(sim.gridToCanvasX(sim.sourceXCell(source) + 0.5));
+      const y = Math.round(viewport.top + viewport.height * 0.24);
+      const ctx = sim.canvas.getContext("2d", { willReadFrequently: true });
+      const pixel = (px, py) => Array.from(ctx.getImageData(px, py, 1, 1).data.slice(0, 3));
+      const background = pixel(Math.round(x + 12 * dpr), y);
+      let contrast = 0;
+      for (let dx = Math.round(-4 * dpr); dx <= Math.round(4 * dpr); dx += 1) {
+        contrast = Math.max(contrast, colorDistance(pixel(x + dx, y), background));
+      }
+      return {
+        theme,
+        available: true,
+        contrast,
+        background,
+        marker: pixel(x, y),
+      };
+    };
+
+    const light = sampleTheme("light");
+    const dark = sampleTheme("dark");
+    const simCanvasZ = Number.parseInt(getComputedStyle(sim.canvas).zIndex, 10);
+    const fieldCanvasZ = Number.parseInt(getComputedStyle(sim.fieldCanvas).zIndex, 10);
+    return {
+      light,
+      dark,
+      palette: sim.sourceOverlayPalette?.() || null,
+      layerOrder: {
+        simCanvasZ,
+        fieldCanvasZ,
+        overlayAboveField: Number.isFinite(simCanvasZ) && Number.isFinite(fieldCanvasZ) && simCanvasZ > fieldCanvasZ,
+      },
+    };
+  });
+
+  const failures = [];
+  if (!status.light.available || !status.dark.available) failures.push("plane-wave source marker was unavailable");
+  if (Number(status.light.contrast) < 80) {
+    failures.push(`light-theme source contrast is too low (${Number(status.light.contrast).toFixed(1)})`);
+  }
+  if (Number(status.dark.contrast) < 80) {
+    failures.push(`dark-theme source contrast is too low (${Number(status.dark.contrast).toFixed(1)})`);
+  }
+  if (!status.palette?.accent || !status.palette?.contrast || !status.palette?.outer) {
+    failures.push("source overlay palette is incomplete");
+  }
+  if (!status.layerOrder?.overlayAboveField) {
+    failures.push("scientific overlay canvas is not stacked above the WebGL field canvas");
+  }
+  return {
+    id: "source_theme_contrast",
+    preset: "planeWaveAir",
     priority: "P1",
     ...status,
     passed: failures.length === 0,
@@ -9107,6 +9202,7 @@ async function main() {
       await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
       await recordCase("draw_preview", () => runDrawPreviewSmoke(page));
       await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));
+      await recordCase("source_theme_contrast", () => runSourceThemeContrastSmoke(page));
       await recordCase("source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page));
       await recordCase("floating_context_menu_drag", () => runFloatingContextMenuDragSmoke(page));
       await recordCase("reflective_boundary_wall", () => runReflectiveBoundaryWallSmoke(page));
