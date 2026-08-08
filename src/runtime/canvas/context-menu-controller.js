@@ -12,20 +12,11 @@
     return typeof value === "function" ? value : fallback;
   }
 
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
   function createContextMenuController(dependencies) {
     const el = requireObject(dependencies.el, "el");
     const beginEditSession = optionalFunction(dependencies.beginEditSession, () => {});
     const endEditSession = optionalFunction(dependencies.endEditSession, () => {});
     const validateEditScope = optionalFunction(dependencies.validateEditScope, () => true);
-    const floatingMenuPad = 10;
-    const minimumDragRoom = 12;
-    const contextualInspectorQuery = "(min-width: 80rem) and (min-height: 40rem)";
-    const contextualSheetQuery = "(max-width: 47.99rem)";
-    let activeMenuDrag = null;
     const state = {
       sourceMenuMode: "add",
       sourceMenuDraft: null,
@@ -45,8 +36,27 @@
       return contextMenuElements().some((menu) => !menu.hidden);
     }
 
+    function mountContextMenus() {
+      const host = el.contextInspectorHost;
+      if (!host) return;
+      contextMenuElements().forEach((menu) => {
+        menu.dataset.contextualInspector = "true";
+        menu.style.removeProperty("left");
+        menu.style.removeProperty("top");
+        menu.style.removeProperty("max-height");
+        menu.style.removeProperty("overflow-y");
+        host.appendChild(menu);
+      });
+    }
+
     function syncContextualInspectorState() {
-      const open = contextMenuElements().some((menu) => !menu.hidden && menu.dataset.contextualInspector === "true");
+      const open = anyContextMenuOpen();
+      const host = el.contextInspectorHost;
+      if (host) {
+        host.hidden = !open;
+        host.inert = !open;
+        host.setAttribute("aria-hidden", String(!open));
+      }
       el.appShell?.classList.toggle("contextual-inspector-open", open);
     }
 
@@ -86,200 +96,21 @@
       });
     }
 
-    function floatingMenuBounds(menu) {
-      const frame = menu?.parentElement;
-      if (!frame || !menu) return;
-      const frameRect = frame.getBoundingClientRect();
-      const menuRect = menu.getBoundingClientRect();
-      const maxLeft = Math.max(
-        floatingMenuPad,
-        Math.min(
-          frameRect.width - menuRect.width - floatingMenuPad,
-          global.innerWidth - frameRect.left - menuRect.width - floatingMenuPad
-        )
-      );
-      const maxTop = Math.max(
-        floatingMenuPad,
-        Math.min(
-          frameRect.height - menuRect.height - floatingMenuPad,
-          global.innerHeight - frameRect.top - menuRect.height - floatingMenuPad
-        )
-      );
-      return {
-        minLeft: floatingMenuPad,
-        minTop: floatingMenuPad,
-        maxLeft,
-        maxTop,
-        canDragX: maxLeft - floatingMenuPad > minimumDragRoom,
-        canDragY: maxTop - floatingMenuPad > minimumDragRoom,
-      };
-    }
-
-    function updateFloatingMenuDragAvailability(menu, bounds = floatingMenuBounds(menu)) {
-      if (!menu || menu.hidden) return;
-      if (contextualInspectorActive(menu)) {
-        menu.dataset.floatingMenuDraggable = "false";
-        return;
+    function resetMenuScroll(menu) {
+      if (!menu) return;
+      menu.scrollTop = 0;
+      const body = menu.querySelector(".source-menu-body");
+      if (body) {
+        body.scrollTop = 0;
+        body.scrollLeft = 0;
       }
-      menu.dataset.floatingMenuDraggable = String(Boolean(bounds?.canDragX || bounds?.canDragY));
     }
 
-    function contextualInspectorActive(menu) {
-      if (menu === el.canvasContextMenu) return false;
-      return Boolean(
-        global.matchMedia?.(contextualInspectorQuery)?.matches ||
-        global.matchMedia?.(contextualSheetQuery)?.matches,
-      );
-    }
-
-    function clampFloatingMenuPosition(menu, desiredLeft, desiredTop) {
-      const bounds = floatingMenuBounds(menu);
-      if (!bounds) return null;
-      const left = clamp(desiredLeft, bounds.minLeft, bounds.maxLeft);
-      const top = clamp(desiredTop, bounds.minTop, bounds.maxTop);
-      menu.style.left = `${left}px`;
-      menu.style.top = `${top}px`;
-      updateFloatingMenuDragAvailability(menu, bounds);
-      return { left, top, bounds };
-    }
-
-    function refreshFloatingMenuPosition(menu) {
-      if (!menu || menu.hidden) return;
-      if (contextualInspectorActive(menu)) {
-        if (menu.dataset.contextualInspector !== "true") {
-          positionFloatingMenu(menu, global.innerWidth, floatingMenuPad);
-        }
-        return;
-      }
-      if (menu.dataset.contextualInspector === "true") {
-        positionFloatingMenu(menu, global.innerWidth / 2, global.innerHeight / 3);
-        return;
-      }
-      const left = Number.parseFloat(menu.style.left);
-      const top = Number.parseFloat(menu.style.top);
-      if (!Number.isFinite(left) || !Number.isFinite(top)) return;
-      clampFloatingMenuPosition(menu, left, top);
-    }
-
-    function refreshOpenFloatingMenus() {
-      contextMenuElements().forEach(refreshFloatingMenuPosition);
-    }
-
-    function positionFloatingMenu(menu, clientX, clientY) {
-      const frame = menu?.parentElement;
-      if (!frame || !menu) return;
-      if (contextualInspectorActive(menu)) {
-        menu.dataset.contextualInspector = "true";
-        menu.dataset.floatingMenuDraggable = "false";
-        menu.style.removeProperty("left");
-        menu.style.removeProperty("top");
-        menu.style.removeProperty("max-height");
-        menu.style.removeProperty("overflow-y");
-        syncContextualInspectorState();
-        return;
-      }
-      delete menu.dataset.contextualInspector;
+    function showMenu(menu) {
+      menu.hidden = false;
+      resetMenuScroll(menu);
       syncContextualInspectorState();
-      const frameRect = frame.getBoundingClientRect();
-      menu.style.removeProperty("max-height");
-      menu.style.removeProperty("overflow-y");
-      const cssMaxHeight = Number.parseFloat(global.getComputedStyle(menu).maxHeight);
-      const preferredMaxHeight = Number.isFinite(cssMaxHeight) && cssMaxHeight > 0 ? cssMaxHeight : Infinity;
-      const availableHeight = Math.max(
-        220,
-        Math.min(preferredMaxHeight, frameRect.height - floatingMenuPad * 2, global.innerHeight - frameRect.top - floatingMenuPad)
-      );
-      menu.style.maxHeight = `${availableHeight}px`;
-      menu.style.overflowY = "auto";
-      clampFloatingMenuPosition(menu, clientX - frameRect.left + floatingMenuPad, clientY - frameRect.top + floatingMenuPad);
-    }
-
-    function isInteractiveDragTarget(target) {
-      return Boolean(target?.closest?.("button, input, select, textarea, a, label, summary, [role='button']"));
-    }
-
-    function endFloatingMenuDrag(event) {
-      if (!activeMenuDrag || (event?.pointerId != null && event.pointerId !== activeMenuDrag.pointerId)) return;
-      activeMenuDrag.menu.classList.remove("is-dragging");
-      try {
-        activeMenuDrag.header.releasePointerCapture?.(activeMenuDrag.pointerId);
-      } catch {
-        // Pointer capture may already be gone if the browser cancelled the gesture.
-      }
-      activeMenuDrag = null;
-      global.document.removeEventListener("pointermove", handleFloatingMenuDragMove, true);
-      global.document.removeEventListener("pointerup", endFloatingMenuDrag, true);
-      global.document.removeEventListener("pointercancel", endFloatingMenuDrag, true);
-    }
-
-    function handleFloatingMenuDragMove(event) {
-      if (!activeMenuDrag || event.pointerId !== activeMenuDrag.pointerId) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const dx = activeMenuDrag.bounds.canDragX ? event.clientX - activeMenuDrag.startClientX : 0;
-      const dy = activeMenuDrag.bounds.canDragY ? event.clientY - activeMenuDrag.startClientY : 0;
-      const result = clampFloatingMenuPosition(
-        activeMenuDrag.menu,
-        activeMenuDrag.startLeft + dx,
-        activeMenuDrag.startTop + dy
-      );
-      if (result?.bounds) {
-        activeMenuDrag.bounds = result.bounds;
-      }
-    }
-
-    function beginFloatingMenuDrag(event) {
-      if (event.button != null && event.button !== 0) return;
-      if (isInteractiveDragTarget(event.target)) return;
-      const header = event.currentTarget;
-      const menu = header.closest?.(".source-menu");
-      if (!menu || menu.hidden || contextualInspectorActive(menu)) return;
-      const currentLeft = Number.parseFloat(menu.style.left);
-      const currentTop = Number.parseFloat(menu.style.top);
-      const bounds = floatingMenuBounds(menu);
-      if (!bounds || (!bounds.canDragX && !bounds.canDragY) || !Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) {
-        updateFloatingMenuDragAvailability(menu, bounds);
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      activeMenuDrag = {
-        menu,
-        header,
-        bounds,
-        pointerId: event.pointerId,
-        startClientX: event.clientX,
-        startClientY: event.clientY,
-        startLeft: currentLeft,
-        startTop: currentTop,
-      };
-      menu.classList.add("is-dragging");
-      try {
-        header.setPointerCapture?.(event.pointerId);
-      } catch {
-        // Continue with document-level listeners if pointer capture is unavailable.
-      }
-      global.document.addEventListener("pointermove", handleFloatingMenuDragMove, true);
-      global.document.addEventListener("pointerup", endFloatingMenuDrag, true);
-      global.document.addEventListener("pointercancel", endFloatingMenuDrag, true);
-    }
-
-    function bindFloatingMenuDrag() {
-      contextMenuElements().forEach((menu) => {
-        const header = menu.querySelector(".source-menu-header");
-        if (!header || header.dataset.dragBound === "true") return;
-        header.dataset.dragBound = "true";
-        header.addEventListener("pointerdown", beginFloatingMenuDrag);
-      });
-      if (typeof global.ResizeObserver === "function") {
-        const observer = new global.ResizeObserver((entries) => {
-          global.requestAnimationFrame(() => {
-            entries.forEach((entry) => refreshFloatingMenuPosition(entry.target));
-          });
-        });
-        contextMenuElements().forEach((menu) => observer.observe(menu));
-      }
-      global.addEventListener("resize", refreshOpenFloatingMenus);
+      focusFirstMenuControl(menu);
     }
 
     function closeMenu(menu, cleanup) {
@@ -333,79 +164,55 @@
       return closed.every(Boolean);
     }
 
-    function resetMenuScroll(menu) {
-      if (!menu) return;
-      menu.scrollTop = 0;
-      const body = menu.querySelector(".source-menu-body");
-      if (body) {
-        body.scrollTop = 0;
-        body.scrollLeft = 0;
-      }
-    }
-
-    function openCanvasContextMenuAt(clientX, clientY, point) {
+    function openCanvasContextMenuAt(_clientX, _clientY, point) {
       if (!el.canvasContextMenu) return;
       if (!closeSourceMenu() || !closeMonitorMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.canvasContextPoint = point || null;
       beginEditSession(el.canvasContextMenu);
-      el.canvasContextMenu.hidden = false;
-      positionFloatingMenu(el.canvasContextMenu, clientX, clientY);
-      resetMenuScroll(el.canvasContextMenu);
-      focusFirstMenuControl(el.canvasContextMenu);
+      showMenu(el.canvasContextMenu);
     }
 
-    function openSourceMenuAt(clientX, clientY, options = {}) {
+    function openSourceMenuAt(_clientX, _clientY, options = {}) {
       if (!el.sourceMenu) return;
       if (!closeCanvasContextMenu() || !closeMonitorMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.sourceMenuMode = options.mode === "edit" ? "edit" : "add";
       state.sourceMenuDraft = options.draft || null;
       beginEditSession(el.sourceMenu);
-      el.sourceMenu.hidden = false;
-      positionFloatingMenu(el.sourceMenu, clientX, clientY);
-      resetMenuScroll(el.sourceMenu);
-      focusFirstMenuControl(el.sourceMenu);
+      showMenu(el.sourceMenu);
     }
 
-    function openMonitorMenuAt(clientX, clientY, options = {}) {
+    function openMonitorMenuAt(_clientX, _clientY, options = {}) {
       if (!el.monitorMenu) return;
       if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeBrushMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.monitorMenuMode = options.mode === "edit" ? "edit" : "add";
       state.monitorMenuDraft = options.draft || null;
       beginEditSession(el.monitorMenu);
-      el.monitorMenu.hidden = false;
-      positionFloatingMenu(el.monitorMenu, clientX, clientY);
-      resetMenuScroll(el.monitorMenu);
-      focusFirstMenuControl(el.monitorMenu);
+      showMenu(el.monitorMenu);
     }
 
-    function openBrushMenuAt(clientX, clientY, options = {}) {
+    function openBrushMenuAt(_clientX, _clientY, options = {}) {
       if (!el.brushMenu) return;
       if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeMonitorMenu() || !closeBoundaryMenu()) return;
       rememberFocusTarget();
       state.brushMenuMode = options.mode === "region" ? "region" : "brush";
       beginEditSession(el.brushMenu);
-      el.brushMenu.hidden = false;
-      positionFloatingMenu(el.brushMenu, clientX, clientY);
-      resetMenuScroll(el.brushMenu);
-      focusFirstMenuControl(el.brushMenu);
+      showMenu(el.brushMenu);
     }
 
-    function openBoundaryMenuAt(clientX, clientY, side = state.boundaryMenuSide) {
+    function openBoundaryMenuAt(_clientX, _clientY, side = state.boundaryMenuSide) {
       if (!el.boundaryMenu) return;
       if (!closeCanvasContextMenu() || !closeSourceMenu() || !closeMonitorMenu() || !closeBrushMenu()) return;
       rememberFocusTarget();
       state.boundaryMenuSide = side || state.boundaryMenuSide || "top";
       beginEditSession(el.boundaryMenu);
-      el.boundaryMenu.hidden = false;
-      positionFloatingMenu(el.boundaryMenu, clientX, clientY);
-      resetMenuScroll(el.boundaryMenu);
-      focusFirstMenuControl(el.boundaryMenu);
+      showMenu(el.boundaryMenu);
     }
 
-    bindFloatingMenuDrag();
+    mountContextMenus();
+    syncContextualInspectorState();
 
     return {
       state,

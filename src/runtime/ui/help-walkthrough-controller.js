@@ -229,6 +229,7 @@
         activeIndex = -1;
         el.walkthroughPanel.removeAttribute("style");
         el.walkthroughHighlight.removeAttribute("style");
+        if (restoreFocus) closeControlDrawer();
         if (restoreFocus && lastFocus?.focus) {
           lastFocus.focus({ preventScroll: true });
         }

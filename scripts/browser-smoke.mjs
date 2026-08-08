@@ -8113,8 +8113,8 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.locator("#helpGuideCloseBtn").click();
 
     const failures = [...localErrors];
-    if (!closed.panelHidden || closed.panel?.top < closed.viewport.height - 1) {
-      failures.push("closed compact panel remains visible above the viewport bottom");
+    if (!closed.panelHidden || (closed.panel?.width || 0) > 1 || (closed.panel?.height || 0) > 1) {
+      failures.push("closed compact panel remains rendered in the workspace");
     }
     if (!closed.navButtonsUnobscured) failures.push("closed compact panel obscures landscape workflow navigation");
     if (closed.helpColorbarOverlap > 1) failures.push("landscape help button overlaps the color scale");
@@ -8126,8 +8126,8 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     if (open.nav && open.panel && Math.abs(open.panel.bottom - open.nav.top) > 1) {
       failures.push("open compact panel extends into the workflow navigation");
     }
-    if (!reclosed.panelHidden || reclosed.panel?.top < reclosed.viewport.height - 1) {
-      failures.push("compact panel remains visible after closing");
+    if (!reclosed.panelHidden || (reclosed.panel?.width || 0) > 1 || (reclosed.panel?.height || 0) > 1) {
+      failures.push("compact panel remains rendered after closing");
     }
     if (!threeDControls.available || threeDControls.overlap > 1) {
       failures.push("3D orbit controls overlap the help action in compact landscape");
@@ -8271,17 +8271,39 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
     });
     await page.keyboard.press("Escape");
     const classClosed = await page.locator(".app-shell").evaluate((shell) => !shell.classList.contains("contextual-inspector-open"));
+    await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
+    await page.waitForTimeout(80);
+    const primaryPanel = await page.evaluate(() => {
+      const panel = document.getElementById("controlPanel");
+      const canvasFrame = document.querySelector(".canvas-frame");
+      const backdrop = document.getElementById("controlDrawerBackdrop");
+      const panelBounds = panel?.getBoundingClientRect();
+      const canvasBounds = canvasFrame?.getBoundingClientRect();
+      return {
+        open: panel?.getAttribute("aria-hidden") === "false",
+        position: panel ? getComputedStyle(panel).position : "",
+        shadow: panel ? getComputedStyle(panel).boxShadow : "",
+        backdropDisplay: backdrop ? getComputedStyle(backdrop).display : "",
+        separateFromCanvas: Boolean(panelBounds && canvasBounds && panelBounds.right <= canvasBounds.left + 1),
+      };
+    });
+    await page.locator("#controlDrawerCloseBtn").click();
     if (!status.appState) failures.push("desktop contextual inspector state was not applied");
     if (status.canvasMenuOverlap > 1) failures.push("desktop contextual inspector covers the simulation canvas");
     if (status.colorbarMenuOverlap > 1) failures.push("desktop contextual inspector covers the colorbar");
     if (status.helpMenuOverlap > 1) failures.push("desktop contextual inspector covers the help control");
     if (!classClosed) failures.push("contextual inspector layout state remained after Escape");
+    if (!primaryPanel.open || primaryPanel.position !== "static") failures.push("desktop workflow menu is not integrated into the workspace grid");
+    if (!primaryPanel.separateFromCanvas || primaryPanel.shadow !== "none" || primaryPanel.backdropDisplay !== "none") {
+      failures.push("desktop workflow menu still behaves like a floating drawer");
+    }
     return {
       id: "contextual_inspector_layout",
       preset: "empty",
       priority: "P1",
       ...status,
       classClosed,
+      primaryPanel,
       passed: failures.length === 0,
       failures,
     };
@@ -8329,6 +8351,7 @@ async function runContextEditorResponsiveSmoke(browser, url) {
       const menu = document.getElementById("monitorMenu");
       const rect = menu.getBoundingClientRect();
       const frame = document.querySelector(".canvas-frame").getBoundingClientRect();
+      const host = document.getElementById("contextInspectorHost").getBoundingClientRect();
       const header = document.querySelector(".topbar").getBoundingClientRect();
       const body = menu.querySelector(".source-menu-body");
       return {
@@ -8336,11 +8359,12 @@ async function runContextEditorResponsiveSmoke(browser, url) {
         contextual: menu.dataset.contextualInspector || "",
         activeId: document.activeElement?.id || "",
         bodyOverflowX: body.scrollWidth - body.clientWidth,
-        contained:
-          rect.left >= frame.left - 1 &&
-          rect.right <= frame.right + 1 &&
-          rect.top >= frame.top - 1 &&
-          rect.bottom <= frame.bottom + 1,
+        fillsHost:
+          Math.abs(rect.left - host.left) <= 1 &&
+          Math.abs(rect.right - host.right) <= 1 &&
+          Math.abs(rect.top - host.top) <= 1 &&
+          Math.abs(rect.bottom - host.bottom) <= 1,
+        separateFromCanvas: rect.left >= frame.right - 1,
         belowHeader: rect.top >= header.bottom - 1,
       };
     });
@@ -8369,15 +8393,15 @@ async function runContextEditorResponsiveSmoke(browser, url) {
       };
     });
 
-    if (desktopChoice.hidden || desktopChoice.height > 180) failures.push("desktop add-element menu is not compact");
+    if (desktopChoice.hidden) failures.push("desktop add-element panel did not open");
     if (desktopChoice.activeIsClose || desktopChoice.activeText !== "Source") failures.push("add-element menu focuses its close action instead of the first choice");
     if (desktopChoice.documentOverflowX > 1) failures.push("desktop add-element menu causes horizontal document overflow");
-    if (desktop.position !== "absolute" || desktop.contextual) failures.push("mid-width monitor editor is not canvas-relative");
-    if (!desktop.contained || !desktop.belowHeader) failures.push("mid-width monitor editor escapes the scientific canvas frame");
+    if (desktop.position !== "static" || desktop.contextual !== "true") failures.push("mid-width monitor editor is not an integrated inspector");
+    if (!desktop.fillsHost || !desktop.separateFromCanvas || !desktop.belowHeader) failures.push("mid-width monitor editor is not docked beside the scientific canvas");
     if (desktop.activeId !== "monitorQuantityInput") failures.push("monitor editor does not focus its first field");
     if (desktop.bodyOverflowX > 1) failures.push("mid-width monitor editor body overflows horizontally");
     if (mobileChoice.activeIsClose || mobileChoice.activeText !== "Source") failures.push("mobile add-element menu focuses its close action");
-    if (mobile.position !== "fixed" || mobile.contextual !== "true") failures.push("mobile monitor editor is not a contextual sheet");
+    if (mobile.position !== "static" || mobile.contextual !== "true") failures.push("mobile monitor editor is not an integrated workspace panel");
     if (!mobile.aligned || !mobile.fullWidth || !mobile.actionsVisible) failures.push("mobile monitor sheet is clipped or misaligned");
     if (mobile.activeId !== "monitorQuantityInput") failures.push("mobile monitor editor does not focus its first field");
     if (mobile.bodyOverflowX > 1 || mobile.menuOverflowX > 1 || mobile.documentOverflowX > 1) {
@@ -8700,7 +8724,9 @@ async function runSourceDependentParamsSmoke(page) {
     const app = window.FdtdApp;
     if (!app?.populateSourceEditor) throw new Error("FdtdApp.populateSourceEditor() is unavailable");
     const sourceMenu = document.getElementById("sourceMenu");
-    if (sourceMenu) sourceMenu.hidden = false;
+    const canvasRect = document.getElementById("simCanvas")?.getBoundingClientRect();
+    if (!app.openSourceMenuAt || !canvasRect) throw new Error("FdtdApp.openSourceMenuAt() is unavailable");
+    app.openSourceMenuAt(canvasRect.left + canvasRect.width * 0.4, canvasRect.top + canvasRect.height * 0.4, null);
     const sourceDetailPanel = document.querySelector(".source-detail-panel");
     const sourceDetailHeading = sourceDetailPanel?.querySelector(".cds--accordion__heading");
     const isRendered = (control) => {
@@ -8915,7 +8941,7 @@ async function runSceneObservablesSmoke(browser, url) {
   };
 }
 
-async function runFloatingContextMenuDragSmoke(page) {
+async function runIntegratedContextInspectorSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(async () => {
     const app = window.FdtdApp;
@@ -8964,37 +8990,31 @@ async function runFloatingContextMenuDragSmoke(page) {
     );
     await new Promise((resolve) => requestAnimationFrame(resolve));
     const after = menu.getBoundingClientRect();
-    const frame = menu.parentElement.getBoundingClientRect();
+    const host = menu.parentElement.getBoundingClientRect();
+    const frame = document.querySelector(".canvas-frame").getBoundingClientRect();
     return {
       opened: menu.hidden === false,
       docked: menu.dataset.contextualInspector === "true",
-      draggable: menu.dataset.floatingMenuDraggable,
+      position: getComputedStyle(menu).position,
       movedX: Number((after.left - before.left).toFixed(1)),
       movedY: Number((after.top - before.top).toFixed(1)),
-      rightAligned: Math.abs(window.innerWidth - 16 - after.right) < 1,
-      separateFromFrame: after.left >= frame.right + 1,
+      fillsHost:
+        Math.abs(after.left - host.left) <= 1 &&
+        Math.abs(after.right - host.right) <= 1 &&
+        Math.abs(after.top - host.top) <= 1 &&
+        Math.abs(after.bottom - host.bottom) <= 1,
+      separateFromFrame: after.left >= frame.right - 1,
       withinViewport: after.left >= 0 && after.top >= 0 && after.right <= window.innerWidth && after.bottom <= window.innerHeight,
-      withinFrame:
-        after.left >= frame.left - 0.5 &&
-        after.top >= frame.top - 0.5 &&
-        after.right <= frame.right + 0.5 &&
-        after.bottom <= frame.bottom + 0.5,
     };
   });
   const failures = [];
   if (!status.opened) failures.push("source menu did not open before the drag test");
-  if (status.docked) {
-    if (status.draggable !== "false") failures.push("docked contextual inspector advertised a draggable state");
-    if (!status.rightAligned) failures.push("contextual inspector is not aligned to the right edge");
-    if (!status.separateFromFrame) failures.push("contextual inspector still covers the canvas frame");
-    if (!status.withinViewport) failures.push("contextual inspector escaped the viewport");
-  } else {
-    if (status.draggable !== "true") failures.push("floating source menu did not advertise draggable state");
-    if (Math.abs(status.movedX) < 20 && Math.abs(status.movedY) < 20) failures.push("source menu did not move after dragging the header");
-  }
-  if (!status.docked && !status.withinFrame) failures.push("dragged source menu escaped the canvas frame");
+  if (!status.docked || status.position !== "static") failures.push("source editor is not an integrated inspector");
+  if (Math.abs(status.movedX) > 1 || Math.abs(status.movedY) > 1) failures.push("integrated source editor moved after dragging the header");
+  if (!status.fillsHost || !status.separateFromFrame) failures.push("integrated source editor is not docked beside the canvas frame");
+  if (!status.withinViewport) failures.push("integrated source editor escaped the viewport");
   return {
-    id: "floating_context_menu_drag",
+    id: "integrated_context_inspector",
     preset: "current",
     priority: "P1",
     ...status,
@@ -9441,7 +9461,7 @@ async function main() {
       await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));
       await recordCase("source_theme_contrast", () => runSourceThemeContrastSmoke(page));
       await recordCase("source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page));
-      await recordCase("floating_context_menu_drag", () => runFloatingContextMenuDragSmoke(page));
+      await recordCase("integrated_context_inspector", () => runIntegratedContextInspectorSmoke(page));
       await recordCase("reflective_boundary_wall", () => runReflectiveBoundaryWallSmoke(page));
       await recordCase("brush_dependent_params_visibility", () => runBrushDependentParamsSmoke(page));
     }

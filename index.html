@@ -40,7 +40,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260808-carbon-workbench-10" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260809-integrated-inspector-1" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -516,7 +516,7 @@
             <div
               id="canvasContextMenu"
               class="source-menu context-choice-menu"
-              role="dialog"
+              role="region"
               aria-labelledby="canvasContextMenuTitle"
               aria-describedby="canvasContextMenuHint"
               hidden
@@ -536,7 +536,7 @@
             <div
               id="sourceMenu"
               class="source-menu"
-              role="dialog"
+              role="region"
               aria-labelledby="sourceMenuTitle"
               aria-describedby="sourceMenuHint"
               hidden
@@ -637,7 +637,7 @@
             <div
               id="monitorMenu"
               class="source-menu monitor-menu"
-              role="dialog"
+              role="region"
               aria-labelledby="monitorMenuTitle"
               aria-describedby="monitorMenuHint"
               hidden
@@ -683,7 +683,7 @@
             <div
               id="brushMenu"
               class="source-menu brush-menu"
-              role="dialog"
+              role="region"
               aria-labelledby="brushMenuTitle"
               aria-describedby="brushMenuHint"
               hidden
@@ -998,7 +998,7 @@
             <div
               id="boundaryMenu"
               class="source-menu boundary-menu"
-              role="dialog"
+              role="region"
               aria-labelledby="boundaryMenuTitle"
               aria-describedby="boundaryMenuHint"
               hidden
@@ -1033,6 +1033,15 @@
             </span>
           </footer>
         </div>
+
+        <aside
+          id="contextInspectorHost"
+          class="context-inspector-host"
+          aria-label="Canvas properties"
+          aria-hidden="true"
+          inert
+          hidden
+        ></aside>
 
         <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
           <div class="control-panel-header">
