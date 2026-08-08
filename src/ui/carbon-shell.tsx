@@ -8,6 +8,7 @@ import {
   Search,
   Switch,
 } from "@carbon/react";
+import { Chemistry, Grid as GridIcon, Inspection, SettingsAdjust } from "@carbon/react/icons";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
@@ -59,14 +60,14 @@ export function ApplicationHeader() {
 }
 
 const workflowLayers = [
-  ["scenes", "1", "Scene"],
-  ["simulation", "2", "Simulate"],
-  ["results", "3", "Results"],
-  ["config", "4", "Numerics"],
+  ["scenes", "1", "Scene", GridIcon],
+  ["simulation", "2", "Simulate", Chemistry],
+  ["results", "3", "Results", Inspection],
+  ["config", "4", "Numerics", SettingsAdjust],
 ] as const;
 
 export function WorkflowNavigation() {
-  return workflowLayers.map(([layer, step, label], index) => (
+  return workflowLayers.map(([layer, step, label, Icon], index) => (
     <Button
       className={`mobile-layer-button${index === 0 ? " is-active" : ""}`}
       type="button"
@@ -80,6 +81,7 @@ export function WorkflowNavigation() {
       key={layer}
     >
       <span className="nav-step" aria-hidden="true">{step}</span>
+      <Icon className="nav-icon" size={16} aria-hidden={true} />
       <span className="nav-label">{label}</span>
     </Button>
   ));

@@ -3735,32 +3735,35 @@ body {
 }
 
 .workflow-rail .mobile-layer-button {
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   gap: var(--space-2xs);
+  width: 100%;
+  max-width: none;
   min-height: 64px;
   padding: var(--space-2xs);
   border: 0;
   border-top: 3px solid transparent;
   border-radius: 0;
-  color: var(--cds-text-secondary, var(--color-muted));
+  color: var(--cds-link-primary, var(--color-accent));
   background: transparent;
   font-size: 0.75rem;
 }
 
 .workflow-rail .mobile-layer-button.is-active {
   border-top-color: var(--cds-border-interactive, var(--color-accent));
-  color: var(--cds-text-primary, var(--color-ink));
+  color: var(--cds-link-primary, var(--color-accent));
   background: var(--cds-layer-selected-01, var(--color-paper-2));
 }
 
 .workflow-rail .nav-step {
-  width: auto;
-  height: auto;
-  flex-basis: auto;
-  border-radius: 0;
-  color: inherit;
-  background: transparent;
-  font-size: 0.7rem;
+  display: none;
+}
+
+.workflow-rail .nav-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
 }
 
 .stage {
@@ -4036,7 +4039,7 @@ body {
 
   .workflow-rail {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(4, minmax(72px, auto));
+    grid-template-rows: repeat(4, minmax(64px, auto));
     align-content: start;
     padding: 0;
     border-top: 0;
@@ -4044,9 +4047,16 @@ body {
   }
 
   .workflow-rail .mobile-layer-button {
-    min-height: 72px;
+    flex-direction: column;
+    gap: var(--space-xs);
+    min-height: 64px;
     border-top: 0;
     border-left: 3px solid transparent;
+  }
+
+  .workflow-rail .nav-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .workflow-rail .mobile-layer-button.is-active {
