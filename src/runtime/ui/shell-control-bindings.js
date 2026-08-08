@@ -63,6 +63,31 @@
       dependencies.handleCanvasContextAdd,
       "handleCanvasContextAdd",
     );
+    const editHelpPanel = documentRef.querySelector('[data-help-guide-topic-panel="edit"]');
+    if (editHelpPanel && editHelpPanel.dataset.progressiveDisclosure !== "true") {
+      editHelpPanel.dataset.progressiveDisclosure = "true";
+      const referenceContent = documentRef.createElement("div");
+      referenceContent.className = "help-guide-reference-content";
+      Array.from(editHelpPanel.children).forEach((child) => referenceContent.appendChild(child));
+
+      const quickGuide = documentRef.createElement("div");
+      quickGuide.className = "help-guide-quick-steps";
+      quickGuide.innerHTML = [
+        "<p>Edit changes the numerical experiment. Reset fields and recollect monitor data after changing geometry or materials.</p>",
+        "<ul>",
+        "<li><strong>Select:</strong> tap an object to select it; drag to move it.</li>",
+        "<li><strong>Add or edit:</strong> right-click on desktop or long-press on touch to open the contextual editor.</li>",
+        "<li><strong>Draw:</strong> tap to paint one point, drag for a stroke, or long-press to configure the brush and material.</li>",
+        "</ul>",
+      ].join("");
+
+      const reference = documentRef.createElement("details");
+      reference.className = "help-guide-reference scene-guide-details";
+      const summary = documentRef.createElement("summary");
+      summary.textContent = "Scientific editing reference";
+      reference.append(summary, referenceContent);
+      editHelpPanel.append(quickGuide, reference);
+    }
     let lastHelpGuideTopicButton = null;
     const helpGuideDefaultKicker = el.helpGuideKicker?.textContent || "Quick guide";
     const helpGuideDefaultTitle = el.helpGuideTitle?.textContent || "How to use the simulator";

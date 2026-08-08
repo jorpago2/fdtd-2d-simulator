@@ -64,6 +64,9 @@
     const isEditableKeyTarget = requireFunction(dependencies.isEditableKeyTarget, "isEditableKeyTarget");
     const deleteSelectedElement = requireFunction(dependencies.deleteSelectedElement, "deleteSelectedElement");
     const touchDragStartPx = dependencies.touchDragStartPx ?? 8;
+    const touchLongPressMs = dependencies.touchLongPressMs ?? 600;
+    let touchLongPressTimer = null;
+    let touchLongPressPointerId = null;
 
     function isDeleteShortcut(event) {
       return event.key === "Delete" || event.key === "Backspace" || event.code === "Delete" || event.code === "Backspace";
@@ -97,34 +100,61 @@
       updateViewInteraction();
     }
 
-    function handleContextMenu(event) {
-      event.preventDefault();
-      if (sim.clientIsInBoundaryControlRegion(event.clientX, event.clientY)) {
-        openBoundaryMenuAt(event.clientX, event.clientY);
+    function openContextAt(clientX, clientY) {
+      if (sim.clientIsInBoundaryControlRegion(clientX, clientY)) {
+        openBoundaryMenuAt(clientX, clientY);
         return;
       }
       if (state.canvasMode === "brush") {
-        openBrushMenuAt(event.clientX, event.clientY);
+        openBrushMenuAt(clientX, clientY);
         return;
       }
-      const source = sim.sourceAtClientPoint(event.clientX, event.clientY);
+      const source = sim.sourceAtClientPoint(clientX, clientY);
       if (source) {
         clearMaterialSelection(false);
-        openSourceMenuAt(event.clientX, event.clientY, source);
+        openSourceMenuAt(clientX, clientY, source);
         return;
       }
-      const monitor = sim.monitorAtClientPoint(event.clientX, event.clientY);
+      const monitor = sim.monitorAtClientPoint(clientX, clientY);
       if (monitor) {
         clearMaterialSelection(false);
-        openMonitorMenuAt(event.clientX, event.clientY, monitor);
+        openMonitorMenuAt(clientX, clientY, monitor);
         return;
       }
-      const region = selectMaterialRegionAt(event.clientX, event.clientY, false);
+      const region = selectMaterialRegionAt(clientX, clientY, false);
       if (region) {
-        openBrushMenuAt(event.clientX, event.clientY, { mode: "region" });
+        openBrushMenuAt(clientX, clientY, { mode: "region" });
         return;
       }
-      openCanvasContextMenuAt(event.clientX, event.clientY);
+      openCanvasContextMenuAt(clientX, clientY);
+    }
+
+    function handleContextMenu(event) {
+      event.preventDefault();
+      openContextAt(event.clientX, event.clientY);
+    }
+
+    function cancelTouchLongPress(pointerId = touchLongPressPointerId) {
+      if (pointerId !== touchLongPressPointerId) return;
+      if (touchLongPressTimer != null) global.clearTimeout(touchLongPressTimer);
+      touchLongPressTimer = null;
+      touchLongPressPointerId = null;
+    }
+
+    function scheduleTouchLongPress(event) {
+      cancelTouchLongPress();
+      const pointerId = event.pointerId;
+      touchLongPressPointerId = pointerId;
+      touchLongPressTimer = global.setTimeout(() => {
+        touchLongPressTimer = null;
+        touchLongPressPointerId = null;
+        const interaction = pointerState.pendingTouchInteraction;
+        if (!interaction || interaction.pointerId !== pointerId || interaction.moved || !pointerStateController.hasPointer(pointerId)) return;
+        pointerStateController.endPan(pointerId);
+        pointerStateController.clearLastCanvasTouchTap();
+        clearPendingTouchInteraction();
+        openContextAt(interaction.startX, interaction.startY);
+      }, touchLongPressMs);
     }
 
     function capturePointer(event) {
@@ -136,6 +166,7 @@
     }
 
     function handleMultiPointerStart(event) {
+      cancelTouchLongPress();
       pointerStateController.resetForMultiPointer();
       clearEntityDragState();
       beginPinchGesture();
@@ -233,6 +264,15 @@
       if (event.button !== 0 && event.pointerType !== "touch") return;
       if (state.canvasMode === "select") {
         handleSelectPointerDown(event);
+        if (event.pointerType === "touch" && pointerState.pendingTouchInteraction?.pointerId === event.pointerId) {
+          scheduleTouchLongPress(event);
+        }
+        event.preventDefault();
+        return;
+      }
+      if (event.pointerType === "touch") {
+        beginPendingTouchInteraction(event, "draw");
+        scheduleTouchLongPress(event);
         event.preventDefault();
         return;
       }
@@ -255,6 +295,20 @@
       if (pointerState.activePointers.size >= 2) {
         handleMultiPointerMove(event);
         return;
+      }
+      const pendingTouch = pointerState.pendingTouchInteraction;
+      if (pendingTouch?.pointerId === event.pointerId) {
+        const distance = Math.hypot(event.clientX - pendingTouch.startX, event.clientY - pendingTouch.startY);
+        if (distance >= touchDragStartPx) cancelTouchLongPress(event.pointerId);
+        if (pendingTouch.kind === "draw") {
+          if (markPendingTouchMoved(event, touchDragStartPx)) {
+            clearPendingTouchInteraction();
+            pointerStateController.beginPaint(event.pointerId);
+            beginPaintStroke(event);
+          }
+          event.preventDefault();
+          return;
+        }
       }
       if (promotePendingTouchDrag(event)) {
         event.preventDefault();
@@ -288,9 +342,19 @@
       const wasPainting = pointerStateController.isPainting(event.pointerId);
       const finishedTouchInteraction =
         pointerState.pendingTouchInteraction?.pointerId === event.pointerId ? pointerState.pendingTouchInteraction : null;
+      cancelTouchLongPress(event.pointerId);
       pointerStateController.deletePointer(event.pointerId);
       if (finishedTouchInteraction) {
-        if (event.type !== "pointerup" || (finishedTouchInteraction.kind === "empty" && finishedTouchInteraction.moved)) {
+        if (finishedTouchInteraction.kind === "draw") {
+          if (event.type === "pointerup" && !finishedTouchInteraction.moved) {
+            if (state.brushTool === "geometry") insertGeometryFromEvent(event);
+            else {
+              beginPaintStroke(event);
+              endPaintStroke(event);
+            }
+          }
+          pointerStateController.clearLastCanvasTouchTap();
+        } else if (event.type !== "pointerup" || (finishedTouchInteraction.kind === "empty" && finishedTouchInteraction.moved)) {
           pointerStateController.clearLastCanvasTouchTap();
         } else {
           handleCanvasTouchTap(event, finishedTouchInteraction);

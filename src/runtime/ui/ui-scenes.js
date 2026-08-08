@@ -405,10 +405,13 @@
           matchingRecords.filter((record) => record.groupLabel === groupLabel).length
         );
       });
-      const filters = groups.map((groupLabel) => ({
-        value: groupLabel,
-        label: cleanSceneGroupLabel(groupLabel),
-      }));
+      const filters = groups
+        .map((groupLabel) => ({
+          value: groupLabel,
+          label: cleanSceneGroupLabel(groupLabel),
+          count: counts.get(groupLabel) || 0,
+        }))
+        .filter((filter) => terms.length === 0 || filter.count > 0);
 
       el.sceneFilterBar.replaceChildren();
       filters.forEach((filter) => {
@@ -419,7 +422,7 @@
         button.dataset.sceneFilter = filter.value;
         button.setAttribute("role", "radio");
         button.setAttribute("aria-checked", String(active));
-        const filterCount = counts.get(filter.value) || 0;
+        const filterCount = filter.count;
         button.disabled = terms.length === 0 && !active && filterCount === 0;
         button.setAttribute("aria-label", `${filter.label}: ${filterCount} scenes`);
         const label = documentRef.createElement("span");

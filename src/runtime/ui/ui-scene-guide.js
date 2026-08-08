@@ -1365,24 +1365,24 @@
       if (!panel) return;
       panel.replaceChildren();
 
-      const header = documentRef.createElement("div");
-      header.className = "scene-guide-header";
-      const eyebrow = documentRef.createElement("span");
-      eyebrow.textContent = record.index == null ? "Custom scene" : `Example ${record.index}`;
-      const title = documentRef.createElement("strong");
-      title.textContent = record.title || guide.phenomenon;
-      header.append(eyebrow, title);
-
       const grid = documentRef.createElement("div");
       grid.className = "scene-guide-grid";
       appendSceneGuideField(grid, "Phenomenon", guide.phenomenon);
-      appendSceneGuideField(grid, "Description", guide.description);
       appendSceneGuideField(grid, "FDTD simulation", guide.fdtd);
-      appendSceneGuideField(grid, "Geometry", guide.geometry);
-      appendSceneGuideField(grid, "Source", guide.source);
-      appendSceneGuideField(grid, "Materials", guide.materials);
       appendSceneGuideField(grid, "Expected results", guide.expected);
-      appendSceneGuideField(grid, "Explanation", guide.explanation);
+
+      const modelDetails = documentRef.createElement("details");
+      modelDetails.className = "scene-guide-details";
+      const modelSummary = documentRef.createElement("summary");
+      modelSummary.textContent = "Model details";
+      const modelBody = documentRef.createElement("div");
+      modelBody.className = "scene-guide-grid";
+      appendSceneGuideField(modelBody, "Description", guide.description);
+      appendSceneGuideField(modelBody, "Geometry", guide.geometry);
+      appendSceneGuideField(modelBody, "Source", guide.source);
+      appendSceneGuideField(modelBody, "Materials", guide.materials);
+      appendSceneGuideField(modelBody, "Explanation", guide.explanation);
+      modelDetails.append(modelSummary, modelBody);
 
       const details = documentRef.createElement("details");
       details.className = "scene-guide-details";
@@ -1395,7 +1395,7 @@
       appendSceneGuideField(detailsBody, "Related experiments", guide.experiments);
       details.append(detailsSummary, detailsBody);
 
-      panel.append(header, grid, details);
+      panel.append(grid, modelDetails, details);
       appendSceneGuideReferences(panel, guide.references);
     }
 

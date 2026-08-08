@@ -7,6 +7,7 @@ import {
   Link,
   Search,
   Switch,
+  Theme,
 } from "@carbon/react";
 import { Chemistry, Grid as GridIcon, Inspection, SettingsAdjust } from "@carbon/react/icons";
 
@@ -14,7 +15,7 @@ export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
 
   return (
-    <Header className="topbar" aria-label="EM Wave Simulator application header">
+    <Theme as={Header} theme="g10" className="topbar" aria-label="EM Wave Simulator application header">
       <div className="brand-lockup">
         <span className="brand-mark" aria-hidden="true">EM</span>
         <div className="brand-heading" data-react-ui="brand">
@@ -56,7 +57,7 @@ export function ApplicationHeader() {
           <SettingsAdjust size={16} aria-hidden={true} />
         </Button>
       </HeaderGlobalBar>
-    </Header>
+    </Theme>
   );
 }
 

@@ -3552,6 +3552,11 @@ body {
   box-shadow: none;
 }
 
+.workspace.cds--css-grid {
+  max-width: none;
+  padding-inline: 0;
+}
+
 .topbar .brand-lockup {
   display: flex;
   grid-template-columns: none;
@@ -5053,4 +5058,263 @@ output {
 html,
 body {
   overflow: clip;
+}
+
+/* 13. Scientific instrument shell refinement
+   Genre: scientific workspace; tone: precise; anchor: Carbon blue;
+   fingerprint: unified header, workflow rail, persistent result, contextual inspector. */
+
+.topbar {
+  border-bottom: 1px solid var(--cds-border-subtle-01, var(--color-rule));
+  color: var(--cds-text-primary, var(--color-ink));
+  background: var(--cds-background, var(--color-surface));
+  box-shadow: none;
+}
+
+.topbar .brand-mark {
+  color: var(--cds-text-on-color, #fff);
+  background: var(--cds-text-primary, var(--color-ink));
+}
+
+.topbar .brand-title,
+.topbar .header-scene-title,
+.topbar .header-status,
+.topbar .brand-descriptor,
+.topbar .header-context-label {
+  color: inherit;
+}
+
+.header-actions > .header-simulation-controls,
+.header-simulation-controls .interaction-toggle,
+.header-theme-toggle {
+  height: 40px;
+  min-height: 40px;
+}
+
+.header-simulation-controls .icon-button,
+.control-drawer-toggle {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  max-inline-size: 40px;
+}
+
+.header-simulation-controls .simulation-run-button {
+  width: 80px;
+  min-width: 80px;
+  max-inline-size: 80px;
+}
+
+.topbar .interaction-toggle > button,
+.topbar .header-theme-toggle > button,
+.topbar .cds--btn--ghost {
+  min-height: 40px;
+  color: var(--cds-text-primary, var(--color-ink));
+}
+
+.topbar .interaction-toggle > button:hover,
+.topbar .header-theme-toggle > button:hover,
+.topbar .cds--btn--ghost:hover {
+  background: var(--cds-layer-hover-01, var(--color-paper-2));
+}
+
+.topbar .interaction-toggle > button[aria-selected="true"],
+.topbar .header-theme-toggle > button[aria-selected="true"] {
+  color: var(--cds-text-on-color, #fff);
+  background: var(--cds-background-brand, var(--color-accent));
+}
+
+#tab-scenes .scene-browse-panel {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+#tab-scenes .scene-browse-panel .scene-search-label,
+#tab-scenes .scene-browse-panel .scene-filter-bar,
+#tab-scenes .scene-browse-panel .scene-browser-meta,
+#tab-scenes .scene-browse-panel .scene-cards {
+  grid-column: 1;
+  grid-row: auto;
+  min-width: 0;
+}
+
+.scene-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--cds-border-subtle-01, var(--color-rule));
+}
+
+.scene-filter-button {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-inline-start: 3px solid transparent;
+  border-radius: 0;
+  background: var(--cds-layer-01, var(--color-surface));
+}
+
+.scene-filter-button.is-active {
+  border-inline-start-color: var(--cds-border-interactive, var(--color-accent));
+  background: var(--cds-layer-selected-01, var(--color-accent-soft));
+}
+
+.scene-cards,
+.scene-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.scene-card {
+  grid-template-columns: 48px minmax(0, 1fr);
+  border-radius: 0;
+}
+
+.scene-guide-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.performance-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--cds-border-subtle-01, var(--color-rule));
+}
+
+.analysis-chart-grid,
+.analysis-chart-grid > * {
+  min-width: 0;
+}
+
+.analysis-chart {
+  max-width: 100%;
+}
+
+.analysis-chart.js-plotly-plot {
+  width: 100%;
+}
+
+.help-guide-quick-steps {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.help-guide-reference {
+  margin-top: var(--space-md);
+  border-top: 1px solid var(--cds-border-subtle-01, var(--color-rule));
+}
+
+.help-guide-reference > summary {
+  min-height: 48px;
+  padding-block: var(--space-sm);
+  color: var(--cds-text-primary, var(--color-ink));
+  font-weight: 600;
+}
+
+.help-guide-reference-content {
+  padding-top: var(--space-sm);
+}
+
+@media (min-width: 80rem) and (min-height: 40rem) {
+  .app-shell.contextual-inspector-open .stage {
+    padding-inline-end: calc(22rem + 2 * var(--space-md));
+  }
+
+  .app-shell.contextual-inspector-open .canvas-frame {
+    max-width: 100%;
+  }
+
+  .app-shell.contextual-inspector-open .colorbar,
+  .app-shell.contextual-inspector-open .help-guide-toggle,
+  .app-shell.contextual-inspector-open .help-guide-panel {
+    right: calc(22rem + 2 * var(--space-md));
+  }
+}
+
+@media (max-height: 39.99rem) {
+  .control-panel {
+    inset: 64px 0 64px;
+    width: 100%;
+    border-right: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .topbar .header-context {
+    display: none;
+  }
+
+  .header-actions {
+    grid-column: 2;
+    width: auto;
+    min-width: max-content;
+    justify-self: end;
+  }
+
+  .header-actions > .header-simulation-controls {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  .header-simulation-controls .tool-group.compact {
+    flex: 0 0 auto;
+  }
+
+  .header-simulation-controls .interaction-toggle {
+    flex: 0 0 9.25rem;
+    width: 9.25rem;
+  }
+
+  .header-actions > .header-simulation-controls,
+  .header-simulation-controls .interaction-toggle,
+  .header-simulation-controls .interaction-toggle > button,
+  .header-simulation-controls .simulation-run-button,
+  .header-simulation-controls .icon-button,
+  .topbar .header-actions .control-drawer-toggle {
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .header-simulation-controls .simulation-run-button,
+  .header-simulation-controls .icon-button,
+  .topbar .header-actions .control-drawer-toggle {
+    width: 44px;
+    min-width: 44px;
+    max-inline-size: 44px;
+  }
+
+  .source-menu[data-contextual-inspector="true"] {
+    inset: 64px 0 64px;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .source-menu[data-contextual-inspector="true"] .source-menu-header {
+    min-height: 64px;
+  }
+}
+
+@media (max-width: 22rem) {
+  .header-simulation-controls .simulation-run-button,
+  .header-simulation-controls .icon-button,
+  .topbar .header-actions .control-drawer-toggle {
+    width: 40px;
+    min-width: 40px;
+    max-inline-size: 40px;
+  }
+
+  .header-simulation-controls .interaction-toggle {
+    flex-basis: 8rem;
+    width: 8rem;
+  }
 }

@@ -93,13 +93,26 @@ function validatePackageScripts(packageJson) {
 }
 
 function validateSourceRootShape() {
-  const allowedEntries = new Set(["README.md", "core", "data", "legacy-runtime.json", "main.tsx", "runtime", "styles", "ui"]);
+  const allowedEntries = new Set([
+    "README.md",
+    "core",
+    "data",
+    "legacy-runtime.json",
+    "main.tsx",
+    "runtime",
+    "stories",
+    "stories.d.ts",
+    "styles",
+    "ui",
+  ]);
   const srcEntries = fs.readdirSync(repoPath("src"), { withFileTypes: true }).map((entry) => entry.name);
   const unexpectedEntries = srcEntries.filter((entry) => !allowedEntries.has(entry));
   addCheck(
     "src contains only active browser assets",
     unexpectedEntries.length === 0,
-    unexpectedEntries.length ? unexpectedEntries.join(", ") : "src contains typed core/data/UI entries, runtime manifest, runtime, styles, and README only",
+    unexpectedEntries.length
+      ? unexpectedEntries.join(", ")
+      : "src contains typed core/data/UI entries, Storybook stories, runtime manifest, runtime, styles, and README only",
   );
 }
 

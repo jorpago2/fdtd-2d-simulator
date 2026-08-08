@@ -24,6 +24,7 @@
     const floatingMenuPad = 10;
     const minimumDragRoom = 12;
     const contextualInspectorQuery = "(min-width: 80rem) and (min-height: 40rem)";
+    const contextualSheetQuery = "(max-width: 47.99rem)";
     let activeMenuDrag = null;
     const state = {
       sourceMenuMode: "add",
@@ -42,6 +43,11 @@
 
     function anyContextMenuOpen() {
       return contextMenuElements().some((menu) => !menu.hidden);
+    }
+
+    function syncContextualInspectorState() {
+      const open = contextMenuElements().some((menu) => !menu.hidden && menu.dataset.contextualInspector === "true");
+      el.appShell?.classList.toggle("contextual-inspector-open", open);
     }
 
     function activeElementInsideContextMenu() {
@@ -118,7 +124,11 @@
     }
 
     function contextualInspectorActive(menu) {
-      return menu !== el.canvasContextMenu && (global.matchMedia?.(contextualInspectorQuery)?.matches ?? false);
+      if (menu === el.canvasContextMenu) return false;
+      return Boolean(
+        global.matchMedia?.(contextualInspectorQuery)?.matches ||
+        global.matchMedia?.(contextualSheetQuery)?.matches,
+      );
     }
 
     function clampFloatingMenuPosition(menu, desiredLeft, desiredTop) {
@@ -164,9 +174,11 @@
         menu.style.removeProperty("top");
         menu.style.removeProperty("max-height");
         menu.style.removeProperty("overflow-y");
+        syncContextualInspectorState();
         return;
       }
       delete menu.dataset.contextualInspector;
+      syncContextualInspectorState();
       const frameRect = frame.getBoundingClientRect();
       menu.style.removeProperty("max-height");
       menu.style.removeProperty("overflow-y");
@@ -260,7 +272,9 @@
       });
       if (typeof global.ResizeObserver === "function") {
         const observer = new global.ResizeObserver((entries) => {
-          entries.forEach((entry) => refreshFloatingMenuPosition(entry.target));
+          global.requestAnimationFrame(() => {
+            entries.forEach((entry) => refreshFloatingMenuPosition(entry.target));
+          });
         });
         contextMenuElements().forEach((menu) => observer.observe(menu));
       }
@@ -273,6 +287,7 @@
       menu.hidden = true;
       cleanup?.();
       state.canvasContextPoint = null;
+      syncContextualInspectorState();
       restoreFocusIfClosed();
       endEditSession(menu);
       return true;

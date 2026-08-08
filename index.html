@@ -109,7 +109,7 @@
         </div>
       </div>
 
-      <section id="simulatorWorkspace" class="workspace" aria-label="Simulator" tabindex="-1">
+      <section id="simulatorWorkspace" class="workspace cds--css-grid cds--css-grid--condensed cds--css-grid--full-width" aria-label="Simulator" tabindex="-1">
         <nav id="reactWorkflowRoot" class="workflow-rail mobile-layer-nav" aria-label="Simulation workflow" data-carbon-react-root="workflow">
           <button class="mobile-layer-button is-active cds--btn cds--btn--ghost cds--btn--sm" type="button" data-mobile-layer="scenes" aria-current="page" aria-controls="controlPanel" aria-expanded="false">
             <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scene</span>
@@ -1462,8 +1462,7 @@
 <section class="panel-section diagnostics-section">
               <div class="results-panel-head">
                 <div>
-                  <p class="panel-kicker">Monitor</p>
-                  <h2>Results</h2>
+                  <h2>Monitor summary</h2>
                 </div>
                 <output id="resultsStateOutput" class="results-state-pill" aria-live="polite">Paused</output>
               </div>
@@ -1645,8 +1644,7 @@
             <section class="panel-section config-summary-section">
               <div class="results-panel-head">
                 <div>
-                  <p class="panel-kicker">Numerics</p>
-                  <h2>Numerics</h2>
+                  <h2>Solver summary</h2>
                 </div>
                 <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">CFL stable</output>
               </div>

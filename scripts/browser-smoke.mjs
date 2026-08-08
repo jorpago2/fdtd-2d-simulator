@@ -6723,7 +6723,7 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
     try {
       await page.goto(url, { waitUntil: "networkidle" });
       await page.click("#helpGuideToggle");
-      states.push(await page.evaluate((name) => {
+      const layoutState = await page.evaluate((name) => {
         const rect = (node) => {
           if (!node) return null;
           const bounds = node.getBoundingClientRect();
@@ -6760,7 +6760,17 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
           toggleAboveFooter: Boolean(toggleRect && footerRect && toggleRect.bottom <= footerRect.top - 2),
           scrollableWhenNeeded: Boolean(panel && panel.scrollHeight >= panel.clientHeight),
         };
-      }, viewport.name));
+      }, viewport.name);
+      await page.locator('[data-help-guide-topic="edit"]').click();
+      const editState = await page.evaluate(() => {
+        const panel = document.getElementById("helpGuidePanel");
+        const reference = document.querySelector(".help-guide-reference");
+        return {
+          editScrollHeight: panel?.scrollHeight || 0,
+          referenceCollapsed: Boolean(reference && !reference.open),
+        };
+      });
+      states.push({ ...layoutState, ...editState });
     } finally {
       await page.close();
     }
@@ -6773,6 +6783,8 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
     if (!state.panelAboveToggle) failures.push(`${state.viewport}: help guide panel overlaps the toggle`);
     if (!state.toggleAboveFooter) failures.push(`${state.viewport}: help guide toggle overlaps the footer`);
     if (!state.scrollableWhenNeeded) failures.push(`${state.viewport}: help guide panel is not scrollable`);
+    if (!state.referenceCollapsed) failures.push(`${state.viewport}: scientific editing reference is expanded by default`);
+    if (state.editScrollHeight > 1200) failures.push(`${state.viewport}: default Edit guide remains excessively tall`);
   }
   return {
     id: "help_guide_responsive_layout",
@@ -7036,7 +7048,7 @@ async function runControlNavigationSmoke(page) {
     failures.push(`Results has open cards by default: ${status.resultsState.openResultCards.join(", ")}`);
   }
   if (status.resultsState?.performanceInResults) failures.push("Performance panel is still under Results");
-  if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerics") {
+  if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Solver summary") {
     failures.push("Numerics tab did not activate the numerical setup panel");
   }
   if (!status.numericsState?.performanceInNumerics) failures.push("Performance panel is missing from Numerics");
@@ -7179,6 +7191,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
     { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
     { name: "tablet", width: 768, height: 1024, isMobile: true, deviceScaleFactor: 2 },
     { name: "tabletLandscape", width: 1024, height: 768, isMobile: false, deviceScaleFactor: 1, expectsDesktopDrawer: true },
+    { name: "shortLaptop", width: 1024, height: 600, isMobile: false, deviceScaleFactor: 1, expectsFullSheet: true },
     { name: "desktop", width: 1440, height: 1000, isMobile: false, deviceScaleFactor: 1 },
     { name: "uhd", width: 3840, height: 2160, isMobile: false, deviceScaleFactor: 1 },
   ];
@@ -7307,7 +7320,27 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
           activeCardImageSrc: activeCardImage?.getAttribute("src") || "",
         };
       });
-      const status = { viewport: viewport.name, current: currentStatus, browse: browseStatus };
+      await page.locator("#sceneSearchInput").fill("topological");
+      await page.waitForTimeout(80);
+      const searchStatus = await page.evaluate(() => {
+        const scroller = document.querySelector(".control-tab-panels");
+        const cards = document.getElementById("sceneCards");
+        const firstCard = cards?.querySelector(".scene-card");
+        const scrollerBounds = scroller?.getBoundingClientRect();
+        const firstCardBounds = firstCard?.getBoundingClientRect();
+        return {
+          cardCount: cards?.querySelectorAll(".scene-card").length || 0,
+          cardsOverflow: cards ? cards.scrollWidth - cards.clientWidth : 0,
+          firstCardVisible:
+            Boolean(firstCardBounds && scrollerBounds) &&
+            firstCardBounds.top < scrollerBounds.bottom &&
+            firstCardBounds.bottom > scrollerBounds.top,
+          scrollerOverflow: scroller ? scroller.scrollWidth - scroller.clientWidth : 0,
+          zeroCountFilters: Array.from(document.querySelectorAll("#sceneFilterBar .scene-filter-count"))
+            .filter((count) => count.textContent?.trim() === "0").length,
+        };
+      });
+      const status = { viewport: viewport.name, current: currentStatus, browse: browseStatus, search: searchStatus };
       states.push(status);
       failures.push(...localErrors.map((error) => `${viewport.name}: ${error}`));
       if (currentStatus.activePanel !== "tab-scenes") failures.push(`${viewport.name}: Scene panel is not active`);
@@ -7344,11 +7377,26 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
       if (currentStatus.documentOverflow > 1) failures.push(`${viewport.name}: document horizontal overflow ${currentStatus.documentOverflow}`);
       if (currentStatus.panelOverflow > 1) failures.push(`${viewport.name}: control panel horizontal overflow ${currentStatus.panelOverflow}`);
       if (browseStatus.panelOverflow > 1) failures.push(`${viewport.name}: browse panel horizontal overflow ${browseStatus.panelOverflow}`);
+      if (searchStatus.scrollerOverflow > 1 || searchStatus.cardsOverflow > 1) {
+        failures.push(`${viewport.name}: filtered scene results overflow horizontally`);
+      }
+      if (searchStatus.cardCount <= 0 || !searchStatus.firstCardVisible) {
+        failures.push(`${viewport.name}: filtered scene results do not begin inside the visible panel`);
+      }
+      if (searchStatus.zeroCountFilters > 0) {
+        failures.push(`${viewport.name}: filtered scene families still include zero-result groups`);
+      }
       if (
         viewport.expectsDesktopDrawer &&
         (!currentStatus.panel || currentStatus.panel.width >= viewport.width - 24 || currentStatus.panel.left <= 0)
       ) {
         failures.push(`${viewport.name}: control panel is still using the fullscreen mobile layout`);
+      }
+      if (
+        viewport.expectsFullSheet &&
+        (!currentStatus.panel || currentStatus.panel.left > 1 || currentStatus.panel.width < viewport.width - 1)
+      ) {
+        failures.push(`${viewport.name}: low-height control panel is not a full-width sheet`);
       }
       if (
         currentStatus.panel &&
@@ -7469,6 +7517,8 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     if (globalSearch.activeFilter) failures.push(`Global search should not show an active family; got ${globalSearch.activeFilter}`);
     if (!globalSearch.browserCount.includes("across all families")) failures.push(`Global search scope was not explained; got ${globalSearch.browserCount}`);
 
+    await page.locator("#sceneSearchInput").fill("");
+    await page.waitForTimeout(80);
     if (!(await clickIfPresent('[data-scene-filter="3. Sources and radiation"]'))) {
       failures.push("Sources and radiation filter button was not found");
     }
@@ -7614,11 +7664,21 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
       pressed: document.getElementById("runPlayPauseBtn")?.getAttribute("aria-pressed") || "",
     }));
     if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
+    await page.locator('[data-mobile-layer="results"]:visible').click();
+    await page.locator("#tab-results details").evaluateAll((panels) => panels.forEach((panel) => { panel.open = true; }));
+    await page.waitForTimeout(160);
+    const resultsOverflow = await page.evaluate(() => {
+      const panel = document.getElementById("tab-results");
+      const scroller = document.querySelector(".control-tab-panels");
+      return Math.max(panel?.scrollWidth - panel?.clientWidth || 0, scroller?.scrollWidth - scroller?.clientWidth || 0);
+    });
+    if (resultsOverflow > 1) failures.push(`expanded mobile Results has horizontal overflow ${resultsOverflow}`);
     return {
       id: "mobile_simulate_panel_scroll",
       preset: "current",
       priority: "P1",
       ...status,
+      resultsOverflow,
       passed: failures.length === 0,
       failures,
     };
@@ -7755,6 +7815,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         menuButton: rect("#controlDrawerToggle"),
         playButton: rect("#playPauseBtn"),
         interactionToggle: rect(".interaction-toggle"),
+        selectButton: rect("#selectModeBtn"),
+        drawButton: rect("#brushModeBtn"),
         openToolbar: rect(".header-simulation-controls"),
         openToolbarOverflowX: toolbarNode && openToolbarBounds ? Math.round(toolbarNode.scrollWidth - openToolbarBounds.width) : null,
         actionToggleShiftX:
@@ -7781,6 +7843,12 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (status.menuButton && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
       failures.push(`Select/Draw toggle height ${status.interactionToggle.height} does not match menu button ${status.menuButton.height}`);
     }
+    if (status.playButton && status.selectButton && Math.abs(status.playButton.height - status.selectButton.height) > 1) {
+      failures.push(`Select button height ${status.selectButton.height} does not match play button ${status.playButton.height}`);
+    }
+    if (status.playButton && status.drawButton && Math.abs(status.playButton.height - status.drawButton.height) > 1) {
+      failures.push(`Draw button height ${status.drawButton.height} does not match play button ${status.playButton.height}`);
+    }
     if (status.toolbar && status.openToolbar && Math.abs(status.openToolbar.height - status.toolbar.height) > 1) {
       failures.push(`open mobile toolbar height ${status.openToolbar.height} should stay on one row like closed height ${status.toolbar.height}`);
     }
@@ -7798,6 +7866,137 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       preset: "current",
       priority: "P1",
       ...status,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runTouchLongPressSmoke(browser, url) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  const failures = [];
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    await selectPreset(page, "empty");
+    const canvas = page.locator("#simCanvas");
+    const bounds = await canvas.boundingBox();
+    if (!bounds) throw new Error("touch canvas is not visible");
+    const point = {
+      x: Math.round(bounds.x + bounds.width * 0.55),
+      y: Math.round(bounds.y + bounds.height * 0.45),
+    };
+    const pointerEvent = (pointerId, buttons) => ({
+      pointerType: "touch",
+      pointerId,
+      isPrimary: true,
+      button: 0,
+      buttons,
+      clientX: point.x,
+      clientY: point.y,
+    });
+
+    await canvas.dispatchEvent("pointerdown", pointerEvent(71, 1));
+    await page.waitForTimeout(650);
+    const selectMenuOpen = await page.locator("#canvasContextMenu").evaluate((menu) => !menu.hidden);
+    await canvas.dispatchEvent("pointerup", pointerEvent(71, 0));
+    await page.keyboard.press("Escape");
+
+    await page.locator("#brushModeBtn").click();
+    await canvas.dispatchEvent("pointerdown", pointerEvent(72, 1));
+    await page.waitForTimeout(650);
+    const brushSheet = await page.locator("#brushMenu").evaluate((menu) => {
+      const rect = menu.getBoundingClientRect();
+      return {
+        contextual: menu.dataset.contextualInspector === "true",
+        hidden: menu.hidden,
+        left: Math.round(rect.left),
+        right: Math.round(rect.right),
+        width: Math.round(rect.width),
+      };
+    });
+    await canvas.dispatchEvent("pointerup", pointerEvent(72, 0));
+    await page.keyboard.press("Escape");
+
+    const paintedBefore = await page.evaluate(() => Array.from(sim.eps).filter((value) => Math.abs(value - 1) > 1e-6).length);
+    await canvas.dispatchEvent("pointerdown", pointerEvent(73, 1));
+    await page.waitForTimeout(60);
+    await canvas.dispatchEvent("pointerup", pointerEvent(73, 0));
+    const paintedAfter = await page.evaluate(() => Array.from(sim.eps).filter((value) => Math.abs(value - 1) > 1e-6).length);
+
+    if (!selectMenuOpen) failures.push("long-press in Select mode did not open the canvas menu");
+    if (brushSheet.hidden || !brushSheet.contextual) failures.push("long-press in Draw mode did not open the contextual brush sheet");
+    if (brushSheet.left > 1 || brushSheet.right < 389 || brushSheet.width < 388) failures.push("mobile brush sheet is not full width");
+    if (paintedAfter <= paintedBefore) failures.push("short touch no longer paints after adding long-press handling");
+
+    return {
+      id: "touch_long_press_editors",
+      preset: "empty",
+      priority: "P1",
+      selectMenuOpen,
+      brushSheet,
+      paintedBefore,
+      paintedAfter,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runContextualInspectorLayoutSmoke(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  const failures = [];
+  try {
+    await page.goto(url, { waitUntil: "networkidle" });
+    await selectPreset(page, "empty");
+    await page.locator("#brushModeBtn").click();
+    const canvas = page.locator("#simCanvas");
+    const bounds = await canvas.boundingBox();
+    if (!bounds) throw new Error("desktop canvas is not visible");
+    await canvas.click({
+      button: "right",
+      position: { x: Math.round(bounds.width * 0.6), y: Math.round(bounds.height * 0.45) },
+    });
+    const status = await page.evaluate(() => {
+      const intersectionArea = (a, b) =>
+        a && b
+          ? Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+            Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+          : 0;
+      const canvasBounds = document.querySelector("#simCanvas")?.getBoundingClientRect();
+      const menuBounds = document.querySelector("#brushMenu")?.getBoundingClientRect();
+      const colorbarBounds = document.querySelector(".colorbar")?.getBoundingClientRect();
+      const helpBounds = document.querySelector("#helpGuideToggle")?.getBoundingClientRect();
+      return {
+        appState: document.querySelector(".app-shell")?.classList.contains("contextual-inspector-open"),
+        canvasMenuOverlap: intersectionArea(canvasBounds, menuBounds),
+        colorbarMenuOverlap: intersectionArea(colorbarBounds, menuBounds),
+        helpMenuOverlap: intersectionArea(helpBounds, menuBounds),
+      };
+    });
+    await page.keyboard.press("Escape");
+    const classClosed = await page.locator(".app-shell").evaluate((shell) => !shell.classList.contains("contextual-inspector-open"));
+    if (!status.appState) failures.push("desktop contextual inspector state was not applied");
+    if (status.canvasMenuOverlap > 1) failures.push("desktop contextual inspector covers the simulation canvas");
+    if (status.colorbarMenuOverlap > 1) failures.push("desktop contextual inspector covers the colorbar");
+    if (status.helpMenuOverlap > 1) failures.push("desktop contextual inspector covers the help control");
+    if (!classClosed) failures.push("contextual inspector layout state remained after Escape");
+    return {
+      id: "contextual_inspector_layout",
+      preset: "empty",
+      priority: "P1",
+      ...status,
+      classClosed,
       passed: failures.length === 0,
       failures,
     };
@@ -8289,7 +8488,9 @@ async function runFloatingContextMenuDragSmoke(page) {
       draggable: menu.dataset.floatingMenuDraggable,
       movedX: Number((after.left - before.left).toFixed(1)),
       movedY: Number((after.top - before.top).toFixed(1)),
-      rightAligned: Math.abs(frame.right - after.right) < 1,
+      rightAligned: Math.abs(window.innerWidth - 16 - after.right) < 1,
+      separateFromFrame: after.left >= frame.right + 1,
+      withinViewport: after.left >= 0 && after.top >= 0 && after.right <= window.innerWidth && after.bottom <= window.innerHeight,
       withinFrame:
         after.left >= frame.left - 0.5 &&
         after.top >= frame.top - 0.5 &&
@@ -8302,11 +8503,13 @@ async function runFloatingContextMenuDragSmoke(page) {
   if (status.docked) {
     if (status.draggable !== "false") failures.push("docked contextual inspector advertised a draggable state");
     if (!status.rightAligned) failures.push("contextual inspector is not aligned to the right edge");
+    if (!status.separateFromFrame) failures.push("contextual inspector still covers the canvas frame");
+    if (!status.withinViewport) failures.push("contextual inspector escaped the viewport");
   } else {
     if (status.draggable !== "true") failures.push("floating source menu did not advertise draggable state");
     if (Math.abs(status.movedX) < 20 && Math.abs(status.movedY) < 20) failures.push("source menu did not move after dragging the header");
   }
-  if (!status.withinFrame) failures.push("dragged source menu escaped the canvas frame");
+  if (!status.docked && !status.withinFrame) failures.push("dragged source menu escaped the canvas frame");
   return {
     id: "floating_context_menu_drag",
     preset: "current",
@@ -8721,6 +8924,8 @@ async function main() {
       report.cases.push(await runMobileSimulatePanelScrollSmoke(browser, url));
       report.cases.push(await runMobileLayerScrollResetSmoke(browser, url));
       report.cases.push(await runMobileToolbarHeightSmoke(browser, url));
+      report.cases.push(await runTouchLongPressSmoke(browser, url));
+      report.cases.push(await runContextualInspectorLayoutSmoke(browser, url));
       report.cases.push(await runBrushStrokeContinuitySmoke(page));
       report.cases.push(await runDrawPreviewSmoke(page));
       report.cases.push(await runSourceWaveVectorOverlaySmoke(page));

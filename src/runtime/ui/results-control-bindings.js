@@ -171,6 +171,11 @@
         if (el.analysisChartReadout) el.analysisChartReadout.textContent = "Focus or move over a chart";
       });
     });
+    forEachNode(el.resultsDetailPanels, (panel) => {
+      panel?.addEventListener("toggle", () => {
+        if (panel.open) global.requestAnimationFrame(updateStats);
+      });
+    });
 
     el.sweepModeInput?.addEventListener("change", () => {
       const nextMode = normalizeSweepMode(el.sweepModeInput.value);
