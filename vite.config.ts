@@ -18,7 +18,6 @@ export default defineConfig({
       "react-dom/client",
       "@carbon/react",
       "@carbon/react/icons",
-      "@jorpago2/scientific-ui",
       "plotly.js-basic-dist-min",
     ],
   },

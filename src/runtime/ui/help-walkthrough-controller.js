@@ -143,7 +143,7 @@
       const margin = 12;
       const gap = 14;
       const pad = 7;
-      const panelViewportTop = [".topbar"].reduce((top, selector) => {
+      const panelViewportTop = [".scientific-header"].reduce((top, selector) => {
         const obstruction = documentRef.querySelector(selector);
         const obstructionRect = obstruction?.getBoundingClientRect?.();
         if (!obstructionRect || obstructionRect.width < viewportWidth - margin * 2 || obstructionRect.bottom > viewportHeight / 2) {
@@ -151,7 +151,7 @@
         }
         return Math.max(top, obstructionRect.bottom);
       }, 0);
-      const panelViewportBottom = [".status-strip", ".workflow-rail"].reduce((bottom, selector) => {
+      const panelViewportBottom = [".status-strip", ".scientific-tool-rail"].reduce((bottom, selector) => {
         const obstruction = documentRef.querySelector(selector);
         const obstructionRect = obstruction?.getBoundingClientRect?.();
         if (!obstructionRect || obstructionRect.width < viewportWidth - margin * 2 || obstructionRect.top < viewportHeight / 2) {

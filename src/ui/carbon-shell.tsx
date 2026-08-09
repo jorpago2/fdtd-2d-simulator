@@ -18,7 +18,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificStatus } from "@jorpago2/scientific-ui";
+import { ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
@@ -49,20 +49,21 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="topbar scientific-app-header" aria-label="EM Wave Simulator application header">
-      <div className="brand-lockup">
-        <span className="brand-mark scientific-app-header__brand-mark" aria-hidden="true">FDTD</span>
-        <div className="brand-heading" data-react-ui="brand">
-          <h1 className="brand-title">EM Wave Simulator</h1>
-          <p className="brand-descriptor">2D FDTD laboratory</p>
+    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="scientific-header scientific-app-header" aria-label="EM Wave Simulator application header">
+      <div className="scientific-header__brand scientific-app-header__brand">
+        <span className="scientific-app-header__brand-mark" aria-hidden="true">FDTD</span>
+        <div className="scientific-header__brand-copy" data-react-ui="brand">
+          <strong>EM Wave Simulator</strong>
+          <small>2D FDTD laboratory</small>
         </div>
       </div>
-      <div className="header-context" aria-label="Current simulation">
-        <span className="header-context-label">Simulation</span>
-        <strong id="headerSceneTitle" className="header-scene-title">Plane wave in air</strong>
-        <ScientificStatus id="headerSimulationStatus" className="header-status" compact status={{ state: "ready", label: "Ready" }} />
+      <div className="scientific-header__context scientific-app-header__context" aria-label="Current simulation">
+        <span className="scientific-header__context-label">Simulation</span>
+        <strong id="headerSceneTitle" className="scientific-header__context-value">Plane wave in air</strong>
+        <ScientificStatus id="headerSimulationStatus" className="scientific-header__context-detail" compact status={{ state: "ready", label: "Ready" }} />
       </div>
-      <HeaderGlobalBar className="header-actions" aria-label="Global actions">
+      <HeaderGlobalBar className="scientific-header__actions scientific-app-header__actions" aria-label="Global actions">
+        <div className="scientific-header__secondary-actions">
         <CanvasPrimaryControls
           compactHeader={compactHeader}
           themeIndex={themeIndex}
@@ -77,6 +78,8 @@ export function ApplicationHeader() {
           <Switch name="light" text="Light" data-theme-choice="light" data-carbon-react="true">Light</Switch>
           <Switch name="dark" text="Dark" data-theme-choice="dark" data-carbon-react="true">Dark</Switch>
         </ContentSwitcher>
+        </div>
+        <div className="scientific-header__primary-action">
         <Button
           id="controlDrawerToggle"
           className="control-drawer-toggle"
@@ -91,38 +94,36 @@ export function ApplicationHeader() {
         >
           <SettingsAdjust size={16} aria-hidden={true} />
         </Button>
+        </div>
       </HeaderGlobalBar>
     </Theme>
   );
 }
 
 const workflowLayers = [
-  ["scenes", "1", "Scene", GridIcon],
-  ["simulation", "2", "Simulate", Chemistry],
-  ["results", "3", "Results", Inspection],
-  ["config", "4", "Numerics", SettingsAdjust],
+  ["scenes", "Scene", GridIcon],
+  ["simulation", "Simulate", Chemistry],
+  ["results", "Results", Inspection],
+  ["config", "Numerics", SettingsAdjust],
 ] as const;
 
 export function WorkflowNavigation() {
-  return <ul>{workflowLayers.map(([layer, step, label, Icon], index) => (
-    <li key={layer}>
-      <Button
-        className={`scientific-tool-rail__item mobile-layer-button${index === 0 ? " is-active" : ""}`}
-        type="button"
-        kind="ghost"
-        size="sm"
-        data-mobile-layer={layer}
-        data-carbon-react="true"
-        aria-current={index === 0 ? "page" : undefined}
-        aria-controls="controlPanel"
-        aria-expanded="false"
-      >
-        <span className="nav-step" aria-hidden="true">{step}</span>
-        <span className="scientific-tool-rail__icon"><Icon className="nav-icon" size={16} aria-hidden={true} /></span>
-        <span className="scientific-tool-rail__label">{label}</span>
-      </Button>
-    </li>
-  ))}</ul>;
+  const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
+  return <ScientificToolRail
+    label="Simulation workflow"
+    activeId={activeLayer}
+    expandedId={activeLayer}
+    onChange={setActiveLayer}
+    collapsible={false}
+    items={workflowLayers.map(([layer, label, Icon]) => ({
+      id: layer,
+      label,
+      icon: <Icon size={16} aria-hidden={true} />,
+      controlsId: "controlPanel",
+      className: "mobile-layer-button",
+      dataAttributes: { "data-mobile-layer": layer },
+    }))}
+  />;
 }
 
 interface CanvasPrimaryControlsProps {
