@@ -51,7 +51,7 @@
 
       <section id="simulatorWorkspace" class="workspace cds--css-grid cds--css-grid--condensed cds--css-grid--full-width" aria-label="Simulator" tabindex="-1">
         <div id="reactWorkflowRoot" data-carbon-react-root="workflow"></div>
-        <div class="stage">
+        <div class="stage scientific-stage">
           <div class="canvas-toolbar">
             <button
               id="canvasOptionsToggle"
@@ -1023,7 +1023,7 @@
               </div>
             </div>
           </div>
-          <footer id="reactFooterRoot" class="canvas-footer status-strip" aria-label="Simulation status" data-carbon-react-root="status">
+          <footer id="reactFooterRoot" class="canvas-footer status-strip scientific-status-surface" aria-label="Simulation status" data-carbon-react-root="status">
             <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
             <span><b>Step</b> <output id="statusStepOutput">0</output></span>
             <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
@@ -1045,13 +1045,13 @@
           hidden
         ></aside>
 
-        <aside id="controlPanel" class="control-panel" aria-label="Scene setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
-          <div class="control-panel-header">
-            <div class="control-panel-title-block">
+        <aside id="controlPanel" class="control-panel scientific-task-panel" aria-label="Scene setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
+          <div class="control-panel-header scientific-task-panel__header">
+            <div class="control-panel-title-block scientific-task-panel__heading">
               <p id="controlPanelKicker" class="panel-kicker">Step 1 · Scene</p>
               <h2 id="controlPanelTitle">Scene setup</h2>
             </div>
-            <div class="control-panel-actions">
+            <div class="control-panel-actions scientific-task-panel__actions">
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" data-carbon-icon-only="true" type="button" aria-label="Close controls" title="Close controls">&times;</button>
             </div>
           </div>
@@ -1069,7 +1069,7 @@
               <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
             </button>
           </div>
-          <div class="control-tab-panels">
+          <div class="control-tab-panels scientific-task-panel__body">
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
 <section class="panel-section scene-section">
               <h2>Scene</h2>

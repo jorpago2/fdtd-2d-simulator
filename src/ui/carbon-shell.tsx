@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Button,
   ContentSwitcher,
-  Header,
-  HeaderGlobalBar,
   Link,
   OverflowMenu,
   OverflowMenuItem,
@@ -18,7 +16,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
@@ -49,21 +47,17 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="scientific-header scientific-app-header" aria-label="EM Wave Simulator application header">
-      <div className="scientific-header__brand scientific-app-header__brand">
-        <span className="scientific-app-header__brand-mark" aria-hidden="true">FDTD</span>
-        <div className="scientific-header__brand-copy" data-react-ui="brand">
-          <strong>EM Wave Simulator</strong>
-          <small>2D FDTD laboratory</small>
-        </div>
-      </div>
-      <div className="scientific-header__context scientific-app-header__context" aria-label="Current simulation">
-        <span className="scientific-header__context-label">Simulation</span>
-        <strong id="headerSceneTitle" className="scientific-header__context-value">Plane wave in air</strong>
-        <ScientificStatus id="headerSimulationStatus" className="scientific-header__context-detail" compact status={{ state: "ready", label: "Ready" }} />
-      </div>
-      <HeaderGlobalBar className="scientific-header__actions scientific-app-header__actions" aria-label="Global actions">
-        <div className="scientific-header__secondary-actions">
+    <Theme theme={themeIndex === 1 ? "g100" : "g10"}>
+      <ScientificHeader
+        aria-label="EM Wave Simulator application header"
+        product="EM Wave Simulator"
+        productMark="FDTD"
+        descriptor="2D FDTD laboratory"
+        href="./"
+        contextLabel="Simulation"
+        context={<span id="headerSceneTitle">Plane wave in air</span>}
+        contextDetail={<ScientificStatus id="headerSimulationStatus" compact status={{ state: "ready", label: "Ready" }} />}
+        secondaryActions={<>
         <CanvasPrimaryControls
           compactHeader={compactHeader}
           themeIndex={themeIndex}
@@ -78,9 +72,8 @@ export function ApplicationHeader() {
           <Switch name="light" text="Light" data-theme-choice="light" data-carbon-react="true">Light</Switch>
           <Switch name="dark" text="Dark" data-theme-choice="dark" data-carbon-react="true">Dark</Switch>
         </ContentSwitcher>
-        </div>
-        <div className="scientific-header__primary-action">
-        <Button
+        </>}
+        primaryAction={<Button
           id="controlDrawerToggle"
           className="control-drawer-toggle"
           type="button"
@@ -93,9 +86,8 @@ export function ApplicationHeader() {
           data-carbon-react="true"
         >
           <SettingsAdjust size={16} aria-hidden={true} />
-        </Button>
-        </div>
-      </HeaderGlobalBar>
+        </Button>}
+      />
     </Theme>
   );
 }
