@@ -19,7 +19,9 @@ export default defineConfig({
       "@carbon/react",
       "@carbon/react/icons",
       "plotly.js-basic-dist-min",
+      "@carbon/react > prop-types",
     ],
+    exclude: ["@jorpago2/scientific-ui"],
   },
   server: {
     host: "127.0.0.1",
