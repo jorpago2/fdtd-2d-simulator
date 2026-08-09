@@ -8718,6 +8718,123 @@ async function runSourceThemeContrastSmoke(page) {
   };
 }
 
+async function runThemeSurfaceConsistencySmoke(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  const failures = [];
+  const states = {};
+  try {
+    await openApplication(page, url);
+    const sampleTheme = async (theme) => {
+      await page.locator(`[data-theme-choice="${theme}"]`).click();
+      await page.waitForTimeout(80);
+      return page.evaluate(() => {
+        const parseRgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const luminance = (value) => {
+          const channels = parseRgb(value).map((channel) => {
+            const normalized = channel / 255;
+            return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+        };
+        const contrast = (foreground, background) => {
+          const lighter = Math.max(luminance(foreground), luminance(background));
+          const darker = Math.min(luminance(foreground), luminance(background));
+          return (lighter + 0.05) / (darker + 0.05);
+        };
+        const colorbarStyle = getComputedStyle(document.querySelector(".colorbar"));
+        const panelStyle = getComputedStyle(document.querySelector(".control-panel"));
+        const brandStyle = getComputedStyle(document.querySelector(".brand-mark"));
+        const frameStyle = getComputedStyle(document.querySelector(".canvas-frame"));
+        const stageStyle = getComputedStyle(document.querySelector(".stage"));
+        const header = document.querySelector(".topbar");
+        return {
+          theme: document.documentElement.dataset.theme,
+          headerTheme: header?.classList.contains("cds--g100")
+            ? "g100"
+            : header?.classList.contains("cds--g10")
+              ? "g10"
+              : "unknown",
+          metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
+          colorbarBackground: colorbarStyle.backgroundColor,
+          colorbarText: colorbarStyle.color,
+          panelBackground: panelStyle.backgroundColor,
+          panelText: panelStyle.color,
+          brandBackground: brandStyle.backgroundColor,
+          brandText: brandStyle.color,
+          brandContrast: contrast(brandStyle.color, brandStyle.backgroundColor),
+          frameBackground: frameStyle.backgroundColor,
+          stageBackground: stageStyle.backgroundColor,
+        };
+      });
+    };
+
+    states.light = await sampleTheme("light");
+    states.dark = await sampleTheme("dark");
+    for (const [theme, expectedHeader, expectedMeta] of [
+      ["light", "g10", "#ffffff"],
+      ["dark", "g100", "#161616"],
+    ]) {
+      const snapshot = states[theme];
+      if (snapshot.theme !== theme) failures.push(`${theme} theme did not reach the application root`);
+      if (snapshot.headerTheme !== expectedHeader) failures.push(`${theme} theme left the header in ${snapshot.headerTheme}`);
+      if (snapshot.metaThemeColor.toLowerCase() !== expectedMeta) {
+        failures.push(`${theme} theme left the browser theme color at ${snapshot.metaThemeColor || "unset"}`);
+      }
+      if (snapshot.colorbarBackground !== snapshot.panelBackground || snapshot.colorbarText !== snapshot.panelText) {
+        failures.push(`${theme} colorbar does not use the active Carbon layer and text tokens`);
+      }
+      if (snapshot.brandContrast < 4.5) {
+        failures.push(`${theme} brand mark contrast is too low (${snapshot.brandContrast.toFixed(2)})`);
+      }
+      if (snapshot.frameBackground !== snapshot.stageBackground) {
+        failures.push(`${theme} canvas fallback background does not follow the active Carbon surface`);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(100);
+    await page.getByRole("button", { name: "More simulation actions" }).click();
+    const compactThemeAction = page.getByRole("menuitem", { name: "Use light theme" });
+    states.compactThemeActionVisible = await compactThemeAction.isVisible();
+    states.compactSaveActionFits = await page.getByRole("menuitem", { name: "Save canvas as PNG" }).evaluate((item) =>
+      item.scrollWidth <= item.clientWidth
+    );
+    if (states.compactThemeActionVisible) {
+      await compactThemeAction.click();
+      await page.waitForTimeout(80);
+    }
+    states.compact = await page.evaluate(() => ({
+      theme: document.documentElement.dataset.theme,
+      headerTheme: document.querySelector(".topbar")?.classList.contains("cds--g10") ? "g10" : "unknown",
+      metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
+      themeSwitcherVisible: getComputedStyle(document.querySelector(".header-theme-toggle")).display !== "none",
+      overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    }));
+    if (!states.compactThemeActionVisible) failures.push("compact header offers no reachable theme action");
+    if (!states.compactSaveActionFits) failures.push("compact action menu truncates the PNG export label");
+    if (states.compact.theme !== "light" || states.compact.headerTheme !== "g10") {
+      failures.push("compact theme action did not synchronize the application and Carbon header");
+    }
+    if (states.compact.metaThemeColor.toLowerCase() !== "#ffffff") {
+      failures.push("compact theme action did not update the browser theme color");
+    }
+    if (states.compact.themeSwitcherVisible) failures.push("compact header unexpectedly exposes the full theme switcher");
+    if (states.compact.overflowX > 0) failures.push(`compact theme action introduced ${states.compact.overflowX}px horizontal overflow`);
+  } finally {
+    await context.close();
+  }
+
+  return {
+    id: "theme_surface_consistency",
+    preset: "planeWaveAir",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
 async function runSourceDependentParamsSmoke(page) {
   await selectPreset(page, "planeWaveAir");
   const status = await page.evaluate(async () => {
@@ -9459,6 +9576,7 @@ async function main() {
       await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
       await recordCase("draw_preview", () => runDrawPreviewSmoke(page));
       await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));
+      await recordCase("theme_surface_consistency", () => runThemeSurfaceConsistencySmoke(browser, url));
       await recordCase("source_theme_contrast", () => runSourceThemeContrastSmoke(page));
       await recordCase("source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page));
       await recordCase("integrated_context_inspector", () => runIntegratedContextInspectorSmoke(page));

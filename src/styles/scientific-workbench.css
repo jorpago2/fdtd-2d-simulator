@@ -123,7 +123,7 @@ fieldset {
   width: 3rem;
   height: 3rem;
   color: var(--cds-text-on-color);
-  background: var(--cds-text-primary);
+  background: var(--cds-background-brand);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--cds-code-01-font-size, 0.75rem);
   font-weight: var(--cds-heading-compact-01-font-weight, 600);
@@ -242,6 +242,10 @@ fieldset {
   max-inline-size: 3rem;
 }
 
+.canvas-action-menu {
+  inline-size: 10.5rem;
+}
+
 .header-simulation-controls .simulation-run-button {
   justify-content: flex-start;
   gap: 0.5rem;
@@ -352,7 +356,7 @@ fieldset {
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--cds-border-strong-01);
-  background: #05080d;
+  background: var(--cds-background);
 }
 
 #simCanvas,
@@ -453,8 +457,9 @@ fieldset {
   gap: 0.5rem;
   min-width: 5.5rem;
   padding: 0.75rem;
-  color: var(--cds-text-inverse);
-  background: var(--cds-background-inverse);
+  border: 1px solid var(--cds-border-subtle-01);
+  color: var(--cds-text-primary);
+  background: var(--cds-layer-01);
 }
 
 .colorbar-title {

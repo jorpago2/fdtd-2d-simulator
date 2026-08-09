@@ -8,6 +8,7 @@
       content="Interactive 2D FDTD electromagnetics simulator with CPML boundaries, configurable sources, material drawing, and field diagnostics."
     />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="canonical" href="https://jorpago2.github.io/fdtd-2d-simulator/" />
     <meta property="og:site_name" content="Online Simulators &amp; Tools" />
     <meta property="og:title" content="EM Wave Simulator · 2D FDTD" />
@@ -29,18 +30,19 @@
         const theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
         document.documentElement.dataset.theme = theme;
         document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--white");
+        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#161616" : "#ffffff";
       } catch {
         document.documentElement.dataset.theme = "light";
         document.documentElement.classList.add("cds--white");
+        document.querySelector('meta[name="theme-color"]').content = "#ffffff";
       }
     </script>
     <link rel="icon" href="assets/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
-    <meta name="theme-color" content="#ffffff" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260809-integrated-inspector-1" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260809-theme-surfaces-1" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>

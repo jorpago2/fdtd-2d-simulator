@@ -47,9 +47,15 @@
       documentElement.dataset.theme = state.theme;
       documentElement.classList.toggle("cds--g100", state.theme === "dark");
       documentElement.classList.toggle("cds--white", state.theme !== "dark");
+      documentElement.ownerDocument
+        ?.querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#ffffff");
       uiCore.setExclusiveButtonState(el.themeButtons, "themeChoice", state.theme, {
         selectedAttribute: "aria-pressed",
       });
+      if (typeof windowRef.CustomEvent === "function" && typeof windowRef.dispatchEvent === "function") {
+        windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:theme-applied", { detail: { theme: state.theme } }));
+      }
     }
 
     function applyTheme(theme, render = true) {

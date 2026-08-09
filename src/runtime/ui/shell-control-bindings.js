@@ -193,8 +193,8 @@
 
     el.sceneSearchInput?.addEventListener("input", refreshSceneSearch);
 
-    forEachNode(el.themeButtons, (button) => {
-      button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));
+    windowRef.addEventListener("fdtd:theme-change", (event) => {
+      applyTheme(event?.detail?.theme);
     });
     forEachNode(el.uiDepthButtons, (button) => {
       button.addEventListener("click", () => applyUiDepth(button.dataset.uiDepthChoice));

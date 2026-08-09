@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   ContentSwitcher,
@@ -21,9 +21,34 @@ import {
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
+  const [compactHeader, setCompactHeader] = useState(() =>
+    window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)").matches
+  );
+
+  useEffect(() => {
+    const compactQuery = window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)");
+    const syncCompactHeader = () => setCompactHeader(compactQuery.matches);
+    const syncAppliedTheme = (event: Event) => {
+      const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
+      setThemeIndex(theme === "dark" ? 1 : 0);
+    };
+    compactQuery.addEventListener("change", syncCompactHeader);
+    window.addEventListener("fdtd:theme-applied", syncAppliedTheme);
+    return () => {
+      compactQuery.removeEventListener("change", syncCompactHeader);
+      window.removeEventListener("fdtd:theme-applied", syncAppliedTheme);
+    };
+  }, []);
+
+  const chooseTheme = (index: number) => {
+    const nextIndex = index === 1 ? 1 : 0;
+    const theme = nextIndex === 1 ? "dark" : "light";
+    setThemeIndex(nextIndex);
+    window.dispatchEvent(new CustomEvent("fdtd:theme-change", { detail: { theme } }));
+  };
 
   return (
-    <Theme as={Header} theme="g10" className="topbar" aria-label="EM Wave Simulator application header">
+    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="topbar" aria-label="EM Wave Simulator application header">
       <div className="brand-lockup">
         <span className="brand-mark" aria-hidden="true">EM</span>
         <div className="brand-heading" data-react-ui="brand">
@@ -40,12 +65,16 @@ export function ApplicationHeader() {
         </span>
       </div>
       <HeaderGlobalBar className="header-actions" aria-label="Global actions">
-        <CanvasPrimaryControls />
+        <CanvasPrimaryControls
+          compactHeader={compactHeader}
+          themeIndex={themeIndex}
+          onThemeChange={chooseTheme}
+        />
         <ContentSwitcher
           className="header-theme-toggle"
           selectedIndex={themeIndex}
           size="sm"
-          onChange={({ index }) => setThemeIndex(index ?? 0)}
+          onChange={({ index }) => chooseTheme(index ?? 0)}
         >
           <Switch name="light" text="Light" data-theme-choice="light" data-carbon-react="true">Light</Switch>
           <Switch name="dark" text="Dark" data-theme-choice="dark" data-carbon-react="true">Dark</Switch>
@@ -97,7 +126,13 @@ export function WorkflowNavigation() {
   ));
 }
 
-export function CanvasPrimaryControls() {
+interface CanvasPrimaryControlsProps {
+  compactHeader: boolean;
+  onThemeChange: (index: number) => void;
+  themeIndex: number;
+}
+
+export function CanvasPrimaryControls({ compactHeader, onThemeChange, themeIndex }: CanvasPrimaryControlsProps) {
   const [modeIndex, setModeIndex] = useState(0);
 
   return (
@@ -148,6 +183,13 @@ export function CanvasPrimaryControls() {
             itemText="Save canvas as PNG"
             onClick={() => window.dispatchEvent(new Event("fdtd:save-png"))}
           />
+          {compactHeader && (
+            <OverflowMenuItem
+              hasDivider
+              itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
+              onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
+            />
+          )}
         </OverflowMenu>
       </div>
       <ContentSwitcher
