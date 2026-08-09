@@ -47,11 +47,11 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme theme={themeIndex === 1 ? "g100" : "g10"}>
+    <Theme theme="g10">
       <ScientificHeader
         aria-label="EM Wave Simulator application header"
         product="EM Wave Simulator"
-        productMark="FDTD"
+        productMark="F"
         descriptor="2D FDTD laboratory"
         href="./"
         contextLabel="Simulation"
