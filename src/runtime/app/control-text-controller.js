@@ -91,7 +91,7 @@
       if (el.headerSimulationStatus) {
         const status = sim.lastDiverged ? "Unstable" : state.running ? "Running" : sim.time > 0 ? "Paused" : "Ready";
         el.headerSimulationStatus.dataset.state = status.toLowerCase();
-        const statusLabel = el.headerSimulationStatus.querySelector(".header-status-label");
+        const statusLabel = el.headerSimulationStatus.querySelector(".scientific-status__content strong");
         if (statusLabel) statusLabel.textContent = status;
       }
       if (el.statusGridOutput) el.statusGridOutput.textContent = `${sim.nx} \u00d7 ${sim.ny}`;

@@ -18,6 +18,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
+import { ScientificStatus } from "@jorpago2/scientific-ui";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
@@ -50,7 +51,7 @@ export function ApplicationHeader() {
   return (
     <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="topbar" aria-label="EM Wave Simulator application header">
       <div className="brand-lockup">
-        <span className="brand-mark" aria-hidden="true">EM</span>
+        <span className="brand-mark" aria-hidden="true">FDTD</span>
         <div className="brand-heading" data-react-ui="brand">
           <h1 className="brand-title">EM Wave Simulator</h1>
           <p className="brand-descriptor">2D FDTD laboratory</p>
@@ -59,10 +60,7 @@ export function ApplicationHeader() {
       <div className="header-context" aria-label="Current simulation">
         <span className="header-context-label">Simulation</span>
         <strong id="headerSceneTitle" className="header-scene-title">Plane wave in air</strong>
-        <span id="headerSimulationStatus" className="header-status" role="status" aria-live="polite" data-state="ready">
-          <span className="header-status-indicator" aria-hidden="true" />
-          <span className="header-status-label">Ready</span>
-        </span>
+        <ScientificStatus id="headerSimulationStatus" className="header-status" compact status={{ state: "ready", label: "Ready" }} />
       </div>
       <HeaderGlobalBar className="header-actions" aria-label="Global actions">
         <CanvasPrimaryControls

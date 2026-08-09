@@ -1,4 +1,5 @@
 /* Carbon React workbench layout and scientific visualization styles. */
+@import "@jorpago2/scientific-ui/styles.css";
 
 :root {
   --workbench-header-height: 4rem;

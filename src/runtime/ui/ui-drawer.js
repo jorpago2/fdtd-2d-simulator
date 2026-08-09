@@ -83,6 +83,10 @@
         currentValue: "page",
         selectedAttribute: null,
       });
+      const drawerOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+      el.mobileLayerButtons?.forEach?.((button) => {
+        button.setAttribute("aria-expanded", String(drawerOpen && button.classList.contains("is-active")));
+      });
     }
 
     function focusControlPanelSection(selector) {
