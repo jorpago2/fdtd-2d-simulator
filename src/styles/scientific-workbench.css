@@ -97,7 +97,7 @@ fieldset {
 .topbar {
   z-index: 500;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(13rem, 26rem) minmax(0, 1fr);
+  grid-template-columns: minmax(7rem, 1fr) minmax(13rem, 26rem) max-content;
   align-items: center;
   width: 100%;
   height: var(--workbench-header-height);
