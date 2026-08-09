@@ -1,6 +1,6 @@
 /* Carbon React workbench layout and scientific visualization styles. */
 :root {
-  --workbench-header-height: 4rem;
+  --workbench-header-height: var(--scientific-ui-header-block-size);
   --workbench-rail-width: var(--scientific-ui-rail-inline-size);
   --workbench-panel-width: var(--scientific-ui-panel-inline-size);
   --workbench-status-height: 1.75rem;
@@ -1364,7 +1364,7 @@ fieldset {
 
 @media (max-height: 39.99rem) {
   :root {
-    --workbench-header-height: 4rem;
+    --workbench-header-height: var(--scientific-ui-header-block-size);
   }
 
   .status-strip {
@@ -1407,7 +1407,7 @@ fieldset {
 
 @media (max-width: 47.99rem) {
   :root {
-    --workbench-header-height: 4rem;
+    --workbench-header-height: var(--scientific-ui-header-block-size);
   }
 
   .topbar {
