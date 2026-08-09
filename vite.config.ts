@@ -12,7 +12,15 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react-dom/client", "@carbon/react"],
+    include: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "@carbon/react",
+      "@carbon/react/icons",
+      "@jorpago2/scientific-ui",
+      "plotly.js-basic-dist-min",
+    ],
   },
   server: {
     host: "127.0.0.1",
