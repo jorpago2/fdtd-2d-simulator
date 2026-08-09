@@ -8,7 +8,7 @@
   --workbench-status-height: 1.75rem;
   --workbench-inspector-width: 22rem;
   --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --workbench-bottom-nav-height: calc(var(--workbench-rail-width) + var(--workbench-safe-bottom));
+  --workbench-bottom-nav-height: calc(var(--scientific-ui-mobile-nav-block-size) + var(--workbench-safe-bottom));
 }
 
 * {
