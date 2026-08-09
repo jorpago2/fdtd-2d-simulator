@@ -3,7 +3,7 @@ import { ApplicationHeader, SceneSearch, WorkflowNavigation } from "./carbon-she
 
 function CarbonShellReference() {
   return (
-    <div className="storybook-workbench cds--white">
+    <div className="storybook-workbench cds--g10">
       <ApplicationHeader />
       <main className="storybook-workbench-content">
         <section aria-labelledby="workflow-reference-title">

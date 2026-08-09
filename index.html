@@ -8,7 +8,7 @@
       content="Interactive 2D FDTD electromagnetics simulator with CPML boundaries, configurable sources, material drawing, and field diagnostics."
     />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#f4f4f4" />
     <link rel="canonical" href="https://jorpago2.github.io/fdtd-2d-simulator/" />
     <meta property="og:site_name" content="Online Simulators &amp; Tools" />
     <meta property="og:title" content="EM Wave Simulator · 2D FDTD" />
@@ -29,12 +29,12 @@
       try {
         const theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
         document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--white");
-        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#161616" : "#ffffff";
+        document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--g10");
+        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#161616" : "#f4f4f4";
       } catch {
         document.documentElement.dataset.theme = "light";
-        document.documentElement.classList.add("cds--white");
-        document.querySelector('meta[name="theme-color"]').content = "#ffffff";
+        document.documentElement.classList.add("cds--g10");
+        document.querySelector('meta[name="theme-color"]').content = "#f4f4f4";
       }
     </script>
     <link rel="icon" href="assets/favicon.ico" sizes="any" />

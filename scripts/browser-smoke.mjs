@@ -8645,7 +8645,7 @@ async function runSourceThemeContrastSmoke(page) {
       state.theme = theme;
       document.documentElement.dataset.theme = theme;
       document.documentElement.classList.toggle("cds--g100", theme === "dark");
-      document.documentElement.classList.toggle("cds--white", theme !== "dark");
+      document.documentElement.classList.toggle("cds--g10", theme !== "dark");
       state.running = false;
       sim.render();
       const source = state.sources?.[0];
@@ -8772,7 +8772,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     states.light = await sampleTheme("light");
     states.dark = await sampleTheme("dark");
     for (const [theme, expectedHeader, expectedMeta] of [
-      ["light", "g10", "#ffffff"],
+      ["light", "g10", "#f4f4f4"],
       ["dark", "g100", "#161616"],
     ]) {
       const snapshot = states[theme];
@@ -8816,7 +8816,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     if (states.compact.theme !== "light" || states.compact.headerTheme !== "g10") {
       failures.push("compact theme action did not synchronize the application and Carbon header");
     }
-    if (states.compact.metaThemeColor.toLowerCase() !== "#ffffff") {
+    if (states.compact.metaThemeColor.toLowerCase() !== "#f4f4f4") {
       failures.push("compact theme action did not update the browser theme color");
     }
     if (states.compact.themeSwitcherVisible) failures.push("compact header unexpectedly exposes the full theme switcher");

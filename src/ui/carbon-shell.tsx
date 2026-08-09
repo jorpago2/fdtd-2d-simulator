@@ -49,9 +49,9 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="topbar" aria-label="EM Wave Simulator application header">
+    <Theme as={Header} theme={themeIndex === 1 ? "g100" : "g10"} className="topbar scientific-app-header" aria-label="EM Wave Simulator application header">
       <div className="brand-lockup">
-        <span className="brand-mark" aria-hidden="true">FDTD</span>
+        <span className="brand-mark scientific-app-header__brand-mark" aria-hidden="true">FDTD</span>
         <div className="brand-heading" data-react-ui="brand">
           <h1 className="brand-title">EM Wave Simulator</h1>
           <p className="brand-descriptor">2D FDTD laboratory</p>
@@ -104,24 +104,25 @@ const workflowLayers = [
 ] as const;
 
 export function WorkflowNavigation() {
-  return workflowLayers.map(([layer, step, label, Icon], index) => (
-    <Button
-      className={`scientific-tool-rail__item mobile-layer-button${index === 0 ? " is-active" : ""}`}
-      type="button"
-      kind="ghost"
-      size="sm"
-      data-mobile-layer={layer}
-      data-carbon-react="true"
-      aria-current={index === 0 ? "page" : undefined}
-      aria-controls="controlPanel"
-      aria-expanded="false"
-      key={layer}
-    >
-      <span className="nav-step" aria-hidden="true">{step}</span>
-      <span className="scientific-tool-rail__icon"><Icon className="nav-icon" size={20} aria-hidden={true} /></span>
-      <span className="scientific-tool-rail__label nav-label">{label}</span>
-    </Button>
-  ));
+  return <ul>{workflowLayers.map(([layer, step, label, Icon], index) => (
+    <li key={layer}>
+      <Button
+        className={`scientific-tool-rail__item mobile-layer-button${index === 0 ? " is-active" : ""}`}
+        type="button"
+        kind="ghost"
+        size="sm"
+        data-mobile-layer={layer}
+        data-carbon-react="true"
+        aria-current={index === 0 ? "page" : undefined}
+        aria-controls="controlPanel"
+        aria-expanded="false"
+      >
+        <span className="nav-step" aria-hidden="true">{step}</span>
+        <span className="scientific-tool-rail__icon"><Icon className="nav-icon" size={16} aria-hidden={true} /></span>
+        <span className="scientific-tool-rail__label">{label}</span>
+      </Button>
+    </li>
+  ))}</ul>;
 }
 
 interface CanvasPrimaryControlsProps {

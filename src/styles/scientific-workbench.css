@@ -1,9 +1,7 @@
 /* Carbon React workbench layout and scientific visualization styles. */
-@import "@jorpago2/scientific-ui/styles.css";
-
 :root {
   --workbench-header-height: 4rem;
-  --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
+  --workbench-rail-width: var(--scientific-ui-rail-inline-size);
   --workbench-panel-width: var(--scientific-ui-panel-inline-size);
   --workbench-status-height: 1.75rem;
   --workbench-inspector-width: 22rem;
@@ -290,17 +288,10 @@ fieldset {
 
 .workflow-rail {
   z-index: 300;
-  display: grid;
   grid-row: 1;
   grid-column: 1;
-  grid-auto-rows: var(--scientific-ui-tool-rail-item-block-size);
-  align-content: start;
   min-width: 0;
   min-height: 0;
-}
-
-.workflow-rail .mobile-layer-button {
-  block-size: var(--scientific-ui-tool-rail-item-block-size);
 }
 
 .workflow-rail .nav-step { display: none; }
@@ -314,12 +305,6 @@ fieldset {
   line-height: var(--cds-label-01-line-height, 1.33333);
   letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
   opacity: 0.7;
-}
-
-.nav-label {
-  font-size: var(--cds-label-01-font-size, 0.75rem);
-  line-height: var(--cds-label-01-line-height, 1.33333);
-  letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
 }
 
 /* Scientific canvas */
@@ -1339,10 +1324,6 @@ fieldset {
   .workflow-rail {
     grid-row: 2;
     grid-column: 1;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: none;
-    grid-auto-rows: 100%;
-    align-content: stretch;
     inline-size: 100%;
     block-size: var(--workbench-bottom-nav-height);
     border-top: 1px solid var(--cds-border-subtle-01);
@@ -1354,18 +1335,6 @@ fieldset {
     grid-row: 1;
     grid-column: 1;
   }
-
-  .workflow-rail.scientific-tool-rail .mobile-layer-button {
-    block-size: 100%;
-    flex-direction: column;
-    border-inline-start: 0;
-    border-block-start: var(--scientific-ui-active-indicator-size) solid transparent;
-  }
-
-  .workflow-rail .mobile-layer-button.is-active,
-  .workflow-rail .mobile-layer-button[aria-expanded="true"] { border-block-start-color: var(--scientific-ui-link); }
-
-  .workflow-rail .scientific-tool-rail__label { position: static; inline-size: auto; block-size: auto; clip: auto; clip-path: none; }
 
   .context-inspector-host {
     z-index: 650;
@@ -1396,7 +1365,6 @@ fieldset {
 @media (max-height: 39.99rem) {
   :root {
     --workbench-header-height: 4rem;
-    --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
   .status-strip {
@@ -1440,7 +1408,6 @@ fieldset {
 @media (max-width: 47.99rem) {
   :root {
     --workbench-header-height: 4rem;
-    --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
   .topbar {
@@ -1625,7 +1592,6 @@ fieldset {
 }
 
 @media (pointer: coarse) {
-  .workflow-rail .mobile-layer-button,
   .control-tab-button {
     min-height: 2.75rem;
   }

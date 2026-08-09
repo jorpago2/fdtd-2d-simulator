@@ -46,10 +46,10 @@
       state.theme = normalizeTheme(state.theme);
       documentElement.dataset.theme = state.theme;
       documentElement.classList.toggle("cds--g100", state.theme === "dark");
-      documentElement.classList.toggle("cds--white", state.theme !== "dark");
+      documentElement.classList.toggle("cds--g10", state.theme !== "dark");
       documentElement.ownerDocument
         ?.querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#ffffff");
+        ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#f4f4f4");
       uiCore.setExclusiveButtonState(el.themeButtons, "themeChoice", state.theme, {
         selectedAttribute: "aria-pressed",
       });

@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { useLayoutEffect, type ReactNode } from "react";
 import Plotly from "plotly.js-basic-dist-min";
+import "@jorpago2/scientific-ui/styles.css";
 import "./core/app-state";
 import "./core/boundary-state";
 import "./core/state-normalizer";
