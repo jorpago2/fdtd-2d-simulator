@@ -97,7 +97,7 @@ fieldset {
 .topbar {
   z-index: 500;
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) minmax(13rem, 26rem) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 26rem) minmax(0, 1fr);
   align-items: center;
   width: 100%;
   height: var(--workbench-header-height);
@@ -114,17 +114,17 @@ fieldset {
   gap: 0.75rem;
   min-width: 0;
   height: 100%;
-  padding-inline: 0.5rem 1rem;
+  padding-inline: 1rem;
 }
 
 .brand-mark {
   display: grid;
   place-items: center;
-  flex: 0 0 3rem;
-  width: 3rem;
-  height: 3rem;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
   color: var(--cds-text-on-color);
-  background: var(--cds-background-brand);
+  background: var(--cds-text-primary);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--cds-code-01-font-size, 0.75rem);
   font-weight: var(--cds-heading-compact-01-font-weight, 600);
@@ -163,6 +163,7 @@ fieldset {
   align-self: stretch;
   align-items: center;
   gap: 0.75rem;
+  justify-content: center;
   min-width: 0;
   padding-inline: 1.5rem;
   border-inline: 1px solid var(--cds-border-subtle-01);
@@ -225,6 +226,7 @@ fieldset {
 
 .header-actions {
   align-self: stretch;
+  justify-self: end;
 }
 
 .header-simulation-controls,
@@ -1393,7 +1395,7 @@ fieldset {
 
 @media (max-height: 39.99rem) {
   :root {
-    --workbench-header-height: 3.5rem;
+    --workbench-header-height: 4rem;
     --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
@@ -1437,7 +1439,7 @@ fieldset {
 
 @media (max-width: 47.99rem) {
   :root {
-    --workbench-header-height: 3.5rem;
+    --workbench-header-height: 4rem;
     --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
@@ -1446,13 +1448,13 @@ fieldset {
   }
 
   .brand-lockup {
-    padding-inline: 0.375rem;
+    padding-inline: 0.5rem;
   }
 
   .brand-mark {
-    flex-basis: 2.75rem;
-    width: 2.75rem;
-    height: 2.75rem;
+    flex-basis: 2rem;
+    width: 2rem;
+    height: 2rem;
   }
 
   .workflow-rail .nav-step {
@@ -1597,9 +1599,9 @@ fieldset {
   }
 
   .brand-mark {
-    flex-basis: 2.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
+    flex-basis: 2rem;
+    width: 2rem;
+    height: 2rem;
   }
 
   .source-menu-body {
