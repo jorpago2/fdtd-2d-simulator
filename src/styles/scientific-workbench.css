@@ -3,8 +3,8 @@
 
 :root {
   --workbench-header-height: 4rem;
-  --workbench-rail-width: 4rem;
-  --workbench-panel-width: 24rem;
+  --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
+  --workbench-panel-width: var(--scientific-ui-panel-inline-size);
   --workbench-status-height: 1.75rem;
   --workbench-inspector-width: 22rem;
   --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -291,33 +291,17 @@ fieldset {
   display: grid;
   grid-row: 1;
   grid-column: 1;
-  grid-template-rows: repeat(4, minmax(4rem, 1fr));
+  grid-auto-rows: var(--scientific-ui-tool-rail-item-block-size);
+  align-content: start;
   min-width: 0;
   min-height: 0;
-  border-right: 1px solid var(--cds-border-subtle-01);
-  background: var(--cds-layer-01);
 }
 
 .workflow-rail .mobile-layer-button {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0.5rem 0.25rem;
-  border-left: 0.1875rem solid transparent;
-  color: var(--cds-text-secondary);
+  block-size: var(--scientific-ui-tool-rail-item-block-size);
 }
 
-.workflow-rail .mobile-layer-button.is-active {
-  border-left-color: var(--cds-background-brand);
-  color: var(--cds-text-primary);
-  background: var(--cds-layer-selected-01);
-}
+.workflow-rail .nav-step { display: none; }
 
 .nav-step {
   position: absolute;
@@ -1286,7 +1270,8 @@ fieldset {
 
 /* Responsive layouts */
 
-@media (min-width: 64rem) and (min-height: 40rem) {
+@media (min-width: 66rem) and (min-height: 40rem) {
+  :root { --workbench-rail-width: var(--scientific-ui-rail-inline-size); }
   .controls-open .workspace {
     grid-template-columns:
       var(--workbench-rail-width)
@@ -1318,7 +1303,7 @@ fieldset {
   }
 }
 
-@media (max-width: 63.99rem), (max-height: 39.99rem) {
+@media (max-width: 65.99rem), (max-height: 39.99rem) {
   .topbar {
     grid-template-columns: minmax(12rem, 1fr) auto;
   }
@@ -1354,6 +1339,10 @@ fieldset {
     grid-column: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: none;
+    grid-auto-rows: 100%;
+    align-content: stretch;
+    inline-size: 100%;
+    block-size: var(--workbench-bottom-nav-height);
     border-top: 1px solid var(--cds-border-subtle-01);
     border-right: 0;
     padding-bottom: var(--workbench-safe-bottom);
@@ -1364,19 +1353,17 @@ fieldset {
     grid-column: 1;
   }
 
-  .workflow-rail .mobile-layer-button {
-    flex-direction: row;
-    border-bottom: 0.1875rem solid transparent;
-    border-left: 0;
+  .workflow-rail.scientific-tool-rail .mobile-layer-button {
+    block-size: 100%;
+    flex-direction: column;
+    border-inline-start: 0;
+    border-block-start: var(--scientific-ui-active-indicator-size) solid transparent;
   }
 
-  .workflow-rail .mobile-layer-button.is-active {
-    border-bottom-color: var(--cds-background-brand);
-  }
+  .workflow-rail .mobile-layer-button.is-active,
+  .workflow-rail .mobile-layer-button[aria-expanded="true"] { border-block-start-color: var(--scientific-ui-link); }
 
-  .nav-step {
-    position: static;
-  }
+  .workflow-rail .scientific-tool-rail__label { position: static; inline-size: auto; block-size: auto; clip: auto; clip-path: none; }
 
   .context-inspector-host {
     z-index: 650;
@@ -1407,7 +1394,7 @@ fieldset {
 @media (max-height: 39.99rem) {
   :root {
     --workbench-header-height: 3.5rem;
-    --workbench-rail-width: 3.5rem;
+    --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
   .status-strip {
@@ -1451,7 +1438,7 @@ fieldset {
 @media (max-width: 47.99rem) {
   :root {
     --workbench-header-height: 3.5rem;
-    --workbench-rail-width: 3.5rem;
+    --workbench-rail-width: var(--scientific-ui-rail-compact-inline-size);
   }
 
   .topbar {

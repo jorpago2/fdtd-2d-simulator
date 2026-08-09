@@ -106,7 +106,7 @@ const workflowLayers = [
 export function WorkflowNavigation() {
   return workflowLayers.map(([layer, step, label, Icon], index) => (
     <Button
-      className={`mobile-layer-button${index === 0 ? " is-active" : ""}`}
+      className={`scientific-tool-rail__item mobile-layer-button${index === 0 ? " is-active" : ""}`}
       type="button"
       kind="ghost"
       size="sm"
@@ -118,8 +118,8 @@ export function WorkflowNavigation() {
       key={layer}
     >
       <span className="nav-step" aria-hidden="true">{step}</span>
-      <Icon className="nav-icon" size={16} aria-hidden={true} />
-      <span className="nav-label">{label}</span>
+      <span className="scientific-tool-rail__icon"><Icon className="nav-icon" size={20} aria-hidden={true} /></span>
+      <span className="scientific-tool-rail__label nav-label">{label}</span>
     </Button>
   ));
 }

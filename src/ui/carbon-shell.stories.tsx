@@ -8,7 +8,7 @@ function CarbonShellReference() {
       <main className="storybook-workbench-content">
         <section aria-labelledby="workflow-reference-title">
           <h2 id="workflow-reference-title">Workflow navigation</h2>
-          <nav className="workflow-rail" aria-label="Simulation workflow">
+          <nav className="scientific-tool-rail workflow-rail" aria-label="Simulation workflow">
             <WorkflowNavigation />
           </nav>
         </section>
