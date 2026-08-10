@@ -136,6 +136,7 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           size="lg"
           hasIconOnly={compactHeader}
           iconDescription={running ? "Pause simulation" : "Start simulation"}
+          tooltipPosition="bottom"
           renderIcon={running ? Pause : Play}
           aria-label={running ? "Pause simulation" : "Start simulation"}
           aria-pressed={running}
@@ -160,6 +161,7 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           size="sm"
           hasIconOnly
           iconDescription="Reset field"
+          tooltipPosition="bottom"
           title="Reset field"
           data-carbon-react="true"
         >
@@ -188,6 +190,7 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           <OverflowMenu
             className="header-overflow-menu"
             iconDescription="More simulation actions"
+            align="bottom-end"
             size="sm"
             flipped
           >

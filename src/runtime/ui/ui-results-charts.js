@@ -685,6 +685,13 @@
       });
     }
 
+    function resizeSpectrumChart() {
+      const chart = el?.spectrumChart;
+      const Plotly = global.Plotly;
+      if (!chart || !Plotly?.Plots?.resize || chart.clientWidth <= 0) return;
+      void Plotly.Plots.resize(chart);
+    }
+
     function drawFarFieldChart({ data = [], scatteringMode = false, scatteringTotalText = "", theme = "light" } = {}) {
       const prepared = prepareChartCanvas(el?.farFieldChart, 260, 126);
       if (!prepared) return;
@@ -791,6 +798,7 @@
       drawSpectrumChart,
       drawSweepChart,
       prepareChartCanvas,
+      resizeSpectrumChart,
       sweepReadoutText,
       updateFarFieldReadout,
       updateSpectrumReadout,

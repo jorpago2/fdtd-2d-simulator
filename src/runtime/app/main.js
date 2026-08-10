@@ -538,7 +538,10 @@ function updateCanvasHover(event) {
 
 const uiDrawer = uiDrawerModule.createDrawerController({
   callbacks: {
-    onResultsTabActivated: () => renderCustomMonitorResults({ force: true }),
+    onResultsTabActivated: () => {
+      renderCustomMonitorResults({ force: true });
+      requestAnimationFrame(() => requestAnimationFrame(() => resultsCharts.resizeSpectrumChart()));
+    },
     refreshControlPanelData,
   },
   compactControlsMediaQuery: appLayoutModule.COMPACT_CONTROLS_MEDIA_QUERY,
