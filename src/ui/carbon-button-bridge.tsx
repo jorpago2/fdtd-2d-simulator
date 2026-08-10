@@ -171,7 +171,6 @@ export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
     if (usesCloseIcon) {
       const buttonAttributes = { ...attributes };
       delete buttonAttributes["aria-label"];
-      delete buttonAttributes.title;
       return createPortal(
         <IconButton
           {...buttonAttributes}

@@ -3,10 +3,9 @@
 
   const DEFAULT_STEPS = Object.freeze([
     Object.freeze({
-      target: "#controlDrawerToggle",
-      title: "Open the controls",
-      text: "This button opens the main workflow menu. The simulator is organized around Scene, Simulate, Results, and Numerics.",
-      closeDrawer: true,
+      target: "#workflow-scenes",
+      title: "Choose a workflow step",
+      text: "Use the workflow navigation to open Scene, Simulate, Results, or Numerics.",
     }),
     Object.freeze({
       target: "#sceneCurrentPanel",

@@ -9,7 +9,6 @@
     "appShell",
     "contextInspectorHost",
     "controlPanel",
-    "controlDrawerToggle",
     "controlDrawerCloseBtn",
     "controlDrawerBackdrop",
     "controlTabButtons",

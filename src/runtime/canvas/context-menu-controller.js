@@ -16,6 +16,7 @@
     const el = requireObject(dependencies.el, "el");
     const beginEditSession = optionalFunction(dependencies.beginEditSession, () => {});
     const endEditSession = optionalFunction(dependencies.endEditSession, () => {});
+    const onInspectorOpen = optionalFunction(dependencies.onInspectorOpen, () => {});
     const validateEditScope = optionalFunction(dependencies.validateEditScope, () => true);
     const state = {
       sourceMenuMode: "add",
@@ -107,6 +108,7 @@
     }
 
     function showMenu(menu) {
+      onInspectorOpen();
       menu.hidden = false;
       resetMenuScroll(menu);
       syncContextualInspectorState();

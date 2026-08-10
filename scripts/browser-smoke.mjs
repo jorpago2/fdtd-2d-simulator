@@ -6546,7 +6546,7 @@ async function runReproducibilitySmoke(page) {
 
 async function runReactBootstrapSmoke(page) {
   const status = await page.evaluate(() => ({
-    brandMounted: Boolean(document.querySelector('[data-react-ui="brand"]')),
+    brandMounted: Boolean(document.querySelector("#reactHeaderRoot .scientific-header__brand")),
     footerMounted: Boolean(document.querySelector('[data-react-ui="footer"]')),
   }));
   const failures = [];
@@ -6565,7 +6565,7 @@ async function runReactBootstrapSmoke(page) {
 async function runCarbonTypographySmoke(page) {
   const status = await page.evaluate(async () => {
     await document.fonts?.ready;
-    const samples = ["body", "button", "input", "select", ".brand-heading", ".colorbar-title"]
+    const samples = ["body", "button", "input", "select", ".scientific-header__brand-copy", ".colorbar-title"]
       .map((selector) => {
         const element = document.querySelector(selector);
         return { selector, family: element ? getComputedStyle(element).fontFamily : "" };
@@ -6600,26 +6600,26 @@ async function runCarbonTypographySmoke(page) {
 }
 
 async function runCanvasActionMenuSmoke(page) {
-  await page.locator("#canvasActionToggle").click();
-  await page.waitForTimeout(50);
-  const status = await page.evaluate(async () => {
-    const toggle = document.getElementById("canvasActionToggle");
-    const menu = document.querySelector('[role="menu"]');
-    if (!toggle || !menu) {
-      return { opened: false, expanded: toggle?.getAttribute("aria-expanded") ?? null, menuDisplay: "", itemCount: 0 };
-    }
-    const style = getComputedStyle(menu);
+  const status = await page.evaluate(() => {
+    const visible = (id) => {
+      const node = document.getElementById(id);
+      return Boolean(node && getComputedStyle(node).display !== "none" && node.getClientRects().length > 0);
+    };
     return {
-      opened: style.display !== "none",
-      expanded: toggle.getAttribute("aria-expanded"),
-      menuDisplay: style.display,
-      itemCount: menu.querySelectorAll('[role="menuitem"]').length,
+      legacyOverflowPresent: Boolean(document.getElementById("canvasActionToggle")),
+      startVisible: visible("playPauseBtn"),
+      stepVisible: visible("stepBtn"),
+      saveVisible: visible("saveBtn"),
+      themeVisible: visible("themeToggleBtn"),
+      modeSwitcherVisible: visible("selectModeBtn") && visible("brushModeBtn"),
     };
   });
   const failures = [];
-  if (!status.opened) failures.push("canvas action menu did not open from the toolbar toggle");
-  if (status.expanded !== "true") failures.push("canvas action toggle did not report aria-expanded=true");
-  if (status.itemCount !== 2) failures.push(`canvas action menu exposed ${status.itemCount} items instead of 2`);
+  if (status.legacyOverflowPresent) failures.push("legacy canvas overflow menu is still mounted");
+  if (!status.startVisible) failures.push("primary simulation action is not visible");
+  if (!status.stepVisible || !status.saveVisible) failures.push("desktop secondary actions are not visible");
+  if (!status.themeVisible) failures.push("theme action is not visible");
+  if (!status.modeSwitcherVisible) failures.push("Select/Draw mode switcher is not visible");
   return {
     id: "canvas_action_menu_toggle",
     preset: "current",
@@ -6631,12 +6631,9 @@ async function runCanvasActionMenuSmoke(page) {
 }
 
 async function runCanvasPngExportSmoke(page) {
-  if (await page.locator("#canvasActionToggle").getAttribute("aria-expanded") !== "true") {
-    await page.locator("#canvasActionToggle").click();
-  }
   const expected = await page.evaluate(() => ({ width: sim.canvas.width, height: sim.canvas.height }));
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("menuitem", { name: "Save canvas as PNG" }).click();
+  await page.locator("#saveBtn").click();
   const download = await downloadPromise;
   const stream = await download.createReadStream();
   const chunks = [];
@@ -7073,14 +7070,14 @@ async function runCanvasFooterSmoke(browser, url) {
 async function runControlNavigationSmoke(page) {
   const status = await page.evaluate(() => {
     if (!document.body.classList.contains("controls-drawer-open")) {
-      document.getElementById("controlDrawerToggle")?.click();
+      document.querySelector('[data-mobile-layer="scenes"]')?.click();
     }
     const tabButtons = Array.from(document.querySelectorAll("[data-control-tab]"));
     const mobileButtons = Array.from(document.querySelectorAll(".mobile-layer-button[data-mobile-layer]"));
     const controlLabel = (button) =>
       `${button.querySelector(".nav-step")?.textContent.trim() || ""} ${button.querySelector(".nav-label")?.textContent.trim() || ""}`.trim();
     const tabLabels = tabButtons.map(controlLabel);
-    const mobileLabels = mobileButtons.map(controlLabel);
+    const mobileLabels = mobileButtons.map((button) => button.textContent?.trim() || "");
     const clickTab = (name) => {
       document.querySelector(`[data-control-tab="${name}"]`)?.click();
       return {
@@ -7095,12 +7092,13 @@ async function runControlNavigationSmoke(page) {
         gridHasSubpixelSmoothing: Boolean(document.querySelector("#tab-config .grid-section #subpixelSmoothingInput")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
-        openResultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel"))
-          .filter((panel) => panel.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "true")
-          .map((panel) => panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className),
+        resultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel")).map((panel) => ({
+          title: panel.querySelector("h2")?.textContent?.trim() || panel.className,
+          visible: getComputedStyle(panel).display !== "none" && panel.getClientRects().length > 0,
+        })),
         numericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel")).map((panel) => ({
-          title: panel.querySelector(".cds--accordion__title")?.textContent?.trim() || panel.className,
-          open: panel.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "true",
+          title: panel.querySelector("h2")?.textContent?.trim() || panel.className,
+          open: getComputedStyle(panel).display !== "none" && panel.getClientRects().length > 0,
         })),
       };
     };
@@ -7120,7 +7118,7 @@ async function runControlNavigationSmoke(page) {
   });
   const failures = [];
   const expectedTabs = ["1 Scenes", "2 Simulate", "3 Results", "4 Numerics"];
-  const expectedMobile = ["1 Scene", "2 Simulate", "3 Results", "4 Numerics"];
+  const expectedMobile = ["Scene", "Simulate", "Results", "Numerics"];
   if (status.tabLabels.join("|") !== expectedTabs.join("|")) failures.push("desktop control tabs do not match the four-section flow");
   if (status.mobileLabels.join("|") !== expectedMobile.join("|")) failures.push("mobile control layers do not match the four-section flow");
   if (status.hasVisualTab) failures.push("standalone Visual tab still exists after merging into Simulate");
@@ -7128,8 +7126,8 @@ async function runControlNavigationSmoke(page) {
   if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
     failures.push("Simulate tab does not contain both run and visual controls");
   }
-  if (status.resultsState?.openResultCards?.length) {
-    failures.push(`Results has open cards by default: ${status.resultsState.openResultCards.join(", ")}`);
+  if (!(status.resultsState?.resultCards || []).every((card) => card.visible)) {
+    failures.push("Results persistent sections are not all visible");
   }
   if (status.resultsState?.performanceInResults) failures.push("Performance panel is still under Results");
   if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Solver summary") {
@@ -7146,10 +7144,7 @@ async function runControlNavigationSmoke(page) {
   if (status.numericsState?.interfaceAccuracyPanelVisible) failures.push("Interface accuracy is still a standalone Numerics card");
   if (!status.numericsState?.gridHasCellsPerWavelength) failures.push("Grid card is missing cells-per-wavelength control");
   if (!status.numericsState?.gridHasSubpixelSmoothing) failures.push("Grid card is missing subpixel smoothing control");
-  const unexpectedNumericsState = numericsCards.filter((card) => {
-    if (card.title === "Grid" || card.title === "Reproducibility") return !card.open;
-    return card.open;
-  });
+  const unexpectedNumericsState = numericsCards.filter((card) => !card.open);
   if (unexpectedNumericsState.length) {
     failures.push(
       `Numerics card open state is wrong: ${unexpectedNumericsState
@@ -7278,7 +7273,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
   const viewports = [
     { name: "mobile", width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 },
     { name: "tablet", width: 768, height: 1024, isMobile: true, deviceScaleFactor: 2 },
-    { name: "tabletLandscape", width: 1024, height: 768, isMobile: false, deviceScaleFactor: 1, expectsDesktopDrawer: true },
+    { name: "tabletLandscape", width: 1024, height: 768, isMobile: false, deviceScaleFactor: 1, expectsFullSheet: true },
     { name: "shortLaptop", width: 1024, height: 600, isMobile: false, deviceScaleFactor: 1, expectsFullSheet: true },
     { name: "desktop", width: 1440, height: 1000, isMobile: false, deviceScaleFactor: 1 },
     { name: "uhd", width: 3840, height: 2160, isMobile: false, deviceScaleFactor: 1 },
@@ -7304,12 +7299,7 @@ async function runSceneMenuResponsiveSmoke(browser, url) {
 
     try {
       await openApplication(page, url);
-      const headerPanelToggle = page.locator("#controlDrawerToggle");
-      if (await headerPanelToggle.isVisible()) {
-        await headerPanelToggle.click();
-      } else {
-        await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
-      }
+      await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
       await page.waitForTimeout(120);
       await selectPreset(page, "topologyTemporalMod");
       await page.waitForTimeout(120);
@@ -7582,7 +7572,7 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     }));
     if (initialStatus.preset !== "planeWaveAir") failures.push(`Initial scene should be planeWaveAir; got ${initialStatus.preset || "none"}`);
     if (initialStatus.reflectance !== "\u2014") failures.push(`Pending reflectance should use an em dash; got ${initialStatus.reflectance || "empty"}`);
-    await page.locator("#controlDrawerToggle").click();
+    await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(120);
     await page.evaluate(() => {
       document.querySelector('[data-control-tab="scenes"]')?.click();
@@ -7901,8 +7891,6 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       document.documentElement.style.setProperty("--workbench-safe-bottom", "34px");
       document.documentElement.style.setProperty("--scientific-ui-safe-area-bottom", "34px");
     });
-    await page.locator("#canvasActionToggle").click();
-    await page.waitForTimeout(80);
     const status = await page.evaluate(() => {
       const rect = (selector) => {
         const node = document.querySelector(selector);
@@ -7915,68 +7903,21 @@ async function runMobileToolbarHeightSmoke(browser, url) {
           width: Math.round(bounds.width),
         };
       };
-      const toolbarNode = document.querySelector(".header-simulation-controls");
-      const actionToggleNode = document.getElementById("canvasActionToggle");
-      const actionMenuNode = Array.from(document.querySelectorAll('[role="menu"]'))
-        .find((node) => getComputedStyle(node).visibility !== "hidden");
-      const closedToolbar = rect(".header-simulation-controls");
-      const boundsOf = (node) => {
-        if (!node) return null;
+      const visible = (selector) => {
+        const node = document.querySelector(selector);
+        if (!node) return false;
         const bounds = node.getBoundingClientRect();
-        return {
-          top: Math.round(bounds.top),
-          bottom: Math.round(bounds.bottom),
-          left: Math.round(bounds.left),
-          right: Math.round(bounds.right),
-          height: Math.round(bounds.height),
-          width: Math.round(bounds.width),
-          display: getComputedStyle(node).display,
-        };
+        const style = getComputedStyle(node);
+        return bounds.width > 0 && bounds.height > 0 && style.display !== "none" && style.visibility !== "hidden";
       };
-      const closedActionToggle = boundsOf(actionToggleNode);
-      const openToolbarBounds = toolbarNode?.getBoundingClientRect();
-      const openActionToggle = boundsOf(actionToggleNode);
-      const openActionNodes = [actionMenuNode, ...(actionMenuNode ? Array.from(actionMenuNode.querySelectorAll("button")) : [])]
-        .map(boundsOf)
-        .filter((bounds) => bounds && bounds.display !== "none");
-      const minActionLeft = openActionNodes.length ? Math.min(...openActionNodes.map((bounds) => bounds.left)) : null;
-      const maxActionRight = openActionNodes.length ? Math.max(...openActionNodes.map((bounds) => bounds.right)) : null;
-      const minActionTop = openActionNodes.length ? Math.min(...openActionNodes.map((bounds) => bounds.top)) : null;
-      const maxActionBottom = openActionNodes.length ? Math.max(...openActionNodes.map((bounds) => bounds.bottom)) : null;
       return {
         topbar: rect("header.scientific-header"),
-        toolbar: closedToolbar,
-        menuButton: rect("#controlDrawerToggle"),
+        toolbar: rect(".header-simulation-controls"),
         playButton: rect("#playPauseBtn"),
-        resetButton: rect("#resetBtn"),
-        actionToggle: rect("#canvasActionToggle"),
-        interactionToggle: rect(".interaction-toggle"),
-        selectButton: rect("#selectModeBtn"),
-        drawButton: rect("#brushModeBtn"),
-        openToolbar: rect(".header-simulation-controls"),
-        openToolbarOverflowX: toolbarNode && openToolbarBounds ? Math.round(toolbarNode.scrollWidth - openToolbarBounds.width) : null,
-        actionToggleShiftX:
-          closedActionToggle && openActionToggle ? Math.round(Math.abs(openActionToggle.left - closedActionToggle.left)) : null,
-        actionMenuBounds: {
-          minLeft: minActionLeft,
-          maxRight: maxActionRight,
-          minTop: minActionTop,
-          maxBottom: maxActionBottom,
-          overflowLeft: minActionLeft === null ? null : Math.max(0, -minActionLeft),
-          overflowRight: maxActionRight === null ? null : Math.max(0, maxActionRight - window.innerWidth),
-          detachedFromTrigger:
-            !openActionToggle || minActionTop === null
-              ? null
-              : minActionTop < openActionToggle.bottom - 1,
-        },
-        actionMenuLabels: actionMenuNode
-          ? Array.from(actionMenuNode.querySelectorAll('[role="menuitem"]')).map((node) => node.textContent?.trim() || "")
-          : [],
-        truncatedActionLabels: actionMenuNode
-          ? Array.from(actionMenuNode.querySelectorAll('[role="menuitem"]')).filter((node) =>
-              Array.from(node.querySelectorAll("*")).some((child) => child.scrollWidth > child.clientWidth + 1)
-            ).map((node) => node.textContent?.trim() || "")
-          : [],
+        themeButton: rect("#themeToggleBtn"),
+        hiddenDesktopActions:
+          !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible(".interaction-toggle"),
+        legacyOverflowPresent: Boolean(document.getElementById("canvasActionToggle")),
         mobileNav: rect('nav[aria-label="Simulation workflow"]'),
         mobileNavButtonBottom: Math.max(
           ...Array.from(document.querySelectorAll('nav[aria-label="Simulation workflow"] .mobile-layer-button'))
@@ -8006,32 +7947,17 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "modified");
     const failures = [...localErrors];
-    if (!status.topbar || !status.toolbar) failures.push("mobile toolbar or menu block was not rendered");
+    if (!status.topbar || !status.toolbar) failures.push("mobile header action group was not rendered");
     if (!status.playButton || status.playButton.width < 44 || status.playButton.height < 44) {
       failures.push("compact header Run / pause action is smaller than 44px");
     }
-    if (!status.actionToggle || status.actionToggle.width < 44 || status.actionToggle.height < 44) {
-      failures.push("compact header More actions control is smaller than 44px");
+    if (!status.themeButton || status.themeButton.width < 44 || status.themeButton.height < 44) {
+      failures.push("compact header theme action is smaller than 44px");
     }
-    if (status.menuButton?.height > 0 || status.resetButton?.height > 0 || status.interactionToggle?.height > 0) {
+    if (!status.hiddenDesktopActions) {
       failures.push("compact header still exposes duplicated desktop actions");
     }
-    const requiredActionLabels = [
-      "Reset field",
-      "Advance one step",
-      "Select canvas objects",
-      "Draw materials",
-      "Save canvas as PNG",
-    ];
-    for (const label of requiredActionLabels) {
-      if (!status.actionMenuLabels.includes(label)) failures.push(`compact action menu is missing ${label}`);
-    }
-    if (status.truncatedActionLabels.length) {
-      failures.push(`compact action menu truncates: ${status.truncatedActionLabels.join(", ")}`);
-    }
-    if ((status.actionMenuBounds.overflowLeft || 0) > 1 || (status.actionMenuBounds.overflowRight || 0) > 1) {
-      failures.push("compact action menu extends beyond the viewport");
-    }
+    if (status.legacyOverflowPresent) failures.push("legacy compact overflow action is still mounted");
     if (!status.workflowLabelsVisible) failures.push("mobile workflow labels are hidden");
     if (!status.mobileNav || status.mobileNav.height < 56 + status.safeBottom - 1) {
       failures.push("mobile workflow navigation does not reserve the bottom safe area");
@@ -8119,11 +8045,11 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       helpColorbarOverlap: intersectionArea(help, colorbar),
       compactHeaderActions: {
         run: visible("#playPauseBtn"),
-        more: visible("#canvasActionToggle"),
+        step: visible("#stepBtn"),
+        save: visible("#saveBtn"),
         reset: visible("#resetBtn"),
         interaction: visible(".interaction-toggle"),
-        theme: visible(".header-theme-toggle"),
-        drawer: visible("#controlDrawerToggle"),
+        theme: visible("#themeToggleBtn"),
       },
       navButtonsUnobscured,
       clippedStatusItems: visibleStatusItems.filter((node) => {
@@ -8183,14 +8109,14 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       failures.push("closed compact panel remains rendered in the workspace");
     }
     if (!closed.navButtonsUnobscured) failures.push("closed compact panel obscures landscape workflow navigation");
-    if (!closed.compactHeaderActions.run || !closed.compactHeaderActions.more) {
-      failures.push("compact landscape header is missing Run or More actions");
+    if (!closed.compactHeaderActions.run || !closed.compactHeaderActions.theme) {
+      failures.push("compact landscape header is missing Run or theme actions");
     }
     if (
-      closed.compactHeaderActions.reset
+      closed.compactHeaderActions.step
+      || closed.compactHeaderActions.save
+      || closed.compactHeaderActions.reset
       || closed.compactHeaderActions.interaction
-      || closed.compactHeaderActions.theme
-      || closed.compactHeaderActions.drawer
     ) {
       failures.push("compact landscape header exposes duplicated desktop actions");
     }
@@ -8267,13 +8193,10 @@ async function runTouchLongPressSmoke(browser, url) {
 
     await canvas.dispatchEvent("pointerdown", pointerEvent(71, 1));
     await page.waitForTimeout(650);
-    const selectMenuOpen = await page.locator("#canvasContextMenu").evaluate((menu) => !menu.hidden);
+    const selectMenuOpen = await page.locator("#sourceMenu").evaluate((menu) => !menu.hidden);
     await canvas.dispatchEvent("pointerup", pointerEvent(71, 0));
-    await page.keyboard.press("Escape");
-
-    await page.locator("#brushModeBtn").click();
-    await canvas.dispatchEvent("pointerdown", pointerEvent(72, 1));
-    await page.waitForTimeout(650);
+    await page.locator('#sourceMenu [data-canvas-add="material"]').click();
+    await page.waitForTimeout(120);
     const brushSheet = await page.locator("#brushMenu").evaluate((menu) => {
       const rect = menu.getBoundingClientRect();
       return {
@@ -8284,7 +8207,6 @@ async function runTouchLongPressSmoke(browser, url) {
         width: Math.round(rect.width),
       };
     });
-    await canvas.dispatchEvent("pointerup", pointerEvent(72, 0));
     await page.keyboard.press("Escape");
 
     const paintedBefore = await page.evaluate(() => Array.from(sim.eps).filter((value) => Math.abs(value - 1) > 1e-6).length);
@@ -8293,7 +8215,7 @@ async function runTouchLongPressSmoke(browser, url) {
     await canvas.dispatchEvent("pointerup", pointerEvent(73, 0));
     const paintedAfter = await page.evaluate(() => Array.from(sim.eps).filter((value) => Math.abs(value - 1) > 1e-6).length);
 
-    if (!selectMenuOpen) failures.push("long-press in Select mode did not open the canvas menu");
+    if (!selectMenuOpen) failures.push("long-press in Select mode did not open the unified element inspector");
     if (brushSheet.hidden || !brushSheet.contextual) failures.push("long-press in Draw mode did not open the contextual brush sheet");
     if (brushSheet.left > 1 || brushSheet.right < 389 || brushSheet.width < 388) failures.push("mobile brush sheet is not full width");
     if (paintedAfter <= paintedBefore) failures.push("short touch no longer paints after adding long-press handling");
@@ -8404,18 +8326,19 @@ async function runContextEditorResponsiveSmoke(browser, url) {
     });
     await page.waitForTimeout(80);
     const choice = await page.evaluate(() => {
-      const menu = document.getElementById("canvasContextMenu");
+      const menu = document.getElementById("sourceMenu");
       const rect = menu?.getBoundingClientRect();
       const active = document.activeElement;
       return {
         hidden: Boolean(menu?.hidden),
         height: rect?.height || 0,
+        activeId: active?.id || "",
         activeText: active?.textContent?.trim() || "",
-        activeIsClose: active?.id === "canvasContextCloseBtn",
+        activeIsClose: active?.id === "sourceMenuCloseBtn",
         documentOverflowX: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
-    await page.locator('#canvasContextMenu [data-canvas-add="monitor"]').click();
+    await page.locator('#sourceMenu [data-canvas-add="monitor"]').click();
     await page.waitForTimeout(120);
     return choice;
   };
@@ -8429,7 +8352,7 @@ async function runContextEditorResponsiveSmoke(browser, url) {
       const rect = menu.getBoundingClientRect();
       const frame = document.querySelector(".canvas-frame").getBoundingClientRect();
       const host = document.getElementById("contextInspectorHost").getBoundingClientRect();
-      const header = document.querySelector(".topbar").getBoundingClientRect();
+      const header = document.querySelector(".scientific-header").getBoundingClientRect();
       const body = menu.querySelector(".source-menu-body");
       return {
         position: getComputedStyle(menu).position,
@@ -8455,8 +8378,8 @@ async function runContextEditorResponsiveSmoke(browser, url) {
       const rect = menu.getBoundingClientRect();
       const body = menu.querySelector(".source-menu-body");
       const actions = menu.querySelector(".source-menu-actions").getBoundingClientRect();
-      const header = document.querySelector(".topbar").getBoundingClientRect();
-      const nav = document.querySelector(".mobile-layer-nav").getBoundingClientRect();
+      const header = document.querySelector(".scientific-header").getBoundingClientRect();
+      const nav = document.querySelector('nav[aria-label="Simulation workflow"]').getBoundingClientRect();
       return {
         position: getComputedStyle(menu).position,
         contextual: menu.dataset.contextualInspector || "",
@@ -8471,13 +8394,17 @@ async function runContextEditorResponsiveSmoke(browser, url) {
     });
 
     if (desktopChoice.hidden) failures.push("desktop add-element panel did not open");
-    if (desktopChoice.activeIsClose || desktopChoice.activeText !== "Source") failures.push("add-element menu focuses its close action instead of the first choice");
+    if (desktopChoice.activeIsClose || desktopChoice.activeId !== "sourceTypeInput") {
+      failures.push("unified element inspector does not focus the first source field");
+    }
     if (desktopChoice.documentOverflowX > 1) failures.push("desktop add-element menu causes horizontal document overflow");
     if (desktop.position !== "static" || desktop.contextual !== "true") failures.push("mid-width monitor editor is not an integrated inspector");
-    if (!desktop.fillsHost || !desktop.separateFromCanvas || !desktop.belowHeader) failures.push("mid-width monitor editor is not docked beside the scientific canvas");
+    if (!desktop.fillsHost || !desktop.belowHeader) failures.push("tablet monitor editor does not fill its workspace panel below the header");
     if (desktop.activeId !== "monitorQuantityInput") failures.push("monitor editor does not focus its first field");
     if (desktop.bodyOverflowX > 1) failures.push("mid-width monitor editor body overflows horizontally");
-    if (mobileChoice.activeIsClose || mobileChoice.activeText !== "Source") failures.push("mobile add-element menu focuses its close action");
+    if (mobileChoice.activeIsClose || mobileChoice.activeId !== "sourceTypeInput") {
+      failures.push("mobile unified element inspector does not focus the first source field");
+    }
     if (mobile.position !== "static" || mobile.contextual !== "true") failures.push("mobile monitor editor is not an integrated workspace panel");
     if (!mobile.aligned || !mobile.fullWidth || !mobile.actionsVisible) failures.push("mobile monitor sheet is clipped or misaligned");
     if (mobile.activeId !== "monitorQuantityInput") failures.push("mobile monitor editor does not focus its first field");
@@ -8818,8 +8745,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     const sampleTheme = async (theme) => {
       const currentTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       if (currentTheme !== theme) {
-        await page.getByRole("button", { name: "More simulation actions" }).click();
-        const themeAction = page.getByRole("menuitem", { name: `Use ${theme} theme` });
+        const themeAction = page.locator("#themeToggleBtn");
         states.desktopThemeActionVisible = await themeAction.isVisible();
         await themeAction.click();
         await page.waitForTimeout(80);
@@ -8867,10 +8793,10 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
 
     states.light = await sampleTheme("light");
     states.dark = await sampleTheme("dark");
-    if (!states.desktopThemeActionVisible) failures.push("desktop More menu hides the theme action");
+    if (!states.desktopThemeActionVisible) failures.push("desktop header hides the theme action");
     for (const [theme, expectedHeader, expectedMeta] of [
       ["light", "g10", "#f4f4f4"],
-      ["dark", "g10", "#f4f4f4"],
+      ["dark", "g100", "#161616"],
     ]) {
       const snapshot = states[theme];
       if (snapshot.theme !== theme) failures.push(`${theme} theme did not reach the application root`);
@@ -8891,12 +8817,8 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(100);
-    await page.getByRole("button", { name: "More simulation actions" }).click();
-    const compactThemeAction = page.getByRole("menuitem", { name: "Use light theme" });
+    const compactThemeAction = page.locator("#themeToggleBtn");
     states.compactThemeActionVisible = await compactThemeAction.isVisible();
-    states.compactSaveActionFits = await page.getByRole("menuitem", { name: "Save canvas as PNG" }).evaluate((item) =>
-      item.scrollWidth <= item.clientWidth
-    );
     if (states.compactThemeActionVisible) {
       await compactThemeAction.click();
       await page.waitForTimeout(80);
@@ -8906,20 +8828,19 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
       headerTheme: document.querySelector(".scientific-header")?.closest(".cds--g10") ? "g10" : "unknown",
       metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
       themeSwitcherVisible: Boolean(
-        document.querySelector(".header-theme-toggle")
-        && getComputedStyle(document.querySelector(".header-theme-toggle")).display !== "none"
+        document.querySelector("#themeToggleBtn")
+        && getComputedStyle(document.querySelector("#themeToggleBtn")).display !== "none"
       ),
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     }));
     if (!states.compactThemeActionVisible) failures.push("compact header offers no reachable theme action");
-    if (!states.compactSaveActionFits) failures.push("compact action menu truncates the PNG export label");
     if (states.compact.theme !== "light" || states.compact.headerTheme !== "g10") {
       failures.push("compact theme action did not synchronize the application and Carbon header");
     }
     if (states.compact.metaThemeColor.toLowerCase() !== "#f4f4f4") {
       failures.push("compact theme action did not update the browser theme color");
     }
-    if (states.compact.themeSwitcherVisible) failures.push("compact header unexpectedly exposes the full theme switcher");
+    if (!states.compact.themeSwitcherVisible) failures.push("compact header hides the theme action");
     if (states.compact.overflowX > 0) failures.push(`compact theme action introduced ${states.compact.overflowX}px horizontal overflow`);
   } finally {
     await context.close();

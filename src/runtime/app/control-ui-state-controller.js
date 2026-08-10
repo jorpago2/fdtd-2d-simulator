@@ -45,13 +45,11 @@
     function updateThemeControls() {
       state.theme = normalizeTheme(state.theme);
       documentElement.dataset.theme = state.theme;
-      // The theme setting belongs to the scientific canvas. Application chrome
-      // remains on the suite-wide Carbon g10 theme at every canvas setting.
-      documentElement.classList.remove("cds--g100");
-      documentElement.classList.add("cds--g10");
+      documentElement.classList.toggle("cds--g100", state.theme === "dark");
+      documentElement.classList.toggle("cds--g10", state.theme !== "dark");
       documentElement.ownerDocument
         ?.querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", "#f4f4f4");
+        ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#f4f4f4");
       if (typeof windowRef.CustomEvent === "function" && typeof windowRef.dispatchEvent === "function") {
         windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:theme-applied", { detail: { theme: state.theme } }));
       }

@@ -1446,6 +1446,7 @@ const contextMenus = contextMenuModule.createContextMenuController({
   el,
   beginEditSession: beginSimulationEditSession,
   endEditSession: finishSimulationEditSession,
+  onInspectorOpen: () => uiDrawer.closeControlDrawer(),
   validateEditScope: (scope) => numericInputs.validateScope(scope),
 });
 const contextMenuState = contextMenus.state;
@@ -1775,6 +1776,9 @@ function handleCanvasContextAdd(button) {
   if (button.dataset.canvasAdd === "monitor") {
     closeCanvasContextMenu();
     openMonitorMenuAt(clientX, clientY, null);
+  } else if (button.dataset.canvasAdd === "material") {
+    closeCanvasContextMenu();
+    openBrushMenuAt(clientX, clientY, {});
   } else {
     closeCanvasContextMenu();
     openSourceMenuAt(clientX, clientY, null);

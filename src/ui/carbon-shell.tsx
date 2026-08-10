@@ -3,11 +3,8 @@ import {
   Button,
   ContentSwitcher,
   Link,
-  OverflowMenu,
-  OverflowMenuItem,
   Search,
   Switch,
-  Theme,
 } from "@carbon/react";
 import {
   Chemistry,
@@ -64,38 +61,22 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme theme="g10">
-      <ScientificHeader
-        aria-label="EM Wave Simulator application header"
-        product="EM Wave Simulator"
-        productMark="F"
-        descriptor="2D FDTD laboratory"
-        href="./"
-        contextLabel="Simulation"
-        context={<span id="headerSceneTitle">Plane wave in air</span>}
-        status={simulationStatus}
-        secondaryActions={<CanvasPrimaryControls
-          compactHeader={compactHeader}
-          running={simulationStatus.state === "running"}
-          themeIndex={themeIndex}
-          onThemeChange={chooseTheme}
-        />}
-        primaryAction={<Button
-          id="controlDrawerToggle"
-          className="control-drawer-toggle"
-          type="button"
-          kind="ghost"
-          size="sm"
-          hasIconOnly
-          iconDescription="Open current workflow panel"
-          aria-controls="controlPanel"
-          aria-expanded="false"
-          data-carbon-react="true"
-        >
-          <SettingsAdjust size={16} aria-hidden={true} />
-        </Button>}
-      />
-    </Theme>
+    <ScientificHeader
+      aria-label="EM Wave Simulator application header"
+      product="EM Wave Simulator"
+      productMark="F"
+      descriptor="2D FDTD laboratory"
+      href="./"
+      contextLabel="Simulation"
+      context={<span id="headerSceneTitle">Plane wave in air</span>}
+      status={simulationStatus}
+      secondaryActions={<CanvasPrimaryControls
+        compactHeader={compactHeader}
+        running={simulationStatus.state === "running"}
+        themeIndex={themeIndex}
+        onThemeChange={chooseTheme}
+      />}
+    />
   );
 }
 
@@ -108,24 +89,27 @@ const workflowLayers = [
 
 export function WorkflowNavigation() {
   const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
+  const chooseLayer = (layer: string | null) => {
+    if (!layer) return;
+    setActiveLayer(layer);
+    window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer } }));
+  };
   return (
-    <Theme theme="g10">
-      <ScientificToolRail
-        label="Simulation workflow"
-        activeId={activeLayer}
-        expandedId={activeLayer}
-        onChange={setActiveLayer}
-        collapsible={false}
-        items={workflowLayers.map(([layer, label, Icon]) => ({
-          id: layer,
-          label,
-          icon: <Icon size={16} aria-hidden={true} />,
-          controlsId: "controlPanel",
-          className: "mobile-layer-button",
-          dataAttributes: { "data-mobile-layer": layer },
-        }))}
-      />
-    </Theme>
+    <ScientificToolRail
+      label="Simulation workflow"
+      activeId={activeLayer}
+      expandedId={activeLayer}
+      onChange={chooseLayer}
+      collapsible={false}
+      items={workflowLayers.map(([layer, label, Icon]) => ({
+        id: layer,
+        label,
+        icon: <Icon size={16} aria-hidden={true} />,
+        controlsId: "controlPanel",
+        className: "mobile-layer-button",
+        dataAttributes: { "data-mobile-layer": layer },
+      }))}
+    />
   );
 }
 
@@ -148,14 +132,24 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           type="button"
           kind="primary"
           size="sm"
-          hasIconOnly
-          iconDescription={running ? "Pause simulation" : "Start simulation"}
+          aria-label={running ? "Pause simulation" : "Start simulation"}
           aria-pressed={running}
           data-carbon-react="true"
         >
           <span aria-hidden="true">{running ? <Pause size={16} /> : <Play size={16} />}</span>
-          <span className="simulation-run-label" aria-hidden="true" />
+          <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>
         </Button>
+        {!compactHeader && (
+          <Button
+            id="stepBtn"
+            className="header-step-button"
+            type="button"
+            kind="ghost"
+            size="sm"
+          >
+            Step
+          </Button>
+        )}
         <Button
           id="resetBtn"
           className="icon-button canvas-reset-button"
@@ -164,56 +158,32 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           size="sm"
           hasIconOnly
           iconDescription="Reset field"
+          title="Reset field"
           data-carbon-react="true"
         >
           <Reset size={16} aria-hidden={true} />
         </Button>
-        <OverflowMenu
-          id="canvasActionToggle"
-          className="icon-button canvas-action-toggle"
-          size="sm"
-          iconDescription="More simulation actions"
-          menuOptionsClass="canvas-action-menu"
-          flipped
-          data-carbon-react="true"
-        >
-          {compactHeader && (
-            <OverflowMenuItem
-              id="compactResetBtn"
-              itemText="Reset field"
-              onClick={() => document.getElementById("resetBtn")?.click()}
-            />
-          )}
-          <OverflowMenuItem
-            id="stepBtn"
-            itemText="Advance one step"
-            onClick={() => window.dispatchEvent(new Event("fdtd:simulation-step"))}
-          />
-          {compactHeader && (
-            <>
-              <OverflowMenuItem
-                id="compactSelectModeBtn"
-                itemText="Select canvas objects"
-                onClick={() => document.getElementById("selectModeBtn")?.click()}
-              />
-              <OverflowMenuItem
-                id="compactDrawModeBtn"
-                itemText="Draw materials"
-                onClick={() => document.getElementById("brushModeBtn")?.click()}
-              />
-            </>
-          )}
-          <OverflowMenuItem
+        {!compactHeader && (
+          <Button
             id="saveBtn"
-            itemText="Save canvas as PNG"
-            onClick={() => window.dispatchEvent(new Event("fdtd:save-png"))}
-          />
-          <OverflowMenuItem
-            hasDivider
-            itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
-            onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
-          />
-        </OverflowMenu>
+            className="header-save-button"
+            type="button"
+            kind="ghost"
+            size="sm"
+          >
+            Save PNG
+          </Button>
+        )}
+        <Button
+          id="themeToggleBtn"
+          className="theme-toggle-button"
+          type="button"
+          kind="ghost"
+          size="sm"
+          onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
+        >
+          {themeIndex === 1 ? "Light" : "Dark"}
+        </Button>
       </div>
       <ContentSwitcher
         className="interaction-toggle"

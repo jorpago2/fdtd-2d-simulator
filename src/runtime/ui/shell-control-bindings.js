@@ -179,16 +179,12 @@
       button.addEventListener("click", () => activateControlTab(button.dataset.controlTab));
       button.addEventListener("keydown", handleControlTabKeydown);
     });
-    forEachNode(el.mobileLayerButtons, (button) => {
-      button.addEventListener("click", () => {
-        const panelIsOpen = Boolean(el.appShell?.classList.contains("controls-open"));
-        if (panelIsOpen && button.classList.contains("is-active")) {
-          closeControlDrawer();
-          return;
-        }
-        activateMobileLayer(button.dataset.mobileLayer);
-        if (!panelIsOpen) toggleControlDrawer();
-      });
+    windowRef.addEventListener("fdtd:workflow-change", (event) => {
+      const layer = event?.detail?.layer;
+      if (!layer) return;
+      const panelIsOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+      if (!panelIsOpen) toggleControlDrawer();
+      activateMobileLayer(layer);
     });
 
     el.sceneSearchInput?.addEventListener("input", refreshSceneSearch);
@@ -201,7 +197,7 @@
     });
 
     el.canvasContextCloseBtn?.addEventListener("click", closeCanvasContextMenuAndRender);
-    el.canvasContextMenu?.addEventListener("click", (event) => {
+    el.contextInspectorHost?.addEventListener("click", (event) => {
       const button = isElement(event.target) ? event.target.closest("[data-canvas-add]") : null;
       if (button) {
         handleCanvasContextAdd(button);

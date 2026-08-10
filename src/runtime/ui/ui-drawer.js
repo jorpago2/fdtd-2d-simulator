@@ -147,6 +147,9 @@
       uiCore.setClass(el.appShell, "controls-open", isOpen);
       uiCore.setClass(documentRef.body, "controls-drawer-open", isOpen);
       uiCore.setExpanded(el.controlDrawerToggle, isOpen);
+      if (isOpen && !wasOpen) {
+        resetControlPanelScroll();
+      }
       if (el.controlPanel) {
         el.controlPanel.setAttribute("aria-hidden", String(!isOpen));
         if (isOpen) {

@@ -29,8 +29,8 @@
       try {
         const theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
         document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.add("cds--g10");
-        document.querySelector('meta[name="theme-color"]').content = "#f4f4f4";
+        document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--g10");
+        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#161616" : "#f4f4f4";
       } catch {
         document.documentElement.dataset.theme = "light";
         document.documentElement.classList.add("cds--g10");
@@ -42,7 +42,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260809-theme-surfaces-1" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260810-workbench-3" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -533,6 +533,7 @@
               <div class="context-choice-grid" role="group" aria-label="Canvas element type">
                 <button class="text-button" type="button" data-canvas-add="source">Source</button>
                 <button class="text-button" type="button" data-canvas-add="monitor">Monitor</button>
+                <button class="text-button" type="button" data-canvas-add="material">Material</button>
               </div>
             </div>
             <div
@@ -549,6 +550,11 @@
                   <h2 id="sourceMenuTitle">Add source</h2>
                 </div>
                 <button id="sourceCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close source editor">×</button>
+              </div>
+              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="source">Source</button>
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="monitor">Monitor</button>
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="material">Material</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -585,10 +591,14 @@
                     </optgroup>
                   </select>
                 </label>
-                <div id="reactFrequencySliderRoot" class="control-row scientific-slider-row"></div>
-                <output id="frequencyOutput" class="scientific-slider-output" for="frequencyInput">1.00</output>
-                <div id="reactAmplitudeSliderRoot" class="control-row scientific-slider-row"></div>
-                <output id="amplitudeOutput" class="scientific-slider-output" for="amplitudeInput">0.55</output>
+                <div class="scientific-slider-group">
+                  <div id="reactFrequencySliderRoot" class="scientific-slider-mount"></div>
+                  <output id="frequencyOutput" class="scientific-slider-output" for="frequencyInput">1.00</output>
+                </div>
+                <div class="scientific-slider-group">
+                  <div id="reactAmplitudeSliderRoot" class="scientific-slider-mount"></div>
+                  <output id="amplitudeOutput" class="scientific-slider-output" for="amplitudeInput">0.55</output>
+                </div>
                 <fieldset class="two-col">
                   <legend class="sr-only">Source position</legend>
                   <label>
@@ -600,17 +610,17 @@
                     <input id="sourceYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
                 </fieldset>
-                <div id="sourceWidthControl" class="control-row scientific-slider-row is-disabled">
+                <div id="sourceWidthControl" class="scientific-slider-group is-disabled">
                   <div id="reactSourceWidthSliderRoot"></div>
                   <output id="sourceWidthOutput" class="scientific-slider-output" for="sourceWidthInput">0.35</output>
                 </div>
-                <div id="sourceAngleControl" class="control-row scientific-slider-row is-disabled">
+                <div id="sourceAngleControl" class="scientific-slider-group is-disabled">
                   <div id="reactSourceAngleSliderRoot"></div>
                   <output id="sourceAngleOutput" class="scientific-slider-output" for="sourceAngleInput">0°</output>
                 </div>
                 <section class="source-detail-panel context-detail-panel" data-carbon-disclosure data-title="Source details">
                   <div class="source-detail-body">
-                    <div id="sourceTimePhaseControl" class="control-row scientific-slider-row">
+                    <div id="sourceTimePhaseControl" class="scientific-slider-group">
                       <div id="reactSourceTimePhaseSliderRoot"></div>
                       <output id="sourceTimePhaseOutput" class="scientific-slider-output" for="sourceTimePhaseInput">0°</output>
                     </div>
@@ -651,6 +661,11 @@
                 </div>
                 <button id="monitorCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close monitor editor">×</button>
               </div>
+              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="source">Source</button>
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="monitor">Monitor</button>
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="material">Material</button>
+              </div>
               <div class="source-menu-body">
                 <label>
                   <span>Quantity</span>
@@ -672,10 +687,14 @@
                     <input id="monitorYInput" type="number" inputmode="decimal" autocomplete="off" min="0.2" max="5.8" step="0.05" value="3.0" />
                   </label>
                 </fieldset>
-                <div id="reactMonitorLengthSliderRoot" class="control-row scientific-slider-row"></div>
-                <output id="monitorLengthOutput" class="scientific-slider-output" for="monitorLengthInput">2.00</output>
-                <div id="reactMonitorAngleSliderRoot" class="control-row scientific-slider-row"></div>
-                <output id="monitorAngleOutput" class="scientific-slider-output" for="monitorAngleInput">90°</output>
+                <div class="scientific-slider-group">
+                  <div id="reactMonitorLengthSliderRoot" class="scientific-slider-mount"></div>
+                  <output id="monitorLengthOutput" class="scientific-slider-output" for="monitorLengthInput">2.00</output>
+                </div>
+                <div class="scientific-slider-group">
+                  <div id="reactMonitorAngleSliderRoot" class="scientific-slider-mount"></div>
+                  <output id="monitorAngleOutput" class="scientific-slider-output" for="monitorAngleInput">90°</output>
+                </div>
               </div>
               <div class="source-menu-actions">
                 <button id="monitorDeleteBtn" class="text-button danger-button" data-carbon-kind="danger--tertiary" type="button" hidden>Delete</button>
@@ -696,6 +715,11 @@
                   <h2 id="brushMenuTitle">Draw</h2>
                 </div>
                 <button id="brushMenuCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close draw editor">×</button>
+              </div>
+              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="source">Source</button>
+                <button type="button" role="tab" aria-selected="false" data-canvas-add="monitor">Monitor</button>
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="material">Material</button>
               </div>
               <div class="source-menu-body">
               <fieldset id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="radiogroup" aria-label="Draw tool">
@@ -736,7 +760,7 @@
                   </label>
                 </fieldset>
               </div>
-              <div id="brushSizeControl" class="control-row scientific-slider-row">
+              <div id="brushSizeControl" class="scientific-slider-group">
                 <div id="reactBrushSizeSliderRoot"></div>
                 <output id="brushMenuSizeOutput" class="scientific-slider-output" for="brushMenuSizeInput">0.20 λ₀</output>
               </div>
@@ -1148,8 +1172,10 @@
                 <span title="Implementation route; it does not change the physical model.">Compute engine</span>
                 <output id="engineValue" title="Implementation route; it does not change the physical model.">JS</output>
               </div>
-              <div id="reactSpeedSliderRoot" class="control-row scientific-slider-row" title="Changes animation pacing, not the CFL time step."></div>
-              <output id="speedOutput" class="scientific-slider-output" for="speedInput">1x</output>
+              <div class="scientific-slider-group" title="Changes animation pacing, not the CFL time step.">
+                <div id="reactSpeedSliderRoot" class="scientific-slider-mount"></div>
+                <output id="speedOutput" class="scientific-slider-output" for="speedInput">1x</output>
+              </div>
               <label class="control-row">
                 <span>Display FPS</span>
                 <select id="renderFpsInput">
@@ -1159,8 +1185,10 @@
                   <option value="15">15</option>
                 </select>
               </label>
-              <div id="reactGainSliderRoot" class="control-row scientific-slider-row" title="Visual scaling only; it does not change the electromagnetic fields."></div>
-              <output id="gainOutput" class="scientific-slider-output" for="gainInput">1.00</output>
+              <div class="scientific-slider-group" title="Visual scaling only; it does not change the electromagnetic fields.">
+                <div id="reactGainSliderRoot" class="scientific-slider-mount"></div>
+                <output id="gainOutput" class="scientific-slider-output" for="gainInput">1.00</output>
+              </div>
               <label class="toggle-row">
                 <input id="autoScaleInput" type="checkbox" />
                 <span>Automatic display scale</span>
@@ -1202,14 +1230,16 @@
                 </div>
               </div>
               <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
-              <section class="scene-observables-panel results-detail-panel" data-carbon-disclosure data-title="Scene observables">
+              <section class="scene-observables-panel results-detail-panel panel-section">
+                <h2>Validation</h2>
                 <div class="results-detail-body">
                   <div id="sceneObservableResults" class="scene-observable-results" aria-live="polite">
                     <p class="results-insight-note">Select and run a scene to compare measured quantities with a physics reference.</p>
                   </div>
                 </div>
               </section>
-              <section class="maxwell-check-panel results-detail-panel" data-carbon-disclosure data-title="Maxwell equations">
+              <section class="maxwell-check-panel results-detail-panel panel-section">
+                <h2>Maxwell checker</h2>
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
                     <label class="toggle-row">
@@ -1224,7 +1254,8 @@
                   </div>
                 </div>
               </section>
-              <section class="monitor-panel results-detail-panel" data-carbon-disclosure data-title="Line monitors">
+              <section class="monitor-panel results-detail-panel panel-section">
+                <h2>Line monitors</h2>
                 <div class="results-detail-body">
                   <label class="toggle-row">
                     <input id="diagnosticsInput" type="checkbox" />
@@ -1260,14 +1291,16 @@
                   <button id="diagnosticsResetBtn" class="text-button" type="button">Reset monitors</button>
                 </div>
               </section>
-              <section class="custom-monitor-panel results-detail-panel" data-carbon-disclosure data-title="Custom monitors">
+              <section class="custom-monitor-panel results-detail-panel panel-section">
+                <h2>Custom monitors</h2>
                 <div class="results-detail-body">
                   <div id="customMonitorResults" class="custom-monitor-results" aria-live="polite">
                     <p class="results-insight-note">Right-click or long-press the canvas to add a monitor.</p>
                   </div>
                 </div>
               </section>
-              <section class="sweep-panel results-detail-panel" data-carbon-disclosure data-title="Parameter sweep">
+              <section class="sweep-panel results-detail-panel panel-section">
+                <h2>Parameter sweep</h2>
                 <div class="results-detail-body">
                   <div class="two-col">
                     <label>
@@ -1321,7 +1354,8 @@
                   </div>
                 </div>
               </section>
-              <section class="analysis-panel results-detail-panel" data-carbon-disclosure data-title="Spectral / NTFF">
+              <section class="analysis-panel results-detail-panel panel-section">
+                <h2>Spectral / NTFF</h2>
                 <div class="results-detail-body">
                   <div class="analysis-panel-header">
                     <label class="toggle-row">
@@ -1374,7 +1408,8 @@
                 </div>
               </div>
             </section>
-            <section class="panel-section grid-section config-detail-panel" data-carbon-disclosure data-title="Grid" data-initially-open="true">
+            <section class="panel-section grid-section config-detail-panel">
+              <h2>Grid</h2>
               <div class="config-detail-body">
                 <div class="two-col">
                   <label>
@@ -1403,7 +1438,8 @@
                 <p class="simulation-guide-note">Cells / &lambda;<sub>0</sub> sets the normalized grid resolution. Subpixel smoothing only changes passive dielectric interface coefficients; PEC, dispersive, tensorial, nonlinear, gain, and phase-change cells are left unchanged.</p>
               </div>
             </section>
-            <section class="panel-section reproducibility-section config-detail-panel" data-carbon-disclosure data-title="Reproducibility" data-initially-open="true">
+            <section class="panel-section reproducibility-section config-detail-panel">
+              <h2>Reproducibility</h2>
               <div class="config-detail-body">
                 <div class="button-row">
                   <button id="exportSceneBtn" class="text-button" type="button">Export JSON</button>
@@ -1415,7 +1451,8 @@
                 <p id="reproStatus" class="simulation-guide-note">Scene state can be exported with sources, grid, boundaries, material parameters, and drawn cells.</p>
               </div>
             </section>
-            <section class="panel-section performance-panel config-detail-panel" data-carbon-disclosure data-title="Performance">
+            <section class="panel-section performance-panel config-detail-panel">
+              <h2>Performance</h2>
               <div class="config-detail-body">
                 <div class="performance-grid" aria-label="Performance summary">
                   <div class="diagnostic-metric">

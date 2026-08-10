@@ -32,7 +32,6 @@
     const clearMaterialSelection = requireFunction(dependencies.clearMaterialSelection, "clearMaterialSelection");
     const clampInt = requireFunction(dependencies.clampInt, "clampInt");
     const cellsToLambda = requireFunction(dependencies.cellsToLambda, "cellsToLambda");
-    const formatLambda = requireFunction(dependencies.formatLambda, "formatLambda");
     const makeSource = requireFunction(dependencies.makeSource, "makeSource");
     const makeMonitor = requireFunction(dependencies.makeMonitor, "makeMonitor");
     const addSource = requireFunction(dependencies.addSource, "addSource");
@@ -72,31 +71,24 @@
     }
 
     function openCanvasContextMenuAt(clientX, clientY) {
-      if (!el.canvasContextMenu) return;
-      const sim = getSim();
       clearMaterialSelection(false);
-      const point = sim.clientToGridCell(clientX, clientY);
-      if (el.canvasContextMenuHint) {
-        el.canvasContextMenuHint.textContent =
-          `x / \u03bb0 ${formatLambda(cellsToLambda(point.x))}, y / \u03bb0 ${formatLambda(cellsToLambda(point.y))}`;
-      }
-      contextMenus.openCanvasContextMenuAt(clientX, clientY, point);
-      sim.render();
+      openSourceMenuAt(clientX, clientY, null);
     }
 
     function openSourceMenuAt(clientX, clientY, source = null) {
       if (!el.sourceMenu) return;
       const sim = getSim();
+      const point = sim.clientToGridCell(clientX, clientY);
       let draft = null;
       let mode = "add";
       if (source) {
         mode = "edit";
         getEntitySelection().selectSource(source.id);
       } else {
-        const point = sim.clientToGridCell(clientX, clientY);
         draft = makeSource(gridPointToSourcePosition(point), false);
       }
       contextMenus.openSourceMenuAt(clientX, clientY, { mode, draft });
+      contextMenuState.canvasContextPoint = point;
       updateControlText();
       sim.render();
     }
@@ -108,16 +100,17 @@
     function openMonitorMenuAt(clientX, clientY, monitor = null) {
       if (!el.monitorMenu) return;
       const sim = getSim();
+      const point = sim.clientToGridCell(clientX, clientY);
       let draft = null;
       let mode = "add";
       if (monitor) {
         mode = "edit";
         getEntitySelection().selectMonitor(monitor.id);
       } else {
-        const point = sim.clientToGridCell(clientX, clientY);
         draft = makeMonitor(gridPointToMonitorPosition(point), false);
       }
       contextMenus.openMonitorMenuAt(clientX, clientY, { mode, draft });
+      contextMenuState.canvasContextPoint = point;
       updateControlText();
       sim.render();
     }
