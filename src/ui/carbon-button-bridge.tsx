@@ -193,7 +193,7 @@ export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
         {...attributes}
         className={className}
         kind={kind}
-        size="sm"
+        size={className.includes("help-guide-toggle") ? "lg" : "sm"}
         hasIconOnly={iconOnly}
         iconDescription={iconOnly ? iconDescription : undefined}
         data-carbon-react="true"

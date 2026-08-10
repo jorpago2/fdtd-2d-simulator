@@ -185,7 +185,7 @@ function validateCarbonUi(indexHtml) {
   }
   if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
   if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
-  if (!indexHtml.includes("cds--g100") || !indexHtml.includes("cds--g10")) missing.push("Carbon theme context");
+  if (!indexHtml.includes("cds--g10")) missing.push("Carbon g10 chrome theme context");
   if (/\.cds--|:not\(\.cds--|Hallmark|instrument shell redesign/i.test(styles)) missing.push("inherited or Carbon-internal CSS selectors");
   if (/input\[type=["']range["']\]/i.test(styles)) missing.push("native range styling");
   if (/font:\s*inherit|label:not\(/i.test(styles)) missing.push("global rules that override Carbon internals");

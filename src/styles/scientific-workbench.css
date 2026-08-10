@@ -349,10 +349,20 @@ fieldset {
 }
 
 .status-strip-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   min-width: 0;
   margin-left: auto;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.status-strip-author > a {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .surface-orbit-controls {
@@ -952,8 +962,8 @@ fieldset {
   display: block;
   right: 1rem;
   bottom: 1rem;
-  width: 2rem;
-  height: 2rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 .help-guide-toggle {

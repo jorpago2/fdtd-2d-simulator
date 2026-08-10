@@ -64,7 +64,7 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme theme={themeIndex === 1 ? "g100" : "g10"}>
+    <Theme theme="g10">
       <ScientificHeader
         aria-label="EM Wave Simulator application header"
         product="EM Wave Simulator"
@@ -108,21 +108,25 @@ const workflowLayers = [
 
 export function WorkflowNavigation() {
   const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
-  return <ScientificToolRail
-    label="Simulation workflow"
-    activeId={activeLayer}
-    expandedId={activeLayer}
-    onChange={setActiveLayer}
-    collapsible={false}
-    items={workflowLayers.map(([layer, label, Icon]) => ({
-      id: layer,
-      label,
-      icon: <Icon size={16} aria-hidden={true} />,
-      controlsId: "controlPanel",
-      className: "mobile-layer-button",
-      dataAttributes: { "data-mobile-layer": layer },
-    }))}
-  />;
+  return (
+    <Theme theme="g10">
+      <ScientificToolRail
+        label="Simulation workflow"
+        activeId={activeLayer}
+        expandedId={activeLayer}
+        onChange={setActiveLayer}
+        collapsible={false}
+        items={workflowLayers.map(([layer, label, Icon]) => ({
+          id: layer,
+          label,
+          icon: <Icon size={16} aria-hidden={true} />,
+          controlsId: "controlPanel",
+          className: "mobile-layer-button",
+          dataAttributes: { "data-mobile-layer": layer },
+        }))}
+      />
+    </Theme>
+  );
 }
 
 interface CanvasPrimaryControlsProps {

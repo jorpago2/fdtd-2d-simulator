@@ -29,8 +29,8 @@
       try {
         const theme = localStorage.getItem("fdtdTheme") === "dark" ? "dark" : "light";
         document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.add(theme === "dark" ? "cds--g100" : "cds--g10");
-        document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#161616" : "#f4f4f4";
+        document.documentElement.classList.add("cds--g10");
+        document.querySelector('meta[name="theme-color"]').content = "#f4f4f4";
       } catch {
         document.documentElement.dataset.theme = "light";
         document.documentElement.classList.add("cds--g10");

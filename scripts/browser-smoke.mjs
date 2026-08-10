@@ -8870,7 +8870,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     if (!states.desktopThemeActionVisible) failures.push("desktop More menu hides the theme action");
     for (const [theme, expectedHeader, expectedMeta] of [
       ["light", "g10", "#f4f4f4"],
-      ["dark", "g100", "#161616"],
+      ["dark", "g10", "#f4f4f4"],
     ]) {
       const snapshot = states[theme];
       if (snapshot.theme !== theme) failures.push(`${theme} theme did not reach the application root`);
