@@ -103,14 +103,13 @@ fieldset {
 }
 
 .header-simulation-controls,
-.tool-group {
+.header-simulation-controls .tool-group {
   display: flex;
   align-items: center;
 }
 
 .header-simulation-controls,
-.header-simulation-controls .interaction-toggle,
-.header-theme-toggle {
+.header-simulation-controls .interaction-toggle {
   height: 3rem;
   min-height: 3rem;
 }
@@ -148,17 +147,6 @@ fieldset {
 
 .interaction-toggle {
   width: 10rem;
-}
-
-.header-theme-toggle {
-  width: 8.5rem;
-}
-
-@media (min-width: 66rem) {
-  .header-simulation-controls .interaction-toggle,
-  .header-theme-toggle {
-    display: none;
-  }
 }
 
 .workspace {
@@ -412,17 +400,12 @@ fieldset {
   width: 100%;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
-  border-right: 1px solid var(--cds-border-subtle-01);
-  background: var(--cds-layer-01);
-  box-shadow: none;
 }
 
 .controls-open .control-panel {
   display: grid;
 }
 
-.control-panel-header,
 .source-menu-header,
 .help-guide-header,
 .walkthrough-header,
@@ -434,31 +417,8 @@ fieldset {
   gap: 1rem;
 }
 
-.control-panel-header {
-  min-height: 4rem;
-  padding: 0.75rem 1rem 0.75rem 1.5rem;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
-  background: var(--cds-layer-02);
-}
-
-.control-panel-title-block {
-  display: grid;
-  gap: 0;
-}
-
-.control-panel-title-block h2 {
-  font-size: var(--cds-heading-03-font-size, 1.25rem);
-  font-weight: var(--cds-heading-03-font-weight, 400);
-  line-height: var(--cds-heading-03-line-height, 1.4);
-  letter-spacing: var(--cds-heading-03-letter-spacing, 0);
-}
-
 .panel-kicker {
   color: var(--cds-link-primary);
-}
-
-.control-panel .panel-kicker {
-  display: none;
 }
 
 .control-tabs {
@@ -481,13 +441,6 @@ fieldset {
   line-height: var(--cds-label-01-line-height, 1.33333);
 }
 
-.control-tab-panels.scientific-task-panel__body {
-  min-height: 0;
-  padding: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-
 .control-tab-panel {
   display: none;
 }
@@ -504,7 +457,7 @@ fieldset {
 
 .control-tab-panel > .panel-section,
 .control-tab-panel > .carbon-disclosure-mount {
-  padding: 1.5rem;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--cds-border-subtle-01);
 }
 
@@ -1170,10 +1123,6 @@ fieldset {
 }
 
 @media (max-width: 65.99rem), (max-height: 39.99rem) {
-  .header-theme-toggle {
-    display: none;
-  }
-
   .control-panel {
     z-index: 600;
     grid-row: 1;
@@ -1217,12 +1166,8 @@ fieldset {
     pointer-events: auto;
   }
 
-}
-
-/* Below Carbon's lg breakpoint the shared header hides secondary actions.
- * Keep the single essential run action in that slot and let the bottom
- * workflow navigation replace the redundant drawer and canvas controls. */
-@media (max-width: 65.99rem) {
+  /* Keep Run and More available when the shared shell turns the rail into
+   * bottom navigation. All remaining canvas actions live in More. */
   .canvas-action-menu {
     inline-size: min(14rem, 100vw);
   }
@@ -1233,8 +1178,7 @@ fieldset {
 
   .control-drawer-toggle,
   .header-simulation-controls .canvas-reset-button,
-  .header-simulation-controls .interaction-toggle,
-  .header-theme-toggle {
+  .header-simulation-controls .interaction-toggle {
     display: none;
   }
 
@@ -1246,6 +1190,23 @@ fieldset {
 
   .simulation-run-label {
     display: none;
+  }
+
+  .header-simulation-controls,
+  .header-simulation-controls .tool-group {
+    width: calc(2 * var(--scientific-ui-header-block-size));
+    min-width: calc(2 * var(--scientific-ui-header-block-size));
+  }
+
+  .header-simulation-controls .simulation-run-button,
+  .header-simulation-controls .canvas-action-toggle {
+    justify-content: center;
+    width: var(--scientific-ui-header-block-size);
+    min-width: var(--scientific-ui-header-block-size);
+    max-inline-size: var(--scientific-ui-header-block-size);
+    height: var(--scientific-ui-header-block-size);
+    min-height: var(--scientific-ui-header-block-size);
+    padding-inline: 0;
   }
 }
 
@@ -1295,46 +1256,6 @@ fieldset {
 @media (max-width: 47.99rem) {
   :root {
     --workbench-header-height: var(--scientific-ui-header-block-size);
-  }
-
-  .header-theme-toggle,
-  .control-drawer-toggle {
-    display: none;
-  }
-
-  .header-simulation-controls {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .header-simulation-controls .tool-group {
-    flex: 0 0 auto;
-  }
-
-  .header-simulation-controls .simulation-run-button,
-  .header-simulation-controls .icon-button {
-    width: 2.75rem;
-    min-width: 2.75rem;
-    max-inline-size: 2.75rem;
-    height: 2.75rem;
-    min-height: 2.75rem;
-    padding-inline: 0.875rem;
-  }
-
-  .header-simulation-controls .interaction-toggle,
-  .header-simulation-controls .interaction-toggle > button {
-    height: 2.75rem;
-    min-height: 2.75rem;
-  }
-
-  .simulation-run-label {
-    display: none;
-  }
-
-  .interaction-toggle {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 8rem;
   }
 
   .stage {
@@ -1391,11 +1312,6 @@ fieldset {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .control-tab-panel > .panel-section,
-  .control-tab-panel > .carbon-disclosure-mount {
-    padding: 1rem;
-  }
-
   .control-tab-panel > .run-section {
     padding-bottom: 0.75rem;
   }
@@ -1424,21 +1340,8 @@ fieldset {
 }
 
 @media (max-width: 22rem) {
-  .interaction-toggle {
-    min-width: 9.5rem;
-  }
-
-
   .source-menu-body {
     padding-inline: 0.5rem;
-  }
-
-  .header-simulation-controls .simulation-run-button,
-  .header-simulation-controls .icon-button {
-    width: 2.5rem;
-    min-width: 2.5rem;
-    max-inline-size: 2.5rem;
-    padding-inline: 0.75rem;
   }
 
   .results-summary-grid,
@@ -1446,25 +1349,6 @@ fieldset {
   .performance-grid,
   .diagnostics-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 65.99rem) {
-  .header-simulation-controls,
-  .header-simulation-controls .tool-group {
-    width: calc(2 * var(--scientific-ui-header-block-size));
-    min-width: calc(2 * var(--scientific-ui-header-block-size));
-  }
-
-  .header-simulation-controls .simulation-run-button,
-  .header-simulation-controls .canvas-action-toggle {
-    justify-content: center;
-    width: var(--scientific-ui-header-block-size);
-    min-width: var(--scientific-ui-header-block-size);
-    max-inline-size: var(--scientific-ui-header-block-size);
-    height: var(--scientific-ui-header-block-size);
-    min-height: var(--scientific-ui-header-block-size);
-    padding-inline: 0;
   }
 }
 

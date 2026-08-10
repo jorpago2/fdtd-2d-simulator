@@ -8086,7 +8086,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     };
     const visibleStatusItems = Array.from(document.querySelectorAll(".status-strip > span"))
       .filter((node) => getComputedStyle(node).display !== "none");
-    const navButtonsUnobscured = Array.from(document.querySelectorAll(".mobile-layer-nav .mobile-layer-button"))
+    const navButtonsUnobscured = Array.from(document.querySelectorAll('nav[aria-label="Simulation workflow"] .mobile-layer-button'))
       .every((button) => {
         const rect = button.getBoundingClientRect();
         const owner = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
@@ -8095,15 +8095,30 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     const panel = document.getElementById("controlPanel");
     const help = bounds(".help-guide-toggle-mount");
     const colorbar = bounds(".colorbar");
+    const visible = (selector) => {
+      const node = document.querySelector(selector);
+      if (!node) return false;
+      const rect = node.getBoundingClientRect();
+      const style = getComputedStyle(node);
+      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+    };
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
-      header: bounds(".topbar"),
+      header: bounds(".scientific-header"),
       panel: bounds("#controlPanel"),
       panelHidden: panel?.getAttribute("aria-hidden") === "true" && panel?.hasAttribute("inert"),
-      nav: bounds(".mobile-layer-nav"),
+      nav: bounds('nav[aria-label="Simulation workflow"]'),
       help,
       colorbar,
       helpColorbarOverlap: intersectionArea(help, colorbar),
+      compactHeaderActions: {
+        run: visible("#playPauseBtn"),
+        more: visible("#canvasActionToggle"),
+        reset: visible("#resetBtn"),
+        interaction: visible(".interaction-toggle"),
+        theme: visible(".header-theme-toggle"),
+        drawer: visible("#controlDrawerToggle"),
+      },
       navButtonsUnobscured,
       clippedStatusItems: visibleStatusItems.filter((node) => {
         const rect = node.getBoundingClientRect();
@@ -8162,6 +8177,17 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       failures.push("closed compact panel remains rendered in the workspace");
     }
     if (!closed.navButtonsUnobscured) failures.push("closed compact panel obscures landscape workflow navigation");
+    if (!closed.compactHeaderActions.run || !closed.compactHeaderActions.more) {
+      failures.push("compact landscape header is missing Run or More actions");
+    }
+    if (
+      closed.compactHeaderActions.reset
+      || closed.compactHeaderActions.interaction
+      || closed.compactHeaderActions.theme
+      || closed.compactHeaderActions.drawer
+    ) {
+      failures.push("compact landscape header exposes duplicated desktop actions");
+    }
     if (closed.helpColorbarOverlap > 1) failures.push("landscape help button overlaps the color scale");
     if (closed.clippedStatusItems) failures.push(`${closed.clippedStatusItems} landscape status items are partially clipped`);
     if (!open.header || !open.panel || !open.nav) failures.push("compact landscape shell is incomplete");
@@ -8770,9 +8796,28 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
   const states = {};
   try {
     await openApplication(page, url);
+    states.desktopControls = await page.evaluate(() => {
+      const visible = (selector) => {
+        const node = document.querySelector(selector);
+        if (!node) return false;
+        const rect = node.getBoundingClientRect();
+        const style = getComputedStyle(node);
+        return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
+      };
+      return {
+        interaction: visible(".interaction-toggle"),
+      };
+    });
+    if (!states.desktopControls.interaction) failures.push("desktop header hides Select / Draw controls");
     const sampleTheme = async (theme) => {
-      await page.locator(`[data-theme-choice="${theme}"]`).click();
-      await page.waitForTimeout(80);
+      const currentTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+      if (currentTheme !== theme) {
+        await page.getByRole("button", { name: "More simulation actions" }).click();
+        const themeAction = page.getByRole("menuitem", { name: `Use ${theme} theme` });
+        states.desktopThemeActionVisible = await themeAction.isVisible();
+        await themeAction.click();
+        await page.waitForTimeout(80);
+      }
       return page.evaluate(() => {
         const parseRgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
         const luminance = (value) => {
@@ -8789,15 +8834,15 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
         };
         const colorbarStyle = getComputedStyle(document.querySelector(".colorbar"));
         const panelStyle = getComputedStyle(document.querySelector(".control-panel"));
-        const brandStyle = getComputedStyle(document.querySelector(".brand-mark"));
+        const brandStyle = getComputedStyle(document.querySelector(".scientific-header__brand-mark"));
         const frameStyle = getComputedStyle(document.querySelector(".canvas-frame"));
         const stageStyle = getComputedStyle(document.querySelector(".stage"));
-        const header = document.querySelector(".topbar");
+        const headerThemeRoot = document.querySelector(".scientific-header")?.closest(".cds--g10, .cds--g100");
         return {
           theme: document.documentElement.dataset.theme,
-          headerTheme: header?.classList.contains("cds--g100")
+          headerTheme: headerThemeRoot?.classList.contains("cds--g100")
             ? "g100"
-            : header?.classList.contains("cds--g10")
+            : headerThemeRoot?.classList.contains("cds--g10")
               ? "g10"
               : "unknown",
           metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
@@ -8816,6 +8861,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
 
     states.light = await sampleTheme("light");
     states.dark = await sampleTheme("dark");
+    if (!states.desktopThemeActionVisible) failures.push("desktop More menu hides the theme action");
     for (const [theme, expectedHeader, expectedMeta] of [
       ["light", "g10", "#f4f4f4"],
       ["dark", "g100", "#161616"],
@@ -8851,9 +8897,12 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     }
     states.compact = await page.evaluate(() => ({
       theme: document.documentElement.dataset.theme,
-      headerTheme: document.querySelector(".topbar")?.classList.contains("cds--g10") ? "g10" : "unknown",
+      headerTheme: document.querySelector(".scientific-header")?.closest(".cds--g10") ? "g10" : "unknown",
       metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
-      themeSwitcherVisible: getComputedStyle(document.querySelector(".header-theme-toggle")).display !== "none",
+      themeSwitcherVisible: Boolean(
+        document.querySelector(".header-theme-toggle")
+        && getComputedStyle(document.querySelector(".header-theme-toggle")).display !== "none"
+      ),
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     }));
     if (!states.compactThemeActionVisible) failures.push("compact header offers no reachable theme action");

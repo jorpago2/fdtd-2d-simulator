@@ -13,6 +13,8 @@ import {
   Chemistry,
   Grid as GridIcon,
   Inspection,
+  Pause,
+  Play,
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
@@ -62,7 +64,7 @@ export function ApplicationHeader() {
   };
 
   return (
-    <Theme theme="g10">
+    <Theme theme={themeIndex === 1 ? "g100" : "g10"}>
       <ScientificHeader
         aria-label="EM Wave Simulator application header"
         product="EM Wave Simulator"
@@ -72,23 +74,12 @@ export function ApplicationHeader() {
         contextLabel="Simulation"
         context={<span id="headerSceneTitle">Plane wave in air</span>}
         status={simulationStatus}
-        secondaryActions={<>
-        <CanvasPrimaryControls
+        secondaryActions={<CanvasPrimaryControls
           compactHeader={compactHeader}
           running={simulationStatus.state === "running"}
           themeIndex={themeIndex}
           onThemeChange={chooseTheme}
-        />
-        <ContentSwitcher
-          className="header-theme-toggle"
-          selectedIndex={themeIndex}
-          size="sm"
-          onChange={({ index }) => chooseTheme(index ?? 0)}
-        >
-          <Switch name="light" text="Light" data-theme-choice="light" data-carbon-react="true">Light</Switch>
-          <Switch name="dark" text="Dark" data-theme-choice="dark" data-carbon-react="true">Dark</Switch>
-        </ContentSwitcher>
-        </>}
+        />}
         primaryAction={<Button
           id="controlDrawerToggle"
           className="control-drawer-toggle"
@@ -158,7 +149,7 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           aria-pressed={running}
           data-carbon-react="true"
         >
-          <span id="playPauseIcon" aria-hidden="true">▶</span>
+          <span aria-hidden="true">{running ? <Pause size={16} /> : <Play size={16} />}</span>
           <span className="simulation-run-label" aria-hidden="true" />
         </Button>
         <Button
@@ -213,13 +204,11 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
             itemText="Save canvas as PNG"
             onClick={() => window.dispatchEvent(new Event("fdtd:save-png"))}
           />
-          {compactHeader && (
-            <OverflowMenuItem
-              hasDivider
-              itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
-              onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
-            />
-          )}
+          <OverflowMenuItem
+            hasDivider
+            itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
+            onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
+          />
         </OverflowMenu>
       </div>
       <ContentSwitcher

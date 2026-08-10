@@ -50,9 +50,6 @@
       documentElement.ownerDocument
         ?.querySelector('meta[name="theme-color"]')
         ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#f4f4f4");
-      uiCore.setExclusiveButtonState(el.themeButtons, "themeChoice", state.theme, {
-        selectedAttribute: "aria-pressed",
-      });
       if (typeof windowRef.CustomEvent === "function" && typeof windowRef.dispatchEvent === "function") {
         windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:theme-applied", { detail: { theme: state.theme } }));
       }
@@ -108,9 +105,6 @@
 
     function updateRunControls() {
       const running = Boolean(state.running);
-      if (el.playPauseIcon) {
-        el.playPauseIcon.textContent = running ? "\u2161" : "\u25b6";
-      }
       if (el.playPauseBtn) {
         const label = running ? "Pause simulation" : "Start simulation";
         el.playPauseBtn.title = label;
