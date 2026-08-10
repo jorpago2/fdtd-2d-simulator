@@ -122,15 +122,6 @@ fieldset {
   max-inline-size: 3rem;
 }
 
-.header-simulation-controls .simulation-run-button {
-  justify-content: flex-start;
-  gap: 0.5rem;
-  width: 5.5rem;
-  min-width: 5.5rem;
-  max-inline-size: 5.5rem;
-  padding-inline: 1rem;
-}
-
 .simulation-run-label {
   font-weight: var(--cds-heading-compact-01-font-weight, 600);
 }
@@ -1383,19 +1374,6 @@ fieldset {
   .header-simulation-controls .tool-group {
     width: auto;
     min-width: 6rem;
-  }
-
-  .header-simulation-controls .simulation-run-button {
-    justify-content: center;
-    height: var(--scientific-ui-header-block-size);
-    min-height: var(--scientific-ui-header-block-size);
-    padding-inline: 0;
-  }
-
-  .header-simulation-controls .simulation-run-button {
-    width: var(--scientific-ui-header-block-size);
-    min-width: var(--scientific-ui-header-block-size);
-    max-inline-size: var(--scientific-ui-header-block-size);
   }
 
 }

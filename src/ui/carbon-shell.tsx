@@ -130,16 +130,18 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
       <div className="tool-group compact">
         <Button
           id="playPauseBtn"
-          className="icon-button primary simulation-run-button"
+          className="simulation-run-button"
           type="button"
           kind="primary"
-          size="sm"
+          size="lg"
+          hasIconOnly={compactHeader}
+          iconDescription={running ? "Pause simulation" : "Start simulation"}
+          renderIcon={running ? Pause : Play}
           aria-label={running ? "Pause simulation" : "Start simulation"}
           aria-pressed={running}
           data-carbon-react="true"
         >
-          <span aria-hidden="true">{running ? <Pause size={16} /> : <Play size={16} />}</span>
-          <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>
+          {compactHeader ? null : <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>}
         </Button>
         <Button
           id="stepBtn"

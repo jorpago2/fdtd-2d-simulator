@@ -7914,6 +7914,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         topbar: rect("header.scientific-header"),
         toolbar: rect(".header-simulation-controls"),
         playButton: rect("#playPauseBtn"),
+        playIcon: rect("#playPauseBtn svg"),
         overflowButton: rect(".header-overflow-menu"),
         hiddenDesktopActions:
           !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible("#themeToggleBtn") && !visible(".interaction-toggle"),
@@ -7953,6 +7954,15 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (!status.topbar || !status.toolbar) failures.push("mobile header action group was not rendered");
     if (!status.playButton || status.playButton.width < 44 || status.playButton.height < 44) {
       failures.push("compact header Run / pause action is smaller than 44px");
+    }
+    if (
+      !status.playIcon
+      || Math.abs(
+        (status.playButton.top + status.playButton.bottom) / 2
+        - (status.playIcon.top + status.playIcon.bottom) / 2,
+      ) > 1
+    ) {
+      failures.push("compact header Run / pause icon is not vertically centered");
     }
     if (!status.overflowButton || status.overflowButton.width < 44 || status.overflowButton.height < 44) {
       failures.push("compact header overflow action is smaller than 44px");
