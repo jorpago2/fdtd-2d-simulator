@@ -88,12 +88,7 @@
         populateMonitorEditor(editorMonitor);
       }
       const boundary = boundarySummaryLabel();
-      if (el.headerSimulationStatus) {
-        const status = sim.lastDiverged ? "Unstable" : state.running ? "Running" : sim.time > 0 ? "Paused" : "Ready";
-        el.headerSimulationStatus.dataset.state = status.toLowerCase();
-        const statusLabel = el.headerSimulationStatus.querySelector(".scientific-status__content strong");
-        if (statusLabel) statusLabel.textContent = status;
-      }
+      updateHeaderSimulationStatus();
       if (el.statusGridOutput) el.statusGridOutput.textContent = `${sim.nx} \u00d7 ${sim.ny}`;
       if (el.statusStepOutput) el.statusStepOutput.textContent = String(sim.time);
       if (el.statusCourantOutput) el.statusCourantOutput.textContent = COURANT.toFixed(2);
@@ -113,6 +108,17 @@
       updateStabilitySummary();
       updateSweepControls();
       updateAnalysisControls();
+    }
+
+    function updateHeaderSimulationStatus() {
+      const status = sim.lastDiverged
+        ? { state: "failed", label: "Unstable" }
+        : state.running
+          ? { state: "running", label: "Running" }
+          : sim.time > 0
+            ? { state: "modified", label: "Paused" }
+            : { state: "ready", label: "Ready" };
+      global.dispatchEvent(new CustomEvent("fdtd:simulation-status", { detail: status }));
     }
 
     return Object.freeze({

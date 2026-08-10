@@ -1218,6 +1218,33 @@ fieldset {
 
 }
 
+/* Below Carbon's lg breakpoint the shared header hides secondary actions.
+ * Keep the single essential run action in that slot and let the bottom
+ * workflow navigation replace the redundant drawer and canvas controls. */
+@media (max-width: 65.99rem) {
+  .scientific-header .scientific-header__secondary-actions {
+    display: flex;
+  }
+
+  .control-drawer-toggle,
+  .header-simulation-controls .canvas-reset-button,
+  .header-simulation-controls .canvas-action-toggle,
+  .header-simulation-controls .interaction-toggle,
+  .header-theme-toggle {
+    display: none;
+  }
+
+  .header-simulation-controls,
+  .header-simulation-controls .tool-group {
+    width: var(--scientific-ui-header-block-size);
+    min-width: var(--scientific-ui-header-block-size);
+  }
+
+  .simulation-run-label {
+    display: none;
+  }
+}
+
 @media (max-height: 39.99rem) {
   :root {
     --workbench-header-height: var(--scientific-ui-header-block-size);
@@ -1415,6 +1442,18 @@ fieldset {
   .performance-grid,
   .diagnostics-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 65.99rem) {
+  .header-simulation-controls .simulation-run-button {
+    justify-content: center;
+    width: var(--scientific-ui-header-block-size);
+    min-width: var(--scientific-ui-header-block-size);
+    max-inline-size: var(--scientific-ui-header-block-size);
+    height: var(--scientific-ui-header-block-size);
+    min-height: var(--scientific-ui-header-block-size);
+    padding-inline: 0;
   }
 }
 

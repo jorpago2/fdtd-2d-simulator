@@ -7711,13 +7711,13 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
 
   try {
     await openApplication(page, url);
-    await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="simulation"]').click();
+    await page.locator('nav[aria-label="Simulation workflow"] .mobile-layer-button[data-mobile-layer="simulation"]').click();
     await page.waitForTimeout(120);
     const status = await page.evaluate(() => {
       const panel = document.getElementById("controlPanel");
       const panels = document.querySelector(".control-tab-panels");
       const header = document.querySelector(".control-panel-header");
-      const nav = document.querySelector(".mobile-layer-nav");
+      const nav = document.querySelector('nav[aria-label="Simulation workflow"]');
       const run = document.querySelector("#tab-simulation .run-section");
       const rect = (node) => {
         if (!node) return null;
@@ -7734,6 +7734,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
       return {
         panelScrollTop: panel?.scrollTop ?? null,
         panelsScrollTop: panels?.scrollTop ?? null,
+        panel: rect(panel),
         header: rect(header),
         nav: rect(nav),
         run: rect(run),
@@ -7749,15 +7750,23 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     if (!status.header || status.header.top < 0 || status.header.bottom <= 0) failures.push("control panel header is not visible after tapping Simulate");
     if (!status.nav || status.nav.top < 0 || status.nav.bottom <= 0) failures.push("mobile layer navigation is not visible after tapping Simulate");
     if (!status.run || !status.header || status.run.top < status.header.bottom - 1) failures.push("Run controls overlap the mobile panel header");
-    if (!status.run || !status.nav || status.run.bottom > status.nav.top + 1) failures.push("Run controls overlap the mobile workflow navigation");
-    if (!status.runButton) failures.push("Simulate panel does not expose a Run / pause control");
+    if (!status.panel || !status.nav || status.panel.bottom > status.nav.top + 1) failures.push("Simulate panel overlaps the mobile workflow navigation");
+    if (!status.runButton || status.runButton.width < 44 || status.runButton.height < 44) {
+      failures.push("compact header does not expose a usable Run / pause control");
+    }
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
     await page.locator("#playPauseBtn").click();
+    await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
     const runState = await page.evaluate(() => ({
       running: Boolean(state.running),
       pressed: document.getElementById("playPauseBtn")?.getAttribute("aria-pressed") || "",
+      status: document.querySelector(".scientific-header__status")?.dataset.state || "",
     }));
-    if (!runState.running || runState.pressed !== "true") failures.push("Run / pause control did not start the simulation while the drawer was open");
+    if (!runState.running || runState.pressed !== "true" || runState.status !== "running") {
+      failures.push("Run / pause control did not start the simulation and synchronize its header status");
+    }
+    await page.locator("#playPauseBtn").click();
+    await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "modified");
     await page.locator('[data-mobile-layer="results"]:visible').click();
     await page.locator("#tab-results .results-detail-panel .cds--accordion__heading").evaluateAll((headings) => {
       headings.forEach((heading) => {
@@ -7803,7 +7812,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
 
   try {
     await openApplication(page, url);
-    await page.locator('.workflow-rail .mobile-layer-button[data-mobile-layer="scenes"]').click();
+    await page.locator('nav[aria-label="Simulation workflow"] .mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(80);
     const layers = ["simulation", "results", "config", "scenes"];
     const layerStates = [];
@@ -7868,9 +7877,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     await openApplication(page, url);
     await page.evaluate(() => {
       document.documentElement.style.setProperty("--workbench-safe-bottom", "34px");
+      document.documentElement.style.setProperty("--scientific-ui-safe-area-bottom", "34px");
     });
-    await page.locator("#canvasActionToggle").click();
-    await page.waitForTimeout(50);
     const status = await page.evaluate(() => {
       const rect = (selector) => {
         const node = document.querySelector(selector);
@@ -7911,11 +7919,12 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       const minActionTop = openActionNodes.length ? Math.min(...openActionNodes.map((bounds) => bounds.top)) : null;
       const maxActionBottom = openActionNodes.length ? Math.max(...openActionNodes.map((bounds) => bounds.bottom)) : null;
       return {
-        topbar: rect(".topbar"),
+        topbar: rect("header.scientific-header"),
         toolbar: closedToolbar,
         menuButton: rect("#controlDrawerToggle"),
         playButton: rect("#playPauseBtn"),
         resetButton: rect("#resetBtn"),
+        actionToggle: rect("#canvasActionToggle"),
         interactionToggle: rect(".interaction-toggle"),
         selectButton: rect("#selectModeBtn"),
         drawButton: rect("#brushModeBtn"),
@@ -7935,13 +7944,13 @@ async function runMobileToolbarHeightSmoke(browser, url) {
               ? null
               : minActionTop < openActionToggle.bottom - 1,
         },
-        mobileNav: rect(".mobile-layer-nav"),
+        mobileNav: rect('nav[aria-label="Simulation workflow"]'),
         mobileNavButtonBottom: Math.max(
-          ...Array.from(document.querySelectorAll(".mobile-layer-nav .mobile-layer-button"))
+          ...Array.from(document.querySelectorAll('nav[aria-label="Simulation workflow"] .mobile-layer-button'))
             .map((node) => Math.round(node.getBoundingClientRect().bottom)),
         ),
         safeBottom: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--workbench-safe-bottom")) || 0,
-        workflowLabelsVisible: Array.from(document.querySelectorAll(".workflow-rail .nav-label")).every((node) => {
+        workflowLabelsVisible: Array.from(document.querySelectorAll('nav[aria-label="Simulation workflow"] .nav-label')).every((node) => {
           const bounds = node.getBoundingClientRect();
           const style = getComputedStyle(node);
           return bounds.width > 1 && bounds.height > 1 && style.display !== "none" && style.visibility !== "hidden";
@@ -7954,18 +7963,23 @@ async function runMobileToolbarHeightSmoke(browser, url) {
           }).length,
       };
     });
-    await page.locator("#stepBtn").click();
-    await page.waitForTimeout(80);
-    status.stepAfterClick = await page.evaluate(() => Number(sim?.time));
+    await page.locator("#playPauseBtn").click();
+    await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
+    const runState = await page.evaluate(() => ({
+      running: Boolean(state.running),
+      status: document.querySelector(".scientific-header__status")?.dataset.state || "",
+      accessibleName: document.getElementById("playPauseBtn")?.getAttribute("aria-label") || "",
+    }));
+    await page.locator("#playPauseBtn").click();
+    await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "modified");
     const failures = [...localErrors];
     if (!status.topbar || !status.toolbar) failures.push("mobile toolbar or menu block was not rendered");
-    if (status.menuButton?.height > 0 && status.playButton && Math.abs(status.menuButton.height - status.playButton.height) > 1) {
-      failures.push(`play button height ${status.playButton.height} does not match menu button ${status.menuButton.height}`);
+    if (!status.playButton || status.playButton.width < 44 || status.playButton.height < 44) {
+      failures.push("compact header Run / pause action is smaller than 44px");
     }
-    if (status.menuButton?.height > 0 && status.interactionToggle && Math.abs(status.menuButton.height - status.interactionToggle.height) > 1) {
-      failures.push(`Select/Draw toggle height ${status.interactionToggle.height} does not match menu button ${status.menuButton.height}`);
+    if (status.menuButton?.height > 0 || status.resetButton?.height > 0 || status.actionToggle?.height > 0 || status.interactionToggle?.height > 0) {
+      failures.push("compact header still exposes nonessential desktop actions");
     }
-    if (!status.resetButton || status.resetButton.height < 44) failures.push("Reset is not a usable 44px header action");
     if (!status.workflowLabelsVisible) failures.push("mobile workflow labels are hidden");
     if (!status.mobileNav || status.mobileNav.height < 56 + status.safeBottom - 1) {
       failures.push("mobile workflow navigation does not reserve the bottom safe area");
@@ -7974,30 +7988,15 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       failures.push("mobile workflow actions extend into the bottom safe area");
     }
     if (status.clippedStatusItems) failures.push(`${status.clippedStatusItems} status items are partially clipped`);
-    if (!(status.stepAfterClick > 0)) failures.push("physical click on the More > Step action did not advance the simulation");
-    if (status.playButton && status.selectButton && Math.abs(status.playButton.height - status.selectButton.height) > 1) {
-      failures.push(`Select button height ${status.selectButton.height} does not match play button ${status.playButton.height}`);
-    }
-    if (status.playButton && status.drawButton && Math.abs(status.playButton.height - status.drawButton.height) > 1) {
-      failures.push(`Draw button height ${status.drawButton.height} does not match play button ${status.playButton.height}`);
-    }
-    if (status.toolbar && status.openToolbar && Math.abs(status.openToolbar.height - status.toolbar.height) > 1) {
-      failures.push(`open mobile toolbar height ${status.openToolbar.height} should stay on one row like closed height ${status.toolbar.height}`);
-    }
-    if (Number(status.openToolbarOverflowX) > 1) {
-      failures.push(`open mobile toolbar overflows horizontally by ${status.openToolbarOverflowX}px`);
-    }
-    if (Number(status.actionMenuBounds?.overflowLeft) > 1 || Number(status.actionMenuBounds?.overflowRight) > 1) {
-      failures.push("open mobile action menu extends outside the viewport");
-    }
-    if (status.actionMenuBounds?.detachedFromTrigger) {
-      failures.push("open mobile action menu is detached from its header trigger");
+    if (!runState.running || runState.status !== "running" || runState.accessibleName !== "Pause simulation") {
+      failures.push("compact Run / pause action did not synchronize the solver, status, and accessible name");
     }
     return {
       id: "mobile_toolbar_height",
       preset: "current",
       priority: "P1",
       ...status,
+      runState,
       passed: failures.length === 0,
       failures,
     };
@@ -9551,37 +9550,42 @@ async function main() {
       await recordCase("source_mutation_split_stability", () => runSourceMutationStability(page));
     }
     if (mode === "smoke") {
-      await recordCase("react_carbon_bootstrap", () => runReactBootstrapSmoke(page));
-      await recordCase("carbon_typography", () => runCarbonTypographySmoke(page));
-      await recordCase("scene_observables_panel", () => runSceneObservablesSmoke(browser, url));
-      await recordCase("scene_state_round_trip", () => runReproducibilitySmoke(page));
-      await recordCase("canvas_action_menu", () => runCanvasActionMenuSmoke(page));
-      await recordCase("canvas_png_export", () => runCanvasPngExportSmoke(page));
-      await recordCase("help_guide", () => runHelpGuideSmoke(page));
-      await recordCase("help_guide_responsive_layout", () => runHelpGuideResponsiveSmoke(browser, url));
-      await recordCase("guided_walkthrough_responsive", () => runWalkthroughSmoke(browser, url));
-      await recordCase("canvas_footer_links", () => runCanvasFooterSmoke(browser, url));
-      await recordCase("control_navigation_four_sections", () => runControlNavigationSmoke(page));
-      await recordCase("poynting_component_visibility", () => runPoyntingComponentVisibilitySmoke(page));
-      await recordCase("maxwell_checker_ui", () => runMaxwellCheckerSmoke(page));
-      await recordCase("scene_menu_responsive_layout", () => runSceneMenuResponsiveSmoke(browser, url));
-      await recordCase("scene_menu_selection", () => runSceneMenuSelectionSmoke(browser, url));
-      await recordCase("mobile_simulate_panel_scroll", () => runMobileSimulatePanelScrollSmoke(browser, url));
-      await recordCase("mobile_layer_scroll_reset", () => runMobileLayerScrollResetSmoke(browser, url));
-      await recordCase("mobile_toolbar_height", () => runMobileToolbarHeightSmoke(browser, url));
-      await recordCase("compact_landscape_layout", () => runCompactLandscapeLayoutSmoke(browser, url));
-      await recordCase("touch_long_press", () => runTouchLongPressSmoke(browser, url));
-      await recordCase("contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url));
-      await recordCase("context_editor_responsive", () => runContextEditorResponsiveSmoke(browser, url));
-      await recordCase("brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page));
-      await recordCase("draw_preview", () => runDrawPreviewSmoke(page));
-      await recordCase("source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page));
-      await recordCase("theme_surface_consistency", () => runThemeSurfaceConsistencySmoke(browser, url));
-      await recordCase("source_theme_contrast", () => runSourceThemeContrastSmoke(page));
-      await recordCase("source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page));
-      await recordCase("integrated_context_inspector", () => runIntegratedContextInspectorSmoke(page));
-      await recordCase("reflective_boundary_wall", () => runReflectiveBoundaryWallSmoke(page));
-      await recordCase("brush_dependent_params_visibility", () => runBrushDependentParamsSmoke(page));
+      const uiCases = [
+        ["react_carbon_bootstrap", () => runReactBootstrapSmoke(page)],
+        ["carbon_typography", () => runCarbonTypographySmoke(page)],
+        ["scene_observables_panel", () => runSceneObservablesSmoke(browser, url)],
+        ["scene_state_round_trip", () => runReproducibilitySmoke(page)],
+        ["canvas_action_menu", () => runCanvasActionMenuSmoke(page)],
+        ["canvas_png_export", () => runCanvasPngExportSmoke(page)],
+        ["help_guide", () => runHelpGuideSmoke(page)],
+        ["help_guide_responsive_layout", () => runHelpGuideResponsiveSmoke(browser, url)],
+        ["guided_walkthrough_responsive", () => runWalkthroughSmoke(browser, url)],
+        ["canvas_footer_links", () => runCanvasFooterSmoke(browser, url)],
+        ["control_navigation_four_sections", () => runControlNavigationSmoke(page)],
+        ["poynting_component_visibility", () => runPoyntingComponentVisibilitySmoke(page)],
+        ["maxwell_checker_ui", () => runMaxwellCheckerSmoke(page)],
+        ["scene_menu_responsive_layout", () => runSceneMenuResponsiveSmoke(browser, url)],
+        ["scene_menu_selection", () => runSceneMenuSelectionSmoke(browser, url)],
+        ["mobile_simulate_panel_scroll", () => runMobileSimulatePanelScrollSmoke(browser, url)],
+        ["mobile_layer_scroll_reset", () => runMobileLayerScrollResetSmoke(browser, url)],
+        ["mobile_toolbar_height", () => runMobileToolbarHeightSmoke(browser, url)],
+        ["compact_landscape_layout", () => runCompactLandscapeLayoutSmoke(browser, url)],
+        ["touch_long_press", () => runTouchLongPressSmoke(browser, url)],
+        ["contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url)],
+        ["context_editor_responsive", () => runContextEditorResponsiveSmoke(browser, url)],
+        ["brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page)],
+        ["draw_preview", () => runDrawPreviewSmoke(page)],
+        ["source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page)],
+        ["theme_surface_consistency", () => runThemeSurfaceConsistencySmoke(browser, url)],
+        ["source_theme_contrast", () => runSourceThemeContrastSmoke(page)],
+        ["source_dependent_params_visibility", () => runSourceDependentParamsSmoke(page)],
+        ["integrated_context_inspector", () => runIntegratedContextInspectorSmoke(page)],
+        ["reflective_boundary_wall", () => runReflectiveBoundaryWallSmoke(page)],
+        ["brush_dependent_params_visibility", () => runBrushDependentParamsSmoke(page)],
+      ];
+      for (const [id, run] of uiCases) {
+        if (!selectedCase || selectedCase === id) await recordCase(id, run);
+      }
     }
   } finally {
     await browser.close();

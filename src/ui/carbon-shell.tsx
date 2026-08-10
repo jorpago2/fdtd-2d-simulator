@@ -16,13 +16,17 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificStatus, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)").matches
   );
+  const [simulationStatus, setSimulationStatus] = useState<{
+    state: "ready" | "running" | "modified" | "failed";
+    label: string;
+  }>({ state: "ready", label: "Ready" });
 
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)");
@@ -31,11 +35,22 @@ export function ApplicationHeader() {
       const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
       setThemeIndex(theme === "dark" ? 1 : 0);
     };
+    const syncSimulationStatus = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        state?: "ready" | "running" | "modified" | "failed";
+        label?: unknown;
+      }>).detail;
+      if (!detail || !["ready", "running", "modified", "failed"].includes(detail.state ?? "")) return;
+      if (typeof detail.label !== "string" || !detail.label.trim()) return;
+      setSimulationStatus({ state: detail.state!, label: detail.label });
+    };
     compactQuery.addEventListener("change", syncCompactHeader);
     window.addEventListener("fdtd:theme-applied", syncAppliedTheme);
+    window.addEventListener("fdtd:simulation-status", syncSimulationStatus);
     return () => {
       compactQuery.removeEventListener("change", syncCompactHeader);
       window.removeEventListener("fdtd:theme-applied", syncAppliedTheme);
+      window.removeEventListener("fdtd:simulation-status", syncSimulationStatus);
     };
   }, []);
 
@@ -56,10 +71,11 @@ export function ApplicationHeader() {
         href="./"
         contextLabel="Simulation"
         context={<span id="headerSceneTitle">Plane wave in air</span>}
-        contextDetail={<ScientificStatus id="headerSimulationStatus" compact status={{ state: "ready", label: "Ready" }} />}
+        status={simulationStatus}
         secondaryActions={<>
         <CanvasPrimaryControls
           compactHeader={compactHeader}
+          running={simulationStatus.state === "running"}
           themeIndex={themeIndex}
           onThemeChange={chooseTheme}
         />
@@ -121,10 +137,11 @@ export function WorkflowNavigation() {
 interface CanvasPrimaryControlsProps {
   compactHeader: boolean;
   onThemeChange: (index: number) => void;
+  running: boolean;
   themeIndex: number;
 }
 
-export function CanvasPrimaryControls({ compactHeader, onThemeChange, themeIndex }: CanvasPrimaryControlsProps) {
+export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, themeIndex }: CanvasPrimaryControlsProps) {
   const [modeIndex, setModeIndex] = useState(0);
 
   return (
@@ -137,8 +154,8 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, themeIndex
           kind="primary"
           size="sm"
           hasIconOnly
-          iconDescription="Start simulation"
-          aria-pressed="false"
+          iconDescription={running ? "Pause simulation" : "Start simulation"}
+          aria-pressed={running}
           data-carbon-react="true"
         >
           <span id="playPauseIcon" aria-hidden="true">▶</span>

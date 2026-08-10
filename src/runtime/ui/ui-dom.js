@@ -83,7 +83,6 @@
       controlPanelKicker: documentRef.getElementById("controlPanelKicker"),
       controlPanelTitle: documentRef.getElementById("controlPanelTitle"),
       headerSceneTitle: documentRef.getElementById("headerSceneTitle"),
-      headerSimulationStatus: documentRef.getElementById("headerSimulationStatus"),
       statusGridOutput: documentRef.getElementById("statusGridOutput"),
       statusStepOutput: documentRef.getElementById("statusStepOutput"),
       statusCourantOutput: documentRef.getElementById("statusCourantOutput"),
