@@ -7914,9 +7914,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         topbar: rect("header.scientific-header"),
         toolbar: rect(".header-simulation-controls"),
         playButton: rect("#playPauseBtn"),
-        themeButton: rect("#themeToggleBtn"),
+        overflowButton: rect(".header-overflow-menu"),
         hiddenDesktopActions:
-          !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible(".interaction-toggle"),
+          !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible("#themeToggleBtn") && !visible(".interaction-toggle"),
         legacyOverflowPresent: Boolean(document.getElementById("canvasActionToggle")),
         mobileNav: rect('nav[aria-label="Simulation workflow"]'),
         mobileNavButtonBottom: Math.max(
@@ -7937,6 +7937,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
           }).length,
       };
     });
+    await page.locator(".header-overflow-menu").click();
+    const overflowItems = await page.getByRole("menuitem").allTextContents();
+    await page.keyboard.press("Escape");
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
     const runState = await page.evaluate(() => ({
@@ -7951,8 +7954,11 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (!status.playButton || status.playButton.width < 44 || status.playButton.height < 44) {
       failures.push("compact header Run / pause action is smaller than 44px");
     }
-    if (!status.themeButton || status.themeButton.width < 44 || status.themeButton.height < 44) {
-      failures.push("compact header theme action is smaller than 44px");
+    if (!status.overflowButton || status.overflowButton.width < 44 || status.overflowButton.height < 44) {
+      failures.push("compact header overflow action is smaller than 44px");
+    }
+    for (const item of ["Step simulation", "Reset field", "Save PNG", "Use dark theme"]) {
+      if (!overflowItems.includes(item)) failures.push(`compact header overflow is missing ${item}`);
     }
     if (!status.hiddenDesktopActions) {
       failures.push("compact header still exposes duplicated desktop actions");
@@ -8050,6 +8056,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
         reset: visible("#resetBtn"),
         interaction: visible(".interaction-toggle"),
         theme: visible("#themeToggleBtn"),
+        overflow: visible(".header-overflow-menu"),
       },
       navButtonsUnobscured,
       clippedStatusItems: visibleStatusItems.filter((node) => {
@@ -8109,13 +8116,14 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       failures.push("closed compact panel remains rendered in the workspace");
     }
     if (!closed.navButtonsUnobscured) failures.push("closed compact panel obscures landscape workflow navigation");
-    if (!closed.compactHeaderActions.run || !closed.compactHeaderActions.theme) {
-      failures.push("compact landscape header is missing Run or theme actions");
+    if (!closed.compactHeaderActions.run || !closed.compactHeaderActions.overflow) {
+      failures.push("compact landscape header is missing Run or overflow actions");
     }
     if (
       closed.compactHeaderActions.step
       || closed.compactHeaderActions.save
       || closed.compactHeaderActions.reset
+      || closed.compactHeaderActions.theme
       || closed.compactHeaderActions.interaction
     ) {
       failures.push("compact landscape header exposes duplicated desktop actions");
@@ -8817,30 +8825,36 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(100);
-    const compactThemeAction = page.locator("#themeToggleBtn");
+    const compactOverflowAction = page.locator(".header-overflow-menu");
+    states.compactOverflowActionVisible = await compactOverflowAction.isVisible();
+    if (states.compactOverflowActionVisible) await compactOverflowAction.click();
+    const compactThemeAction = page.getByRole("menuitem", { name: "Use light theme" });
     states.compactThemeActionVisible = await compactThemeAction.isVisible();
-    if (states.compactThemeActionVisible) {
-      await compactThemeAction.click();
-      await page.waitForTimeout(80);
-    }
+    if (states.compactThemeActionVisible) await compactThemeAction.click();
+    await page.waitForTimeout(80);
     states.compact = await page.evaluate(() => ({
       theme: document.documentElement.dataset.theme,
       headerTheme: document.querySelector(".scientific-header")?.closest(".cds--g10") ? "g10" : "unknown",
       metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
-      themeSwitcherVisible: Boolean(
-        document.querySelector("#themeToggleBtn")
-        && getComputedStyle(document.querySelector("#themeToggleBtn")).display !== "none"
+      overflowVisible: Boolean(
+        document.querySelector(".header-overflow-menu")
+        && getComputedStyle(document.querySelector(".header-overflow-menu")).display !== "none"
       ),
+      desktopThemeHidden: getComputedStyle(document.querySelector("#themeToggleBtn")).display === "none",
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     }));
-    if (!states.compactThemeActionVisible) failures.push("compact header offers no reachable theme action");
+    if (!states.compactOverflowActionVisible || !states.compactThemeActionVisible) {
+      failures.push("compact header offers no reachable theme action through its overflow menu");
+    }
     if (states.compact.theme !== "light" || states.compact.headerTheme !== "g10") {
       failures.push("compact theme action did not synchronize the application and Carbon header");
     }
     if (states.compact.metaThemeColor.toLowerCase() !== "#f4f4f4") {
       failures.push("compact theme action did not update the browser theme color");
     }
-    if (!states.compact.themeSwitcherVisible) failures.push("compact header hides the theme action");
+    if (!states.compact.overflowVisible || !states.compact.desktopThemeHidden) {
+      failures.push("compact header does not consolidate theme controls into overflow");
+    }
     if (states.compact.overflowX > 0) failures.push(`compact theme action introduced ${states.compact.overflowX}px horizontal overflow`);
   } finally {
     await context.close();

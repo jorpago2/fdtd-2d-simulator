@@ -146,6 +146,10 @@ fieldset {
   justify-content: center;
 }
 
+.header-overflow-menu {
+  display: none;
+}
+
 .interaction-toggle {
   width: 10rem;
 }
@@ -1354,13 +1358,20 @@ fieldset {
   .header-simulation-controls .canvas-reset-button,
   .header-simulation-controls .header-step-button,
   .header-simulation-controls .header-save-button,
+  .header-simulation-controls .theme-toggle-button,
   .header-simulation-controls .interaction-toggle {
     display: none;
   }
 
+  .header-simulation-controls .header-overflow-menu {
+    display: flex;
+    inline-size: var(--scientific-ui-header-block-size);
+    block-size: var(--scientific-ui-header-block-size);
+  }
+
   .scientific-header .scientific-header__context {
     inset-inline-start: var(--scientific-ui-header-block-size);
-    inline-size: calc(100% - 7rem);
+    inline-size: calc(100% - 9rem);
     transform: none;
   }
 
@@ -1371,11 +1382,10 @@ fieldset {
   .header-simulation-controls,
   .header-simulation-controls .tool-group {
     width: auto;
-    min-width: 7rem;
+    min-width: 6rem;
   }
 
-  .header-simulation-controls .simulation-run-button,
-  .header-simulation-controls .theme-toggle-button {
+  .header-simulation-controls .simulation-run-button {
     justify-content: center;
     height: var(--scientific-ui-header-block-size);
     min-height: var(--scientific-ui-header-block-size);
@@ -1388,10 +1398,6 @@ fieldset {
     max-inline-size: var(--scientific-ui-header-block-size);
   }
 
-  .header-simulation-controls .theme-toggle-button {
-    width: 4rem;
-    min-width: 4rem;
-  }
 }
 
 @media (max-height: 39.99rem) {

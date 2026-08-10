@@ -3,6 +3,8 @@ import {
   Button,
   ContentSwitcher,
   Link,
+  OverflowMenu,
+  OverflowMenuItem,
   Search,
   Switch,
 } from "@carbon/react";
@@ -139,17 +141,15 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           <span aria-hidden="true">{running ? <Pause size={16} /> : <Play size={16} />}</span>
           <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>
         </Button>
-        {!compactHeader && (
-          <Button
-            id="stepBtn"
-            className="header-step-button"
-            type="button"
-            kind="ghost"
-            size="sm"
-          >
-            Step
-          </Button>
-        )}
+        <Button
+          id="stepBtn"
+          className="header-step-button"
+          type="button"
+          kind="ghost"
+          size="sm"
+        >
+          Step
+        </Button>
         <Button
           id="resetBtn"
           className="icon-button canvas-reset-button"
@@ -163,17 +163,15 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
         >
           <Reset size={16} aria-hidden={true} />
         </Button>
-        {!compactHeader && (
-          <Button
-            id="saveBtn"
-            className="header-save-button"
-            type="button"
-            kind="ghost"
-            size="sm"
-          >
-            Save PNG
-          </Button>
-        )}
+        <Button
+          id="saveBtn"
+          className="header-save-button"
+          type="button"
+          kind="ghost"
+          size="sm"
+        >
+          Save PNG
+        </Button>
         <Button
           id="themeToggleBtn"
           className="theme-toggle-button"
@@ -184,6 +182,22 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
         >
           {themeIndex === 1 ? "Light" : "Dark"}
         </Button>
+        {compactHeader && (
+          <OverflowMenu
+            className="header-overflow-menu"
+            iconDescription="More simulation actions"
+            size="sm"
+            flipped
+          >
+            <OverflowMenuItem itemText="Step simulation" onClick={() => document.getElementById("stepBtn")?.click()} />
+            <OverflowMenuItem itemText="Reset field" onClick={() => document.getElementById("resetBtn")?.click()} />
+            <OverflowMenuItem itemText="Save PNG" onClick={() => document.getElementById("saveBtn")?.click()} />
+            <OverflowMenuItem
+              itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
+              onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
+            />
+          </OverflowMenu>
+        )}
       </div>
       <ContentSwitcher
         className="interaction-toggle"
