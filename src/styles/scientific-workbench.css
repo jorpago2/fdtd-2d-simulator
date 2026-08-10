@@ -3,7 +3,7 @@
   --workbench-header-height: var(--scientific-ui-header-block-size);
   --workbench-rail-width: var(--scientific-ui-rail-inline-size);
   --workbench-panel-width: var(--scientific-ui-panel-inline-size);
-  --workbench-status-height: 1.75rem;
+  --workbench-status-height: var(--scientific-ui-status-block-size);
   --workbench-inspector-width: 22rem;
   --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
   --workbench-bottom-nav-height: calc(var(--scientific-ui-mobile-nav-block-size) + var(--workbench-safe-bottom));
