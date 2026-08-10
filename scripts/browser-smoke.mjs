@@ -7719,6 +7719,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
       const header = document.querySelector(".control-panel-header");
       const nav = document.querySelector('nav[aria-label="Simulation workflow"]');
       const run = document.querySelector("#tab-simulation .run-section");
+      const activePanelElement = document.querySelector(".control-tab-panel.is-active");
       const rect = (node) => {
         if (!node) return null;
         const bounds = node.getBoundingClientRect();
@@ -7739,7 +7740,15 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
         nav: rect(nav),
         run: rect(run),
         runButton: rect(document.getElementById("playPauseBtn")),
-        activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
+        closeButton: rect(document.getElementById("controlDrawerCloseBtn")),
+        closeButtonUsesCarbonIcon: Boolean(
+          document.querySelector('#controlDrawerCloseBtn[data-carbon-react="true"] svg')
+        ),
+        activePanel: activePanelElement?.id || "",
+        panelContentOverflow: Math.max(
+          panels?.scrollWidth - panels?.clientWidth || 0,
+          activePanelElement?.scrollWidth - activePanelElement?.clientWidth || 0,
+        ),
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         viewportHeight: window.innerHeight,
       };
@@ -7754,7 +7763,14 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     if (!status.runButton || status.runButton.width < 44 || status.runButton.height < 44) {
       failures.push("compact header does not expose a usable Run / pause control");
     }
+    if (!status.closeButton || status.closeButton.width < 44 || status.closeButton.height < 44) {
+      failures.push("mobile panel Close action is smaller than 44px");
+    }
+    if (!status.closeButtonUsesCarbonIcon) failures.push("mobile panel Close action does not use the Carbon Close icon");
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
+    if (status.panelContentOverflow > 1) {
+      failures.push(`mobile Simulate controls have internal horizontal overflow ${status.panelContentOverflow}`);
+    }
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
     const runState = await page.evaluate(() => ({
@@ -7879,6 +7895,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       document.documentElement.style.setProperty("--workbench-safe-bottom", "34px");
       document.documentElement.style.setProperty("--scientific-ui-safe-area-bottom", "34px");
     });
+    await page.locator("#canvasActionToggle").click();
+    await page.waitForTimeout(80);
     const status = await page.evaluate(() => {
       const rect = (selector) => {
         const node = document.querySelector(selector);
@@ -7893,7 +7911,8 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       };
       const toolbarNode = document.querySelector(".header-simulation-controls");
       const actionToggleNode = document.getElementById("canvasActionToggle");
-      const actionMenuNode = document.querySelector('[role="menu"]');
+      const actionMenuNode = Array.from(document.querySelectorAll('[role="menu"]'))
+        .find((node) => getComputedStyle(node).visibility !== "hidden");
       const closedToolbar = rect(".header-simulation-controls");
       const boundsOf = (node) => {
         if (!node) return null;
@@ -7944,6 +7963,14 @@ async function runMobileToolbarHeightSmoke(browser, url) {
               ? null
               : minActionTop < openActionToggle.bottom - 1,
         },
+        actionMenuLabels: actionMenuNode
+          ? Array.from(actionMenuNode.querySelectorAll('[role="menuitem"]')).map((node) => node.textContent?.trim() || "")
+          : [],
+        truncatedActionLabels: actionMenuNode
+          ? Array.from(actionMenuNode.querySelectorAll('[role="menuitem"]')).filter((node) =>
+              Array.from(node.querySelectorAll("*")).some((child) => child.scrollWidth > child.clientWidth + 1)
+            ).map((node) => node.textContent?.trim() || "")
+          : [],
         mobileNav: rect('nav[aria-label="Simulation workflow"]'),
         mobileNavButtonBottom: Math.max(
           ...Array.from(document.querySelectorAll('nav[aria-label="Simulation workflow"] .mobile-layer-button'))
@@ -7977,8 +8004,27 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (!status.playButton || status.playButton.width < 44 || status.playButton.height < 44) {
       failures.push("compact header Run / pause action is smaller than 44px");
     }
-    if (status.menuButton?.height > 0 || status.resetButton?.height > 0 || status.actionToggle?.height > 0 || status.interactionToggle?.height > 0) {
-      failures.push("compact header still exposes nonessential desktop actions");
+    if (!status.actionToggle || status.actionToggle.width < 44 || status.actionToggle.height < 44) {
+      failures.push("compact header More actions control is smaller than 44px");
+    }
+    if (status.menuButton?.height > 0 || status.resetButton?.height > 0 || status.interactionToggle?.height > 0) {
+      failures.push("compact header still exposes duplicated desktop actions");
+    }
+    const requiredActionLabels = [
+      "Reset field",
+      "Advance one step",
+      "Select canvas objects",
+      "Draw materials",
+      "Save canvas as PNG",
+    ];
+    for (const label of requiredActionLabels) {
+      if (!status.actionMenuLabels.includes(label)) failures.push(`compact action menu is missing ${label}`);
+    }
+    if (status.truncatedActionLabels.length) {
+      failures.push(`compact action menu truncates: ${status.truncatedActionLabels.join(", ")}`);
+    }
+    if ((status.actionMenuBounds.overflowLeft || 0) > 1 || (status.actionMenuBounds.overflowRight || 0) > 1) {
+      failures.push("compact action menu extends beyond the viewport");
     }
     if (!status.workflowLabelsVisible) failures.push("mobile workflow labels are hidden");
     if (!status.mobileNav || status.mobileNav.height < 56 + status.safeBottom - 1) {

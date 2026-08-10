@@ -481,8 +481,9 @@ fieldset {
   line-height: var(--cds-label-01-line-height, 1.33333);
 }
 
-.control-tab-panels {
+.control-tab-panels.scientific-task-panel__body {
   min-height: 0;
+  padding: 0;
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -1222,22 +1223,25 @@ fieldset {
  * Keep the single essential run action in that slot and let the bottom
  * workflow navigation replace the redundant drawer and canvas controls. */
 @media (max-width: 65.99rem) {
+  .canvas-action-menu {
+    inline-size: min(14rem, 100vw);
+  }
+
   .scientific-header .scientific-header__secondary-actions {
     display: flex;
   }
 
   .control-drawer-toggle,
   .header-simulation-controls .canvas-reset-button,
-  .header-simulation-controls .canvas-action-toggle,
   .header-simulation-controls .interaction-toggle,
   .header-theme-toggle {
     display: none;
   }
 
-  .header-simulation-controls,
-  .header-simulation-controls .tool-group {
-    width: var(--scientific-ui-header-block-size);
-    min-width: var(--scientific-ui-header-block-size);
+  .scientific-header .scientific-header__context {
+    inset-inline-start: var(--scientific-ui-header-block-size);
+    inline-size: calc(100% - 3 * var(--scientific-ui-header-block-size));
+    transform: none;
   }
 
   .simulation-run-label {
@@ -1446,7 +1450,14 @@ fieldset {
 }
 
 @media (max-width: 65.99rem) {
-  .header-simulation-controls .simulation-run-button {
+  .header-simulation-controls,
+  .header-simulation-controls .tool-group {
+    width: calc(2 * var(--scientific-ui-header-block-size));
+    min-width: calc(2 * var(--scientific-ui-header-block-size));
+  }
+
+  .header-simulation-controls .simulation-run-button,
+  .header-simulation-controls .canvas-action-toggle {
     justify-content: center;
     width: var(--scientific-ui-header-block-size);
     min-width: var(--scientific-ui-header-block-size);

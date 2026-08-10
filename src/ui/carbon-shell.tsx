@@ -21,7 +21,7 @@ import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
 export function ApplicationHeader() {
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
   const [compactHeader, setCompactHeader] = useState(() =>
-    window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)").matches
+    window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
   );
   const [simulationStatus, setSimulationStatus] = useState<{
     state: "ready" | "running" | "modified" | "failed";
@@ -29,7 +29,7 @@ export function ApplicationHeader() {
   }>({ state: "ready", label: "Ready" });
 
   useEffect(() => {
-    const compactQuery = window.matchMedia("(max-width: 63.99rem), (max-height: 39.99rem)");
+    const compactQuery = window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)");
     const syncCompactHeader = () => setCompactHeader(compactQuery.matches);
     const syncAppliedTheme = (event: Event) => {
       const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
@@ -182,11 +182,32 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
           flipped
           data-carbon-react="true"
         >
+          {compactHeader && (
+            <OverflowMenuItem
+              id="compactResetBtn"
+              itemText="Reset field"
+              onClick={() => document.getElementById("resetBtn")?.click()}
+            />
+          )}
           <OverflowMenuItem
             id="stepBtn"
             itemText="Advance one step"
             onClick={() => window.dispatchEvent(new Event("fdtd:simulation-step"))}
           />
+          {compactHeader && (
+            <>
+              <OverflowMenuItem
+                id="compactSelectModeBtn"
+                itemText="Select canvas objects"
+                onClick={() => document.getElementById("selectModeBtn")?.click()}
+              />
+              <OverflowMenuItem
+                id="compactDrawModeBtn"
+                itemText="Draw materials"
+                onClick={() => document.getElementById("brushModeBtn")?.click()}
+              />
+            </>
+          )}
           <OverflowMenuItem
             id="saveBtn"
             itemText="Save canvas as PNG"
