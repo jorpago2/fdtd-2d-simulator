@@ -5,6 +5,7 @@
   --workbench-panel-width: var(--scientific-ui-panel-inline-size);
   --workbench-status-height: 1.75rem;
   --workbench-inspector-width: 22rem;
+  --workbench-mini-preview-height: clamp(7.5rem, 18dvh, 10rem);
   --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
   --workbench-bottom-nav-height: calc(var(--scientific-ui-mobile-nav-block-size) + var(--workbench-safe-bottom));
 }
@@ -1327,6 +1328,35 @@ fieldset {
 
   .control-row > :nth-child(2):not(output) {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 41.99rem) {
+  .controls-open .control-panel {
+    align-self: start;
+    height: calc(100% - var(--workbench-mini-preview-height));
+  }
+
+  .controls-open .stage {
+    align-self: end;
+    visibility: visible;
+    height: var(--workbench-mini-preview-height);
+    padding: 0.5rem;
+    border-block-start: 1px solid var(--cds-border-strong-01);
+    pointer-events: none;
+  }
+
+  .controls-open .stage .canvas-toolbar,
+  .controls-open .stage .colorbar,
+  .controls-open .stage .surface-orbit-controls,
+  .controls-open .stage .help-guide-toggle-mount,
+  .controls-open .stage .help-guide-panel,
+  .controls-open .stage .status-strip {
+    display: none;
+  }
+
+  .controls-open .stage {
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 

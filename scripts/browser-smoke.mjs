@@ -7744,6 +7744,13 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
         closeButtonUsesCarbonIcon: Boolean(
           document.querySelector('#controlDrawerCloseBtn[data-carbon-react="true"] svg')
         ),
+        closeButtonUsesCarbonIconButton: Boolean(
+          document.querySelector('#controlDrawerCloseBtn[data-carbon-component="IconButton"]')
+        ),
+        miniPreview: rect(document.querySelector('.controls-open .stage')),
+        miniPreviewToolbarVisible: Boolean(
+          document.querySelector('.controls-open .stage .canvas-toolbar')?.getBoundingClientRect().width
+        ),
         activePanel: activePanelElement?.id || "",
         panelContentOverflow: Math.max(
           panels?.scrollWidth - panels?.clientWidth || 0,
@@ -7767,6 +7774,11 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
       failures.push("mobile panel Close action is smaller than 44px");
     }
     if (!status.closeButtonUsesCarbonIcon) failures.push("mobile panel Close action does not use the Carbon Close icon");
+    if (!status.closeButtonUsesCarbonIconButton) failures.push("mobile panel Close action does not use Carbon IconButton");
+    if (!status.miniPreview || status.miniPreview.height < 120 || status.miniPreview.height > 160) {
+      failures.push(`mobile canvas preview height is outside 120-160px (${status.miniPreview?.height || 0}px)`);
+    }
+    if (status.miniPreviewToolbarVisible) failures.push("mobile canvas preview exposes full canvas controls");
     if (status.overflow > 1) failures.push(`mobile Simulate panel has horizontal overflow ${status.overflow}`);
     if (status.panelContentOverflow > 1) {
       failures.push(`mobile Simulate controls have internal horizontal overflow ${status.panelContentOverflow}`);

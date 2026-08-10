@@ -1,7 +1,7 @@
 import { createElement, Fragment } from "react";
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Button, Checkbox, Select, TextArea, TextInput } from "@carbon/react";
+import { Button, Checkbox, IconButton, Select, TextArea, TextInput } from "@carbon/react";
 import { Close } from "@carbon/react/icons";
 
 type BridgedButton = {
@@ -168,19 +168,37 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
 export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
   return buttons.map(({ attributes, className, content, iconDescription, iconOnly, key, kind, mount }) => {
     const usesCloseIcon = iconOnly && Boolean(iconDescription?.startsWith("Close"));
+    if (usesCloseIcon) {
+      const buttonAttributes = { ...attributes };
+      delete buttonAttributes["aria-label"];
+      delete buttonAttributes.title;
+      return createPortal(
+        <IconButton
+          {...buttonAttributes}
+          className={className}
+          kind="ghost"
+          size="lg"
+          label={iconDescription || "Close"}
+          data-carbon-react="true"
+          data-carbon-component="IconButton"
+        >
+          <Close size={20} aria-hidden={true} />
+        </IconButton>,
+        mount,
+        key,
+      );
+    }
     return createPortal(
       <Button
         {...attributes}
         className={className}
         kind={kind}
-        size={usesCloseIcon ? "lg" : "sm"}
+        size="sm"
         hasIconOnly={iconOnly}
         iconDescription={iconOnly ? iconDescription : undefined}
         data-carbon-react="true"
       >
-        {usesCloseIcon
-          ? <Close size={20} aria-hidden={true} />
-          : <span className="carbon-button-content">{content}</span>}
+        <span className="carbon-button-content">{content}</span>
       </Button>,
       mount,
       key,
