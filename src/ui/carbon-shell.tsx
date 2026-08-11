@@ -114,7 +114,7 @@ export function ApplicationHeader() {
           onClick: openFullGuide,
         },
       }}
-      secondaryActions={<CanvasPrimaryControls
+      primaryAction={<CanvasPrimaryControls
         compactHeader={compactHeader}
         running={simulationStatus.state === "running"}
         themeIndex={themeIndex}

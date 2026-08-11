@@ -1328,10 +1328,6 @@ fieldset {
     pointer-events: auto;
   }
 
-  .scientific-header .scientific-header__secondary-actions {
-    display: flex;
-  }
-
   .header-simulation-controls .canvas-reset-button,
   .header-simulation-controls .header-step-button,
   .header-simulation-controls .header-save-button,
@@ -1344,12 +1340,6 @@ fieldset {
     display: flex;
     inline-size: var(--scientific-ui-header-block-size);
     block-size: var(--scientific-ui-header-block-size);
-  }
-
-  .scientific-header .scientific-header__context {
-    inset-inline-start: var(--scientific-ui-header-block-size);
-    inline-size: calc(100% - 9rem);
-    transform: none;
   }
 
   .simulation-run-label {
