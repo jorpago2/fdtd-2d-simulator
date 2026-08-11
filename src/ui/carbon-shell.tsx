@@ -17,7 +17,27 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
+
+type SimulationStatus = {
+  state: "ready" | "running" | "modified" | "failed";
+  label: string;
+};
+
+function useSimulationStatus() {
+  const [simulationStatus, setSimulationStatus] = useState<SimulationStatus>({ state: "ready", label: "Ready" });
+  useEffect(() => {
+    const syncSimulationStatus = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<SimulationStatus>>).detail;
+      if (!detail || !["ready", "running", "modified", "failed"].includes(detail.state ?? "")) return;
+      if (typeof detail.label !== "string" || !detail.label.trim()) return;
+      setSimulationStatus({ state: detail.state!, label: detail.label });
+    };
+    window.addEventListener("fdtd:simulation-status", syncSimulationStatus);
+    return () => window.removeEventListener("fdtd:simulation-status", syncSimulationStatus);
+  }, []);
+  return simulationStatus;
+}
 
 export function ApplicationHeader() {
   const helpGuideReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -25,10 +45,7 @@ export function ApplicationHeader() {
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
   );
-  const [simulationStatus, setSimulationStatus] = useState<{
-    state: "ready" | "running" | "modified" | "failed";
-    label: string;
-  }>({ state: "ready", label: "Ready" });
+  const simulationStatus = useSimulationStatus();
 
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)");
@@ -37,22 +54,11 @@ export function ApplicationHeader() {
       const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
       setThemeIndex(theme === "dark" ? 1 : 0);
     };
-    const syncSimulationStatus = (event: Event) => {
-      const detail = (event as CustomEvent<{
-        state?: "ready" | "running" | "modified" | "failed";
-        label?: unknown;
-      }>).detail;
-      if (!detail || !["ready", "running", "modified", "failed"].includes(detail.state ?? "")) return;
-      if (typeof detail.label !== "string" || !detail.label.trim()) return;
-      setSimulationStatus({ state: detail.state!, label: detail.label });
-    };
     compactQuery.addEventListener("change", syncCompactHeader);
     window.addEventListener("fdtd:theme-applied", syncAppliedTheme);
-    window.addEventListener("fdtd:simulation-status", syncSimulationStatus);
     return () => {
       compactQuery.removeEventListener("change", syncCompactHeader);
       window.removeEventListener("fdtd:theme-applied", syncAppliedTheme);
-      window.removeEventListener("fdtd:simulation-status", syncSimulationStatus);
     };
   }, []);
 
@@ -273,8 +279,9 @@ export function SceneSearch() {
 }
 
 export function StatusFooter() {
+  const simulationStatus = useSimulationStatus();
   return (
-    <>
+    <ScientificStatusBar embedded aria-label="Simulation status" status={simulationStatus} metadata={<>
       <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
       <span><b>Step</b> <output id="statusStepOutput">0</output></span>
       <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
@@ -284,6 +291,6 @@ export function StatusFooter() {
         <span aria-hidden="true">·</span>
         <Link inline href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</Link>
       </span>
-    </>
+    </>} />
   );
 }

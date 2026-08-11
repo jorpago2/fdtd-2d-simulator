@@ -42,7 +42,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260810-workbench-3" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260812-workbench-4" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -1044,17 +1044,6 @@
               </div>
             </div>
           </div>
-          <footer id="reactFooterRoot" class="canvas-footer status-strip scientific-status-surface" aria-label="Simulation status" data-carbon-react-root="status">
-            <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
-            <span><b>Step</b> <output id="statusStepOutput">0</output></span>
-            <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
-            <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
-            <span class="status-strip-author">
-              <a href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</a>
-              <span aria-hidden="true">&middot;</span>
-              <a href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</a>
-            </span>
-          </footer>
         </div>
 
         <aside
@@ -1534,6 +1523,7 @@
             </div>
           </div>
         </aside>
+        <div id="reactFooterRoot" data-carbon-react-root="status"></div>
         <button id="controlDrawerBackdrop" class="control-drawer-backdrop" type="button" aria-label="Close controls" hidden></button>
       </main>
     </div>
