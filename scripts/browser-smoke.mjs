@@ -6570,25 +6570,24 @@ async function runCarbonTypographySmoke(page) {
         const element = document.querySelector(selector);
         return { selector, family: element ? getComputedStyle(element).fontFamily : "" };
       });
-    const monoFamilies = [".colorbar-labels", ".status-strip"].map((selector) => ({
+    const numericFamilies = [".colorbar-labels", ".status-strip"].map((selector) => ({
       selector,
       family: getComputedStyle(document.querySelector(selector)).fontFamily,
     }));
     return {
       samples,
-      monoFamilies,
+      numericFamilies,
       sansLoaded: document.fonts?.check?.('16px "IBM Plex Sans"') ?? true,
-      monoLoaded: document.fonts?.check?.('12px "IBM Plex Mono"') ?? true,
     };
   });
   const failures = [];
   for (const sample of status.samples) {
     if (!sample.family.includes("IBM Plex Sans")) failures.push(`${sample.selector} uses ${sample.family || "no font"}`);
   }
-  for (const sample of status.monoFamilies) {
-    if (!sample.family.includes("IBM Plex Mono")) failures.push(`${sample.selector} uses ${sample.family || "no font"}`);
+  for (const sample of status.numericFamilies) {
+    if (!sample.family.includes("IBM Plex Sans")) failures.push(`${sample.selector} uses ${sample.family || "no font"}`);
   }
-  if (!status.sansLoaded || !status.monoLoaded) failures.push("IBM Plex webfonts are not loaded");
+  if (!status.sansLoaded) failures.push("IBM Plex Sans webfont is not loaded");
   return {
     id: "carbon_typography",
     preset: "current",
