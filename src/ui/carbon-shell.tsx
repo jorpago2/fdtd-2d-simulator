@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Button,
   ContentSwitcher,
@@ -20,6 +20,7 @@ import {
 import { ScientificHeader, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 export function ApplicationHeader() {
+  const helpGuideReturnFocusRef = useRef<HTMLElement | null>(null);
   const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
@@ -62,6 +63,38 @@ export function ApplicationHeader() {
     window.dispatchEvent(new CustomEvent("fdtd:theme-change", { detail: { theme } }));
   };
 
+  const openFullGuide = () => {
+    const runtimeGuide = (window as Window & { FdtdOpenHelpGuide?: () => void }).FdtdOpenHelpGuide;
+    if (runtimeGuide) {
+      runtimeGuide();
+      return;
+    }
+    const panel = document.getElementById("helpGuidePanel");
+    if (!panel) return;
+    const legacyToggle = document.getElementById("helpGuideToggle");
+    const closeButton = document.getElementById("helpGuideCloseBtn");
+    helpGuideReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    panel.hidden = false;
+    legacyToggle?.setAttribute("aria-expanded", "true");
+    panel.focus({ preventScroll: true });
+
+    const closeGuide = () => {
+      panel.hidden = true;
+      legacyToggle?.setAttribute("aria-expanded", "false");
+      closeButton?.removeEventListener("click", closeGuide);
+      document.removeEventListener("keydown", handleEscape, true);
+      helpGuideReturnFocusRef.current?.focus({ preventScroll: true });
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeGuide();
+    };
+    closeButton?.addEventListener("click", closeGuide);
+    document.addEventListener("keydown", handleEscape, true);
+  };
+
   return (
     <ScientificHeader
       aria-label="EM Wave Simulator application header"
@@ -72,6 +105,15 @@ export function ApplicationHeader() {
       contextLabel="Simulation"
       context={<span id="headerSceneTitle">Plane wave in air</span>}
       status={simulationStatus}
+      help={{
+        id: "fdtd-help",
+        summary: "Choose a scene, run the FDTD update, then inspect fields, materials, flux and numerical validation before interpreting the result.",
+        shortcuts: [{ keys: ["Esc"], description: "Close the active guide or panel" }],
+        action: {
+          label: "Open full guide",
+          onClick: openFullGuide,
+        },
+      }}
       secondaryActions={<CanvasPrimaryControls
         compactHeader={compactHeader}
         running={simulationStatus.state === "running"}

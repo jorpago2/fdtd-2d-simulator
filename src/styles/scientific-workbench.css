@@ -1117,20 +1117,6 @@ fieldset {
   padding-inline: 1rem;
 }
 
-.help-guide-toggle-mount {
-  position: absolute;
-  z-index: 30;
-  display: block;
-  right: 1rem;
-  bottom: 1rem;
-  width: 3rem;
-  height: 3rem;
-}
-
-.help-guide-toggle {
-  position: static;
-}
-
 .help-guide-panel {
   position: absolute;
   inset: auto 1rem 4.5rem auto;
@@ -1410,11 +1396,6 @@ fieldset {
     right: 10rem;
   }
 
-  .help-guide-toggle-mount {
-    right: 0.5rem;
-    bottom: 0.5rem;
-  }
-
   .help-guide-panel {
     top: 0;
     height: auto;
@@ -1451,11 +1432,6 @@ fieldset {
 
   .colorbar-body {
     height: 6rem;
-  }
-
-  .help-guide-toggle-mount {
-    right: 0.5rem;
-    bottom: 0.5rem;
   }
 
   .help-guide-panel {
@@ -1500,11 +1476,6 @@ fieldset {
   .scene-observable-row {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.canvas-frame:has(.surface-orbit-controls:not([hidden])) .help-guide-toggle-mount {
-  right: auto;
-  left: 0.5rem;
 }
 
 .canvas-frame:has(.help-guide-panel:not([hidden])) .surface-orbit-controls {

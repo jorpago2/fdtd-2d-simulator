@@ -101,6 +101,7 @@
       global.FdtdCarbonUI?.upgradeDisclosures?.(editHelpPanel);
     }
     let lastHelpGuideTopicButton = null;
+    let helpGuideReturnFocus = null;
     const helpGuideDefaultKicker = el.helpGuideKicker?.textContent || "Quick guide";
     const helpGuideDefaultTitle = el.helpGuideTitle?.textContent || "How to use the simulator";
     const helpGuideElements = () => Boolean(el.helpGuideToggle && el.helpGuidePanel);
@@ -141,7 +142,7 @@
         lastHelpGuideTopicButton = null;
       }
       if (!open && restoreFocus) {
-        el.helpGuideToggle.focus?.({ preventScroll: true });
+        helpGuideReturnFocus?.focus?.({ preventScroll: true });
       }
     };
     const walkthroughController = global.FdtdHelpWalkthrough?.createHelpWalkthroughController?.({
@@ -208,6 +209,12 @@
       event.stopPropagation();
       setHelpGuideOpen(!helpGuideOpen(), { restoreFocus: true });
     });
+    const openHelpGuideFromHeader = () => {
+      helpGuideReturnFocus = documentRef?.activeElement || null;
+      setHelpGuideOpen(true);
+    };
+    windowRef.FdtdOpenHelpGuide = openHelpGuideFromHeader;
+    windowRef.addEventListener("fdtd:open-help-guide", openHelpGuideFromHeader);
     forEachNode(el.helpGuideTopicButtons, (button) => {
       button.addEventListener("click", () => {
         lastHelpGuideTopicButton = button;

@@ -41,7 +41,7 @@ type BridgedFormControl = {
 };
 
 function keepCustom(button: HTMLButtonElement) {
-  return Boolean(button.closest(
+  return button.hidden || Boolean(button.closest(
     "[data-carbon-react-root], [data-react-ui], template, [data-carbon-react]",
   ));
 }
@@ -150,7 +150,7 @@ export function prepareCarbonButtonBridge(documentRef: Document = document) {
 
   return buttons.map((button, index): BridgedButton => {
     const mount = documentRef.createElement("span");
-    mount.className = `carbon-button-mount${button.classList.contains("help-guide-toggle") ? " help-guide-toggle-mount" : ""}`;
+    mount.className = "carbon-button-mount";
     button.replaceWith(mount);
     return {
       attributes: collectAttributes(button),
@@ -192,7 +192,7 @@ export function CarbonButtonBridge({ buttons }: { buttons: BridgedButton[] }) {
         {...attributes}
         className={className}
         kind={kind}
-        size={className.includes("help-guide-toggle") ? "lg" : "sm"}
+        size="sm"
         hasIconOnly={iconOnly}
         iconDescription={iconOnly ? iconDescription : undefined}
         data-carbon-react="true"
