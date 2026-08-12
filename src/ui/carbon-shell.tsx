@@ -17,7 +17,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
@@ -131,10 +131,10 @@ export function ApplicationHeader() {
 }
 
 const workflowLayers = [
-  ["scenes", "Scene", GridIcon],
-  ["simulation", "Simulate", Chemistry],
-  ["results", "Results", Inspection],
-  ["config", "Numerics", SettingsAdjust],
+  ["scenes", "Model", GridIcon],
+  ["simulation", "Run", Chemistry],
+  ["results", "Measure", Inspection],
+  ["config", "Validate", SettingsAdjust],
 ] as const;
 
 export function WorkflowNavigation() {
@@ -281,7 +281,7 @@ export function SceneSearch() {
 export function StatusFooter() {
   const simulationStatus = useSimulationStatus();
   return (
-    <ScientificStatusBar embedded aria-label="Simulation status" status={simulationStatus} metadata={<>
+    <ScientificStatusBar className="fdtd-status-strip" embedded aria-label="Simulation status" status={simulationStatus} metadata={<>
       <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
       <span><b>Step</b> <output id="statusStepOutput">0</output></span>
       <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
@@ -293,4 +293,43 @@ export function StatusFooter() {
       </span>
     </>} />
   );
+}
+
+export function NumericalPreflight() {
+  const simulationStatus = useSimulationStatus();
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const ids = ["gridNxInput", "gridNyInput", "cellsPerWavelengthInput"];
+    const refresh = () => setRevision((value) => value + 1);
+    const controls = ids.map((id) => document.getElementById(id)).filter((element): element is HTMLElement => Boolean(element));
+    controls.forEach((element) => element.addEventListener("change", refresh));
+    window.addEventListener("fdtd:simulation-status", refresh);
+    return () => {
+      controls.forEach((element) => element.removeEventListener("change", refresh));
+      window.removeEventListener("fdtd:simulation-status", refresh);
+    };
+  }, []);
+  const numericValue = (id: string, fallback: number) => {
+    const value = Number((document.getElementById(id) as HTMLInputElement | null)?.value);
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const nx = numericValue("gridNxInput", 360);
+  const ny = numericValue("gridNyInput", 240);
+  const cellsPerWavelength = numericValue("cellsPerWavelengthInput", 20);
+  const underResolved = cellsPerWavelength < 20;
+  void revision;
+  return <ScientificPreflightSummary
+    className="fdtd-preflight"
+    description="These checks assess whether the current discretization is safe to run. They do not replace mesh, domain and boundary convergence studies."
+    status={{
+      state: simulationStatus.state === "failed" ? "failed" : underResolved ? "warning" : "ready",
+      label: simulationStatus.state === "failed" ? "Solver failed" : underResolved ? "Review resolution" : "Ready to run",
+    }}
+    checks={[
+      { id: "grid", label: "Grid capacity", state: nx * ny <= 960_000 ? "passed" : "failed", value: `${nx} × ${ny}`, detail: `${(nx * ny).toLocaleString("en-US")} Yee cells` },
+      { id: "resolution", label: "Free-space resolution", state: underResolved ? "warning" : "passed", value: `${cellsPerWavelength} cells / λ₀`, detail: underResolved ? "Material wavelengths and small features may be under-resolved." : "Still verify convergence for quantitative claims." },
+      { id: "stability", label: "CFL stability", state: "passed", value: "S = 0.10" },
+      { id: "run", label: "Current execution", state: simulationStatus.state === "running" ? "running" : simulationStatus.state === "failed" ? "failed" : simulationStatus.state === "modified" ? "warning" : "not-run", detail: simulationStatus.label },
+    ]}
+  />;
 }

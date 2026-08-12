@@ -234,7 +234,7 @@
               </div>
               <div id="helpGuideHome" class="help-guide-body help-guide-view">
                 <p id="helpGuideIntro" class="help-guide-intro">
-                  Choose a scene, run the FDTD update, then inspect fields, materials, flux, or numerical settings.
+                  Define the model, run the FDTD update, measure observables, then validate the numerical evidence.
                 </p>
                 <button id="walkthroughStartBtn" class="text-button primary-button help-guide-walkthrough-button" data-carbon-kind="primary" type="button">
                   Start walkthrough
@@ -242,13 +242,13 @@
                 <div class="help-guide-grid">
                   <button class="help-guide-card" type="button" data-help-guide-topic="scene">
                     <span aria-hidden="true">1</span>
-                    <strong>Scene</strong>
+                    <strong>Model</strong>
                     <small>Examples, source, geometry, and boundaries.</small>
                     <b aria-hidden="true">&rsaquo;</b>
                   </button>
                   <button class="help-guide-card" type="button" data-help-guide-topic="simulate">
                     <span aria-hidden="true">2</span>
-                    <strong>Simulate</strong>
+                    <strong>Run</strong>
                     <small>Run, reset, step, and display the fields.</small>
                     <b aria-hidden="true">&rsaquo;</b>
                   </button>
@@ -260,7 +260,7 @@
                   </button>
                   <button class="help-guide-card" type="button" data-help-guide-topic="numerics">
                     <span aria-hidden="true">4</span>
-                    <strong>Numerics</strong>
+                    <strong>Validate</strong>
                     <small>Resolution, CFL, boundaries, and cost.</small>
                     <b aria-hidden="true">&rsaquo;</b>
                   </button>
@@ -1055,11 +1055,11 @@
           hidden
         ></aside>
 
-        <aside id="controlPanel" class="control-panel scientific-task-panel" aria-label="Scene setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
+        <aside id="controlPanel" class="control-panel scientific-task-panel" aria-label="Model setup controls" aria-hidden="true" inert tabindex="-1" data-mobile-layer="scenes">
           <div class="control-panel-header scientific-task-panel__header">
             <div class="control-panel-title-block scientific-task-panel__heading">
-              <p id="controlPanelKicker" class="panel-kicker">Step 1 · Scene</p>
-              <h2 id="controlPanelTitle">Scene setup</h2>
+              <p id="controlPanelKicker" class="panel-kicker">Step 1 · Model</p>
+              <h2 id="controlPanelTitle">Model setup</h2>
             </div>
             <div class="control-panel-actions scientific-task-panel__actions">
               <button id="controlDrawerCloseBtn" class="icon-button compact-button control-drawer-close" data-carbon-icon-only="true" type="button" aria-label="Close controls" title="Close controls">&times;</button>
@@ -1067,22 +1067,22 @@
           </div>
           <div class="control-tabs" role="tablist" aria-label="Control sections">
             <button class="control-tab-button is-active" type="button" role="tab" id="tab-scenes-button" aria-controls="tab-scenes" aria-selected="true" data-control-tab="scenes">
-              <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Scenes</span>
+              <span class="nav-step" aria-hidden="true">1</span><span class="nav-label">Model</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-simulation-button" aria-controls="tab-simulation" aria-selected="false" data-control-tab="simulation">
-              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Simulate</span>
+              <span class="nav-step" aria-hidden="true">2</span><span class="nav-label">Run</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-results-button" aria-controls="tab-results" aria-selected="false" data-control-tab="results">
-              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Results</span>
+              <span class="nav-step" aria-hidden="true">3</span><span class="nav-label">Measure</span>
             </button>
             <button class="control-tab-button" type="button" role="tab" id="tab-config-button" aria-controls="tab-config" aria-selected="false" data-control-tab="config">
-              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Numerics</span>
+              <span class="nav-step" aria-hidden="true">4</span><span class="nav-label">Validate</span>
             </button>
           </div>
           <div class="control-tab-panels scientific-task-panel__body">
             <div id="tab-scenes" class="control-tab-panel is-active" role="tabpanel" aria-labelledby="tab-scenes-button" data-control-panel="scenes">
 <section class="panel-section scene-section">
-              <h2>Scene</h2>
+              <h2>Model and example</h2>
               <div class="scene-view-toggle canvas-mode-toggle" role="tablist" aria-label="Scene menu view">
                 <button
                   id="sceneCurrentViewBtn"
@@ -1144,7 +1144,7 @@
             </div>
             <div id="tab-simulation" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden>
 <section class="panel-section run-section">
-              <h2>Field and playback</h2>
+              <h2>Execution and field</h2>
               <div class="solver-row">
                 <span>Field component</span>
                 <fieldset class="canvas-mode-toggle solver-toggle" role="radiogroup" aria-label="Simulated field component">
@@ -1372,10 +1372,11 @@
             </section>
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
+            <div id="reactNumericalPreflightRoot"></div>
             <section class="panel-section config-summary-section">
               <div class="results-panel-head">
                 <div>
-                  <h2>Solver summary</h2>
+                  <h2>Numerical preflight</h2>
                 </div>
                 <output id="configStabilityOutput" class="results-state-pill" aria-live="polite">CFL stable</output>
               </div>

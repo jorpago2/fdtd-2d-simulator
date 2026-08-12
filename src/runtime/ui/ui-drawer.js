@@ -2,10 +2,10 @@
   "use strict";
 
   const DEFAULT_CONTROL_PANEL_CONTEXTS = Object.freeze({
-    scenes: Object.freeze({ compactTitle: "Scene", kicker: "Step 1 · Scene", title: "Scene setup" }),
-    simulation: Object.freeze({ compactTitle: "Simulate", kicker: "Step 2 · Simulate", title: "Run and display" }),
-    results: Object.freeze({ compactTitle: "Results", kicker: "Step 3 · Results", title: "Measurements" }),
-    config: Object.freeze({ compactTitle: "Numerics", kicker: "Step 4 · Numerics", title: "Numerics" }),
+    scenes: Object.freeze({ compactTitle: "Model", kicker: "Step 1 · Model", title: "Model setup" }),
+    simulation: Object.freeze({ compactTitle: "Run", kicker: "Step 2 · Run", title: "Run and display" }),
+    results: Object.freeze({ compactTitle: "Measure", kicker: "Step 3 · Measure", title: "Measurements" }),
+    config: Object.freeze({ compactTitle: "Validate", kicker: "Step 4 · Validate", title: "Numerics and validation" }),
   });
 
   const DEFAULT_TAB_LAYERS = Object.freeze({

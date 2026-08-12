@@ -17,6 +17,7 @@ import {
 } from "./ui/carbon-button-bridge";
 import {
   ApplicationHeader,
+  NumericalPreflight,
   SceneSearch,
   StatusFooter,
   WorkflowNavigation,
@@ -67,6 +68,7 @@ async function startApplication() {
     renderReactRoot(requiredElement("reactWorkflowRoot"), <WorkflowNavigation />),
     renderReactRoot(requiredElement("reactSceneSearchRoot"), <SceneSearch />),
     renderReactRoot(requiredElement("reactFooterRoot"), <StatusFooter />),
+    renderReactRoot(requiredElement("reactNumericalPreflightRoot"), <NumericalPreflight />),
     renderReactRoot(requiredElement("reactVisualFieldRoot"), <VisualFieldControls />),
     renderReactRoot(requiredElement("reactVisualOverlaysRoot"), <VisualOverlayControls />),
     ...scientificSliderDefinitions().map((definition) => renderReactRoot(
