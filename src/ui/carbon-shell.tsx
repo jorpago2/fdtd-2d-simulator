@@ -17,12 +17,47 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail, useScientificResultTransition } from "@jorpago2/scientific-ui";
+import { ScientificAutosaveStatus, ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificRecoveryNotice, ScientificStatusBar, ScientificToolRail, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
   label: string;
 };
+
+function isSceneSnapshot(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { kind?: unknown }).kind === "fdtd-2d-scene";
+}
+
+function useFdtdAutosave() {
+  const [snapshot, setSnapshot] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    const update = (event: Event) => {
+      const detail = (event as CustomEvent<unknown>).detail;
+      if (isSceneSnapshot(detail)) setSnapshot(detail);
+    };
+    const request = () => window.dispatchEvent(new Event("fdtd:request-session-snapshot"));
+    window.addEventListener("fdtd:session-snapshot", update);
+    window.addEventListener("fdtd:runtime-ready", request);
+    document.addEventListener("change", request);
+    document.addEventListener("pointerup", request);
+    return () => {
+      window.removeEventListener("fdtd:session-snapshot", update);
+      window.removeEventListener("fdtd:runtime-ready", request);
+      document.removeEventListener("change", request);
+      document.removeEventListener("pointerup", request);
+    };
+  }, []);
+  const autosave = useScientificAutosave({
+    storageKey: "fdtd-2d-simulator:session",
+    value: snapshot,
+    onRestore: (saved) => window.dispatchEvent(new CustomEvent("fdtd:restore-session", { detail: saved })),
+    validate: isSceneSnapshot,
+    shouldSave: isSceneSnapshot,
+    schemaVersion: 1,
+    maxBytes: 3_000_000,
+  });
+  return autosave;
+}
 
 function useSimulationStatus() {
   const [simulationStatus, setSimulationStatus] = useState<SimulationStatus>({ state: "ready", label: "Ready" });
@@ -248,8 +283,11 @@ export function SceneSearch() {
 
 export function StatusFooter() {
   const simulationStatus = useSimulationStatus();
+  const autosave = useFdtdAutosave();
   return (
+    <><>{autosave.recovery && <ScientificRecoveryNotice savedAt={autosave.recovery.savedAt} onRestore={autosave.restore} onDiscard={autosave.discard} />}</>
     <ScientificStatusBar className="fdtd-status-strip" embedded aria-label="Simulation status" status={simulationStatus} metadata={<>
+      <ScientificAutosaveStatus status={autosave.status} savedAt={autosave.lastSavedAt} />
       <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
       <span><b>Step</b> <output id="statusStepOutput">0</output></span>
       <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
@@ -259,7 +297,7 @@ export function StatusFooter() {
         <span aria-hidden="true">·</span>
         <Link inline href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</Link>
       </span>
-    </>} />
+    </>} /></>
   );
 }
 

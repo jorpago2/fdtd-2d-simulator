@@ -38,6 +38,7 @@
     updatePerformanceStats(true);
     initWasmBackend();
     runtimeController.startAnimationLoop();
+    windowRef.dispatchEvent(new CustomEvent("fdtd:runtime-ready", { detail: { sceneLoadedFromUrl } }));
   }
 
   global.FdtdAppBootstrap = {

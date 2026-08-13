@@ -1334,6 +1334,15 @@ function applySceneState(snapshot) {
   sceneState().applySceneState(snapshot);
 }
 
+window.addEventListener("fdtd:request-session-snapshot", () => {
+  window.dispatchEvent(new CustomEvent("fdtd:session-snapshot", { detail: exportSceneState({ includeMaterials: true }) }));
+});
+window.addEventListener("fdtd:restore-session", (event) => {
+  const snapshot = event.detail;
+  applySceneState(snapshot);
+  setReproStatus("Previous scene restored. Run the simulation to regenerate fields and monitor results.");
+});
+
 function encodeSceneSnapshot(snapshot) {
   return sceneState().encodeSceneSnapshot(snapshot);
 }
