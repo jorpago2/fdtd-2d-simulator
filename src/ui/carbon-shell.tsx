@@ -17,7 +17,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail, useScientificResultTransition } from "@jorpago2/scientific-ui";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
@@ -265,6 +265,7 @@ export function StatusFooter() {
 
 export function FdtdRunOutcome() {
   const simulationStatus = useSimulationStatus();
+  const outcomeHeading = useRef<HTMLHeadingElement>(null);
   const [resultSnapshot, setResultSnapshot] = useState({
     reflectance: "—",
     transmittance: "—",
@@ -305,9 +306,17 @@ export function FdtdRunOutcome() {
           ? "up-to-date"
           : "needs-input";
 
+  useScientificResultTransition({
+    state: outcomeState,
+    resultRef: outcomeHeading,
+    completionKey: hasMonitorResult ? `${resultSnapshot.reflectance}|${resultSnapshot.transmittance}|${resultSnapshot.balance}` : null,
+    onReveal: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "results" } })),
+  });
+
   return <ScientificOutcomeSummary
     className="fdtd-run-outcome"
     title="Monitor outcome"
+    headingRef={outcomeHeading}
     status={{
       state: outcomeState,
       label: simulationStatus.state === "running"
