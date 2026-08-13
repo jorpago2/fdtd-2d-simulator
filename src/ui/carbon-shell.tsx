@@ -105,7 +105,7 @@ export function ApplicationHeader() {
     <ScientificHeader
       aria-label="EM Wave Simulator application header"
       product="EM Wave Simulator"
-      productMark="F"
+      productIcon="fdtd"
       descriptor="2D FDTD laboratory"
       href="./"
       contextLabel="Simulation"
