@@ -81,11 +81,18 @@ fieldset {
 }
 
 #reactHeaderRoot,
+#reactWorkflowRoot,
 #reactFooterRoot,
 .react-control-root,
 .carbon-button-mount,
 .carbon-button-content,
 .carbon-control-mount {
+  display: contents;
+}
+
+#reactHeaderRoot > .scientific-theme,
+#reactWorkflowRoot > .scientific-theme,
+#reactFooterRoot > .scientific-theme {
   display: contents;
 }
 
@@ -185,13 +192,18 @@ fieldset {
   background: var(--cds-background);
 }
 
-#reactFooterRoot > .fdtd-status-strip {
+#reactFooterRoot .fdtd-status-strip {
   grid-row: 2;
   grid-column: 2 / -1;
 }
 
 .canvas-frame {
   position: relative;
+  width: min(100%, var(--sim-frame-width-limit, 100%));
+  max-height: 100%;
+  aspect-ratio: var(--sim-aspect-ratio, 3 / 2);
+  align-self: center;
+  justify-self: center;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1290,7 +1302,7 @@ fieldset {
     grid-column: 1;
   }
 
-  #reactFooterRoot > .fdtd-status-strip {
+  #reactFooterRoot .fdtd-status-strip {
     grid-row: 2;
     grid-column: 1;
   }
