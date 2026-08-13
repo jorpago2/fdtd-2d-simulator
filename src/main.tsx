@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { useLayoutEffect, type ReactNode } from "react";
 import Plotly from "plotly.js-basic-dist-min";
 import {
+  SCIENTIFIC_PLOT_LINE_WIDTHS,
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
@@ -44,11 +45,13 @@ import {
   ScientificPlotUI: {
     createConfig: typeof createScientificPlotlyConfig;
     createLayout: typeof createScientificPlotlyLayout;
+    lineWidths: typeof SCIENTIFIC_PLOT_LINE_WIDTHS;
     prepareToolbar: typeof prepareScientificPlotlyToolbar;
   };
 }).ScientificPlotUI = {
   createConfig: createScientificPlotlyConfig,
   createLayout: createScientificPlotlyLayout,
+  lineWidths: SCIENTIFIC_PLOT_LINE_WIDTHS,
   prepareToolbar: prepareScientificPlotlyToolbar,
 };
 installCarbonSceneBrowser();

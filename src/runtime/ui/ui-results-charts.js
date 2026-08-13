@@ -464,6 +464,7 @@
               balanceResidual: point.referenceNormalized.balanceResidual,
             }))
         : portPoints;
+      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 4 };
       if (plottedPortPoints.length > 0) {
         const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
         const fMax = Math.max(...plottedPortPoints.map((point) => point.frequency));
@@ -602,7 +603,7 @@
           name,
           x: plottedPortPoints.map((point) => point.frequency),
           y: plottedPortPoints.map((point) => point[key]),
-          line: { color, width: 2 },
+          line: { color, width: lineWidths.primary },
           hovertemplate: `${name}: %{y:.4g}<extra></extra>`,
         }));
         const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
@@ -649,7 +650,7 @@
             name: "Probe spectrum",
             x: points.map((point) => point.f),
             y: points.map((point) => point.db),
-            line: { color: colors.blue, width: 2 },
+            line: { color: colors.blue, width: lineWidths.primary },
             hovertemplate: "%{x:.4g}: %{y:.2f} dB<extra></extra>",
           }];
           yAxis = { title: { text: "Relative magnitude (dB)" }, range: [-54, 0], gridcolor: colors.grid, zerolinecolor: colors.axis };
