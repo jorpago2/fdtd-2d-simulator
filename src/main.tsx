@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
 import { useLayoutEffect, type ReactNode } from "react";
 import Plotly from "plotly.js-basic-dist-min";
+import {
+  createScientificPlotlyConfig,
+  createScientificPlotlyLayout,
+  prepareScientificPlotlyToolbar,
+} from "@jorpago2/scientific-ui";
 import "@jorpago2/scientific-ui/styles.css";
 import "./core/app-state";
 import "./core/boundary-state";
@@ -35,6 +40,17 @@ import {
 } from "./ui/scientific-sliders";
 
 (globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
+(globalThis as typeof globalThis & {
+  ScientificPlotUI: {
+    createConfig: typeof createScientificPlotlyConfig;
+    createLayout: typeof createScientificPlotlyLayout;
+    prepareToolbar: typeof prepareScientificPlotlyToolbar;
+  };
+}).ScientificPlotUI = {
+  createConfig: createScientificPlotlyConfig,
+  createLayout: createScientificPlotlyLayout,
+  prepareToolbar: prepareScientificPlotlyToolbar,
+};
 installCarbonSceneBrowser();
 installCarbonDisclosures();
 installScientificSliderControls();

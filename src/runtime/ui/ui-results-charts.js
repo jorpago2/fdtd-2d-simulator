@@ -663,26 +663,28 @@
         }
       }
 
-      void Plotly.react(chart, traces, {
-        autosize: true,
+      const scientificPlotUI = global.ScientificPlotUI;
+      const layout = scientificPlotUI.createLayout({
         height: Math.max(150, chart.clientHeight || 160),
         margin: { l: 56, r: 18, t: 30, b: 46 },
-        paper_bgcolor: "rgba(0,0,0,0)",
-        plot_bgcolor: colors.bg,
-        font: { family: CARBON_SANS_FONT, size: 10, color: colors.text },
-        hovermode: "x unified",
-        dragmode: "pan",
         uirevision: "fdtd-spectrum-monitor",
-        xaxis: { title: { text: "Frequency" }, gridcolor: colors.grid, zerolinecolor: colors.axis },
-        yaxis: yAxis,
-        legend: { orientation: "h", x: 0, y: 1.2 },
-        annotations: annotation ? [annotation] : [],
-      }, {
-        displaylogo: false,
-        responsive: true,
-        scrollZoom: true,
-        toImageButtonOptions: { format: "png", filename: "fdtd-monitor-spectrum", width: 1200, height: 650, scale: 1 },
+        xTitle: "Frequency",
+        theme: { background: colors.bg, text: colors.text, textSecondary: colors.text, grid: colors.grid, axis: colors.axis },
+        overrides: {
+          yaxis: yAxis,
+          legend: { orientation: "h", x: 0, y: 1.2 },
+          annotations: annotation ? [annotation] : [],
+          font: { size: 10 },
+        },
       });
+      const config = scientificPlotUI.createConfig({
+        filename: "fdtd-monitor-spectrum",
+        format: "png",
+        width: 1200,
+        height: 650,
+        scrollZoom: true,
+      });
+      void Plotly.react(chart, traces, layout, config).then(scientificPlotUI.prepareToolbar);
     }
 
     function resizeSpectrumChart() {
