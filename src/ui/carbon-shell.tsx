@@ -17,7 +17,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificHeader, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
+import { ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificStatusBar, ScientificToolRail } from "@jorpago2/scientific-ui";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
@@ -261,6 +261,81 @@ export function StatusFooter() {
       </span>
     </>} />
   );
+}
+
+export function FdtdRunOutcome() {
+  const simulationStatus = useSimulationStatus();
+  const [resultSnapshot, setResultSnapshot] = useState({
+    reflectance: "—",
+    transmittance: "—",
+    balance: "—",
+    angle: "0°",
+    insight: "Run the simulation to collect monitor samples.",
+  });
+
+  useEffect(() => {
+    const readResults = () => setResultSnapshot({
+      reflectance: document.getElementById("summaryReflectanceOutput")?.textContent?.trim() || "—",
+      transmittance: document.getElementById("summaryTransmittanceOutput")?.textContent?.trim() || "—",
+      balance: document.getElementById("summaryBalanceOutput")?.textContent?.trim() || "—",
+      angle: document.getElementById("summaryAngleOutput")?.textContent?.trim() || "0°",
+      insight: document.getElementById("resultsInsightNote")?.textContent?.trim() || "Run the simulation to collect monitor samples.",
+    });
+    const observedElements = [
+      "summaryReflectanceOutput",
+      "summaryTransmittanceOutput",
+      "summaryBalanceOutput",
+      "summaryAngleOutput",
+      "resultsInsightNote",
+    ].map((id) => document.getElementById(id)).filter((element): element is HTMLElement => Boolean(element));
+    const observer = new MutationObserver(readResults);
+    observedElements.forEach((element) => observer.observe(element, { childList: true, characterData: true, subtree: true }));
+    readResults();
+    return () => observer.disconnect();
+  }, []);
+
+  const hasMonitorResult = resultSnapshot.reflectance !== "—" || resultSnapshot.transmittance !== "—";
+  const outcomeState = simulationStatus.state === "running"
+    ? "running"
+    : simulationStatus.state === "failed"
+      ? "failed"
+      : simulationStatus.state === "modified" && hasMonitorResult
+        ? "modified"
+        : hasMonitorResult
+          ? "up-to-date"
+          : "needs-input";
+
+  return <ScientificOutcomeSummary
+    className="fdtd-run-outcome"
+    title="Monitor outcome"
+    status={{
+      state: outcomeState,
+      label: simulationStatus.state === "running"
+        ? "Collecting field samples"
+        : simulationStatus.state === "failed"
+          ? simulationStatus.label
+          : simulationStatus.state === "modified" && hasMonitorResult
+            ? "Result uses an earlier scene"
+            : hasMonitorResult
+              ? "Monitor result current"
+              : "No monitor result",
+    }}
+    summary={resultSnapshot.insight}
+    metrics={hasMonitorResult ? [
+      { id: "reflectance", label: "Estimated reflectance", value: resultSnapshot.reflectance },
+      { id: "transmittance", label: "Estimated transmittance", value: resultSnapshot.transmittance },
+      { id: "balance", label: "Power-balance residual", value: resultSnapshot.balance },
+      { id: "angle", label: "Propagation angle", value: resultSnapshot.angle },
+    ] : []}
+    actions={hasMonitorResult ? [
+      { id: "save-field", label: "Save field PNG", emphasis: "primary", onClick: () => document.getElementById("saveBtn")?.click() },
+      { id: "review-validation", label: "Review validation", emphasis: "secondary", collapseAt: "sm", onClick: () => document.getElementById("sceneObservableResults")?.scrollIntoView({ behavior: "smooth", block: "start" }) },
+      { id: "reset-field", label: "Reset field", emphasis: "tertiary", overflowOnly: true, onClick: () => document.getElementById("resetBtn")?.click() },
+    ] : [
+      { id: "start-simulation", label: "Start simulation", emphasis: "primary", disabled: simulationStatus.state === "running", onClick: () => document.getElementById("playPauseBtn")?.click() },
+      { id: "review-numerics", label: "Review numerics", emphasis: "secondary", collapseAt: "sm", onClick: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "config" } })) },
+    ]}
+  />;
 }
 
 export function NumericalPreflight() {

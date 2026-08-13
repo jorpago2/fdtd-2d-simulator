@@ -1191,13 +1191,12 @@
             </div>
             <div id="tab-results" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-results-button" data-control-panel="results" hidden>
 <section class="panel-section diagnostics-section">
-              <div class="results-panel-head">
-                <div>
-                  <h2>Monitor summary</h2>
-                </div>
-                <output id="resultsStateOutput" class="results-state-pill" aria-live="polite">Paused</output>
+              <div id="reactRunOutcomeRoot"></div>
+              <div hidden aria-hidden="true">
+                <output id="resultsStateOutput" aria-live="polite">Paused</output>
+                <p id="resultsInsightNote">Run the simulation to collect monitor samples.</p>
               </div>
-              <div class="results-summary-grid" aria-label="Results summary">
+              <div class="results-summary-grid" aria-label="Detailed monitor values">
                 <div class="results-summary-card reflectance is-primary">
                   <span><i>R</i><sub>est</sub></span>
                   <output id="summaryReflectanceOutput">—</output>
@@ -1215,7 +1214,6 @@
                   <output id="summaryAngleOutput">0°</output>
                 </div>
               </div>
-              <p id="resultsInsightNote" class="results-insight-note">Run the simulation to collect monitor samples.</p>
               <section class="scene-observables-panel results-detail-panel panel-section">
                 <h2>Validation</h2>
                 <div class="results-detail-body">
