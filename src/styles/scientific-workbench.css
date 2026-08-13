@@ -127,8 +127,7 @@ fieldset {
   font-weight: var(--cds-heading-compact-01-font-weight, 600);
 }
 
-.header-step-button,
-.theme-toggle-button {
+.header-step-button {
   min-inline-size: 4rem;
   justify-content: center;
 }
@@ -1338,7 +1337,6 @@ fieldset {
   .header-simulation-controls .canvas-reset-button,
   .header-simulation-controls .header-step-button,
   .header-simulation-controls .header-save-button,
-  .header-simulation-controls .theme-toggle-button,
   .header-simulation-controls .interaction-toggle {
     display: none;
   }

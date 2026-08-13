@@ -41,7 +41,6 @@ function useSimulationStatus() {
 
 export function ApplicationHeader() {
   const helpGuideReturnFocusRef = useRef<HTMLElement | null>(null);
-  const [themeIndex, setThemeIndex] = useState(document.documentElement.dataset.theme === "dark" ? 1 : 0);
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
   );
@@ -50,24 +49,11 @@ export function ApplicationHeader() {
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)");
     const syncCompactHeader = () => setCompactHeader(compactQuery.matches);
-    const syncAppliedTheme = (event: Event) => {
-      const theme = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
-      setThemeIndex(theme === "dark" ? 1 : 0);
-    };
     compactQuery.addEventListener("change", syncCompactHeader);
-    window.addEventListener("fdtd:theme-applied", syncAppliedTheme);
     return () => {
       compactQuery.removeEventListener("change", syncCompactHeader);
-      window.removeEventListener("fdtd:theme-applied", syncAppliedTheme);
     };
   }, []);
-
-  const chooseTheme = (index: number) => {
-    const nextIndex = index === 1 ? 1 : 0;
-    const theme = nextIndex === 1 ? "dark" : "light";
-    setThemeIndex(nextIndex);
-    window.dispatchEvent(new CustomEvent("fdtd:theme-change", { detail: { theme } }));
-  };
 
   const openFullGuide = () => {
     const runtimeGuide = (window as Window & { FdtdOpenHelpGuide?: () => void }).FdtdOpenHelpGuide;
@@ -123,8 +109,6 @@ export function ApplicationHeader() {
       primaryAction={<CanvasPrimaryControls
         compactHeader={compactHeader}
         running={simulationStatus.state === "running"}
-        themeIndex={themeIndex}
-        onThemeChange={chooseTheme}
       />}
     />
   );
@@ -165,12 +149,10 @@ export function WorkflowNavigation() {
 
 interface CanvasPrimaryControlsProps {
   compactHeader: boolean;
-  onThemeChange: (index: number) => void;
   running: boolean;
-  themeIndex: number;
 }
 
-export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, themeIndex }: CanvasPrimaryControlsProps) {
+export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryControlsProps) {
   const [modeIndex, setModeIndex] = useState(0);
 
   return (
@@ -224,16 +206,6 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
         >
           Save PNG
         </Button>
-        <Button
-          id="themeToggleBtn"
-          className="theme-toggle-button"
-          type="button"
-          kind="ghost"
-          size="sm"
-          onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
-        >
-          {themeIndex === 1 ? "Light" : "Dark"}
-        </Button>
         {compactHeader && (
           <OverflowMenu
             className="header-overflow-menu"
@@ -245,10 +217,6 @@ export function CanvasPrimaryControls({ compactHeader, onThemeChange, running, t
             <OverflowMenuItem itemText="Step simulation" onClick={() => document.getElementById("stepBtn")?.click()} />
             <OverflowMenuItem itemText="Reset field" onClick={() => document.getElementById("resetBtn")?.click()} />
             <OverflowMenuItem itemText="Save PNG" onClick={() => document.getElementById("saveBtn")?.click()} />
-            <OverflowMenuItem
-              itemText={themeIndex === 1 ? "Use light theme" : "Use dark theme"}
-              onClick={() => onThemeChange(themeIndex === 1 ? 0 : 1)}
-            />
           </OverflowMenu>
         )}
       </div>

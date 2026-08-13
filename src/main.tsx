@@ -3,6 +3,7 @@ import { useLayoutEffect, type ReactNode } from "react";
 import Plotly from "plotly.js-basic-dist-min";
 import {
   SCIENTIFIC_PLOT_LINE_WIDTHS,
+  ScientificUiProvider,
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
@@ -72,13 +73,20 @@ function RootCommit({ onCommit }: { onCommit: () => void }) {
 function renderReactRoot(mount: HTMLElement, content: ReactNode): Promise<void> {
   return new Promise((resolve) => {
     createRoot(mount).render(
-      <>
+      <ScientificUiProvider>
         <RootCommit onCommit={resolve} />
         {content}
-      </>,
+      </ScientificUiProvider>,
     );
   });
 }
+
+window.addEventListener("scientific-ui:theme-applied", (event) => {
+  const isDark = Boolean((event as CustomEvent<{ isDark?: unknown }>).detail?.isDark);
+  const theme = isDark ? "dark" : "light";
+  document.documentElement.dataset.theme = theme;
+  window.dispatchEvent(new CustomEvent("fdtd:theme-change", { detail: { theme } }));
+});
 
 async function startApplication() {
   await upgradeCarbonDisclosures();
