@@ -158,6 +158,17 @@ const workflowLayers = [
 
 export function WorkflowNavigation() {
   const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
+  useEffect(() => {
+    const syncActiveLayer = (event: Event) => {
+      const layer = (event as CustomEvent<{ layer?: string }>).detail?.layer;
+      if (layer && workflowLayers.some(([candidate]) => candidate === layer)) {
+        setActiveLayer(layer);
+      }
+    };
+    window.addEventListener("fdtd:workflow-change", syncActiveLayer);
+    return () => window.removeEventListener("fdtd:workflow-change", syncActiveLayer);
+  }, []);
+
   const chooseLayer = (layer: string | null) => {
     if (!layer) return;
     setActiveLayer(layer);

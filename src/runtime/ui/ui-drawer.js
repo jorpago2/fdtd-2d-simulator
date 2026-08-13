@@ -79,14 +79,6 @@
         el.controlPanel.dataset.mobileLayer = layerName;
       }
       updateControlPanelContext(layerName);
-      uiCore.setExclusiveButtonState(el.mobileLayerButtons, "mobileLayer", layerName, {
-        currentValue: "page",
-        selectedAttribute: null,
-      });
-      const drawerOpen = Boolean(el.appShell?.classList.contains("controls-open"));
-      el.mobileLayerButtons?.forEach?.((button) => {
-        button.setAttribute("aria-expanded", String(drawerOpen && button.classList.contains("is-active")));
-      });
     }
 
     function focusControlPanelSection(selector) {
@@ -158,9 +150,6 @@
           el.controlPanel.setAttribute("inert", "");
         }
       }
-      el.mobileLayerButtons?.forEach?.((button) => {
-        button.setAttribute("aria-expanded", String(isOpen && button.classList.contains("is-active")));
-      });
       uiCore.setHidden(el.controlDrawerBackdrop, !isOpen);
       if (isOpen) {
         closeCanvasActionsMenu();
@@ -168,7 +157,6 @@
         if (activeMobileLayerName() === "visual") {
           setMobileLayerActive(controlTabLayerName(activeControlTabName()));
         }
-        refreshControlPanelData();
         el.controlPanel?.focus?.({ preventScroll: true });
       } else if (wasOpen && controlDrawerTrigger?.isConnected) {
         controlDrawerTrigger.focus?.({ preventScroll: true });

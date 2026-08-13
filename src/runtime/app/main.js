@@ -2127,7 +2127,6 @@ function handleWindowResize() {
   if (!canvasActionsMenuActive()) {
     closeCanvasActionsMenu();
   }
-  syncResultsDetailPanels();
   const gridChanged = applyResponsiveGridOrientation({ render: false });
   if (!gridChanged) {
     updateControlText();
