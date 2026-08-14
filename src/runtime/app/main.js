@@ -101,6 +101,10 @@ const state = createInitialAppState({
   themeStorageKey: THEME_STORAGE_KEY,
   windowRef: window,
 });
+const compactMobileRuntime = window.matchMedia?.("(max-width: 760px)")?.matches ?? false;
+if (compactMobileRuntime && state.renderFps === 0) {
+  state.renderFps = 15;
+}
 
 document.documentElement.dataset.theme = state.theme;
 
@@ -1485,7 +1489,10 @@ runtimeController = runtimeControllerModule.createRuntimeController({
   updatePerformanceStats,
   courant: COURANT,
   visualCourantReference: VISUAL_COURANT_REFERENCE,
-  maxNumericalStepsPerFrame: MAX_NUMERICAL_STEPS_PER_FRAME,
+  maxNumericalStepsPerFrame: compactMobileRuntime ? 1 : MAX_NUMERICAL_STEPS_PER_FRAME,
+  scheduleFrame: compactMobileRuntime
+    ? (callback) => window.setTimeout(() => callback(performance.now()), 50)
+    : (callback) => window.requestAnimationFrame(callback),
 });
 sweepAnalysisController = sweepAnalysisModule.createSweepAnalysisController({
   state,
@@ -1768,6 +1775,7 @@ runtimeControlBindingsModule.bindRuntimeControls({
   canvasRenderController,
   clamp,
   updateControlText,
+  prepareRuntime: ensureWasmBackend,
 });
 
 function refreshSceneSearch() {
@@ -2154,6 +2162,20 @@ async function initWasmBackend() {
   }
 }
 
+let wasmBackendPromise = null;
+
+function ensureWasmBackend() {
+  if (
+    !window.WebAssembly ||
+    sim.wasmBackend ||
+    window.matchMedia?.("(max-width: 760px)")?.matches
+  ) return Promise.resolve();
+  if (!wasmBackendPromise) {
+    wasmBackendPromise = initWasmBackend();
+  }
+  return wasmBackendPromise;
+}
+
 Object.assign(globalThis, {
   materialSelection,
   materialRegionSignature,
@@ -2185,7 +2207,7 @@ appBootstrapModule.runAppBootstrap({
   updateControlText,
   updateStats,
   updatePerformanceStats,
-  initWasmBackend,
+  initWasmBackend: ensureWasmBackend,
   runtimeController,
 });
 

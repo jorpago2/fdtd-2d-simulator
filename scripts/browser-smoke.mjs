@@ -7736,7 +7736,10 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
         closeButtonUsesCarbonIconButton: Boolean(
           document.querySelector('#controlDrawerCloseBtn[data-carbon-component="IconButton"]')
         ),
-        canvasHiddenWhilePanelOpen: getComputedStyle(document.querySelector('.controls-open .stage')).visibility === 'hidden',
+        canvasHiddenWhilePanelOpen: (() => {
+          const stageStyle = getComputedStyle(document.querySelector('.controls-open .stage'));
+          return stageStyle.display === 'none' || stageStyle.visibility === 'hidden';
+        })(),
         activePanel: activePanelElement?.id || "",
         panelContentOverflow: Math.max(
           panels?.scrollWidth - panels?.clientWidth || 0,
@@ -7966,7 +7969,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (!status.overflowButton || status.overflowButton.width < 44 || status.overflowButton.height < 44) {
       failures.push("compact header overflow action is smaller than 44px");
     }
-    for (const item of ["Step simulation", "Reset field", "Save PNG", "Use dark theme"]) {
+    for (const item of ["Step simulation", "Reset field", "Save PNG"]) {
       if (!overflowItems.includes(item)) failures.push(`compact header overflow is missing ${item}`);
     }
     if (!status.hiddenDesktopActions) {

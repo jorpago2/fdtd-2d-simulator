@@ -127,10 +127,10 @@
         resetRuntimePacing();
         startAnimationLoop();
       }
-      if (wasRunning && !shouldRun) {
-        finalizeDeferredResults();
-      }
       updateControlText();
+      if (wasRunning && !shouldRun) {
+        global.setTimeout(finalizeDeferredResults, 0);
+      }
       return state.running;
     }
 

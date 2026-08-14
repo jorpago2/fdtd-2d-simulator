@@ -22,12 +22,27 @@
     const canvasRenderController = requireObject(dependencies.canvasRenderController, "canvasRenderController");
     const clamp = requireFunction(dependencies.clamp, "clamp");
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
+    const prepareRuntime = typeof dependencies.prepareRuntime === "function"
+      ? dependencies.prepareRuntime
+      : () => Promise.resolve();
+    let preparingRuntime = false;
+
+    async function toggleRunningWhenReady() {
+      if (preparingRuntime) return;
+      preparingRuntime = true;
+      try {
+        await prepareRuntime();
+        runtimeController.toggleRunning();
+      } finally {
+        preparingRuntime = false;
+      }
+    }
 
     el.playPauseBtn?.addEventListener("click", () => {
-      runtimeController.toggleRunning();
+      void toggleRunningWhenReady();
     });
     el.runPlayPauseBtn?.addEventListener("click", () => {
-      runtimeController.toggleRunning();
+      void toggleRunningWhenReady();
     });
 
     el.stepBtn?.addEventListener("click", () => {

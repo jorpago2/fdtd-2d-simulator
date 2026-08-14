@@ -81,11 +81,18 @@ fieldset {
 }
 
 #reactHeaderRoot,
+#reactWorkflowRoot,
 #reactFooterRoot,
 .react-control-root,
 .carbon-button-mount,
 .carbon-button-content,
 .carbon-control-mount {
+  display: contents;
+}
+
+#reactHeaderRoot > .scientific-theme,
+#reactWorkflowRoot > .scientific-theme,
+#reactFooterRoot > .scientific-theme {
   display: contents;
 }
 
@@ -185,7 +192,7 @@ fieldset {
   background: var(--cds-background);
 }
 
-#reactFooterRoot > .fdtd-status-strip {
+#reactFooterRoot .fdtd-status-strip {
   grid-row: 2;
   grid-column: 2 / -1;
 }
@@ -1295,7 +1302,7 @@ fieldset {
     grid-column: 1;
   }
 
-  #reactFooterRoot > .fdtd-status-strip {
+  #reactFooterRoot .fdtd-status-strip {
     grid-row: 2;
     grid-column: 1;
   }
