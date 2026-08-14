@@ -101,12 +101,6 @@ const state = createInitialAppState({
   themeStorageKey: THEME_STORAGE_KEY,
   windowRef: window,
 });
-const compactMobileRuntime = window.matchMedia?.("(max-width: 760px)")?.matches ?? false;
-const MOBILE_MAX_NUMERICAL_STEPS_PER_FRAME = 2;
-if (compactMobileRuntime && state.renderFps === 0) {
-  state.renderFps = 15;
-}
-
 document.documentElement.dataset.theme = state.theme;
 
 const appFormatters = appFormattersModule.createAppFormatters({
@@ -1490,12 +1484,7 @@ runtimeController = runtimeControllerModule.createRuntimeController({
   updatePerformanceStats,
   courant: COURANT,
   visualCourantReference: VISUAL_COURANT_REFERENCE,
-  maxNumericalStepsPerFrame: compactMobileRuntime
-    ? MOBILE_MAX_NUMERICAL_STEPS_PER_FRAME
-    : MAX_NUMERICAL_STEPS_PER_FRAME,
-  scheduleFrame: compactMobileRuntime
-    ? (callback) => window.setTimeout(() => callback(performance.now()), 0)
-    : (callback) => window.requestAnimationFrame(callback),
+  maxNumericalStepsPerFrame: MAX_NUMERICAL_STEPS_PER_FRAME,
 });
 sweepAnalysisController = sweepAnalysisModule.createSweepAnalysisController({
   state,

@@ -7990,7 +7990,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (!runState.running || runState.status !== "running" || runState.accessibleName !== "Pause simulation") {
       failures.push("compact Run / pause action did not synchronize the solver, status, and accessible name");
     }
-    if (runState.solverSteps < 24) {
+    if (runState.solverSteps < 100) {
       failures.push(`compact runtime advanced only ${runState.solverSteps} steps in 600 ms`);
     }
     return {

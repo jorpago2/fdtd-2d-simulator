@@ -36,9 +36,7 @@
     updateStats();
     sim.render();
     updatePerformanceStats(true);
-    if (!windowRef.matchMedia?.("(max-width: 760px)")?.matches) {
-      initWasmBackend();
-    }
+    initWasmBackend();
     runtimeController.startAnimationLoop();
     windowRef.dispatchEvent(new CustomEvent("fdtd:runtime-ready", { detail: { sceneLoadedFromUrl } }));
   }
