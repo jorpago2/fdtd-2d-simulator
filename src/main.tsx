@@ -42,6 +42,8 @@ import {
   scientificSliderDefinitions,
 } from "./ui/scientific-sliders";
 
+const FDTD_THEME_STORAGE_KEY = "fdtdTheme";
+
 (globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
 (globalThis as typeof globalThis & {
   ScientificPlotUI: {
@@ -75,7 +77,7 @@ function renderReactRoot(mount: HTMLElement, content: ReactNode): Promise<void> 
   mount.dataset.carbonReactRoot = "";
   return new Promise((resolve) => {
     createRoot(mount).render(
-      <ScientificUiProvider>
+      <ScientificUiProvider themeStorageKey={FDTD_THEME_STORAGE_KEY}>
         <RootCommit onCommit={resolve} />
         {content}
       </ScientificUiProvider>,
