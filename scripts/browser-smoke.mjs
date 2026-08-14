@@ -7945,10 +7945,13 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     await page.keyboard.press("Escape");
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
+    await page.waitForTimeout(600);
     const runState = await page.evaluate(() => ({
       running: Boolean(state.running),
       status: document.querySelector(".scientific-header__status")?.dataset.state || "",
       accessibleName: document.getElementById("playPauseBtn")?.getAttribute("aria-label") || "",
+      solverSteps: Number(sim.time) || 0,
+      engine: sim.engineLabel?.() || "",
     }));
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "modified");
@@ -7986,6 +7989,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (status.clippedStatusItems) failures.push(`${status.clippedStatusItems} status items are partially clipped`);
     if (!runState.running || runState.status !== "running" || runState.accessibleName !== "Pause simulation") {
       failures.push("compact Run / pause action did not synchronize the solver, status, and accessible name");
+    }
+    if (runState.solverSteps < 24) {
+      failures.push(`compact runtime advanced only ${runState.solverSteps} steps in 600 ms`);
     }
     return {
       id: "mobile_toolbar_height",

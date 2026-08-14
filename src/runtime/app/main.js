@@ -102,6 +102,7 @@ const state = createInitialAppState({
   windowRef: window,
 });
 const compactMobileRuntime = window.matchMedia?.("(max-width: 760px)")?.matches ?? false;
+const MOBILE_MAX_NUMERICAL_STEPS_PER_FRAME = 2;
 if (compactMobileRuntime && state.renderFps === 0) {
   state.renderFps = 15;
 }
@@ -1489,9 +1490,11 @@ runtimeController = runtimeControllerModule.createRuntimeController({
   updatePerformanceStats,
   courant: COURANT,
   visualCourantReference: VISUAL_COURANT_REFERENCE,
-  maxNumericalStepsPerFrame: compactMobileRuntime ? 1 : MAX_NUMERICAL_STEPS_PER_FRAME,
+  maxNumericalStepsPerFrame: compactMobileRuntime
+    ? MOBILE_MAX_NUMERICAL_STEPS_PER_FRAME
+    : MAX_NUMERICAL_STEPS_PER_FRAME,
   scheduleFrame: compactMobileRuntime
-    ? (callback) => window.setTimeout(() => callback(performance.now()), 50)
+    ? (callback) => window.setTimeout(() => callback(performance.now()), 0)
     : (callback) => window.requestAnimationFrame(callback),
 });
 sweepAnalysisController = sweepAnalysisModule.createSweepAnalysisController({
@@ -2150,11 +2153,6 @@ async function initWasmBackend() {
   try {
     const backend = await WasmFdtdBackend.load(WASM_CORE_URL);
     sim.attachWasmBackend(backend);
-    sim.measure();
-    updateControlText();
-    updateStats();
-    sim.render();
-    updatePerformanceStats(true);
     console.info("WASM FDTD backend enabled");
   } catch (error) {
     console.warn("WASM FDTD backend unavailable; using JavaScript", error);
@@ -2167,8 +2165,7 @@ let wasmBackendPromise = null;
 function ensureWasmBackend() {
   if (
     !window.WebAssembly ||
-    sim.wasmBackend ||
-    window.matchMedia?.("(max-width: 760px)")?.matches
+    sim.wasmBackend
   ) return Promise.resolve();
   if (!wasmBackendPromise) {
     wasmBackendPromise = initWasmBackend();
