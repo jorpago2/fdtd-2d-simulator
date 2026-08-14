@@ -1325,17 +1325,15 @@ fieldset {
   }
 
   .app-shell.contextual-inspector-open .stage {
-    visibility: hidden;
-    pointer-events: none;
+    display: none;
   }
 
   .controls-open .stage {
-    visibility: hidden;
-    pointer-events: none;
+    display: none;
   }
 
   body.walkthrough-active .controls-open .stage {
-    visibility: visible;
+    display: grid;
     pointer-events: auto;
   }
 

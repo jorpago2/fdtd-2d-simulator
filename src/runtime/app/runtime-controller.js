@@ -125,6 +125,7 @@
       state.running = shouldRun;
       if (!wasRunning && shouldRun) {
         resetRuntimePacing();
+        startAnimationLoop();
       }
       if (wasRunning && !shouldRun) {
         finalizeDeferredResults();
@@ -192,7 +193,12 @@
         sim.render();
       }
       updatePerformanceStats();
-      scheduleFrame(animationFrame);
+      if (state.running) {
+        scheduleFrame(animationFrame);
+      } else {
+        animationStarted = false;
+        previousFrameTimeMs = null;
+      }
     }
 
     function startAnimationLoop() {

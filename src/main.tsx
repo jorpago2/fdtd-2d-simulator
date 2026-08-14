@@ -72,6 +72,7 @@ function RootCommit({ onCommit }: { onCommit: () => void }) {
 }
 
 function renderReactRoot(mount: HTMLElement, content: ReactNode): Promise<void> {
+  mount.dataset.carbonReactRoot = "";
   return new Promise((resolve) => {
     createRoot(mount).render(
       <ScientificUiProvider>
