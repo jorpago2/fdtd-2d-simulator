@@ -162,6 +162,9 @@
         controlDrawerTrigger.focus?.({ preventScroll: true });
         controlDrawerTrigger = null;
       }
+      if (typeof global.dispatchEvent === "function" && typeof global.CustomEvent === "function") {
+        global.dispatchEvent(new global.CustomEvent("fdtd:control-drawer-state", { detail: { open: isOpen } }));
+      }
     }
 
     function closeControlDrawer() {

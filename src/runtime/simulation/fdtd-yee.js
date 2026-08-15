@@ -12,6 +12,12 @@ function fdtdRecordSolverPhase(name, startedAt) {
 }
 
 Object.assign(FDTDSim.prototype, {
+  recordDiagnosticsAfterStep() {
+    const phaseStartedAt = fdtdSolverPhaseStart();
+    this.updateDiagnostics();
+    fdtdRecordSolverPhase("solverDiagnosticsMs", phaseStartedAt);
+  },
+
   step() {
     this.rebuildSubpixelMaterialCoefficients?.();
     const maxwellSnapshot = this.captureMaxwellCheckSnapshot?.();
@@ -51,11 +57,7 @@ Object.assign(FDTDSim.prototype, {
       fdtdRecordSolverPhase("solverBoundarySourceMs", phaseStartedAt);
       this.time += 1;
       this.markFieldsChanged?.();
-      if (!state.running) {
-        phaseStartedAt = fdtdSolverPhaseStart();
-        this.updateDiagnostics();
-        fdtdRecordSolverPhase("solverDiagnosticsMs", phaseStartedAt);
-      }
+      this.recordDiagnosticsAfterStep();
       return;
     }
 
@@ -86,11 +88,7 @@ Object.assign(FDTDSim.prototype, {
     fdtdRecordSolverPhase("solverBoundarySourceMs", phaseStartedAt);
     this.time += 1;
     this.markFieldsChanged?.();
-    if (!state.running) {
-      phaseStartedAt = fdtdSolverPhaseStart();
-      this.updateDiagnostics();
-      fdtdRecordSolverPhase("solverDiagnosticsMs", phaseStartedAt);
-    }
+    this.recordDiagnosticsAfterStep();
   },
 
   stepEzMode() {

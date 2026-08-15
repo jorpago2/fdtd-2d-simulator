@@ -56,7 +56,7 @@ function collectAttributes(button: HTMLButtonElement) {
   const attributes: Record<string, string | boolean> = {};
   for (const attribute of Array.from(button.attributes)) {
     if (["class", "disabled", "hidden", "data-carbon-kind", "data-carbon-icon-only"].includes(attribute.name)) continue;
-    attributes[attribute.name] = attribute.value;
+    attributes[reactAttributeNames[attribute.name] || attribute.name] = attribute.value;
   }
   if (button.disabled) attributes.disabled = true;
   if (button.hidden) attributes.hidden = true;

@@ -150,7 +150,7 @@
         }
         return Math.max(top, obstructionRect.bottom);
       }, 0);
-      const panelViewportBottom = [".status-strip", ".scientific-tool-rail"].reduce((bottom, selector) => {
+      const panelViewportBottom = [".fdtd-status-strip", ".scientific-tool-rail"].reduce((bottom, selector) => {
         const obstruction = documentRef.querySelector(selector);
         const obstructionRect = obstruction?.getBoundingClientRect?.();
         if (!obstructionRect || obstructionRect.width < viewportWidth - margin * 2 || obstructionRect.top < viewportHeight / 2) {
@@ -238,7 +238,8 @@
 
     function start() {
       if (!hasElements()) return;
-      lastFocus = el.helpGuideToggle || (isElement(documentRef.activeElement) ? documentRef.activeElement : el.walkthroughStartBtn);
+      const stableHelpTrigger = documentRef.querySelector?.(".scientific-header-help__button");
+      lastFocus = stableHelpTrigger || (isElement(documentRef.activeElement) ? documentRef.activeElement : el.walkthroughStartBtn);
       setHelpGuideOpen(false);
       activeIndex = 0;
       setOpen(true);

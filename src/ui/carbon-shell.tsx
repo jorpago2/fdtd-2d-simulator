@@ -17,7 +17,7 @@ import {
   Reset,
   SettingsAdjust,
 } from "@carbon/react/icons";
-import { ScientificAutosaveStatus, ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificRecoveryNotice, ScientificStatusBar, ScientificToolRail, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
+import { ScientificAutosaveStatus, ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificRecoveryNotice, ScientificStatusBar, ScientificToolRail, useScientificAutosave, useScientificResultTransition, useScientificTheme } from "@jorpago2/scientific-ui";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
@@ -76,6 +76,8 @@ function useSimulationStatus() {
 
 export function ApplicationHeader() {
   const helpGuideReturnFocusRef = useRef<HTMLElement | null>(null);
+  const breakpointFocusRef = useRef<"run" | "theme" | null>(null);
+  const lastHeaderFocusRef = useRef<"run" | "theme" | null>(null);
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
   );
@@ -83,12 +85,52 @@ export function ApplicationHeader() {
 
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)");
-    const syncCompactHeader = () => setCompactHeader(compactQuery.matches);
+    const semanticHeaderFocus = (element: Element | null): "run" | "theme" | null => {
+      if (!(element instanceof HTMLElement)) return null;
+      if (element.id === "playPauseBtn") return "run";
+      if (
+        element.closest(".scientific-theme-toggle, .header-overflow-menu")
+        || element.getAttribute("aria-label") === "More simulation actions"
+        || /(?:light|dark) theme/i.test(element.textContent ?? "")
+      ) {
+        return "theme";
+      }
+      return null;
+    };
+    const trackHeaderFocus = (event: FocusEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (target === document.body || target === document.documentElement) return;
+      lastHeaderFocusRef.current = semanticHeaderFocus(target);
+    };
+    const syncCompactHeader = () => {
+      breakpointFocusRef.current = semanticHeaderFocus(document.activeElement) ?? lastHeaderFocusRef.current;
+      setCompactHeader(compactQuery.matches);
+    };
+    document.addEventListener("focusin", trackHeaderFocus, true);
     compactQuery.addEventListener("change", syncCompactHeader);
     return () => {
+      document.removeEventListener("focusin", trackHeaderFocus, true);
       compactQuery.removeEventListener("change", syncCompactHeader);
     };
   }, []);
+
+  useEffect(() => {
+    const focusTarget = breakpointFocusRef.current;
+    if (!focusTarget) return;
+    breakpointFocusRef.current = null;
+    const frame = window.requestAnimationFrame(() => {
+      const selector = focusTarget === "run"
+        ? "#playPauseBtn"
+        : compactHeader
+          ? ".header-overflow-menu"
+          : ".scientific-theme-toggle";
+      const target = document.querySelector<HTMLElement>(selector);
+      if (target?.isConnected && target.getClientRects().length > 0) {
+        target.focus({ preventScroll: true });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [compactHeader]);
 
   const openFullGuide = () => {
     const runtimeGuide = (window as Window & { FdtdOpenHelpGuide?: () => void }).FdtdOpenHelpGuide;
@@ -110,12 +152,18 @@ export function ApplicationHeader() {
       legacyToggle?.setAttribute("aria-expanded", "false");
       closeButton?.removeEventListener("click", closeGuide);
       document.removeEventListener("keydown", handleEscape, true);
-      helpGuideReturnFocusRef.current?.focus({ preventScroll: true });
+      const requestedTarget = helpGuideReturnFocusRef.current;
+      const stableHeaderHelp = document.querySelector<HTMLElement>(".scientific-header-help__button");
+      const focusTarget = requestedTarget?.isConnected && requestedTarget.getClientRects().length > 0
+        ? requestedTarget
+        : stableHeaderHelp;
+      focusTarget?.focus({ preventScroll: true });
     };
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
       closeGuide();
     };
     closeButton?.addEventListener("click", closeGuide);
@@ -141,6 +189,7 @@ export function ApplicationHeader() {
           onClick: openFullGuide,
         },
       }}
+      showThemeToggle={!compactHeader}
       primaryAction={<CanvasPrimaryControls
         compactHeader={compactHeader}
         running={simulationStatus.state === "running"}
@@ -158,6 +207,7 @@ const workflowLayers = [
 
 export function WorkflowNavigation() {
   const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
+  const [drawerOpen, setDrawerOpen] = useState(false);
   useEffect(() => {
     const syncActiveLayer = (event: Event) => {
       const layer = (event as CustomEvent<{ layer?: string }>).detail?.layer;
@@ -167,6 +217,13 @@ export function WorkflowNavigation() {
     };
     window.addEventListener("fdtd:workflow-change", syncActiveLayer);
     return () => window.removeEventListener("fdtd:workflow-change", syncActiveLayer);
+  }, []);
+  useEffect(() => {
+    const syncDrawerState = (event: Event) => {
+      setDrawerOpen(Boolean((event as CustomEvent<{ open?: unknown }>).detail?.open));
+    };
+    window.addEventListener("fdtd:control-drawer-state", syncDrawerState);
+    return () => window.removeEventListener("fdtd:control-drawer-state", syncDrawerState);
   }, []);
 
   const chooseLayer = (layer: string | null) => {
@@ -178,7 +235,7 @@ export function WorkflowNavigation() {
     <ScientificToolRail
       label="Simulation workflow"
       activeId={activeLayer}
-      expandedId={activeLayer}
+      expandedId={drawerOpen ? activeLayer : null}
       onChange={chooseLayer}
       collapsible={false}
       items={workflowLayers.map(([layer, label, Icon]) => ({
@@ -200,6 +257,7 @@ interface CanvasPrimaryControlsProps {
 
 export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryControlsProps) {
   const [modeIndex, setModeIndex] = useState(0);
+  const { isDark, toggleTheme } = useScientificTheme();
 
   return (
     <div className="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
@@ -217,6 +275,7 @@ export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryC
           aria-label={running ? "Pause simulation" : "Start simulation"}
           aria-pressed={running}
           data-carbon-react="true"
+          onClick={() => window.dispatchEvent(new Event("fdtd:toggle-running"))}
         >
           {compactHeader ? null : <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>}
         </Button>
@@ -263,6 +322,7 @@ export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryC
             <OverflowMenuItem itemText="Step simulation" onClick={() => document.getElementById("stepBtn")?.click()} />
             <OverflowMenuItem itemText="Reset field" onClick={() => document.getElementById("resetBtn")?.click()} />
             <OverflowMenuItem itemText="Save PNG" onClick={() => document.getElementById("saveBtn")?.click()} />
+            <OverflowMenuItem itemText={isDark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme} />
           </OverflowMenu>
         )}
       </div>

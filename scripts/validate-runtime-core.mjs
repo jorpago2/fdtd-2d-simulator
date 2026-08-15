@@ -69,6 +69,122 @@ function assertClose(actual, expected, label, tolerance = 1e-12) {
   }
 }
 
+function makeDiagnosticSamplingSim(runtime, { compiled }) {
+  const sim = new runtime.FDTDSim();
+  sim.time = 0;
+  sim.fieldScale = 1;
+  sim.diagnosticsLastUpdateTime = null;
+  sim.diagnosticsSamplingActive = false;
+  sim.resetLineDiagnostics();
+  sim.resetModePortDiagnostics();
+  sim.resetAnalysisDiagnostics();
+
+  sim.canUseCompiledMaterialStep = () => compiled;
+  sim.wasmBackend = { step() {} };
+  sim.stepEzMode = () => {};
+  sim.applyDispersiveElectricResponse = () => {};
+  sim.applyTfsfScalarCorrections = () => {};
+  sim.applyHarmonicNonlinearResponse = () => {};
+  sim.applyBianisotropicResponse = () => {};
+  sim.zeroBoundaryFields = () => {};
+  sim.injectSource = () => {};
+  sim.reconcileSplitScalarState = () => {};
+
+  sim.analysisProbeCell = () => 0;
+  sim.scalarAnalysisValueAt = () => 1;
+  sim.ensureAnalysisContour = () => {};
+  sim.analysisTotalFieldEnergy = () => 2;
+  sim.analysisSourceIntensityEstimate = () => 1;
+  sim.analysisContourFluxEstimate = () => ({ outward: 0.5, guided: 0.25 });
+  sim.diagnosticFrequency = () => 0.025;
+  sim.diagnosticMonitorPositions = () => ({ left: 1, right: 2 });
+  sim.diagnosticDirection = () => ({ angleDeg: 0, cos: 1, sin: 0 });
+  sim.lineDirectionalFluxAt = () => 0;
+  sim.lineWaveSeparationAt = (x) => ({
+    backward: x === 1 ? 0.1 : 0,
+    backwardPower: x === 1 ? 0.01 : 0,
+    forward: x === 1 ? 1 : 0.8,
+    forwardPower: x === 1 ? 1 : 0.64,
+    impedance: 1,
+  });
+  sim.fieldPowerScale = () => 1;
+  sim.updateHyperlensAnalysis = () => {};
+  const modeSource = { frequency: 0.025, shape: "modeProfile" };
+  sim.ensureModePortDiagnostics = () => ({
+    positions: { inputX: 1, outputX: 3, reflectionX: 0, sy: 1 },
+    source: modeSource,
+    sourceDescriptor: {},
+  });
+  sim.modePortProjectionAt = (_source, x) => ({
+    projection: {
+      modalAmplitude: x === 1 ? 1 : x === 3 ? 0.8 : 0.1,
+      overlap: 1,
+    },
+  });
+  return sim;
+}
+
+function checkStepDiagnosticSampling(runtime) {
+  Object.assign(runtime.state, {
+    analysisEnabled: true,
+    analysisSampleEvery: 4,
+    diagnosticsEnabled: true,
+    fieldComponent: "ez",
+    materialHarmonicEnabled: false,
+    materialModulationEnabled: false,
+    materialNonlinearEnabled: false,
+    materialPhaseChangeEnabled: false,
+    running: true,
+  });
+
+  const compiledSim = makeDiagnosticSamplingSim(runtime, { compiled: true });
+  for (let expectedSteps = 1; expectedSteps <= 64; expectedSteps += 1) {
+    compiledSim.step();
+    assertEqual(compiledSim.time, expectedSteps, `Play time after step ${expectedSteps}`);
+    assertEqual(compiledSim.diagnosticDftSampleCount, expectedSteps, `Play line DFT samples after step ${expectedSteps}`);
+    assertEqual(compiledSim.modePortDftSampleCount, expectedSteps, `Play mode-port samples after step ${expectedSteps}`);
+  }
+  assertEqual(compiledSim.analysisSamples, 16, "Play decimated analysis samples at 64 steps");
+  assertEqual(compiledSim.analysisProbeCount, 16, "Play analysis probe samples at 64 steps");
+  if (!compiledSim.diagnosticSpectrumSummary) {
+    throw new Error("Play line DFT did not reach its 64-sample spectrum threshold");
+  }
+  if (!compiledSim.modePortDftSummary) {
+    throw new Error("Play mode-port DFT did not reach its 64-sample S-parameter threshold");
+  }
+  assertEqual(compiledSim.diagnosticSpectrumSummary.sampleCount, 64, "Play line DFT spectrum threshold");
+  assertEqual(compiledSim.modePortDftSummary.sampleCount, 64, "Play mode-port S-parameter threshold");
+
+  compiledSim.updateDiagnostics({ forceAnalysis: true });
+  assertEqual(compiledSim.diagnosticDftSampleCount, 64, "pause does not duplicate line DFT at a sampled time");
+  assertEqual(compiledSim.modePortDftSampleCount, 64, "pause does not duplicate mode-port DFT at a sampled time");
+  assertEqual(compiledSim.analysisSamples, 16, "pause does not duplicate analysis at a sampled time");
+
+  compiledSim.step();
+  assertEqual(compiledSim.diagnosticDftSampleCount, 65, "Play line DFT samples after off-cadence step");
+  assertEqual(compiledSim.modePortDftSampleCount, 65, "Play mode-port samples after off-cadence step");
+  assertEqual(compiledSim.analysisSamples, 16, "analysis cadence before forced pause sample");
+  compiledSim.updateDiagnostics({ forceAnalysis: true });
+  compiledSim.updateDiagnostics({ forceAnalysis: true });
+  assertEqual(compiledSim.diagnosticDftSampleCount, 65, "forced pause never duplicates line DFT");
+  assertEqual(compiledSim.modePortDftSampleCount, 65, "forced pause never duplicates mode-port DFT");
+  assertEqual(compiledSim.analysisSamples, 17, "forced pause fills one off-cadence analysis sample");
+
+  runtime.state.running = false;
+  for (let expectedSteps = 66; expectedSteps <= 68; expectedSteps += 1) {
+    compiledSim.step();
+    assertEqual(compiledSim.diagnosticDftSampleCount, expectedSteps, `Step/sweep line DFT samples after step ${expectedSteps}`);
+    assertEqual(compiledSim.modePortDftSampleCount, expectedSteps, `Step/sweep mode-port samples after step ${expectedSteps}`);
+  }
+  assertEqual(compiledSim.analysisSamples, 18, "Step/sweep analysis keeps configured cadence");
+
+  runtime.state.running = true;
+  const jsFallbackSim = makeDiagnosticSamplingSim(runtime, { compiled: false });
+  jsFallbackSim.step();
+  assertEqual(jsFallbackSim.diagnosticDftSampleCount, 1, "JS fallback Play line DFT sample");
+  assertEqual(jsFallbackSim.modePortDftSampleCount, 1, "JS fallback Play mode-port sample");
+}
+
 function sampleStateOptions() {
   return {
     defaultSourceConfig: {
@@ -190,6 +306,7 @@ function makeFakeElement(dataset = {}) {
   return {
     dataset,
     hidden: false,
+    tabIndex: 0,
     attributes,
     classList: {
       contains(className) {
@@ -203,6 +320,9 @@ function makeFakeElement(dataset = {}) {
     removeAttribute(name) {
       delete attributes[name];
     },
+    getAttribute(name) {
+      return attributes[name] ?? null;
+    },
     setAttribute(name, value) {
       attributes[name] = String(value);
     },
@@ -211,6 +331,7 @@ function makeFakeElement(dataset = {}) {
         attributes: { ...attributes },
         classes: Array.from(classes).sort(),
         hidden: this.hidden,
+        tabIndex: this.tabIndex,
       };
     },
   };
@@ -222,9 +343,11 @@ function compareUiCoreModules(runtime, next) {
 
   const runtimeButtons = [makeFakeElement({ mode: "select" }), makeFakeElement({ mode: "draw" })];
   const nextButtons = [makeFakeElement({ mode: "select" }), makeFakeElement({ mode: "draw" })];
+  [...runtimeButtons, ...nextButtons].forEach((button) => button.setAttribute("role", "tab"));
   runtimeUi.setExclusiveButtonState(runtimeButtons, "mode", "draw", { currentValue: "page" });
   nextUi.setExclusiveButtonState(nextButtons, "mode", "draw", { currentValue: "page" });
   assertDeepEqual(nextButtons.map((button) => button.snapshot()), runtimeButtons.map((button) => button.snapshot()), "ui setExclusiveButtonState");
+  assertDeepEqual(runtimeButtons.map((button) => button.tabIndex), [-1, 0], "ui tab roving tabindex");
   assertEqual(nextUi.activeDatasetValue(nextButtons, "mode", "fallback"), runtimeUi.activeDatasetValue(runtimeButtons, "mode", "fallback"), "ui activeDatasetValue");
 
   const runtimePanels = [makeFakeElement({ tab: "scene" }), makeFakeElement({ tab: "visual" })];
@@ -433,6 +556,166 @@ function compareViewportModules(runtime, next) {
   assertDeepEqual(snapshotViewportSim(nextSim), snapshotViewportSim(runtimeSim), "viewport mutating methods");
 }
 
+function checkHiddenViewportResizeGuard(runtime, next) {
+  function verifyHiddenGuard(sim, label) {
+    sim.canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });
+    const before = { width: sim.canvas.width, height: sim.canvas.height };
+    assertEqual(sim.fitCanvas(), false, `${label} hidden fit result`);
+    assertEqual(sim.canvas.width, before.width, `${label} hidden canvas width`);
+    assertEqual(sim.canvas.height, before.height, `${label} hidden canvas height`);
+
+    sim.canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 320, height: 180 });
+    assertEqual(sim.fitCanvas(), true, `${label} visible fit result`);
+    assertEqual(sim.canvas.width, 640, `${label} restored canvas width`);
+    assertEqual(sim.canvas.height, 360, `${label} restored canvas height`);
+  }
+
+  function NextSim() {}
+  next.FdtdNext.canvas.viewport.installViewportMethods(NextSim, {
+    clampNumber: runtime.clamp,
+    clampInt: runtime.clampInt,
+  });
+  const runtimeSim = makeViewportSim(runtime.FDTDSim);
+  runtimeSim.fieldCanvas = { width: runtimeSim.canvas.width, height: runtimeSim.canvas.height };
+  runtimeSim.surfaceCanvas = { width: runtimeSim.canvas.width, height: runtimeSim.canvas.height };
+  const nextSim = makeViewportSim(NextSim);
+
+  verifyHiddenGuard(runtimeSim, "runtime viewport");
+  verifyHiddenGuard(nextSim, "reference viewport");
+  assertEqual(runtimeSim.fieldCanvas.width, 640, "runtime restored field canvas width");
+  assertEqual(runtimeSim.fieldCanvas.height, 360, "runtime restored field canvas height");
+  assertEqual(runtimeSim.surfaceCanvas.width, 640, "runtime restored surface canvas width");
+  assertEqual(runtimeSim.surfaceCanvas.height, 360, "runtime restored surface canvas height");
+}
+
+function checkCanvasLayoutRefreshBindings() {
+  const runtime = createBrowserContext();
+  const listeners = new Map();
+  const animationFrames = new Map();
+  let nextFrameId = 1;
+  runtime.CustomEvent = class CustomEvent {
+    constructor(type, options = {}) {
+      this.type = type;
+      this.detail = options.detail;
+    }
+  };
+  runtime.addEventListener = (type, listener) => {
+    const typeListeners = listeners.get(type) || [];
+    typeListeners.push(listener);
+    listeners.set(type, typeListeners);
+  };
+  runtime.dispatchEvent = (event) => {
+    (listeners.get(event.type) || []).forEach((listener) => listener(event));
+    return true;
+  };
+  runtime.requestAnimationFrame = (callback) => {
+    const frameId = nextFrameId;
+    nextFrameId += 1;
+    animationFrames.set(frameId, callback);
+    return frameId;
+  };
+  runtime.cancelAnimationFrame = (frameId) => animationFrames.delete(frameId);
+  runtime.matchMedia = () => ({ matches: true });
+  const flushAnimationFrame = () => {
+    const callbacks = [...animationFrames.values()];
+    animationFrames.clear();
+    callbacks.forEach((callback) => callback());
+  };
+  const classList = (initial = []) => {
+    const values = new Set(initial);
+    return {
+      contains: (name) => values.has(name),
+      toggle(name, active) {
+        if (active) values.add(name);
+        else values.delete(name);
+      },
+    };
+  };
+  const element = (initialClasses = []) => ({
+    classList: classList(initialClasses),
+    dataset: {},
+    hidden: false,
+    attributes: {},
+    addEventListener(type, listener) {
+      this.listeners ||= new Map();
+      this.listeners.set(type, listener);
+    },
+    focus() {},
+    querySelector: () => null,
+    removeAttribute(name) {
+      delete this.attributes[name];
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    },
+  });
+  const documentRef = { activeElement: null, body: element() };
+
+  loadScripts(runtime, [
+    ["src", "runtime", "ui", "ui-core.js"],
+    ["src", "runtime", "ui", "ui-drawer.js"],
+    ["src", "runtime", "ui", "visual-control-bindings.js"],
+  ]);
+
+  const appShell = element();
+  const controlPanel = element();
+  const drawerEvents = [];
+  runtime.addEventListener("fdtd:control-drawer-state", (event) => drawerEvents.push(event.detail?.open));
+  const drawer = runtime.FdtdUiDrawer.createDrawerController({
+    documentRef,
+    el: {
+      appShell,
+      controlDrawerBackdrop: element(),
+      controlDrawerToggle: element(),
+      controlPanel,
+      controlTabButtons: [],
+      controlTabPanels: [],
+      mobileLayerButtons: [],
+    },
+    uiCore: runtime.FdtdUiCore,
+  });
+  drawer.setControlDrawerOpen(true);
+  drawer.setControlDrawerOpen(false);
+  assertDeepEqual(drawerEvents, [true, false], "drawer layout-state events");
+  assertEqual(controlPanel.attributes["aria-hidden"], "true", "closed drawer accessibility state");
+
+  const projectionButton = element();
+  projectionButton.dataset.viewProjection = "3d";
+  let fitCalls = 0;
+  let renderCalls = 0;
+  const state = { viewProjection: "2d" };
+  const sim = {
+    canvas: element(),
+    fitCanvas: () => {
+      fitCalls += 1;
+    },
+    render: () => {
+      renderCalls += 1;
+    },
+  };
+  runtime.FdtdVisualControlBindings.bindVisualControls({
+    el: { viewProjectionButtons: [projectionButton] },
+    setCustomVisualLayer() {},
+    sim,
+    state,
+    updateControlText() {},
+    updateStats() {},
+  });
+  projectionButton.listeners.get("click")();
+  assertEqual(state.viewProjection, "3d", "projection state update");
+  assertEqual(renderCalls, 1, "projection immediate render");
+  flushAnimationFrame();
+  flushAnimationFrame();
+  assertEqual(fitCalls, 1, "projection post-layout fit");
+  assertEqual(renderCalls, 2, "projection post-layout render");
+
+  runtime.dispatchEvent(new runtime.CustomEvent("fdtd:control-drawer-state", { detail: { open: false } }));
+  flushAnimationFrame();
+  flushAnimationFrame();
+  assertEqual(fitCalls, 2, "drawer post-layout fit");
+  assertEqual(renderCalls, 3, "drawer post-layout render");
+}
+
 function checkMonitorResults(runtime) {
   const collecting = runtime.FdtdUiResults.resultsInsightText(
     { balanceReady: false, diagnosticsEnabled: true, samples: 20 },
@@ -529,6 +812,280 @@ function checkMonitorResults(runtime) {
   assertClose(floquetBalance.transmittance, 0.7, "Floquet transmittance");
 }
 
+function deferredPromise() {
+  let resolve;
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, reject, resolve };
+}
+
+async function settlePromiseQueue() {
+  for (let index = 0; index < 8; index += 1) await Promise.resolve();
+}
+
+async function checkPlotlyRenderQueue(runtime) {
+  let visible = true;
+  let activeRenders = 0;
+  let maxActiveRenders = 0;
+  const attributes = {};
+  const renderCalls = [];
+  const resizeCalls = [];
+  const toolbarResults = [];
+  const reportedErrors = [];
+  const unhandledRejections = [];
+  const chart = {
+    get clientHeight() {
+      return visible ? 240 : 0;
+    },
+    get clientWidth() {
+      return visible ? 640 : 0;
+    },
+    closest() {
+      return null;
+    },
+    getClientRects() {
+      return visible ? [{}] : [];
+    },
+    hidden: false,
+    isConnected: true,
+    setAttribute(name, value) {
+      attributes[name] = String(value);
+    },
+  };
+  const originalConsole = runtime.console;
+  const originalPlotly = runtime.Plotly;
+  const originalScientificPlotUI = runtime.ScientificPlotUI;
+  const onUnhandledRejection = (error) => unhandledRejections.push(error);
+
+  process.on("unhandledRejection", onUnhandledRejection);
+  runtime.console = { ...console, error: (...args) => reportedErrors.push(args) };
+  runtime.queueMicrotask = queueMicrotask;
+  runtime.ScientificPlotUI = {
+    createConfig: (options) => options,
+    createLayout: (options) => options,
+    lineWidths: { primary: 4 },
+    prepareToolbar: (result) => toolbarResults.push(result),
+  };
+  runtime.Plotly = {
+    Plots: {
+      resize(target) {
+        resizeCalls.push(target);
+      },
+    },
+    react(target, traces, layout, config) {
+      const deferred = deferredPromise();
+      activeRenders += 1;
+      maxActiveRenders = Math.max(maxActiveRenders, activeRenders);
+      renderCalls.push({ config, deferred, layout, target, traces });
+      return deferred.promise.then(
+        (value) => {
+          activeRenders -= 1;
+          return value;
+        },
+        (error) => {
+          activeRenders -= 1;
+          throw error;
+        },
+      );
+    },
+  };
+
+  try {
+    const controller = runtime.FdtdUiResultsCharts.createResultsChartsController({ el: { spectrumChart: chart } });
+    const drawFrequency = (frequency) =>
+      controller.drawSpectrumChart({
+        portSpectrum: {
+          points: [{ balanceResidual: 0.1, frequency, reflectance: 0.1, transmittance: 0.8, valid: true }],
+        },
+      });
+
+    drawFrequency(0.01);
+    drawFrequency(0.02);
+    assertEqual(renderCalls.length, 0, "same-turn Plotly render deferral");
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 1, "same-turn Plotly render coalescing");
+    assertEqual(renderCalls[0].traces[0].x[0], 0.02, "same-turn Plotly latest state");
+
+    drawFrequency(0.03);
+    drawFrequency(0.04);
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 1, "Plotly render serialization while pending");
+    renderCalls[0].deferred.resolve("first");
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 2, "Plotly queued render starts after completion");
+    assertEqual(renderCalls[1].traces[0].x[0], 0.04, "pending Plotly latest state");
+
+    visible = false;
+    drawFrequency(0.05);
+    renderCalls[1].deferred.resolve("second");
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 2, "hidden Plotly chart is not rendered");
+
+    visible = true;
+    controller.resizeSpectrumChart();
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 3, "hidden Plotly state resumes when visible");
+    assertEqual(renderCalls[2].traces[0].x[0], 0.05, "hidden Plotly latest state");
+    assertEqual(resizeCalls.length, 0, "Plotly resize does not overlap queued render");
+
+    drawFrequency(0.06);
+    renderCalls[2].deferred.reject(new Error("expected render failure"));
+    await settlePromiseQueue();
+    assertEqual(renderCalls.length, 4, "Plotly queue recovers after rejection");
+    assertEqual(renderCalls[3].traces[0].x[0], 0.06, "Plotly state survives rejection");
+    renderCalls[3].deferred.resolve("fourth");
+    await settlePromiseQueue();
+    controller.resizeSpectrumChart();
+    await settlePromiseQueue();
+
+    assertEqual(maxActiveRenders, 1, "maximum concurrent Plotly renders");
+    assertEqual(resizeCalls.length, 1, "Plotly resize after queue drain");
+    assertEqual(toolbarResults.join(","), "first,second,fourth", "Plotly toolbar preparation");
+    assertEqual(reportedErrors.length, 1, "Plotly rejected render reporting");
+    await new Promise((resolve) => setImmediate(resolve));
+    assertEqual(unhandledRejections.length, 0, "Plotly unhandled rejections");
+  } finally {
+    process.off("unhandledRejection", onUnhandledRejection);
+    runtime.console = originalConsole;
+    runtime.Plotly = originalPlotly;
+    runtime.ScientificPlotUI = originalScientificPlotUI;
+  }
+}
+
+function checkHelpEscapeModalPrecedence() {
+  const runtime = createBrowserContext();
+  loadScripts(runtime, [["src", "runtime", "canvas", "canvas-interactions.js"]]);
+
+  const documentListeners = new Map();
+  const noopNames = [
+    "closeContextMenus",
+    "clearCanvasHover",
+    "updateViewInteraction",
+    "handleCanvasKeydown",
+    "beginPinchGesture",
+    "updatePinchGesture",
+    "beginPan",
+    "beginPendingTouchInteraction",
+    "markPendingTouchMoved",
+    "promotePendingTouchDrag",
+    "handleCanvasTouchTap",
+    "clearPendingTouchInteraction",
+    "updateSourceDrag",
+    "updateMonitorDrag",
+    "updateMaterialDrag",
+    "updatePan",
+    "endSourceDrag",
+    "endMonitorDrag",
+    "endMaterialDrag",
+    "beginSourceDrag",
+    "beginMonitorDrag",
+    "beginMaterialDrag",
+    "selectMaterialRegionAt",
+    "clearMaterialSelection",
+    "updateCanvasHover",
+    "updateCanvasInteractionState",
+    "insertGeometryFromEvent",
+    "beginPaintStroke",
+    "paintFromEvent",
+    "endPaintStroke",
+    "openBoundaryMenuAt",
+    "openBrushMenuAt",
+    "openSourceMenuAt",
+    "openMonitorMenuAt",
+    "openCanvasContextMenuAt",
+    "closeCanvasActionsMenu",
+    "closeCanvasOptionsMenu",
+  ];
+  const dependencies = Object.fromEntries(noopNames.map((name) => [name, () => {}]));
+  let drawerCloseCount = 0;
+  const el = {
+    appShell: { classList: { contains: (name) => name === "controls-open" } },
+    canvas: { addEventListener() {} },
+    helpGuidePanel: { hidden: false },
+    stage: { classList: { contains: () => false } },
+  };
+  Object.assign(dependencies, {
+    closeControlDrawer: () => {
+      drawerCloseCount += 1;
+    },
+    deleteSelectedElement: () => false,
+    documentRef: {
+      addEventListener(type, listener) {
+        documentListeners.set(type, listener);
+      },
+    },
+    dragStateController: {},
+    el,
+    isEditableKeyTarget: () => false,
+    pointerState: {},
+    pointerStateController: {},
+    sim: { render() {} },
+    state: {},
+  });
+
+  runtime.FdtdCanvasInteractions.createCanvasInteractionsController(dependencies).bind();
+  const keydown = documentListeners.get("keydown");
+  assertEqual(typeof keydown, "function", "canvas document keydown binding");
+
+  let prevented = false;
+  keydown({ key: "Escape", preventDefault: () => { prevented = true; }, target: {} });
+  assertEqual(drawerCloseCount, 0, "help Escape leaves underlying drawer open");
+  assertEqual(prevented, false, "help Escape remains available to modal handler");
+
+  el.helpGuidePanel.hidden = true;
+  keydown({ key: "Escape", preventDefault: () => { prevented = true; }, target: {} });
+  assertEqual(drawerCloseCount, 1, "drawer Escape still closes without help modal");
+  assertEqual(prevented, true, "drawer Escape prevents the default action");
+}
+
+function checkThreeResourceDisposalOnCanvasReplacement() {
+  const runtime = createBrowserContext();
+  runtime.URL = URL;
+  runtime.document = { baseURI: "https://fdtd.test/" };
+  runtime.state = {};
+  runtime.clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  runtime.clampInt = (value, min, max) => Math.round(runtime.clamp(Number(value) || 0, min, max));
+  loadScripts(runtime, [["src", "runtime", "canvas", "canvas-surface-three-renderer.js"]]);
+
+  const renderer = runtime.FdtdCanvasSurfaceThreeRenderer.createRenderer();
+  const oldCanvas = {};
+  const nextCanvas = {};
+  const mesh = {};
+  const outline = {};
+  const disposed = [];
+  const removed = [];
+  const disposable = (name) => ({ dispose: () => disposed.push(name) });
+  renderer.canvas = oldCanvas;
+  renderer.scene = { remove: (object) => removed.push(object) };
+  renderer.mesh = mesh;
+  renderer.outline = outline;
+  renderer.geometry = disposable("geometry");
+  renderer.material = disposable("material");
+  renderer.outlineGeometry = disposable("outlineGeometry");
+  renderer.outlineMaterial = disposable("outlineMaterial");
+  renderer.renderer = disposable("renderer");
+  renderer.positions = new Float32Array(3);
+  renderer.colors = new Float32Array(3);
+  renderer.lastFrameKey = "stale-frame";
+  renderer.runningReuseCounter = 1;
+
+  assertEqual(renderer.ensureCanvas({ surfaceCanvas: nextCanvas }), nextCanvas, "replacement surface canvas");
+  assertEqual(disposed.sort().join(","), "geometry,material,outlineGeometry,outlineMaterial,renderer", "Three resource disposal");
+  assertEqual(removed.length, 2, "Three scene object removal count");
+  assertEqual(removed[0], mesh, "Three mesh removal");
+  assertEqual(removed[1], outline, "Three outline removal");
+  assertEqual(renderer.renderer, null, "Three renderer reset");
+  assertEqual(renderer.geometry, null, "Three geometry reset");
+  assertEqual(renderer.material, null, "Three material reset");
+  assertEqual(renderer.outlineGeometry, null, "Three outline geometry reset");
+  assertEqual(renderer.outlineMaterial, null, "Three outline material reset");
+  assertEqual(renderer.lastFrameKey, "", "Three frame cache reset");
+  assertEqual(renderer.runningReuseCounter, 0, "Three reuse counter reset");
+}
+
 async function main() {
   const runtime = createBrowserContext();
   runtime.devicePixelRatio = 2;
@@ -542,11 +1099,16 @@ async function main() {
   runtime.DIAGNOSTIC_DFT_WINDOW = 512;
   runtime.FdtdAppState = await import("../src/core/app-state.ts");
   loadScripts(runtime, [
+    ["src", "runtime", "core", "numerics.js"],
     ["src", "runtime", "core", "app-formatters.js"],
     ["src", "runtime", "core", "scene-codec.js"],
     ["src", "runtime", "ui", "ui-core.js"],
     ["src", "runtime", "canvas", "canvas-viewport.js"],
     ["src", "runtime", "simulation", "fdtd-line-diagnostics.js"],
+    ["src", "runtime", "simulation", "fdtd-modal-analysis.js"],
+    ["src", "runtime", "simulation", "fdtd-analysis-sampling.js"],
+    ["src", "runtime", "simulation", "fdtd-diagnostics.js"],
+    ["src", "runtime", "simulation", "fdtd-yee.js"],
     ["src", "runtime", "ui", "ui-results.js"],
     ["src", "runtime", "ui", "ui-results-charts.js"],
   ]);
@@ -570,7 +1132,13 @@ async function main() {
   compareUiCoreModules(runtime, next);
   compareStateNormalizerModules(runtime, next);
   compareViewportModules(runtime, next);
+  checkHiddenViewportResizeGuard(runtime, next);
+  checkCanvasLayoutRefreshBindings();
   checkMonitorResults(runtime);
+  checkStepDiagnosticSampling(runtime);
+  checkHelpEscapeModalPrecedence();
+  checkThreeResourceDisposalOnCanvasReplacement();
+  await checkPlotlyRenderQueue(runtime);
   console.log("Runtime core validation: PASS");
 }
 

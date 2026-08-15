@@ -42,7 +42,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="stylesheet" href="src/styles/carbon.scss?v=20260808-carbon-6" />
-    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260813-workbench-7" />
+    <link rel="stylesheet" href="src/styles/scientific-workbench.css?v=20260815-workbench-8" />
   </head>
   <body>
     <a class="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
@@ -178,8 +178,9 @@
                 id="surfaceOrbitGizmo"
                 class="surface-orbit-gizmo"
                 type="button"
-                title="Rotate 3D surface"
-                aria-label="Drag to rotate 3D surface"
+                title="Rotate 3D surface with drag or arrow keys"
+                aria-label="Rotate 3D surface; use arrow keys, Home to reset"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home"
                 data-surface-orbit-drag
               >
                 <span class="surface-orbit-ring" aria-hidden="true"></span>
@@ -209,6 +210,7 @@
               id="helpGuidePanel"
               class="help-guide-panel"
               role="dialog"
+              aria-modal="true"
               aria-labelledby="helpGuideTitle"
               aria-describedby="helpGuideIntro"
               tabindex="-1"
@@ -548,10 +550,10 @@
                 </div>
                 <button id="sourceCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close source editor">×</button>
               </div>
-              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
-                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="source">Source</button>
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="monitor">Monitor</button>
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="material">Material</button>
+              <div class="context-kind-switcher" role="group" aria-label="Add element">
+                <button class="is-active" type="button" aria-pressed="true" data-canvas-add="source">Source</button>
+                <button type="button" aria-pressed="false" data-canvas-add="monitor">Monitor</button>
+                <button type="button" aria-pressed="false" data-canvas-add="material">Material</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -658,10 +660,10 @@
                 </div>
                 <button id="monitorCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close monitor editor">×</button>
               </div>
-              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="source">Source</button>
-                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="monitor">Monitor</button>
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="material">Material</button>
+              <div class="context-kind-switcher" role="group" aria-label="Add element">
+                <button type="button" aria-pressed="false" data-canvas-add="source">Source</button>
+                <button class="is-active" type="button" aria-pressed="true" data-canvas-add="monitor">Monitor</button>
+                <button type="button" aria-pressed="false" data-canvas-add="material">Material</button>
               </div>
               <div class="source-menu-body">
                 <label>
@@ -713,10 +715,10 @@
                 </div>
                 <button id="brushMenuCloseBtn" class="icon-button compact-button" data-carbon-icon-only="true" type="button" title="Close" aria-label="Close draw editor">×</button>
               </div>
-              <div class="context-kind-switcher" role="tablist" aria-label="Element type">
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="source">Source</button>
-                <button type="button" role="tab" aria-selected="false" data-canvas-add="monitor">Monitor</button>
-                <button class="is-active" type="button" role="tab" aria-selected="true" data-canvas-add="material">Material</button>
+              <div class="context-kind-switcher" role="group" aria-label="Add element">
+                <button type="button" aria-pressed="false" data-canvas-add="source">Source</button>
+                <button type="button" aria-pressed="false" data-canvas-add="monitor">Monitor</button>
+                <button class="is-active" type="button" aria-pressed="true" data-canvas-add="material">Material</button>
               </div>
               <div class="source-menu-body">
               <fieldset id="brushToolControl" class="canvas-mode-toggle brush-tool-toggle" role="radiogroup" aria-label="Draw tool">

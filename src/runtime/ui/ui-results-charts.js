@@ -117,6 +117,85 @@
     formatSweepValue = (value) => String(value),
   } = {}) {
     let spectrumReadoutState = { mode: "empty", points: [] };
+    const plotlyRenderStates = new WeakMap();
+
+    function plotlyChartIsVisible(chart) {
+      if (!chart || chart.isConnected === false || chart.hidden || chart.clientWidth <= 0 || chart.clientHeight <= 0) return false;
+      if (typeof chart.closest === "function" && chart.closest('[hidden], [aria-hidden="true"], [inert]')) return false;
+      return typeof chart.getClientRects !== "function" || chart.getClientRects().length > 0;
+    }
+
+    function plotlyRenderState(chart) {
+      let renderState = plotlyRenderStates.get(chart);
+      if (!renderState) {
+        renderState = { inFlight: null, queued: null, scheduled: false };
+        plotlyRenderStates.set(chart, renderState);
+      }
+      return renderState;
+    }
+
+    function reportPlotlyError(error) {
+      try {
+        global.console?.error?.("FDTD chart render failed.", error);
+      } catch {
+        // Error reporting must never destabilize the simulation loop.
+      }
+    }
+
+    function schedulePlotlyRender(chart) {
+      const renderState = plotlyRenderState(chart);
+      if (renderState.inFlight || renderState.scheduled || !renderState.queued || !plotlyChartIsVisible(chart)) return;
+      renderState.scheduled = true;
+      const run = () => {
+        try {
+          renderState.scheduled = false;
+          startPlotlyRender(chart);
+        } catch (error) {
+          renderState.scheduled = false;
+          reportPlotlyError(error);
+        }
+      };
+      if (typeof global.queueMicrotask === "function") {
+        global.queueMicrotask(run);
+      } else {
+        void Promise.resolve().then(run);
+      }
+    }
+
+    function startPlotlyRender(chart) {
+      const renderState = plotlyRenderState(chart);
+      if (renderState.inFlight || !renderState.queued || !plotlyChartIsVisible(chart)) return;
+      const request = renderState.queued;
+      renderState.queued = null;
+
+      let reactResult;
+      try {
+        reactResult = request.Plotly.react(chart, request.traces, request.layout, request.config);
+      } catch (error) {
+        reportPlotlyError(error);
+        schedulePlotlyRender(chart);
+        return;
+      }
+
+      const completion = Promise.resolve(reactResult)
+        .then((result) => request.prepareToolbar?.(result))
+        .catch(reportPlotlyError)
+        .then(() => {
+          if (renderState.inFlight === completion) renderState.inFlight = null;
+          try {
+            schedulePlotlyRender(chart);
+          } catch (error) {
+            reportPlotlyError(error);
+          }
+        });
+      renderState.inFlight = completion;
+    }
+
+    function queuePlotlyRender(chart, request) {
+      const renderState = plotlyRenderState(chart);
+      renderState.queued = request;
+      schedulePlotlyRender(chart);
+    }
 
     function drawSweepChart({
       auxMetric = null,
@@ -576,6 +655,7 @@
       const Plotly = global.Plotly;
       if (!chart || !Plotly) return;
       const colors = chartPalette(theme);
+      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 4 };
       const referenceActive = Boolean(portSpectrum?.reference?.active);
       const portPoints = Array.isArray(portSpectrum?.points) ? portSpectrum.points.filter((point) => point?.valid) : [];
       const plottedPortPoints = referenceActive
@@ -685,14 +765,27 @@
         height: 650,
         scrollZoom: true,
       });
-      void Plotly.react(chart, traces, layout, config).then(scientificPlotUI.prepareToolbar);
+      queuePlotlyRender(chart, {
+        config,
+        layout,
+        Plotly,
+        prepareToolbar: scientificPlotUI.prepareToolbar,
+        traces,
+      });
     }
 
     function resizeSpectrumChart() {
       const chart = el?.spectrumChart;
       const Plotly = global.Plotly;
-      if (!chart || !Plotly?.Plots?.resize || chart.clientWidth <= 0) return;
-      void Plotly.Plots.resize(chart);
+      if (!chart || !Plotly) return;
+      const renderState = plotlyRenderState(chart);
+      schedulePlotlyRender(chart);
+      if (!Plotly.Plots?.resize || !plotlyChartIsVisible(chart) || renderState.queued || renderState.scheduled || renderState.inFlight) return;
+      try {
+        void Promise.resolve(Plotly.Plots.resize(chart)).catch(reportPlotlyError);
+      } catch (error) {
+        reportPlotlyError(error);
+      }
     }
 
     function drawFarFieldChart({ data = [], scatteringMode = false, scatteringTotalText = "", theme = "light" } = {}) {

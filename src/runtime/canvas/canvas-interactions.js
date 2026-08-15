@@ -409,6 +409,9 @@
     }
 
     function handleDocumentKeydown(event) {
+      // The help guide owns Escape while it is visible. Its capture listener is
+      // registered later, so leave the event untouched for that modal handler.
+      if (event.key === "Escape" && el.helpGuidePanel && !el.helpGuidePanel.hidden) return;
       if (event.key === "Escape" && el.stage?.classList.contains("canvas-actions-open")) {
         closeCanvasActionsMenu();
         event.preventDefault();

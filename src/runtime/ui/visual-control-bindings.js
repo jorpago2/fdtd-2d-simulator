@@ -29,6 +29,25 @@
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const setCustomVisualLayer = requireFunction(dependencies.setCustomVisualLayer, "setCustomVisualLayer");
+    let pendingLayoutFrame = 0;
+
+    function scheduleCanvasLayoutRefresh() {
+      if (typeof global.requestAnimationFrame !== "function") {
+        sim.fitCanvas?.();
+        sim.render();
+        return;
+      }
+      if (pendingLayoutFrame && typeof global.cancelAnimationFrame === "function") {
+        global.cancelAnimationFrame(pendingLayoutFrame);
+      }
+      pendingLayoutFrame = global.requestAnimationFrame(() => {
+        pendingLayoutFrame = global.requestAnimationFrame(() => {
+          pendingLayoutFrame = 0;
+          sim.fitCanvas?.();
+          sim.render();
+        });
+      });
+    }
 
     function measureVisualState() {
       if (typeof sim.measureForUi === "function") sim.measureForUi();
@@ -101,6 +120,7 @@
         state.viewProjection = button.dataset.viewProjection === "3d" ? "3d" : "2d";
         updateControlText();
         sim.render();
+        scheduleCanvasLayoutRefresh();
       });
     });
 
@@ -111,6 +131,20 @@
         sim.render();
       });
     });
+
+    global.addEventListener?.("fdtd:control-drawer-state", scheduleCanvasLayoutRefresh);
+    global.addEventListener?.("fdtd:theme-change", scheduleCanvasLayoutRefresh);
+
+    const observedCanvas = sim.canvas || el.canvas;
+    if (observedCanvas && typeof global.ResizeObserver === "function" && !sim.canvasResizeObserver) {
+      sim.canvasResizeObserver = new global.ResizeObserver((entries) => {
+        const rect = entries?.[0]?.contentRect;
+        if ((Number(rect?.width) || 0) > 0 && (Number(rect?.height) || 0) > 0) {
+          scheduleCanvasLayoutRefresh();
+        }
+      });
+      sim.canvasResizeObserver.observe(observedCanvas);
+    }
   }
 
   global.FdtdVisualControlBindings = Object.freeze({

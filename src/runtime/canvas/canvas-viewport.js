@@ -4,10 +4,17 @@
   function canvasPixelSize(canvas) {
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.max(1, global.devicePixelRatio || 1);
+    const cssWidth = Number(rect.width) || 0;
+    const cssHeight = Number(rect.height) || 0;
+    const visible = cssWidth > 0 && cssHeight > 0;
     return {
-      width: Math.max(1, Math.round(rect.width * dpr)),
-      height: Math.max(1, Math.round(rect.height * dpr)),
+      // Preserve the last valid drawing buffer while a responsive drawer uses
+      // display:none. Reducing it to 1x1 discards the rendered field and leaves
+      // WebGL/Canvas2D stretched after the drawer closes.
+      width: visible ? Math.max(1, Math.round(cssWidth * dpr)) : Math.max(1, canvas.width || 1),
+      height: visible ? Math.max(1, Math.round(cssHeight * dpr)) : Math.max(1, canvas.height || 1),
       dpr,
+      visible,
     };
   }
 
@@ -181,7 +188,12 @@
     },
 
     fitCanvas() {
-      const { width, height } = canvasPixelSize(this.canvas);
+      const projection = global.state?.viewProjection === "3d" ? "3d" : "2d";
+      const canvasFrame = this.canvas.closest?.(".canvas-frame") || this.canvas.parentElement;
+      if (canvasFrame?.dataset) canvasFrame.dataset.viewProjection = projection;
+
+      const { width, height, visible } = canvasPixelSize(this.canvas);
+      if (!visible) return false;
       if (this.canvas.width !== width || this.canvas.height !== height) {
         this.canvas.width = width;
         this.canvas.height = height;
@@ -201,6 +213,7 @@
         Math.round(viewport.width),
         Math.round(viewport.height),
       ].join(",");
+      return true;
     },
   });
 

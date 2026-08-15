@@ -106,6 +106,17 @@
     const helpGuideDefaultTitle = el.helpGuideTitle?.textContent || "How to use the simulator";
     const helpGuideElements = () => Boolean(el.helpGuideToggle && el.helpGuidePanel);
     const helpGuideOpen = () => helpGuideElements() && !el.helpGuidePanel.hidden;
+    const stableHelpGuideTrigger = () => documentRef?.querySelector?.(".scientific-header-help__button") || null;
+    const visibleConnectedElement = (element) => Boolean(
+      element?.isConnected
+      && (typeof element.getClientRects !== "function" || element.getClientRects().length > 0),
+    );
+    const helpGuideFocusableElements = () => Array.from(el.helpGuidePanel?.querySelectorAll?.(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || []).filter((element) => {
+      if (element.closest?.('[hidden], [inert], [aria-hidden="true"]')) return false;
+      return typeof element.getClientRects !== "function" || element.getClientRects().length > 0;
+    });
     const setHelpGuideTopic = (topic, { restoreFocus = false } = {}) => {
       const showDetail = Boolean(topic);
       if (el.helpGuideHome) el.helpGuideHome.hidden = showDetail;
@@ -131,6 +142,13 @@
     };
     const setHelpGuideOpen = (open, { restoreFocus = false } = {}) => {
       if (!helpGuideElements()) return;
+      if (
+        open &&
+        el.appShell?.classList.contains("controls-open") &&
+        global.getComputedStyle?.(el.stage)?.display === "none"
+      ) {
+        setControlDrawerOpen(false);
+      }
       el.helpGuidePanel.hidden = !open;
       el.helpGuideToggle.setAttribute("aria-expanded", String(Boolean(open)));
       if (open) {
@@ -142,7 +160,10 @@
         lastHelpGuideTopicButton = null;
       }
       if (!open && restoreFocus) {
-        helpGuideReturnFocus?.focus?.({ preventScroll: true });
+        const focusTarget = visibleConnectedElement(helpGuideReturnFocus)
+          ? helpGuideReturnFocus
+          : stableHelpGuideTrigger();
+        focusTarget?.focus?.({ preventScroll: true });
       }
     };
     const walkthroughController = global.FdtdHelpWalkthrough?.createHelpWalkthroughController?.({
@@ -207,10 +228,12 @@
 
     el.helpGuideToggle?.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (!helpGuideOpen()) helpGuideReturnFocus = event.currentTarget;
       setHelpGuideOpen(!helpGuideOpen(), { restoreFocus: true });
     });
     const openHelpGuideFromHeader = () => {
-      helpGuideReturnFocus = documentRef?.activeElement || null;
+      const activeElement = documentRef?.activeElement || null;
+      helpGuideReturnFocus = visibleConnectedElement(activeElement) ? activeElement : stableHelpGuideTrigger();
       setHelpGuideOpen(true);
     };
     windowRef.FdtdOpenHelpGuide = openHelpGuideFromHeader;
@@ -228,12 +251,37 @@
     documentRef?.addEventListener?.("click", (event) => {
       if (!helpGuideOpen()) return;
       if (isElement(event.target) && (event.target.closest("#helpGuidePanel") || event.target.closest("#helpGuideToggle"))) return;
-      setHelpGuideOpen(false);
-    });
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+      setHelpGuideOpen(false, { restoreFocus: true });
+    }, true);
     documentRef?.addEventListener?.("keydown", (event) => {
-      if (event.key === "Escape" && helpGuideOpen()) {
+      if (!helpGuideOpen()) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
         event.stopPropagation();
+        event.stopImmediatePropagation?.();
         setHelpGuideOpen(false, { restoreFocus: true });
+        return;
+      }
+      if (event.key === "Tab") {
+        const focusable = helpGuideFocusableElements();
+        if (!focusable.length) {
+          event.preventDefault();
+          el.helpGuidePanel.focus?.({ preventScroll: true });
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = documentRef.activeElement;
+        if (!el.helpGuidePanel.contains(active) || (event.shiftKey && (active === first || active === el.helpGuidePanel))) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus?.({ preventScroll: true });
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus?.({ preventScroll: true });
+        }
       }
     }, true);
   }

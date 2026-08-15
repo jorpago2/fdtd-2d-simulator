@@ -157,6 +157,10 @@
       this.geometry = null;
       this.material = null;
       this.mesh = null;
+      this.outlineGeometry = null;
+      this.outlineMaterial = null;
+      this.outline = null;
+      this.outlinePositions = null;
       this.canvas = null;
       this.positions = null;
       this.colors = null;
@@ -185,23 +189,38 @@
       });
     }
 
+    disposeRendererResources() {
+      this.scene?.remove?.(this.mesh);
+      this.scene?.remove?.(this.outline);
+      this.geometry?.dispose?.();
+      this.material?.dispose?.();
+      this.outlineGeometry?.dispose?.();
+      this.outlineMaterial?.dispose?.();
+      this.renderer?.dispose?.();
+
+      this.renderer = null;
+      this.scene = null;
+      this.camera = null;
+      this.geometry = null;
+      this.material = null;
+      this.mesh = null;
+      this.outlineGeometry = null;
+      this.outlineMaterial = null;
+      this.outline = null;
+      this.outlinePositions = null;
+      this.positions = null;
+      this.colors = null;
+      this.shapeKey = "";
+      this.lastFrameKey = "";
+      this.runningReuseCounter = 0;
+      this.renderWidth = 0;
+      this.renderHeight = 0;
+    }
+
     ensureCanvas(sim) {
       const nextCanvas = sim.surfaceCanvas || this.canvas || global.document?.createElement?.("canvas") || null;
       if (!nextCanvas) return null;
-      if (this.renderer && this.canvas !== nextCanvas) {
-        this.renderer.dispose();
-        this.renderer = null;
-        this.scene = null;
-        this.camera = null;
-        this.geometry = null;
-        this.material = null;
-        this.mesh = null;
-        this.positions = null;
-        this.colors = null;
-        this.shapeKey = "";
-        this.renderWidth = 0;
-        this.renderHeight = 0;
-      }
+      if (this.canvas && this.canvas !== nextCanvas) this.disposeRendererResources();
       this.canvas = nextCanvas;
       return this.canvas;
     }
@@ -217,6 +236,7 @@
         state.fieldDisplay,
         state.fieldComponent,
         state.materialPart,
+        state.theme,
         surfaceOrbitFromState().key,
       ].join("|");
     }
@@ -269,6 +289,22 @@
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.mesh.frustumCulled = false;
         this.scene.add(this.mesh);
+        this.outlinePositions = new Float32Array(12);
+        this.outlineGeometry = new THREE.BufferGeometry();
+        this.outlineGeometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(this.outlinePositions, 3).setUsage(THREE.DynamicDrawUsage),
+        );
+        this.outlineMaterial = new THREE.LineBasicMaterial({
+          color: 0xffffff,
+          depthTest: false,
+          depthWrite: false,
+          opacity: 0.56,
+          transparent: true,
+        });
+        this.outline = new THREE.LineLoop(this.outlineGeometry, this.outlineMaterial);
+        this.outline.frustumCulled = false;
+        this.scene.add(this.outline);
       }
 
       const renderWidth = Math.max(1, Math.floor(width));
@@ -366,11 +402,22 @@
 
       this.geometry.attributes.position.needsUpdate = true;
       this.geometry.attributes.color.needsUpdate = true;
+      const outlineVertexIndices = [0, cols - 1, rows * cols - 1, (rows - 1) * cols];
+      outlineVertexIndices.forEach((sourceIndex, outlineIndex) => {
+        const sourceOffset = sourceIndex * 3;
+        const outlineOffset = outlineIndex * 3;
+        this.outlinePositions[outlineOffset] = this.positions[sourceOffset];
+        this.outlinePositions[outlineOffset + 1] = this.positions[sourceOffset + 1];
+        this.outlinePositions[outlineOffset + 2] = this.positions[sourceOffset + 2];
+      });
+      this.outlineGeometry.attributes.position.needsUpdate = true;
       if (!renderingToDisplayCanvas) {
         this.drawBackground(sim);
       }
       const orbit = surfaceOrbitFromState();
       this.mesh.rotation.set(orbit.pitchRad, orbit.yawRad, 0);
+      this.outlineMaterial.opacity = state.theme === "dark" ? 0.62 : 0.38;
+      this.outline.rotation.copy(this.mesh.rotation);
       this.renderer.render(this.scene, this.camera);
       if (!renderingToDisplayCanvas) {
         sim.ctx.drawImage(this.canvas, 0, 0, width, height);

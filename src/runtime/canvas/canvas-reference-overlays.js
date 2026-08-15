@@ -24,10 +24,12 @@
         state.viewMode === "field" || state.viewMode === "poynting" || state.viewProjection === "3d"
           ? colorbarReserve
           : 22 * dpr;
-      const x1 = Math.max(viewport.left + 96 * dpr, viewport.right - rightPad);
-      const availableWidth = Math.max(48 * dpr, x1 - (viewport.left + 22 * dpr));
+      const anchorLeft = viewport.left + 22 * dpr;
+      const anchorRight = Math.max(viewport.left + 96 * dpr, viewport.right - rightPad);
+      const availableWidth = Math.max(48 * dpr, anchorRight - anchorLeft);
       const scaleWidth = clamp((scaleLambda / visibleLambdaWidth) * viewport.width, 42 * dpr, availableWidth * 0.72);
-      const x0 = Math.max(viewport.left + 22 * dpr, x1 - scaleWidth);
+      const x1 = state.viewProjection === "3d" ? anchorLeft + scaleWidth : anchorRight;
+      const x0 = state.viewProjection === "3d" ? anchorLeft : Math.max(anchorLeft, x1 - scaleWidth);
       const y = viewport.bottom - 34 * dpr;
       const tick = 8 * dpr;
 
@@ -87,6 +89,11 @@
       return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
     },
 
+    overlayReferenceBackdropColor() {
+      if (state.viewProjection === "3d" || state.theme === "dark") return "rgba(0, 0, 0, 0.72)";
+      return "rgba(255, 255, 255, 0.78)";
+    },
+
     overlayTextFontPx(scale = 1) {
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       const viewport = this.renderViewport();
@@ -116,6 +123,9 @@
     strokeOverlayPath(shadowWidth, lineWidth, plain = false) {
       const ctx = this.ctx;
       if (plain) {
+        ctx.strokeStyle = this.overlayReferenceBackdropColor();
+        ctx.lineWidth = shadowWidth;
+        ctx.stroke();
         ctx.strokeStyle = this.overlayReferenceColor();
         ctx.lineWidth = lineWidth;
         ctx.stroke();
@@ -143,7 +153,10 @@
       const top = y - height / 2;
 
       ctx.save();
-      if (!plain) {
+      if (plain) {
+        ctx.fillStyle = this.overlayReferenceBackdropColor();
+        ctx.fillRect(left, top, width, height);
+      } else {
         ctx.fillStyle = "rgba(255, 255, 255, 0.68)";
         ctx.fillRect(left, top, width, height);
       }

@@ -4,6 +4,7 @@
   Object.assign(FDTDSim.prototype, {
     resetAnalysisDiagnostics() {
       this.analysisSamples = 0;
+      this.analysisLastSampleTime = null;
       this.analysisProbeIndex = 0;
       this.analysisProbeCount = 0;
       this.analysisProbeSeries = new Float32Array(512);
@@ -217,6 +218,7 @@
         this.analysisContourDnIm[i] = (1 - alpha) * this.analysisContourDnIm[i] - alpha * normalDerivativeSource * sinPhase;
       }
       this.analysisSamples += 1;
+      this.analysisLastSampleTime = this.time;
       this.analysisFarField = [];
       this.analysisFarFieldPeak = 0;
       this.analysisScatteringTotal = 0;

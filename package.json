@@ -17,6 +17,8 @@
     "validate": "node scripts/validate-static.mjs --json",
     "validate:static": "node scripts/validate-static.mjs",
     "validate:json": "node scripts/validate-static.mjs --json",
+    "validate:ci": "pnpm test && pnpm validate:architecture && pnpm validate:runtime && pnpm validate:mode-solver && pnpm validate:subpixel",
+    "validate:browser:ci": "node scripts/browser-smoke.mjs --root dist --case react_carbon_bootstrap,scene_state_round_trip,help_guide,scene_menu_selection,mobile_toolbar_height,header_breakpoint_interaction,compact_landscape_layout,theme_surface_consistency --summary",
     "validate:architecture": "node scripts/validate-architecture.mjs",
     "validate:subpixel": "node scripts/validate-subpixel-smoothing.mjs",
     "validate:mode-solver": "node scripts/validate-mode-solver.mjs",

@@ -1669,6 +1669,7 @@ sceneApplication = sceneApplicationModule.createSceneApplicationController({
   closeContextMenus,
   sanitizeImportedSources,
   sanitizeImportedMonitors,
+  applyTheme,
   updateControlText,
   updateStats,
   drawSweepChart,
@@ -2169,7 +2170,9 @@ Object.assign(globalThis, {
 });
 
 window.FdtdApp = Object.freeze({
+  applySceneState,
   buildSceneObservables: () => sceneObservables?.buildSceneObservables?.() || null,
+  exportSceneState,
   openSourceMenuAt,
   populateSourceEditor,
   selectScenePreset,
@@ -2179,7 +2182,7 @@ window.FdtdApp = Object.freeze({
   updateStats,
 });
 
-appBootstrapModule.runAppBootstrap({
+await appBootstrapModule.runAppBootstrap({
   layoutControlBindingsModule,
   windowRef: window,
   handleWindowResize,

@@ -94,6 +94,7 @@
     const updateControlText = requireFunction(dependencies.updateControlText, "updateControlText");
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const drawSweepChart = requireFunction(dependencies.drawSweepChart, "drawSweepChart");
+    const applyTheme = typeof dependencies.applyTheme === "function" ? dependencies.applyTheme : null;
 
     function applySceneState(snapshot) {
       if (!isPlainObject(snapshot)) {
@@ -114,7 +115,9 @@
       state.gridNx = clampInt(grid.nx ?? importedState.gridNx ?? state.gridNx, 80, maxGrid.nx);
       state.gridNy = clampInt(grid.ny ?? importedState.gridNy ?? state.gridNy, 60, maxGrid.ny);
       normalizeImportedStateValues();
-      if (documentElement) {
+      if (applyTheme) {
+        applyTheme(state.theme, false);
+      } else if (documentElement) {
         documentElement.dataset.theme = state.theme;
       }
       clearMaterialSelection(false);

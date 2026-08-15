@@ -211,6 +211,12 @@ fieldset {
   background: var(--cds-background);
 }
 
+/* The 3D surface and PNG exporter share this neutral scientific backdrop.
+ * Keeping it independent of the shell theme preserves colormap contrast. */
+.canvas-frame[data-view-projection="3d"] {
+  background: linear-gradient(to bottom, rgb(3, 5, 9) 0%, rgb(7, 8, 13) 58%, rgb(0, 0, 0) 100%);
+}
+
 #simCanvas,
 .field-canvas,
 .surface-canvas {
@@ -1121,7 +1127,7 @@ fieldset {
   inset: auto 1rem 4.5rem auto;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(36rem, calc(100vw - 7rem));
-  height: min(42rem, calc(100vh - 9rem));
+  height: min(42rem, calc(100dvh - 9rem), calc(100% - 5.5rem));
 }
 
 .help-guide-grid {
@@ -1339,6 +1345,16 @@ fieldset {
     display: none;
   }
 
+  /* Keep recovery actions available without obscuring the task-panel Close
+   * control at the top of compact layouts. The higher-specificity selector
+   * intentionally overrides the shared scientific-ui fixed placement. */
+  body.controls-drawer-open .scientific-recovery-notice {
+    inset-block-start: auto;
+    inset-block-end: calc(var(--workbench-bottom-nav-height) + var(--scientific-ui-spacing-03));
+    max-block-size: min(42dvh, 18rem);
+    overflow: auto;
+  }
+
   body.walkthrough-active .controls-open .stage {
     display: grid;
     pointer-events: auto;
@@ -1411,6 +1427,29 @@ fieldset {
 
   .colorbar-body {
     height: 6rem;
+  }
+
+  .surface-orbit-controls {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    grid-template-columns: auto auto;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .surface-orbit-pad {
+    grid-template-columns: repeat(5, 2.25rem);
+  }
+
+  .surface-orbit-pad button {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .surface-orbit-pad button:first-child,
+  .surface-orbit-pad button:last-child {
+    grid-column: auto;
   }
 
   .help-guide-panel {

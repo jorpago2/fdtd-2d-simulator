@@ -4,6 +4,8 @@ const UI_MEASURE_MIN_INTERVAL_MS = 250;
 
 Object.assign(FDTDSim.prototype, {
 resetDiagnostics() {
+  this.diagnosticsLastUpdateTime = null;
+  this.diagnosticsSamplingActive = false;
   this.resetLineDiagnostics();
   this.resetModePortDiagnostics?.();
   this.resetAnalysisDiagnostics();
@@ -903,12 +905,24 @@ bianisotropyQuantitativeEstimate() {
 
 updateDiagnostics({ forceAnalysis = false } = {}) {
   if (!state.diagnosticsEnabled) {
-    this.resetDiagnostics();
+    if (this.diagnosticsSamplingActive) this.resetDiagnostics();
     return;
   }
+
+  const sampleTime = Number(this.time);
+  const alreadyUpdated = this.diagnosticsLastUpdateTime === sampleTime;
+  if (alreadyUpdated) {
+    if (forceAnalysis && this.analysisLastSampleTime !== sampleTime) {
+      this.updateAnalysisDiagnostics(true);
+    }
+    return;
+  }
+
   this.updateAnalysisDiagnostics(forceAnalysis);
   this.updateLineDiagnostics();
   this.updateModePortDiagnostics?.();
+  this.diagnosticsLastUpdateTime = sampleTime;
+  this.diagnosticsSamplingActive = true;
 },
 
 measureCacheKey() {

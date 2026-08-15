@@ -163,6 +163,18 @@
       beginDrag(event, "gizmo");
     }
 
+    function handleGizmoKeydown(event) {
+      if (!orbitEnabled()) return;
+      const orbit = normalizedOrbit(state);
+      if (event.key === "ArrowLeft") setOrbit(orbit.yawDeg - BUTTON_STEP_DEG, orbit.pitchDeg);
+      else if (event.key === "ArrowRight") setOrbit(orbit.yawDeg + BUTTON_STEP_DEG, orbit.pitchDeg);
+      else if (event.key === "ArrowUp") setOrbit(orbit.yawDeg, orbit.pitchDeg + BUTTON_STEP_DEG);
+      else if (event.key === "ArrowDown") setOrbit(orbit.yawDeg, orbit.pitchDeg - BUTTON_STEP_DEG);
+      else if (event.key === "Home" || event.key === "Enter" || event.key === " ") resetOrbit();
+      else return;
+      stopEvent(event);
+    }
+
     function handlePointerMoveCapture(event) {
       updateDrag(event);
     }
@@ -201,6 +213,7 @@
       el.canvas?.addEventListener("pointerdown", handleCanvasPointerDownCapture, true);
       el.canvas?.addEventListener("wheel", handleCanvasWheelCapture, { capture: true, passive: false });
       el.surfaceOrbitGizmo?.addEventListener("pointerdown", handleGizmoPointerDown);
+      el.surfaceOrbitGizmo?.addEventListener("keydown", handleGizmoKeydown);
       el.surfaceOrbitControls?.addEventListener("click", handleControlClick);
       documentRef?.addEventListener?.("pointermove", handlePointerMoveCapture, true);
       documentRef?.addEventListener?.("pointerup", handlePointerEndCapture, true);
@@ -214,6 +227,7 @@
       el.canvas?.removeEventListener("pointerdown", handleCanvasPointerDownCapture, true);
       el.canvas?.removeEventListener("wheel", handleCanvasWheelCapture, true);
       el.surfaceOrbitGizmo?.removeEventListener("pointerdown", handleGizmoPointerDown);
+      el.surfaceOrbitGizmo?.removeEventListener("keydown", handleGizmoKeydown);
       el.surfaceOrbitControls?.removeEventListener("click", handleControlClick);
       documentRef?.removeEventListener?.("pointermove", handlePointerMoveCapture, true);
       documentRef?.removeEventListener?.("pointerup", handlePointerEndCapture, true);

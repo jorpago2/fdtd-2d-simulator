@@ -39,11 +39,14 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
-      - name: Validate static site
-        run: pnpm test
+      - name: Run release validation gates
+        run: pnpm validate:ci
 
       - name: Build public artifact
         run: pnpm build
+
+      - name: Validate critical browser interactions
+        run: pnpm validate:browser:ci
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

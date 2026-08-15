@@ -26,19 +26,35 @@
       ? dependencies.prepareRuntime
       : () => Promise.resolve();
     let preparingRuntime = false;
+    let requestedRunning = null;
+    let stepQueue = Promise.resolve();
 
     async function toggleRunningWhenReady() {
+      requestedRunning = !(requestedRunning ?? Boolean(state.running));
       if (preparingRuntime) return;
       preparingRuntime = true;
       try {
         await prepareRuntime();
-        runtimeController.toggleRunning();
+        const nextRunning = requestedRunning ?? !Boolean(state.running);
+        requestedRunning = null;
+        runtimeController.setRunning(nextRunning);
+      } catch (error) {
+        requestedRunning = null;
+        global.console?.error?.("Unable to prepare the FDTD runtime.", error);
       } finally {
         preparingRuntime = false;
       }
     }
 
-    el.playPauseBtn?.addEventListener("click", () => {
+    function advanceOneStepWhenReady() {
+      stepQueue = stepQueue
+        .then(() => prepareRuntime())
+        .then(() => runtimeController.advanceOneStep())
+        .catch((error) => global.console?.error?.("Unable to advance the FDTD simulation.", error));
+      return stepQueue;
+    }
+
+    global.addEventListener("fdtd:toggle-running", () => {
       void toggleRunningWhenReady();
     });
     el.runPlayPauseBtn?.addEventListener("click", () => {
@@ -46,13 +62,13 @@
     });
 
     el.stepBtn?.addEventListener("click", () => {
-      runtimeController.advanceOneStep();
+      void advanceOneStepWhenReady();
     });
     global.addEventListener("fdtd:simulation-step", () => {
-      runtimeController.advanceOneStep();
+      void advanceOneStepWhenReady();
     });
     el.runStepBtn?.addEventListener("click", () => {
-      runtimeController.advanceOneStep();
+      void advanceOneStepWhenReady();
     });
 
     el.resetBtn?.addEventListener("click", () => {

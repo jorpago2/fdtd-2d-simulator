@@ -1,7 +1,7 @@
 (function initFdtdAppBootstrap(global) {
   "use strict";
 
-  function runAppBootstrap({
+  async function runAppBootstrap({
     layoutControlBindingsModule,
     windowRef,
     handleWindowResize,
@@ -36,7 +36,7 @@
     updateStats();
     sim.render();
     updatePerformanceStats(true);
-    initWasmBackend();
+    await initWasmBackend();
     runtimeController.startAnimationLoop();
     windowRef.dispatchEvent(new CustomEvent("fdtd:runtime-ready", { detail: { sceneLoadedFromUrl } }));
   }

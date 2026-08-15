@@ -51,6 +51,9 @@
       } else if (selectedAttribute) {
         button.setAttribute(selectedAttribute, String(active));
       }
+      if (button.getAttribute?.("role") === "tab") {
+        button.tabIndex = active ? 0 : -1;
+      }
       if (currentValue) {
         if (active) button.setAttribute("aria-current", currentValue);
         else button.removeAttribute("aria-current");

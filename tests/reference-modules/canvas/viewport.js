@@ -15,10 +15,14 @@
   function canvasPixelSize(canvasElement, windowRef = global) {
     const rect = canvasElement.getBoundingClientRect();
     const dpr = Math.max(1, windowRef.devicePixelRatio || 1);
+    const cssWidth = Number(rect.width) || 0;
+    const cssHeight = Number(rect.height) || 0;
+    const visible = cssWidth > 0 && cssHeight > 0;
     return {
-      width: Math.max(1, Math.round(rect.width * dpr)),
-      height: Math.max(1, Math.round(rect.height * dpr)),
+      width: visible ? Math.max(1, Math.round(cssWidth * dpr)) : Math.max(1, canvasElement.width || 1),
+      height: visible ? Math.max(1, Math.round(cssHeight * dpr)) : Math.max(1, canvasElement.height || 1),
       dpr,
+      visible,
     };
   }
 
@@ -197,7 +201,8 @@
       },
 
       fitCanvas() {
-        const { width, height } = canvasPixelSize(this.canvas, windowRef);
+        const { width, height, visible } = canvasPixelSize(this.canvas, windowRef);
+        if (!visible) return false;
         if (this.canvas.width !== width || this.canvas.height !== height) {
           this.canvas.width = width;
           this.canvas.height = height;
@@ -212,6 +217,7 @@
           Math.round(viewport.width),
           Math.round(viewport.height),
         ].join(",");
+        return true;
       },
     };
   }

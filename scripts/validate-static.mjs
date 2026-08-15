@@ -200,6 +200,37 @@ function validateCarbonUi(indexHtml) {
   );
 }
 
+function validateContextKindSwitchers(indexHtml) {
+  const switchers = Array.from(
+    indexHtml.matchAll(/<div\b([^>]*class="[^"]*\bcontext-kind-switcher\b[^"]*"[^>]*)>([\s\S]*?)<\/div>/g),
+  );
+  const failures = [];
+  if (switchers.length !== 3) failures.push(`expected 3 groups, found ${switchers.length}`);
+
+  switchers.forEach((switcher, switcherIndex) => {
+    const groupAttributes = switcher[1];
+    if (!/\brole="group"/.test(groupAttributes)) failures.push(`group ${switcherIndex + 1} is not role=group`);
+    const buttons = Array.from(switcher[2].matchAll(/<button\b([^>]*)>/g), (match) => match[1]);
+    if (buttons.length !== 3) failures.push(`group ${switcherIndex + 1} has ${buttons.length} buttons`);
+    const activeCount = buttons.filter((attributes) => /\bclass="[^"]*\bis-active\b[^"]*"/.test(attributes)).length;
+    if (activeCount !== 1) failures.push(`group ${switcherIndex + 1} has ${activeCount} active buttons`);
+    buttons.forEach((attributes, buttonIndex) => {
+      const kind = attributes.match(/\bdata-canvas-add="([^"]+)"/)?.[1] || `button ${buttonIndex + 1}`;
+      const active = /\bclass="[^"]*\bis-active\b[^"]*"/.test(attributes);
+      const pressed = attributes.match(/\baria-pressed="(true|false)"/)?.[1];
+      if (pressed !== String(active)) {
+        failures.push(`group ${switcherIndex + 1} ${kind} aria-pressed=${pressed || "missing"}, active=${active}`);
+      }
+    });
+  });
+
+  addCheck(
+    "context kind switcher semantics",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0 ? "3 button groups keep aria-pressed synchronized with is-active" : failures.join(", "),
+  );
+}
+
 function validatePresets(sceneCatalog, sceneDescriptions, presetSourceJs) {
   const catalogPresets = unique((sceneCatalog.scenes || []).map((scene) => scene.id).filter(Boolean));
   const presetCases = unique(extractAll(/case\s+"([^"]+)"/g, presetSourceJs));
@@ -682,6 +713,7 @@ function main() {
     missingAccessibilityHooks.length === 0 ? "PASS" : "BLOCK",
     missingAccessibilityHooks.length === 0 ? "skip link and focus target found" : missingAccessibilityHooks.join(", "),
   );
+  validateContextKindSwitchers(indexHtml);
   const { catalog, constants } = loadCatalog(
     readActiveScript(activeScripts, "constants.js"),
     readActiveScript(activeScripts, "catalog.js"),

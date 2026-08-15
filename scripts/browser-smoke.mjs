@@ -221,6 +221,24 @@ async function openApplication(page, url) {
   await page.evaluate(() => window.FdtdReady);
 }
 
+async function openFullHelpGuide(page) {
+  const headerHelp = page.locator(".scientific-header-help__button");
+  await headerHelp.click();
+  await page.getByRole("button", { name: "Open full guide" }).click();
+  await page.waitForFunction(() => {
+    const panel = document.getElementById("helpGuidePanel");
+    const bounds = panel?.getBoundingClientRect();
+    return Boolean(
+      panel &&
+      !panel.hidden &&
+      getComputedStyle(panel).display !== "none" &&
+      bounds &&
+      bounds.width > 0 &&
+      bounds.height > 0
+    );
+  });
+}
+
 async function selectPreset(page, preset) {
   await page.evaluate((nextPreset) => {
     if (!window.FdtdApp?.selectScenePreset) throw new Error("FdtdApp.selectScenePreset() is unavailable");
@@ -6528,19 +6546,68 @@ async function runSmokeCase(page, testCase) {
 
 async function runReproducibilitySmoke(page) {
   const snapshot = await page.evaluate(() => exportSceneState({ includeMaterials: true }));
-  const passed =
+  const serializable =
     snapshot?.kind === "fdtd-2d-scene" &&
     Number.isInteger(snapshot?.grid?.nx) &&
     Number.isInteger(snapshot?.grid?.ny) &&
     Array.isArray(snapshot?.materials);
+  const originalTheme = snapshot?.state?.theme === "dark" ? "dark" : "light";
+  const importedTheme = originalTheme === "dark" ? "light" : "dark";
+  const applySnapshotTheme = async (theme) => {
+    await page.evaluate(({ sceneSnapshot, nextTheme }) => {
+      const themedSnapshot = structuredClone(sceneSnapshot);
+      themedSnapshot.state = { ...themedSnapshot.state, theme: nextTheme };
+      if (!window.FdtdApp?.applySceneState) {
+        throw new Error("FdtdApp.applySceneState() is unavailable");
+      }
+      window.FdtdApp.applySceneState(themedSnapshot);
+    }, { sceneSnapshot: snapshot, nextTheme: theme });
+    await page.waitForFunction((expectedTheme) => {
+      const carbonTheme = expectedTheme === "dark" ? "g100" : "g10";
+      const providerRoots = Array.from(document.querySelectorAll(".scientific-theme"));
+      return (
+        document.documentElement.dataset.theme === expectedTheme
+        && document.documentElement.dataset.scientificTheme === carbonTheme
+        && providerRoots.length > 0
+        && providerRoots.every((root) => root.getAttribute("data-scientific-theme") === carbonTheme)
+      );
+    }, theme);
+    return page.evaluate(() => ({
+      runtimeTheme: document.documentElement.dataset.theme || "",
+      scientificTheme: document.documentElement.dataset.scientificTheme || "",
+      headerTheme: document.querySelector(".scientific-header")?.closest(".scientific-theme")?.getAttribute("data-scientific-theme") || "",
+      providerThemes: Array.from(document.querySelectorAll(".scientific-theme"))
+        .map((root) => root.getAttribute("data-scientific-theme") || ""),
+    }));
+  };
+  let themeRoundTrip = null;
+  if (serializable) {
+    const imported = await applySnapshotTheme(importedTheme);
+    const restored = await applySnapshotTheme(originalTheme);
+    themeRoundTrip = { originalTheme, importedTheme, imported, restored };
+  }
+  const failures = [];
+  if (!serializable) failures.push("scene snapshot was not serializable");
+  if (
+    serializable
+    && (
+      themeRoundTrip?.imported.runtimeTheme !== importedTheme
+      || themeRoundTrip?.imported.headerTheme !== (importedTheme === "dark" ? "g100" : "g10")
+      || themeRoundTrip?.restored.runtimeTheme !== originalTheme
+      || themeRoundTrip?.restored.headerTheme !== (originalTheme === "dark" ? "g100" : "g10")
+    )
+  ) {
+    failures.push("scene import did not synchronize runtime and Carbon provider themes");
+  }
   return {
     id: "json_reproducibility",
     preset: "current",
     priority: "P1",
-    passed,
+    passed: failures.length === 0,
     grid: snapshot?.grid,
     materialCells: snapshot?.materials?.length ?? null,
-    failures: passed ? [] : ["scene snapshot was not serializable"],
+    themeRoundTrip,
+    failures,
   };
 }
 
@@ -6570,9 +6637,12 @@ async function runCarbonTypographySmoke(page) {
         const element = document.querySelector(selector);
         return { selector, family: element ? getComputedStyle(element).fontFamily : "" };
       });
-    const numericFamilies = [".colorbar-labels", ".status-strip"].map((selector) => ({
+    const numericFamilies = [".colorbar-labels", ".fdtd-status-strip"].map((selector) => ({
       selector,
-      family: getComputedStyle(document.querySelector(selector)).fontFamily,
+      family: (() => {
+        const element = document.querySelector(selector);
+        return element ? getComputedStyle(element).fontFamily : "";
+      })(),
     }));
     return {
       samples,
@@ -6600,17 +6670,17 @@ async function runCarbonTypographySmoke(page) {
 
 async function runCanvasActionMenuSmoke(page) {
   const status = await page.evaluate(() => {
-    const visible = (id) => {
-      const node = document.getElementById(id);
+    const visible = (selector) => {
+      const node = document.querySelector(selector);
       return Boolean(node && getComputedStyle(node).display !== "none" && node.getClientRects().length > 0);
     };
     return {
       legacyOverflowPresent: Boolean(document.getElementById("canvasActionToggle")),
-      startVisible: visible("playPauseBtn"),
-      stepVisible: visible("stepBtn"),
-      saveVisible: visible("saveBtn"),
-      themeVisible: visible("themeToggleBtn"),
-      modeSwitcherVisible: visible("selectModeBtn") && visible("brushModeBtn"),
+      startVisible: visible("#playPauseBtn"),
+      stepVisible: visible("#stepBtn"),
+      saveVisible: visible("#saveBtn"),
+      themeVisible: visible(".scientific-theme-toggle"),
+      modeSwitcherVisible: visible("#selectModeBtn") && visible("#brushModeBtn"),
     };
   });
   const failures = [];
@@ -6665,14 +6735,15 @@ async function runCanvasPngExportSmoke(page) {
 }
 
 async function runHelpGuideSmoke(page) {
-  await page.evaluate(() => {
-    document.getElementById("helpGuideToggle")?.click();
-  });
+  await openFullHelpGuide(page);
   const openStatus = await page.evaluate(() => {
-    const toggle = document.getElementById("helpGuideToggle");
+    const legacyToggle = document.getElementById("helpGuideToggle");
+    const trigger = document.querySelector(".scientific-header-help__button");
+    const header = document.querySelector(".scientific-header");
     const panel = document.getElementById("helpGuidePanel");
     const panelRect = panel?.getBoundingClientRect();
-    const toggleRect = toggle?.getBoundingClientRect();
+    const triggerRect = trigger?.getBoundingClientRect();
+    const headerRect = header?.getBoundingClientRect();
     const style = panel ? getComputedStyle(panel) : null;
     const withinViewport =
       panelRect &&
@@ -6680,18 +6751,22 @@ async function runHelpGuideSmoke(page) {
       panelRect.top >= 0 &&
       panelRect.right <= window.innerWidth &&
       panelRect.bottom <= window.innerHeight;
-    const bottomRight =
-      toggleRect &&
-      toggleRect.right > window.innerWidth - 90 &&
-      toggleRect.bottom > window.innerHeight - 90;
     return {
       opened: Boolean(panel && !panel.hidden && style?.display !== "none"),
-      expanded: toggle?.getAttribute("aria-expanded") || "",
+      expanded: legacyToggle?.getAttribute("aria-expanded") || "",
       cardCount: panel?.querySelectorAll(".help-guide-card").length || 0,
       title: panel?.querySelector("#helpGuideTitle")?.textContent?.trim() || "",
       intro: panel?.querySelector("#helpGuideIntro")?.textContent?.trim() || "",
       withinViewport: Boolean(withinViewport),
-      bottomRight: Boolean(bottomRight),
+      triggerVisible: Boolean(triggerRect && triggerRect.width > 0 && triggerRect.height > 0),
+      triggerWithinHeader: Boolean(
+        triggerRect &&
+          headerRect &&
+          triggerRect.left >= headerRect.left &&
+          triggerRect.right <= headerRect.right &&
+          triggerRect.top >= headerRect.top &&
+          triggerRect.bottom <= headerRect.bottom,
+      ),
     };
   });
   const detailStatus = await page.evaluate(() => {
@@ -6741,19 +6816,96 @@ async function runHelpGuideSmoke(page) {
       sections,
     };
   });
+  const focusTrapSetup = await page.evaluate(() => {
+    const panel = document.getElementById("helpGuidePanel");
+    const focusable = Array.from(panel?.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || []).filter((element) => {
+      if (element.closest?.('[hidden], [inert], [aria-hidden="true"]')) return false;
+      return element.getClientRects().length > 0;
+    });
+    focusable[0]?.focus();
+    return {
+      modal: panel?.getAttribute("aria-modal") || "",
+      firstId: focusable[0]?.id || focusable[0]?.getAttribute("data-help-guide-topic") || "",
+      lastId: focusable.at(-1)?.id || focusable.at(-1)?.getAttribute("data-help-guide-topic") || "",
+    };
+  });
+  await page.keyboard.press("Shift+Tab");
+  const shiftTabTarget = await page.evaluate(() =>
+    document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || "",
+  );
+  await page.keyboard.press("Tab");
+  const tabTarget = await page.evaluate(() =>
+    document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || "",
+  );
+  await page.locator('[data-help-guide-topic="edit"]').click();
+  const detailFocusSetup = await page.evaluate(() => {
+    const panel = document.getElementById("helpGuidePanel");
+    const focusable = Array.from(panel?.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) || []).filter((element) => {
+      if (element.closest?.('[hidden], [inert], [aria-hidden="true"]')) return false;
+      return element.getClientRects().length > 0;
+    });
+    focusable[0]?.focus();
+    const key = (element) => element?.id || element?.getAttribute?.("data-help-guide-topic") || element?.textContent?.trim() || "";
+    return { firstId: key(focusable[0]), lastId: key(focusable.at(-1)), visibleCount: focusable.length };
+  });
+  await page.keyboard.press("Shift+Tab");
+  const detailShiftTabTarget = await page.evaluate(() =>
+    document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || document.activeElement?.textContent?.trim() || "",
+  );
+  await page.keyboard.press("Tab");
+  const detailTabTarget = await page.evaluate(() =>
+    document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || document.activeElement?.textContent?.trim() || "",
+  );
+  const runningBeforeBackgroundClick = await page.evaluate(() => Boolean(state.running));
+  await page.locator("#playPauseBtn").click();
+  const backgroundClickState = await page.evaluate(() => ({
+    guideClosed: Boolean(document.getElementById("helpGuidePanel")?.hidden),
+    running: Boolean(state.running),
+  }));
+  const workflowButton = page.locator('.mobile-layer-button[data-mobile-layer="scenes"]:visible');
+  if ((await workflowButton.getAttribute("aria-expanded")) !== "true") {
+    await workflowButton.click();
+    await page.waitForFunction(() => document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "false");
+  }
+  await openFullHelpGuide(page);
   await page.keyboard.press("Escape");
   await page.waitForTimeout(20);
   const closedStatus = await page.evaluate(() => {
-    const toggle = document.getElementById("helpGuideToggle");
+    const legacyToggle = document.getElementById("helpGuideToggle");
+    const trigger = document.querySelector(".scientific-header-help__button");
     const panel = document.getElementById("helpGuidePanel");
     return {
       closed: Boolean(panel?.hidden),
-      expanded: toggle?.getAttribute("aria-expanded") || "",
-      focusReturned: document.activeElement === toggle,
+      expanded: legacyToggle?.getAttribute("aria-expanded") || "",
+      focusReturned: document.activeElement === trigger,
+      drawerStillOpen: document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "false",
     };
   });
+  if (closedStatus.drawerStillOpen) {
+    await page.locator("#controlDrawerCloseBtn").click();
+  }
   const failures = [];
-  if (!openStatus.opened) failures.push("help guide did not open from the circular toggle");
+  if (!openStatus.opened) failures.push("help guide did not open from the visible Carbon header action");
+  if (focusTrapSetup.modal !== "true") failures.push("help guide is not exposed as a modal dialog");
+  if (shiftTabTarget !== focusTrapSetup.lastId || tabTarget !== focusTrapSetup.firstId) {
+    failures.push(`help guide focus did not wrap (${focusTrapSetup.firstId}/${shiftTabTarget}/${tabTarget}/${focusTrapSetup.lastId})`);
+  }
+  if (
+    detailFocusSetup.visibleCount < 2
+    || detailShiftTabTarget !== detailFocusSetup.lastId
+    || detailTabTarget !== detailFocusSetup.firstId
+  ) {
+    failures.push(
+      `help guide detail focus did not wrap (${detailFocusSetup.firstId}/${detailShiftTabTarget}/${detailTabTarget}/${detailFocusSetup.lastId})`,
+    );
+  }
+  if (!backgroundClickState.guideClosed || backgroundClickState.running !== runningBeforeBackgroundClick) {
+    failures.push("help guide allowed a background action while modal");
+  }
   if (openStatus.expanded !== "true") failures.push("help guide toggle did not report aria-expanded=true");
   if (openStatus.cardCount < 4) failures.push("help guide does not expose the four basic workflow cards");
   if (detailStatus.detailsCount > 0) failures.push("help guide should navigate to detail views instead of expanding cards");
@@ -6775,16 +6927,24 @@ async function runHelpGuideSmoke(page) {
   if (!openStatus.title.includes("simulator")) failures.push("help guide title is missing simulator context");
   if (!openStatus.intro.includes("FDTD")) failures.push("help guide intro does not mention the FDTD update");
   if (!openStatus.withinViewport) failures.push("help guide panel overflows the viewport");
-  if (!openStatus.bottomRight) failures.push("help guide toggle is not anchored near the lower-right display corner");
+  if (!openStatus.triggerVisible || !openStatus.triggerWithinHeader) {
+    failures.push("visible help action is not contained in the application header");
+  }
   if (!closedStatus.closed) failures.push("help guide did not close with Escape");
   if (closedStatus.expanded !== "false") failures.push("help guide toggle did not reset aria-expanded=false");
-  if (!closedStatus.focusReturned) failures.push("help guide did not return focus to the toggle");
+  if (!closedStatus.focusReturned) failures.push("help guide did not return focus to the visible header action");
+  if (!closedStatus.drawerStillOpen) failures.push("closing the help guide also closed the underlying workflow panel");
   return {
     id: "help_guide_overlay",
     preset: "current",
     priority: "P1",
     openStatus,
     detailStatus,
+    focusTrap: {
+      overview: { ...focusTrapSetup, shiftTabTarget, tabTarget },
+      detail: { ...detailFocusSetup, shiftTabTarget: detailShiftTabTarget, tabTarget: detailTabTarget },
+      backgroundClickState,
+    },
     closedStatus,
     passed: failures.length === 0,
     failures,
@@ -6802,7 +6962,14 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
     try {
       await openApplication(page, url);
-      await page.click("#helpGuideToggle");
+      if (viewport.name === "mobile") {
+        const workflowButton = page.locator('.mobile-layer-button[data-mobile-layer="scenes"]:visible');
+        if ((await workflowButton.getAttribute("aria-expanded")) !== "true") {
+          await workflowButton.click();
+        }
+        await page.waitForFunction(() => document.querySelector(".app-shell")?.classList.contains("controls-open"));
+      }
+      await openFullHelpGuide(page);
       const layoutState = await page.evaluate((name) => {
         const rect = (node) => {
           if (!node) return null;
@@ -6817,17 +6984,32 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
           };
         };
         const panel = document.getElementById("helpGuidePanel");
-        const toggle = document.getElementById("helpGuideToggle");
+        const trigger = document.querySelector(".scientific-header-help__button");
+        const header = document.querySelector(".scientific-header");
         const footer = document.querySelector(".canvas-footer");
         const panelRect = rect(panel);
-        const toggleRect = rect(toggle);
+        const triggerRect = rect(trigger);
+        const headerRect = rect(header);
         const footerRect = rect(footer);
         const style = panel ? getComputedStyle(panel) : null;
+        const intersectionArea = (a, b) =>
+          a && b
+            ? Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+              Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+            : 0;
         return {
           viewport: name,
-          opened: Boolean(panel && !panel.hidden && style?.display !== "none"),
+          opened: Boolean(
+            panel &&
+            !panel.hidden &&
+            style?.display !== "none" &&
+            panelRect?.width > 0 &&
+            panelRect?.height > 0
+          ),
+          compactDrawerClosed: !document.querySelector(".app-shell")?.classList.contains("controls-open"),
           panel: panelRect,
-          toggle: toggleRect,
+          trigger: triggerRect,
+          header: headerRect,
           footer: footerRect,
           withinViewport: Boolean(
             panelRect &&
@@ -6836,8 +7018,16 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
               panelRect.right <= window.innerWidth &&
               panelRect.bottom <= window.innerHeight,
           ),
-          panelAboveToggle: Boolean(panelRect && toggleRect && panelRect.bottom <= toggleRect.top - 4),
-          toggleAboveFooter: Boolean(toggleRect && footerRect && toggleRect.bottom <= footerRect.top - 2),
+          triggerVisible: Boolean(triggerRect && triggerRect.width > 0 && triggerRect.height > 0),
+          triggerWithinHeader: Boolean(
+            triggerRect &&
+              headerRect &&
+              triggerRect.left >= headerRect.left &&
+              triggerRect.right <= headerRect.right &&
+              triggerRect.top >= headerRect.top &&
+              triggerRect.bottom <= headerRect.bottom,
+          ),
+          panelFooterOverlap: intersectionArea(panelRect, footerRect),
           scrollableWhenNeeded: Boolean(panel && panel.scrollHeight >= panel.clientHeight),
         };
       }, viewport.name);
@@ -6850,7 +7040,17 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
           referenceCollapsed: reference?.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "false",
         };
       });
-      states.push({ ...layoutState, ...editState });
+      let closeState = null;
+      if (viewport.name === "mobile") {
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(() => Boolean(document.getElementById("helpGuidePanel")?.hidden));
+        closeState = await page.evaluate(() => ({
+          closed: Boolean(document.getElementById("helpGuidePanel")?.hidden),
+          drawerClosed: !document.querySelector(".app-shell")?.classList.contains("controls-open"),
+          focusReturned: document.activeElement === document.querySelector(".scientific-header-help__button"),
+        }));
+      }
+      states.push({ ...layoutState, ...editState, closeState });
     } finally {
       await page.close();
     }
@@ -6859,9 +7059,20 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
   const failures = [];
   for (const state of states) {
     if (!state.opened) failures.push(`${state.viewport}: help guide did not open`);
+    if (state.viewport === "mobile" && !state.compactDrawerClosed) {
+      failures.push("mobile: opening the full help guide did not close the compact drawer");
+    }
+    if (
+      state.viewport === "mobile" &&
+      (!state.closeState?.closed || !state.closeState?.drawerClosed || !state.closeState?.focusReturned)
+    ) {
+      failures.push("mobile: Escape did not close only the guide and return focus to the header help action");
+    }
     if (!state.withinViewport) failures.push(`${state.viewport}: help guide panel overflows the viewport`);
-    if (!state.panelAboveToggle) failures.push(`${state.viewport}: help guide panel overlaps the toggle`);
-    if (!state.toggleAboveFooter) failures.push(`${state.viewport}: help guide toggle overlaps the footer`);
+    if (!state.triggerVisible || !state.triggerWithinHeader) {
+      failures.push(`${state.viewport}: visible help action is outside the application header`);
+    }
+    if (state.panelFooterOverlap > 1) failures.push(`${state.viewport}: help guide overlaps the footer`);
     if (!state.scrollableWhenNeeded) failures.push(`${state.viewport}: help guide panel is not scrollable`);
     if (!state.referenceCollapsed) failures.push(`${state.viewport}: scientific editing reference is expanded by default`);
     if (state.editScrollHeight > 1200) failures.push(`${state.viewport}: default Edit guide remains excessively tall`);
@@ -6886,7 +7097,7 @@ async function runWalkthroughSmoke(browser, url) {
     const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
     try {
       await openApplication(page, url);
-      await page.click("#helpGuideToggle");
+      await openFullHelpGuide(page);
       await page.click("#walkthroughStartBtn");
       for (let stepIndex = 0; stepIndex < 7; stepIndex += 1) {
         await page.waitForTimeout(80);
@@ -6943,7 +7154,7 @@ async function runWalkthroughSmoke(browser, url) {
         viewport: name,
         stepIndex: "closed",
         closed: Boolean(document.getElementById("walkthroughPanel")?.hidden),
-        focusReturned: document.activeElement === document.getElementById("helpGuideToggle"),
+        focusReturned: document.activeElement === document.querySelector(".scientific-header-help__button"),
       }), viewport.name));
     } finally {
       await page.close();
@@ -6954,7 +7165,7 @@ async function runWalkthroughSmoke(browser, url) {
   for (const state of states) {
     if (state.stepIndex === "closed") {
       if (!state.closed) failures.push(`${state.viewport}: walkthrough did not close after Finish`);
-      if (!state.focusReturned) failures.push(`${state.viewport}: walkthrough did not return focus to the guide toggle`);
+      if (!state.focusReturned) failures.push(`${state.viewport}: walkthrough did not return focus to the visible help action`);
       continue;
     }
     const expectedProgress = `Step ${state.stepIndex + 1} of 7`;
@@ -7013,9 +7224,10 @@ async function runCanvasFooterSmoke(browser, url) {
             height: bounds.height,
           };
         };
-        const footer = document.querySelector(".canvas-footer");
+        const footer = document.querySelector(".fdtd-status-strip");
         const frame = document.querySelector(".canvas-frame");
-        const help = document.getElementById("helpGuideToggle");
+        const help = document.querySelector(".scientific-header-help__button");
+        const author = footer?.querySelector(".status-strip-author");
         const links = Array.from(footer?.querySelectorAll("a") || []).map((link) => ({
           text: link.textContent.trim(),
           href: link.href,
@@ -7030,6 +7242,7 @@ async function runCanvasFooterSmoke(browser, url) {
           footer: footerRect,
           frame: frameRect,
           help: helpRect,
+          authorVisible: Boolean(author && author.getClientRects().length > 0),
           withinViewport: Boolean(
             footerRect &&
               footerRect.left >= 0 &&
@@ -7047,11 +7260,13 @@ async function runCanvasFooterSmoke(browser, url) {
 
   const failures = [];
   for (const state of states) {
-    if (!state.text.includes("Jorge Parra")) failures.push(`${state.viewport}: footer does not show Jorge Parra`);
-    if (!state.text.includes("Online Simulators & Tools")) failures.push(`${state.viewport}: footer tools label missing`);
+    const compact = state.viewport === "mobile";
+    if (!compact && !state.text.includes("Jorge Parra")) failures.push(`${state.viewport}: footer does not show Jorge Parra`);
+    if (!compact && !state.text.includes("Online Simulators & Tools")) failures.push(`${state.viewport}: footer tools label missing`);
     if (state.text.toLowerCase().includes("github")) failures.push(`${state.viewport}: footer should not expose GitHub text`);
-    if (!state.links.some((link) => link.href === "https://www.uv.es/jorpago2")) failures.push(`${state.viewport}: footer university profile link missing`);
-    if (!state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer tools link missing`);
+    if (!compact && !state.links.some((link) => link.href === "https://www.uv.es/jorpago2")) failures.push(`${state.viewport}: footer university profile link missing`);
+    if (!compact && !state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer tools link missing`);
+    if (compact && state.authorVisible) failures.push(`${state.viewport}: compact status bar does not hide secondary author links`);
     if (!state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
     if (!state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
     if (!state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
@@ -7107,6 +7322,11 @@ async function runControlNavigationSmoke(page) {
     const navigationState = {
       tabLabels,
       mobileLabels,
+      tabStops: tabButtons.map((button) => ({
+        name: button.dataset.controlTab || "",
+        selected: button.getAttribute("aria-selected") || "",
+        tabIndex: button.tabIndex,
+      })),
       hasVisualTab: Boolean(document.getElementById("tab-visual")),
       simulateState,
       resultsState,
@@ -7116,11 +7336,18 @@ async function runControlNavigationSmoke(page) {
     return navigationState;
   });
   const failures = [];
-  const expectedTabs = ["1 Scenes", "2 Simulate", "3 Results", "4 Numerics"];
-  const expectedMobile = ["Scene", "Simulate", "Results", "Numerics"];
+  const expectedTabs = ["1 Model", "2 Run", "3 Measure", "4 Validate"];
+  const expectedMobile = ["Model", "Run", "Measure", "Validate"];
   if (status.tabLabels.join("|") !== expectedTabs.join("|")) failures.push("desktop control tabs do not match the four-section flow");
   if (status.mobileLabels.join("|") !== expectedMobile.join("|")) failures.push("mobile control layers do not match the four-section flow");
   if (status.hasVisualTab) failures.push("standalone Visual tab still exists after merging into Simulate");
+  if (
+    status.tabStops.filter((tab) => tab.tabIndex === 0).length !== 1
+    || status.tabStops.find((tab) => tab.tabIndex === 0)?.name !== "config"
+    || status.tabStops.some((tab) => (tab.name === "config") !== (tab.selected === "true"))
+  ) {
+    failures.push(`control tabs do not use a selected-only tab stop: ${JSON.stringify(status.tabStops)}`);
+  }
   if (status.simulateState?.activePanel !== "tab-simulation") failures.push("Simulate tab did not activate the simulation panel");
   if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
     failures.push("Simulate tab does not contain both run and visual controls");
@@ -7129,7 +7356,7 @@ async function runControlNavigationSmoke(page) {
     failures.push("Results persistent sections are not all visible");
   }
   if (status.resultsState?.performanceInResults) failures.push("Performance panel is still under Results");
-  if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Solver summary") {
+  if (status.numericsState?.activePanel !== "tab-config" || status.numericsState?.numericsTitle !== "Numerical preflight") {
     failures.push("Numerics tab did not activate the numerical setup panel");
   }
   if (!status.numericsState?.performanceInNumerics) failures.push("Performance panel is missing from Numerics");
@@ -7919,7 +8146,7 @@ async function runMobileToolbarHeightSmoke(browser, url) {
         playIcon: rect("#playPauseBtn svg"),
         overflowButton: rect(".header-overflow-menu"),
         hiddenDesktopActions:
-          !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible("#themeToggleBtn") && !visible(".interaction-toggle"),
+          !visible("#stepBtn") && !visible("#resetBtn") && !visible("#saveBtn") && !visible(".scientific-theme-toggle") && !visible(".interaction-toggle"),
         legacyOverflowPresent: Boolean(document.getElementById("canvasActionToggle")),
         mobileNav: rect('nav[aria-label="Simulation workflow"]'),
         mobileNavButtonBottom: Math.max(
@@ -7943,6 +8170,11 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     await page.locator(".header-overflow-menu").click();
     const overflowItems = await page.getByRole("menuitem").allTextContents();
     await page.keyboard.press("Escape");
+    await page.evaluate(() => {
+      state.diagnosticsEnabled = true;
+      state.analysisEnabled = true;
+      sim.resetDiagnostics();
+    });
     await page.locator("#playPauseBtn").click();
     await page.waitForFunction(() => document.querySelector(".scientific-header__status")?.dataset.state === "running");
     await page.waitForTimeout(600);
@@ -7951,6 +8183,9 @@ async function runMobileToolbarHeightSmoke(browser, url) {
       status: document.querySelector(".scientific-header__status")?.dataset.state || "",
       accessibleName: document.getElementById("playPauseBtn")?.getAttribute("aria-label") || "",
       solverSteps: Number(sim.time) || 0,
+      diagnosticSamples: Number(sim.diagnosticSamples) || 0,
+      lineDftSamples: Number(sim.diagnosticDftSampleCount) || 0,
+      analysisSamples: Number(sim.analysisSamples) || 0,
       engine: sim.engineLabel?.() || "",
     }));
     await page.locator("#playPauseBtn").click();
@@ -7993,12 +8228,134 @@ async function runMobileToolbarHeightSmoke(browser, url) {
     if (runState.solverSteps < 100) {
       failures.push(`compact runtime advanced only ${runState.solverSteps} steps in 600 ms`);
     }
+    if (runState.diagnosticSamples < 48 || runState.lineDftSamples < 48 || runState.analysisSamples < 1) {
+      failures.push(
+        `Play did not accumulate monitor data (${runState.diagnosticSamples}/${runState.lineDftSamples}/${runState.analysisSamples})`,
+      );
+    }
     return {
       id: "mobile_toolbar_height",
       preset: "current",
       priority: "P1",
       ...status,
       runState,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function runHeaderBreakpointInteractionSmoke(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  const failures = [];
+  const runtimeErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") runtimeErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+
+  async function toggleAndRead(expectedRunning) {
+    await page.locator("#playPauseBtn").click();
+    await page.waitForFunction(
+      (running) => Boolean(state.running) === running,
+      expectedRunning,
+    );
+    return page.evaluate(() => ({
+      label: document.getElementById("playPauseBtn")?.getAttribute("aria-label") || "",
+      pressed: document.getElementById("playPauseBtn")?.getAttribute("aria-pressed") || "",
+      running: Boolean(state.running),
+      time: Number(sim.time) || 0,
+    }));
+  }
+
+  try {
+    await openApplication(page, url);
+    await page.locator("#playPauseBtn").evaluate((button) => {
+      button.dataset.breakpointProbe = "desktop-node";
+    });
+    const desktopStart = await toggleAndRead(true);
+    const desktopPause = await toggleAndRead(false);
+
+    await page.locator("#playPauseBtn").focus();
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.waitForFunction(() => !document.querySelector("#playPauseBtn .simulation-run-label"));
+    await page.waitForFunction(() => document.activeElement?.id === "playPauseBtn");
+    const compactRunFocusPreserved = await page.evaluate(() => document.activeElement?.id === "playPauseBtn");
+    const compactNodeReplaced = await page.locator("#playPauseBtn").evaluate(
+      (button) => button.dataset.breakpointProbe !== "desktop-node",
+    );
+    const compactStart = await toggleAndRead(true);
+    const compactPause = await toggleAndRead(false);
+
+    const workflowButton = page.locator('.mobile-layer-button[data-mobile-layer="scenes"]:visible');
+    const initiallyExpanded = await workflowButton.getAttribute("aria-expanded");
+    await workflowButton.click();
+    await page.waitForFunction(() => document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "false");
+    const openExpanded = await workflowButton.getAttribute("aria-expanded");
+    await page.locator("#controlDrawerCloseBtn").click();
+    await page.waitForFunction(() => document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "true");
+    await page.waitForFunction(
+      () => document.querySelector('.mobile-layer-button[data-mobile-layer="scenes"]:not([hidden])')?.getAttribute("aria-expanded") === "false",
+    );
+    const closedExpanded = await workflowButton.getAttribute("aria-expanded");
+
+    await page.locator(".header-overflow-menu").focus();
+    const compactOverflowFocusBeforeResize = await page.evaluate(() => ({
+      tag: document.activeElement?.tagName || "",
+      className: document.activeElement?.className || "",
+      label: document.activeElement?.getAttribute?.("aria-label") || "",
+    }));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.waitForFunction(() => Boolean(document.querySelector("#playPauseBtn .simulation-run-label")));
+    await page.waitForFunction(
+      () => document.activeElement?.matches?.(".scientific-theme-toggle"),
+      null,
+      { timeout: 5_000 },
+    );
+    const desktopThemeFocusRestored = await page.evaluate(
+      () => Boolean(document.activeElement?.matches?.(".scientific-theme-toggle")),
+    );
+    const restoredStart = await toggleAndRead(true);
+    const restoredPause = await toggleAndRead(false);
+
+    failures.push(...runtimeErrors);
+    if (!desktopStart.running || desktopStart.pressed !== "true" || desktopPause.running) {
+      failures.push("desktop Run/Pause did not synchronize before the breakpoint change");
+    }
+    if (!compactStart.running || compactStart.pressed !== "true" || compactPause.running) {
+      failures.push("Run/Pause stopped working after entering the compact header");
+    }
+    if (initiallyExpanded !== "false" || openExpanded !== "true" || closedExpanded !== "false") {
+      failures.push(`workflow expansion state was ${initiallyExpanded}/${openExpanded}/${closedExpanded}`);
+    }
+    if (!restoredStart.running || restoredStart.pressed !== "true" || restoredPause.running) {
+      failures.push("Run/Pause stopped working after returning to the desktop header");
+    }
+    if (!(compactPause.time > desktopPause.time && restoredPause.time > compactPause.time)) {
+      failures.push("solver time did not advance through both responsive transitions");
+    }
+    if (!compactRunFocusPreserved || !desktopThemeFocusRestored) {
+      failures.push("responsive header did not preserve focus on equivalent Run/theme actions");
+    }
+
+    return {
+      id: "header_breakpoint_interaction",
+      preset: "current",
+      priority: "P0",
+      compactNodeReplaced,
+      compactRunFocusPreserved,
+      compactOverflowFocusBeforeResize,
+      desktopThemeFocusRestored,
+      desktopStart,
+      desktopPause,
+      compactStart,
+      compactPause,
+      restoredStart,
+      restoredPause,
+      workflowExpansion: { initiallyExpanded, openExpanded, closedExpanded },
       passed: failures.length === 0,
       failures,
     };
@@ -8049,7 +8406,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
         return owner === button || button.contains(owner);
       });
     const panel = document.getElementById("controlPanel");
-    const help = bounds(".help-guide-toggle-mount");
+    const help = bounds(".scientific-header-help__button");
     const colorbar = bounds(".colorbar");
     const visible = (selector) => {
       const node = document.querySelector(selector);
@@ -8073,7 +8430,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
         save: visible("#saveBtn"),
         reset: visible("#resetBtn"),
         interaction: visible(".interaction-toggle"),
-        theme: visible("#themeToggleBtn"),
+        theme: visible(".scientific-theme-toggle"),
         overflow: visible(".header-overflow-menu"),
       },
       navButtonsUnobscured,
@@ -8101,7 +8458,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.waitForTimeout(250);
     const threeDControls = await page.evaluate(() => {
       const orbit = document.querySelector(".surface-orbit-controls");
-      const help = document.querySelector(".help-guide-toggle-mount");
+      const help = document.querySelector(".scientific-header-help__button");
       const colorbar = document.querySelector(".colorbar");
       const surface = document.querySelector("#surfaceCanvas");
       if (!orbit || !help || !colorbar || !surface) return { available: false, overlap: 0 };
@@ -8122,7 +8479,16 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
         colorbar: { left: colorbarRect.left, right: colorbarRect.right, top: colorbarRect.top, bottom: colorbarRect.bottom },
       };
     });
-    await page.locator("#helpGuideToggle").click();
+    await page.locator("#surfaceOrbitGizmo").focus();
+    const orbitBeforeKeyboard = await page.evaluate(() => Number(state.surfaceOrbitYawDeg) || 0);
+    await page.keyboard.press("ArrowRight");
+    const orbitAfterKeyboard = await page.evaluate(() => Number(state.surfaceOrbitYawDeg) || 0);
+    await page.keyboard.press("Home");
+    const orbitAfterReset = await page.evaluate(() => ({
+      pitch: Number(state.surfaceOrbitPitchDeg) || 0,
+      yaw: Number(state.surfaceOrbitYawDeg) || 0,
+    }));
+    await openFullHelpGuide(page);
     const threeDGuide = await page.evaluate(() => ({
       open: !document.getElementById("helpGuidePanel")?.hidden,
       orbitVisibility: getComputedStyle(document.querySelector(".surface-orbit-controls")).visibility,
@@ -8161,6 +8527,12 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     if (!threeDControls.available || threeDControls.overlap > 1) {
       failures.push("3D orbit controls overlap the help action in compact landscape");
     }
+    if (Math.abs(orbitAfterKeyboard - orbitBeforeKeyboard) < 1) {
+      failures.push("3D orbit gizmo did not respond to keyboard arrows");
+    }
+    if (Math.abs(orbitAfterReset.yaw) > 1e-9 || Math.abs(orbitAfterReset.pitch) > 1e-9) {
+      failures.push("3D orbit gizmo Home shortcut did not reset the view");
+    }
     if (threeDControls.colorbarOverlap > 1) failures.push("3D orbit controls overlap the colorbar in compact landscape");
     if (threeDControls.renderer?.lastDrawingBuffer !== threeDControls.surfaceSize) {
       failures.push(
@@ -8179,6 +8551,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
       open,
       reclosed,
       threeDControls,
+      orbitKeyboard: { orbitBeforeKeyboard, orbitAfterKeyboard, orbitAfterReset },
       threeDGuide,
       passed: failures.length === 0,
       failures,
@@ -8286,7 +8659,7 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
       const canvasBounds = document.querySelector("#simCanvas")?.getBoundingClientRect();
       const menuBounds = document.querySelector("#brushMenu")?.getBoundingClientRect();
       const colorbarBounds = document.querySelector(".colorbar")?.getBoundingClientRect();
-      const helpBounds = document.querySelector("#helpGuideToggle")?.getBoundingClientRect();
+      const helpBounds = document.querySelector(".scientific-header-help__button")?.getBoundingClientRect();
       return {
         appState: document.querySelector(".app-shell")?.classList.contains("contextual-inspector-open"),
         canvasMenuOverlap: intersectionArea(canvasBounds, menuBounds),
@@ -8771,7 +9144,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     const sampleTheme = async (theme) => {
       const currentTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       if (currentTheme !== theme) {
-        const themeAction = page.locator("#themeToggleBtn");
+        const themeAction = page.locator(".scientific-theme-toggle");
         states.desktopThemeActionVisible = await themeAction.isVisible();
         await themeAction.click();
         await page.waitForTimeout(80);
@@ -8850,17 +9223,20 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     states.compactThemeActionVisible = await compactThemeAction.isVisible();
     if (states.compactThemeActionVisible) await compactThemeAction.click();
     await page.waitForTimeout(80);
-    states.compact = await page.evaluate(() => ({
-      theme: document.documentElement.dataset.theme,
-      headerTheme: document.querySelector(".scientific-header")?.closest(".cds--g10") ? "g10" : "unknown",
-      metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
-      overflowVisible: Boolean(
-        document.querySelector(".header-overflow-menu")
-        && getComputedStyle(document.querySelector(".header-overflow-menu")).display !== "none"
-      ),
-      desktopThemeHidden: getComputedStyle(document.querySelector("#themeToggleBtn")).display === "none",
-      overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    }));
+    states.compact = await page.evaluate(() => {
+      const desktopThemeAction = document.querySelector(".scientific-theme-toggle");
+      return {
+        theme: document.documentElement.dataset.theme,
+        headerTheme: document.querySelector(".scientific-header")?.closest(".cds--g10") ? "g10" : "unknown",
+        metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
+        overflowVisible: Boolean(
+          document.querySelector(".header-overflow-menu")
+          && getComputedStyle(document.querySelector(".header-overflow-menu")).display !== "none"
+        ),
+        desktopThemeHidden: !desktopThemeAction || desktopThemeAction.getClientRects().length === 0,
+        overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
     if (!states.compactOverflowActionVisible || !states.compactThemeActionVisible) {
       failures.push("compact header offers no reachable theme action through its overflow menu");
     }
@@ -9514,12 +9890,24 @@ async function runSourceMutationStability(page) {
     sim.measure();
   }, 480);
   const beforeDelete = await splitStorageSnapshot(page);
-  await page.evaluate(() => {
-    const sourceId = state.sources[0]?.id;
-    if (typeof deleteSource === "function" && sourceId != null) deleteSource(sourceId);
-    else state.sources.splice(0, state.sources.length);
-    simulationEffects.commitSourceMutation({ render: false });
+  const deletionAction = await page.evaluate(() => {
+    const source = state.sources[0];
+    const openSourceMenuAt = window.FdtdApp?.openSourceMenuAt;
+    if (!source) throw new Error("Source-mutation stability case requires a primary source");
+    if (typeof openSourceMenuAt !== "function") {
+      throw new Error("FdtdApp.openSourceMenuAt() is unavailable");
+    }
+    const canvasBounds = sim.canvas.getBoundingClientRect();
+    openSourceMenuAt(canvasBounds.left + canvasBounds.width / 2, canvasBounds.top + canvasBounds.height / 2, source);
+    return { sourceId: source.id, via: "FdtdApp.openSourceMenuAt + sourceDeleteBtn" };
   });
+  await page.waitForFunction(() => {
+    const menu = document.getElementById("sourceMenu");
+    const deleteButton = document.getElementById("sourceDeleteBtn");
+    return Boolean(menu && !menu.hidden && deleteButton && !deleteButton.hidden);
+  });
+  await page.locator("#sourceDeleteBtn").click();
+  await page.waitForFunction(() => state.sources.length === 0);
   const afterDelete = await splitStorageSnapshot(page);
   await page.evaluate((steps) => {
     for (let i = 0; i < steps; i += 1) sim.step();
@@ -9555,6 +9943,7 @@ async function runSourceMutationStability(page) {
     preset: "poyntingPlaneWave",
     priority: "P0",
     steps: 960,
+    deletionAction,
     beforeDelete,
     afterDelete,
     afterRun,
@@ -9623,6 +10012,7 @@ async function main() {
         ["mobile_simulate_panel_scroll", () => runMobileSimulatePanelScrollSmoke(browser, url)],
         ["mobile_layer_scroll_reset", () => runMobileLayerScrollResetSmoke(browser, url)],
         ["mobile_toolbar_height", () => runMobileToolbarHeightSmoke(browser, url)],
+        ["header_breakpoint_interaction", () => runHeaderBreakpointInteractionSmoke(browser, url)],
         ["compact_landscape_layout", () => runCompactLandscapeLayoutSmoke(browser, url)],
         ["touch_long_press", () => runTouchLongPressSmoke(browser, url)],
         ["contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url)],
@@ -9638,7 +10028,7 @@ async function main() {
         ["brush_dependent_params_visibility", () => runBrushDependentParamsSmoke(page)],
       ];
       for (const [id, run] of uiCases) {
-        if (!selectedCase || selectedCase === id) await recordCase(id, run);
+        if (selectedCaseIds.size === 0 || selectedCaseIds.has(id)) await recordCase(id, run);
       }
     }
   } finally {
