@@ -99,14 +99,13 @@ function cmasherMap(name) {
 }
 
 function currentFieldColormapName(magnitude = false) {
-  if (magnitude) return state.theme === "dark" ? "torch" : "ember";
-  return state.theme === "dark" ? "iceburn" : "redshift";
+  return magnitude ? "torch" : "iceburn";
 }
 
 function currentMaterialColormapName(context) {
   const crossesCenter = context.min < context.center && context.max > context.center;
-  if (state.materialPart === "imag" || crossesCenter) return state.theme === "dark" ? "iceburn" : "redshift";
-  return state.theme === "dark" ? "ocean" : "rainforest";
+  if (state.materialPart === "imag" || crossesCenter) return "iceburn";
+  return "ocean";
 }
 
 function cmasherColor(name, value, shade = 1, signed = false) {

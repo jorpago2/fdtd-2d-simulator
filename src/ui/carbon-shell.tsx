@@ -409,11 +409,9 @@ export function FdtdRunOutcome() {
     ? "running"
     : simulationStatus.state === "failed"
       ? "failed"
-      : simulationStatus.state === "modified" && hasMonitorResult
-        ? "modified"
-        : hasMonitorResult
-          ? "up-to-date"
-          : "needs-input";
+      : hasMonitorResult
+        ? "up-to-date"
+        : "needs-input";
 
   useScientificResultTransition({
     state: outcomeState,
@@ -432,11 +430,9 @@ export function FdtdRunOutcome() {
         ? "Collecting field samples"
         : simulationStatus.state === "failed"
           ? simulationStatus.label
-          : simulationStatus.state === "modified" && hasMonitorResult
-            ? "Result uses an earlier scene"
-            : hasMonitorResult
-              ? "Monitor result current"
-              : "No monitor result",
+          : hasMonitorResult
+            ? "Monitor result current"
+            : "No monitor result",
     }}
     summary={resultSnapshot.insight}
     metrics={hasMonitorResult ? [
@@ -481,6 +477,7 @@ export function NumericalPreflight() {
   void revision;
   return <ScientificPreflightSummary
     className="fdtd-preflight"
+    compact
     description="These checks assess whether the current discretization is safe to run. They do not replace mesh, domain and boundary convergence studies."
     status={{
       state: simulationStatus.state === "failed" ? "failed" : underResolved ? "warning" : "ready",
@@ -490,7 +487,7 @@ export function NumericalPreflight() {
       { id: "grid", label: "Grid capacity", state: nx * ny <= 960_000 ? "passed" : "failed", value: `${nx} × ${ny}`, detail: `${(nx * ny).toLocaleString("en-US")} Yee cells` },
       { id: "resolution", label: "Free-space resolution", state: underResolved ? "warning" : "passed", value: `${cellsPerWavelength} cells / λ₀`, detail: underResolved ? "Material wavelengths and small features may be under-resolved." : "Still verify convergence for quantitative claims." },
       { id: "stability", label: "CFL stability", state: "passed", value: "S = 0.10" },
-      { id: "run", label: "Current execution", state: simulationStatus.state === "running" ? "running" : simulationStatus.state === "failed" ? "failed" : simulationStatus.state === "modified" ? "warning" : "not-run", detail: simulationStatus.label },
+      { id: "run", label: "Current execution", state: simulationStatus.state === "running" ? "running" : simulationStatus.state === "failed" ? "failed" : simulationStatus.state === "modified" ? "ready" : "not-run", detail: simulationStatus.label },
     ]}
   />;
 }

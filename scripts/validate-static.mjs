@@ -231,6 +231,54 @@ function validateContextKindSwitchers(indexHtml) {
   );
 }
 
+function validateWorkbenchPresentationContracts(indexHtml) {
+  const styles = readText("src", "styles", "scientific-workbench.css");
+  const carbonShell = readText("src", "ui", "carbon-shell.tsx");
+  const runtimeController = readText("src", "runtime", "app", "runtime-controller.js");
+  const shellBindings = readText("src", "runtime", "ui", "shell-control-bindings.js");
+  const colormaps = readText("src", "runtime", "data", "colormaps.js");
+  const failures = [];
+
+  if (!/results-summary-grid[^>]*\bhidden\b[^>]*aria-hidden="true"/.test(indexHtml)) {
+    failures.push("legacy monitor summary remains visible");
+  }
+  if (!/config-summary-section[^>]*\bhidden\b[^>]*aria-hidden="true"/.test(indexHtml)) {
+    failures.push("legacy preflight summary remains visible");
+  }
+  if (!styles.includes(".fdtd-run-outcome,\n.fdtd-preflight {\n  container-type: inline-size;")) {
+    failures.push("FDTD summaries are not container-responsive");
+  }
+  if (!/\.scientific-slider-output\s*\{[\s\S]*?position:\s*absolute;/.test(styles)) {
+    failures.push("slider readout is not separated from the range track");
+  }
+  if (!/\.help-guide-panel\s*\{[\s\S]*?position:\s*fixed;/.test(styles)) {
+    failures.push("full help guide is not viewport-fixed");
+  }
+  if (!shellBindings.includes("documentRef.body.append(el.helpGuidePanel)")) {
+    failures.push("full help guide is not portalled outside the clipped stage");
+  }
+  if (!shellBindings.includes("el.appShell.inert = Boolean(open)")) {
+    failures.push("full help guide does not make the application inert");
+  }
+  if (!/function resetSimulationFields\(\)[\s\S]*?sim\.render\(\);\s*updateControlText\(\);/.test(runtimeController)) {
+    failures.push("reset does not publish a fresh presentation state");
+  }
+  if (carbonShell.includes("Result uses an earlier scene")) {
+    failures.push("paused execution is still presented as a stale result");
+  }
+  if (!/function currentFieldColormapName\(magnitude = false\)\s*\{\s*return magnitude \? "torch" : "iceburn";/.test(colormaps)) {
+    failures.push("field colormap still changes with shell theme");
+  }
+
+  addCheck(
+    "workbench presentation contracts",
+    failures.length === 0 ? "PASS" : "BLOCK",
+    failures.length === 0
+      ? "single summaries, container-aware layout, modal help, reset state, and theme-invariant colormaps found"
+      : failures.join(", "),
+  );
+}
+
 function validatePresets(sceneCatalog, sceneDescriptions, presetSourceJs) {
   const catalogPresets = unique((sceneCatalog.scenes || []).map((scene) => scene.id).filter(Boolean));
   const presetCases = unique(extractAll(/case\s+"([^"]+)"/g, presetSourceJs));
@@ -714,6 +762,7 @@ function main() {
     missingAccessibilityHooks.length === 0 ? "skip link and focus target found" : missingAccessibilityHooks.join(", "),
   );
   validateContextKindSwitchers(indexHtml);
+  validateWorkbenchPresentationContracts(indexHtml);
   const { catalog, constants } = loadCatalog(
     readActiveScript(activeScripts, "constants.js"),
     readActiveScript(activeScripts, "catalog.js"),

@@ -153,6 +153,7 @@
       sim.measure();
       updateStats();
       sim.render();
+      updateControlText();
     }
 
     function clampStepAccumulator(maxSteps = effectiveStepsPerFrame()) {

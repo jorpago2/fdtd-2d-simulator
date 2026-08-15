@@ -6861,11 +6861,19 @@ async function runHelpGuideSmoke(page) {
     document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || document.activeElement?.textContent?.trim() || "",
   );
   const runningBeforeBackgroundClick = await page.evaluate(() => Boolean(state.running));
-  await page.locator("#playPauseBtn").click();
   const backgroundClickState = await page.evaluate(() => ({
     guideClosed: Boolean(document.getElementById("helpGuidePanel")?.hidden),
     running: Boolean(state.running),
+    backgroundBlocked: (() => {
+      const button = document.getElementById("playPauseBtn");
+      const rect = button?.getBoundingClientRect();
+      if (!button || !rect) return false;
+      const target = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      return target !== button && !button.contains(target);
+    })(),
   }));
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.getElementById("helpGuidePanel")?.hidden === true);
   const workflowButton = page.locator('.mobile-layer-button[data-mobile-layer="scenes"]:visible');
   if ((await workflowButton.getAttribute("aria-expanded")) !== "true") {
     await workflowButton.click();
@@ -6903,7 +6911,7 @@ async function runHelpGuideSmoke(page) {
       `help guide detail focus did not wrap (${detailFocusSetup.firstId}/${detailShiftTabTarget}/${detailTabTarget}/${detailFocusSetup.lastId})`,
     );
   }
-  if (!backgroundClickState.guideClosed || backgroundClickState.running !== runningBeforeBackgroundClick) {
+  if (backgroundClickState.guideClosed || !backgroundClickState.backgroundBlocked || backgroundClickState.running !== runningBeforeBackgroundClick) {
     failures.push("help guide allowed a background action while modal");
   }
   if (openStatus.expanded !== "true") failures.push("help guide toggle did not report aria-expanded=true");

@@ -697,10 +697,10 @@ fieldset {
 }
 
 .scientific-slider-group {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.5rem;
-  align-items: end;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   min-width: 0;
 }
 
@@ -712,14 +712,64 @@ fieldset {
 }
 
 .scientific-slider-output {
-  min-width: 4.5rem;
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  min-width: 3.5rem;
+  padding-inline-start: 0.5rem;
   color: var(--cds-text-secondary);
+  background: var(--cds-layer-01);
   font-family: var(--scientific-ui-font-sans);
   font-size: var(--cds-code-01-font-size, 0.75rem);
   line-height: var(--cds-code-01-line-height, 1.33333);
   letter-spacing: var(--cds-code-01-letter-spacing, 0.32px);
   text-align: right;
-  padding-block-end: 0.5rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* The shared summaries are viewport-responsive by default. In FDTD they live
+ * inside a 24rem workbench panel, so their own inline size is the relevant
+ * constraint. These container rules keep the shared component intact while
+ * giving the narrow consumer a deliberate compact composition. */
+.fdtd-run-outcome,
+.fdtd-preflight {
+  container-type: inline-size;
+}
+
+@container (max-width: 32rem) {
+  .fdtd-run-outcome .scientific-outcome-summary__copy-column,
+  .fdtd-run-outcome .scientific-outcome-summary__action-column {
+    grid-column: 1 / -1;
+  }
+
+  .fdtd-run-outcome .scientific-outcome-summary__heading,
+  .fdtd-preflight .scientific-evidence-summary__header,
+  .fdtd-preflight .scientific-evidence-summary__check-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--scientific-ui-spacing-03);
+  }
+
+  .fdtd-run-outcome .scientific-outcome-summary__action-column,
+  .fdtd-run-outcome .scientific-outcome-summary__actions {
+    justify-content: flex-start;
+  }
+
+  .fdtd-run-outcome .scientific-metric {
+    grid-column: span 8;
+  }
+
+  .fdtd-preflight .scientific-evidence-summary__checks > li {
+    min-block-size: 0;
+  }
+}
+
+@container (max-width: 22rem) {
+  .fdtd-run-outcome .scientific-metric {
+    grid-column: 1 / -1;
+  }
 }
 
 .button-row,
@@ -1123,11 +1173,13 @@ fieldset {
 }
 
 .help-guide-panel {
-  position: absolute;
-  inset: auto 1rem 4.5rem auto;
+  position: fixed;
+  z-index: 9000;
+  inset: var(--scientific-ui-header-block-size) 1rem auto auto;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(36rem, calc(100vw - 7rem));
-  height: min(42rem, calc(100dvh - 9rem), calc(100% - 5.5rem));
+  height: min(42rem, calc(100dvh - var(--scientific-ui-header-block-size) - 1rem));
+  box-shadow: 0 0 0 100vmax var(--cds-overlay), 0 0.75rem 2rem var(--cds-shadow);
 }
 
 .help-guide-grid {
@@ -1453,7 +1505,7 @@ fieldset {
   }
 
   .help-guide-panel {
-    inset: 0 0 calc(4.5rem + var(--workbench-safe-bottom));
+    inset: var(--scientific-ui-header-block-size) 0 calc(4.5rem + var(--workbench-safe-bottom));
     width: 100%;
     height: auto;
     max-height: none;
@@ -1496,7 +1548,7 @@ fieldset {
   }
 }
 
-.canvas-frame:has(.help-guide-panel:not([hidden])) .surface-orbit-controls {
+.help-guide-open .surface-orbit-controls {
   visibility: hidden;
 }
 
@@ -1513,8 +1565,17 @@ fieldset {
   }
 }
 
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 47.99rem) {
   .control-tab-button {
+    min-height: 2.75rem;
+  }
+
+  .context-inspector-host .carbon-button-mount > button,
+  .help-guide-panel .carbon-button-mount > button,
+  .source-menu-actions .carbon-button-mount > button,
+  .source-menu-actions > button,
+  .context-inspector-host .context-detail-panel > button,
+  .scientific-recovery-notice button {
     min-height: 2.75rem;
   }
 }

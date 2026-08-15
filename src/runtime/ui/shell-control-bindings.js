@@ -106,6 +106,9 @@
     const helpGuideDefaultTitle = el.helpGuideTitle?.textContent || "How to use the simulator";
     const helpGuideElements = () => Boolean(el.helpGuideToggle && el.helpGuidePanel);
     const helpGuideOpen = () => helpGuideElements() && !el.helpGuidePanel.hidden;
+    if (el.helpGuidePanel && el.helpGuidePanel.parentElement !== documentRef.body) {
+      documentRef.body.append(el.helpGuidePanel);
+    }
     const stableHelpGuideTrigger = () => documentRef?.querySelector?.(".scientific-header-help__button") || null;
     const visibleConnectedElement = (element) => Boolean(
       element?.isConnected
@@ -151,10 +154,17 @@
       }
       el.helpGuidePanel.hidden = !open;
       el.helpGuideToggle.setAttribute("aria-expanded", String(Boolean(open)));
+      documentRef.body.classList.toggle("help-guide-open", Boolean(open));
+      if (el.appShell) {
+        el.appShell.inert = Boolean(open);
+        if (open) el.appShell.setAttribute("aria-hidden", "true");
+        else el.appShell.removeAttribute("aria-hidden");
+      }
       if (open) {
         setHelpGuideTopic(null);
         closeCanvasActionsMenu();
-        el.helpGuidePanel.focus?.({ preventScroll: true });
+        (el.walkthroughStartBtn || helpGuideFocusableElements()[0] || el.helpGuidePanel)
+          ?.focus?.({ preventScroll: true });
       } else {
         setHelpGuideTopic(null);
         lastHelpGuideTopicButton = null;
@@ -272,16 +282,13 @@
           el.helpGuidePanel.focus?.({ preventScroll: true });
           return;
         }
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
         const active = documentRef.activeElement;
-        if (!el.helpGuidePanel.contains(active) || (event.shiftKey && (active === first || active === el.helpGuidePanel))) {
-          event.preventDefault();
-          (event.shiftKey ? last : first).focus?.({ preventScroll: true });
-        } else if (!event.shiftKey && active === last) {
-          event.preventDefault();
-          first.focus?.({ preventScroll: true });
-        }
+        const activeIndex = focusable.indexOf(active);
+        const nextIndex = activeIndex < 0
+          ? event.shiftKey ? focusable.length - 1 : 0
+          : (activeIndex + (event.shiftKey ? -1 : 1) + focusable.length) % focusable.length;
+        event.preventDefault();
+        focusable[nextIndex].focus?.({ preventScroll: true });
       }
     }, true);
   }

@@ -1198,7 +1198,7 @@
                 <output id="resultsStateOutput" aria-live="polite">Paused</output>
                 <p id="resultsInsightNote">Run the simulation to collect monitor samples.</p>
               </div>
-              <div class="results-summary-grid" aria-label="Detailed monitor values">
+              <div class="results-summary-grid" aria-label="Detailed monitor values" hidden aria-hidden="true">
                 <div class="results-summary-card reflectance is-primary">
                   <span><i>R</i><sub>est</sub></span>
                   <output id="summaryReflectanceOutput">—</output>
@@ -1373,7 +1373,7 @@
             </div>
             <div id="tab-config" class="control-tab-panel" role="tabpanel" aria-labelledby="tab-config-button" data-control-panel="config" hidden>
             <div id="reactNumericalPreflightRoot"></div>
-            <section class="panel-section config-summary-section">
+            <section class="panel-section config-summary-section" hidden aria-hidden="true">
               <div class="results-panel-head">
                 <div>
                   <h2>Numerical preflight</h2>
