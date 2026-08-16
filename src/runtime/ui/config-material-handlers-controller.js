@@ -80,7 +80,6 @@
         el.frequencyInput.step = "any";
         el.frequencyInput.value = "1.00";
       }
-      if (el.frequencyOutput) el.frequencyOutput.value = "1.00";
       sim.buildBoundary(state.boundary);
       if (state.preset !== "empty") {
         sim.applyPreset(state.preset);
@@ -165,8 +164,9 @@
       sim.render();
     }
 
-    function handleBoundaryMenuInput() {
-      applyBoundaryMode(el.boundaryMenuInput.value, contextMenuState.boundaryMenuSide);
+    function handleBoundaryMenuInput(mode) {
+      if (mode !== "absorbing" && mode !== "reflective") return;
+      applyBoundaryMode(mode, contextMenuState.boundaryMenuSide);
       closeBoundaryMenu();
       sim.render();
     }

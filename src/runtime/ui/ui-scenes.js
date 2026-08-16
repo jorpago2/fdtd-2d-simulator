@@ -64,36 +64,6 @@
     return safeValue ? `assets/scene-thumbnails/${safeValue}.webp` : "";
   }
 
-  function ensureSceneThumb(thumbnail, documentRef, record = null) {
-    thumbnail.className = "scene-card-thumb scene-spotlight-thumb";
-    thumbnail.setAttribute("aria-hidden", "true");
-    const src = record?.thumbnailSrc || sceneThumbnailSrc(record?.value);
-    if (!src) return;
-    const existing = thumbnail.querySelector("img.scene-thumb-image");
-    if (existing?.getAttribute("src") === src) return;
-    const image = documentRef.createElement("img");
-    image.className = "scene-thumb-image";
-    image.src = src;
-    image.alt = "";
-    image.width = 96;
-    image.height = 96;
-    image.decoding = "async";
-    image.loading = "eager";
-    image.draggable = false;
-    thumbnail.replaceChildren(image);
-  }
-
-  function fillSceneBadges(badgeRow, record, documentRef) {
-    if (!badgeRow) return;
-    badgeRow.replaceChildren();
-    record.badges.forEach((badgeLabel) => {
-      const badge = documentRef.createElement("span");
-      badge.className = "scene-card-badge";
-      badge.textContent = badgeLabel;
-      badgeRow.appendChild(badge);
-    });
-  }
-
   function createSceneRecordFromOption(option, sceneDescriptions) {
     const rawLabel = option.textContent || option.value;
     const parsed = parseSceneOptionLabel(rawLabel);
@@ -171,52 +141,21 @@
       return value === "browse" ? "browse" : "current";
     }
 
-    function sceneViewButtons() {
-      return Array.from(el.sceneViewButtons || []);
-    }
-
     function setSceneView(view, { focusSearch = false } = {}) {
       const nextView = normalizeSceneView(view);
       state.view = nextView;
-      sceneViewButtons().forEach((button) => {
-        const active = normalizeSceneView(button.dataset.sceneView) === nextView;
-        button.classList.toggle("is-active", active);
-        button.setAttribute("aria-selected", String(active));
-        button.setAttribute("tabindex", active ? "0" : "-1");
-      });
-      if (el.sceneCurrentPanel) el.sceneCurrentPanel.hidden = nextView !== "current";
-      if (el.sceneBrowsePanel) el.sceneBrowsePanel.hidden = nextView !== "browse";
+      global.dispatchEvent?.(new CustomEvent("fdtd:scene-view-sync", { detail: { view: nextView } }));
       if (nextView === "browse" && focusSearch) {
         el.sceneSearchInput?.focus?.({ preventScroll: true });
       }
     }
 
-    function handleSceneViewKeydown(event) {
-      const buttons = sceneViewButtons();
-      const currentIndex = buttons.indexOf(event.currentTarget);
-      if (currentIndex < 0) return;
-      let nextIndex = currentIndex;
-      if (event.key === "ArrowRight" || event.key === "ArrowDown") nextIndex = (currentIndex + 1) % buttons.length;
-      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
-      else if (event.key === "Home") nextIndex = 0;
-      else if (event.key === "End") nextIndex = buttons.length - 1;
-      else return;
-
-      event.preventDefault();
-      const nextButton = buttons[nextIndex];
-      setSceneView(nextButton.dataset.sceneView, { focusSearch: normalizeSceneView(nextButton.dataset.sceneView) === "browse" });
-      nextButton.focus?.({ preventScroll: true });
-    }
-
     function bindSceneViewControls() {
       if (state.viewControlsBound) return;
       state.viewControlsBound = true;
-      sceneViewButtons().forEach((button) => {
-        button.addEventListener("click", () => {
-          const nextView = normalizeSceneView(button.dataset.sceneView);
-          setSceneView(nextView, { focusSearch: nextView === "browse" });
-        });
-        button.addEventListener("keydown", handleSceneViewKeydown);
+      global.addEventListener?.("fdtd:scene-view-request", (event) => {
+        const nextView = normalizeSceneView(event?.detail?.view);
+        setSceneView(nextView, { focusSearch: nextView === "browse" });
       });
       setSceneView(state.view);
     }
@@ -277,42 +216,23 @@
     }
 
     function updateSceneSpotlight(record) {
-      if (!el.sceneSpotlight) return;
       const current = record || sceneRecordByValue(getCurrentPreset?.()) || currentSceneRecordFallback();
-      const thumbnailKind = current.thumbnail || sceneThumbnailKind(current);
-      el.sceneSpotlight.dataset.sceneThumb = thumbnailKind;
-      const thumb = el.sceneSpotlight.querySelector(".scene-spotlight-thumb");
-      if (thumb) ensureSceneThumb(thumb, documentRef, current);
-      if (el.sceneSpotlightNumber) {
-        el.sceneSpotlightNumber.textContent = current.index == null ? "Custom" : `Example ${current.index}`;
-      }
-      if (el.sceneSpotlightGroup) el.sceneSpotlightGroup.textContent = current.group || cleanSceneGroupLabel(current.groupLabel);
-      if (el.sceneSpotlightTitle) el.sceneSpotlightTitle.textContent = current.title || "Custom scene";
-      if (el.headerSceneTitle) el.headerSceneTitle.textContent = current.title || "Custom scene";
-      if (el.sceneSpotlightDescription) {
-        el.sceneSpotlightDescription.textContent = current.description || sceneDescriptions.empty || "Custom FDTD scene.";
-      }
-      fillSceneBadges(el.sceneSpotlightBadges, current, documentRef);
+      global.dispatchEvent?.(new CustomEvent("fdtd:scene-title", {
+        detail: { title: current.title || "Custom scene" },
+      }));
+      global.dispatchEvent?.(new CustomEvent("fdtd:scene-selection", { detail: { record: current } }));
     }
 
     function updateSceneBrowserMeta(records = visibleSceneRecords()) {
       const visibleCount = records.length;
       const searchActive = Boolean((el.sceneSearchInput?.value || "").trim());
       const groupName = cleanSceneGroupLabel(state.filter || "Group");
-      if (el.sceneBrowserCount) {
-        el.sceneBrowserCount.hidden = !searchActive;
-        el.sceneBrowserCount.textContent = searchActive
+      global.dispatchEvent?.(new CustomEvent("fdtd:scene-browser-meta", { detail: {
+        hidden: !searchActive,
+        text: searchActive
           ? `${groupCountLabel(visibleCount)} across all families`
-          : `${groupCountLabel(visibleCount)} in ${groupName}`;
-      }
-      if (el.sceneBrowserActive) {
-        const current = sceneRecordByValue(getCurrentPreset?.());
-        el.sceneBrowserActive.textContent = searchActive
-          ? "Search: all families"
-          : current
-            ? `Family: ${current.group}`
-            : "Family: custom";
-      }
+          : `${groupCountLabel(visibleCount)} in ${groupName}`,
+      } }));
       updateSceneSpotlight(sceneRecordByValue(getCurrentPreset?.()));
     }
 
@@ -348,7 +268,7 @@
         selectedValue: terms.length > 0 ? "" : state.filter,
         onSelect(value) {
           state.filter = value;
-          if (el.sceneSearchInput) el.sceneSearchInput.value = "";
+          global.dispatchEvent?.(new CustomEvent("fdtd:scene-search-clear"));
           renderSceneFilterBar();
           renderSceneCards();
         },

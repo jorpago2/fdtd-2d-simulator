@@ -22,15 +22,6 @@
     return value;
   }
 
-  function forEachNode(nodes, callback) {
-    nodes?.forEach?.(callback);
-  }
-
-  function bindInputAndChange(input, handler) {
-    input?.addEventListener("input", handler);
-    input?.addEventListener("change", handler);
-  }
-
   function bindBrushControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
     const documentRef = dependencies.documentRef || global.document;
@@ -59,25 +50,26 @@
       "closeBoundaryMenuAndRender",
     );
 
-    el.brushMenuSizeInput?.addEventListener("input", handleBrushSizeInput);
-
-    forEachNode(el.brushToolButtons, (button) => {
-      button.addEventListener("click", () => handleBrushToolButton(button));
+    global.addEventListener("fdtd:slider-input", (event) => {
+      if (event?.detail?.id === "brushMenuSizeInput") handleBrushSizeInput();
     });
-
-    el.brushGeometryInput?.addEventListener("change", handleBrushGeometryInput);
-    GEOMETRY_DIMENSION_KEYS.forEach((key) => {
-      bindInputAndChange(el[key], handleGeometryDimensionInput);
+    const geometryInputIds = new Set(GEOMETRY_DIMENSION_KEYS.map((key) => el[key]?.id).filter(Boolean));
+    const handleInput = (event) => {
+      if (geometryInputIds.has(event.target?.id)) handleGeometryDimensionInput();
+      else if (event.target?.id === "brushGeometryInput") handleBrushGeometryInput();
+    };
+    documentRef.addEventListener("input", handleInput);
+    documentRef.addEventListener("change", handleInput);
+    documentRef.addEventListener("click", (event) => {
+      const button = event.target?.closest?.("button");
+      if (!button) return;
+      if (button.matches("[data-brush-tool]")) handleBrushToolButton(button);
+      else if (button.matches("[data-brush]")) handleBrushMaterialButton(button);
+      else if (button.id === "brushMenuClearMaterialsBtn") clearMedium();
+      else if (button.id === "brushMenuClearFieldsBtn") clearField();
+      else if (button.id === "brushMenuCloseBtn") closeBrushMenuAndRender();
+      else if (button.id === "boundaryMenuCloseBtn") closeBoundaryMenuAndRender();
     });
-
-    documentRef.querySelectorAll("[data-brush]").forEach((button) => {
-      button.addEventListener("click", () => handleBrushMaterialButton(button));
-    });
-
-    el.brushMenuClearMaterialsBtn?.addEventListener("click", clearMedium);
-    el.brushMenuClearFieldsBtn?.addEventListener("click", clearField);
-    el.brushMenuCloseBtn?.addEventListener("click", closeBrushMenuAndRender);
-    el.boundaryMenuCloseBtn?.addEventListener("click", closeBoundaryMenuAndRender);
   }
 
   global.FdtdBrushControlBindings = Object.freeze({

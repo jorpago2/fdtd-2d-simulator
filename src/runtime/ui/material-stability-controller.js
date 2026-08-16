@@ -163,8 +163,7 @@
         notes.push(`Field scale ${formatScaleFromLog(sim.fieldLog10Scale)}x.`);
       }
       const warningText = notes.join(" ");
-      el.materialWarning.textContent = warningText;
-      el.materialWarning.hidden = !warningText;
+      global.dispatchEvent(new global.CustomEvent("fdtd:material-warning", { detail: { warning: warningText } }));
     }
     
     function arrayHasNonzero(values) {
@@ -273,21 +272,6 @@
       return `CFL S=${COURANT.toFixed(2)} is below the material-aware estimate ${limit.toFixed(2)} and no material stability flags are active.`;
     }
     
-    function applyHealthState(output, level, reason) {
-      if (!output) return;
-      output.textContent = level === "stable" ? "CFL stable" : level === "caution" ? "Review" : "Unstable";
-      output.title = reason;
-      output.dataset.healthLevel = level;
-      output.setAttribute("aria-label", `Numerical health: ${level}. ${reason}`);
-      output.classList.toggle("is-warning", level === "caution");
-      output.classList.toggle("is-danger", level === "unstable");
-    }
-    
-    function updateHealthStatusOutputs(level, reason) {
-      applyHealthState(el.configStabilityOutput, level, reason);
-      applyHealthState(el.stabilityEstimateValue, level, reason);
-    }
-    
     function updateStabilitySummary() {
       const cflEstimate = materialCflEstimate();
       const limit = cflEstimate.materialLimit;
@@ -296,24 +280,13 @@
       const cflStable = COURANT < limit;
       const level = !cflStable || sim.lastDiverged ? "unstable" : flags.length > 0 ? "caution" : "stable";
       const healthReason = healthStatusReason(cflStable, flags, cflEstimate);
-      updateHealthStatusOutputs(level, healthReason);
-      if (el.stabilityCflValue) {
-        el.stabilityCflValue.textContent = `S = ${COURANT.toFixed(2)} / ${limit.toFixed(2)}`;
-      }
-      if (el.stabilityResolutionValue) {
-        el.stabilityResolutionValue.textContent = `${state.cellsPerWavelength} cells / λ₀`;
-      }
-      if (el.stabilityMediaValue) {
-        el.stabilityMediaValue.textContent = media.join(", ");
-      }
-      if (el.stabilityNote) {
-        const base = `Explicit 2D Yee check: S must stay below min(1/sqrt(2), n_min/sqrt(2)). Current material estimate=${limit.toFixed(2)}.`;
-        el.stabilityNote.textContent =
-          flags.length > 0
-            ? `${base} Watch: ${flags.join(", ")}. Run convergence checks for publishable results.`
-            : `${base} Resolution is ${state.cellsPerWavelength} cells/λ₀; still verify convergence before quantitative claims.`;
-        el.stabilityNote.classList.toggle("is-warning", level !== "stable");
-      }
+      global.dispatchEvent(new global.CustomEvent("fdtd:numerical-health", { detail: {
+        flags,
+        level,
+        limit,
+        media,
+        reason: healthReason,
+      } }));
     }
 
     return Object.freeze({

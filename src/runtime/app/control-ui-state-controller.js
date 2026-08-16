@@ -44,22 +44,16 @@
 
     function updateThemeControls() {
       state.theme = normalizeTheme(state.theme);
-      const scientificTheme = state.theme === "dark" ? "g100" : "g10";
+      const carbonTheme = state.theme === "dark" ? "g100" : "g10";
       const runtimeThemeChanged = documentElement.dataset.theme !== state.theme;
-      const scientificThemeNeedsSync = documentElement.dataset.scientificTheme !== scientificTheme;
-      documentElement.dataset.theme = state.theme;
-      documentElement.classList.toggle("cds--g100", state.theme === "dark");
-      documentElement.classList.toggle("cds--g10", state.theme !== "dark");
-      documentElement.ownerDocument
-        ?.querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", state.theme === "dark" ? "#161616" : "#f4f4f4");
+      const carbonThemeNeedsSync = documentElement.dataset.carbonTheme !== carbonTheme;
       if (typeof windowRef.CustomEvent === "function" && typeof windowRef.dispatchEvent === "function") {
-        if (scientificThemeNeedsSync) {
-          windowRef.dispatchEvent(new windowRef.CustomEvent("scientific-ui:theme-change", {
-            detail: { preference: state.theme },
+        if (carbonThemeNeedsSync) {
+          windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:theme-request", {
+            detail: { theme: state.theme },
           }));
         }
-        if (runtimeThemeChanged || scientificThemeNeedsSync) {
+        if (runtimeThemeChanged || carbonThemeNeedsSync) {
           windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:theme-applied", { detail: { theme: state.theme } }));
         }
       }
@@ -67,11 +61,11 @@
 
     function applyTheme(theme, render = true) {
       const nextTheme = normalizeTheme(theme);
-      const scientificTheme = nextTheme === "dark" ? "g100" : "g10";
+      const carbonTheme = nextTheme === "dark" ? "g100" : "g10";
       const themeAlreadyApplied =
         state.theme === nextTheme
         && documentElement.dataset.theme === nextTheme
-        && documentElement.dataset.scientificTheme === scientificTheme;
+        && documentElement.dataset.carbonTheme === carbonTheme;
       state.theme = nextTheme;
       if (themeAlreadyApplied) return;
       try {
@@ -96,14 +90,11 @@
     }
 
     function updateCanvasModeControls() {
-      uiCore.setPressed(el.selectModeBtn, state.canvasMode === "select");
-      uiCore.setPressed(el.brushModeBtn, state.canvasMode === "brush");
+      global.FdtdReactUI?.notify?.();
     }
 
     function updateCanvasInteractionState() {
-      el.canvasFrame?.classList.toggle("is-draw-mode", state.canvasMode === "brush");
-      el.stage?.classList.toggle("is-draw-mode", state.canvasMode === "brush");
-      el.canvas?.setAttribute("data-canvas-mode", state.canvasMode);
+      global.FdtdReactUI?.notify?.();
     }
 
     function setCanvasMode(mode) {
@@ -121,61 +112,16 @@
     }
 
     function updateRunControls() {
-      const running = Boolean(state.running);
-      const playPauseBtn = global.document?.getElementById?.("playPauseBtn") || el.playPauseBtn;
-      if (playPauseBtn) {
-        const label = running ? "Pause simulation" : "Start simulation";
-        playPauseBtn.title = label;
-        playPauseBtn.setAttribute("aria-label", label);
-        uiCore.setPressed(playPauseBtn, running);
-        if (el.runPlayPauseBtn) {
-          el.runPlayPauseBtn.title = label;
-          el.runPlayPauseBtn.setAttribute("aria-label", label);
-          el.runPlayPauseBtn.setAttribute("aria-pressed", String(running));
-        }
-        if (el.runPlayPauseIcon) el.runPlayPauseIcon.textContent = running ? "\u2161" : "\u25b6";
-      }
+      global.FdtdReactUI?.notify?.();
     }
 
     function updateFieldDisplayControls() {
-      uiCore.setExclusiveButtonState(el.fieldDisplayButtons, "fieldDisplay", state.fieldDisplay, {
-        selectedAttribute: "aria-pressed",
-      });
-      const materialView = state.viewMode === "epsilon" || state.viewMode === "mu";
-      const materialOverlayAvailable = materialView && state.viewProjection === "2d";
-      const fieldDisplayVisible = state.viewMode === "field" || (materialOverlayAvailable && state.materialFieldOverlay);
-      if (el.fieldDisplayControl) el.fieldDisplayControl.hidden = !fieldDisplayVisible;
-      el.visualComponentRows?.forEach?.((row) => {
-        row.hidden = !fieldDisplayVisible;
-      });
-      el.materialFieldOverlayInputs?.forEach?.((input) => {
-        input.checked = Boolean(state.materialFieldOverlay);
-      });
-      el.materialFieldOverlayControls?.forEach?.((control) => {
-        control.hidden = !materialOverlayAvailable;
-      });
-      el.fieldQuiverInputs?.forEach?.((input) => {
-        input.checked = Boolean(state.fieldQuiver);
-      });
-      const quiverSymbol = state.viewMode === "poynting" ? "S" : state.fieldComponent === "hz" ? "E" : "H";
-      el.fieldQuiverLabels?.forEach?.((label) => {
-        const symbol = global.document.createElement("i");
-        symbol.textContent = quiverSymbol;
-        label.replaceChildren(symbol, global.document.createTextNode(" quiver"));
-      });
-      const quiverAvailable =
-        state.viewProjection === "2d" && (state.viewMode === "field" || state.viewMode === "poynting");
-      el.fieldQuiverControls?.forEach?.((control) => {
-        control.classList.toggle("is-disabled", !quiverAvailable);
-      });
+      global.FdtdReactUI?.notify?.();
     }
 
     function updateVisualControls() {
-      const visualSnapshot = visualLayerModel.visualLayerSnapshot(state);
-      el.visualLayerInputs?.forEach?.((input) => {
-        const layer = input.dataset.visualLayer;
-        input.checked = Boolean(visualSnapshot[layer]);
-      });
+      visualLayerModel.visualLayerSnapshot(state);
+      global.FdtdReactUI?.notify?.();
       updateColorbarIfAvailable();
     }
 

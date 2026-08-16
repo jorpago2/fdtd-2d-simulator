@@ -47,37 +47,28 @@
     const compactControlsActive = createMediaMatcher(compactControlsMediaQuery);
     const compactPanelTitleActive = createMediaMatcher(compactPanelTitleMediaQuery);
     let controlDrawerTrigger = null;
+    let drawerOpen = false;
+    let activeTab = "scenes";
+    let activeLayer = "scenes";
 
     function controlTabLayerName(tabName) {
       return tabLayers[tabName] || "scenes";
     }
 
     function activeControlTabName() {
-      return uiCore.activeDatasetValue(el.controlTabButtons, "controlTab", "scenes");
+      return activeTab;
     }
 
     function activeMobileLayerName() {
-      return uiCore.activeDatasetValue(el.mobileLayerButtons, "mobileLayer");
+      return activeLayer;
     }
 
     function updateControlPanelContext(layerName = activeMobileLayerName() || controlTabLayerName(activeControlTabName())) {
-      const context = contexts[layerName] || contexts.scenes;
-      const panelTitle = compactPanelTitleActive() ? context.compactTitle || context.title : context.title;
-      if (el.controlPanelKicker) {
-        el.controlPanelKicker.textContent = context.kicker;
-      }
-      if (el.controlPanelTitle) {
-        el.controlPanelTitle.textContent = panelTitle;
-      }
-      if (el.controlPanel) {
-        el.controlPanel.setAttribute("aria-label", `${context.title} controls`);
-      }
+      activeLayer = contexts[layerName] ? layerName : "scenes";
     }
 
     function setMobileLayerActive(layerName) {
-      if (el.controlPanel) {
-        el.controlPanel.dataset.mobileLayer = layerName;
-      }
+      activeLayer = contexts[layerName] ? layerName : "scenes";
       updateControlPanelContext(layerName);
     }
 
@@ -97,8 +88,7 @@
 
     function activateControlTab(tabName, options = {}) {
       const selected = tabName || "scenes";
-      uiCore.setExclusiveButtonState(el.controlTabButtons, "controlTab", selected);
-      uiCore.setExclusivePanels(el.controlTabPanels, "controlPanel", selected);
+      activeTab = tabLayers[selected] ? selected : "scenes";
       setMobileLayerActive(options.layer || controlTabLayerName(selected));
       resetControlPanelScroll();
       if (options.focusSelector) {
@@ -107,6 +97,7 @@
       if (selected === "results") {
         callbacks.onResultsTabActivated?.();
       }
+      global.dispatchEvent(new global.CustomEvent("fdtd:workflow-change", { detail: { layer: activeLayer } }));
     }
 
     function activateMobileLayer(layerName) {
@@ -129,28 +120,17 @@
 
     function setControlDrawerOpen(open) {
       const isOpen = Boolean(open) && controlDrawerOverlayActive();
-      const wasOpen = Boolean(el.appShell?.classList.contains("controls-open"));
+      const wasOpen = drawerOpen;
       if (isOpen && !wasOpen) {
         const activeElement = documentRef.activeElement;
         controlDrawerTrigger = activeElement?.matches?.("button, [href], input, select, textarea")
           ? activeElement
           : el.controlDrawerToggle;
       }
-      uiCore.setClass(el.appShell, "controls-open", isOpen);
-      uiCore.setClass(documentRef.body, "controls-drawer-open", isOpen);
-      uiCore.setExpanded(el.controlDrawerToggle, isOpen);
+      drawerOpen = isOpen;
       if (isOpen && !wasOpen) {
         resetControlPanelScroll();
       }
-      if (el.controlPanel) {
-        el.controlPanel.setAttribute("aria-hidden", String(!isOpen));
-        if (isOpen) {
-          el.controlPanel.removeAttribute("inert");
-        } else {
-          el.controlPanel.setAttribute("inert", "");
-        }
-      }
-      uiCore.setHidden(el.controlDrawerBackdrop, !isOpen);
       if (isOpen) {
         closeCanvasActionsMenu();
         closeCanvasOptionsMenu();
@@ -172,7 +152,7 @@
     }
 
     function toggleControlDrawer() {
-      setControlDrawerOpen(!el.appShell?.classList.contains("controls-open"));
+      setControlDrawerOpen(!drawerOpen);
     }
 
     function canvasActionsMenuActive() {

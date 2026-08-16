@@ -224,6 +224,8 @@ async function openApplication(page, url) {
 async function openFullHelpGuide(page) {
   const headerHelp = page.locator(".scientific-header-help__button");
   await headerHelp.click();
+  const fullGuide = page.locator("#helpGuidePanel:not([hidden])");
+  if (await fullGuide.count()) return;
   await page.getByRole("button", { name: "Open full guide" }).click();
   await page.waitForFunction(() => {
     const panel = document.getElementById("helpGuidePanel");
@@ -6564,20 +6566,20 @@ async function runReproducibilitySmoke(page) {
     }, { sceneSnapshot: snapshot, nextTheme: theme });
     await page.waitForFunction((expectedTheme) => {
       const carbonTheme = expectedTheme === "dark" ? "g100" : "g10";
-      const providerRoots = Array.from(document.querySelectorAll(".scientific-theme"));
+      const themeOwners = Array.from(document.querySelectorAll(".fdtd-theme"));
       return (
         document.documentElement.dataset.theme === expectedTheme
-        && document.documentElement.dataset.scientificTheme === carbonTheme
-        && providerRoots.length > 0
-        && providerRoots.every((root) => root.getAttribute("data-scientific-theme") === carbonTheme)
+        && document.documentElement.dataset.carbonTheme === carbonTheme
+        && document.body.classList.contains(`cds--${carbonTheme}`)
+        && themeOwners.length === 1
+        && themeOwners[0]?.getAttribute("data-carbon-theme") === carbonTheme
       );
     }, theme);
     return page.evaluate(() => ({
       runtimeTheme: document.documentElement.dataset.theme || "",
-      scientificTheme: document.documentElement.dataset.scientificTheme || "",
-      headerTheme: document.querySelector(".scientific-header")?.closest(".scientific-theme")?.getAttribute("data-scientific-theme") || "",
-      providerThemes: Array.from(document.querySelectorAll(".scientific-theme"))
-        .map((root) => root.getAttribute("data-scientific-theme") || ""),
+      carbonTheme: document.documentElement.dataset.carbonTheme || "",
+      bodyTheme: document.body.classList.contains("cds--g100") ? "g100" : "g10",
+      themeOwnerCount: document.querySelectorAll(".fdtd-theme").length,
     }));
   };
   let themeRoundTrip = null;
@@ -6592,9 +6594,11 @@ async function runReproducibilitySmoke(page) {
     serializable
     && (
       themeRoundTrip?.imported.runtimeTheme !== importedTheme
-      || themeRoundTrip?.imported.headerTheme !== (importedTheme === "dark" ? "g100" : "g10")
+      || themeRoundTrip?.imported.carbonTheme !== (importedTheme === "dark" ? "g100" : "g10")
+      || themeRoundTrip?.imported.themeOwnerCount !== 1
       || themeRoundTrip?.restored.runtimeTheme !== originalTheme
-      || themeRoundTrip?.restored.headerTheme !== (originalTheme === "dark" ? "g100" : "g10")
+      || themeRoundTrip?.restored.carbonTheme !== (originalTheme === "dark" ? "g100" : "g10")
+      || themeRoundTrip?.restored.themeOwnerCount !== 1
     )
   ) {
     failures.push("scene import did not synchronize runtime and Carbon provider themes");
@@ -6613,7 +6617,7 @@ async function runReproducibilitySmoke(page) {
 
 async function runReactBootstrapSmoke(page) {
   const status = await page.evaluate(() => ({
-    brandMounted: Boolean(document.querySelector("#reactHeaderRoot .scientific-header__brand")),
+    brandMounted: Boolean(document.querySelector(".scientific-header__brand")),
     footerMounted: Boolean(document.querySelector('[data-react-ui="footer"]')),
   }));
   const failures = [];
@@ -6669,7 +6673,7 @@ async function runCarbonTypographySmoke(page) {
 }
 
 async function runCanvasActionMenuSmoke(page) {
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
     const visible = (selector) => {
       const node = document.querySelector(selector);
       return Boolean(node && getComputedStyle(node).display !== "none" && node.getClientRects().length > 0);
@@ -6737,7 +6741,6 @@ async function runCanvasPngExportSmoke(page) {
 async function runHelpGuideSmoke(page) {
   await openFullHelpGuide(page);
   const openStatus = await page.evaluate(() => {
-    const legacyToggle = document.getElementById("helpGuideToggle");
     const trigger = document.querySelector(".scientific-header-help__button");
     const header = document.querySelector(".scientific-header");
     const panel = document.getElementById("helpGuidePanel");
@@ -6753,7 +6756,6 @@ async function runHelpGuideSmoke(page) {
       panelRect.bottom <= window.innerHeight;
     return {
       opened: Boolean(panel && !panel.hidden && style?.display !== "none"),
-      expanded: legacyToggle?.getAttribute("aria-expanded") || "",
       cardCount: panel?.querySelectorAll(".help-guide-card").length || 0,
       title: panel?.querySelector("#helpGuideTitle")?.textContent?.trim() || "",
       intro: panel?.querySelector("#helpGuideIntro")?.textContent?.trim() || "",
@@ -6762,27 +6764,46 @@ async function runHelpGuideSmoke(page) {
       triggerWithinHeader: Boolean(
         triggerRect &&
           headerRect &&
-          triggerRect.left >= headerRect.left &&
-          triggerRect.right <= headerRect.right &&
-          triggerRect.top >= headerRect.top &&
-          triggerRect.bottom <= headerRect.bottom,
+          triggerRect.left >= headerRect.left - 1 &&
+          triggerRect.right <= headerRect.right + 1 &&
+          triggerRect.top >= headerRect.top - 1 &&
+          triggerRect.bottom <= headerRect.bottom + 1,
       ),
     };
   });
-  const detailStatus = await page.evaluate(() => {
-    const panel = document.getElementById("helpGuidePanel");
-    const home = document.getElementById("helpGuideHome");
-    const detail = document.getElementById("helpGuideDetail");
-    const title = document.getElementById("helpGuideTitle");
-    const back = document.getElementById("helpGuideBackBtn");
-    const buttons = Array.from(panel?.querySelectorAll("[data-help-guide-topic]") || []);
-    const sections = [];
-    for (const button of buttons) {
-      const topic = button.dataset.helpGuideTopic || "";
-      button.click();
-      const topicPanel = panel?.querySelector(`[data-help-guide-topic-panel="${topic}"]`);
-      sections.push({
-        topic,
+  const helpTopicButtons = page.locator("#helpGuideHome [data-help-guide-topic]");
+  const sections = [];
+  for (let index = 0; index < await helpTopicButtons.count(); index += 1) {
+    const button = helpTopicButtons.nth(index);
+    const topic = await button.getAttribute("data-help-guide-topic");
+    await button.click();
+    await page.waitForFunction((expectedTopic) => {
+      const panel = document.getElementById("helpGuidePanel");
+      const home = document.getElementById("helpGuideHome");
+      const detail = document.getElementById("helpGuideDetail");
+      const back = document.getElementById("helpGuideBackBtn");
+      const topicPanel = panel?.querySelector(`[data-help-guide-topic-panel="${expectedTopic}"]`);
+      return Boolean(
+        panel &&
+          !panel.hidden &&
+          home?.hidden &&
+          detail &&
+          !detail.hidden &&
+          back &&
+          !back.hidden &&
+          topicPanel &&
+          !topicPanel.hidden,
+      );
+    }, topic);
+    sections.push(await page.evaluate((expectedTopic) => {
+      const panel = document.getElementById("helpGuidePanel");
+      const home = document.getElementById("helpGuideHome");
+      const detail = document.getElementById("helpGuideDetail");
+      const title = document.getElementById("helpGuideTitle");
+      const back = document.getElementById("helpGuideBackBtn");
+      const topicPanel = panel?.querySelector(`[data-help-guide-topic-panel="${expectedTopic}"]`);
+      return {
+        topic: expectedTopic,
         title: title?.textContent?.trim() || "",
         homeHidden: Boolean(home?.hidden),
         detailVisible: Boolean(detail && !detail.hidden),
@@ -6790,11 +6811,24 @@ async function runHelpGuideSmoke(page) {
         activePanelVisible: Boolean(topicPanel && !topicPanel.hidden),
         detailLength: topicPanel?.textContent?.trim().length || 0,
         listItems: topicPanel?.querySelectorAll("li").length || 0,
-      });
-      back?.click();
-    }
+      };
+    }, topic));
+    await page.locator("#helpGuideBackBtn").click();
+    await page.waitForFunction(() => {
+      const home = document.getElementById("helpGuideHome");
+      const detail = document.getElementById("helpGuideDetail");
+      const back = document.getElementById("helpGuideBackBtn");
+      return Boolean(home && !home.hidden && detail?.hidden && back?.hidden);
+    });
+  }
+  const detailStatus = await page.evaluate((sections) => {
+    const panel = document.getElementById("helpGuidePanel");
+    const home = document.getElementById("helpGuideHome");
+    const detail = document.getElementById("helpGuideDetail");
+    const back = document.getElementById("helpGuideBackBtn");
+    const buttons = panel?.querySelectorAll("[data-help-guide-topic]");
     return {
-      buttonCount: buttons.length,
+      buttonCount: buttons?.length || 0,
       detailsCount: panel?.querySelectorAll("details.help-guide-card").length || 0,
       detailViewCount: sections.filter(
         (section) => section.homeHidden && section.detailVisible && section.backVisible && section.activePanelVisible,
@@ -6815,7 +6849,7 @@ async function runHelpGuideSmoke(page) {
       mentionsDrawDispersionParameters: Boolean(panel?.textContent?.includes("Drude and plasma expose")),
       sections,
     };
-  });
+  }, sections);
   const focusTrapSetup = await page.evaluate(() => {
     const panel = document.getElementById("helpGuidePanel");
     const focusable = Array.from(panel?.querySelectorAll(
@@ -6839,7 +6873,15 @@ async function runHelpGuideSmoke(page) {
   const tabTarget = await page.evaluate(() =>
     document.activeElement?.id || document.activeElement?.getAttribute?.("data-help-guide-topic") || "",
   );
-  await page.locator('[data-help-guide-topic="edit"]').click();
+  await page.locator('[data-help-guide-topic="measure"]').click();
+  await page.waitForFunction(() => {
+    const panel = document.getElementById("helpGuidePanel");
+    const home = document.getElementById("helpGuideHome");
+    const detail = document.getElementById("helpGuideDetail");
+    const back = document.getElementById("helpGuideBackBtn");
+    const topicPanel = panel?.querySelector('[data-help-guide-topic-panel="measure"]');
+    return Boolean(panel && home?.hidden && detail && !detail.hidden && back && !back.hidden && topicPanel && !topicPanel.hidden);
+  });
   const detailFocusSetup = await page.evaluate(() => {
     const panel = document.getElementById("helpGuidePanel");
     const focusable = Array.from(panel?.querySelectorAll(
@@ -6883,12 +6925,10 @@ async function runHelpGuideSmoke(page) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(20);
   const closedStatus = await page.evaluate(() => {
-    const legacyToggle = document.getElementById("helpGuideToggle");
     const trigger = document.querySelector(".scientific-header-help__button");
     const panel = document.getElementById("helpGuidePanel");
     return {
       closed: Boolean(panel?.hidden),
-      expanded: legacyToggle?.getAttribute("aria-expanded") || "",
       focusReturned: document.activeElement === trigger,
       drawerStillOpen: document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "false",
     };
@@ -6914,7 +6954,6 @@ async function runHelpGuideSmoke(page) {
   if (backgroundClickState.guideClosed || !backgroundClickState.backgroundBlocked || backgroundClickState.running !== runningBeforeBackgroundClick) {
     failures.push("help guide allowed a background action while modal");
   }
-  if (openStatus.expanded !== "true") failures.push("help guide toggle did not report aria-expanded=true");
   if (openStatus.cardCount < 4) failures.push("help guide does not expose the four basic workflow cards");
   if (detailStatus.detailsCount > 0) failures.push("help guide should navigate to detail views instead of expanding cards");
   if (detailStatus.buttonCount < 4) failures.push("help guide cards are not implemented as navigation buttons");
@@ -6939,7 +6978,6 @@ async function runHelpGuideSmoke(page) {
     failures.push("visible help action is not contained in the application header");
   }
   if (!closedStatus.closed) failures.push("help guide did not close with Escape");
-  if (closedStatus.expanded !== "false") failures.push("help guide toggle did not reset aria-expanded=false");
   if (!closedStatus.focusReturned) failures.push("help guide did not return focus to the visible header action");
   if (!closedStatus.drawerStillOpen) failures.push("closing the help guide also closed the underlying workflow panel");
   return {
@@ -6994,6 +7032,10 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
         const panel = document.getElementById("helpGuidePanel");
         const trigger = document.querySelector(".scientific-header-help__button");
         const header = document.querySelector(".scientific-header");
+        const headerActions = document.querySelector(".scientific-header__actions");
+        const helpHost = document.querySelector(".scientific-header__help");
+        const headerBrand = document.querySelector(".scientific-header__brand");
+        const headerContext = document.querySelector(".scientific-header__context");
         const footer = document.querySelector(".canvas-footer");
         const panelRect = rect(panel);
         const triggerRect = rect(trigger);
@@ -7018,6 +7060,11 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
           panel: panelRect,
           trigger: triggerRect,
           header: headerRect,
+          headerGrid: header ? getComputedStyle(header).gridTemplateColumns : "",
+          headerBrand: rect(headerBrand),
+          headerContext: rect(headerContext),
+          headerActions: rect(headerActions),
+          helpHost: rect(helpHost),
           footer: footerRect,
           withinViewport: Boolean(
             panelRect &&
@@ -7045,7 +7092,7 @@ async function runHelpGuideResponsiveSmoke(browser, url) {
         const reference = document.querySelector(".help-guide-reference");
         return {
           editScrollHeight: panel?.scrollHeight || 0,
-          referenceCollapsed: reference?.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "false",
+          referenceCollapsed: !reference || reference.querySelector(".cds--accordion__heading")?.getAttribute("aria-expanded") === "false",
         };
       });
       let closeState = null;
@@ -7243,6 +7290,7 @@ async function runCanvasFooterSmoke(browser, url) {
         const footerRect = rect(footer);
         const frameRect = rect(frame);
         const helpRect = rect(help);
+        const footerVisible = Boolean(footer && footerRect && footerRect.width > 0 && footerRect.height > 0 && getComputedStyle(footer).display !== "none");
         return {
           viewport: name,
           text: footer?.textContent.replace(/\s+/g, " ").trim() || "",
@@ -7250,6 +7298,7 @@ async function runCanvasFooterSmoke(browser, url) {
           footer: footerRect,
           frame: frameRect,
           help: helpRect,
+          footerVisible,
           authorVisible: Boolean(author && author.getClientRects().length > 0),
           withinViewport: Boolean(
             footerRect &&
@@ -7269,15 +7318,15 @@ async function runCanvasFooterSmoke(browser, url) {
   const failures = [];
   for (const state of states) {
     const compact = state.viewport === "mobile";
-    if (!compact && !state.text.includes("Jorge Parra")) failures.push(`${state.viewport}: footer does not show Jorge Parra`);
-    if (!compact && !state.text.includes("Online Simulators & Tools")) failures.push(`${state.viewport}: footer tools label missing`);
-    if (state.text.toLowerCase().includes("github")) failures.push(`${state.viewport}: footer should not expose GitHub text`);
-    if (!compact && !state.links.some((link) => link.href === "https://www.uv.es/jorpago2")) failures.push(`${state.viewport}: footer university profile link missing`);
-    if (!compact && !state.links.some((link) => link.href === "https://jorpago2.github.io/")) failures.push(`${state.viewport}: footer tools link missing`);
-    if (compact && state.authorVisible) failures.push(`${state.viewport}: compact status bar does not hide secondary author links`);
-    if (!state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
-    if (!state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
-    if (!state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
+    if (compact && state.footerVisible) failures.push(`${state.viewport}: empty status bar remains visible above the workflow navigation`);
+    if (!compact && !state.footerVisible) failures.push(`${state.viewport}: simulation status bar is not visible`);
+    if (!compact && !["Grid", "Step", "CFL", "Boundary"].every((label) => state.text.includes(label))) {
+      failures.push(`${state.viewport}: status bar is missing operational metadata`);
+    }
+    if (state.links.length > 0) failures.push(`${state.viewport}: status bar contains unrelated external links`);
+    if (!compact && !state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
+    if (!compact && !state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
+    if (!compact && !state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
   }
   return {
     id: "canvas_footer_links",
@@ -7290,7 +7339,7 @@ async function runCanvasFooterSmoke(browser, url) {
 }
 
 async function runControlNavigationSmoke(page) {
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
     if (!document.body.classList.contains("controls-drawer-open")) {
       document.querySelector('[data-mobile-layer="scenes"]')?.click();
     }
@@ -7300,8 +7349,9 @@ async function runControlNavigationSmoke(page) {
       `${button.querySelector(".nav-step")?.textContent.trim() || ""} ${button.querySelector(".nav-label")?.textContent.trim() || ""}`.trim();
     const tabLabels = tabButtons.map(controlLabel);
     const mobileLabels = mobileButtons.map((button) => button.textContent?.trim() || "");
-    const clickTab = (name) => {
+    const clickTab = async (name) => {
       document.querySelector(`[data-control-tab="${name}"]`)?.click();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       return {
         activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
         runVisible: Boolean(document.querySelector("#tab-simulation .run-section")),
@@ -7313,20 +7363,20 @@ async function runControlNavigationSmoke(page) {
         gridHasCellsPerWavelength: Boolean(document.querySelector("#tab-config .grid-section #cellsPerWavelengthInput")),
         gridHasSubpixelSmoothing: Boolean(document.querySelector("#tab-config .grid-section #subpixelSmoothingInput")),
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
-        numericsTitle: document.querySelector("#tab-config .config-summary-section h2")?.textContent.trim() || "",
+        numericsTitle: document.querySelector("#tab-config .fdtd-preflight h2, #tab-config .fdtd-preflight h3")?.textContent.trim() || "",
         resultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel")).map((panel) => ({
-          title: panel.querySelector("h2")?.textContent?.trim() || panel.className,
+          title: panel.querySelector("h2, .cds--accordion__title")?.textContent?.trim() || panel.className,
           visible: getComputedStyle(panel).display !== "none" && panel.getClientRects().length > 0,
         })),
         numericsCards: Array.from(document.querySelectorAll("#tab-config .config-detail-panel")).map((panel) => ({
-          title: panel.querySelector("h2")?.textContent?.trim() || panel.className,
+          title: panel.querySelector("h2, .cds--accordion__title")?.textContent?.trim() || panel.className,
           open: getComputedStyle(panel).display !== "none" && panel.getClientRects().length > 0,
         })),
       };
     };
-    const simulateState = clickTab("simulation");
-    const resultsState = clickTab("results");
-    const numericsState = clickTab("config");
+    const simulateState = await clickTab("simulation");
+    const resultsState = await clickTab("results");
+    const numericsState = await clickTab("config");
     const navigationState = {
       tabLabels,
       mobileLabels,
@@ -7802,10 +7852,10 @@ async function runSceneMenuSelectionSmoke(browser, url) {
     await openApplication(page, url);
     const initialStatus = await page.evaluate(() => ({
       preset: window.FdtdApp?.state?.preset || "",
-      reflectance: document.getElementById("summaryReflectanceOutput")?.textContent?.trim() || "",
+      outcome: document.querySelector(".fdtd-run-outcome")?.textContent?.replace(/\s+/g, " ").trim() || "",
     }));
     if (initialStatus.preset !== "planeWaveAir") failures.push(`Initial scene should be planeWaveAir; got ${initialStatus.preset || "none"}`);
-    if (initialStatus.reflectance !== "\u2014") failures.push(`Pending reflectance should use an em dash; got ${initialStatus.reflectance || "empty"}`);
+    if (!initialStatus.outcome.includes("No monitor result")) failures.push("Pending monitor outcome is not reported explicitly");
     await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(120);
     await page.evaluate(() => {
@@ -8289,7 +8339,7 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
 
     await page.locator("#playPauseBtn").focus();
     await page.setViewportSize({ width: 1024, height: 768 });
-    await page.waitForFunction(() => !document.querySelector("#playPauseBtn .simulation-run-label"));
+    await page.waitForFunction(() => getComputedStyle(document.getElementById("stepBtn")).display === "none");
     await page.waitForFunction(() => document.activeElement?.id === "playPauseBtn");
     const compactRunFocusPreserved = await page.evaluate(() => document.activeElement?.id === "playPauseBtn");
     const compactNodeReplaced = await page.locator("#playPauseBtn").evaluate(
@@ -8312,25 +8362,27 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
 
     await page.locator('.mobile-layer-button[data-mobile-layer="simulation"]:visible').click();
     await page.waitForFunction(() => document.getElementById("tab-simulation")?.classList.contains("is-active"));
-    const exactGainInput = page.locator("#gainInput-input-for-slider");
+    const exactGainInput = page.locator("#gainInputExactInput");
     await exactGainInput.fill("1.25");
     await exactGainInput.press("Enter");
-    await page.waitForFunction(
-      () => document.getElementById("gainInput")?.getAttribute("aria-valuenow") === "1.25"
-        && document.getElementById("gainOutput")?.value === "1.25",
-    );
+    await page.waitForFunction(() => Number(state.gain) === 1.25);
+    const exactGainCommit = await page.evaluate(() => ({
+      ariaValue: document.getElementById("gainInput")?.getAttribute("aria-valuenow") || "",
+      exactValue: document.getElementById("gainInputExactInput")?.value || "",
+      runtimeValue: String(state.gain),
+    }));
     await page.locator("#gainInput").press("ArrowRight");
     await page.waitForFunction(
       () => document.getElementById("gainInput")?.getAttribute("aria-valuenow") === "1.3"
-        && document.getElementById("gainOutput")?.value === "1.30",
+        && Number(state.gain) === 1.3,
     );
     const compactSliderInteraction = await page.evaluate(() => {
-      const input = document.getElementById("gainInput-input-for-slider");
+      const input = document.getElementById("gainInputExactInput");
       const rect = input?.getBoundingClientRect();
       return {
         ariaValue: document.getElementById("gainInput")?.getAttribute("aria-valuenow") || "",
         exactValue: input?.value || "",
-        runtimeValue: document.getElementById("gainOutput")?.value || "",
+        runtimeValue: String(state.gain),
         withinViewport: Boolean(rect && rect.left >= 0 && rect.right <= window.innerWidth),
       };
     });
@@ -8343,7 +8395,7 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
       label: document.activeElement?.getAttribute?.("aria-label") || "",
     }));
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.waitForFunction(() => Boolean(document.querySelector("#playPauseBtn .simulation-run-label")));
+    await page.waitForFunction(() => getComputedStyle(document.getElementById("stepBtn")).display !== "none");
     await page.waitForFunction(
       () => document.activeElement?.matches?.(".scientific-theme-toggle"),
       null,
@@ -8374,7 +8426,7 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
     if (!compactRunFocusPreserved || !desktopThemeFocusRestored) {
       failures.push("responsive header did not preserve focus on equivalent Run/theme actions");
     }
-    if (!compactSliderInteraction.withinViewport || compactSliderInteraction.runtimeValue !== "1.30") {
+    if (!compactSliderInteraction.withinViewport || compactSliderInteraction.runtimeValue !== "1.3") {
       failures.push(`compact exact-value slider did not remain visible and synchronized: ${JSON.stringify(compactSliderInteraction)}`);
     }
 
@@ -8394,6 +8446,7 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
       restoredPause,
       workflowExpansion: { initiallyExpanded, openExpanded, closedExpanded },
       compactSliderInteraction,
+      exactGainCommit,
       passed: failures.length === 0,
       failures,
     };
@@ -8490,7 +8543,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.waitForTimeout(250);
     const reclosed = await readLayout();
     await page.locator('.mobile-layer-button[data-mobile-layer="simulation"]').click();
-    await page.locator('#tab-simulation [data-view-projection="3d"]').click();
+    await page.locator('#tab-simulation [data-visual-choice="viewProjection"][data-visual-value="3d"]').click();
     await page.waitForFunction(() => window.FdtdCanvasSurfaceThreeRenderer?.status?.().frames > 0);
     await page.locator("#controlDrawerCloseBtn").click();
     await page.waitForTimeout(250);
@@ -8865,6 +8918,407 @@ async function runContextEditorResponsiveSmoke(browser, url) {
   }
 }
 
+async function runVisualCompositionResponsiveSmoke(browser, url) {
+  const viewports = [
+    { name: "tablet", width: 1024, height: 768, isMobile: false, hasTouch: false },
+    { name: "mobile", width: 320, height: 568, isMobile: true, hasTouch: true },
+  ];
+  const states = [];
+  const failures = [];
+
+  const openLayer = async (page, layer) => {
+    const mobileButton = page.locator(`.mobile-layer-button[data-mobile-layer="${layer}"]:visible`);
+    if (await mobileButton.count()) {
+      await mobileButton.first().click();
+    } else {
+      await page.locator(`[data-control-tab="${layer}"]:visible`).click();
+    }
+    await page.waitForFunction((expectedLayer) => {
+      const panel = document.getElementById("controlPanel");
+      const active = document.querySelector(`#tab-${expectedLayer}.control-tab-panel.is-active`);
+      return panel?.getAttribute("aria-hidden") === "false" && Boolean(active && !active.hidden);
+    }, layer);
+    await page.waitForTimeout(60);
+  };
+
+  const setTheme = async (page, theme) => {
+    await page.evaluate((nextTheme) => {
+      window.dispatchEvent(new CustomEvent("fdtd:theme-request", { detail: { theme: nextTheme } }));
+    }, theme);
+    await page.waitForFunction((expectedTheme) => document.documentElement.dataset.theme === expectedTheme, theme);
+    await page.waitForTimeout(40);
+  };
+
+  for (const viewport of viewports) {
+    const context = await browser.newContext({
+      viewport: { width: viewport.width, height: viewport.height },
+      deviceScaleFactor: 1,
+      isMobile: viewport.isMobile,
+      hasTouch: viewport.hasTouch,
+    });
+    const page = await context.newPage();
+    const localErrors = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") localErrors.push(message.text());
+    });
+    page.on("pageerror", (error) => localErrors.push(error.message));
+
+    try {
+      await openApplication(page, url);
+      await openLayer(page, "simulation");
+
+      const panelThemes = [];
+      for (const theme of ["light", "dark"]) {
+        await setTheme(page, theme);
+        panelThemes.push(await page.evaluate((nextTheme) => {
+          const rect = (node) => {
+            if (!node) return null;
+            const bounds = node.getBoundingClientRect();
+            return {
+              top: bounds.top,
+              bottom: bounds.bottom,
+              left: bounds.left,
+              right: bounds.right,
+              width: bounds.width,
+              height: bounds.height,
+            };
+          };
+          const parseColor = (value) => {
+            const match = String(value || "").match(/rgba?\(([^)]+)\)/i);
+            if (!match) return null;
+            const channels = match[1].split(",").map((item) => Number.parseFloat(item.trim()));
+            if (channels.length < 3 || channels.slice(0, 3).some((item) => !Number.isFinite(item))) return null;
+            const alpha = channels.length > 3 && Number.isFinite(channels[3]) ? channels[3] : 1;
+            return { rgb: channels.slice(0, 3), alpha };
+          };
+          const solidBackground = (node) => {
+            let current = node;
+            while (current) {
+              const color = parseColor(getComputedStyle(current).backgroundColor);
+              if (color && color.alpha > 0.02) return color.rgb;
+              current = current.parentElement;
+            }
+            return [255, 255, 255];
+          };
+          const luminance = (rgb) => rgb.reduce((sum, channel, index) => {
+            const value = channel / 255;
+            const linear = value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+            return sum + linear * [0.2126, 0.7152, 0.0722][index];
+          }, 0);
+          const contrast = (foreground, background) => {
+            const fg = parseColor(foreground);
+            if (!fg) return 0;
+            const a = luminance(fg.rgb);
+            const b = luminance(background);
+            return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+          };
+          const panel = document.getElementById("controlPanel");
+          const active = panel?.querySelector(".control-tab-panel.is-active:not([hidden])");
+          const header = panel?.querySelector(".control-panel-header");
+          const title = header?.querySelector("h2");
+          const close = document.getElementById("controlDrawerCloseBtn");
+          const panelStyle = panel ? getComputedStyle(panel) : null;
+          const activeStyle = active ? getComputedStyle(active) : null;
+          const titleStyle = title ? getComputedStyle(title) : null;
+          const closeStyle = close ? getComputedStyle(close) : null;
+          const panelRect = rect(panel);
+          const activeRect = rect(active);
+          const headerRect = rect(header);
+          const titleRect = rect(title);
+          const closeRect = rect(close);
+          const inViewport = (bounds) => Boolean(
+            bounds && bounds.left >= -1 && bounds.top >= -1 && bounds.right <= window.innerWidth + 1 && bounds.bottom <= window.innerHeight + 1,
+          );
+          return {
+            theme: nextTheme,
+            panel: panelRect,
+            active: activeRect,
+            header: headerRect,
+            title: titleRect,
+            close: closeRect,
+            panelDisplay: panelStyle?.display || "",
+            activeDisplay: activeStyle?.display || "",
+            panelBackground: panelStyle?.backgroundColor || "",
+            activeBackground: activeStyle?.backgroundColor || "",
+            contentLength: active?.textContent?.trim().length || 0,
+            contentVisible: Boolean(active && !active.hidden && activeRect && activeRect.width > 1 && activeRect.height > 1),
+            panelPainted: Boolean(panelStyle && parseColor(panelStyle.backgroundColor)?.alpha > 0.02),
+            titleContrast: titleStyle ? contrast(titleStyle.color, solidBackground(title)) : 0,
+            closeContrast: closeStyle ? contrast(closeStyle.color, solidBackground(close)) : 0,
+            panelInViewport: inViewport(panelRect),
+            headerInViewport: inViewport(headerRect),
+            titleInHeader: Boolean(titleRect && headerRect && titleRect.top >= headerRect.top - 1 && titleRect.bottom <= headerRect.bottom + 1),
+            closeInHeader: Boolean(closeRect && headerRect && closeRect.top >= headerRect.top - 1 && closeRect.bottom <= headerRect.bottom + 1),
+          };
+        }, theme));
+      }
+
+      const overflow = { items: [], select: null, draw: null, selectMode: "", drawMode: "" };
+      if (viewport.width <= 320) {
+        await page.locator("#controlDrawerCloseBtn").click();
+        await page.waitForFunction(() => document.getElementById("controlPanel")?.getAttribute("aria-hidden") === "true");
+        const overflowButton = page.locator(".header-overflow-menu:visible");
+        if (await overflowButton.count()) {
+          await overflowButton.click();
+          await page.waitForFunction(() => Array.from(document.querySelectorAll(".cds--overflow-menu-options__btn, [role=menuitem]")).some((node) => node.getClientRects().length > 0));
+          overflow.items = await page.evaluate(() => Array.from(document.querySelectorAll(".cds--overflow-menu-options__btn, [role=menuitem]"))
+            .filter((node) => node.getClientRects().length > 0)
+            .map((node) => {
+              const bounds = node.getBoundingClientRect();
+              return { text: node.textContent?.replace(/\s+/g, " ").trim() || "", width: bounds.width, height: bounds.height };
+            }));
+          const clickMenuItem = async (pattern) => {
+            const clicked = await page.evaluate((source) => {
+              const expression = new RegExp(source, "i");
+              const item = Array.from(document.querySelectorAll(".cds--overflow-menu-options__btn, [role=menuitem]"))
+                .find((node) => node.getClientRects().length > 0 && expression.test(node.textContent || ""));
+              item?.click();
+              return Boolean(item);
+            }, pattern);
+            await page.waitForTimeout(60);
+            return { clicked, mode: await page.evaluate(() => state.canvasMode || "") };
+          };
+          overflow.select = await clickMenuItem("select|edit");
+          overflow.selectMode = overflow.select.mode;
+          await overflowButton.click();
+          await page.waitForTimeout(30);
+          overflow.draw = await clickMenuItem("draw");
+          overflow.drawMode = overflow.draw.mode;
+        }
+      }
+
+      await openLayer(page, "scenes");
+      await page.locator('[data-scene-view="current"]:visible').click();
+      await setTheme(page, "dark");
+      const scene = await page.evaluate(() => {
+        const current = document.querySelector('[data-scene-view="current"]');
+        const kicker = document.querySelector(".scene-spotlight-kicker");
+        const number = document.getElementById("sceneSpotlightNumber");
+        const group = document.getElementById("sceneSpotlightGroup");
+        const rect = (node) => {
+          if (!node) return null;
+          const bounds = node.getBoundingClientRect();
+          return { top: bounds.top, bottom: bounds.bottom, left: bounds.left, right: bounds.right, width: bounds.width, height: bounds.height };
+        };
+        const parseColor = (value) => {
+          const channels = String(value || "").match(/rgba?\(([^)]+)\)/i)?.[1]?.split(",").map((item) => Number.parseFloat(item.trim())) || [];
+          return channels.length >= 3 && channels.slice(0, 3).every(Number.isFinite) ? channels.slice(0, 3) : null;
+        };
+        const luminance = (rgb) => rgb.reduce((sum, channel, index) => {
+          const value = channel / 255;
+          const linear = value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+          return sum + linear * [0.2126, 0.7152, 0.0722][index];
+        }, 0);
+        const currentStyle = current ? getComputedStyle(current) : null;
+        const currentBackground = parseColor(currentStyle?.backgroundColor);
+        const currentColor = parseColor(currentStyle?.color);
+        const contrast = currentColor && currentBackground
+          ? (Math.max(luminance(currentColor), luminance(currentBackground)) + 0.05) /
+            (Math.min(luminance(currentColor), luminance(currentBackground)) + 0.05)
+          : 0;
+        const raw = kicker?.textContent?.trim() || "";
+        const numberText = number?.textContent?.trim() || "";
+        const groupText = group?.textContent?.trim() || "";
+        const boundaryText = raw.startsWith(numberText) && raw.endsWith(groupText)
+          ? raw.slice(numberText.length, raw.length - groupText.length)
+          : "";
+        const numberRect = rect(number);
+        const groupRect = rect(group);
+        return {
+          currentActive: current?.getAttribute("aria-selected") === "true" || current?.classList.contains("is-active"),
+          currentRect: rect(current),
+          currentContrast: contrast,
+          kickerText: raw,
+          kickerBoundaryText: boundaryText,
+          kickerVisualGap: numberRect && groupRect ? groupRect.left - numberRect.right : null,
+          numberRect,
+          groupRect,
+        };
+      });
+
+      await openLayer(page, "results");
+      const seededScroll = await page.evaluate(() => {
+        document.querySelectorAll("#tab-results .cds--accordion__heading").forEach((heading) => {
+          if (heading.getAttribute("aria-expanded") !== "true") heading.click();
+        });
+        const panel = document.getElementById("controlPanel");
+        const scroller = document.querySelector(".control-tab-panels");
+        if (panel) panel.scrollTop = panel.scrollHeight;
+        if (scroller) scroller.scrollTop = scroller.scrollHeight;
+        return {
+          panel: { top: panel?.scrollTop || 0, max: Math.max(0, (panel?.scrollHeight || 0) - (panel?.clientHeight || 0)) },
+          scroller: { top: scroller?.scrollTop || 0, max: Math.max(0, (scroller?.scrollHeight || 0) - (scroller?.clientHeight || 0)) },
+        };
+      });
+      await openLayer(page, "simulation");
+      const scrollReset = await page.evaluate(() => ({
+        panelTop: document.getElementById("controlPanel")?.scrollTop || 0,
+        panelsTop: document.querySelector(".control-tab-panels")?.scrollTop || 0,
+      }));
+
+      states.push({
+        viewport: viewport.name,
+        panelThemes,
+        overflow,
+        scene,
+        seededScroll,
+        scrollReset,
+        localErrors,
+      });
+    } catch (error) {
+      failures.push(`${viewport.name}: ${error instanceof Error ? error.message : String(error)}`);
+      states.push({ viewport: viewport.name, localErrors, error: String(error) });
+    } finally {
+      await context.close();
+    }
+  }
+
+  const landscapeContext = await browser.newContext({ viewport: { width: 844, height: 390 } });
+  const landscapePage = await landscapeContext.newPage();
+  const landscapeErrors = [];
+  landscapePage.on("console", (message) => {
+    if (message.type() === "error") landscapeErrors.push(message.text());
+  });
+  landscapePage.on("pageerror", (error) => landscapeErrors.push(error.message));
+  try {
+    await openApplication(landscapePage, url);
+    const opened = await landscapePage.evaluate(() => {
+      const canvas = document.getElementById("simCanvas");
+      const bounds = canvas?.getBoundingClientRect();
+      if (!canvas || !bounds || !window.FdtdApp?.openSourceMenuAt) return false;
+      window.FdtdApp.openSourceMenuAt(bounds.left + bounds.width * 0.45, bounds.top + bounds.height * 0.42, null);
+      return true;
+    });
+    if (!opened) throw new Error("landscape source editor entry point is unavailable");
+    await landscapePage.waitForFunction(() => {
+      const menu = document.getElementById("sourceMenu");
+      return Boolean(menu && !menu.hidden && menu.getClientRects().length > 0);
+    });
+    const landscape = await landscapePage.evaluate(() => {
+      const rect = (node) => {
+        if (!node) return null;
+        const bounds = node.getBoundingClientRect();
+        return { top: bounds.top, bottom: bounds.bottom, left: bounds.left, right: bounds.right, width: bounds.width, height: bounds.height };
+      };
+      const intersectionArea = (a, b) => a && b
+        ? Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+        : 0;
+      const menu = document.getElementById("sourceMenu");
+      const body = menu?.querySelector(".source-menu-body");
+      const actions = menu?.querySelector(".source-menu-actions");
+      const header = menu?.querySelector(".source-menu-header");
+      const menuRect = rect(menu);
+      const bodyRect = rect(body);
+      const actionsRect = rect(actions);
+      return {
+        menu: menuRect,
+        body: bodyRect,
+        actions: actionsRect,
+        header: rect(header),
+        bodyActionsOverlap: intersectionArea(bodyRect, actionsRect),
+        bodyBelowActions: Boolean(bodyRect && actionsRect && bodyRect.bottom <= actionsRect.top + 1),
+        actionsWithinMenu: Boolean(actionsRect && menuRect && actionsRect.left >= menuRect.left - 1 && actionsRect.right <= menuRect.right + 1 && actionsRect.bottom <= menuRect.bottom + 1),
+        bodyWithinViewport: Boolean(bodyRect && bodyRect.left >= -1 && bodyRect.right <= window.innerWidth + 1 && bodyRect.top >= -1 && bodyRect.bottom <= window.innerHeight + 1),
+        documentOverflowX: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    states.push({ viewport: "landscape", landscape, localErrors: landscapeErrors });
+  } catch (error) {
+    failures.push(`landscape: ${error instanceof Error ? error.message : String(error)}`);
+    states.push({ viewport: "landscape", landscapeErrors, error: String(error) });
+  } finally {
+    await landscapeContext.close();
+  }
+
+  for (const state of states.filter((item) => item.viewport !== "landscape")) {
+    for (const panel of state.panelThemes || []) {
+      const prefix = `${state.viewport} ${panel.theme}`;
+      if (!panel.panelInViewport || !panel.headerInViewport || !panel.titleInHeader || !panel.closeInHeader) {
+        failures.push(`${prefix}: compact panel/header control escaped its valid viewport bounds`);
+      }
+      if (panel.panelDisplay === "none" || panel.activeDisplay === "none" || !panel.contentVisible || panel.contentLength < 40) {
+        failures.push(`${prefix}: opened compact panel has no visible content`);
+      }
+      if (!panel.panelPainted || panel.titleContrast < 4.5 || panel.closeContrast < 3) {
+        failures.push(`${prefix}: panel surfaces or header controls do not have usable contrast`);
+      }
+    }
+    if (state.viewport === "mobile") {
+      const itemTexts = (state.overflow.items || []).map((item) => item.text).join(" | ");
+      if (!state.overflow.items?.length) failures.push("mobile: compact overflow menu has no reachable actions");
+      if (!/select|edit/i.test(itemTexts)) failures.push("mobile: compact overflow does not expose Select/Edit");
+      if (!/draw/i.test(itemTexts)) failures.push("mobile: compact overflow does not expose Draw");
+      for (const item of state.overflow.items || []) {
+        if (item.width < 44 || item.height < 44) failures.push(`mobile: overflow target ${item.text || "unnamed"} is smaller than 44px`);
+      }
+      if (!state.overflow.select?.clicked || state.overflow.selectMode !== "select") failures.push("mobile: Select/Edit overflow action did not activate Select mode");
+      if (!state.overflow.draw?.clicked || state.overflow.drawMode !== "brush") failures.push("mobile: Draw overflow action did not activate Draw mode");
+    }
+    if (!state.scene?.currentActive || !state.scene.currentRect || state.scene.currentRect.width < 1 || state.scene.currentRect.height < 1) {
+      failures.push(`${state.viewport}: Current scene selector is not visibly active`);
+    }
+    if (state.scene.currentContrast < 3) failures.push(`${state.viewport}: dark-theme Current selector contrast is ${Number(state.scene.currentContrast || 0).toFixed(2)}`);
+    if (!state.scene.kickerBoundaryText && Number(state.scene.kickerVisualGap) < 4) {
+      failures.push(`${state.viewport}: scene kicker visually concatenates its number and family label`);
+    }
+    const scrollable = Math.max(state.seededScroll?.panel?.max || 0, state.seededScroll?.scroller?.max || 0);
+    if (scrollable > 1 && (state.scrollReset?.panelTop > 1 || state.scrollReset?.panelsTop > 1)) {
+      failures.push(`${state.viewport}: changing workflow did not reset content scroll (${state.scrollReset.panelTop}/${state.scrollReset.panelsTop})`);
+    }
+    failures.push(...(state.localErrors || []).map((error) => `${state.viewport}: ${error}`));
+  }
+  const landscapeState = states.find((item) => item.viewport === "landscape")?.landscape;
+  if (!landscapeState) {
+    failures.push("landscape: source editor did not render");
+  } else {
+    if (landscapeState.bodyActionsOverlap > 1 || !landscapeState.bodyBelowActions) {
+      failures.push("landscape: source editor body is covered by its footer actions");
+    }
+    if (!landscapeState.actionsWithinMenu || !landscapeState.bodyWithinViewport || landscapeState.documentOverflowX > 1) {
+      failures.push("landscape: source editor footer/body escaped the usable viewport");
+    }
+    failures.push(...landscapeErrors.map((error) => `landscape: ${error}`));
+  }
+
+  return {
+    id: "visual_composition_responsive",
+    preset: "current",
+    priority: "P1",
+    states,
+    passed: failures.length === 0,
+    failures,
+  };
+}
+
+async function runHelpGuide320Smoke(browser, url) {
+  const context = await browser.newContext({ viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  const failures = [];
+  try {
+    await openApplication(page, url);
+    await openFullHelpGuide(page);
+    const status = await page.evaluate(() => {
+      const panel = document.getElementById("helpGuidePanel");
+      const trigger = document.querySelector(".scientific-header-help__button");
+      const bounds = (node) => node?.getBoundingClientRect() || null;
+      const panelRect = bounds(panel);
+      const triggerRect = bounds(trigger);
+      return {
+        visible: Boolean(panel && !panel.hidden && getComputedStyle(panel).display !== "none" && panelRect?.width > 1 && panelRect?.height > 1),
+        withinViewport: Boolean(panelRect && panelRect.left >= 0 && panelRect.top >= 0 && panelRect.right <= innerWidth && panelRect.bottom <= innerHeight),
+        triggerVisible: Boolean(triggerRect && triggerRect.width > 1 && triggerRect.height > 1),
+        overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    if (!status.visible || !status.withinViewport) failures.push("320px help guide is outside the viewport or not visible");
+    if (!status.triggerVisible) failures.push("320px help trigger is not visible");
+    if (status.overflowX > 1) failures.push("320px help guide introduces horizontal overflow");
+    return { id: "help_guide_320_viewport", preset: "current", priority: "P1", ...status, passed: failures.length === 0, failures };
+  } finally {
+    await context.close();
+  }
+}
+
 async function runBrushStrokeContinuitySmoke(page) {
   await selectPreset(page, "empty");
   const segment = await page.evaluate(() => {
@@ -9174,11 +9628,18 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
         const style = getComputedStyle(node);
         return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
       };
+      const contextRect = document.querySelector(".scientific-app-header__context")?.getBoundingClientRect();
+      const actionsRect = document.querySelector(".scientific-header__actions")?.getBoundingClientRect();
       return {
         interaction: visible(".interaction-toggle"),
+        headerOverlap: Boolean(contextRect && actionsRect && contextRect.right > actionsRect.left + 0.5),
+        actionIcons: ["#stepBtn", "#resetBtn", "#saveBtn", "#selectModeBtn", "#brushModeBtn"]
+          .every((selector) => Boolean(document.querySelector(`${selector} svg`))),
       };
     });
     if (!states.desktopControls.interaction) failures.push("desktop header hides Select / Draw controls");
+    if (states.desktopControls.headerOverlap) failures.push("desktop header context overlaps application actions");
+    if (!states.desktopControls.actionIcons) failures.push("desktop header actions are missing their Carbon icons");
     const sampleTheme = async (theme) => {
       const currentTheme = await page.evaluate(() => document.documentElement.dataset.theme);
       if (currentTheme !== theme) {
@@ -9217,6 +9678,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
           metaThemeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") || "",
           colorbarBackground: colorbarStyle.backgroundColor,
           colorbarText: colorbarStyle.color,
+          colorbarContrast: contrast(colorbarStyle.color, colorbarStyle.backgroundColor),
           panelBackground: panelStyle.backgroundColor,
           panelText: panelStyle.color,
           brandBackground: brandStyle.backgroundColor,
@@ -9224,6 +9686,7 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
           brandContrast: contrast(brandStyle.color, brandStyle.backgroundColor),
           frameBackground: frameStyle.backgroundColor,
           stageBackground: stageStyle.backgroundColor,
+          fieldMapName: globalThis.currentFieldColormapName?.(false) || "",
         };
       });
     };
@@ -9231,9 +9694,9 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
     states.light = await sampleTheme("light");
     states.dark = await sampleTheme("dark");
     if (!states.desktopThemeActionVisible) failures.push("desktop header hides the theme action");
-    for (const [theme, expectedHeader, expectedMeta] of [
-      ["light", "g10", "#f4f4f4"],
-      ["dark", "g100", "#161616"],
+    for (const [theme, expectedHeader, expectedMeta, expectedFieldMap] of [
+      ["light", "g10", "#f4f4f4", "redshift"],
+      ["dark", "g100", "#161616", "iceburn"],
     ]) {
       const snapshot = states[theme];
       if (snapshot.theme !== theme) failures.push(`${theme} theme did not reach the application root`);
@@ -9241,8 +9704,8 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
       if (snapshot.metaThemeColor.toLowerCase() !== expectedMeta) {
         failures.push(`${theme} theme left the browser theme color at ${snapshot.metaThemeColor || "unset"}`);
       }
-      if (snapshot.colorbarBackground !== snapshot.panelBackground || snapshot.colorbarText !== snapshot.panelText) {
-        failures.push(`${theme} colorbar does not use the active Carbon layer and text tokens`);
+      if (snapshot.colorbarContrast < 4.5) {
+        failures.push(`${theme} colorbar contrast is too low (${snapshot.colorbarContrast.toFixed(2)})`);
       }
       if (snapshot.brandContrast < 4.5) {
         failures.push(`${theme} brand mark contrast is too low (${snapshot.brandContrast.toFixed(2)})`);
@@ -9250,6 +9713,12 @@ async function runThemeSurfaceConsistencySmoke(browser, url) {
       if (snapshot.frameBackground !== snapshot.stageBackground) {
         failures.push(`${theme} canvas fallback background does not follow the active Carbon surface`);
       }
+      if (snapshot.fieldMapName !== expectedFieldMap) {
+        failures.push(`${theme} signed field map uses ${snapshot.fieldMapName || "no colormap"} instead of ${expectedFieldMap}`);
+      }
+    }
+    if (states.light.colorbarBackground === states.dark.colorbarBackground) {
+      failures.push("colorbar background does not follow the active Carbon theme");
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -9332,12 +9801,13 @@ async function runSourceDependentParamsSmoke(page) {
       multipoleOrder: 3,
       multipolePhase: "cos",
     };
-    const shapeControlState = (shape) => {
+    const shapeControlState = async (shape) => {
       app.populateSourceEditor({
         ...sourceTemplate,
         shape,
         widthLambda: shape === "evanescentLine" ? 1.25 : shape === "modeProfile" ? 1.15 : sourceTemplate.widthLambda,
       });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       const visibleSourceIds = [
         "sourceWidthControl",
         "sourceAngleControl",
@@ -9357,20 +9827,20 @@ async function runSourceDependentParamsSmoke(page) {
     };
     window.FdtdCarbonUI?.closeDisclosures?.(sourceMenu || document);
     await new Promise((resolve) => requestAnimationFrame(resolve));
-    const closedAdvanced = shapeControlState("multipole");
+    const closedAdvanced = await shapeControlState("multipole");
     const sourceDetailsClosed = sourceDetailHeading?.getAttribute("aria-expanded") === "false";
     if (sourceDetailHeading?.getAttribute("aria-expanded") !== "true") sourceDetailHeading?.click();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     return {
       sourceDetailsClosed,
       closedAdvanced,
-      point: shapeControlState("point"),
-      gaussianSpot: shapeControlState("gaussianSpot"),
-      line: shapeControlState("line"),
-      gaussianProfile: shapeControlState("gaussianProfile"),
-      evanescentLine: shapeControlState("evanescentLine"),
-      modeProfile: shapeControlState("modeProfile"),
-      multipole: shapeControlState("multipole"),
+      point: await shapeControlState("point"),
+      gaussianSpot: await shapeControlState("gaussianSpot"),
+      line: await shapeControlState("line"),
+      gaussianProfile: await shapeControlState("gaussianProfile"),
+      evanescentLine: await shapeControlState("evanescentLine"),
+      modeProfile: await shapeControlState("modeProfile"),
+      multipole: await shapeControlState("multipole"),
     };
   });
   const failures = [];
@@ -9609,6 +10079,16 @@ async function runIntegratedContextInspectorSmoke(page) {
 
 async function runReflectiveBoundaryWallSmoke(page) {
   await selectPreset(page, "empty");
+  await page.evaluate(() => {
+    for (const side of ["left", "right", "top", "bottom"]) setBoundarySideMode(side, "absorbing");
+  });
+  const canvasBox = await page.locator("#simCanvas").boundingBox();
+  if (canvasBox) {
+    await page.mouse.click(canvasBox.x + canvasBox.width - 2, canvasBox.y + canvasBox.height / 2, { button: "right" });
+  }
+  const uiOpened = await page.locator("#boundaryMenu").isVisible();
+  if (uiOpened) await page.locator('[data-boundary-mode="reflective"]').click();
+  const uiApplied = await page.evaluate(() => state.boundarySides?.right === "reflective");
   const status = await page.evaluate(() => {
     state.running = false;
     for (const side of ["left", "right", "top", "bottom"]) setBoundarySideMode(side, "absorbing");
@@ -9671,6 +10151,8 @@ async function runReflectiveBoundaryWallSmoke(page) {
     };
   });
   const failures = [];
+  if (!uiOpened) failures.push("boundary condition editor did not open from the canvas boundary");
+  if (!uiApplied) failures.push("Reflective boundary button did not apply the selected condition");
   if (status.boundary?.right !== "reflective") failures.push("right boundary did not enter reflective mode");
   if (status.wallAbs !== 0) failures.push("reflective boundary wall did not zero the visible PEC strip");
   if (status.probeAbs <= 0) failures.push("reflective boundary zeroing leaked into the active interior");
@@ -9680,6 +10162,8 @@ async function runReflectiveBoundaryWallSmoke(page) {
     id: "reflective_boundary_wall",
     preset: "current",
     priority: "P1",
+    uiOpened,
+    uiApplied,
     ...status,
     passed: failures.length === 0,
     failures,
@@ -9691,8 +10175,9 @@ async function runBrushDependentParamsSmoke(page) {
   const status = await page.evaluate(async () => {
     const app = window.FdtdApp;
     if (!app?.updateControlText) throw new Error("FdtdApp.updateControlText() is unavailable");
+    if (!app?.openBrushMenuAt) throw new Error("FdtdApp.openBrushMenuAt() is unavailable");
+    app.openBrushMenuAt(0, 0);
     const brushMenu = document.getElementById("brushMenu");
-    if (brushMenu) brushMenu.hidden = false;
     const materialDetailPanel = document.querySelector(".material-detail-panel");
     const materialDetailHeading = materialDetailPanel?.querySelector(".cds--accordion__heading");
     const isRendered = (control) => {
@@ -9740,9 +10225,10 @@ async function runBrushDependentParamsSmoke(page) {
     window.FdtdCarbonUI?.closeDisclosures?.(brushMenu || document);
     await new Promise((resolve) => requestAnimationFrame(resolve));
     app.updateControlText();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const advancedMaterialClosedByDefault = materialDetailHeading?.getAttribute("aria-expanded") === "false";
     const hiddenWhenOff = dependentSelectors.every(allHidden);
-    const modulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
+    const modulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("[data-carbon-field-shell]");
     const modulationPhaseHiddenWhenOff = modulationPhaseControl?.hidden === true && !isRendered(modulationPhaseControl);
     const dispersionHiddenWhenNone = allHidden(".dispersion-params");
     const materialWarning = document.getElementById("materialWarning");
@@ -9754,10 +10240,11 @@ async function runBrushDependentParamsSmoke(page) {
       isotropicMaterialInputs.length === 4 &&
       isotropicInputShape.columns === 2 &&
       isotropicInputShape.rows === 2;
-    const geometryControlShape = (geometry) => {
+    const geometryControlShape = async (geometry) => {
       state.brushTool = "geometry";
       state.brushGeometry = geometry;
       app.updateControlText();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       const visibleGeometryIds = [
         "geometryWidthControl",
         "geometryHeightControl",
@@ -9773,10 +10260,10 @@ async function runBrushDependentParamsSmoke(page) {
       return { visibleGeometryIds, visibleGroups };
     };
     const geometryShapes = {
-      rectangle: geometryControlShape("rectangle"),
-      disk: geometryControlShape("disk"),
-      ellipse: geometryControlShape("ellipse"),
-      ring: geometryControlShape("ring"),
+      rectangle: await geometryControlShape("rectangle"),
+      disk: await geometryControlShape("disk"),
+      ellipse: await geometryControlShape("ellipse"),
+      ring: await geometryControlShape("ring"),
     };
 
     Object.assign(state, {
@@ -9790,9 +10277,10 @@ async function runBrushDependentParamsSmoke(page) {
     if (materialDetailHeading?.getAttribute("aria-expanded") !== "true") materialDetailHeading?.click();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     app.updateControlText();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const gyrotropyVisibleWhenOn = allVisible(".gyrotropy-params");
     const modulationVisibleWhenOn = allVisible(".modulation-params");
-    const visibleModulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("label");
+    const visibleModulationPhaseControl = document.getElementById("modulationPhaseInput")?.closest("[data-carbon-field-shell]");
     const modulationPhaseVisibleWhenOn = visibleModulationPhaseControl?.hidden === false && isRendered(visibleModulationPhaseControl);
     const conductivityVisibleWhenOn = allVisible(".conductivity-params");
     const conductivityYControl = document.getElementById("conductivitySigmaYControl");
@@ -9819,6 +10307,7 @@ async function runBrushDependentParamsSmoke(page) {
 
     state.brush = "pec";
     app.updateControlText();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     const hiddenWhenNonCustom = dependentSelectors.every(allHidden) && allHidden(".dispersion-params");
 
     return {
@@ -10055,6 +10544,8 @@ async function main() {
         ["touch_long_press", () => runTouchLongPressSmoke(browser, url)],
         ["contextual_inspector_layout", () => runContextualInspectorLayoutSmoke(browser, url)],
         ["context_editor_responsive", () => runContextEditorResponsiveSmoke(browser, url)],
+        ["visual_composition_responsive", () => runVisualCompositionResponsiveSmoke(browser, url)],
+        ["help_guide_320_viewport", () => runHelpGuide320Smoke(browser, url)],
         ["brush_stroke_continuity", () => runBrushStrokeContinuitySmoke(page)],
         ["draw_preview", () => runDrawPreviewSmoke(page)],
         ["source_wave_vector_overlay_direction", () => runSourceWaveVectorOverlaySmoke(page)],

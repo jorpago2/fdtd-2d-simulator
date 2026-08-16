@@ -48,7 +48,6 @@ import "./runtime/ui/control-sync-ui.js";
 import "./runtime/core/scene-codec.js";
 import "./runtime/ui/source-monitor-model.js";
 import "./runtime/ui/material-editor-model.js";
-import "./runtime/ui/material-editor-ui.js";
 import "./runtime/app/simulation-effects.js";
 import "./runtime/app/runtime-controller.js";
 import "./runtime/canvas/canvas-colorbar.js";

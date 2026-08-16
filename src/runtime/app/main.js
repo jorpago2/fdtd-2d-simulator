@@ -24,7 +24,6 @@ const {
   sourceMonitorOperationsModule,
   sceneObservablesModule,
   materialEditorModel,
-  materialEditorUi,
   materialOperationsModule,
   materialSelectionModule,
   entitySelectionModule,
@@ -458,9 +457,6 @@ function loadSceneCatalogForUi() {
       sceneBrowser.setSceneCatalog(catalog);
       updateSceneGuidePanel();
       syncSceneBrowserSelection();
-      if (el.sceneNote) {
-        el.sceneNote.textContent = sceneDescriptions[state.preset] || sceneDescriptions.empty || "";
-      }
     })
     .catch((error) => {
       console.warn("Scene catalog JSON unavailable; using embedded scene metadata.", error);
@@ -1120,7 +1116,9 @@ function controlText() {
 }
 
 function updateControlText() {
-  return controlText().updateControlText();
+  const result = controlText().updateControlText();
+  globalThis.FdtdReactUI?.notify?.();
+  return result;
 }
 function updateResultsInsight(diagnosticReflectance, diagnosticTransmittance, diagnosticBalance) {
   resultsView.updateInsight({
@@ -1173,6 +1171,7 @@ function updateStats() {
   }
   updateAnalysisControls();
   updatePerformanceStats();
+  globalThis.FdtdReactUI?.notify?.();
 }
 
 function finalizeDeferredResults({ render = true } = {}) {
@@ -1601,7 +1600,6 @@ controlTextController = controlTextModule.createControlTextController({
   el,
   uiCore,
   controlSyncUi,
-  materialEditorUi,
   sceneDescriptions,
   COURANT,
   clampAllSourcesToInterior,
@@ -1935,8 +1933,8 @@ function applyBoundaryMode(mode, side = contextMenuState.boundaryMenuSide) {
   configMaterialHandlers().applyBoundaryMode(mode, side);
 }
 
-function handleBoundaryMenuInput() {
-  configMaterialHandlers().handleBoundaryMenuInput();
+function handleBoundaryMenuInput(mode) {
+  configMaterialHandlers().handleBoundaryMenuInput(mode);
 }
 
 function applyGridSizeFromInputs() {
@@ -2173,6 +2171,7 @@ window.FdtdApp = Object.freeze({
   applySceneState,
   buildSceneObservables: () => sceneObservables?.buildSceneObservables?.() || null,
   exportSceneState,
+  openBrushMenuAt,
   openSourceMenuAt,
   populateSourceEditor,
   selectScenePreset,

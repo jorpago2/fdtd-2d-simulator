@@ -138,18 +138,9 @@
     }
 
     function bindControls() {
-      el.exportSceneBtn?.addEventListener("click", downloadSceneJson);
-      el.importSceneBtn?.addEventListener("click", () => {
-        el.importSceneFileInput?.click();
-      });
-      el.importSceneFileInput?.addEventListener("change", async () => {
-        const file = el.importSceneFileInput.files?.[0];
-        await importSceneJsonFile(file);
-        el.importSceneFileInput.value = "";
-      });
-      el.copySceneUrlBtn?.addEventListener("click", () => {
-        copySceneUrl();
-      });
+      windowRef.addEventListener("fdtd:export-scene", downloadSceneJson);
+      windowRef.addEventListener("fdtd:import-scene", (event) => importSceneJsonFile(event.detail?.file));
+      windowRef.addEventListener("fdtd:copy-scene-url", copySceneUrl);
     }
 
     return Object.freeze({

@@ -52,13 +52,9 @@
 
     function syncContextualInspectorState() {
       const open = anyContextMenuOpen();
-      const host = el.contextInspectorHost;
-      if (host) {
-        host.hidden = !open;
-        host.inert = !open;
-        host.setAttribute("aria-hidden", String(!open));
+      if (typeof global.dispatchEvent === "function" && typeof global.CustomEvent === "function") {
+        global.dispatchEvent(new global.CustomEvent("fdtd:context-inspector-state", { detail: { open } }));
       }
-      el.appShell?.classList.toggle("contextual-inspector-open", open);
     }
 
     function activeElementInsideContextMenu() {

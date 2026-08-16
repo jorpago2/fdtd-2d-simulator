@@ -677,7 +677,7 @@ function checkCanvasLayoutRefreshBindings() {
   drawer.setControlDrawerOpen(true);
   drawer.setControlDrawerOpen(false);
   assertDeepEqual(drawerEvents, [true, false], "drawer layout-state events");
-  assertEqual(controlPanel.attributes["aria-hidden"], "true", "closed drawer accessibility state");
+  assertEqual(controlPanel.attributes["aria-hidden"], undefined, "drawer leaves accessibility state to React");
 
   const projectionButton = element();
   projectionButton.dataset.viewProjection = "3d";
@@ -701,7 +701,9 @@ function checkCanvasLayoutRefreshBindings() {
     updateControlText() {},
     updateStats() {},
   });
-  projectionButton.listeners.get("click")();
+  runtime.dispatchEvent(new runtime.CustomEvent("fdtd:visual-choice", {
+    detail: { property: "viewProjection", value: "3d" },
+  }));
   assertEqual(state.viewProjection, "3d", "projection state update");
   assertEqual(renderCalls, 1, "projection immediate render");
   flushAnimationFrame();

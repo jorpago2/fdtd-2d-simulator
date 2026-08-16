@@ -352,9 +352,15 @@
       const width = sim.canvas.width;
       const height = sim.canvas.height;
       const background = ctx.createLinearGradient(0, 0, 0, height);
-      background.addColorStop(0, "rgb(3, 5, 9)");
-      background.addColorStop(0.58, "rgb(7, 8, 13)");
-      background.addColorStop(1, "rgb(0, 0, 0)");
+      if (state.theme === "dark") {
+        background.addColorStop(0, "rgb(3, 5, 9)");
+        background.addColorStop(0.58, "rgb(7, 8, 13)");
+        background.addColorStop(1, "rgb(0, 0, 0)");
+      } else {
+        background.addColorStop(0, "rgb(255, 255, 255)");
+        background.addColorStop(0.58, "rgb(244, 244, 244)");
+        background.addColorStop(1, "rgb(224, 224, 224)");
+      }
       ctx.fillStyle = background;
       ctx.fillRect(0, 0, width, height);
     }
@@ -416,7 +422,8 @@
       }
       const orbit = surfaceOrbitFromState();
       this.mesh.rotation.set(orbit.pitchRad, orbit.yawRad, 0);
-      this.outlineMaterial.opacity = state.theme === "dark" ? 0.62 : 0.38;
+      this.outlineMaterial.color.setHex(state.theme === "dark" ? 0xffffff : 0x161616);
+      this.outlineMaterial.opacity = state.theme === "dark" ? 0.62 : 0.46;
       this.outline.rotation.copy(this.mesh.rotation);
       this.renderer.render(this.scene, this.camera);
       if (!renderingToDisplayCanvas) {

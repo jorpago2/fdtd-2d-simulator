@@ -1,23 +1,45 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
+  ActionableNotification,
   Button,
+  Column,
   ContentSwitcher,
-  Link,
+  Grid,
+  Header,
+  HeaderGlobalBar,
+  HeaderName,
+  IconButton,
+  IconSwitch,
   OverflowMenu,
   OverflowMenuItem,
   Search,
-  Switch,
+  SideNav,
+  SideNavItems,
+  SideNavLink,
+  Tag,
+  Toggletip,
+  ToggletipActions,
+  ToggletipButton,
+  ToggletipContent,
 } from "@carbon/react";
 import {
+  Contrast,
   Chemistry,
+  Cursor_1,
+  Download,
+  Draw,
   Grid as GridIcon,
+  Help,
   Inspection,
   Pause,
   Play,
   Reset,
   SettingsAdjust,
+  SkipForward,
 } from "@carbon/react/icons";
-import { ScientificAutosaveStatus, ScientificHeader, ScientificOutcomeSummary, ScientificPreflightSummary, ScientificRecoveryNotice, ScientificStatusBar, ScientificToolRail, useScientificAutosave, useScientificResultTransition, useScientificTheme } from "@jorpago2/scientific-ui";
+import { ScientificOutcomeSummary, ScientificPreflightSummary, useScientificAutosave, useScientificResultTransition } from "@jorpago2/scientific-ui";
+import { useFdtdTheme } from "./fdtd-theme";
+import { requestRuntimeAction, runtimeState, runtimeStep, useFdtdRuntimeReady, useFdtdRuntimeSelector, useFdtdRuntimeState } from "./runtime-state";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
@@ -66,7 +88,9 @@ function useSimulationStatus() {
       const detail = (event as CustomEvent<Partial<SimulationStatus>>).detail;
       if (!detail || !["ready", "running", "modified", "failed"].includes(detail.state ?? "")) return;
       if (typeof detail.label !== "string" || !detail.label.trim()) return;
-      setSimulationStatus({ state: detail.state!, label: detail.label });
+      setSimulationStatus((current) => current.state === detail.state && current.label === detail.label
+        ? current
+        : { state: detail.state!, label: detail.label! });
     };
     window.addEventListener("fdtd:simulation-status", syncSimulationStatus);
     return () => window.removeEventListener("fdtd:simulation-status", syncSimulationStatus);
@@ -74,14 +98,102 @@ function useSimulationStatus() {
   return simulationStatus;
 }
 
+function useSceneTitle() {
+  const [title, setTitle] = useState("Plane wave in air");
+  useEffect(() => {
+    const sync = (event: Event) => {
+      const nextTitle = (event as CustomEvent<{ title?: unknown }>).detail?.title;
+      if (typeof nextTitle === "string" && nextTitle.trim()) setTitle((current) => current === nextTitle ? current : nextTitle);
+    };
+    window.addEventListener("fdtd:scene-title", sync);
+    return () => window.removeEventListener("fdtd:scene-title", sync);
+  }, []);
+  return title;
+}
+
+function FdtdHeaderHelp({ compact, onOpenGuide }: { compact: boolean; onOpenGuide: () => void }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const toggleHelp = (event: KeyboardEvent) => {
+      if (event.repeat) return;
+      if (event.key === "Escape" && buttonRef.current?.getAttribute("aria-expanded") === "true") {
+        event.preventDefault();
+        buttonRef.current.click();
+        buttonRef.current.focus();
+        return;
+      }
+      if (
+        event.defaultPrevented
+        || event.key !== "?"
+        || (event.target instanceof HTMLElement
+          && (event.target.matches("input, select, textarea") || event.target.isContentEditable))
+      ) return;
+      event.preventDefault();
+      buttonRef.current?.click();
+    };
+    document.addEventListener("keydown", toggleHelp, true);
+    return () => document.removeEventListener("keydown", toggleHelp, true);
+  }, []);
+
+  if (compact) {
+    return (
+      <IconButton
+        ref={buttonRef}
+        id="fdtd-help"
+        type="button"
+        kind="ghost"
+        size="lg"
+        className="scientific-header-help__button"
+        label="Help"
+        aria-keyshortcuts="?"
+        onClick={onOpenGuide}
+      >
+        <Help size={20} aria-hidden={true} />
+      </IconButton>
+    );
+  }
+
+  return (
+    <Toggletip className="scientific-header-help" align="bottom-end" autoAlign>
+      <ToggletipButton
+        ref={buttonRef}
+        id="fdtd-help"
+        className="scientific-header-help__button"
+        label="Help"
+        aria-keyshortcuts="?"
+      >
+        <Help size={20} aria-hidden={true} />
+      </ToggletipButton>
+      <ToggletipContent className="scientific-header-help__popover">
+        <div className="scientific-header-help__content">
+          <strong className="scientific-header-help__title">Quick workflow</strong>
+          <p className="scientific-header-help__summary">Choose a scene, run the FDTD update, then inspect fields, materials, flux and numerical validation before interpreting the result.</p>
+          <dl className="scientific-header-help__shortcuts">
+            <div><dt><kbd>Esc</kbd></dt><dd>Close the active guide or panel</dd></div>
+            <div><dt><kbd>?</kbd></dt><dd>Toggle this help</dd></div>
+          </dl>
+          <ToggletipActions>
+            <Button size="sm" kind="primary" onClick={() => {
+              buttonRef.current?.focus();
+              buttonRef.current?.click();
+              window.requestAnimationFrame(onOpenGuide);
+            }}>Open full guide</Button>
+          </ToggletipActions>
+        </div>
+      </ToggletipContent>
+    </Toggletip>
+  );
+}
+
 export function ApplicationHeader() {
-  const helpGuideReturnFocusRef = useRef<HTMLElement | null>(null);
   const breakpointFocusRef = useRef<"run" | "theme" | null>(null);
   const lastHeaderFocusRef = useRef<"run" | "theme" | null>(null);
   const [compactHeader, setCompactHeader] = useState(() =>
     window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)").matches
   );
   const simulationStatus = useSimulationStatus();
+  const sceneTitle = useSceneTitle();
+  const runtimeReady = useFdtdRuntimeReady();
 
   useEffect(() => {
     const compactQuery = window.matchMedia("(max-width: 65.99rem), (max-height: 39.99rem)");
@@ -133,68 +245,59 @@ export function ApplicationHeader() {
   }, [compactHeader]);
 
   const openFullGuide = () => {
-    const runtimeGuide = (window as Window & { FdtdOpenHelpGuide?: () => void }).FdtdOpenHelpGuide;
+    const runtimeWindow = window as Window & {
+      FdtdOpenHelpGuide?: () => void;
+      FdtdReady?: Promise<void>;
+    };
+    const runtimeGuide = runtimeWindow.FdtdOpenHelpGuide;
     if (runtimeGuide) {
       runtimeGuide();
       return;
     }
-    const panel = document.getElementById("helpGuidePanel");
-    if (!panel) return;
-    const legacyToggle = document.getElementById("helpGuideToggle");
-    const closeButton = document.getElementById("helpGuideCloseBtn");
-    helpGuideReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panel.hidden = false;
-    legacyToggle?.setAttribute("aria-expanded", "true");
-    panel.focus({ preventScroll: true });
-
-    const closeGuide = () => {
-      panel.hidden = true;
-      legacyToggle?.setAttribute("aria-expanded", "false");
-      closeButton?.removeEventListener("click", closeGuide);
-      document.removeEventListener("keydown", handleEscape, true);
-      const requestedTarget = helpGuideReturnFocusRef.current;
-      const stableHeaderHelp = document.querySelector<HTMLElement>(".scientific-header-help__button");
-      const focusTarget = requestedTarget?.isConnected && requestedTarget.getClientRects().length > 0
-        ? requestedTarget
-        : stableHeaderHelp;
-      focusTarget?.focus({ preventScroll: true });
-    };
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      closeGuide();
-    };
-    closeButton?.addEventListener("click", closeGuide);
-    document.addEventListener("keydown", handleEscape, true);
+    void runtimeWindow.FdtdReady?.then(() => runtimeWindow.FdtdOpenHelpGuide?.());
   };
 
+  const { isDark, toggleTheme } = useFdtdTheme();
+  const statusType = simulationStatus.state === "failed"
+    ? "red"
+    : simulationStatus.state === "running"
+      ? "blue"
+      : simulationStatus.state === "modified"
+        ? "warm-gray"
+        : "green";
+
   return (
-    <ScientificHeader
-      aria-label="EM Wave Simulator application header"
-      product="EM Wave Simulator"
-      productIcon="fdtd"
-      descriptor="2D FDTD laboratory"
-      href="./"
-      contextLabel="Simulation"
-      context={<span id="headerSceneTitle">Plane wave in air</span>}
-      status={simulationStatus}
-      help={{
-        id: "fdtd-help",
-        summary: "Choose a scene, run the FDTD update, then inspect fields, materials, flux and numerical validation before interpreting the result.",
-        shortcuts: [{ keys: ["Esc"], description: "Close the active guide or panel" }],
-        action: {
-          label: "Open full guide",
-          onClick: openFullGuide,
-        },
-      }}
-      showThemeToggle={!compactHeader}
-      primaryAction={<CanvasPrimaryControls
-        compactHeader={compactHeader}
-        running={simulationStatus.state === "running"}
-      />}
-    />
+    <Header className="scientific-header scientific-app-header" aria-label="EM Wave Simulator application header">
+      <HeaderName className="scientific-header__brand scientific-app-header__brand" href="./" prefix="" aria-label="EM Wave Simulator">
+        <span className="scientific-header__brand-mark scientific-app-header__brand-mark" aria-hidden="true"><GridIcon size={20} /></span>
+        <span className="scientific-header__brand-copy"><strong>EM Wave Simulator</strong><small>2D FDTD laboratory</small></span>
+      </HeaderName>
+      <div className="scientific-header__context scientific-app-header__context">
+        <span className="scientific-header__context-label">Simulation</span>
+        <div className="scientific-header__context-value"><span>{sceneTitle}</span></div>
+         <Tag className="scientific-header__status" size="sm" type={runtimeReady ? statusType : "warm-gray"} data-state={runtimeReady ? simulationStatus.state : "loading"}>{runtimeReady ? simulationStatus.label : "Loading"}</Tag>
+      </div>
+      <HeaderGlobalBar className="scientific-header__actions scientific-app-header__actions" role="group" aria-label="Application actions">
+        <div className="scientific-header__primary-action">
+           <CanvasPrimaryControls compactHeader={compactHeader} running={runtimeReady && simulationStatus.state === "running"} runtimeReady={runtimeReady} />
+        </div>
+        {!compactHeader && <div className="scientific-header__theme">
+          <IconButton
+            type="button"
+            kind="ghost"
+            size="lg"
+            align="bottom-end"
+            label={isDark ? "Use light theme" : "Use dark theme"}
+            className="scientific-theme-toggle"
+            aria-pressed={isDark}
+            onClick={toggleTheme}
+          >
+            <Contrast size={20} aria-hidden={true} />
+          </IconButton>
+        </div>}
+        <div className="scientific-header__help" data-scientific-header-terminal-action><FdtdHeaderHelp compact={compactHeader} onOpenGuide={openFullGuide} /></div>
+      </HeaderGlobalBar>
+    </Header>
   );
 }
 
@@ -208,6 +311,7 @@ const workflowLayers = [
 export function WorkflowNavigation() {
   const [activeLayer, setActiveLayer] = useState<string | null>("scenes");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigationRef = useRef<HTMLElement>(null);
   useEffect(() => {
     const syncActiveLayer = (event: Event) => {
       const layer = (event as CustomEvent<{ layer?: string }>).detail?.layer;
@@ -231,33 +335,75 @@ export function WorkflowNavigation() {
     setActiveLayer(layer);
     window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer } }));
   };
+
+  const moveFocus = (event: ReactKeyboardEvent<HTMLButtonElement>, direction: number | "first" | "last") => {
+    const buttons = Array.from(navigationRef.current?.querySelectorAll<HTMLButtonElement>(".scientific-tool-rail__item:not(:disabled)") ?? []);
+    if (buttons.length === 0) return;
+    const currentIndex = buttons.indexOf(event.currentTarget);
+    const nextIndex = direction === "first"
+      ? 0
+      : direction === "last"
+        ? buttons.length - 1
+        : (Math.max(0, currentIndex) + direction + buttons.length) % buttons.length;
+    event.preventDefault();
+    buttons[nextIndex]?.focus();
+  };
+
   return (
-    <ScientificToolRail
-      label="Simulation workflow"
-      activeId={activeLayer}
-      expandedId={drawerOpen ? activeLayer : null}
-      onChange={chooseLayer}
-      collapsible={false}
-      items={workflowLayers.map(([layer, label, Icon]) => ({
-        id: layer,
-        label,
-        icon: <Icon size={16} aria-hidden={true} />,
-        controlsId: "controlPanel",
-        className: "mobile-layer-button",
-        dataAttributes: { "data-mobile-layer": layer },
-      }))}
-    />
+    <SideNav
+      ref={navigationRef}
+      className="scientific-tool-rail"
+      aria-label="Simulation workflow"
+      expanded
+      isFixedNav
+      isPersistent
+      addFocusListeners={false}
+      addMouseListeners={false}
+    >
+      <SideNavItems className="scientific-tool-rail__items">
+        {workflowLayers.map(([layer, label, Icon]) => {
+          const active = layer === activeLayer;
+          return <SideNavLink
+            key={layer}
+            as="button"
+            type="button"
+            id={`workflow-${layer}`}
+            isActive={active}
+            aria-controls="controlPanel"
+            aria-current={active ? "page" : undefined}
+            aria-expanded={drawerOpen && active}
+            title={label}
+            className="scientific-tool-rail__item mobile-layer-button"
+            data-mobile-layer={layer}
+            onClick={() => chooseLayer(layer)}
+            onKeyDown={(event: ReactKeyboardEvent<HTMLButtonElement>) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowRight") moveFocus(event, 1);
+              else if (event.key === "ArrowUp" || event.key === "ArrowLeft") moveFocus(event, -1);
+              else if (event.key === "Home") moveFocus(event, "first");
+              else if (event.key === "End") moveFocus(event, "last");
+            }}
+          >
+            <span className="scientific-tool-rail__content">
+              <span aria-hidden="true" className="scientific-tool-rail__icon"><Icon size={16} /></span>
+              <span className="scientific-tool-rail__label">{label}</span>
+            </span>
+          </SideNavLink>;
+        })}
+      </SideNavItems>
+    </SideNav>
   );
 }
 
 interface CanvasPrimaryControlsProps {
   compactHeader: boolean;
   running: boolean;
+  runtimeReady: boolean;
 }
 
-export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryControlsProps) {
-  const [modeIndex, setModeIndex] = useState(0);
-  const { isDark, toggleTheme } = useScientificTheme();
+export function CanvasPrimaryControls({ compactHeader, running, runtimeReady }: CanvasPrimaryControlsProps) {
+  const canvasMode = useFdtdRuntimeSelector((state) => state?.canvasMode ?? "select");
+  const modeIndex = canvasMode === "brush" ? 1 : 0;
+  const { isDark, toggleTheme } = useFdtdTheme();
 
   return (
     <div className="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
@@ -268,7 +414,8 @@ export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryC
           type="button"
           kind="primary"
           size="lg"
-          hasIconOnly={compactHeader}
+          hasIconOnly
+          disabled={!runtimeReady}
           iconDescription={running ? "Pause simulation" : "Start simulation"}
           tooltipPosition="bottom"
           renderIcon={running ? Pause : Play}
@@ -276,70 +423,93 @@ export function CanvasPrimaryControls({ compactHeader, running }: CanvasPrimaryC
           aria-pressed={running}
           data-carbon-react="true"
           onClick={() => window.dispatchEvent(new Event("fdtd:toggle-running"))}
-        >
-          {compactHeader ? null : <span className="simulation-run-label">{running ? "Pause" : "Start"}</span>}
-        </Button>
+        />
         <Button
           id="stepBtn"
           className="header-step-button"
           type="button"
           kind="ghost"
-          size="sm"
-        >
-          Step
-        </Button>
+          size="lg"
+          hasIconOnly
+          disabled={!runtimeReady}
+          iconDescription="Step simulation"
+          tooltipPosition="bottom"
+          renderIcon={SkipForward}
+          aria-label="Step simulation"
+          onClick={() => requestRuntimeAction("simulation-step")}
+        />
         <Button
           id="resetBtn"
           className="icon-button canvas-reset-button"
           type="button"
           kind="ghost"
-          size="sm"
+          size="lg"
           hasIconOnly
+          disabled={!runtimeReady}
+          renderIcon={Reset}
           iconDescription="Reset field"
           tooltipPosition="bottom"
           title="Reset field"
+          aria-label="Reset field"
           data-carbon-react="true"
-        >
-          <Reset size={16} aria-hidden={true} />
-        </Button>
+          onClick={() => requestRuntimeAction("reset-simulation")}
+        />
         <Button
           id="saveBtn"
           className="header-save-button"
           type="button"
           kind="ghost"
-          size="sm"
-        >
-          Save PNG
-        </Button>
+          size="lg"
+          hasIconOnly
+          disabled={!runtimeReady}
+          iconDescription="Save PNG"
+          tooltipPosition="bottom"
+          renderIcon={Download}
+          aria-label="Save PNG"
+          onClick={() => requestRuntimeAction("save-png")}
+        />
         {compactHeader && (
           <OverflowMenu
             className="header-overflow-menu"
+            menuOptionsClass="scientific-header-overflow-options"
             iconDescription="More simulation actions"
             align="bottom-end"
             size="sm"
             flipped
           >
-            <OverflowMenuItem itemText="Step simulation" onClick={() => document.getElementById("stepBtn")?.click()} />
-            <OverflowMenuItem itemText="Reset field" onClick={() => document.getElementById("resetBtn")?.click()} />
-            <OverflowMenuItem itemText="Save PNG" onClick={() => document.getElementById("saveBtn")?.click()} />
-            <OverflowMenuItem itemText={isDark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme} />
+            <OverflowMenuItem className="scientific-header-overflow-item" disabled={!runtimeReady} itemText="Step simulation" onClick={() => requestRuntimeAction("simulation-step")} />
+            <OverflowMenuItem className="scientific-header-overflow-item" disabled={!runtimeReady} itemText="Select and move objects" onClick={() => requestRuntimeAction("canvas-mode", { mode: "select" })} />
+            <OverflowMenuItem className="scientific-header-overflow-item" disabled={!runtimeReady} itemText="Draw materials" onClick={() => requestRuntimeAction("canvas-mode", { mode: "brush" })} />
+            <OverflowMenuItem className="scientific-header-overflow-item" disabled={!runtimeReady} itemText="Reset field" onClick={() => requestRuntimeAction("reset-simulation")} />
+            <OverflowMenuItem className="scientific-header-overflow-item" disabled={!runtimeReady} itemText="Save PNG" onClick={() => requestRuntimeAction("save-png")} />
+            <OverflowMenuItem className="scientific-header-overflow-item" itemText={isDark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme} />
           </OverflowMenu>
         )}
       </div>
       <ContentSwitcher
         className="interaction-toggle"
         selectedIndex={modeIndex}
-        size="sm"
-        onChange={({ index }) => setModeIndex(index ?? 0)}
+        size="lg"
+        onChange={({ index }) => requestRuntimeAction("canvas-mode", { mode: index === 1 ? "brush" : "select" })}
       >
-        <Switch id="selectModeBtn" name="select" text="Select" title="Select and move canvas objects" data-carbon-react="true">Select</Switch>
-        <Switch id="brushModeBtn" name="draw" text="Draw" title="Draw materials and geometries" data-carbon-react="true">Draw</Switch>
+        <IconSwitch id="selectModeBtn" name="select" text="Select and move canvas objects" align="bottom" data-carbon-react="true">
+          <Cursor_1 size={20} aria-hidden={true} />
+        </IconSwitch>
+        <IconSwitch id="brushModeBtn" name="draw" text="Draw materials and geometries" align="bottom" data-carbon-react="true">
+          <Draw size={20} aria-hidden={true} />
+        </IconSwitch>
       </ContentSwitcher>
     </div>
   );
 }
 
 export function SceneSearch() {
+  const [value, setValue] = useState("");
+  useEffect(() => {
+    const clear = () => setValue("");
+    window.addEventListener("fdtd:scene-search-clear", clear);
+    return () => window.removeEventListener("fdtd:scene-search-clear", clear);
+  }, []);
   return (
     <Search
       id="sceneSearchInput"
@@ -348,32 +518,64 @@ export function SceneSearch() {
       placeholder="Bragg, Kerr, TEz..."
       size="lg"
       autoComplete="off"
+      value={value}
+      onChange={(event) => setValue(event.currentTarget.value)}
     />
   );
 }
 
+function formatSavedAt(savedAt: string | null | undefined) {
+  if (!savedAt) return "";
+  const date = new Date(savedAt);
+  return Number.isFinite(date.getTime())
+    ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(date)
+    : "";
+}
+
+function autosaveLabel(status: "idle" | "saving" | "saved" | "unavailable" | "error", savedAt?: string | null) {
+  if (status === "saving") return "Saving locally…";
+  if (status === "saved") return `Saved locally${formatSavedAt(savedAt) ? ` ${formatSavedAt(savedAt)}` : ""}`;
+  if (status === "unavailable") return "Local saving unavailable";
+  if (status === "error") return "Local saving failed";
+  return "Local saving ready";
+}
+
 export function StatusFooter() {
-  const simulationStatus = useSimulationStatus();
   const autosave = useFdtdAutosave();
+  const state = useFdtdRuntimeState();
   return (
-    <><>{autosave.recovery && <ScientificRecoveryNotice savedAt={autosave.recovery.savedAt} onRestore={autosave.restore} onDiscard={autosave.discard} />}</>
-    <ScientificStatusBar className="fdtd-status-strip" embedded aria-label="Simulation status" status={simulationStatus} metadata={<>
-      <ScientificAutosaveStatus status={autosave.status} savedAt={autosave.lastSavedAt} />
-      <span><b>Grid</b> <output id="statusGridOutput">360 × 240</output></span>
-      <span><b>Step</b> <output id="statusStepOutput">0</output></span>
-      <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
-      <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
-      <span className="status-strip-author" data-react-ui="footer">
-        <Link inline href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer" aria-label="About Jorge Parra">About</Link>
-        <span aria-hidden="true">·</span>
-        <Link inline href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer" aria-label="More online simulators and tools">More simulators</Link>
-      </span>
-    </>} /></>
+    <>
+      {autosave.recovery && <aside className="scientific-recovery-notice" aria-label="Session recovery">
+        <ActionableNotification
+          kind="info"
+          title="Previous session available"
+          subtitle={`Saved locally ${formatSavedAt(autosave.recovery.savedAt) || "during an earlier visit"}. Restore the saved inputs and configuration, or discard this draft.`}
+          actionButtonLabel="Restore session"
+          onActionButtonClick={autosave.restore}
+          onCloseButtonClick={autosave.discard}
+          closeOnEscape
+          aria-label="Discard saved session"
+          lowContrast
+        />
+      </aside>}
+      <footer className="scientific-status-bar scientific-status-bar--embedded fdtd-status-strip" aria-label="Simulation status" data-react-ui="footer">
+        <Grid fullWidth condensed>
+          <Column sm={4} md={8} lg={16} className="scientific-status-bar__metadata">
+            <span className="scientific-autosave-status" role="status" aria-live="polite" aria-atomic="true">{autosaveLabel(autosave.status, autosave.lastSavedAt)}</span>
+            <span><b>Grid</b> <output>{state?.gridNx ?? 360} × {state?.gridNy ?? 240}</output></span>
+            <span><b>Step</b> <output>{runtimeStep()}</output></span>
+            <span><b>CFL</b> <output>0.10</output></span>
+            <span><b>Boundary</b> <output>{state?.boundary === "reflective" ? "Reflective" : "CPML absorbing"}</output></span>
+          </Column>
+        </Grid>
+      </footer>
+    </>
   );
 }
 
 export function FdtdRunOutcome() {
   const simulationStatus = useSimulationStatus();
+  const runtimeReady = useFdtdRuntimeReady();
   const outcomeHeading = useRef<HTMLHeadingElement>(null);
   const [resultSnapshot, setResultSnapshot] = useState({
     reflectance: "—",
@@ -384,24 +586,17 @@ export function FdtdRunOutcome() {
   });
 
   useEffect(() => {
-    const readResults = () => setResultSnapshot({
-      reflectance: document.getElementById("summaryReflectanceOutput")?.textContent?.trim() || "—",
-      transmittance: document.getElementById("summaryTransmittanceOutput")?.textContent?.trim() || "—",
-      balance: document.getElementById("summaryBalanceOutput")?.textContent?.trim() || "—",
-      angle: document.getElementById("summaryAngleOutput")?.textContent?.trim() || "0°",
-      insight: document.getElementById("resultsInsightNote")?.textContent?.trim() || "Run the simulation to collect monitor samples.",
-    });
-    const observedElements = [
-      "summaryReflectanceOutput",
-      "summaryTransmittanceOutput",
-      "summaryBalanceOutput",
-      "summaryAngleOutput",
-      "resultsInsightNote",
-    ].map((id) => document.getElementById(id)).filter((element): element is HTMLElement => Boolean(element));
-    const observer = new MutationObserver(readResults);
-    observedElements.forEach((element) => observer.observe(element, { childList: true, characterData: true, subtree: true }));
-    readResults();
-    return () => observer.disconnect();
+    const sync = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<typeof resultSnapshot>>).detail;
+      if (detail) setResultSnapshot((current) => {
+        const next = { ...current, ...detail };
+        return Object.keys(next).every((key) => next[key as keyof typeof next] === current[key as keyof typeof current])
+          ? current
+          : next;
+      });
+    };
+    window.addEventListener("fdtd:results-snapshot", sync);
+    return () => window.removeEventListener("fdtd:results-snapshot", sync);
   }, []);
 
   const hasMonitorResult = resultSnapshot.reflectance !== "—" || resultSnapshot.transmittance !== "—";
@@ -442,11 +637,11 @@ export function FdtdRunOutcome() {
       { id: "angle", label: "Propagation angle", value: resultSnapshot.angle },
     ] : []}
     actions={hasMonitorResult ? [
-      { id: "save-field", label: "Save field PNG", emphasis: "primary", onClick: () => document.getElementById("saveBtn")?.click() },
+      { id: "save-field", label: "Save field PNG", emphasis: "primary", disabled: !runtimeReady, onClick: () => requestRuntimeAction("save-png") },
       { id: "review-validation", label: "Review validation", emphasis: "secondary", collapseAt: "sm", onClick: () => document.getElementById("sceneObservableResults")?.scrollIntoView({ behavior: "smooth", block: "start" }) },
-      { id: "reset-field", label: "Reset field", emphasis: "tertiary", overflowOnly: true, onClick: () => document.getElementById("resetBtn")?.click() },
+      { id: "reset-field", label: "Reset field", emphasis: "tertiary", disabled: !runtimeReady, overflowOnly: true, onClick: () => requestRuntimeAction("reset-simulation") },
     ] : [
-      { id: "start-simulation", label: "Start simulation", emphasis: "primary", disabled: simulationStatus.state === "running", onClick: () => document.getElementById("playPauseBtn")?.click() },
+      { id: "start-simulation", label: "Start simulation", emphasis: "primary", disabled: !runtimeReady || simulationStatus.state === "running", onClick: () => requestRuntimeAction("toggle-running") },
       { id: "review-numerics", label: "Review numerics", emphasis: "secondary", collapseAt: "sm", onClick: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "config" } })) },
     ]}
   />;
@@ -454,27 +649,26 @@ export function FdtdRunOutcome() {
 
 export function NumericalPreflight() {
   const simulationStatus = useSimulationStatus();
-  const [revision, setRevision] = useState(0);
+  useFdtdRuntimeSelector((current) => current ? `${current.gridNx}|${current.gridNy}|${current.cellsPerWavelength}` : "");
+  const state = runtimeState();
+  const [health, setHealth] = useState({ level: "stable", limit: 1 / Math.sqrt(2), reason: "CFL estimate is ready.", flags: [] as string[] });
   useEffect(() => {
-    const ids = ["gridNxInput", "gridNyInput", "cellsPerWavelengthInput"];
-    const refresh = () => setRevision((value) => value + 1);
-    const controls = ids.map((id) => document.getElementById(id)).filter((element): element is HTMLElement => Boolean(element));
-    controls.forEach((element) => element.addEventListener("change", refresh));
-    window.addEventListener("fdtd:simulation-status", refresh);
-    return () => {
-      controls.forEach((element) => element.removeEventListener("change", refresh));
-      window.removeEventListener("fdtd:simulation-status", refresh);
+    const sync = (event: Event) => {
+      const next = (event as CustomEvent<typeof health>).detail;
+      setHealth((current) => current.level === next.level
+        && current.limit === next.limit
+        && current.reason === next.reason
+        && current.flags.join("\u0000") === next.flags.join("\u0000")
+        ? current
+        : next);
     };
+    window.addEventListener("fdtd:numerical-health", sync);
+    return () => window.removeEventListener("fdtd:numerical-health", sync);
   }, []);
-  const numericValue = (id: string, fallback: number) => {
-    const value = Number((document.getElementById(id) as HTMLInputElement | null)?.value);
-    return Number.isFinite(value) ? value : fallback;
-  };
-  const nx = numericValue("gridNxInput", 360);
-  const ny = numericValue("gridNyInput", 240);
-  const cellsPerWavelength = numericValue("cellsPerWavelengthInput", 20);
+  const nx = state?.gridNx ?? 360;
+  const ny = state?.gridNy ?? 240;
+  const cellsPerWavelength = state?.cellsPerWavelength ?? 20;
   const underResolved = cellsPerWavelength < 20;
-  void revision;
   return <ScientificPreflightSummary
     className="fdtd-preflight"
     compact
@@ -486,8 +680,8 @@ export function NumericalPreflight() {
     checks={[
       { id: "grid", label: "Grid capacity", state: nx * ny <= 960_000 ? "passed" : "failed", value: `${nx} × ${ny}`, detail: `${(nx * ny).toLocaleString("en-US")} Yee cells` },
       { id: "resolution", label: "Free-space resolution", state: underResolved ? "warning" : "passed", value: `${cellsPerWavelength} cells / λ₀`, detail: underResolved ? "Material wavelengths and small features may be under-resolved." : "Still verify convergence for quantitative claims." },
-      { id: "stability", label: "CFL stability", state: "passed", value: "S = 0.10" },
-      { id: "run", label: "Current execution", state: simulationStatus.state === "running" ? "running" : simulationStatus.state === "failed" ? "failed" : simulationStatus.state === "modified" ? "ready" : "not-run", detail: simulationStatus.label },
+      { id: "stability", label: "CFL stability", state: health.level === "unstable" ? "failed" : health.level === "caution" ? "warning" : "passed", value: `S = 0.10 / ${health.limit.toFixed(2)}`, detail: health.reason },
+      { id: "run", label: "Current execution", state: simulationStatus.state === "running" ? "running" : simulationStatus.state === "failed" ? "failed" : simulationStatus.state === "modified" ? "ready" : "not-run", value: simulationStatus.state === "ready" ? "Not run" : simulationStatus.label, detail: simulationStatus.label },
     ]}
   />;
 }

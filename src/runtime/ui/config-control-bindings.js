@@ -15,21 +15,9 @@
     return value;
   }
 
-  function bindInputAndChange(input, handler) {
-    input?.addEventListener("input", handler);
-    input?.addEventListener("change", handler);
-  }
-
-  function bindEnterKey(input, handler) {
-    input?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        handler();
-      }
-    });
-  }
-
   function bindConfigControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
+    const documentRef = dependencies.documentRef || global.document;
     const handleWavelengthInput = requireFunction(dependencies.handleWavelengthInput, "handleWavelengthInput");
     const handleCellsPerWavelengthInput = requireFunction(
       dependencies.handleCellsPerWavelengthInput,
@@ -49,15 +37,23 @@
       "handleSubpixelSmoothingInput",
     );
 
-    bindInputAndChange(el.wavelengthInput, handleWavelengthInput);
-    bindInputAndChange(el.cellsPerWavelengthInput, handleCellsPerWavelengthInput);
-    el.slabThicknessInput?.addEventListener("input", handleSlabThicknessInput);
-    el.boundaryMenuInput?.addEventListener("change", handleBoundaryMenuInput);
-    el.subpixelSmoothingInput?.addEventListener("change", handleSubpixelSmoothingInput);
-
-    [el.gridNxInput, el.gridNyInput].forEach((input) => {
-      input?.addEventListener("change", applyGridSizeFromInputs);
-      bindEnterKey(input, applyGridSizeFromInputs);
+    global.addEventListener("fdtd:boundary-mode-request", (event) => {
+      handleBoundaryMenuInput(event.detail?.mode);
+    });
+    const handleInput = (event) => {
+      const id = event.target?.id;
+      if (id === "wavelengthInput") handleWavelengthInput();
+      else if (id === "cellsPerWavelengthInput") handleCellsPerWavelengthInput();
+      else if (id === "slabThicknessInput") handleSlabThicknessInput();
+      else if (id === "subpixelSmoothingInput") handleSubpixelSmoothingInput();
+      else if (event.type === "change" && (id === "gridNxInput" || id === "gridNyInput")) applyGridSizeFromInputs();
+    };
+    documentRef.addEventListener("input", handleInput);
+    documentRef.addEventListener("change", handleInput);
+    documentRef.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.target?.id === "gridNxInput" || event.target?.id === "gridNyInput")) {
+        applyGridSizeFromInputs();
+      }
     });
   }
 

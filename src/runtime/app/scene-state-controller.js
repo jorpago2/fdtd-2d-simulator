@@ -35,9 +35,7 @@
     }
 
     function setReproStatus(text, isWarning = false) {
-      if (!el.reproStatus) return;
-      el.reproStatus.textContent = text;
-      el.reproStatus.classList.toggle("is-warning", isWarning);
+      global.dispatchEvent(new global.CustomEvent("fdtd:repro-status", { detail: { text, warning: isWarning } }));
     }
 
     function knownPresetValue(value) {

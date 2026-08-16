@@ -210,7 +210,7 @@ function validateContextKindSwitchers(indexHtml) {
   switchers.forEach((switcher, switcherIndex) => {
     const groupAttributes = switcher[1];
     if (!/\brole="group"/.test(groupAttributes)) failures.push(`group ${switcherIndex + 1} is not role=group`);
-    const buttons = Array.from(switcher[2].matchAll(/<button\b([^>]*)>/g), (match) => match[1]);
+    const buttons = Array.from(switcher[2].matchAll(/<CarbonButton\b([^>]*)>/g), (match) => match[1]);
     if (buttons.length !== 3) failures.push(`group ${switcherIndex + 1} has ${buttons.length} buttons`);
     const activeCount = buttons.filter((attributes) => /\bclass="[^"]*\bis-active\b[^"]*"/.test(attributes)).length;
     if (activeCount !== 1) failures.push(`group ${switcherIndex + 1} has ${activeCount} active buttons`);
@@ -240,14 +240,15 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   const carbonShell = readText("src", "ui", "carbon-shell.tsx");
   const runtimeController = readText("src", "runtime", "app", "runtime-controller.js");
   const shellBindings = readText("src", "runtime", "ui", "shell-control-bindings.js");
+  const canvasStage = readText("src", "ui", "canvas-stage.tsx");
   const colormaps = readText("src", "runtime", "data", "colormaps.js");
   const failures = [];
 
-  if (!/results-summary-grid[^>]*\bhidden\b[^>]*aria-hidden="true"/.test(indexHtml)) {
-    failures.push("legacy monitor summary remains visible");
+  if (indexHtml.includes("results-summary-grid")) {
+    failures.push("legacy monitor summary remains in the HTML shell");
   }
-  if (!/config-summary-section[^>]*\bhidden\b[^>]*aria-hidden="true"/.test(indexHtml)) {
-    failures.push("legacy preflight summary remains visible");
+  if (indexHtml.includes("config-summary-section")) {
+    failures.push("legacy preflight summary remains in the HTML shell");
   }
   if (!styles.includes(".fdtd-run-outcome,\n.fdtd-preflight {\n  container-type: inline-size;")) {
     failures.push("FDTD summaries are not container-responsive");
@@ -258,8 +259,8 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (!/\.scientific-slider-output\s*\{[\s\S]*?clip:\s*rect\(0,?\s*0,?\s*0,?\s*0\);/.test(styles)) {
     failures.push("duplicate slider output is not visually hidden");
   }
-  if (sliders.includes("hideTextInput")) {
-    failures.push("Carbon exact slider inputs are hidden");
+  if (sliders.includes("hideTextInput") && !sliders.includes('labelText="Exact value"')) {
+    failures.push("Carbon exact slider inputs are hidden without a visible exact-value field");
   }
   if (!sliders.includes('ariaLabelInput={`${configuration.labelText} exact value`}')) {
     failures.push("Carbon exact slider inputs are not labelled");
@@ -267,7 +268,7 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (!sliders.includes("useRef(new EventTarget())") || !sliders.includes('dispatchEvent(new Event("input"))')) {
     failures.push("slider runtime events are not bridged through a stable target");
   }
-  if (!/state\.gain\s*=\s*Number\(el\.gainInput\.value\)/.test(visualBindings)) {
+  if (!/state\.gain\s*=\s*Number\(event\.detail\.value\)/.test(visualBindings)) {
     failures.push("display gain does not use direct user-facing units");
   }
   if (!/amplitude:\s*Number\(el\.amplitudeInput\.value\)/.test(sourceMonitorModel)) {
@@ -279,8 +280,8 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (!/\.help-guide-panel\s*\{[\s\S]*?position:\s*fixed;/.test(styles)) {
     failures.push("full help guide is not viewport-fixed");
   }
-  if (!shellBindings.includes("documentRef.body.append(el.helpGuidePanel)")) {
-    failures.push("full help guide is not portalled outside the clipped stage");
+  if (!canvasStage.includes('id="helpGuidePanel"')) {
+    failures.push("React does not own the full help guide");
   }
   if (!shellBindings.includes("el.appShell.inert = Boolean(open)")) {
     failures.push("full help guide does not make the application inert");
@@ -291,15 +292,15 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (carbonShell.includes("Result uses an earlier scene")) {
     failures.push("paused execution is still presented as a stale result");
   }
-  if (!/function currentFieldColormapName\(magnitude = false\)\s*\{\s*return magnitude \? "torch" : "iceburn";/.test(colormaps)) {
-    failures.push("field colormap still changes with shell theme");
+  if (!/function currentFieldColormapName\(magnitude = false\)\s*\{\s*if \(magnitude\) return "torch";\s*return state\.theme === "dark" \? "iceburn" : "redshift";/.test(colormaps)) {
+    failures.push("signed field colormap does not provide light and dark neutral backgrounds");
   }
 
   addCheck(
     "workbench presentation contracts",
     failures.length === 0 ? "PASS" : "BLOCK",
     failures.length === 0
-      ? "single summaries, direct-value Carbon sliders, container-aware layout, modal help, reset state, and theme-invariant colormaps found"
+      ? "single summaries, direct-value Carbon sliders, container-aware layout, modal help, reset state, and theme-aware colormaps found"
       : failures.join(", "),
   );
 }
@@ -551,7 +552,7 @@ function validateNumerics(constants) {
 function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneReproJs = "") {
   const requiredIds = [
     "exportSceneBtn",
-    "importSceneBtn",
+    "importSceneFileInput",
     "copySceneUrlBtn",
     "shareSceneUrlOutput",
   ];
@@ -578,29 +579,11 @@ function validateUiReproducibility(indexHtml, appJs, sceneCodecJs = "", sceneRep
 }
 
 function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, fdtdDiagnosticsJs, wasmBackendJs, wasmCpp) {
+  const resultsViews = readText("src", "ui", "results-views.tsx");
   const requiredIds = [
-    "performanceBackendOutput",
-    "performanceGridOutput",
-    "performanceStepOutput",
-    "performanceRenderOutput",
-    "performanceRenderMapOutput",
-    "performanceRenderPresentOutput",
-    "performanceRenderOverlayOutput",
-    "performanceMeasureOutput",
-    "performanceSolverWasmOutput",
-    "performanceSolverJsOutput",
-    "performanceSourcePackOutput",
-    "performanceAuxMaterialOutput",
-    "performanceBoundarySourceOutput",
-    "performanceDiagnosticsOutput",
-    "performanceThroughputOutput",
-    "performanceTargetStepsOutput",
-    "performanceLiveStepsOutput",
-    "performanceFpsOutput",
-    "performanceStatus",
     "performanceResetBtn",
   ];
-  const missingIds = requiredIds.filter((id) => !indexHtml.includes(`id="${id}"`));
+  const missingIds = requiredIds.filter((id) => !resultsViews.includes(`id="${id}"`));
   const requiredSymbols = [
     "performanceStats",
     "solverWasmKernelMs",
@@ -629,7 +612,7 @@ function validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs,
     "renormalize_fields",
     "renormalizeFields",
   ];
-  const performanceSources = `${indexHtml}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${fdtdDiagnosticsJs}\n${wasmBackendJs}\n${wasmCpp}`;
+  const performanceSources = `${indexHtml}\n${resultsViews}\n${appJs}\n${appPerformanceJs}\n${fdtdSimJs}\n${fdtdEngineRoutingJs}\n${fdtdDiagnosticsJs}\n${wasmBackendJs}\n${wasmCpp}`;
   const missingSymbols = requiredSymbols.filter((symbol) => !performanceSources.includes(symbol));
   const requiredFiles = [
     ["docs", "PERFORMANCE.md"],
@@ -737,6 +720,13 @@ function validateWasmStepContract(wasmBackendJs, wasmCpp) {
 
 function main() {
   const indexHtml = readText("index.html");
+  const workspaceMarkup = listFilesRecursive("src/ui", ".tsx")
+    .filter((file) => !file.endsWith(".stories.tsx"))
+    .map((file) => readText(...file.split("/")))
+    .join("\n")
+    .replaceAll("className=", "class=")
+    .replaceAll("tabIndex=", "tabindex=");
+  const interfaceMarkup = `${indexHtml}\n${workspaceMarkup}`;
   const requiredMetadata = ["theme-color", "canonical", "og:site_name", "og:title", "og:description", "og:type", "og:url", "og:image:alt", "twitter:card", "twitter:title", "twitter:description", "twitter:image:alt"];
   const missingMetadata = requiredMetadata.filter((metadata) => !indexHtml.includes(metadata));
   addCheck(
@@ -775,19 +765,19 @@ function main() {
   validateRuntimeCore();
   validateModeSolver();
   validateHtmlAssets(indexHtml);
-  validateCarbonUi(indexHtml);
+  validateCarbonUi(interfaceMarkup);
   const missingAccessibilityHooks = [
     'class="skip-link" href="#simulatorWorkspace"',
     'id="simulatorWorkspace"',
-    'tabindex="-1"',
-  ].filter((fragment) => !indexHtml.includes(fragment));
+    'tabindex={-1}',
+  ].filter((fragment) => !interfaceMarkup.includes(fragment));
   addCheck(
     "workspace accessibility hooks",
     missingAccessibilityHooks.length === 0 ? "PASS" : "BLOCK",
     missingAccessibilityHooks.length === 0 ? "skip link and focus target found" : missingAccessibilityHooks.join(", "),
   );
-  validateContextKindSwitchers(indexHtml);
-  validateWorkbenchPresentationContracts(indexHtml);
+  validateContextKindSwitchers(interfaceMarkup);
+  validateWorkbenchPresentationContracts(interfaceMarkup);
   const { catalog, constants } = loadCatalog(
     readActiveScript(activeScripts, "constants.js"),
     readActiveScript(activeScripts, "catalog.js"),
@@ -801,9 +791,9 @@ function main() {
   validateSceneCatalogJson(sceneCatalog, catalogPresets, catalog.sceneDescriptions);
   validateValidationMatrix(catalogPresets);
   validateNumerics(constants);
-  validateUiReproducibility(indexHtml, appJs, sceneCodecJs, sceneReproJs);
+  validateUiReproducibility(interfaceMarkup, appJs, sceneCodecJs, sceneReproJs);
   const appPerformanceJs = readActiveScript(activeScripts, "app-performance.js");
-  validatePerformanceRoute(indexHtml, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, fdtdDiagnosticsJs, wasmBackendJs, wasmCpp);
+  validatePerformanceRoute(interfaceMarkup, appJs, appPerformanceJs, fdtdSimJs, fdtdEngineRoutingJs, fdtdDiagnosticsJs, wasmBackendJs, wasmCpp);
   validateWasmStepContract(wasmBackendJs, wasmCpp);
 
   if (report.blockers.length > 0) report.status = "BLOCK";

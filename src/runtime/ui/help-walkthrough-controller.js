@@ -5,7 +5,7 @@
     Object.freeze({
       target: "#workflow-scenes",
       title: "Choose a workflow step",
-      text: "Use the workflow navigation to open Scene, Simulate, Results, or Numerics.",
+      text: "Use the workflow navigation to open Model, Run, Measure, or Validate.",
     }),
     Object.freeze({
       target: "#sceneCurrentPanel",
@@ -17,7 +17,7 @@
     Object.freeze({
       target: "#playPauseBtn",
       title: "Run the FDTD update",
-      text: "Play advances the time-domain solver. Reset clears fields and monitor traces without changing the selected scene.",
+      text: "Start advances the time-domain solver. Reset clears fields and monitor traces without changing the selected scene.",
       closeDrawer: true,
     }),
     Object.freeze({
@@ -32,7 +32,7 @@
       tab: "results",
       focusSelector: "#tab-results",
       title: "Measure before interpreting",
-      text: "Results contains monitor fluxes, custom probes, spectra, far-field estimates, and scene-specific checks.",
+      text: "Measure contains monitor fluxes, custom probes, spectra, far-field estimates, and scene-specific checks.",
     }),
     Object.freeze({
       target: ".canvas-mode-toggle.interaction-toggle",
@@ -102,7 +102,7 @@
     }
 
     function isOpen() {
-      return hasElements() && !el.walkthroughPanel.hidden;
+      return hasElements() && activeIndex >= 0;
     }
 
     function resolveTarget(step) {
@@ -203,11 +203,14 @@
       const step = steps[activeIndex];
       if (!step) return;
       applyStepContext(step);
-      el.walkthroughProgress.textContent = `Step ${activeIndex + 1} of ${steps.length}`;
-      el.walkthroughTitle.textContent = step.title;
-      el.walkthroughText.textContent = step.text;
-      el.walkthroughPrevBtn.disabled = activeIndex <= 0;
-      el.walkthroughNextBtn.textContent = activeIndex >= steps.length - 1 ? "Finish" : "Next";
+      windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:walkthrough-state", { detail: {
+        open: true,
+        progress: `Step ${activeIndex + 1} of ${steps.length}`,
+        title: step.title,
+        text: step.text,
+        previousDisabled: activeIndex <= 0,
+        nextLabel: activeIndex >= steps.length - 1 ? "Finish" : "Next",
+      } }));
       windowRef.requestAnimationFrame?.(() => {
         position();
         el.walkthroughPanel?.focus?.({ preventScroll: true });
@@ -217,15 +220,13 @@
     function setOpen(open, { restoreFocus = false } = {}) {
       if (!hasElements()) return;
       const shouldOpen = Boolean(open);
-      el.walkthroughOverlay.hidden = !shouldOpen;
-      el.walkthroughHighlight.hidden = !shouldOpen;
-      el.walkthroughPanel.hidden = !shouldOpen;
       documentRef.body?.classList?.toggle("walkthrough-active", shouldOpen);
       if (shouldOpen) {
         activeIndex = activeIndex < 0 ? 0 : activeIndex;
         refreshStep();
       } else {
         activeIndex = -1;
+        windowRef.dispatchEvent(new windowRef.CustomEvent("fdtd:walkthrough-state", { detail: { open: false } }));
         el.walkthroughPanel.removeAttribute("style");
         el.walkthroughHighlight.removeAttribute("style");
         if (restoreFocus) closeControlDrawer();
@@ -271,22 +272,13 @@
     }
 
     function bind() {
-      el.walkthroughStartBtn?.addEventListener("click", (event) => {
-        event.stopPropagation();
-        start();
-      });
-      el.walkthroughPanel?.addEventListener("click", (event) => event.stopPropagation());
-      el.walkthroughPrevBtn?.addEventListener("click", (event) => {
-        event.stopPropagation();
-        move(-1);
-      });
-      el.walkthroughNextBtn?.addEventListener("click", (event) => {
-        event.stopPropagation();
-        move(1);
-      });
-      el.walkthroughSkipBtn?.addEventListener("click", (event) => {
-        event.stopPropagation();
-        setOpen(false, { restoreFocus: true });
+      documentRef.addEventListener?.("click", (event) => {
+        const button = event.target?.closest?.("button");
+        if (!button?.closest?.("#walkthroughPanel, #helpGuidePanel")) return;
+        if (button.id === "walkthroughStartBtn") start();
+        else if (button.id === "walkthroughPrevBtn") move(-1);
+        else if (button.id === "walkthroughNextBtn") move(1);
+        else if (button.id === "walkthroughSkipBtn") setOpen(false, { restoreFocus: true });
       });
       windowRef.addEventListener?.("resize", position, { passive: true });
       documentRef.addEventListener?.("scroll", position, { passive: true, capture: true });

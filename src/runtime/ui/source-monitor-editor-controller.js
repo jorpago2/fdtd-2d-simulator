@@ -32,6 +32,18 @@
       ? dependencies.validateNumericInputs
       : () => true;
 
+    const editorElementIds = Object.freeze([
+      "sourceTypeInput", "sourceShapeInput", "sourceXInput", "sourceYInput",
+      "sourceOrderInput", "sourcePhaseInput", "monitorQuantityInput",
+      "monitorXInput", "monitorYInput", "sourceMenu", "monitorMenu",
+    ]);
+
+    function refreshEditorElements() {
+      editorElementIds.forEach((id) => {
+        el[id] = global.document.getElementById(id);
+      });
+    }
+
     const selectedSource = requireFunction(dependencies.selectedSource, "selectedSource");
     const explicitlySelectedMonitor = requireFunction(dependencies.explicitlySelectedMonitor, "explicitlySelectedMonitor");
     const normalizeSource = requireFunction(dependencies.normalizeSource, "normalizeSource");
@@ -43,7 +55,6 @@
     const sourceUsesWidth = requireFunction(dependencies.sourceUsesWidth, "sourceUsesWidth");
     const sourceUsesAngle = requireFunction(dependencies.sourceUsesAngle, "sourceUsesAngle");
     const sourceUsesMultipoleControls = requireFunction(dependencies.sourceUsesMultipoleControls, "sourceUsesMultipoleControls");
-    const setControlDisabled = requireFunction(dependencies.setControlDisabled, "setControlDisabled");
     const formatLambda = requireFunction(dependencies.formatLambda, "formatLambda");
     const formatLambdaOutput = requireFunction(dependencies.formatLambdaOutput, "formatLambdaOutput");
     const formatMonitorAngle = requireFunction(dependencies.formatMonitorAngle, "formatMonitorAngle");
@@ -95,121 +106,69 @@
       return `${currentSourceLetter()}z axis θ (°)`;
     }
 
-    function controlInputs(control) {
-      return Array.from(control?.querySelectorAll?.("input, select, textarea") || []);
-    }
-
-    function syncDependentControl(control, visible) {
-      if (!control) return;
-      control.hidden = !visible;
-      setControlDisabled(control, controlInputs(control), !visible);
-    }
-
-    function syncChildControlGroupVisibility(control) {
-      const childControls = Array.from(control?.children || []).filter((child) => child.matches?.("label"));
-      if (childControls.length === 0) return;
-      const visible = childControls.some((child) => !child.hidden);
-      control.hidden = !visible;
-      setControlDisabled(control, [], !visible);
-    }
-    
     function updateSourceShapeOptionLabels() {
-      if (!el.sourceShapeInput) return;
-      const currentGroup = el.sourceShapeInput.querySelector("optgroup");
-      if (currentGroup) {
-        currentGroup.label = `Out-of-plane ${currentSourceLetter()}z source`;
-      }
-      Array.from(el.sourceShapeInput.options).forEach((option) => {
-        if (Object.prototype.hasOwnProperty.call(sourceShapeLabels, option.value)) {
-          option.textContent = sourceShapeLabel(option.value);
-        }
-      });
+      // React renders source labels from the current editor snapshot.
     }
     
     function populateSourceEditor(source) {
+      refreshEditorElements();
       const normalized = normalizeSource(source);
       const wavelengthRange = sourceMonitorModel.sourceWavelengthRange(state.cellsPerWavelength);
       const sourceWavelengthLambda = sourceMonitorModel.frequencyToSourceWavelengthLambda(
         normalized.frequency,
         state.cellsPerWavelength,
       );
-      updateSourceShapeOptionLabels();
-      el.sourceTypeInput.value = normalized.type;
-      el.sourceShapeInput.value = normalized.shape;
       el.frequencyInput.min = wavelengthRange.min.toFixed(2);
       el.frequencyInput.max = wavelengthRange.max.toFixed(2);
       el.frequencyInput.step = "any";
       el.frequencyInput.value = sourceWavelengthLambda.toFixed(2);
-      el.frequencyOutput.value = sourceWavelengthLambda.toFixed(2);
       el.amplitudeInput.value = normalized.amplitude.toFixed(2);
-      el.amplitudeOutput.value = normalized.amplitude.toFixed(2);
       global.FdtdScientificControls?.setLabel?.("amplitudeInput", sourceAmplitudeLabel(normalized.shape));
-      el.sourceXInput.min = formatLambda(minSourceXLambda());
-      el.sourceYInput.min = formatLambda(minSourceYLambda());
-      el.sourceXInput.max = formatLambda(maxSourceXLambda());
-      el.sourceYInput.max = formatLambda(maxSourceYLambda());
-      el.sourceXInput.value = formatLambda(normalized.xLambda);
-      el.sourceYInput.value = formatLambda(normalized.yLambda);
       if (normalized.shape === "evanescentLine") {
         global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "k∥/k₀");
         el.sourceWidthInput.min = "1.01";
         el.sourceWidthInput.max = "2.50";
         el.sourceWidthInput.step = "0.01";
         el.sourceWidthInput.value = normalized.widthLambda.toFixed(2);
-        el.sourceWidthOutput.value = normalized.widthLambda.toFixed(2);
       } else if (normalized.shape === "modeProfile") {
         global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "mode window / λ₀");
         el.sourceWidthInput.min = "0.25";
         el.sourceWidthInput.max = "3.00";
         el.sourceWidthInput.step = "0.05";
         el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
-        el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
       } else {
         global.FdtdScientificControls?.setLabel?.("sourceWidthInput", "FWHM / λ₀");
         el.sourceWidthInput.min = "0.05";
         el.sourceWidthInput.max = "1.50";
         el.sourceWidthInput.step = "0.05";
         el.sourceWidthInput.value = formatLambda(normalized.widthLambda);
-        el.sourceWidthOutput.value = formatLambda(normalized.widthLambda);
       }
       el.sourceAngleInput.value = String(Math.round(normalized.angleDeg));
-      el.sourceAngleOutput.value = `${Math.round(normalized.angleDeg)}°`;
       global.FdtdScientificControls?.setLabel?.("sourceAngleInput", sourceAngleLabel(normalized.shape));
-      if (el.sourceTimePhaseInput) {
-        el.sourceTimePhaseInput.value = String(Math.round(normalized.phaseDeg));
-      }
-      if (el.sourceTimePhaseOutput) {
-        el.sourceTimePhaseOutput.value = `${Math.round(normalized.phaseDeg)}°`;
-      }
-      el.sourceOrderInput.value = String(normalized.multipoleOrder);
-      el.sourcePhaseInput.value = normalized.multipolePhase;
+      if (el.sourceTimePhaseInput) el.sourceTimePhaseInput.value = String(Math.round(normalized.phaseDeg));
       const widthEnabled = sourceUsesWidth(normalized.shape);
       const angleEnabled = sourceUsesAngle(normalized.shape);
-      syncDependentControl(el.sourceWidthControl, widthEnabled);
-      syncDependentControl(el.sourceAngleControl, angleEnabled);
       el.sourceWidthInput.disabled = !widthEnabled;
       el.sourceAngleInput.disabled = !angleEnabled;
-      syncDependentControl(el.sourceOrderControl, sourceUsesMultipoleControls(normalized.shape));
-      syncDependentControl(el.sourcePhaseControl, sourceUsesMultipoleControls(normalized.shape));
-      syncChildControlGroupVisibility(el.sourceOrderControl?.closest(".source-order-controls"));
-      if (el.sourceMenuTitle) {
-        el.sourceMenuTitle.textContent = contextMenuState.sourceMenuMode === "edit" ? `Edit source ${normalized.id ?? ""}`.trim() : "Add source";
-      }
-      if (el.sourceMenuHint) {
-        el.sourceMenuHint.textContent =
-          contextMenuState.sourceMenuMode === "edit"
-            ? `${sourceTypeLabel(normalized.type)} · ${sourceShapeLabel(normalized.shape)} · ${sourceCouplingLabel(normalized.shape)}`
-            : `x / λ₀ ${formatLambda(normalized.xLambda)}, y / λ₀ ${formatLambda(normalized.yLambda)}`;
-      }
-      if (el.sourceApplyBtn) {
-        el.sourceApplyBtn.textContent = contextMenuState.sourceMenuMode === "edit" ? "Update source" : "Add source";
-      }
-      if (el.sourceDeleteBtn) {
-        el.sourceDeleteBtn.hidden = contextMenuState.sourceMenuMode !== "edit";
-      }
+      global.dispatchEvent(new global.CustomEvent("fdtd:source-editor", { detail: {
+        source: normalized,
+        mode: contextMenuState.sourceMenuMode,
+        title: contextMenuState.sourceMenuMode === "edit" ? `Edit source ${normalized.id ?? ""}`.trim() : "Add source",
+        hint: contextMenuState.sourceMenuMode === "edit"
+          ? `${sourceTypeLabel(normalized.type)} · ${sourceShapeLabel(normalized.shape)} · ${sourceCouplingLabel(normalized.shape)}`
+          : `x / λ₀ ${formatLambda(normalized.xLambda)}, y / λ₀ ${formatLambda(normalized.yLambda)}`,
+        widthEnabled,
+        angleEnabled,
+        multipoleEnabled: sourceUsesMultipoleControls(normalized.shape),
+        minX: formatLambda(minSourceXLambda()),
+        maxX: formatLambda(maxSourceXLambda()),
+        minY: formatLambda(minSourceYLambda()),
+        maxY: formatLambda(maxSourceYLambda()),
+      } }));
     }
     
     function readSourceEditorValues() {
+      refreshEditorElements();
       return sourceMonitorModel.readSourceEditorValues(el, {
         cellsPerWavelength: state.cellsPerWavelength,
       });
@@ -249,44 +208,30 @@
     }
     
     function populateMonitorEditor(monitor) {
+      refreshEditorElements();
       const normalized = normalizeMonitor(monitor);
-      if (el.monitorQuantityInput) el.monitorQuantityInput.value = normalized.quantity;
-      if (el.monitorXInput) {
-        el.monitorXInput.min = formatLambda(minMonitorXLambda());
-        el.monitorXInput.max = formatLambda(maxMonitorXLambda());
-        el.monitorXInput.value = formatLambda(normalized.xLambda);
-      }
-      if (el.monitorYInput) {
-        el.monitorYInput.min = formatLambda(minMonitorYLambda());
-        el.monitorYInput.max = formatLambda(maxMonitorYLambda());
-        el.monitorYInput.value = formatLambda(normalized.yLambda);
-      }
       if (el.monitorLengthInput) {
         const maxLengthLambda = Math.max(0.1, Math.hypot(maxMonitorXLambda() - minMonitorXLambda(), maxMonitorYLambda() - minMonitorYLambda()));
         el.monitorLengthInput.max = formatLambda(maxLengthLambda);
         el.monitorLengthInput.value = formatLambda(normalized.lengthLambda);
       }
-      if (el.monitorLengthOutput) el.monitorLengthOutput.value = formatLambda(normalized.lengthLambda);
       if (el.monitorAngleInput) el.monitorAngleInput.value = String(Math.round(normalized.angleDeg));
-      if (el.monitorAngleOutput) el.monitorAngleOutput.value = `${formatMonitorAngle(normalized.angleDeg)}°`;
-      if (el.monitorMenuTitle) {
-        el.monitorMenuTitle.textContent = contextMenuState.monitorMenuMode === "edit" ? `Edit monitor M${normalized.id ?? ""}` : "Add monitor";
-      }
-      if (el.monitorMenuHint) {
-        el.monitorMenuHint.textContent =
-          contextMenuState.monitorMenuMode === "edit"
-            ? `${monitorQuantityLabel(normalized.quantity)} · ${formatLambdaOutput(normalized.lengthLambda)}`
-            : `x / λ0 ${formatLambda(normalized.xLambda)}, y / λ0 ${formatLambda(normalized.yLambda)}`;
-      }
-      if (el.monitorApplyBtn) {
-        el.monitorApplyBtn.textContent = contextMenuState.monitorMenuMode === "edit" ? "Update monitor" : "Add monitor";
-      }
-      if (el.monitorDeleteBtn) {
-        el.monitorDeleteBtn.hidden = contextMenuState.monitorMenuMode !== "edit";
-      }
+      global.dispatchEvent(new global.CustomEvent("fdtd:monitor-editor", { detail: {
+        monitor: normalized,
+        mode: contextMenuState.monitorMenuMode,
+        title: contextMenuState.monitorMenuMode === "edit" ? `Edit monitor M${normalized.id ?? ""}` : "Add monitor",
+        hint: contextMenuState.monitorMenuMode === "edit"
+          ? `${monitorQuantityLabel(normalized.quantity)} · ${formatLambdaOutput(normalized.lengthLambda)}`
+          : `x / λ0 ${formatLambda(normalized.xLambda)}, y / λ0 ${formatLambda(normalized.yLambda)}`,
+        minX: formatLambda(minMonitorXLambda()),
+        maxX: formatLambda(maxMonitorXLambda()),
+        minY: formatLambda(minMonitorYLambda()),
+        maxY: formatLambda(maxMonitorYLambda()),
+      } }));
     }
     
     function readMonitorEditorValues() {
+      refreshEditorElements();
       return sourceMonitorModel.readMonitorEditorValues(el);
     }
     

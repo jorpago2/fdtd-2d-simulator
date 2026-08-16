@@ -200,35 +200,67 @@ function validateUiCssBoundary(cssText) {
 }
 
 function validateCarbonAdapterBoundary(indexHtml) {
-  const adapterText = readText("src", "ui", "carbon-button-bridge.tsx");
+  const workspaceText = listFilesRecursive("src/ui", ".tsx")
+    .filter((file) => !file.endsWith(".stories.tsx"))
+    .map((file) => readText(...file.split("/")))
+    .join("\n");
+  const primitivesText = readText("src", "ui", "carbon-primitives.tsx");
   const disclosureText = readText("src", "ui", "carbon-disclosures.tsx");
   const adapterViolations = [];
-  if (/dangerouslySetInnerHTML|\.innerHTML\b/.test(adapterText)) adapterViolations.push("HTML injection");
-  if (/\.cds--/.test(adapterText)) adapterViolations.push("Carbon internal-class selector");
-  if (/\/delete\|remove\|clear\//i.test(adapterText)) adapterViolations.push("label-based control semantics");
-  if (!disclosureText.includes('const disclosureSelector = "[data-carbon-disclosure]"')) {
-    adapterViolations.push("class-based disclosure discovery");
+  if (/dangerouslySetInnerHTML|\.innerHTML\b/.test(workspaceText + primitivesText)) adapterViolations.push("HTML injection");
+  if (/<(?:button|select|textarea)\b/.test(workspaceText) || /<input\b/.test(workspaceText)) {
+    adapterViolations.push("native interactive elements in the React workspace");
   }
-  if (!disclosureText.includes('data-carbon-react="true"')) {
-    adapterViolations.push("unmarked Carbon accordion toggle");
+  if (!["Button", "Checkbox", "FileUploaderButton", "IconButton", "Select", "TextArea", "TextInput"].every((name) => primitivesText.includes(name))) {
+    adapterViolations.push("missing Carbon control primitives");
   }
-
-  const buttonTags = [...indexHtml.matchAll(/<button\b([^>]*)>/gi)].map((match) => match[1]);
-  const missingKind = buttonTags.filter(
-    (attributes) => /\b(?:primary-button|danger-button)\b/.test(attributes) && !/data-carbon-kind=/.test(attributes),
-  );
-  const missingIconContract = buttonTags.filter(
-    (attributes) => /\b(?:icon-button|help-guide-toggle)\b/.test(attributes) && !/data-carbon-icon-only="true"/.test(attributes),
-  );
-  if (missingKind.length) adapterViolations.push(`${missingKind.length} buttons lack explicit Carbon kind`);
-  if (missingIconContract.length) adapterViolations.push(`${missingIconContract.length} icon buttons lack explicit icon-only semantics`);
+  if (!/Accordion, AccordionItem/.test(disclosureText) || /querySelector|replaceWith/.test(disclosureText)) {
+    adapterViolations.push("imperative disclosure upgrade");
+  }
+  if (!/<div id="root"><\/div>/.test(indexHtml)) adapterViolations.push("index.html is not a minimal React root");
 
   addCheck(
-    "Carbon adapters avoid inherited DOM heuristics",
+    "React owns the Carbon interface",
     adapterViolations.length === 0,
     adapterViolations.length
       ? adapterViolations.join(", ")
-      : "explicit data contracts; no HTML injection, internal-class selectors, or label heuristics",
+      : "minimal HTML root; Carbon controls and disclosures are rendered declaratively",
+  );
+}
+
+function validateReactComponentBudget() {
+  const oversized = listFilesRecursive("src/ui", ".tsx")
+    .filter((file) => !file.endsWith(".stories.tsx"))
+    .map((file) => ({ file, lines: readText(...file.split("/")).split(/\r?\n/).length }))
+    .filter(({ lines }) => lines > 700);
+  addCheck(
+    "React interface stays modular",
+    oversized.length === 0,
+    oversized.length ? oversized.map(({ file, lines }) => `${file}: ${lines}`).join(", ") : "no UI component file exceeds 700 lines",
+  );
+}
+
+function validateRuntimeUiBridge() {
+  const allowedImperativeRenderers = new Set([
+    "src/runtime/ui/numeric-input-controller.js",
+    "src/runtime/ui/results-control-bindings.js",
+    "src/runtime/ui/ui-results-charts.js",
+  ]);
+  const runtimeUiFiles = listFilesRecursive("src/runtime/ui", ".js");
+  const renderViolations = runtimeUiFiles
+    .filter((file) => !allowedImperativeRenderers.has(file))
+    .filter((file) => /createElement\(|\.innerHTML\b|replaceChildren\(|\.textContent\s*=/.test(readText(...file.split("/"))));
+  const capturedListenerViolations = runtimeUiFiles.filter((file) =>
+    /(?:el\.[A-Za-z0-9_]+|button|input|select|control)\.addEventListener\(/.test(readText(...file.split("/"))),
+  );
+  const violations = [
+    ...renderViolations.map((file) => `${file}: runtime-rendered interface`),
+    ...capturedListenerViolations.map((file) => `${file}: captured React-node listener`),
+  ];
+  addCheck(
+    "Runtime uses semantic React UI bridges",
+    violations.length === 0,
+    violations.length ? violations.join(", ") : "runtime publishes state/actions; only chart and validation adapters mutate their owned surfaces",
   );
 }
 
@@ -253,6 +285,8 @@ validateRuntimeNamespaceDocumentation();
 validateSimulationDomBoundary();
 validateUiCssBoundary(readText("src/styles/scientific-workbench.css"));
 validateCarbonAdapterBoundary(indexHtml);
+validateReactComponentBudget();
+validateRuntimeUiBridge();
 validateCentralFileBudget();
 
 if (process.argv.includes("--json")) {

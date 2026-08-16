@@ -15,10 +15,6 @@
     return value;
   }
 
-  function forEachNode(nodes, callback) {
-    nodes?.forEach?.(callback);
-  }
-
   function bindSourceMonitorControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
     const sim = requireObject(dependencies.sim, "sim");
@@ -33,64 +29,53 @@
     const deleteMonitor = requireFunction(dependencies.deleteMonitor, "deleteMonitor");
     const closeMonitorMenu = requireFunction(dependencies.closeMonitorMenu, "closeMonitorMenu");
     const syncMonitorEditorTarget = requireFunction(dependencies.syncMonitorEditorTarget, "syncMonitorEditorTarget");
-
-    el.sourceApplyBtn?.addEventListener("click", () => {
-      applySourceMenu();
-    });
-
-    el.sourceDeleteBtn?.addEventListener("click", () => {
-      const source = selectedSource();
-      if (!source) return;
-      deleteSource(source.id);
-      closeSourceMenu();
-      simulationEffects.commitSourceMutation();
-    });
-
-    el.sourceCloseBtn?.addEventListener("click", () => {
-      closeSourceMenu();
-      sim.render();
-    });
-
-    el.monitorApplyBtn?.addEventListener("click", () => {
-      applyMonitorMenu();
-    });
-
-    el.monitorDeleteBtn?.addEventListener("click", () => {
-      const monitor = explicitlySelectedMonitor();
-      if (!monitor) return;
-      deleteMonitor(monitor.id);
-      closeMonitorMenu();
-      simulationEffects.commitMonitorMutation();
-    });
-
-    el.monitorCloseBtn?.addEventListener("click", () => {
-      closeMonitorMenu();
-      sim.render();
-    });
-
-    forEachNode([el.monitorQuantityInput, el.monitorXInput, el.monitorYInput, el.monitorLengthInput, el.monitorAngleInput], (input) => {
-      input?.addEventListener("input", syncMonitorEditorTarget);
-      input?.addEventListener("change", syncMonitorEditorTarget);
-    });
-
-    el.sourceTypeInput?.addEventListener("change", syncSourceEditorTarget);
-    el.sourceShapeInput?.addEventListener("change", syncSourceEditorTarget);
-    el.amplitudeInput?.addEventListener("input", syncSourceEditorTarget);
-    el.sourceXInput?.addEventListener("change", syncSourceEditorTarget);
-    el.sourceYInput?.addEventListener("change", syncSourceEditorTarget);
-    el.sourceWidthInput?.addEventListener("input", syncSourceEditorTarget);
-    el.sourcePhaseInput?.addEventListener("change", syncSourceEditorTarget);
+    const documentRef = dependencies.documentRef || global.document;
 
     const syncSourceAndResetDiagnostics = () => {
       sim.resetDiagnostics();
       syncSourceEditorTarget();
     };
-    el.frequencyInput?.addEventListener("input", syncSourceAndResetDiagnostics);
-    el.sourceAngleInput?.addEventListener("input", syncSourceAndResetDiagnostics);
-    el.sourceTimePhaseInput?.addEventListener("input", syncSourceAndResetDiagnostics);
 
-    el.sourceOrderInput?.addEventListener("input", syncSourceEditorTarget);
-    el.sourceOrderInput?.addEventListener("change", syncSourceEditorTarget);
+    documentRef.addEventListener("click", (event) => {
+      const id = event.target?.closest?.("button")?.id;
+      if (id === "sourceApplyBtn") applySourceMenu();
+      else if (id === "sourceDeleteBtn") {
+        const source = selectedSource();
+        if (!source) return;
+        deleteSource(source.id);
+        closeSourceMenu();
+        simulationEffects.commitSourceMutation();
+      } else if (id === "sourceCloseBtn") {
+        closeSourceMenu();
+        sim.render();
+      } else if (id === "monitorApplyBtn") applyMonitorMenu();
+      else if (id === "monitorDeleteBtn") {
+        const monitor = explicitlySelectedMonitor();
+        if (!monitor) return;
+        deleteMonitor(monitor.id);
+        closeMonitorMenu();
+        simulationEffects.commitMonitorMutation();
+      } else if (id === "monitorCloseBtn") {
+        closeMonitorMenu();
+        sim.render();
+      }
+    });
+
+    const monitorInputs = new Set(["monitorQuantityInput", "monitorXInput", "monitorYInput"]);
+    const sourceInputs = new Set(["sourceTypeInput", "sourceShapeInput", "sourceXInput", "sourceYInput", "sourcePhaseInput", "sourceOrderInput"]);
+    const handleControlInput = (event) => {
+      const id = event.target?.id;
+      if (monitorInputs.has(id)) syncMonitorEditorTarget();
+      else if (sourceInputs.has(id)) syncSourceEditorTarget();
+    };
+    documentRef.addEventListener("input", handleControlInput);
+    documentRef.addEventListener("change", handleControlInput);
+    global.addEventListener("fdtd:slider-input", (event) => {
+      const id = event?.detail?.id;
+      if (["monitorLengthInput", "monitorAngleInput"].includes(id)) syncMonitorEditorTarget();
+      else if (["frequencyInput", "sourceAngleInput", "sourceTimePhaseInput"].includes(id)) syncSourceAndResetDiagnostics();
+      else if (["amplitudeInput", "sourceWidthInput"].includes(id)) syncSourceEditorTarget();
+    });
   }
 
   global.FdtdSourceMonitorControlBindings = Object.freeze({

@@ -433,9 +433,15 @@ renderSurfaceField() {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const surfaceContext = this.surfaceRenderContext();
   const background = ctx.createLinearGradient(0, 0, 0, h);
-  background.addColorStop(0, "rgb(3, 5, 9)");
-  background.addColorStop(0.58, "rgb(7, 8, 13)");
-  background.addColorStop(1, "rgb(0, 0, 0)");
+  if (state.theme === "dark") {
+    background.addColorStop(0, "rgb(3, 5, 9)");
+    background.addColorStop(0.58, "rgb(7, 8, 13)");
+    background.addColorStop(1, "rgb(0, 0, 0)");
+  } else {
+    background.addColorStop(0, "rgb(255, 255, 255)");
+    background.addColorStop(0.58, "rgb(244, 244, 244)");
+    background.addColorStop(1, "rgb(224, 224, 224)");
+  }
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, w, h);
 

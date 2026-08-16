@@ -99,7 +99,8 @@ function cmasherMap(name) {
 }
 
 function currentFieldColormapName(magnitude = false) {
-  return magnitude ? "torch" : "iceburn";
+  if (magnitude) return "torch";
+  return state.theme === "dark" ? "iceburn" : "redshift";
 }
 
 function currentMaterialColormapName(context) {

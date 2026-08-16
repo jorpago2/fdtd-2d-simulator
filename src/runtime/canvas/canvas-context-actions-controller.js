@@ -141,14 +141,13 @@
 
     function updateBoundaryMenuControls() {
       normalizeBoundarySides();
-      if (el.boundaryMenuInput) {
-        el.boundaryMenuInput.value = boundarySideMode(contextMenuState.boundaryMenuSide);
-      }
-      if (el.boundaryMenuHint) {
-        const sideLabel = boundarySideLabels[contextMenuState.boundaryMenuSide] || "Boundary";
-        const modeLabel = boundarySideIsAbsorbing(contextMenuState.boundaryMenuSide) ? "CPML absorbing" : "reflective";
-        el.boundaryMenuHint.textContent = `${sideLabel} boundary \u00b7 ${modeLabel}`;
-      }
+      const selectedMode = boundarySideMode(contextMenuState.boundaryMenuSide);
+      global.dispatchEvent(new CustomEvent("fdtd:boundary-mode-sync", { detail: { mode: selectedMode } }));
+      const sideLabel = boundarySideLabels[contextMenuState.boundaryMenuSide] || "Boundary";
+      const modeLabel = boundarySideIsAbsorbing(contextMenuState.boundaryMenuSide) ? "CPML absorbing" : "reflective";
+      global.dispatchEvent(new CustomEvent("fdtd:boundary-editor", {
+        detail: { hint: `${sideLabel} boundary \u00b7 ${modeLabel}` },
+      }));
     }
 
     function openBoundaryMenuAt(clientX, clientY) {

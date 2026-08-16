@@ -21,7 +21,6 @@
     const el = requireObject(dependencies.el, "el");
     const uiCore = requireObject(dependencies.uiCore, "uiCore");
     const controlSyncUi = requireObject(dependencies.controlSyncUi, "controlSyncUi");
-    const materialEditorUi = requireObject(dependencies.materialEditorUi, "materialEditorUi");
     const sceneDescriptions = requireObject(dependencies.sceneDescriptions, "sceneDescriptions");
     const COURANT = Number(dependencies.COURANT);
     if (!Number.isFinite(COURANT)) throw new Error("Control text dependency must provide finite COURANT.");
@@ -36,7 +35,6 @@
     const formatTimeRate = requireFunction(dependencies.formatTimeRate, "formatTimeRate");
     const updateSourceShapeOptionLabels = requireFunction(dependencies.updateSourceShapeOptionLabels, "updateSourceShapeOptionLabels");
     const updateFieldDisplayControls = requireFunction(dependencies.updateFieldDisplayControls, "updateFieldDisplayControls");
-    const normalizeDispersionModel = requireFunction(dependencies.normalizeDispersionModel, "normalizeDispersionModel");
     const formatLambdaOutput = requireFunction(dependencies.formatLambdaOutput, "formatLambdaOutput");
     const updateSceneGuidePanel = requireFunction(dependencies.updateSceneGuidePanel, "updateSceneGuidePanel");
     const syncSceneBrowserSelection = requireFunction(dependencies.syncSceneBrowserSelection, "syncSceneBrowserSelection");
@@ -67,11 +65,6 @@
       controlSyncUi.syncRuntimeAndViewControls({ el, formatTimeRate, state, uiCore });
       updateSourceShapeOptionLabels();
       updateFieldDisplayControls();
-      if (el.wavelengthInput) el.wavelengthInput.value = state.wavelengthUm.toFixed(2);
-      if (el.cellsPerWavelengthInput) el.cellsPerWavelengthInput.value = String(state.cellsPerWavelength);
-      el.customAnisotropyInput.checked = state.customAnisotropic;
-      materialEditorUi.syncCustomMaterialLabels({ el, state });
-      materialEditorUi.syncCustomMaterialEditorValues({ el, normalizeDispersionModel, state });
       controlSyncUi.syncSceneAndGridControls({ el, formatLambdaOutput, sceneDescriptions, state });
       updateSceneGuidePanel();
       syncSceneBrowserSelection();
@@ -89,10 +82,6 @@
       }
       const boundary = boundarySummaryLabel();
       updateHeaderSimulationStatus();
-      if (el.statusGridOutput) el.statusGridOutput.textContent = `${sim.nx} \u00d7 ${sim.ny}`;
-      if (el.statusStepOutput) el.statusStepOutput.textContent = String(sim.time);
-      if (el.statusCourantOutput) el.statusCourantOutput.textContent = COURANT.toFixed(2);
-      if (el.statusBoundaryOutput) el.statusBoundaryOutput.textContent = boundary;
       controlSyncUi.syncConfigSummaryControls({
         boundary,
         cellsToLambda,

@@ -186,26 +186,31 @@
           }.`
         : "Run or step the simulation to collect timing samples.";
 
-      if (el.performanceBackendOutput) el.performanceBackendOutput.textContent = engineText;
-      if (el.performanceGridOutput) el.performanceGridOutput.textContent = gridText;
-      if (el.performanceStepOutput) el.performanceStepOutput.textContent = stepText;
-      if (el.performanceRenderOutput) el.performanceRenderOutput.textContent = renderText;
-      if (el.performanceRenderMapOutput) el.performanceRenderMapOutput.textContent = renderMapText;
-      if (el.performanceRenderPresentOutput) el.performanceRenderPresentOutput.textContent = renderPresentText;
-      if (el.performanceRenderOverlayOutput) el.performanceRenderOverlayOutput.textContent = renderOverlayText;
-      if (el.performanceMeasureOutput) el.performanceMeasureOutput.textContent = measureText;
-      if (el.performanceSolverWasmOutput) el.performanceSolverWasmOutput.textContent = solverWasmKernelText;
-      if (el.performanceSolverJsOutput) el.performanceSolverJsOutput.textContent = solverJsKernelText;
-      if (el.performanceSourcePackOutput) el.performanceSourcePackOutput.textContent = solverSourcePackText;
-      if (el.performanceAuxMaterialOutput) el.performanceAuxMaterialOutput.textContent = solverAuxMaterialText;
-      if (el.performanceBoundarySourceOutput) el.performanceBoundarySourceOutput.textContent = solverBoundarySourceText;
-      if (el.performanceDiagnosticsOutput) el.performanceDiagnosticsOutput.textContent = solverDiagnosticsText;
-      if (el.performanceThroughputOutput) el.performanceThroughputOutput.textContent = throughputText;
-      if (el.performanceTargetStepsOutput) el.performanceTargetStepsOutput.textContent = targetStepsText;
-      if (el.performanceLiveStepsOutput) el.performanceLiveStepsOutput.textContent = liveStepsText;
-      if (el.performanceFpsOutput) el.performanceFpsOutput.textContent = fpsText;
-      if (el.performanceStatus) el.performanceStatus.textContent = statusText;
-      if (el.statusStepOutput) el.statusStepOutput.textContent = String(sim.time);
+      global.dispatchEvent?.(new CustomEvent("fdtd:performance-snapshot", {
+        detail: {
+          metrics: [
+            ["Engine", engineText],
+            ["Grid cells", gridText],
+            ["FDTD step", stepText],
+            ["Render", renderText],
+            ["Map pixels", renderMapText],
+            ["Present", renderPresentText],
+            ["Overlays", renderOverlayText],
+            ["Measure", measureText],
+            ["WASM kernel", solverWasmKernelText],
+            ["JS kernel", solverJsKernelText],
+            ["Sources", solverSourcePackText],
+            ["Aux materials", solverAuxMaterialText],
+            ["Boundary/source", solverBoundarySourceText],
+            ["Diagnostics", solverDiagnosticsText],
+            ["Capacity", throughputText],
+            ["Target", targetStepsText],
+            ["Live steps", liveStepsText],
+            ["Live FPS", fpsText],
+          ],
+          status: statusText,
+        },
+      }));
     }
 
     function reset() {

@@ -18,10 +18,6 @@
     return value;
   }
 
-  function forEachNode(nodes, callback) {
-    nodes?.forEach?.(callback);
-  }
-
   function bindVisualControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
     const state = requireObject(dependencies.state, "state");
@@ -54,9 +50,9 @@
       else sim.measure();
     }
 
-    forEachNode(el.fieldComponentButtons, (button) => {
-      button.addEventListener("click", () => {
-        const component = button.dataset.fieldComponent === "hz" ? "hz" : "ez";
+    function applyVisualChoice(property, value) {
+      if (property === "fieldComponent") {
+        const component = value === "hz" ? "hz" : "ez";
         if (state.fieldComponent === component) return;
         state.fieldComponent = component;
         sim.resetFields();
@@ -64,47 +60,31 @@
         updateControlText();
         updateStats();
         sim.render();
-      });
-    });
-
-    forEachNode(el.fieldDisplayButtons, (button) => {
-      button.addEventListener("click", () => {
-        const display = button.dataset.fieldDisplay || "scalar";
-        state.fieldDisplay = FIELD_DISPLAY_VALUES.includes(display) ? display : "scalar";
+        return;
+      }
+      if (property === "fieldDisplay") {
+        state.fieldDisplay = FIELD_DISPLAY_VALUES.includes(value) ? value : "scalar";
         measureVisualState();
         updateControlText();
         updateStats();
         sim.render();
-      });
-    });
-
-    forEachNode(el.fieldQuiverInputs, (input) => {
-      input.addEventListener("change", () => {
-        state.fieldQuiver = input.checked;
+        return;
+      }
+      if (property === "fieldQuiver") {
+        state.fieldQuiver = Boolean(value);
         updateControlText();
         sim.render();
-      });
-    });
-
-    forEachNode(el.materialFieldOverlayInputs, (input) => {
-      input.addEventListener("change", () => {
-        state.materialFieldOverlay = input.checked;
+        return;
+      }
+      if (property === "materialFieldOverlay") {
+        state.materialFieldOverlay = Boolean(value);
         measureVisualState();
         updateControlText();
         sim.render();
-      });
-    });
-
-    forEachNode(el.visualLayerInputs, (input) => {
-      input.addEventListener("change", () => {
-        setCustomVisualLayer(input.dataset.visualLayer, input.checked);
-      });
-    });
-
-    forEachNode(el.viewModeButtons, (button) => {
-      button.addEventListener("click", () => {
-        const mode = button.dataset.viewMode;
-        state.viewMode = VIEW_MODE_VALUES.includes(mode) ? mode : "field";
+        return;
+      }
+      if (property === "viewMode") {
+        state.viewMode = VIEW_MODE_VALUES.includes(value) ? value : "field";
         if (state.viewMode === "poynting") {
           state.fieldDisplay = "scalar";
         }
@@ -112,24 +92,27 @@
         updateControlText();
         updateStats();
         sim.render();
-      });
-    });
-
-    forEachNode(el.viewProjectionButtons, (button) => {
-      button.addEventListener("click", () => {
-        state.viewProjection = button.dataset.viewProjection === "3d" ? "3d" : "2d";
+        return;
+      }
+      if (property === "viewProjection") {
+        state.viewProjection = value === "3d" ? "3d" : "2d";
         updateControlText();
         sim.render();
         scheduleCanvasLayoutRefresh();
-      });
-    });
-
-    forEachNode(el.materialPartButtons, (button) => {
-      button.addEventListener("click", () => {
-        state.materialPart = button.dataset.materialPart === "imag" ? "imag" : "real";
+        return;
+      }
+      if (property === "materialPart") {
+        state.materialPart = value === "imag" ? "imag" : "real";
         updateControlText();
         sim.render();
-      });
+      }
+    }
+
+    global.addEventListener?.("fdtd:visual-choice", (event) => {
+      applyVisualChoice(event?.detail?.property, event?.detail?.value);
+    });
+    global.addEventListener?.("fdtd:visual-layer", (event) => {
+      setCustomVisualLayer(event?.detail?.layer, Boolean(event?.detail?.enabled));
     });
 
     global.addEventListener?.("fdtd:control-drawer-state", scheduleCanvasLayoutRefresh);

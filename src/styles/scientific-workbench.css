@@ -82,24 +82,8 @@ fieldset {
   overflow: clip;
 }
 
-#reactHeaderRoot,
-#reactWorkflowRoot,
-#reactFooterRoot,
-.react-control-root,
-.carbon-button-mount,
-.carbon-button-content,
-.carbon-control-mount {
+.carbon-button-content {
   display: contents;
-}
-
-#reactHeaderRoot > .scientific-theme,
-#reactWorkflowRoot > .scientific-theme,
-#reactFooterRoot > .scientific-theme {
-  display: contents;
-}
-
-.carbon-portal-host {
-  display: none;
 }
 
 .panel-kicker,
@@ -118,6 +102,42 @@ fieldset {
   align-items: center;
 }
 
+body header.scientific-header.scientific-app-header {
+  grid-template-columns: var(--workbench-rail-width) minmax(0, 1fr) max-content;
+  width: 100vw;
+  min-width: 0;
+  max-width: 100vw;
+}
+
+header .scientific-app-header__context {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  border-inline-start: 1px solid var(--cds-border-subtle-01);
+}
+
+.scientific-header__context-value > span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-simulation-controls .tool-group,
+.interaction-toggle,
+.scientific-header__theme,
+.scientific-header__help {
+  border-inline-start: 1px solid var(--cds-border-subtle-01);
+}
+
+.scientific-header__help .scientific-header-help,
+.scientific-header__help .scientific-header-help__button {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .header-simulation-controls,
 .header-simulation-controls .interaction-toggle {
   height: 3rem;
@@ -132,18 +152,17 @@ fieldset {
   max-inline-size: 3rem;
 }
 
-.simulation-run-label {
-  font-weight: var(--cds-heading-compact-01-font-weight, 600);
-}
-
+.simulation-run-button,
 .header-step-button {
-  min-inline-size: 4rem;
-  justify-content: center;
+  inline-size: 3rem;
+  min-inline-size: 3rem;
+  max-inline-size: 3rem;
 }
 
 .header-save-button {
-  min-inline-size: 6rem;
-  justify-content: center;
+  inline-size: 3rem;
+  min-inline-size: 3rem;
+  max-inline-size: 3rem;
 }
 
 .header-overflow-menu {
@@ -151,7 +170,7 @@ fieldset {
 }
 
 .interaction-toggle {
-  width: 10rem;
+  width: 6rem;
 }
 
 .workspace {
@@ -194,9 +213,46 @@ fieldset {
   background: var(--cds-background);
 }
 
-#reactFooterRoot .fdtd-status-strip {
+.fdtd-status-strip {
   grid-row: 2;
   grid-column: 2 / -1;
+}
+
+.fdtd-status-strip .scientific-status-bar__status {
+  display: none;
+}
+
+.fdtd-status-strip .scientific-status-bar__metadata {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  gap: 0;
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--cds-label-01-line-height, 1rem);
+}
+
+.fdtd-status-strip .scientific-status-bar__metadata > span {
+  display: inline-flex;
+  min-width: 0;
+  min-height: var(--workbench-status-height);
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline: 0.75rem;
+  border-inline-end: 1px solid var(--cds-border-subtle-01);
+  white-space: nowrap;
+}
+
+.fdtd-status-strip .scientific-status-bar__metadata > span:first-child {
+  padding-inline-start: 1rem;
+}
+
+.fdtd-status-strip .scientific-status-bar__metadata b {
+  color: var(--cds-text-secondary);
+  font-weight: 400;
+}
+
+.fdtd-status-strip .scientific-status-bar__metadata output {
+  color: var(--cds-text-primary);
 }
 
 .canvas-frame {
@@ -213,10 +269,12 @@ fieldset {
   background: var(--cds-background);
 }
 
-/* The 3D surface and PNG exporter share this neutral scientific backdrop.
- * Keeping it independent of the shell theme preserves colormap contrast. */
 .canvas-frame[data-view-projection="3d"] {
   background: linear-gradient(to bottom, rgb(3, 5, 9) 0%, rgb(7, 8, 13) 58%, rgb(0, 0, 0) 100%);
+}
+
+[data-theme="light"] .canvas-frame[data-view-projection="3d"] {
+  background: linear-gradient(to bottom, #ffffff 0%, #f4f4f4 58%, #e0e0e0 100%);
 }
 
 #simCanvas,
@@ -320,6 +378,7 @@ fieldset {
   border: 1px solid var(--cds-border-subtle-01);
   color: var(--cds-text-primary);
   background: var(--cds-layer-01);
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 35%);
 }
 
 .colorbar-title {
@@ -351,29 +410,6 @@ fieldset {
   letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
 }
 
-.status-strip-author {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  margin-left: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-strip-author > a {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 95.99rem) {
-  .status-strip-author {
-    display: none;
-  }
-}
-
 .surface-orbit-controls {
   position: absolute;
   z-index: 14;
@@ -384,6 +420,7 @@ fieldset {
   padding: 0.5rem;
   border: 1px solid var(--cds-border-subtle-01);
   background: var(--cds-layer-01);
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 35%);
 }
 
 .surface-orbit-gizmo,
@@ -392,8 +429,8 @@ fieldset {
   place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--cds-border-strong-01);
-  color: var(--cds-text-primary);
+  border: 1px solid var(--cds-border-subtle-01);
+  color: var(--cds-icon-primary);
   background: var(--cds-layer-02);
 }
 
@@ -405,6 +442,16 @@ fieldset {
 .surface-orbit-pad button:first-child,
 .surface-orbit-pad button:last-child {
   grid-column: 2;
+}
+
+@media (min-width: 66rem) {
+  body .scientific-recovery-notice {
+    inset-inline-end: 15rem;
+  }
+
+  .app-shell.contextual-inspector-open .scientific-recovery-notice {
+    inset-inline-end: calc(var(--workbench-inspector-width) + 15rem);
+  }
 }
 
 /* Carbon control panel */
@@ -521,6 +568,14 @@ fieldset {
   text-align: left;
 }
 
+.scene-view-toggle > .is-active {
+  color: var(--cds-text-primary);
+}
+
+.scene-view-toggle > .is-active::after {
+  background: var(--cds-layer-selected-01);
+}
+
 .scene-view-panel,
 .scene-browse-panel,
 .scene-current-panel,
@@ -610,11 +665,30 @@ fieldset {
 
 .scene-spotlight {
   display: grid;
-  grid-template-columns: 7rem minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1rem;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem;
   border-left: 0.25rem solid var(--cds-background-brand);
   background: var(--cds-layer-02);
+}
+
+.scene-spotlight-kicker {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  line-height: var(--cds-label-01-line-height, 1.33333);
+  letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
+  flex-wrap: wrap;
+}
+
+.scene-spotlight-group {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scene-guide-panel,
@@ -631,6 +705,10 @@ fieldset {
   gap: 0.75rem;
   padding-block: 1rem;
   border-top: 1px solid var(--cds-border-subtle-01);
+}
+
+.scene-guide-panel:not(.show-details) .scene-guide-details {
+  display: none;
 }
 
 .scene-guide-section > h3 {
@@ -668,8 +746,6 @@ fieldset {
 .geometry-params,
 .source-order-controls,
 .performance-grid,
-.config-summary-grid,
-.results-summary-grid,
 .diagnostics-grid,
 .analysis-chart-grid,
 .two-col {
@@ -713,7 +789,6 @@ fieldset {
 }
 
 .scientific-slider-group > :first-child,
-.scientific-slider-mount,
 .scientific-slider {
   min-width: 0;
   width: 100%;
@@ -731,17 +806,36 @@ fieldset {
   border: 0;
 }
 
-.scientific-slider {
+.scientific-slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(6rem, 7rem);
+  align-items: end;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--cds-border-subtle-01);
+  background: var(--cds-layer-01);
   font-variant-numeric: tabular-nums;
 }
 
-.scientific-slider > div {
+.control-panel .scientific-slider-control {
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+}
+
+.control-panel .scientific-slider-exact {
+  max-width: 7rem;
+}
+
+.scientific-slider,
+.scientific-slider-exact {
+  min-width: 0;
   width: 100%;
 }
 
-.scientific-slider > div > :nth-child(2) {
-  flex: 1 1 8rem;
-  min-width: 0;
+.scientific-slider-exact {
+  max-width: 8rem;
+  justify-self: stretch;
 }
 
 /* The shared summaries are viewport-responsive by default. In FDTD they live
@@ -751,6 +845,38 @@ fieldset {
 .fdtd-run-outcome,
 .fdtd-preflight {
   container-type: inline-size;
+}
+
+.scientific-evidence-summary.fdtd-preflight[data-density="compact"] > .scientific-evidence-summary__checks {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.control-panel .fdtd-preflight {
+  padding: 0;
+  background: transparent;
+}
+
+.control-panel .fdtd-preflight .scientific-evidence-summary__checks > li {
+  display: grid;
+  min-block-size: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem;
+}
+
+.control-panel .fdtd-preflight .scientific-evidence-summary__check-heading {
+  min-width: 0;
+  align-items: center;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.control-panel .fdtd-preflight .scientific-evidence-summary__value {
+  margin-block-start: 0;
+  font-size: 1rem;
+  line-height: 1.25rem;
+  text-align: end;
 }
 
 @container (max-width: 32rem) {
@@ -781,7 +907,7 @@ fieldset {
   }
 
   .fdtd-preflight .scientific-evidence-summary__checks {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -833,9 +959,11 @@ fieldset {
 .material-tensor-part {
   display: grid;
   grid-template-columns: minmax(2rem, 0.6fr) minmax(0, 1fr);
-  gap: 1px;
+  gap: 0.25rem 0.5rem;
   min-width: 0;
-  background: var(--cds-border-subtle-01);
+  padding: 0.75rem;
+  border: 1px solid var(--cds-border-subtle-01);
+  background: var(--cds-layer-02);
 }
 
 .material-tensor-part:has(.brush-anisotropic-params:not([hidden])) {
@@ -844,16 +972,23 @@ fieldset {
 
 .material-tensor-part > * {
   min-width: 0;
-  padding: 0.5rem;
-  background: var(--cds-layer-01);
+  padding: 0.25rem 0;
+  background: transparent;
 }
 
 .material-tensor-title {
   grid-column: 1 / -1;
+  padding-block: 0 0.5rem;
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  font-weight: var(--cds-heading-compact-01-font-weight, 600);
 }
 
 .material-tensor-axis {
   grid-row: 2;
+  color: var(--cds-text-helper);
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  text-align: center;
 }
 
 .material-tensor-axis:empty {
@@ -883,11 +1018,10 @@ fieldset {
 .material-tensor-cell input {
   width: 100%;
   min-width: 0;
+  background: var(--cds-field-01);
 }
 
-.material-warning,
-.sweep-status,
-.analysis-status {
+.material-warning {
   color: var(--cds-support-error);
   font-size: var(--cds-helper-text-01-font-size, 0.75rem);
   line-height: var(--cds-helper-text-01-line-height, 1.33333);
@@ -900,15 +1034,11 @@ fieldset {
 
 /* Results */
 
-.results-summary-grid,
-.config-summary-grid,
 .performance-grid,
 .diagnostics-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.results-summary-card,
-.config-summary-card,
 .diagnostic-metric,
 .scene-observable-card,
 .maxwell-check-card,
@@ -920,6 +1050,14 @@ fieldset {
   padding: 0.75rem;
   border: 1px solid var(--cds-border-subtle-01);
   background: var(--cds-layer-02);
+}
+
+.sweep-status,
+.analysis-status {
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
 }
 
 .source-menu-actions > button[id$="DeleteBtn"] {
@@ -1052,8 +1190,6 @@ fieldset {
   min-width: 0;
 }
 
-.results-summary-card span,
-.config-summary-card span,
 .diagnostic-metric span,
 .performance-grid span {
   color: var(--cds-text-secondary);
@@ -1062,8 +1198,6 @@ fieldset {
   letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
 }
 
-.results-summary-card strong,
-.config-summary-card strong,
 .diagnostic-metric strong,
 .performance-grid strong,
 .chart-readout,
@@ -1073,30 +1207,6 @@ fieldset {
   line-height: var(--cds-code-01-line-height, 1.33333);
   letter-spacing: var(--cds-code-01-letter-spacing, 0.32px);
   font-variant-numeric: tabular-nums;
-}
-
-.results-state-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: fit-content;
-  min-height: 1.5rem;
-  color: var(--cds-text-secondary);
-  font-size: var(--cds-label-01-font-size, 0.75rem);
-  line-height: var(--cds-label-01-line-height, 1.33333);
-  letter-spacing: var(--cds-label-01-letter-spacing, 0.32px);
-}
-
-.results-state-pill::before {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--cds-icon-secondary);
-  content: "";
-}
-
-#configStabilityOutput::before {
-  background: var(--cds-support-success);
 }
 
 .analysis-chart,
@@ -1182,6 +1292,26 @@ fieldset {
   overscroll-behavior: contain;
 }
 
+.context-inspector-host .source-menu-body {
+  gap: 1rem;
+}
+
+.context-inspector-host .scientific-slider-control {
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+}
+
+.context-inspector-host .scientific-slider-exact {
+  max-width: 7rem;
+}
+
+.context-inspector-host .source-menu-body,
+.context-inspector-host .context-choice-grid {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cds-border-strong-01) transparent;
+}
+
 .source-menu-header,
 .help-guide-header,
 .walkthrough-header {
@@ -1191,9 +1321,18 @@ fieldset {
   background: var(--cds-layer-02);
 }
 
-.context-choice-menu,
-.boundary-menu {
+.context-inspector-host > .context-choice-menu,
+.context-inspector-host > .boundary-menu {
   grid-template-rows: auto minmax(0, 1fr);
+}
+
+.boundary-condition-control {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.boundary-condition-switcher {
+  width: 100%;
 }
 
 .context-kind-switcher {
@@ -1205,9 +1344,18 @@ fieldset {
   background: var(--cds-layer-01);
 }
 
+.app-shell:has(#boundaryMenu:not([hidden])),
+.app-shell:has(#canvasContextMenu:not([hidden])) {
+  --workbench-inspector-width: 22rem;
+}
+
+.app-shell:has(#monitorMenu:not([hidden])) {
+  --workbench-inspector-width: 25rem;
+}
+
 .context-kind-switcher > button {
   position: relative;
-  justify-content: flex-start;
+  justify-content: center;
   min-width: 0;
   min-height: 3rem;
   max-inline-size: none;
@@ -1225,6 +1373,10 @@ fieldset {
   height: 0.1875rem;
   background: var(--cds-border-interactive);
   content: "";
+}
+
+.context-inspector-host .source-menu-actions > button {
+  min-block-size: 3rem;
 }
 
 .context-choice-grid {
@@ -1251,8 +1403,18 @@ fieldset {
   inset: var(--scientific-ui-header-block-size) 1rem auto auto;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(36rem, calc(100vw - 7rem));
-  height: min(42rem, calc(100dvh - var(--scientific-ui-header-block-size) - 1rem));
+  height: auto;
+  max-height: min(42rem, calc(100dvh - var(--scientific-ui-header-block-size) - 1rem));
   box-shadow: 0 0 0 100vmax var(--cds-overlay), 0 0.75rem 2rem var(--cds-shadow);
+}
+
+.scientific-header-help__popover {
+  max-inline-size: min(22rem, calc(100vw - 1rem));
+}
+
+.maxwell-check-panel .analysis-panel-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .help-guide-grid {
@@ -1325,7 +1487,7 @@ fieldset {
 
 .walkthrough-panel {
   position: fixed;
-  z-index: 950;
+  z-index: 11000;
   top: 1rem;
   left: 1rem;
   width: min(26rem, calc(100vw - 2rem));
@@ -1336,14 +1498,14 @@ fieldset {
 
 .walkthrough-overlay {
   position: fixed;
-  z-index: 900;
+  z-index: 10900;
   inset: 0;
   background: var(--cds-overlay);
 }
 
 .walkthrough-highlight {
   position: fixed;
-  z-index: 925;
+  z-index: 10925;
   border: 0.1875rem solid var(--cds-focus);
   pointer-events: none;
 }
@@ -1410,12 +1572,13 @@ fieldset {
 }
 
 @media (max-width: 65.99rem), (max-height: 39.99rem) {
-  .status-strip-author {
-    display: none;
+  body header.scientific-header.scientific-app-header {
+    grid-template-columns: var(--scientific-ui-header-block-size) minmax(0, 1fr) max-content;
   }
 
   .control-panel {
-    z-index: 600;
+    position: relative;
+    z-index: 9000;
     grid-row: 1;
     grid-column: 1;
     width: 100%;
@@ -1433,7 +1596,7 @@ fieldset {
     grid-column: 1;
   }
 
-  #reactFooterRoot .fdtd-status-strip {
+  .fdtd-status-strip {
     grid-row: 2;
     grid-column: 1;
   }
@@ -1454,6 +1617,7 @@ fieldset {
   }
 
   .context-inspector-host {
+    position: relative;
     z-index: 650;
     grid-row: 1;
     grid-column: 1;
@@ -1474,17 +1638,26 @@ fieldset {
    * control at the top of compact layouts. The higher-specificity selector
    * intentionally overrides the shared scientific-ui fixed placement. */
   body.controls-drawer-open .scientific-recovery-notice {
-    inset-block-start: calc(var(--workbench-header-height) + 4.5rem + var(--fdtd-space-xs));
+    inset-block-start: auto;
     inset-inline: var(--fdtd-space-xs);
-    inset-block-end: auto;
+    inset-block-end: calc(var(--workbench-bottom-nav-height) + var(--fdtd-space-xs));
+    inline-size: calc(100vw - 2 * var(--fdtd-space-xs));
     width: auto;
     max-inline-size: none;
-    max-block-size: min(36dvh, 12rem);
+    max-block-size: min(30dvh, 9rem);
     overflow: auto;
   }
 
+  body.controls-drawer-open .scientific-recovery-notice > :first-child {
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: none;
+    width: 100%;
+    max-width: none;
+  }
+
   body.controls-drawer-open:has(.scientific-recovery-notice) .control-tab-panel.is-active {
-    padding-block-start: 12.5rem;
+    padding-block-end: 9.5rem;
   }
 
   body.walkthrough-active .controls-open .stage {
@@ -1505,8 +1678,9 @@ fieldset {
     block-size: var(--scientific-ui-header-block-size);
   }
 
-  .simulation-run-label {
-    display: none;
+  .scientific-header-overflow-item,
+  .scientific-header-overflow-item > button {
+    min-block-size: 2.75rem;
   }
 
   .header-simulation-controls,
@@ -1515,6 +1689,23 @@ fieldset {
     min-width: 6rem;
   }
 
+}
+
+@media (max-width: 41.99rem) {
+  .workspace,
+  .controls-open .workspace,
+  .contextual-inspector-open .workspace {
+    grid-template-rows: minmax(0, 1fr) var(--workbench-bottom-nav-height);
+  }
+
+  .fdtd-status-strip {
+    display: none;
+  }
+
+  .controls-open .control-panel,
+  .contextual-inspector-open .context-inspector-host {
+    grid-row: 1;
+  }
 }
 
 @media (max-height: 39.99rem) {
@@ -1539,6 +1730,20 @@ fieldset {
   .help-guide-panel {
     top: 0;
     height: auto;
+  }
+
+  .scientific-header-overflow-item,
+  .scientific-header-overflow-item > button {
+    min-block-size: 2.75rem;
+  }
+
+  .context-inspector-host .source-menu-header {
+    min-height: 3rem;
+    padding-block: 0.25rem;
+  }
+
+  .context-inspector-host .source-menu-actions {
+    padding-block: 0.5rem;
   }
 }
 
@@ -1602,10 +1807,6 @@ fieldset {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .config-summary-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .control-tab-panel > .run-section {
     padding-bottom: 0.75rem;
   }
@@ -1630,6 +1831,12 @@ fieldset {
 
 .help-guide-open .surface-orbit-controls {
   visibility: hidden;
+}
+
+@media (max-width: 30rem) {
+  .scientific-app-header__context .scientific-header__status {
+    display: none;
+  }
 }
 
 @media (max-width: 22rem) {
@@ -1676,8 +1883,6 @@ fieldset {
     padding-inline: 0.5rem;
   }
 
-  .results-summary-grid,
-  .config-summary-grid,
   .performance-grid,
   .diagnostics-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -1689,9 +1894,6 @@ fieldset {
     min-height: 2.75rem;
   }
 
-  .context-inspector-host .carbon-button-mount > button,
-  .help-guide-panel .carbon-button-mount > button,
-  .source-menu-actions .carbon-button-mount > button,
   .source-menu-actions > button,
   .context-inspector-host .context-detail-panel > button,
   .scientific-recovery-notice button {

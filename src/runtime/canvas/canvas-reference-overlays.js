@@ -85,12 +85,11 @@
     },
 
     overlayReferenceColor() {
-      if (state.viewProjection === "3d") return "rgba(255, 255, 255, 0.94)";
       return state.theme === "dark" ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.94)";
     },
 
     overlayReferenceBackdropColor() {
-      if (state.viewProjection === "3d" || state.theme === "dark") return "rgba(0, 0, 0, 0.72)";
+      if (state.theme === "dark") return "rgba(0, 0, 0, 0.72)";
       return "rgba(255, 255, 255, 0.78)";
     },
 

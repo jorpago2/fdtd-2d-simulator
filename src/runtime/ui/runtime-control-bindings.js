@@ -57,55 +57,40 @@
     global.addEventListener("fdtd:toggle-running", () => {
       void toggleRunningWhenReady();
     });
-    el.runPlayPauseBtn?.addEventListener("click", () => {
-      void toggleRunningWhenReady();
-    });
-
-    el.stepBtn?.addEventListener("click", () => {
-      void advanceOneStepWhenReady();
-    });
     global.addEventListener("fdtd:simulation-step", () => {
       void advanceOneStepWhenReady();
-    });
-    el.runStepBtn?.addEventListener("click", () => {
-      void advanceOneStepWhenReady();
-    });
-
-    el.resetBtn?.addEventListener("click", () => {
-      runtimeController.resetSimulationFields();
-    });
-    el.runResetBtn?.addEventListener("click", () => {
-      runtimeController.resetSimulationFields();
-    });
-
-    el.saveBtn?.addEventListener("click", () => {
-      canvasRenderController.downloadCanvasPng();
     });
     global.addEventListener("fdtd:save-png", () => {
       canvasRenderController.downloadCanvasPng();
     });
-
-    el.speedInput?.addEventListener("input", () => {
-      state.timeRate = clamp(Number(el.speedInput.value), 0.1, 10);
-      runtimeController.resetRuntimePacing();
-      updateControlText();
+    global.addEventListener("fdtd:reset-simulation", () => {
+      runtimeController.resetSimulationFields();
     });
 
-    el.renderFpsInput?.addEventListener("change", () => {
-      const fps = Number(el.renderFpsInput.value);
-      state.renderFps = [15, 30, 60].includes(fps) ? fps : 0;
-      runtimeController.resetRuntimePacing();
-      updateControlText();
+    global.addEventListener("fdtd:slider-input", (event) => {
+      if (event?.detail?.id === "speedInput") {
+        state.timeRate = clamp(Number(event.detail.value), 0.1, 10);
+        runtimeController.resetRuntimePacing();
+        updateControlText();
+      } else if (event?.detail?.id === "gainInput") {
+        state.gain = Number(event.detail.value);
+        updateControlText();
+      }
     });
 
-    el.gainInput?.addEventListener("input", () => {
-      state.gain = Number(el.gainInput.value);
-      updateControlText();
+    global.addEventListener("fdtd:runtime-setting", (event) => {
+      const property = event?.detail?.property;
+      if (property === "renderFps") {
+        const fps = Number(event?.detail?.value);
+        state.renderFps = [15, 30, 60].includes(fps) ? fps : 0;
+        runtimeController.resetRuntimePacing();
+        updateControlText();
+      } else if (property === "autoScale") {
+        state.autoScale = Boolean(event?.detail?.value);
+        updateControlText();
+      }
     });
 
-    el.autoScaleInput?.addEventListener("change", () => {
-      state.autoScale = el.autoScaleInput.checked;
-    });
   }
 
   global.FdtdRuntimeControlBindings = Object.freeze({

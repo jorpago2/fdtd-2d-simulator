@@ -65,24 +65,21 @@
     return value;
   }
 
-  function bindInputEvents(input, events, handler) {
-    events.forEach((eventName) => {
-      input?.addEventListener(eventName, handler);
-    });
-  }
-
   function bindMaterialControls(dependencies) {
     const el = requireObject(dependencies.el, "el");
+    const documentRef = dependencies.documentRef || global.document;
     const handleCustomMaterialInput = requireFunction(
       dependencies.handleCustomMaterialInput,
       "handleCustomMaterialInput",
     );
 
-    CHANGE_ONLY_KEYS.forEach((key) => {
-      bindInputEvents(el[key], ["change"], handleCustomMaterialInput);
+    const changeIds = new Set(CHANGE_ONLY_KEYS.map((key) => el[key]?.id).filter(Boolean));
+    const liveIds = new Set(INPUT_AND_CHANGE_KEYS.map((key) => el[key]?.id).filter(Boolean));
+    documentRef.addEventListener("input", (event) => {
+      if (liveIds.has(event.target?.id)) handleCustomMaterialInput();
     });
-    INPUT_AND_CHANGE_KEYS.forEach((key) => {
-      bindInputEvents(el[key], ["input", "change"], handleCustomMaterialInput);
+    documentRef.addEventListener("change", (event) => {
+      if (changeIds.has(event.target?.id) || liveIds.has(event.target?.id)) handleCustomMaterialInput();
     });
   }
 

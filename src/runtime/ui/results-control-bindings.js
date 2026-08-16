@@ -15,10 +15,6 @@
     return value;
   }
 
-  function forEachNode(nodes, callback) {
-    nodes?.forEach?.(callback);
-  }
-
   function applySweepModeDefaults(state, el, mode) {
     if (mode === "frequency") {
       state.sweepStart = 0.012;
@@ -71,6 +67,7 @@
     const updateSweepChartReadout = requireFunction(dependencies.updateSweepChartReadout, "updateSweepChartReadout");
     const sweepModeLabel = requireFunction(dependencies.sweepModeLabel, "sweepModeLabel");
     const formatSweepValue = requireFunction(dependencies.formatSweepValue, "formatSweepValue");
+    const documentRef = dependencies.documentRef || global.document;
 
     function refreshLineReferenceStatus(message = "") {
       if (!el.lineReferenceStatus) return;
@@ -87,130 +84,99 @@
       else sim.measure();
     }
 
-    el.diagnosticsInput?.addEventListener("change", () => {
-      state.diagnosticsEnabled = el.diagnosticsInput.checked;
-      sim.resetDiagnostics();
-      measureResultsUi();
-      updateStats();
-      sim.render();
-    });
-
-    el.diagnosticsResetBtn?.addEventListener("click", () => {
-      sim.resetDiagnostics();
-      measureResultsUi();
-      updateStats();
-      sim.render();
-    });
-
-    el.maxwellCheckInput?.addEventListener("change", () => {
-      state.maxwellCheckEnabled = Boolean(el.maxwellCheckInput.checked);
-      if (!state.maxwellCheckEnabled) {
-        sim.lastMaxwellCheck = null;
-      } else if (typeof sim.updateMaxwellCheck === "function") {
-        sim.updateMaxwellCheck(null);
-      }
-      updateStats();
-      sim.render();
-    });
-
-    el.maxwellCheckResetBtn?.addEventListener("click", () => {
-      sim.lastMaxwellCheck = null;
-      if (state.maxwellCheckEnabled && typeof sim.updateMaxwellCheck === "function") {
-        sim.updateMaxwellCheck(null);
-      }
-      updateStats();
-      sim.render();
-    });
-
-    el.performanceResetBtn?.addEventListener("click", () => {
-      resetPerformanceStats();
-    });
-
-    el.analysisInput?.addEventListener("change", () => {
-      state.analysisEnabled = el.analysisInput.checked;
-      sim.resetAnalysisDiagnostics();
-      updateControlText();
-      sim.render();
-    });
-
-    el.analysisResetBtn?.addEventListener("click", () => {
-      sim.resetAnalysisDiagnostics();
-      updateStats();
-      sim.render();
-    });
-
-    el.lineReferenceCaptureBtn?.addEventListener("click", () => {
-      const result =
-        typeof sim.captureLinePortReference === "function"
-          ? sim.captureLinePortReference()
-          : { ok: false, message: "Line-monitor reference capture is unavailable." };
-      refreshLineReferenceStatus(result.message);
-      updateStats();
-      sim.render();
-    });
-
-    el.lineReferenceClearBtn?.addEventListener("click", () => {
-      const result =
-        typeof sim.clearLinePortReference === "function"
-          ? sim.clearLinePortReference()
-          : { ok: false, message: "Line-monitor reference capture is unavailable." };
-      refreshLineReferenceStatus(result.message);
-      updateStats();
-      sim.render();
-    });
-
     refreshLineReferenceStatus();
 
-    el.spectrumChart?.addEventListener("pointermove", updateSpectrumReadout);
-    el.farFieldChart?.addEventListener("pointermove", updateFarFieldReadout);
-    forEachNode([el.spectrumChart, el.farFieldChart], (canvas) => {
-      canvas?.addEventListener("focus", () => {
-        if (el.analysisChartReadout) el.analysisChartReadout.textContent = canvas.getAttribute("aria-label") || "Chart";
-      });
-      canvas?.addEventListener("pointerleave", () => {
+    documentRef.addEventListener("change", (event) => {
+      const id = event.target?.id;
+      if (id === "maxwellCheckInput") {
+        state.maxwellCheckEnabled = Boolean(event.target.checked);
+        if (!state.maxwellCheckEnabled) sim.lastMaxwellCheck = null;
+        else sim.updateMaxwellCheck?.(null);
+        updateStats();
+        sim.render();
+      } else if (id === "analysisInput") {
+        state.analysisEnabled = Boolean(event.target.checked);
+        sim.resetAnalysisDiagnostics();
+        updateControlText();
+        sim.render();
+      } else if (id === "sweepModeInput") {
+        const nextMode = normalizeSweepMode(event.target.value);
+        state.sweepMode = nextMode;
+        applySweepModeDefaults(state, el, nextMode);
+        resetSweepResults(state, setSweepStatus, sweepReadyStatusText, updateControlText);
+      } else if (["sweepStartInput", "sweepEndInput", "sweepSamplesInput", "sweepStepsInput", "sweepBidirectionalInput"].includes(id)) {
+        syncSweepStateFromInputs();
+        resetSweepResults(state, setSweepStatus, sweepReadyStatusText, updateControlText);
+      }
+    });
+    global.addEventListener("fdtd:results-setting", (event) => {
+      if (event?.detail?.property !== "diagnosticsEnabled") return;
+      state.diagnosticsEnabled = Boolean(event.detail.value);
+      sim.resetDiagnostics();
+      measureResultsUi();
+      updateStats();
+      sim.render();
+    });
+
+    documentRef.addEventListener("click", (event) => {
+      const id = event.target?.closest?.("button")?.id;
+      if (id === "diagnosticsResetBtn") {
+        sim.resetDiagnostics();
+        measureResultsUi();
+        updateStats();
+        sim.render();
+      } else if (id === "maxwellCheckResetBtn") {
+        sim.lastMaxwellCheck = null;
+        if (state.maxwellCheckEnabled) sim.updateMaxwellCheck?.(null);
+        updateStats();
+        sim.render();
+      } else if (id === "performanceResetBtn") resetPerformanceStats();
+      else if (id === "analysisResetBtn") {
+        sim.resetAnalysisDiagnostics();
+        updateStats();
+        sim.render();
+      } else if (id === "lineReferenceCaptureBtn" || id === "lineReferenceClearBtn") {
+        const capture = id === "lineReferenceCaptureBtn";
+        const action = capture ? sim.captureLinePortReference : sim.clearLinePortReference;
+        const result = typeof action === "function"
+          ? action.call(sim)
+          : { ok: false, message: "Line-monitor reference capture is unavailable." };
+        refreshLineReferenceStatus(result.message);
+        updateStats();
+        sim.render();
+      } else if (id === "sweepRunBtn") runSweep();
+      else if (id === "sweepExportBtn") exportSweepCsv();
+    });
+
+    documentRef.addEventListener("toggle", (event) => {
+      if (event.detail?.open && event.target?.closest?.(".results-detail-panel")) {
+        global.requestAnimationFrame(updateStats);
+      }
+    });
+    documentRef.addEventListener("focusin", (event) => {
+      const chart = event.target?.closest?.("#spectrumChart, #farFieldChart");
+      if (chart && el.analysisChartReadout) {
+        el.analysisChartReadout.textContent = chart.getAttribute("aria-label") || "Chart";
+      }
+    });
+    documentRef.addEventListener("pointermove", (event) => {
+      if (event.target?.closest?.("#spectrumChart")) updateSpectrumReadout(event);
+      else if (event.target?.closest?.("#farFieldChart")) updateFarFieldReadout(event);
+      else if (event.target?.closest?.("#sweepChart")) updateSweepChartReadout(event);
+    });
+    documentRef.addEventListener("pointerleave", (event) => {
+      const chart = event.target?.closest?.("#spectrumChart, #farFieldChart, #sweepChart");
+      if (!chart) return;
+      if (chart.id !== "sweepChart") {
         if (el.analysisChartReadout) el.analysisChartReadout.textContent = "Focus or move over a chart";
-      });
-    });
-    forEachNode(el.resultsDetailPanels, (panel) => {
-      panel?.addEventListener("toggle", (event) => {
-        if (event.detail?.open) global.requestAnimationFrame(updateStats);
-      });
-    });
-
-    el.sweepModeInput?.addEventListener("change", () => {
-      const nextMode = normalizeSweepMode(el.sweepModeInput.value);
-      state.sweepMode = nextMode;
-      applySweepModeDefaults(state, el, nextMode);
-      resetSweepResults(state, setSweepStatus, sweepReadyStatusText, updateControlText);
-    });
-
-    forEachNode(
-      [el.sweepStartInput, el.sweepEndInput, el.sweepSamplesInput, el.sweepStepsInput, el.sweepBidirectionalInput],
-      (input) => {
-        input?.addEventListener("change", () => {
-          syncSweepStateFromInputs();
-          resetSweepResults(state, setSweepStatus, sweepReadyStatusText, updateControlText);
-        });
-      },
-    );
-
-    el.sweepRunBtn?.addEventListener("click", () => {
-      runSweep();
-    });
-
-    el.sweepExportBtn?.addEventListener("click", () => {
-      exportSweepCsv();
-    });
-
-    el.sweepChart?.addEventListener("pointermove", updateSweepChartReadout);
-    el.sweepChart?.addEventListener("pointerleave", () => {
+        return;
+      }
       if (!el.sweepChartReadout) return;
       const results = state.sweepResults || [];
-      el.sweepChartReadout.textContent =
-        results.length > 0
-          ? `${results.length} sweep points | ${sweepModeLabel()} ${formatSweepValue(results[results.length - 1].x)}`
-          : "No sweep point";
-    });
+      el.sweepChartReadout.textContent = results.length > 0
+        ? `${results.length} sweep points | ${sweepModeLabel()} ${formatSweepValue(results[results.length - 1].x)}`
+        : "No sweep point";
+    }, true);
   }
 
   global.FdtdResultsControlBindings = Object.freeze({

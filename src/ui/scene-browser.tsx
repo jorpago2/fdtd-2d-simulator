@@ -1,4 +1,4 @@
-import { createRoot, type Root } from "react-dom/client";
+import { useSyncExternalStore } from "react";
 import {
   Column,
   Dropdown,
@@ -44,7 +44,6 @@ type CarbonSceneBrowserApi = {
   closeDisclosures?: (root?: ParentNode) => void;
   renderSceneCards: (options: SceneCardRenderOptions) => void;
   renderSceneFilters: (options: SceneFilterRenderOptions) => void;
-  upgradeDisclosures?: (root?: ParentNode) => void;
 };
 
 declare global {
@@ -53,15 +52,17 @@ declare global {
   }
 }
 
-const roots = new WeakMap<HTMLElement, Root>();
+type SceneFilterState = Omit<SceneFilterRenderOptions, "target"> | null;
+type SceneCardState = Omit<SceneCardRenderOptions, "target"> | null;
 
-function renderInto(target: HTMLElement, node: React.ReactNode) {
-  let root = roots.get(target);
-  if (!root) {
-    root = createRoot(target);
-    roots.set(target, root);
-  }
-  root.render(node);
+let filterState: SceneFilterState = null;
+let cardState: SceneCardState = null;
+const filterListeners = new Set<() => void>();
+const cardListeners = new Set<() => void>();
+
+function subscribe(listeners: Set<() => void>, listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 function sceneId(value: string) {
@@ -153,15 +154,41 @@ function SceneCards({ currentPreset, onSelect, records }: Omit<SceneCardRenderOp
   );
 }
 
+export function SceneFilterBar() {
+  const state = useSyncExternalStore(
+    (listener) => subscribe(filterListeners, listener),
+    () => filterState,
+  );
+  return (
+    <div id="sceneFilterBar" className="scene-filter-bar">
+      {state ? <SceneFamilyFilter {...state} /> : null}
+    </div>
+  );
+}
+
+export function SceneCardBrowser() {
+  const state = useSyncExternalStore(
+    (listener) => subscribe(cardListeners, listener),
+    () => cardState,
+  );
+  return (
+    <div id="sceneCards" className="scene-cards" aria-live="polite">
+      {state ? <SceneCards {...state} /> : null}
+    </div>
+  );
+}
+
 export function installCarbonSceneBrowser() {
   window.FdtdCarbonUI = {
     renderSceneFilters({ target, ...options }) {
       target.dataset.selectedSceneFilter = options.selectedValue;
       target.dataset.zeroCountFilters = String(options.filters.filter((filter) => filter.count === 0).length);
-      renderInto(target, <SceneFamilyFilter {...options} />);
+      filterState = options;
+      filterListeners.forEach((listener) => listener());
     },
     renderSceneCards({ target, ...options }) {
-      renderInto(target, <SceneCards {...options} />);
+      cardState = options;
+      cardListeners.forEach((listener) => listener());
     },
   };
 }

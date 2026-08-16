@@ -1306,109 +1306,11 @@
     };
   }
 
-  function createSceneGuideRenderer(documentRef) {
-    function appendSceneGuideField(parent, label, value) {
-      const item = documentRef.createElement("div");
-      item.className = "scene-guide-item";
-      const title = documentRef.createElement("h3");
-      title.textContent = label;
-      const body = documentRef.createElement("p");
-      body.textContent = value;
-      item.append(title, body);
-      parent.appendChild(item);
-    }
-
-    function appendSceneGuideList(parent, label, items) {
-      const item = documentRef.createElement("div");
-      item.className = "scene-guide-item";
-      const title = documentRef.createElement("h3");
-      title.textContent = label;
-      const list = documentRef.createElement("ul");
-      (items || []).forEach((text) => {
-        const li = documentRef.createElement("li");
-        li.appendChild(documentRef.createTextNode(text));
-        const doiUrl = sceneGuideReferenceDoiUrl(text);
-        if (doiUrl) {
-          li.appendChild(documentRef.createTextNode(" "));
-          const link = documentRef.createElement("a");
-          link.href = doiUrl;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = "DOI";
-          link.setAttribute("aria-label", `Open DOI for ${text}`);
-          li.appendChild(link);
-        }
-        list.appendChild(li);
-      });
-      item.append(title, list);
-      parent.appendChild(item);
-    }
-
-    function appendSceneGuideReferences(parent, references) {
-      const details = documentRef.createElement("section");
-      details.className = "scene-guide-details scene-guide-section";
-      const title = documentRef.createElement("h3");
-      title.textContent = "References";
-      const body = documentRef.createElement("div");
-      body.className = "scene-guide-reference-grid";
-      [
-        ["Books", references.books],
-        ["Classic papers", references.classics],
-        ["Reviews", references.reviews],
-        ["Recent papers", references.recent],
-      ].forEach(([label, items]) => appendSceneGuideList(body, label, items));
-      details.append(title, body);
-      parent.appendChild(details);
-    }
-
-    function render(panel, record, guide) {
-      if (!panel) return;
-      panel.replaceChildren();
-
-      const grid = documentRef.createElement("div");
-      grid.className = "scene-guide-grid";
-      appendSceneGuideField(grid, "Phenomenon", guide.phenomenon);
-      appendSceneGuideField(grid, "Expected results", guide.expected);
-
-      const modelDetails = documentRef.createElement("section");
-      modelDetails.className = "scene-guide-details scene-guide-section";
-      const modelTitle = documentRef.createElement("h3");
-      modelTitle.textContent = "Model details";
-      const modelBody = documentRef.createElement("div");
-      modelBody.className = "scene-guide-grid";
-      appendSceneGuideField(modelBody, "FDTD simulation", guide.fdtd);
-      appendSceneGuideField(modelBody, "Description", guide.description);
-      appendSceneGuideField(modelBody, "Geometry", guide.geometry);
-      appendSceneGuideField(modelBody, "Source", guide.source);
-      appendSceneGuideField(modelBody, "Materials", guide.materials);
-      appendSceneGuideField(modelBody, "Explanation", guide.explanation);
-      modelDetails.append(modelTitle, modelBody);
-
-      const details = documentRef.createElement("section");
-      details.className = "scene-guide-details scene-guide-section";
-      const detailsTitle = documentRef.createElement("h3");
-      detailsTitle.textContent = "More context";
-      const detailsBody = documentRef.createElement("div");
-      detailsBody.className = "scene-guide-grid";
-      appendSceneGuideList(detailsBody, "Common mistakes", guide.errors);
-      appendSceneGuideField(detailsBody, "What it enables", guide.enabled);
-      appendSceneGuideField(detailsBody, "Related experiments", guide.experiments);
-      details.append(detailsTitle, detailsBody);
-
-      panel.append(grid, modelDetails, details);
-      appendSceneGuideReferences(panel, guide.references);
-    }
-
-    return { render };
-  }
-
   function createSceneGuideController({ documentRef = global.document, panel, getContext = () => ({}) } = {}) {
-    const renderer = createSceneGuideRenderer(documentRef);
-
     function update(record) {
-      if (!panel || !record) return;
+      if (!record) return;
       const guide = buildSceneGuide(record, getContext());
-      renderer.render(panel, record, guide);
+      global.dispatchEvent(new global.CustomEvent("fdtd:scene-guide", { detail: { guide, record } }));
     }
 
     return {
