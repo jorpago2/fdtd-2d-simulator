@@ -25,6 +25,7 @@
     if (el.speedOutput) el.speedOutput.value = timeRateFormatter(state.timeRate);
     if (el.renderFpsInput) el.renderFpsInput.value = String(state.renderFps || 0);
     if (el.renderFpsOutput) el.renderFpsOutput.value = state.renderFps > 0 ? `${state.renderFps} FPS` : "Auto";
+    if (el.gainInput) el.gainInput.value = String(state.gain);
     if (el.gainOutput) el.gainOutput.value = state.gain.toFixed(2);
     if (el.diagnosticsInput) {
       el.diagnosticsInput.checked = state.diagnosticsEnabled;

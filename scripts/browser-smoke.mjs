@@ -8310,6 +8310,32 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
     );
     const closedExpanded = await workflowButton.getAttribute("aria-expanded");
 
+    await page.locator('.mobile-layer-button[data-mobile-layer="simulation"]:visible').click();
+    await page.waitForFunction(() => document.getElementById("tab-simulation")?.classList.contains("is-active"));
+    const exactGainInput = page.locator("#gainInput-input-for-slider");
+    await exactGainInput.fill("1.25");
+    await exactGainInput.press("Enter");
+    await page.waitForFunction(
+      () => document.getElementById("gainInput")?.getAttribute("aria-valuenow") === "1.25"
+        && document.getElementById("gainOutput")?.value === "1.25",
+    );
+    await page.locator("#gainInput").press("ArrowRight");
+    await page.waitForFunction(
+      () => document.getElementById("gainInput")?.getAttribute("aria-valuenow") === "1.3"
+        && document.getElementById("gainOutput")?.value === "1.30",
+    );
+    const compactSliderInteraction = await page.evaluate(() => {
+      const input = document.getElementById("gainInput-input-for-slider");
+      const rect = input?.getBoundingClientRect();
+      return {
+        ariaValue: document.getElementById("gainInput")?.getAttribute("aria-valuenow") || "",
+        exactValue: input?.value || "",
+        runtimeValue: document.getElementById("gainOutput")?.value || "",
+        withinViewport: Boolean(rect && rect.left >= 0 && rect.right <= window.innerWidth),
+      };
+    });
+    await page.locator("#controlDrawerCloseBtn").click();
+
     await page.locator(".header-overflow-menu").focus();
     const compactOverflowFocusBeforeResize = await page.evaluate(() => ({
       tag: document.activeElement?.tagName || "",
@@ -8348,6 +8374,9 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
     if (!compactRunFocusPreserved || !desktopThemeFocusRestored) {
       failures.push("responsive header did not preserve focus on equivalent Run/theme actions");
     }
+    if (!compactSliderInteraction.withinViewport || compactSliderInteraction.runtimeValue !== "1.30") {
+      failures.push(`compact exact-value slider did not remain visible and synchronized: ${JSON.stringify(compactSliderInteraction)}`);
+    }
 
     return {
       id: "header_breakpoint_interaction",
@@ -8364,6 +8393,7 @@ async function runHeaderBreakpointInteractionSmoke(browser, url) {
       restoredStart,
       restoredPause,
       workflowExpansion: { initiallyExpanded, openExpanded, closedExpanded },
+      compactSliderInteraction,
       passed: failures.length === 0,
       failures,
     };

@@ -25,6 +25,24 @@
     }[status] || "reference";
   }
 
+  function formatObservableText(value) {
+    return String(value || "")
+      .replaceAll("lambda_s", "λₛ")
+      .replaceAll("lambda0", "λ₀")
+      .replaceAll("theta_i", "θᵢ")
+      .replaceAll("theta_slab", "θslab")
+      .replaceAll("dphi", "Δφ")
+      .replace(/\bkappa\b/g, "κ")
+      .replace(/\beps\b/g, "ε")
+      .replace(/\bmu\b/g, "μ")
+      .replace(/\bcpw\b/g, "cells/λ")
+      .replace(/\s*>=\s*/g, " ≥ ")
+      .replace(/\s*<=\s*/g, " ≤ ")
+      .replace(/\s*=\s*/g, " = ")
+      .replace(/\s*,\s*/g, ", ")
+      .trim();
+  }
+
   function maxwellStatusLabel(status) {
     return {
       ok: "verified",
@@ -165,12 +183,23 @@
 
         const values = documentRef.createElement("output");
         values.className = "scene-observable-values";
-        const parts = [
-          item.measured ? `measured: ${item.measured}` : null,
-          item.expected ? `reference: ${item.expected}` : null,
-          item.error && item.error !== "-" ? item.error : null,
-        ].filter(Boolean);
-        values.textContent = parts.join(" | ");
+        const appendValue = (label, value, className = "") => {
+          if (!value) return;
+          const valueRow = documentRef.createElement("span");
+          valueRow.className = `scene-observable-value ${className}`.trim();
+          if (label) {
+            const valueLabel = documentRef.createElement("b");
+            valueLabel.textContent = label;
+            valueRow.appendChild(valueLabel);
+          }
+          const valueText = documentRef.createElement("span");
+          valueText.textContent = formatObservableText(value);
+          valueRow.appendChild(valueText);
+          values.appendChild(valueRow);
+        };
+        appendValue("Measured", item.measured);
+        appendValue("Reference", item.expected);
+        if (item.error && item.error !== "-") appendValue("", item.error, "scene-observable-value--error");
 
         rowNode.append(metric, values);
         if (item.note) {

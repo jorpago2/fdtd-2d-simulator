@@ -99,7 +99,7 @@
     });
 
     el.gainInput?.addEventListener("input", () => {
-      state.gain = Number(el.gainInput.value) / 100;
+      state.gain = Number(el.gainInput.value);
       updateControlText();
     });
 

@@ -1,3 +1,5 @@
+@import url("../../tokens.css");
+
 /* Carbon React workbench layout and scientific visualization styles. */
 :root {
   --workbench-header-height: var(--scientific-ui-header-block-size);
@@ -366,6 +368,12 @@ fieldset {
   white-space: nowrap;
 }
 
+@media (max-width: 95.99rem) {
+  .status-strip-author {
+    display: none;
+  }
+}
+
 .surface-orbit-controls {
   position: absolute;
   z-index: 14;
@@ -697,10 +705,10 @@ fieldset {
 }
 
 .scientific-slider-group {
-  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  gap: var(--fdtd-space-2xs);
   min-width: 0;
 }
 
@@ -713,20 +721,27 @@ fieldset {
 
 .scientific-slider-output {
   position: absolute;
-  z-index: 1;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  min-width: 3.5rem;
-  padding-inline-start: 0.5rem;
-  color: var(--cds-text-secondary);
-  background: var(--cds-layer-01);
-  font-family: var(--scientific-ui-font-sans);
-  font-size: var(--cds-code-01-font-size, 0.75rem);
-  line-height: var(--cds-code-01-line-height, 1.33333);
-  letter-spacing: var(--cds-code-01-letter-spacing, 0.32px);
-  text-align: right;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.scientific-slider {
   font-variant-numeric: tabular-nums;
-  pointer-events: none;
+}
+
+.scientific-slider > div {
+  width: 100%;
+}
+
+.scientific-slider > div > :nth-child(2) {
+  flex: 1 1 8rem;
+  min-width: 0;
 }
 
 /* The shared summaries are viewport-responsive by default. In FDTD they live
@@ -764,11 +779,19 @@ fieldset {
   .fdtd-preflight .scientific-evidence-summary__checks > li {
     min-block-size: 0;
   }
+
+  .fdtd-preflight .scientific-evidence-summary__checks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @container (max-width: 22rem) {
   .fdtd-run-outcome .scientific-metric {
     grid-column: 1 / -1;
+  }
+
+  .fdtd-preflight .scientific-evidence-summary__checks {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -899,6 +922,15 @@ fieldset {
   background: var(--cds-layer-02);
 }
 
+.source-menu-actions > button[id$="DeleteBtn"] {
+  flex: 0 0 auto;
+  min-inline-size: 7rem;
+}
+
+.source-menu-actions > button[id$="ApplyBtn"] {
+  flex: 1 1 12rem;
+}
+
 .scene-observable-results,
 .maxwell-check-results,
 .custom-monitor-results {
@@ -907,6 +939,10 @@ fieldset {
   grid-auto-rows: max-content;
   gap: 0.75rem;
   min-width: 0;
+}
+
+.scene-observable-results {
+  container-type: inline-size;
 }
 
 .scene-observable-card {
@@ -949,17 +985,54 @@ fieldset {
   border-bottom: 1px solid var(--cds-border-subtle-01);
 }
 
+@container (max-width: 32rem) {
+  .scene-observable-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--fdtd-space-xs);
+  }
+
+  .scene-observable-values {
+    font-size: var(--cds-body-compact-01-font-size, 0.875rem);
+    line-height: var(--cds-body-compact-01-line-height, 1.2857);
+    letter-spacing: var(--cds-body-compact-01-letter-spacing, 0.16px);
+  }
+}
+
 .scene-observable-metric {
   font-weight: 600;
 }
 
 .scene-observable-values {
+  display: grid;
+  gap: 0.25rem;
   min-width: 0;
   font-family: var(--scientific-ui-font-sans);
   font-size: var(--cds-code-01-font-size, 0.75rem);
   line-height: var(--cds-code-01-line-height, 1.33333);
   letter-spacing: var(--cds-code-01-letter-spacing, 0.32px);
   overflow-wrap: anywhere;
+}
+
+.scene-observable-value {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.scene-observable-value > b {
+  color: var(--cds-text-secondary);
+  font-weight: 400;
+}
+
+.scene-observable-value--error {
+  color: var(--cds-text-error, #da1e28);
+}
+
+@container (max-width: 22rem) {
+  .scene-observable-value {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
 }
 
 .scene-observable-row > small {
@@ -1401,10 +1474,17 @@ fieldset {
    * control at the top of compact layouts. The higher-specificity selector
    * intentionally overrides the shared scientific-ui fixed placement. */
   body.controls-drawer-open .scientific-recovery-notice {
-    inset-block-start: auto;
-    inset-block-end: calc(var(--workbench-bottom-nav-height) + var(--scientific-ui-spacing-03));
-    max-block-size: min(42dvh, 18rem);
+    inset-block-start: calc(var(--workbench-header-height) + 4.5rem + var(--fdtd-space-xs));
+    inset-inline: var(--fdtd-space-xs);
+    inset-block-end: auto;
+    width: auto;
+    max-inline-size: none;
+    max-block-size: min(36dvh, 12rem);
     overflow: auto;
+  }
+
+  body.controls-drawer-open:has(.scientific-recovery-notice) .control-tab-panel.is-active {
+    padding-block-start: 12.5rem;
   }
 
   body.walkthrough-active .controls-open .stage {
@@ -1553,6 +1633,45 @@ fieldset {
 }
 
 @media (max-width: 22rem) {
+  .reproducibility-section .button-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scientific-slider > div {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    width: 100%;
+  }
+
+  .scientific-slider > div > :nth-child(2) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .scientific-slider > div > div:has(> input[type="number"]) {
+    display: grid;
+    grid-template-columns: auto 6rem;
+    align-items: center;
+    gap: var(--fdtd-space-xs);
+    grid-column: 1 / -1;
+    justify-self: end;
+    width: auto;
+    margin-top: var(--fdtd-space-2xs);
+  }
+
+  .scientific-slider > div > div:has(> input[type="number"])::before {
+    content: "Exact";
+    color: var(--cds-text-secondary);
+    font-size: var(--cds-label-01-font-size, 0.75rem);
+    line-height: var(--cds-label-01-line-height, 1.33333);
+  }
+
+  .scientific-slider input[type="number"] {
+    width: 100%;
+    border-bottom: 1px solid var(--cds-border-strong-01);
+    background: var(--cds-field-02);
+  }
+
   .source-menu-body {
     padding-inline: 0.5rem;
   }

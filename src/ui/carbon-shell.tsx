@@ -364,9 +364,9 @@ export function StatusFooter() {
       <span><b>CFL</b> <output id="statusCourantOutput">0.10</output></span>
       <span><b>Boundary</b> <output id="statusBoundaryOutput">CPML</output></span>
       <span className="status-strip-author" data-react-ui="footer">
-        <Link inline href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer">Jorge Parra</Link>
+        <Link inline href="https://www.uv.es/jorpago2" target="_blank" rel="noopener noreferrer" aria-label="About Jorge Parra">About</Link>
         <span aria-hidden="true">·</span>
-        <Link inline href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer">Online Simulators &amp; Tools</Link>
+        <Link inline href="https://jorpago2.github.io/" target="_blank" rel="noopener noreferrer" aria-label="More online simulators and tools">More simulators</Link>
       </span>
     </>} /></>
   );

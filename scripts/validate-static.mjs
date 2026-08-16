@@ -174,7 +174,7 @@ function validateCarbonUi(indexHtml) {
   const styles = readText("src", "styles", "scientific-workbench.css");
   const carbon = readText("src", "styles", "carbon.scss");
   const missing = [];
-  const inheritedFontPattern = /Nunito Sans|Helvetica Neue|SFMono|ui-monospace|ui-sans-serif|system-ui|Consolas|Menlo|Liberation Mono|Georgia|Times New Roman|Cambria Math|Arial/i;
+  const inheritedFontPattern = /Nunito Sans|Helvetica Neue|SFMono|ui-monospace|ui-sans-serif|system-ui|Consolas|Menlo|Liberation Mono|Georgia|Times New Roman|Cambria Math|\bArial\b/i;
   const typographyFiles = [".css", ".scss", ".js", ".ts", ".tsx"]
     .flatMap((extension) => listFilesRecursive("src", extension))
     .concat(".storybook/preview.tsx");
@@ -233,6 +233,10 @@ function validateContextKindSwitchers(indexHtml) {
 
 function validateWorkbenchPresentationContracts(indexHtml) {
   const styles = readText("src", "styles", "scientific-workbench.css");
+  const sliders = readText("src", "ui", "scientific-sliders.tsx");
+  const visualBindings = readText("src", "runtime", "ui", "runtime-control-bindings.js");
+  const sourceMonitorModel = readText("src", "runtime", "ui", "source-monitor-model.js");
+  const sourceEditor = readText("src", "runtime", "ui", "source-monitor-editor-controller.js");
   const carbonShell = readText("src", "ui", "carbon-shell.tsx");
   const runtimeController = readText("src", "runtime", "app", "runtime-controller.js");
   const shellBindings = readText("src", "runtime", "ui", "shell-control-bindings.js");
@@ -248,8 +252,29 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (!styles.includes(".fdtd-run-outcome,\n.fdtd-preflight {\n  container-type: inline-size;")) {
     failures.push("FDTD summaries are not container-responsive");
   }
-  if (!/\.scientific-slider-output\s*\{[\s\S]*?position:\s*absolute;/.test(styles)) {
-    failures.push("slider readout is not separated from the range track");
+  if (!styles.startsWith('@import url("../../tokens.css");')) {
+    failures.push("workbench does not load the visual token contract");
+  }
+  if (!/\.scientific-slider-output\s*\{[\s\S]*?clip:\s*rect\(0,?\s*0,?\s*0,?\s*0\);/.test(styles)) {
+    failures.push("duplicate slider output is not visually hidden");
+  }
+  if (sliders.includes("hideTextInput")) {
+    failures.push("Carbon exact slider inputs are hidden");
+  }
+  if (!sliders.includes('ariaLabelInput={`${configuration.labelText} exact value`}')) {
+    failures.push("Carbon exact slider inputs are not labelled");
+  }
+  if (!sliders.includes("useRef(new EventTarget())") || !sliders.includes('dispatchEvent(new Event("input"))')) {
+    failures.push("slider runtime events are not bridged through a stable target");
+  }
+  if (!/state\.gain\s*=\s*Number\(el\.gainInput\.value\)/.test(visualBindings)) {
+    failures.push("display gain does not use direct user-facing units");
+  }
+  if (!/amplitude:\s*Number\(el\.amplitudeInput\.value\)/.test(sourceMonitorModel)) {
+    failures.push("source amplitude does not use direct user-facing units");
+  }
+  if (!sourceEditor.includes("Incident amplitude") || !sourceEditor.includes("Incidence angle θ (°)")) {
+    failures.push("source controls do not expose descriptive scientific labels");
   }
   if (!/\.help-guide-panel\s*\{[\s\S]*?position:\s*fixed;/.test(styles)) {
     failures.push("full help guide is not viewport-fixed");
@@ -274,7 +299,7 @@ function validateWorkbenchPresentationContracts(indexHtml) {
     "workbench presentation contracts",
     failures.length === 0 ? "PASS" : "BLOCK",
     failures.length === 0
-      ? "single summaries, container-aware layout, modal help, reset state, and theme-invariant colormaps found"
+      ? "single summaries, direct-value Carbon sliders, container-aware layout, modal help, reset state, and theme-invariant colormaps found"
       : failures.join(", "),
   );
 }

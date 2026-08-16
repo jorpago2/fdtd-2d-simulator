@@ -155,7 +155,7 @@
       type: el.sourceTypeInput.value,
       shape: el.sourceShapeInput.value,
       frequency: sourceWavelengthLambdaToFrequency(Number(el.frequencyInput.value), context.cellsPerWavelength),
-      amplitude: Number(el.amplitudeInput.value) / 100,
+      amplitude: Number(el.amplitudeInput.value),
       xLambda: Number(el.sourceXInput.value),
       yLambda: Number(el.sourceYInput.value),
       widthLambda: Number(el.sourceWidthInput.value),

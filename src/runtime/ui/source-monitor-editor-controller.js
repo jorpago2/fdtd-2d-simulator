@@ -79,20 +79,20 @@
     
     function sourceAmplitudeLabel(shape) {
       if (inPlaneElectricCurrentShapes.has(shape)) {
-        return "J∥,0";
+        return "Source amplitude J∥,₀";
       }
       if (currentSourceShapes.has(shape)) {
-        return `${currentSourceLetter()}z,0`;
+        return `Source amplitude ${currentSourceLetter()}z,₀`;
       }
-      return `${simulatedFieldLetter()}inc,0`;
+      return `Incident amplitude ${simulatedFieldLetter()}inc,₀`;
     }
     
     function sourceAngleLabel(shape) {
-      if (incidentFieldSourceShapes.has(shape)) return "incidence θ";
-      if (inPlaneElectricCurrentShapes.has(shape)) return "J∥ angle θ";
-      if (shape === "huygens" || shape === "janusDipole") return "direction θ";
-      if (circularDipoleSourceShapes.has(shape)) return "spin axis θ";
-      return `${currentSourceLetter()}z axis θ`;
+      if (incidentFieldSourceShapes.has(shape)) return "Incidence angle θ (°)";
+      if (inPlaneElectricCurrentShapes.has(shape)) return "Current angle θ (°)";
+      if (shape === "huygens" || shape === "janusDipole") return "Direction θ (°)";
+      if (circularDipoleSourceShapes.has(shape)) return "Spin axis θ (°)";
+      return `${currentSourceLetter()}z axis θ (°)`;
     }
 
     function controlInputs(control) {
@@ -141,7 +141,7 @@
       el.frequencyInput.step = "any";
       el.frequencyInput.value = sourceWavelengthLambda.toFixed(2);
       el.frequencyOutput.value = sourceWavelengthLambda.toFixed(2);
-      el.amplitudeInput.value = String(Math.round(normalized.amplitude * 100));
+      el.amplitudeInput.value = normalized.amplitude.toFixed(2);
       el.amplitudeOutput.value = normalized.amplitude.toFixed(2);
       global.FdtdScientificControls?.setLabel?.("amplitudeInput", sourceAmplitudeLabel(normalized.shape));
       el.sourceXInput.min = formatLambda(minSourceXLambda());

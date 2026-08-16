@@ -1,0 +1,41 @@
+/* Hallmark · genre: modern-minimal · tone: technical-austere · palette: Carbon monochrome + blue 60 · macrostructure: Workbench · design-system: design.md · designed-as-app */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V3 · contrast: pass (Carbon g10/g100) · slop: pass · mobile: pass (320–1440 px) */
+:root {
+  /* FDTD aliases intentionally resolve through Carbon/scientific-ui tokens so
+   * g10 and g100 remain the source of truth for colour and typography. */
+  --fdtd-font-display: var(--scientific-ui-font-sans);
+  --fdtd-font-body: var(--scientific-ui-font-sans);
+  --fdtd-font-data: var(--scientific-ui-font-mono, "IBM Plex Mono", monospace);
+
+  --fdtd-space-3xs: 0.125rem;
+  --fdtd-space-2xs: 0.25rem;
+  --fdtd-space-xs: 0.5rem;
+  --fdtd-space-sm: 0.75rem;
+  --fdtd-space-md: 1rem;
+  --fdtd-space-lg: 1.5rem;
+  --fdtd-space-xl: 2rem;
+
+  --fdtd-control-block-size: 3rem;
+  --fdtd-touch-target-size: 2.75rem;
+  --fdtd-panel-padding: var(--fdtd-space-md);
+  --fdtd-section-gap: var(--fdtd-space-lg);
+  --fdtd-control-gap: var(--fdtd-space-sm);
+  --fdtd-reading-measure: 65ch;
+
+  --fdtd-color-paper: var(--cds-background);
+  --fdtd-color-layer: var(--cds-layer-01);
+  --fdtd-color-layer-raised: var(--cds-layer-02);
+  --fdtd-color-ink: var(--cds-text-primary);
+  --fdtd-color-muted: var(--cds-text-secondary);
+  --fdtd-color-rule: var(--cds-border-subtle-01);
+  --fdtd-color-rule-strong: var(--cds-border-strong-01);
+  --fdtd-color-accent: var(--cds-background-brand);
+  --fdtd-color-focus: var(--cds-focus);
+
+  --fdtd-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fdtd-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --fdtd-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --fdtd-duration-micro: 120ms;
+  --fdtd-duration-short: 220ms;
+  --fdtd-duration-long: 420ms;
+}
