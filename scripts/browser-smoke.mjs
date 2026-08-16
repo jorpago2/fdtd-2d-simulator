@@ -7352,6 +7352,15 @@ async function runControlNavigationSmoke(page) {
     const clickTab = async (name) => {
       document.querySelector(`[data-control-tab="${name}"]`)?.click();
       await new Promise((resolve) => requestAnimationFrame(resolve));
+      const reproducibilityRow = document.querySelector("#tab-config .reproducibility-section .button-row");
+      const reproducibilityButtons = Array.from(reproducibilityRow?.querySelectorAll(":scope > button") || []).map((button) => {
+        const rect = button.getBoundingClientRect();
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+      });
+      const sceneSwitcher = document.querySelector(".scene-view-toggle");
+      const sceneSwitcherHeight = sceneSwitcher?.getBoundingClientRect().height || 0;
+      const sceneButtonHeights = Array.from(sceneSwitcher?.querySelectorAll(":scope > button") || [])
+        .map((button) => button.getBoundingClientRect().height);
       return {
         activePanel: document.querySelector(".control-tab-panel.is-active")?.id || "",
         runVisible: Boolean(document.querySelector("#tab-simulation .run-section")),
@@ -7362,6 +7371,19 @@ async function runControlNavigationSmoke(page) {
         interfaceAccuracyPanelVisible: Boolean(document.querySelector("#tab-config .interface-accuracy-panel")),
         gridHasCellsPerWavelength: Boolean(document.querySelector("#tab-config .grid-section #cellsPerWavelengthInput")),
         gridHasSubpixelSmoothing: Boolean(document.querySelector("#tab-config .grid-section #subpixelSmoothingInput")),
+        reproducibilityLayout: {
+          buttonCount: reproducibilityButtons.length,
+          horizontalOverflow: Boolean(reproducibilityRow && reproducibilityRow.scrollWidth > reproducibilityRow.clientWidth + 1),
+          uniformHeight: reproducibilityButtons.every((button) => Math.abs(button.bottom - button.top - (reproducibilityButtons[0]?.bottom - reproducibilityButtons[0]?.top || 0)) <= 1),
+          overlap: reproducibilityButtons.some((button, index) => {
+            const previous = reproducibilityButtons[index - 1];
+            return Boolean(previous && button.left < previous.right && button.top < previous.bottom);
+          }),
+        },
+        sceneSwitcherLayout: {
+          height: sceneSwitcherHeight,
+          buttonHeights: sceneButtonHeights,
+        },
         visualVisible: Boolean(document.querySelector("#tab-simulation .visual-field-section")),
         numericsTitle: document.querySelector("#tab-config .fdtd-preflight h2, #tab-config .fdtd-preflight h3")?.textContent.trim() || "",
         resultCards: Array.from(document.querySelectorAll("#tab-results .results-detail-panel")).map((panel) => ({
@@ -7374,6 +7396,7 @@ async function runControlNavigationSmoke(page) {
         })),
       };
     };
+    const modelState = await clickTab("scenes");
     const simulateState = await clickTab("simulation");
     const resultsState = await clickTab("results");
     const numericsState = await clickTab("config");
@@ -7386,6 +7409,7 @@ async function runControlNavigationSmoke(page) {
         tabIndex: button.tabIndex,
       })),
       hasVisualTab: Boolean(document.getElementById("tab-visual")),
+      modelState,
       simulateState,
       resultsState,
       numericsState,
@@ -7407,6 +7431,14 @@ async function runControlNavigationSmoke(page) {
     failures.push(`control tabs do not use a selected-only tab stop: ${JSON.stringify(status.tabStops)}`);
   }
   if (status.simulateState?.activePanel !== "tab-simulation") failures.push("Simulate tab did not activate the simulation panel");
+  if (
+    !status.modelState?.sceneSwitcherLayout?.height
+    || status.modelState.sceneSwitcherLayout.buttonHeights.some(
+      (height) => Math.abs(height - status.modelState.sceneSwitcherLayout.height) > 1,
+    )
+  ) {
+    failures.push(`Model view switcher has inconsistent heights: ${JSON.stringify(status.modelState?.sceneSwitcherLayout)}`);
+  }
   if (!status.simulateState?.runVisible || !status.simulateState?.visualVisible) {
     failures.push("Simulate tab does not contain both run and visual controls");
   }
@@ -7428,6 +7460,14 @@ async function runControlNavigationSmoke(page) {
   if (status.numericsState?.interfaceAccuracyPanelVisible) failures.push("Interface accuracy is still a standalone Numerics card");
   if (!status.numericsState?.gridHasCellsPerWavelength) failures.push("Grid card is missing cells-per-wavelength control");
   if (!status.numericsState?.gridHasSubpixelSmoothing) failures.push("Grid card is missing subpixel smoothing control");
+  if (
+    status.numericsState?.reproducibilityLayout?.buttonCount !== 3
+    || status.numericsState?.reproducibilityLayout?.horizontalOverflow
+    || !status.numericsState?.reproducibilityLayout?.uniformHeight
+    || status.numericsState?.reproducibilityLayout?.overlap
+  ) {
+    failures.push(`Reproducibility actions do not fit their panel: ${JSON.stringify(status.numericsState?.reproducibilityLayout)}`);
+  }
   const unexpectedNumericsState = numericsCards.filter((card) => !card.open);
   if (unexpectedNumericsState.length) {
     failures.push(
@@ -8758,6 +8798,12 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
         helpMenuOverlap: intersectionArea(helpBounds, menuBounds),
       };
     });
+    const inspectorWidths = { material: await page.locator("#contextInspectorHost").evaluate((host) => host.getBoundingClientRect().width) };
+    await page.locator('#brushMenu [data-canvas-add="source"]').click();
+    inspectorWidths.source = await page.locator("#contextInspectorHost").evaluate((host) => host.getBoundingClientRect().width);
+    await page.locator('#sourceMenu [data-canvas-add="monitor"]').click();
+    inspectorWidths.monitor = await page.locator("#contextInspectorHost").evaluate((host) => host.getBoundingClientRect().width);
+    const inspectorWidthValues = Object.values(inspectorWidths);
     await page.keyboard.press("Escape");
     const classClosed = await page.locator(".app-shell").evaluate((shell) => !shell.classList.contains("contextual-inspector-open"));
     await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
@@ -8781,6 +8827,9 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
     if (status.canvasMenuOverlap > 1) failures.push("desktop contextual inspector covers the simulation canvas");
     if (status.colorbarMenuOverlap > 1) failures.push("desktop contextual inspector covers the colorbar");
     if (status.helpMenuOverlap > 1) failures.push("desktop contextual inspector covers the help control");
+    if (Math.max(...inspectorWidthValues) - Math.min(...inspectorWidthValues) > 1) {
+      failures.push(`desktop contextual inspector changes width: ${JSON.stringify(inspectorWidths)}`);
+    }
     if (!classClosed) failures.push("contextual inspector layout state remained after Escape");
     if (!primaryPanel.open || primaryPanel.position !== "static") failures.push("desktop workflow menu is not integrated into the workspace grid");
     if (!primaryPanel.separateFromCanvas || primaryPanel.shadow !== "none" || primaryPanel.backdropDisplay !== "none") {
@@ -8791,6 +8840,7 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
       preset: "empty",
       priority: "P1",
       ...status,
+      inspectorWidths,
       classClosed,
       primaryPanel,
       passed: failures.length === 0,

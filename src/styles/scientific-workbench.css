@@ -1182,12 +1182,22 @@ header .scientific-app-header__context {
 
 .reproducibility-section .button-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .reproducibility-section .button-row > button {
   justify-content: center;
+  inline-size: 100%;
+  min-block-size: 3rem;
+  min-inline-size: 0;
   min-width: 0;
+  max-inline-size: none;
+  padding-inline: var(--cds-spacing-05, 1rem);
+  white-space: nowrap;
+}
+
+.reproducibility-section .button-row > button:last-of-type {
+  grid-column: 1 / -1;
 }
 
 .diagnostic-metric span,
@@ -1342,15 +1352,6 @@ header .scientific-app-header__context {
   overflow: hidden;
   border-bottom: 1px solid var(--cds-border-subtle-01);
   background: var(--cds-layer-01);
-}
-
-.app-shell:has(#boundaryMenu:not([hidden])),
-.app-shell:has(#canvasContextMenu:not([hidden])) {
-  --workbench-inspector-width: 22rem;
-}
-
-.app-shell:has(#monitorMenu:not([hidden])) {
-  --workbench-inspector-width: 25rem;
 }
 
 .context-kind-switcher > button {
@@ -1540,6 +1541,34 @@ header .scientific-app-header__context {
 
 @media (min-width: 66rem) and (min-height: 40rem) {
   :root { --workbench-rail-width: var(--scientific-ui-rail-inline-size); }
+
+  .scene-view-toggle {
+    block-size: var(--fdtd-control-block-size, 3rem);
+    min-block-size: var(--fdtd-control-block-size, 3rem);
+  }
+
+  .scene-view-toggle > button,
+  .context-kind-switcher > button {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .control-panel .cds--accordion__content,
+  .context-inspector-host .cds--accordion__content {
+    padding-inline-end: var(--fdtd-panel-padding, var(--cds-spacing-05, 1rem));
+  }
+
+  .context-inspector-host .source-menu-header > :first-child {
+    min-inline-size: 0;
+    overflow: hidden;
+  }
+
+  .context-inspector-host .source-menu-header > .icon-button {
+    flex: 0 0 var(--fdtd-control-block-size, 3rem);
+    inline-size: var(--fdtd-control-block-size, 3rem);
+    block-size: var(--fdtd-control-block-size, 3rem);
+  }
+
   .controls-open .workspace {
     grid-template-columns:
       var(--workbench-rail-width)
@@ -1842,6 +1871,10 @@ header .scientific-app-header__context {
 @media (max-width: 22rem) {
   .reproducibility-section .button-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reproducibility-section .button-row > button:last-of-type {
+    grid-column: auto;
   }
 
   .scientific-slider > div {
