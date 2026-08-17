@@ -2,6 +2,7 @@
   "use strict";
 
   const CARBON_SANS_FONT = '"IBM Plex Sans", sans-serif';
+  const PAPER_PLOT_COLORS = { blue: "#0072b2", green: "#009e73", reference: "#d55e00" };
 
   function clampNumber(value, min, max) {
     return Math.min(max, Math.max(min, Number(value) || 0));
@@ -543,7 +544,7 @@
               balanceResidual: point.referenceNormalized.balanceResidual,
             }))
         : portPoints;
-      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 4 };
+      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 1.75 };
       if (plottedPortPoints.length > 0) {
         const fMin = Math.min(...plottedPortPoints.map((point) => point.frequency));
         const fMax = Math.max(...plottedPortPoints.map((point) => point.frequency));
@@ -654,8 +655,7 @@
       const chart = el?.spectrumChart;
       const Plotly = global.Plotly;
       if (!chart || !Plotly) return;
-      const colors = chartPalette(theme);
-      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 4 };
+      const lineWidths = global.ScientificPlotUI?.lineWidths ?? { primary: 1.75 };
       const referenceActive = Boolean(portSpectrum?.reference?.active);
       const portPoints = Array.isArray(portSpectrum?.points) ? portSpectrum.points.filter((point) => point?.valid) : [];
       const plottedPortPoints = referenceActive
@@ -669,14 +669,14 @@
             }))
         : portPoints;
       let traces = [];
-      let yAxis = { title: { text: "Normalized power" }, gridcolor: colors.grid, zerolinecolor: colors.axis };
+      let yAxis = { title: { text: "Normalized power" } };
       let annotation = null;
 
       if (plottedPortPoints.length > 0) {
         traces = [
-          ["R", "reflectance", colors.blue],
-          ["T", "transmittance", colors.green],
-          ["Residual", "balanceResidual", colors.reference],
+          ["R", "reflectance", PAPER_PLOT_COLORS.blue],
+          ["T", "transmittance", PAPER_PLOT_COLORS.green],
+          ["Residual", "balanceResidual", PAPER_PLOT_COLORS.reference],
         ].map(([name, key, color]) => ({
           type: "scatter",
           mode: "lines",
@@ -730,16 +730,16 @@
             name: "Probe spectrum",
             x: points.map((point) => point.f),
             y: points.map((point) => point.db),
-            line: { color: colors.blue, width: lineWidths.primary },
+            line: { color: PAPER_PLOT_COLORS.blue, width: lineWidths.primary },
             hovertemplate: "%{x:.4g}: %{y:.2f} dB<extra></extra>",
           }];
-          yAxis = { title: { text: "Relative magnitude (dB)" }, range: [-54, 0], gridcolor: colors.grid, zerolinecolor: colors.axis };
+          yAxis = { title: { text: "Relative magnitude (dB)" }, range: [-54, 0] };
           spectrumReadoutState = { fMax: maxFrequency, fMin: 0, mode: "probe", points };
           const peak = bins.reduce((best, bin) => (bin.mag > best.mag ? bin : best), bins[0]);
           chart.setAttribute("aria-label", `Probe spectrum. Peak frequency ${formatFieldValue(peak.f)}.`);
         } else {
           spectrumReadoutState = { mode: "empty", points: [] };
-          annotation = { text: "Collecting probe samples", showarrow: false, font: { color: colors.muted } };
+          annotation = { text: "Collecting probe samples", showarrow: false, font: { color: "#666663" } };
           chart.setAttribute("aria-label", "Probe spectrum. Collecting samples.");
         }
       }
@@ -750,7 +750,6 @@
         margin: { l: 56, r: 18, t: 30, b: 46 },
         uirevision: "fdtd-spectrum-monitor",
         xTitle: "Frequency",
-        theme: { background: colors.bg, text: colors.text, textSecondary: colors.text, grid: colors.grid, axis: colors.axis },
         overrides: {
           yaxis: yAxis,
           legend: { orientation: "h", x: 0, y: 1.2 },

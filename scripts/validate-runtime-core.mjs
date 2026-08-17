@@ -868,7 +868,7 @@ async function checkPlotlyRenderQueue(runtime) {
   runtime.ScientificPlotUI = {
     createConfig: (options) => options,
     createLayout: (options) => options,
-    lineWidths: { primary: 4 },
+    lineWidths: { primary: 1.75 },
     prepareToolbar: (result) => toolbarResults.push(result),
   };
   runtime.Plotly = {
