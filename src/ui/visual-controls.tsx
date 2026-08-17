@@ -94,7 +94,7 @@ export function BoundaryConditionSwitcher() {
   const selectedIndex = boundary === "reflective" ? 1 : 0;
   return (
     <ContentSwitcher
-      className="boundary-condition-switcher"
+      className="boundary-condition-switcher scientific-content-switcher scientific-content-switcher--md"
       selectedIndex={selectedIndex}
       size="md"
       onChange={({ index }) => {

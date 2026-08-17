@@ -208,7 +208,7 @@ export function ScenePanel({ active }: { active: boolean }) {
 <section className="panel-section scene-section">
               <h2>Model and example</h2>
               <ContentSwitcher
-                className="scene-view-toggle"
+                className="scene-view-toggle scientific-content-switcher scientific-content-switcher--sm"
                 selectedIndex={sceneView === "browse" ? 1 : 0}
                 size="sm"
                 onChange={({ index }) => {

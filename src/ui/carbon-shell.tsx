@@ -294,7 +294,7 @@ export function CanvasPrimaryControls({ running, runtimeReady }: CanvasPrimaryCo
         </OverflowMenu>
       </div>
       <ContentSwitcher
-        className="interaction-toggle"
+        className="interaction-toggle scientific-content-switcher scientific-content-switcher--lg"
         selectedIndex={modeIndex}
         size="lg"
         onChange={({ index }) => requestRuntimeAction("canvas-mode", { mode: index === 1 ? "brush" : "select" })}
