@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ApplicationHeader, StatusFooter, WorkflowNavigation } from "./carbon-shell";
+import { ScientificAppShell } from "@jorpago2/scientific-ui";
+import { ApplicationHeader, SessionRecovery, StatusFooter, WorkflowNavigation, useFdtdAutosave } from "./carbon-shell";
 import { CarbonButton } from "./carbon-primitives";
 import { CanvasStage } from "./canvas-stage";
 import { ControlPanel } from "./control-panel";
@@ -8,6 +9,7 @@ import { requestRuntimeAction } from "./runtime-state";
 export function FdtdWorkspace() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [contextInspectorOpen, setContextInspectorOpen] = useState(false);
+  const autosave = useFdtdAutosave();
   useEffect(() => {
     const syncDrawer = (event: Event) => setDrawerOpen(Boolean((event as CustomEvent<{ open?: unknown }>).detail?.open));
     window.addEventListener("fdtd:control-drawer-state", syncDrawer);
@@ -25,31 +27,33 @@ export function FdtdWorkspace() {
     return () => window.removeEventListener("fdtd:context-inspector-state", syncContextInspector);
   }, []);
   return (
-    <>
-      <a className="skip-link" href="#simulatorWorkspace">Skip to simulator workspace</a>
-      <div className={`app-shell cds--grid${drawerOpen ? " controls-open" : ""}${contextInspectorOpen ? " contextual-inspector-open" : ""}`}>
-        <ApplicationHeader />
-        <main
+    <ScientificAppShell
+      className={`app-shell${drawerOpen ? " controls-open" : ""}${contextInspectorOpen ? " contextual-inspector-open" : ""}`}
+      panelOpen={drawerOpen}
+      header={<ApplicationHeader />}
+      navigation={<WorkflowNavigation />}
+      recovery={<SessionRecovery autosave={autosave} />}
+      panel={<ControlPanel />}
+      inspector={<aside
+        id="contextInspectorHost"
+        className="context-inspector-host"
+        aria-label="Canvas properties"
+        aria-hidden={contextInspectorOpen ? "false" : "true"}
+        inert={!contextInspectorOpen}
+        hidden={!contextInspectorOpen}
+      />}
+      statusBar={<StatusFooter autosave={autosave} />}
+    >
+        <section
           id="simulatorWorkspace"
-          className="workspace cds--css-grid cds--css-grid--condensed cds--css-grid--full-width"
+          className="fdtd-stage-root"
           aria-labelledby="simulator-title"
           tabIndex={-1}
         >
           <h1 id="simulator-title" className="scientific-visually-hidden">
             EM Wave Simulator — 2D FDTD laboratory
           </h1>
-          <WorkflowNavigation />
           <CanvasStage />
-          <aside
-            id="contextInspectorHost"
-            className="context-inspector-host"
-            aria-label="Canvas properties"
-            aria-hidden={contextInspectorOpen ? "false" : "true"}
-            inert={!contextInspectorOpen}
-            hidden={!contextInspectorOpen}
-          />
-          <ControlPanel />
-          <StatusFooter />
           <CarbonButton
             id="controlDrawerBackdrop"
             className="control-drawer-backdrop"
@@ -58,8 +62,7 @@ export function FdtdWorkspace() {
             hidden
             onClick={() => requestRuntimeAction("close-controls")}
           />
-        </main>
-      </div>
-    </>
+        </section>
+    </ScientificAppShell>
   );
 }

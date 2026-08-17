@@ -16,6 +16,11 @@
 - Comunica runtime → React mediante el store o eventos `fdtd:*`, y React → runtime mediante la API de acciones.
 - No combines listeners imperativos y handlers React sobre el mismo control.
 
+### Excepción temporal de entradas numéricas
+
+- Algunos `CarbonInput` con `type="number"` en los editores de contexto conservan IDs y eventos DOM que el runtime FDTD necesita para mantener la compatibilidad con su frontera de acciones. Esta es una excepción temporal y explícita, no una pauta para crear nuevos controles.
+- No los migres masivamente a `ScientificNumberField` hasta que se retire esa dependencia de IDs/eventos; cualquier migración debe preservar el contrato de runtime y probar el flujo afectado.
+
 ## `scientific-ui`
 
 - Corrige por defecto los problemas específicos dentro de FDTD.

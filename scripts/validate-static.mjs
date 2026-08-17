@@ -184,7 +184,7 @@ function validateCarbonUi(indexHtml) {
     missing.push("Carbon Sass entry");
   }
   if (/tailwindcss|@theme inline/.test(styles)) missing.push("obsolete Tailwind contract");
-  if (!indexHtml.includes("cds--grid")) missing.push("Carbon grid shell");
+  if (!indexHtml.includes("<ScientificAppShell")) missing.push("scientific-ui app shell");
   if (!indexHtml.includes("cds--g10")) missing.push("Carbon g10 chrome theme context");
   if (/\.cds--|:not\(\.cds--|Hallmark|instrument shell redesign/i.test(styles)) missing.push("inherited or Carbon-internal CSS selectors");
   if (/input\[type=["']range["']\]/i.test(styles)) missing.push("native range styling");
@@ -196,7 +196,7 @@ function validateCarbonUi(indexHtml) {
   addCheck(
     "Carbon UI contract",
     missing.length === 0 ? "PASS" : "BLOCK",
-    missing.length === 0 ? "Carbon Sass, grid shell, and IBM Plex typography found" : missing.join(", "),
+    missing.length === 0 ? "Carbon Sass, scientific-ui shell, and IBM Plex typography found" : missing.join(", "),
   );
 }
 
@@ -767,7 +767,7 @@ function main() {
   validateHtmlAssets(indexHtml);
   validateCarbonUi(interfaceMarkup);
   const missingAccessibilityHooks = [
-    'class="skip-link" href="#simulatorWorkspace"',
+    '<SkipToContent href="#simulatorWorkspace">',
     'id="simulatorWorkspace"',
     'tabindex={-1}',
   ].filter((fragment) => !interfaceMarkup.includes(fragment));

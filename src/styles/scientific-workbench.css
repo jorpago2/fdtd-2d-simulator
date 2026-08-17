@@ -1,14 +1,8 @@
 @import url("../../tokens.css");
 
-/* Carbon React workbench layout and scientific visualization styles. */
+/* FDTD content and scientific visualization styles. Shell geometry is shared. */
 :root {
-  --workbench-header-height: var(--scientific-ui-header-block-size);
-  --workbench-rail-width: var(--scientific-ui-rail-inline-size);
-  --workbench-panel-width: var(--scientific-ui-panel-inline-size);
-  --workbench-status-height: var(--scientific-ui-status-block-size);
   --workbench-inspector-width: 28rem;
-  --workbench-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --workbench-bottom-nav-height: calc(var(--scientific-ui-mobile-nav-block-size) + var(--workbench-safe-bottom));
 }
 
 * {
@@ -26,6 +20,8 @@ body {
 }
 
 body {
+  position: fixed;
+  inset: 0;
   font-size: var(--cds-body-compact-01-font-size, 0.875rem);
   font-weight: var(--cds-body-compact-01-font-weight, 400);
   line-height: var(--cds-body-compact-01-line-height, 1.2857);
@@ -51,39 +47,14 @@ fieldset {
   border: 0;
 }
 
-.skip-link {
-  position: fixed;
-  z-index: 10000;
-  top: 0;
-  left: 0;
-  transform: translateY(-100%);
-  padding: 0.75rem 1rem;
-  color: var(--cds-text-on-color);
-  background: var(--cds-background-brand);
-}
-
-.skip-link:focus {
-  transform: translateY(0);
-}
-
-/* Application shell */
-
-.app-shell {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  grid-template-rows: var(--workbench-header-height) minmax(0, 1fr);
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-  overflow: clip;
-}
-
 .carbon-button-content {
   display: contents;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .panel-kicker,
@@ -102,21 +73,7 @@ fieldset {
   align-items: center;
 }
 
-body header.scientific-header.scientific-app-header {
-  grid-template-columns: var(--workbench-rail-width) minmax(0, 1fr) max-content;
-  width: 100vw;
-  min-width: 0;
-  max-width: 100vw;
-}
-
-header .scientific-app-header__context {
-  width: 100%;
-  max-width: none;
-  justify-self: stretch;
-  border-inline-start: 1px solid var(--cds-border-subtle-01);
-}
-
-.scientific-header__context-value > span {
+.fdtd-scene-title {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -125,17 +82,8 @@ header .scientific-app-header__context {
 }
 
 .header-simulation-controls .tool-group,
-.interaction-toggle,
-.scientific-header__theme,
-.scientific-header__help {
+.interaction-toggle {
   border-inline-start: 1px solid var(--cds-border-subtle-01);
-}
-
-.scientific-header__help .scientific-header-help,
-.scientific-header__help .scientific-header-help__button {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
 }
 
 .header-simulation-controls,
@@ -173,18 +121,11 @@ header .scientific-app-header__context {
   width: 6rem;
 }
 
-.workspace {
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: var(--workbench-rail-width) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) var(--workbench-status-height);
+.fdtd-stage-root {
+  position: relative;
   width: 100%;
-  max-width: none;
+  height: 100%;
   min-height: 0;
-  height: calc(100vh - var(--workbench-header-height));
-  height: calc(100dvh - var(--workbench-header-height));
-  padding: 0;
-  background: var(--cds-background);
 }
 
 .nav-step {
@@ -203,9 +144,9 @@ header .scientific-app-header__context {
 .stage {
   position: relative;
   display: grid;
-  grid-row: 1;
-  grid-column: 2;
   grid-template-rows: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   padding: 1rem 1rem 0;
@@ -213,28 +154,18 @@ header .scientific-app-header__context {
   background: var(--cds-background);
 }
 
-.fdtd-status-strip {
-  grid-row: 2;
-  grid-column: 2 / -1;
-}
-
-.fdtd-status-strip .scientific-status-bar__status {
-  display: none;
-}
-
-.fdtd-status-strip .scientific-status-bar__metadata {
-  grid-column: 1 / -1;
-  justify-content: flex-start;
+.fdtd-status-metadata {
+  display: contents;
   gap: 0;
   font-size: var(--cds-label-01-font-size, 0.75rem);
   font-variant-numeric: tabular-nums;
   line-height: var(--cds-label-01-line-height, 1rem);
 }
 
-.fdtd-status-strip .scientific-status-bar__metadata > span {
+.fdtd-status-metadata > span {
   display: inline-flex;
   min-width: 0;
-  min-height: var(--workbench-status-height);
+  min-height: var(--scientific-ui-status-block-size);
   align-items: center;
   gap: 0.375rem;
   padding-inline: 0.75rem;
@@ -242,16 +173,16 @@ header .scientific-app-header__context {
   white-space: nowrap;
 }
 
-.fdtd-status-strip .scientific-status-bar__metadata > span:first-child {
+.fdtd-status-metadata > span:first-child {
   padding-inline-start: 1rem;
 }
 
-.fdtd-status-strip .scientific-status-bar__metadata b {
+.fdtd-status-metadata b {
   color: var(--cds-text-secondary);
   font-weight: 400;
 }
 
-.fdtd-status-strip .scientific-status-bar__metadata output {
+.fdtd-status-metadata output {
   color: var(--cds-text-primary);
 }
 
@@ -444,34 +375,10 @@ header .scientific-app-header__context {
   grid-column: 2;
 }
 
-@media (min-width: 66rem) {
-  body .scientific-recovery-notice {
-    inset-inline-end: 15rem;
-  }
-
-  .app-shell.contextual-inspector-open .scientific-recovery-notice {
-    inset-inline-end: calc(var(--workbench-inspector-width) + 15rem);
-  }
-}
-
 /* Carbon control panel */
 
 .control-panel {
-  position: static;
-  z-index: 450;
-  display: none;
-  grid-row: 1;
-  grid-column: 2;
-  grid-template-rows: auto minmax(0, 1fr);
   width: 100%;
-  min-width: 0;
-  min-height: 0;
-  border-right: 1px solid var(--cds-border-subtle-01);
-  background: var(--cds-layer-01);
-}
-
-.controls-open .control-panel {
-  display: grid;
 }
 
 .source-menu-header,
@@ -1260,8 +1167,11 @@ header .scientific-app-header__context {
 }
 
 .context-inspector-host {
-  grid-row: 1;
-  grid-column: 3;
+  position: fixed;
+  z-index: 6400;
+  inset-block: var(--scientific-ui-header-block-size) var(--scientific-ui-status-block-size);
+  inset-inline-end: 0;
+  width: var(--workbench-inspector-width);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1409,10 +1319,6 @@ header .scientific-app-header__context {
   box-shadow: 0 0 0 100vmax var(--cds-overlay), 0 0.75rem 2rem var(--cds-shadow);
 }
 
-.scientific-header-help__popover {
-  max-inline-size: min(22rem, calc(100vw - 1rem));
-}
-
 .maxwell-check-panel .analysis-panel-header {
   align-items: flex-start;
   flex-wrap: wrap;
@@ -1524,7 +1430,7 @@ header .scientific-app-header__context {
 
 .storybook-workflow-preview {
   display: grid;
-  grid-template-columns: var(--workbench-rail-width) minmax(0, 1fr);
+  grid-template-columns: var(--scientific-ui-rail-inline-size) minmax(0, 1fr);
   min-height: 24rem;
 }
 
@@ -1540,8 +1446,6 @@ header .scientific-app-header__context {
 /* Responsive layouts */
 
 @media (min-width: 66rem) and (min-height: 40rem) {
-  :root { --workbench-rail-width: var(--scientific-ui-rail-inline-size); }
-
   .scene-view-toggle {
     block-size: var(--fdtd-control-block-size, 3rem);
     min-block-size: var(--fdtd-control-block-size, 3rem);
@@ -1551,11 +1455,6 @@ header .scientific-app-header__context {
   .context-kind-switcher > button {
     inline-size: 100%;
     block-size: 100%;
-  }
-
-  .control-panel .cds--accordion__content,
-  .context-inspector-host .cds--accordion__content {
-    padding-inline-end: var(--fdtd-panel-padding, var(--cds-spacing-05, 1rem));
   }
 
   .context-inspector-host .source-menu-header > :first-child {
@@ -1569,129 +1468,22 @@ header .scientific-app-header__context {
     block-size: var(--fdtd-control-block-size, 3rem);
   }
 
-  .controls-open .workspace {
-    grid-template-columns:
-      var(--workbench-rail-width)
-      var(--workbench-panel-width)
-      minmax(0, 1fr);
-  }
-
-  .controls-open .stage {
-    grid-column: 3;
-  }
-
-  .app-shell.contextual-inspector-open .workspace {
-    grid-template-columns:
-      var(--workbench-rail-width)
-      minmax(0, 1fr)
-      var(--workbench-inspector-width);
-  }
-
-  .app-shell.controls-open.contextual-inspector-open .workspace {
-    grid-template-columns:
-      var(--workbench-rail-width)
-      var(--workbench-panel-width)
-      minmax(0, 1fr)
-      var(--workbench-inspector-width);
-  }
-
-  .app-shell.controls-open.contextual-inspector-open .context-inspector-host {
-    grid-column: 4;
+  .app-shell.contextual-inspector-open .fdtd-stage-root {
+    inline-size: calc(100% - var(--workbench-inspector-width));
   }
 }
 
-@media (max-width: 65.99rem), (max-height: 39.99rem) {
-  body header.scientific-header.scientific-app-header {
-    grid-template-columns: var(--scientific-ui-header-block-size) minmax(0, 1fr) max-content;
-  }
-
-  .control-panel {
-    position: relative;
-    z-index: 9000;
-    grid-row: 1;
-    grid-column: 1;
-    width: 100%;
-    height: 100%;
-    border-right: 0;
-  }
-
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) var(--workbench-status-height) var(--workbench-bottom-nav-height);
-  }
-
-  .stage {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
-  .fdtd-status-strip {
-    grid-row: 2;
-    grid-column: 1;
-  }
-
-  .controls-open .workspace,
-  .contextual-inspector-open .workspace {
-    grid-template-rows: minmax(0, 1fr) 0 var(--workbench-bottom-nav-height);
-  }
-
-  .controls-open .control-panel,
-  .contextual-inspector-open .context-inspector-host {
-    grid-row: 1 / 3;
-  }
-
-  .controls-open .fdtd-status-strip,
-  .contextual-inspector-open .fdtd-status-strip {
-    display: none;
-  }
-
+@media (max-width: 65.99rem) {
   .context-inspector-host {
-    position: relative;
-    z-index: 650;
-    grid-row: 1;
-    grid-column: 1;
+    z-index: 6400;
+    inset-block: var(--scientific-ui-header-block-size) var(--scientific-ui-mobile-nav-total-block-size);
+    inset-inline: 0;
     width: 100%;
-    height: 100%;
     border-left: 0;
   }
 
-  .app-shell.contextual-inspector-open .stage {
+  .app-shell.contextual-inspector-open > .fdtd-status-strip {
     display: none;
-  }
-
-  .controls-open .stage {
-    display: none;
-  }
-
-  /* Keep recovery actions available without obscuring the task-panel Close
-   * control at the top of compact layouts. The higher-specificity selector
-   * intentionally overrides the shared scientific-ui fixed placement. */
-  body.controls-drawer-open .scientific-recovery-notice {
-    inset-block-start: auto;
-    inset-inline: var(--fdtd-space-xs);
-    inset-block-end: calc(var(--workbench-bottom-nav-height) + var(--fdtd-space-xs));
-    inline-size: calc(100vw - 2 * var(--fdtd-space-xs));
-    width: auto;
-    max-inline-size: none;
-    max-block-size: min(30dvh, 9rem);
-    overflow: auto;
-  }
-
-  body.controls-drawer-open .scientific-recovery-notice > :first-child {
-    min-inline-size: 0;
-    inline-size: 100%;
-    max-inline-size: none;
-    width: 100%;
-    max-width: none;
-  }
-
-  body.controls-drawer-open:has(.scientific-recovery-notice) .control-tab-panel.is-active {
-    padding-block-end: 9.5rem;
-  }
-
-  body.walkthrough-active .controls-open .stage {
-    display: grid;
-    pointer-events: auto;
   }
 
   .header-simulation-controls .canvas-reset-button,
@@ -1707,8 +1499,8 @@ header .scientific-app-header__context {
     block-size: var(--scientific-ui-header-block-size);
   }
 
-  .scientific-header-overflow-item,
-  .scientific-header-overflow-item > button {
+  .fdtd-header-overflow-item,
+  .fdtd-header-overflow-item > button {
     min-block-size: 2.75rem;
   }
 
@@ -1720,28 +1512,7 @@ header .scientific-app-header__context {
 
 }
 
-@media (max-width: 41.99rem) {
-  .workspace,
-  .controls-open .workspace,
-  .contextual-inspector-open .workspace {
-    grid-template-rows: minmax(0, 1fr) var(--workbench-bottom-nav-height);
-  }
-
-  .fdtd-status-strip {
-    display: none;
-  }
-
-  .controls-open .control-panel,
-  .contextual-inspector-open .context-inspector-host {
-    grid-row: 1;
-  }
-}
-
 @media (max-height: 39.99rem) {
-  :root {
-    --workbench-header-height: var(--scientific-ui-header-block-size);
-  }
-
   .colorbar {
     top: 0.5rem;
     right: 0.5rem;
@@ -1761,8 +1532,8 @@ header .scientific-app-header__context {
     height: auto;
   }
 
-  .scientific-header-overflow-item,
-  .scientific-header-overflow-item > button {
+  .fdtd-header-overflow-item,
+  .fdtd-header-overflow-item > button {
     min-block-size: 2.75rem;
   }
 
@@ -1777,10 +1548,6 @@ header .scientific-app-header__context {
 }
 
 @media (max-width: 47.99rem) {
-  :root {
-    --workbench-header-height: var(--scientific-ui-header-block-size);
-  }
-
   .stage {
     padding: 0.5rem 0.5rem 0;
   }
@@ -1819,7 +1586,7 @@ header .scientific-app-header__context {
   }
 
   .help-guide-panel {
-    inset: var(--scientific-ui-header-block-size) 0 calc(4.5rem + var(--workbench-safe-bottom));
+    inset: var(--scientific-ui-header-block-size) 0 calc(4.5rem + var(--scientific-ui-safe-area-bottom));
     width: 100%;
     height: auto;
     max-height: none;
@@ -1860,12 +1627,6 @@ header .scientific-app-header__context {
 
 .help-guide-open .surface-orbit-controls {
   visibility: hidden;
-}
-
-@media (max-width: 30rem) {
-  .scientific-app-header__context .scientific-header__status {
-    display: none;
-  }
 }
 
 @media (max-width: 22rem) {

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { ScientificTaskPanel } from "@jorpago2/scientific-ui";
 import { CarbonButton } from "./carbon-primitives";
 import { ResultsPanel, RunPanel, ScenePanel, ValidationPanel } from "./control-panels";
 import { requestRuntimeAction } from "./runtime-state";
@@ -19,7 +20,7 @@ function isTabName(value: unknown): value is TabName {
 export function ControlPanel() {
   const [active, setActive] = useState<TabName>("scenes");
   const [open, setOpen] = useState(false);
-  const panelScrollerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const syncWorkflow = (event: Event) => {
@@ -38,7 +39,7 @@ export function ControlPanel() {
   }, []);
 
   useLayoutEffect(() => {
-    panelScrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    panelRef.current?.querySelector<HTMLElement>(".control-tab-panels")?.scrollTo({ top: 0, behavior: "auto" });
   }, [active]);
 
   const choose = (tab: TabName) => {
@@ -60,34 +61,31 @@ export function ControlPanel() {
 
   const context = tabs.find(([name]) => name === active) ?? tabs[0];
   return (
-    <aside
+    <ScientificTaskPanel
+      ref={panelRef}
       id="controlPanel"
-      className="control-panel scientific-task-panel"
+      className="control-panel"
+      title={context[4]}
+      titleId="controlPanelTitle"
+      eyebrow={<span id="controlPanelKicker">{context[3]}</span>}
+      actions={<CarbonButton
+        id="controlDrawerCloseBtn"
+        className="icon-button compact-button control-drawer-close"
+        data-carbon-icon-only="true"
+        type="button"
+        aria-label="Close controls"
+        title="Close controls"
+        onClick={() => requestRuntimeAction("close-controls")}
+      >
+        &times;
+      </CarbonButton>}
+      bodyClassName="control-tab-panels"
       aria-label={`${context[4]} controls`}
       aria-hidden={!open}
       inert={!open}
       tabIndex={-1}
       data-mobile-layer={active}
     >
-      <div className="control-panel-header scientific-task-panel__header">
-        <div className="control-panel-title-block scientific-task-panel__heading">
-          <p className="panel-kicker">{context[3]}</p>
-          <h2>{context[4]}</h2>
-        </div>
-        <div className="control-panel-actions scientific-task-panel__actions">
-          <CarbonButton
-            id="controlDrawerCloseBtn"
-            className="icon-button compact-button control-drawer-close"
-            data-carbon-icon-only="true"
-            type="button"
-            aria-label="Close controls"
-            title="Close controls"
-            onClick={() => requestRuntimeAction("close-controls")}
-          >
-            &times;
-          </CarbonButton>
-        </div>
-      </div>
       <div className="control-tabs" role="tablist" aria-label="Control sections">
         {tabs.map(([name, step, label]) => {
           const selected = name === active;
@@ -116,12 +114,10 @@ export function ControlPanel() {
           );
         })}
       </div>
-      <div ref={panelScrollerRef} className="control-tab-panels scientific-task-panel__body">
-        <ScenePanel active={active === "scenes"} />
-        <RunPanel active={active === "simulation"} />
-        <ResultsPanel active={active === "results"} />
-        <ValidationPanel active={active === "config"} />
-      </div>
-    </aside>
+      <ScenePanel active={active === "scenes"} />
+      <RunPanel active={active === "simulation"} />
+      <ResultsPanel active={active === "results"} />
+      <ValidationPanel active={active === "config"} />
+    </ScientificTaskPanel>
   );
 }

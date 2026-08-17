@@ -6,6 +6,7 @@ import {
   createScientificPlotlyConfig,
   createScientificPlotlyLayout,
   prepareScientificPlotlyToolbar,
+  ScientificUiProvider,
 } from "@jorpago2/scientific-ui";
 import "@jorpago2/scientific-ui/styles.css";
 import "./core/app-state";
@@ -20,7 +21,7 @@ import { FdtdWorkspace } from "./ui/fdtd-workspace";
 import { installCarbonSceneBrowser } from "./ui/scene-browser";
 import { installCarbonDisclosures } from "./ui/carbon-disclosures";
 import { installScientificSliderControls } from "./ui/scientific-sliders";
-import { FdtdThemeProvider } from "./ui/fdtd-theme";
+import { FdtdThemeBridge } from "./ui/fdtd-theme";
 
 (globalThis as typeof globalThis & { Plotly: typeof Plotly }).Plotly = Plotly;
 (globalThis as typeof globalThis & {
@@ -42,9 +43,10 @@ async function startApplication() {
   const root = document.getElementById("root");
   if (!root) throw new Error("Missing React application root");
   flushSync(() => createRoot(root).render(
-    <FdtdThemeProvider>
+    <ScientificUiProvider themeStorageKey="fdtdTheme">
+      <FdtdThemeBridge />
       <FdtdWorkspace />
-    </FdtdThemeProvider>,
+    </ScientificUiProvider>,
   ));
 
   installCarbonSceneBrowser();
