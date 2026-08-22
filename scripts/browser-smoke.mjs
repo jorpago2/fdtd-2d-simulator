@@ -6566,20 +6566,20 @@ async function runReproducibilitySmoke(page) {
     }, { sceneSnapshot: snapshot, nextTheme: theme });
     await page.waitForFunction((expectedTheme) => {
       const carbonTheme = expectedTheme === "dark" ? "g100" : "g10";
-      const themeOwners = Array.from(document.querySelectorAll(".fdtd-theme"));
+      const themeOwners = Array.from(document.querySelectorAll(".scientific-theme[data-scientific-theme]"));
       return (
         document.documentElement.dataset.theme === expectedTheme
         && document.documentElement.dataset.carbonTheme === carbonTheme
         && document.body.classList.contains(`cds--${carbonTheme}`)
         && themeOwners.length === 1
-        && themeOwners[0]?.getAttribute("data-carbon-theme") === carbonTheme
+        && themeOwners[0]?.getAttribute("data-scientific-theme") === carbonTheme
       );
     }, theme);
     return page.evaluate(() => ({
       runtimeTheme: document.documentElement.dataset.theme || "",
       carbonTheme: document.documentElement.dataset.carbonTheme || "",
       bodyTheme: document.body.classList.contains("cds--g100") ? "g100" : "g10",
-      themeOwnerCount: document.querySelectorAll(".fdtd-theme").length,
+      themeOwnerCount: document.querySelectorAll(".scientific-theme[data-scientific-theme]").length,
     }));
   };
   let themeRoundTrip = null;
@@ -7424,7 +7424,7 @@ async function runControlNavigationSmoke(page) {
       mobileLabels,
       tabStops: tabButtons.map((button) => ({
         name: button.dataset.controlTab || "",
-        selected: button.getAttribute("aria-selected") || "",
+        selected: button.matches('[role="tab"][aria-selected="true"]'),
         tabIndex: button.tabIndex,
       })),
       hasVisualTab: Boolean(document.getElementById("tab-visual")),
@@ -7445,7 +7445,7 @@ async function runControlNavigationSmoke(page) {
   if (
     status.tabStops.filter((tab) => tab.tabIndex === 0).length !== 1
     || status.tabStops.find((tab) => tab.tabIndex === 0)?.name !== "config"
-    || status.tabStops.some((tab) => (tab.name === "config") !== (tab.selected === "true"))
+    || status.tabStops.some((tab) => (tab.name === "config") !== tab.selected)
   ) {
     failures.push(`control tabs do not use a selected-only tab stop: ${JSON.stringify(status.tabStops)}`);
   }
@@ -7506,31 +7506,44 @@ async function runControlNavigationSmoke(page) {
 }
 
 async function runPoyntingComponentVisibilitySmoke(page) {
-  const status = await page.evaluate(() => {
+  const status = await page.evaluate(async () => {
     document.querySelector('[data-control-tab="simulation"]')?.click();
     const visualPanel = document.querySelector("#tab-simulation .visual-field-section");
     const componentRow = visualPanel?.querySelector(".visual-component-row");
-    const scalarButton = componentRow?.querySelector('[data-field-display="scalar"]');
-    const transverseButton = componentRow?.querySelector('[data-field-display="transverseX"]');
-    const fieldButton = visualPanel?.querySelector('[data-view-mode="field"]');
-    const poyntingButton = visualPanel?.querySelector('[data-view-mode="poynting"]');
+    const waitForReact = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const choice = (property, value) => visualPanel?.querySelector(`[data-visual-choice="${property}"][data-visual-value="${value}"]`);
+    const isSelected = (node) => node?.getAttribute("aria-selected") === "true";
+    const runtimeFieldDisplay = () => {
+      const appState = window.FdtdApp?.state;
+      if (appState && typeof appState === "object") return appState.fieldDisplay || "";
+      return typeof state !== "undefined" ? state.fieldDisplay || "" : "";
+    };
+    const scalarButton = choice("fieldDisplay", "scalar");
+    const transverseButton = choice("fieldDisplay", "transverseX");
+    const fieldButton = choice("viewMode", "field");
+    const poyntingButton = choice("viewMode", "poynting");
     transverseButton?.click();
+    await waitForReact();
     const beforePoynting = {
       componentRowHidden: Boolean(componentRow?.hidden),
-      transverseSelected: transverseButton?.classList.contains("is-active") || false,
+      transverseSelected: isSelected(choice("fieldDisplay", "transverseX")),
     };
     poyntingButton?.click();
+    await waitForReact();
+    const afterComponentRow = visualPanel?.querySelector(".visual-component-row");
     const afterPoynting = {
-      componentRowHidden: Boolean(componentRow?.hidden),
-      scalarSelected: scalarButton?.classList.contains("is-active") || false,
-      poyntingSelected: poyntingButton?.classList.contains("is-active") || false,
+      componentRowHidden: !afterComponentRow || Boolean(afterComponentRow.hidden),
+      scalarSelected: runtimeFieldDisplay() === "scalar",
+      poyntingSelected: isSelected(choice("viewMode", "poynting")),
       colorbarTitle: document.getElementById("colorbarTitle")?.textContent.trim() || "",
-      quiverLabel: document.querySelector("[data-field-quiver-label]")?.textContent.trim() || "",
+      quiverLabels: Array.from(document.querySelectorAll("[data-field-quiver-label]"), (node) => node.textContent.trim()),
     };
     fieldButton?.click();
+    await waitForReact();
+    const afterFieldComponentRow = visualPanel?.querySelector(".visual-component-row");
     const afterField = {
-      componentRowHidden: Boolean(componentRow?.hidden),
-      fieldSelected: fieldButton?.classList.contains("is-active") || false,
+      componentRowHidden: !afterFieldComponentRow || Boolean(afterFieldComponentRow.hidden),
+      fieldSelected: isSelected(choice("viewMode", "field")),
     };
     return {
       controlsFound: Boolean(visualPanel && componentRow && scalarButton && transverseButton && fieldButton && poyntingButton),
@@ -7547,7 +7560,7 @@ async function runPoyntingComponentVisibilitySmoke(page) {
   if (!status.afterPoynting.scalarSelected) failures.push("Poynting quantity did not reset the hidden field display to scalar");
   if (!status.afterPoynting.poyntingSelected) failures.push("Poynting quantity button is not selected");
   if (!/S/.test(status.afterPoynting.colorbarTitle || "")) failures.push("Poynting colorbar title does not report S");
-  if (status.afterPoynting.quiverLabel !== "S quiver") failures.push("Poynting vector control is not labeled S quiver");
+  if (!status.afterPoynting.quiverLabels.length || status.afterPoynting.quiverLabels.some((label) => label !== "S quiver")) failures.push("Poynting vector control is not labeled S quiver");
   if (status.afterField.componentRowHidden) failures.push("field component row did not reappear after returning to field quantity");
   if (!status.afterField.fieldSelected) failures.push("field quantity button is not selected after returning to field mode");
   return {
@@ -7575,6 +7588,7 @@ async function runMaxwellCheckerSmoke(page) {
       if (typeof sim !== "undefined" && typeof sim.step === "function") sim.step();
     }
     window.FdtdApp?.updateStats?.();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const results = document.getElementById("maxwellCheckResults");
     const report = typeof sim !== "undefined" && typeof sim.maxwellCheckReport === "function" ? sim.maxwellCheckReport() : null;
     state.maxwellCheckEnabled = savedMaxwellCheckEnabled;
@@ -8049,7 +8063,7 @@ async function runMobileSimulatePanelScrollSmoke(browser, url) {
     const status = await page.evaluate(() => {
       const panel = document.getElementById("controlPanel");
       const panels = document.querySelector(".control-tab-panels");
-      const header = document.querySelector(".control-panel-header");
+      const header = document.querySelector(".scientific-task-panel__header");
       const nav = document.querySelector('nav[aria-label="Simulation workflow"]');
       const run = document.querySelector("#tab-simulation .run-section");
       const activePanelElement = document.querySelector(".control-tab-panel.is-active");
@@ -8184,7 +8198,7 @@ async function runMobileLayerScrollResetSmoke(browser, url) {
         const panel = document.getElementById("controlPanel");
         const scroller = document.querySelector(".control-tab-panels");
         const active = document.querySelector(".control-tab-panel.is-active");
-        const header = document.querySelector(".control-panel-header")?.getBoundingClientRect();
+        const header = document.querySelector(".scientific-task-panel__header")?.getBoundingClientRect();
         const nav = document.querySelector(".mobile-layer-nav")?.getBoundingClientRect();
         return {
           layer: layerName,
@@ -8602,7 +8616,7 @@ async function runCompactLandscapeLayoutSmoke(browser, url) {
     await page.waitForTimeout(250);
     const reclosed = await readLayout();
     await page.locator('.mobile-layer-button[data-mobile-layer="simulation"]').click();
-    await page.locator('#tab-simulation [data-visual-choice="viewProjection"][data-visual-value="3d"]').click();
+    await page.locator('#tab-simulation [role="tab"][data-visual-choice="viewProjection"][data-visual-value="3d"]').click();
     await page.waitForFunction(() => window.FdtdCanvasSurfaceThreeRenderer?.status?.().frames > 0);
     await page.locator("#controlDrawerCloseBtn").click();
     await page.waitForTimeout(250);
@@ -9095,7 +9109,7 @@ async function runVisualCompositionResponsiveSmoke(browser, url) {
           };
           const panel = document.getElementById("controlPanel");
           const active = panel?.querySelector(".control-tab-panel.is-active:not([hidden])");
-          const header = panel?.querySelector(".control-panel-header");
+          const header = panel?.querySelector(".scientific-task-panel__header");
           const title = header?.querySelector("h2");
           const close = document.getElementById("controlDrawerCloseBtn");
           const panelStyle = panel ? getComputedStyle(panel) : null;
@@ -9978,13 +9992,14 @@ async function runSceneObservablesSmoke(browser, url) {
       await openApplication(page, url);
       for (const preset of presetNames.slice(batchStart, batchStart + batchSize)) {
         if (progressMode) console.error(`[browser-smoke] OBS   ${preset}`);
-        status[preset] = await page.evaluate((nextPreset) => {
+        status[preset] = await page.evaluate(async (nextPreset) => {
           const app = window.FdtdApp;
           if (!app?.selectScenePreset || !app?.updateStats || typeof FdtdSceneObservables === "undefined") {
             return { preset: nextPreset, loaded: false, panelText: "", rowCount: 0, report: null };
           }
           app.selectScenePreset(nextPreset);
           app.updateStats();
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
           return {
             preset: app.state.preset,
             loaded: true,
@@ -10032,7 +10047,7 @@ async function runSceneObservablesSmoke(browser, url) {
   if (!status.doubleSlit.panelText.includes("Aperture geometry")) failures.push("doubleSlit does not expose the aperture geometry observable");
   if (!status.doubleSlit.panelText.includes("Diffraction scale")) failures.push("doubleSlit does not expose the diffraction-scale observable");
   if (!status.phasedDipoleArray.panelText.includes("Array phase law")) failures.push("phasedDipoleArray does not expose the array phase-law observable");
-  if (!status.normalInterface.panelText.includes("R_theory=0.040")) failures.push("normalInterface does not expose the Fresnel R_theory reference");
+  if (!status.normalInterface.panelText.includes("R_theory = 0.040")) failures.push("normalInterface does not expose the Fresnel R_theory reference");
   if (!status.normalInterface.panelText.includes("Spectral R/T/residual")) {
     failures.push("normalInterface does not expose the spectral R/T/residual observable");
   }

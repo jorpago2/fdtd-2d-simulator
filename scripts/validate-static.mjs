@@ -250,7 +250,7 @@ function validateWorkbenchPresentationContracts(indexHtml) {
   if (indexHtml.includes("config-summary-section")) {
     failures.push("legacy preflight summary remains in the HTML shell");
   }
-  if (!styles.includes(".fdtd-run-outcome,\n.fdtd-preflight {\n  container-type: inline-size;")) {
+  if (!/\.fdtd-run-outcome,\r?\n\.fdtd-preflight \{\r?\n  container-type: inline-size;/.test(styles)) {
     failures.push("FDTD summaries are not container-responsive");
   }
   if (!styles.startsWith('@import url("../../tokens.css");')) {

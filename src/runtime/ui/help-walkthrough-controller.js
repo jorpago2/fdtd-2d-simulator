@@ -28,14 +28,14 @@
       text: "The Field map controls change the rendered quantity: fields, Poynting flux, material maps, projection, and components.",
     }),
     Object.freeze({
-      target: "#tab-results",
+      target: "#tab-results, #workflow-results",
       tab: "results",
       focusSelector: "#tab-results",
       title: "Measure before interpreting",
       text: "Measure contains monitor fluxes, custom probes, spectra, far-field estimates, and scene-specific checks.",
     }),
     Object.freeze({
-      target: ".canvas-mode-toggle.interaction-toggle",
+      target: ".interaction-toggle, .header-overflow-menu",
       title: "Edit the geometry",
       text: "Select moves existing sources, monitors, and objects. Draw adds material regions with brush or parametric geometry tools.",
       closeDrawer: true,
@@ -115,7 +115,11 @@
         if (!node) continue;
         const rect = node.getBoundingClientRect();
         const style = windowRef.getComputedStyle?.(node);
-        if (rect.width > 0 && rect.height > 0 && style?.visibility !== "hidden") return node;
+        const intersectsViewport = rect.right > 0
+          && rect.bottom > 0
+          && rect.left < (windowRef.innerWidth || documentRef.documentElement?.clientWidth || 0)
+          && rect.top < (windowRef.innerHeight || documentRef.documentElement?.clientHeight || 0);
+        if (rect.width > 0 && rect.height > 0 && style?.visibility !== "hidden" && intersectsViewport) return node;
       }
       return el.canvasFrame || documentRef.body;
     }

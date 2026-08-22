@@ -409,8 +409,9 @@
     }
 
     function handleDocumentKeydown(event) {
+      if (event.defaultPrevented) return;
       // The help guide owns Escape while it is visible. Its capture listener is
-      // registered later, so leave the event untouched for that modal handler.
+      // registered separately, so leave the event untouched for that modal handler.
       if (event.key === "Escape" && el.helpGuidePanel && !el.helpGuidePanel.hidden) return;
       if (event.key === "Escape" && el.stage?.classList.contains("canvas-actions-open")) {
         closeCanvasActionsMenu();
@@ -453,7 +454,7 @@
       el.canvas.addEventListener("pointercancel", handlePointerEnd);
       el.canvas.addEventListener("pointerleave", () => clearCanvasHover());
       documentRef.addEventListener("pointerdown", handleDocumentPointerDown);
-      documentRef.addEventListener("keydown", handleDocumentKeydown, true);
+      documentRef.addEventListener("keydown", handleDocumentKeydown);
     }
 
     return Object.freeze({

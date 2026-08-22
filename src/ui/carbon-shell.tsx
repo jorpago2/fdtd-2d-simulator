@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   ContentSwitcher,
@@ -31,6 +31,7 @@ import {
   ScientificToolRail,
   useScientificAutosave,
   useScientificResultTransition,
+  useScientificTheme,
   type ScientificStatusDescriptor,
 } from "@jorpago2/scientific-ui";
 import { requestRuntimeAction, runtimeState, runtimeStep, useFdtdRuntimeReady, useFdtdRuntimeSelector, useFdtdRuntimeState } from "./runtime-state";
@@ -46,27 +47,32 @@ function isSceneSnapshot(value: unknown): value is Record<string, unknown> {
 
 export function useFdtdAutosave() {
   const [snapshot, setSnapshot] = useState<Record<string, unknown> | null>(null);
+  const requestSessionSnapshot = useCallback(() => {
+    window.dispatchEvent(new Event("fdtd:request-session-snapshot"));
+  }, []);
   useEffect(() => {
     const update = (event: Event) => {
       const detail = (event as CustomEvent<unknown>).detail;
       if (isSceneSnapshot(detail)) setSnapshot(detail);
     };
-    const request = () => window.dispatchEvent(new Event("fdtd:request-session-snapshot"));
     window.addEventListener("fdtd:session-snapshot", update);
-    window.addEventListener("fdtd:runtime-ready", request);
-    document.addEventListener("change", request);
-    document.addEventListener("pointerup", request);
+    window.addEventListener("fdtd:runtime-ready", requestSessionSnapshot);
+    document.addEventListener("change", requestSessionSnapshot);
+    document.addEventListener("pointerup", requestSessionSnapshot);
     return () => {
       window.removeEventListener("fdtd:session-snapshot", update);
-      window.removeEventListener("fdtd:runtime-ready", request);
-      document.removeEventListener("change", request);
-      document.removeEventListener("pointerup", request);
+      window.removeEventListener("fdtd:runtime-ready", requestSessionSnapshot);
+      document.removeEventListener("change", requestSessionSnapshot);
+      document.removeEventListener("pointerup", requestSessionSnapshot);
     };
-  }, []);
+  }, [requestSessionSnapshot]);
   const autosave = useScientificAutosave({
     storageKey: "fdtd-2d-simulator:session",
     value: snapshot,
-    onRestore: (saved) => window.dispatchEvent(new CustomEvent("fdtd:restore-session", { detail: saved })),
+    onRestore: (saved) => {
+      window.dispatchEvent(new CustomEvent("fdtd:restore-session", { detail: saved }));
+      requestSessionSnapshot();
+    },
     validate: isSceneSnapshot,
     shouldSave: isSceneSnapshot,
     schemaVersion: 1,
@@ -213,7 +219,34 @@ interface CanvasPrimaryControlsProps {
 
 export function CanvasPrimaryControls({ running, runtimeReady }: CanvasPrimaryControlsProps) {
   const canvasMode = useFdtdRuntimeSelector((state) => state?.canvasMode ?? "select");
+  const { isDark, toggleTheme } = useScientificTheme();
   const modeIndex = canvasMode === "brush" ? 1 : 0;
+
+  useEffect(() => {
+    let overflowHadFocus = false;
+    const rememberResponsiveFocus = () => {
+      const overflow = document.querySelector<HTMLElement>(".header-overflow-menu");
+      overflowHadFocus = Boolean(overflow?.contains(document.activeElement));
+    };
+    const preserveResponsiveFocus = () => {
+      const overflow = document.querySelector<HTMLElement>(".header-overflow-menu");
+      const shouldRestore = overflowHadFocus || Boolean(overflow?.contains(document.activeElement));
+      if (!shouldRestore) return;
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          if (!overflow || getComputedStyle(overflow).display !== "none") return;
+          document.querySelector<HTMLElement>(".scientific-theme-toggle")?.focus();
+          overflowHadFocus = false;
+        });
+      });
+    };
+    document.addEventListener("focusin", rememberResponsiveFocus);
+    window.addEventListener("resize", preserveResponsiveFocus);
+    return () => {
+      document.removeEventListener("focusin", rememberResponsiveFocus);
+      window.removeEventListener("resize", preserveResponsiveFocus);
+    };
+  }, []);
 
   return (
     <div className="header-simulation-controls" role="group" aria-label="Simulation and canvas controls">
@@ -291,6 +324,7 @@ export function CanvasPrimaryControls({ running, runtimeReady }: CanvasPrimaryCo
             <OverflowMenuItem className="fdtd-header-overflow-item" disabled={!runtimeReady} itemText="Draw materials" onClick={() => requestRuntimeAction("canvas-mode", { mode: "brush" })} />
             <OverflowMenuItem className="fdtd-header-overflow-item" disabled={!runtimeReady} itemText="Reset field" onClick={() => requestRuntimeAction("reset-simulation")} />
             <OverflowMenuItem className="fdtd-header-overflow-item" disabled={!runtimeReady} itemText="Save PNG" onClick={() => requestRuntimeAction("save-png")} />
+            <OverflowMenuItem className="fdtd-header-overflow-item" itemText={isDark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme} />
         </OverflowMenu>
       </div>
       <ContentSwitcher

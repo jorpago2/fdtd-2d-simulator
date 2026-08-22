@@ -1,24 +1,30 @@
-import { Button, Checkbox, ContentSwitcher, Switch } from "@carbon/react";
+import { Checkbox, ContentSwitcher, RadioButton, RadioButtonGroup, Switch } from "@carbon/react";
+import type { ReactNode } from "react";
 import { requestRuntimeAction, runtimeState, useFdtdRuntimeSelector } from "./runtime-state";
 
 const projectionOptions = [
-  ["2d", "2D", "Show flat 2D map"],
-  ["3d", "3D", "Show 3D surface"],
+  ["2d", "2D", "Show flat 2D map", "2D"],
+  ["3d", "3D", "Show 3D surface", "3D"],
 ] as const;
 
 const viewOptions = [
-  ["field", <><i>E</i>/<i>H</i></>, "Show electromagnetic fields"],
-  ["poynting", <i>S</i>, "Show Poynting vector flux"],
-  ["epsilon", "ε", "Show permittivity map"],
-  ["mu", "μ", "Show permeability map"],
+  ["field", <><i aria-hidden="true">E</i>/<i aria-hidden="true">H</i></>, "Show electromagnetic fields", "E/H"],
+  ["poynting", <i aria-hidden="true">S</i>, "Show Poynting vector flux", "S"],
+  ["epsilon", "ε", "Show permittivity map", "ε"],
+  ["mu", "μ", "Show permeability map", "μ"],
 ] as const;
 
 const displayOptions = [
-  ["scalar", <><i>E</i><sub>z</sub></>, "Show out-of-plane field"],
-  ["transverseX", <><i>H</i><sub>x</sub></>, "Show transverse x component"],
-  ["transverseY", <><i>H</i><sub>y</sub></>, "Show transverse y component"],
-  ["electricMag", <>|<i>E</i>|</>, "Show electric-field magnitude"],
-  ["magneticMag", <>|<i>H</i>|</>, "Show magnetic-field magnitude"],
+  ["scalar", <><i aria-hidden="true">E</i><sub aria-hidden="true">z</sub></>, "Show out-of-plane field", "Ez"],
+  ["transverseX", <><i aria-hidden="true">H</i><sub aria-hidden="true">x</sub></>, "Show transverse x component", "Hx"],
+  ["transverseY", <><i aria-hidden="true">H</i><sub aria-hidden="true">y</sub></>, "Show transverse y component", "Hy"],
+  ["electricMag", <>|<i aria-hidden="true">E</i>|</>, "Show electric-field magnitude", "|E|"],
+  ["magneticMag", <>|<i aria-hidden="true">H</i>|</>, "Show magnetic-field magnitude", "|H|"],
+] as const;
+
+const materialPartOptions = [
+  ["real", "Re", "Show the real material component", "Re"],
+  ["imag", "Im", "Show the imaginary material component", "Im"],
 ] as const;
 
 const overlayLayers = [
@@ -38,33 +44,41 @@ function ChoiceButtons({
 }: {
   ariaLabel: string;
   attribute: string;
-  options: ReadonlyArray<readonly [string, React.ReactNode, string]>;
+  options: ReadonlyArray<readonly [string, ReactNode, string, string]>;
   selected: string;
 }) {
+  const legacyAttribute = {
+    viewProjection: "data-view-projection",
+    viewMode: "data-view-mode",
+    fieldDisplay: "data-field-display",
+    materialPart: "data-material-part",
+  }[attribute as "viewProjection" | "viewMode" | "fieldDisplay" | "materialPart"];
+  const selectedIndex = Math.max(0, options.findIndex(([value]) => value === selected));
   return (
-    <fieldset className="canvas-mode-toggle" role="radiogroup" aria-label={ariaLabel}>
-      <legend className="sr-only">{ariaLabel}</legend>
-      {options.map(([value, label, title]) => {
-        const active = value === selected;
-        return (
-          <Button
-            className={`mode-toggle-button${active ? " is-active" : ""}`}
-            type="button"
-            kind="ghost"
-            size="sm"
-            role="radio"
-            aria-checked={active}
-            title={title}
-            data-visual-choice={attribute}
-            data-visual-value={value}
-            onClick={() => requestRuntimeAction("visual-choice", { property: attribute, value })}
-            key={value}
-          >
-            {label}
-          </Button>
-        );
-      })}
-    </fieldset>
+    <ContentSwitcher
+      aria-label={ariaLabel}
+      className="visual-choice-switcher scientific-content-switcher scientific-content-switcher--sm"
+      selectedIndex={selectedIndex}
+      size="sm"
+      onChange={({ index }) => {
+        const option = typeof index === "number" ? options[index] : undefined;
+        if (option) requestRuntimeAction("visual-choice", { property: attribute, value: option[0] });
+      }}
+    >
+      {options.map(([value, label, title, accessibleLabel]) => (
+        <Switch
+          name={`${attribute}-${value}`}
+          aria-label={accessibleLabel}
+          title={title}
+          data-visual-choice={attribute}
+          data-visual-value={value}
+          {...(legacyAttribute ? { [legacyAttribute]: value } : {})}
+          key={value}
+        >
+          {label}
+        </Switch>
+      ))}
+    </ContentSwitcher>
   );
 }
 
@@ -112,49 +126,43 @@ export function CanvasVisualControls() {
   useFdtdRuntimeSelector((current) => current ? `${current.viewMode}|${current.viewProjection}|${current.fieldDisplay}|${current.fieldQuiver}|${current.materialPart}|${current.materialFieldOverlay}` : "");
   const state = runtimeState();
   const viewMode = state?.viewMode ?? "field";
+  const poyntingMode = viewMode === "poynting";
   const materialMode = viewMode === "epsilon" || viewMode === "mu";
   return (
     <>
       <ChoiceButtons ariaLabel="Projection" attribute="viewProjection" options={projectionOptions} selected={state?.viewProjection ?? "2d"} />
       <ChoiceButtons ariaLabel="View" attribute="viewMode" options={viewOptions} selected={viewMode} />
-      <ChoiceButtons ariaLabel="Field component" attribute="fieldDisplay" options={displayOptions} selected={state?.fieldDisplay ?? "scalar"} />
-      <Checkbox
-        id="fieldQuiverInput"
-        className="toolbar-switch quiver-switch"
-        labelText={<span id="fieldQuiverLabel"><i>H</i> quiver</span>}
-        title="Overlay vector arrows"
-        checked={state?.fieldQuiver ?? false}
-        onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "fieldQuiver", value: data.checked })}
-      />
-      <fieldset className="canvas-mode-toggle material-part-toggle" role="radiogroup" aria-label="Material component" hidden={!materialMode}>
-        <legend className="sr-only">Material component</legend>
-        {(["real", "imag"] as const).map((value) => {
-          const active = (state?.materialPart ?? "real") === value;
-          return (
-            <Button
-              className={`mode-toggle-button${active ? " is-active" : ""}`}
-              type="button"
-              kind="ghost"
-              size="sm"
-              role="radio"
-              aria-checked={active}
-              onClick={() => requestRuntimeAction("visual-choice", { property: "materialPart", value })}
-              key={value}
-            >
-              {value === "real" ? "Re" : "Im"}
-            </Button>
-          );
-        })}
-      </fieldset>
-      <Checkbox
-        id="materialFieldOverlayToolbarInput"
-        className="toolbar-switch"
-        labelText={<><i>E</i>/<i>H</i> overlay</>}
-        title="Overlay a selectable electric or magnetic field on the material map"
-        hidden={!materialMode}
-        checked={state?.materialFieldOverlay ?? false}
-        onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "materialFieldOverlay", value: data.checked })}
-      />
+      {!poyntingMode ? (
+        <ChoiceButtons ariaLabel="Field component" attribute="fieldDisplay" options={displayOptions} selected={state?.fieldDisplay ?? "scalar"} />
+      ) : null}
+      {!materialMode ? (
+        <Checkbox
+          id="fieldQuiverInput"
+          className="toolbar-switch quiver-switch"
+          labelText={<span id="fieldQuiverLabel" data-field-quiver-label><i>{poyntingMode ? "S" : "H"}</i> quiver</span>}
+          title="Overlay vector arrows"
+          checked={state?.fieldQuiver ?? false}
+          onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "fieldQuiver", value: data.checked })}
+        />
+      ) : null}
+      {materialMode ? (
+        <ChoiceButtons
+          ariaLabel="Material component"
+          attribute="materialPart"
+          options={materialPartOptions}
+          selected={state?.materialPart ?? "real"}
+        />
+      ) : null}
+      {materialMode ? (
+        <Checkbox
+          id="materialFieldOverlayToolbarInput"
+          className="toolbar-switch"
+          labelText={<><i>E</i>/<i>H</i> overlay</>}
+          title="Overlay a selectable electric or magnetic field on the material map"
+          checked={state?.materialFieldOverlay ?? false}
+          onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "materialFieldOverlay", value: data.checked })}
+        />
+      ) : null}
       <span className="visual-options-divider" aria-hidden="true" />
       <OverlayControls toolbar />
     </>
@@ -165,6 +173,7 @@ export function VisualFieldControls() {
   useFdtdRuntimeSelector((current) => current ? `${current.viewMode}|${current.viewProjection}|${current.fieldDisplay}|${current.fieldQuiver}|${current.materialFieldOverlay}` : "");
   const state = runtimeState();
   const viewMode = state?.viewMode ?? "field";
+  const poyntingMode = viewMode === "poynting";
   const materialMode = viewMode === "epsilon" || viewMode === "mu";
   return (
     <div className="visual-control-stack" data-react-ui="visual-field-controls">
@@ -176,26 +185,31 @@ export function VisualFieldControls() {
         <span>Quantity</span>
         <ChoiceButtons ariaLabel="Visual panel quantity" attribute="viewMode" options={viewOptions} selected={viewMode} />
       </div>
-      <Checkbox
-        id="materialFieldOverlayInput"
-        className="toggle-row"
-        labelText="Overlay field on ε/μ"
-        hidden={!materialMode}
-        checked={state?.materialFieldOverlay ?? false}
-        onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "materialFieldOverlay", value: data.checked })}
-      />
-      <div className="visual-control-row visual-component-row">
-        <span>Component</span>
-        <ChoiceButtons ariaLabel="Visual panel field component" attribute="fieldDisplay" options={displayOptions} selected={state?.fieldDisplay ?? "scalar"} />
-      </div>
-      <Checkbox
-        id="fieldQuiverPanelInput"
-        className="toggle-row visual-quiver-row"
-        labelText={<span><i>H</i> quiver</span>}
-        title="Overlay vector arrows"
-        checked={state?.fieldQuiver ?? false}
-        onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "fieldQuiver", value: data.checked })}
-      />
+      {materialMode ? (
+        <Checkbox
+          id="materialFieldOverlayInput"
+          className="toggle-row"
+          labelText="Overlay field on ε/μ"
+          checked={state?.materialFieldOverlay ?? false}
+          onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "materialFieldOverlay", value: data.checked })}
+        />
+      ) : null}
+      {!poyntingMode ? (
+        <div className="visual-control-row visual-component-row">
+          <span>Component</span>
+          <ChoiceButtons ariaLabel="Visual panel field component" attribute="fieldDisplay" options={displayOptions} selected={state?.fieldDisplay ?? "scalar"} />
+        </div>
+      ) : null}
+      {!materialMode ? (
+        <Checkbox
+          id="fieldQuiverPanelInput"
+          className="toggle-row visual-quiver-row"
+          labelText={<span data-field-quiver-label><i>{poyntingMode ? "S" : "H"}</i> quiver</span>}
+          title="Overlay vector arrows"
+          checked={state?.fieldQuiver ?? false}
+          onChange={(_, data) => requestRuntimeAction("visual-choice", { property: "fieldQuiver", value: data.checked })}
+        />
+      ) : null}
     </div>
   );
 }
@@ -207,29 +221,16 @@ export function VisualOverlayControls() {
 export function FieldComponentControls() {
   const selected = useFdtdRuntimeSelector((state) => state?.fieldComponent ?? "ez");
   return (
-    <fieldset className="canvas-mode-toggle solver-toggle" role="radiogroup" aria-label="Simulated field component">
-      <legend className="sr-only">Simulated field component</legend>
-      {([
-        ["ez", <><i>E</i><sub>z</sub></>, "TMz: solve Ez, Hx, Hy"],
-        ["hz", <><i>H</i><sub>z</sub></>, "TEz: solve Hz, Ex, Ey"],
-      ] as const).map(([value, label, title]) => {
-        const active = value === selected;
-        return (
-          <Button
-            className={`mode-toggle-button${active ? " is-active" : ""}`}
-            type="button"
-            kind="ghost"
-            size="sm"
-            role="radio"
-            aria-checked={active}
-            title={title}
-            onClick={() => requestRuntimeAction("visual-choice", { property: "fieldComponent", value })}
-            key={value}
-          >
-            {label}
-          </Button>
-        );
-      })}
-    </fieldset>
+    <RadioButtonGroup
+      className="solver-radio-group"
+      legendText="Solver polarization"
+      name="field-component"
+      orientation="horizontal"
+      valueSelected={selected}
+      onChange={(value) => requestRuntimeAction("visual-choice", { property: "fieldComponent", value })}
+    >
+      <RadioButton id="field-component-ez" labelText={<><i>E</i><sub>z</sub> · TMz</>} value="ez" />
+      <RadioButton id="field-component-hz" labelText={<><i>H</i><sub>z</sub> · TEz</>} value="hz" />
+    </RadioButtonGroup>
   );
 }

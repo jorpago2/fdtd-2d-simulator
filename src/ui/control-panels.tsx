@@ -169,23 +169,21 @@ function RunSettings() {
   const state = runtimeState();
   return (
     <>
-      <div className="control-row">
-        <Select
-          id="renderFpsInput"
-          labelText="Display FPS"
-          size="sm"
-          value={String(state?.renderFps ?? 0)}
-          onChange={(event) => requestRuntimeAction("runtime-setting", { property: "renderFps", value: Number(event.currentTarget.value) })}
-        >
-          <option value="0">Auto</option>
-          <option value="60">60</option>
-          <option value="30">30</option>
-          <option value="15">15</option>
-        </Select>
-      </div>
+      <Select
+        id="renderFpsInput"
+        labelText="Display FPS"
+        size="sm"
+        value={String(state?.renderFps ?? 0)}
+        onChange={(event) => requestRuntimeAction("runtime-setting", { property: "renderFps", value: Number(event.currentTarget.value) })}
+      >
+        <option value="0">Auto</option>
+        <option value="60">60</option>
+        <option value="30">30</option>
+        <option value="15">15</option>
+      </Select>
       <Checkbox
         id="autoScaleInput"
-        className="toggle-row"
+        className="run-scale-checkbox"
         labelText="Automatic display scale"
         checked={state?.autoScale ?? false}
         onChange={(_, data) => requestRuntimeAction("runtime-setting", { property: "autoScale", value: data.checked })}
@@ -256,10 +254,7 @@ export function RunPanel({ active }: { active: boolean }) {
             <div id="tab-simulation" className={`control-tab-panel${active ? " is-active" : ""}`} role="tabpanel" aria-labelledby="tab-simulation-button" data-control-panel="simulation" hidden={!active}>
 <section className="panel-section run-section">
               <h2>Execution and field</h2>
-              <div className="solver-row">
-                <span>Field component</span>
-                <FieldComponentControls />
-              </div>
+              <FieldComponentControls />
               <p className="results-insight-note">Solver convention: <i>E</i><sub>z</sub> is TMz and <i>H</i><sub>z</sub> is TEz. At interfaces, p/TM uses the <i>H</i><sub>z</sub> solver; s/TE uses <i>E</i><sub>z</sub>.</p>
               <div className="control-row">
                 <span title="Implementation route; it does not change the physical model.">Compute engine</span>

@@ -329,6 +329,15 @@ fieldset {
   gap: 0.5rem;
 }
 
+.visual-choice-switcher {
+  width: 100%;
+}
+
+.solver-radio-group,
+.run-scale-checkbox {
+  align-self: start;
+}
+
 .colorbar {
   position: absolute;
   z-index: 12;
@@ -395,6 +404,42 @@ fieldset {
   border: 1px solid var(--cds-border-subtle-01);
   color: var(--cds-icon-primary);
   background: var(--cds-layer-02);
+}
+
+.surface-orbit-gizmo {
+  position: relative;
+  overflow: hidden;
+}
+
+.surface-orbit-ring {
+  position: absolute;
+  inset: 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.45;
+}
+
+.surface-orbit-axis {
+  position: absolute;
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+.surface-orbit-axis-x {
+  inset-block-start: 50%;
+  inset-inline-end: 0.25rem;
+  transform: translateY(-50%);
+}
+
+.surface-orbit-axis-y {
+  inset-block-start: 0.25rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+}
+
+.surface-orbit-axis-z {
+  inset-block-end: 0.25rem;
+  inset-inline-start: 0.25rem;
 }
 
 .surface-orbit-pad {
@@ -786,7 +831,8 @@ fieldset {
   container-type: inline-size;
 }
 
-.scientific-evidence-summary.fdtd-preflight[data-density="compact"] > .scientific-evidence-summary__checks {
+.control-panel .scientific-evidence-summary.fdtd-preflight[data-density="compact"] > .scientific-evidence-summary__checks {
+  /* The scoped selector outranks scientific-ui's late compact grid rule. */
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -798,9 +844,9 @@ fieldset {
 .control-panel .fdtd-preflight .scientific-evidence-summary__checks > li {
   display: grid;
   min-block-size: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.5rem 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0.5rem;
   padding: 0.75rem;
 }
 
@@ -815,7 +861,7 @@ fieldset {
   margin-block-start: 0;
   font-size: 1rem;
   line-height: 1.25rem;
-  text-align: end;
+  text-align: start;
 }
 
 @container (max-width: 32rem) {
@@ -1477,6 +1523,12 @@ fieldset {
 
 /* Responsive layouts */
 
+@media (min-width: 66rem) {
+  .app-shell.contextual-inspector-open .fdtd-stage-root {
+    inline-size: calc(100% - var(--workbench-inspector-width));
+  }
+}
+
 @media (min-width: 66rem) and (min-height: 40rem) {
   .scene-view-toggle {
     block-size: var(--fdtd-control-block-size, 3rem);
@@ -1499,9 +1551,35 @@ fieldset {
     inline-size: var(--fdtd-control-block-size, 3rem);
     block-size: var(--fdtd-control-block-size, 3rem);
   }
+}
 
-  .app-shell.contextual-inspector-open .fdtd-stage-root {
-    inline-size: calc(100% - var(--workbench-inspector-width));
+@media (min-width: 66rem) and (max-width: 77.99rem) {
+  .header-simulation-controls .header-step-button,
+  .header-simulation-controls .canvas-reset-button,
+  .header-simulation-controls .header-save-button,
+  .header-simulation-controls .interaction-toggle {
+    display: none;
+  }
+
+  .header-simulation-controls .header-overflow-menu {
+    display: flex;
+    inline-size: var(--scientific-ui-header-block-size);
+    block-size: var(--scientific-ui-header-block-size);
+  }
+}
+
+@media (min-width: 60rem) and (max-width: 65.99rem) {
+  .app-shell.controls-open .canvas-frame.is-surface-orbit-available > .colorbar {
+    right: 10rem;
+  }
+}
+
+@media (min-width: 78rem) and (max-width: 84.99rem) {
+  body header.scientific-header.scientific-app-header {
+    grid-template-columns:
+      minmax(var(--scientific-ui-rail-inline-size), 1fr)
+      minmax(0, 34rem)
+      minmax(24.0625rem, 1fr);
   }
 }
 
@@ -1521,7 +1599,8 @@ fieldset {
   .header-simulation-controls .canvas-reset-button,
   .header-simulation-controls .header-step-button,
   .header-simulation-controls .header-save-button,
-  .header-simulation-controls .interaction-toggle {
+  .header-simulation-controls .interaction-toggle,
+  .scientific-header.scientific-app-header .scientific-header__theme {
     display: none;
   }
 
@@ -1580,6 +1659,10 @@ fieldset {
 }
 
 @media (max-width: 47.99rem) {
+  .controls-open .stage {
+    display: none;
+  }
+
   .stage {
     padding: 0.5rem 0.5rem 0;
   }
@@ -1604,12 +1687,13 @@ fieldset {
   }
 
   .surface-orbit-pad {
-    grid-template-columns: repeat(5, 2.25rem);
+    grid-template-columns: repeat(5, var(--scientific-ui-target-size));
   }
 
+  .surface-orbit-gizmo,
   .surface-orbit-pad button {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: var(--scientific-ui-target-size);
+    height: var(--scientific-ui-target-size);
   }
 
   .surface-orbit-pad button:first-child,
