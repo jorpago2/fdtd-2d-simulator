@@ -7257,7 +7257,10 @@ async function runWalkthroughSmoke(browser, url) {
 
 async function runCanvasFooterSmoke(browser, url) {
   const viewports = [
+    { name: "micro-mobile", width: 320, height: 568 },
     { name: "mobile", width: 390, height: 844 },
+    { name: "tablet", width: 768, height: 720 },
+    { name: "wide-tablet", width: 1024, height: 768 },
     { name: "desktop", width: 1280, height: 840 },
     { name: "uhd", width: 1920, height: 1080 },
   ];
@@ -7282,6 +7285,7 @@ async function runCanvasFooterSmoke(browser, url) {
         const footer = document.querySelector(".fdtd-status-strip");
         const frame = document.querySelector(".canvas-frame");
         const help = document.querySelector(".scientific-header-help__button");
+        const header = document.querySelector(".scientific-header");
         const author = footer?.querySelector(".status-strip-author");
         const links = Array.from(footer?.querySelectorAll("a") || []).map((link) => ({
           text: link.textContent.trim(),
@@ -7290,7 +7294,15 @@ async function runCanvasFooterSmoke(browser, url) {
         const footerRect = rect(footer);
         const frameRect = rect(frame);
         const helpRect = rect(help);
+        const headerRect = rect(header);
         const footerVisible = Boolean(footer && footerRect && footerRect.width > 0 && footerRect.height > 0 && getComputedStyle(footer).display !== "none");
+        const metadataItems = Array.from(footer?.querySelectorAll(".fdtd-status-metadata > *") || [])
+          .filter((item) => item.getClientRects().length > 0)
+          .map((item) => rect(item));
+        const metadataOverlap = metadataItems.some((item, index) => {
+          const next = metadataItems[index + 1];
+          return Boolean(item && next && item.right > next.left + 1);
+        });
         return {
           viewport: name,
           text: footer?.textContent.replace(/\s+/g, " ").trim() || "",
@@ -7300,6 +7312,7 @@ async function runCanvasFooterSmoke(browser, url) {
           help: helpRect,
           footerVisible,
           authorVisible: Boolean(author && author.getClientRects().length > 0),
+          metadataOverlap,
           withinViewport: Boolean(
             footerRect &&
               footerRect.left >= 0 &&
@@ -7308,6 +7321,7 @@ async function runCanvasFooterSmoke(browser, url) {
           ),
           belowCanvas: Boolean(footerRect && frameRect && footerRect.top >= frameRect.bottom - 1),
           helpAboveFooter: Boolean(footerRect && helpRect && helpRect.bottom <= footerRect.top - 2),
+          canvasTopGap: frameRect && headerRect ? frameRect.top - headerRect.bottom : null,
         };
       }, viewport.name));
     } finally {
@@ -7317,16 +7331,21 @@ async function runCanvasFooterSmoke(browser, url) {
 
   const failures = [];
   for (const state of states) {
-    const compact = state.viewport === "mobile";
+    const compact = state.viewport.endsWith("mobile");
+    const expectedMetadata = state.viewport === "tablet" ? ["Grid", "Step", "CFL"] : ["Grid", "Step", "CFL", "Boundary"];
     if (compact && state.footerVisible) failures.push(`${state.viewport}: empty status bar remains visible above the workflow navigation`);
     if (!compact && !state.footerVisible) failures.push(`${state.viewport}: simulation status bar is not visible`);
-    if (!compact && !["Grid", "Step", "CFL", "Boundary"].every((label) => state.text.includes(label))) {
+    if (!compact && !expectedMetadata.every((label) => state.text.includes(label))) {
       failures.push(`${state.viewport}: status bar is missing operational metadata`);
     }
     if (state.links.length > 0) failures.push(`${state.viewport}: status bar contains unrelated external links`);
     if (!compact && !state.withinViewport) failures.push(`${state.viewport}: footer is not fully visible`);
     if (!compact && !state.belowCanvas) failures.push(`${state.viewport}: footer is not below the canvas frame`);
     if (!compact && !state.helpAboveFooter) failures.push(`${state.viewport}: help button overlaps the footer`);
+    if (!compact && state.metadataOverlap) failures.push(`${state.viewport}: status metadata overlaps`);
+    if (state.viewport === "micro-mobile" && (state.canvasTopGap === null || state.canvasTopGap > 16)) {
+      failures.push(`micro-mobile: canvas starts ${state.canvasTopGap}px below the header`);
+    }
   }
   return {
     id: "canvas_footer_links",
@@ -8791,8 +8810,12 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
       const menuBounds = document.querySelector("#brushMenu")?.getBoundingClientRect();
       const colorbarBounds = document.querySelector(".colorbar")?.getBoundingClientRect();
       const helpBounds = document.querySelector(".scientific-header-help__button")?.getBoundingClientRect();
+      const host = document.getElementById("contextInspectorHost");
+      const brushMenu = document.getElementById("brushMenu");
       return {
         appState: document.querySelector(".app-shell")?.classList.contains("contextual-inspector-open"),
+        hostUsable: Boolean(host && !host.hidden && !host.inert && host.getAttribute("aria-hidden") === "false"),
+        brushMenuVisible: Boolean(brushMenu && !brushMenu.hidden && brushMenu.getClientRects().length > 0),
         canvasMenuOverlap: intersectionArea(canvasBounds, menuBounds),
         colorbarMenuOverlap: intersectionArea(colorbarBounds, menuBounds),
         helpMenuOverlap: intersectionArea(helpBounds, menuBounds),
@@ -8805,7 +8828,14 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
     inspectorWidths.monitor = await page.locator("#contextInspectorHost").evaluate((host) => host.getBoundingClientRect().width);
     const inspectorWidthValues = Object.values(inspectorWidths);
     await page.keyboard.press("Escape");
-    const classClosed = await page.locator(".app-shell").evaluate((shell) => !shell.classList.contains("contextual-inspector-open"));
+    const closedState = await page.evaluate(() => {
+      const shell = document.querySelector(".app-shell");
+      const host = document.getElementById("contextInspectorHost");
+      return {
+        classClosed: !shell?.classList.contains("contextual-inspector-open"),
+        hostClosed: Boolean(host?.hidden && host?.inert && host?.getAttribute("aria-hidden") === "true"),
+      };
+    });
     await page.locator('.mobile-layer-button[data-mobile-layer="scenes"]').click();
     await page.waitForTimeout(80);
     const primaryPanel = await page.evaluate(() => {
@@ -8824,13 +8854,14 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
     });
     await page.locator("#controlDrawerCloseBtn").click();
     if (!status.appState) failures.push("desktop contextual inspector state was not applied");
+    if (!status.hostUsable || !status.brushMenuVisible) failures.push("React left the contextual inspector hidden or inert after opening it");
     if (status.canvasMenuOverlap > 1) failures.push("desktop contextual inspector covers the simulation canvas");
     if (status.colorbarMenuOverlap > 1) failures.push("desktop contextual inspector covers the colorbar");
     if (status.helpMenuOverlap > 1) failures.push("desktop contextual inspector covers the help control");
     if (Math.max(...inspectorWidthValues) - Math.min(...inspectorWidthValues) > 1) {
       failures.push(`desktop contextual inspector changes width: ${JSON.stringify(inspectorWidths)}`);
     }
-    if (!classClosed) failures.push("contextual inspector layout state remained after Escape");
+    if (!closedState.classClosed || !closedState.hostClosed) failures.push("contextual inspector layout state remained after Escape");
     if (!primaryPanel.open || primaryPanel.position !== "static") failures.push("desktop workflow menu is not integrated into the workspace grid");
     if (!primaryPanel.separateFromCanvas || primaryPanel.shadow !== "none" || primaryPanel.backdropDisplay !== "none") {
       failures.push("desktop workflow menu still behaves like a floating drawer");
@@ -8841,7 +8872,7 @@ async function runContextualInspectorLayoutSmoke(browser, url) {
       priority: "P1",
       ...status,
       inspectorWidths,
-      classClosed,
+      ...closedState,
       primaryPanel,
       passed: failures.length === 0,
       failures,

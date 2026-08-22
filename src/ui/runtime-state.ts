@@ -10,7 +10,9 @@ type RuntimeWindow = Window & {
 
 let version = 0;
 let runtimeReady = false;
+let activeContextMenuId: string | null = null;
 const listeners = new Set<() => void>();
+const pendingActions: Array<{ name: string; detail: unknown }> = [];
 
 function notify() {
   version += 1;
@@ -43,6 +45,14 @@ export function useFdtdRuntimeReady() {
   return useSyncExternalStore(subscribe, () => runtimeReady, () => false);
 }
 
+export function useFdtdContextMenuOpen(menuId?: string) {
+  return useSyncExternalStore(
+    subscribe,
+    () => menuId ? activeContextMenuId === menuId : activeContextMenuId !== null,
+    () => false,
+  );
+}
+
 export function useFdtdRuntimeSelector<T>(selector: (state: FdtdRuntimeState | null) => T) {
   return useSyncExternalStore(
     subscribe,
@@ -52,11 +62,22 @@ export function useFdtdRuntimeSelector<T>(selector: (state: FdtdRuntimeState | n
 }
 
 export function requestRuntimeAction<T>(name: string, detail?: T) {
+  if (!runtimeReady) {
+    pendingActions.push({ name, detail });
+    return;
+  }
   window.dispatchEvent(new CustomEvent(`fdtd:${name}`, { detail }));
 }
 
 (window as RuntimeWindow).FdtdReactUI = Object.freeze({ notify });
 window.addEventListener("fdtd:runtime-ready", () => {
   runtimeReady = true;
+  pendingActions.splice(0).forEach(({ name, detail }) => {
+    window.dispatchEvent(new CustomEvent(`fdtd:${name}`, { detail }));
+  });
+  notify();
+});
+window.addEventListener("fdtd:context-inspector-state", (event) => {
+  activeContextMenuId = (event as CustomEvent<{ activeMenuId?: string | null }>).detail?.activeMenuId ?? null;
   notify();
 });

@@ -1,7 +1,6 @@
 import { memo, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CarbonButton } from "./carbon-primitives";
-import { BoundaryEditor, BrushEditor, CanvasContextMenu, MonitorEditor, SourceEditor } from "./context-editors";
 import { CanvasVisualControls } from "./visual-controls";
 import { useFdtdRuntimeState } from "./runtime-state";
 
@@ -439,11 +438,6 @@ const CanvasStageContents = memo(function CanvasStageContents({ canvasMode }: { 
                 </div>
               </section>
             </>, document.body)}
-            <CanvasContextMenu />
-            <SourceEditor />
-            <MonitorEditor />
-            <BrushEditor />
-            <BoundaryEditor />
           </div>
         </div>
   );

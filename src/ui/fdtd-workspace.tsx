@@ -4,11 +4,12 @@ import { ApplicationHeader, SessionRecovery, StatusFooter, WorkflowNavigation, u
 import { CarbonButton } from "./carbon-primitives";
 import { CanvasStage } from "./canvas-stage";
 import { ControlPanel } from "./control-panel";
-import { requestRuntimeAction } from "./runtime-state";
+import { BoundaryEditor, BrushEditor, CanvasContextMenu, MonitorEditor, SourceEditor } from "./context-editors";
+import { requestRuntimeAction, useFdtdContextMenuOpen } from "./runtime-state";
 
 export function FdtdWorkspace() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [contextInspectorOpen, setContextInspectorOpen] = useState(false);
+  const contextInspectorOpen = useFdtdContextMenuOpen();
   const autosave = useFdtdAutosave();
   useEffect(() => {
     const syncDrawer = (event: Event) => setDrawerOpen(Boolean((event as CustomEvent<{ open?: unknown }>).detail?.open));
@@ -19,13 +20,6 @@ export function FdtdWorkspace() {
       document.body.classList.remove("controls-drawer-open");
     };
   }, [drawerOpen]);
-  useEffect(() => {
-    const syncContextInspector = (event: Event) => {
-      setContextInspectorOpen(Boolean((event as CustomEvent<{ open?: unknown }>).detail?.open));
-    };
-    window.addEventListener("fdtd:context-inspector-state", syncContextInspector);
-    return () => window.removeEventListener("fdtd:context-inspector-state", syncContextInspector);
-  }, []);
   return (
     <ScientificAppShell
       className={`app-shell${drawerOpen ? " controls-open" : ""}${contextInspectorOpen ? " contextual-inspector-open" : ""}`}
@@ -34,14 +28,22 @@ export function FdtdWorkspace() {
       navigation={<WorkflowNavigation />}
       recovery={<SessionRecovery autosave={autosave} />}
       panel={<ControlPanel />}
-      inspector={<aside
-        id="contextInspectorHost"
-        className="context-inspector-host"
-        aria-label="Canvas properties"
-        aria-hidden={contextInspectorOpen ? "false" : "true"}
-        inert={!contextInspectorOpen}
-        hidden={!contextInspectorOpen}
-      />}
+      inspector={
+        <aside
+          id="contextInspectorHost"
+          className="context-inspector-host"
+          aria-label="Canvas properties"
+          aria-hidden={contextInspectorOpen ? "false" : "true"}
+          inert={!contextInspectorOpen}
+          hidden={!contextInspectorOpen}
+        >
+          <CanvasContextMenu />
+          <SourceEditor />
+          <MonitorEditor />
+          <BrushEditor />
+          <BoundaryEditor />
+        </aside>
+      }
       statusBar={<StatusFooter autosave={autosave} />}
     >
         <section

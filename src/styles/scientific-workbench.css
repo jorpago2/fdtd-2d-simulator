@@ -186,6 +186,38 @@ fieldset {
   color: var(--cds-text-primary);
 }
 
+@media (min-width: 42rem) and (max-width: 65.99rem) {
+  .fdtd-status-metadata > :first-child {
+    display: none;
+  }
+
+  .fdtd-status-metadata > span {
+    padding-inline: 0.5rem;
+  }
+}
+
+@media (min-width: 42rem) and (max-width: 50rem) {
+  .fdtd-status-metadata > span:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 41.99rem) {
+  .fdtd-status-strip {
+    display: none;
+  }
+}
+
+@media (max-width: 23.99rem) {
+  .stage {
+    padding-top: 0.5rem;
+  }
+
+  .stage .canvas-frame {
+    align-self: start;
+  }
+}
+
 .canvas-frame {
   position: relative;
   width: min(100%, var(--sim-frame-width-limit, 100%));

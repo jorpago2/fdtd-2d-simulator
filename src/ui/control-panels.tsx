@@ -362,7 +362,7 @@ export function ResultsPanel({ active }: { active: boolean }) {
                     <CarbonButton id="sweepExportBtn" className="text-button" type="button" disabled>Export CSV</CarbonButton>
                   </div>
                   <p id="sweepStatus" className="sweep-status" role="status" aria-live="polite">No sweep yet.</p>
-                  <canvas id="sweepChart" className="sweep-chart" width="420" height="180" aria-label="R and T sweep chart"></canvas>
+                  <canvas id="sweepChart" className="sweep-chart" width="420" height="180" role="img" tabIndex={0} aria-label="R and T sweep chart" aria-describedby="sweepChartReadout"></canvas>
                   <div className="chart-footer">
                     <div className="chart-legend" aria-hidden="true">
                       <span><i className="legend-swatch reflectance"></i>R</span>

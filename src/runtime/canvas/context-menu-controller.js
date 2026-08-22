@@ -27,6 +27,7 @@
       brushMenuMode: "brush",
       boundaryMenuSide: "top",
       restoreFocusTarget: null,
+      activeMenuId: null,
     };
 
     function contextMenuElements() {
@@ -34,7 +35,7 @@
     }
 
     function anyContextMenuOpen() {
-      return contextMenuElements().some((menu) => !menu.hidden);
+      return Boolean(state.activeMenuId);
     }
 
     function mountContextMenus() {
@@ -46,14 +47,15 @@
         menu.style.removeProperty("top");
         menu.style.removeProperty("max-height");
         menu.style.removeProperty("overflow-y");
-        host.appendChild(menu);
       });
     }
 
     function syncContextualInspectorState() {
       const open = anyContextMenuOpen();
       if (typeof global.dispatchEvent === "function" && typeof global.CustomEvent === "function") {
-        global.dispatchEvent(new global.CustomEvent("fdtd:context-inspector-state", { detail: { open } }));
+        global.dispatchEvent(new global.CustomEvent("fdtd:context-inspector-state", {
+          detail: { open, activeMenuId: state.activeMenuId },
+        }));
       }
     }
 
@@ -105,16 +107,16 @@
 
     function showMenu(menu) {
       onInspectorOpen();
-      menu.hidden = false;
+      state.activeMenuId = menu.id;
       resetMenuScroll(menu);
       syncContextualInspectorState();
       focusFirstMenuControl(menu);
     }
 
     function closeMenu(menu, cleanup) {
-      if (!menu || menu.hidden) return true;
+      if (!menu || state.activeMenuId !== menu.id) return true;
       if (!validateEditScope(menu)) return false;
-      menu.hidden = true;
+      state.activeMenuId = null;
       cleanup?.();
       state.canvasContextPoint = null;
       syncContextualInspectorState();

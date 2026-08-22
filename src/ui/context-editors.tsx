@@ -3,7 +3,7 @@ import { CarbonButton, CarbonField, CarbonInput, CarbonSelect } from "./carbon-p
 import { CarbonDisclosure } from "./carbon-disclosures";
 import { ScientificSlider } from "./scientific-slider-control";
 import { BoundaryConditionSwitcher } from "./visual-controls";
-import { runtimeState, useFdtdRuntimeSelector } from "./runtime-state";
+import { runtimeState, useFdtdContextMenuOpen, useFdtdRuntimeSelector } from "./runtime-state";
 
 type SourceEditorSnapshot = {
   source: {
@@ -67,6 +67,7 @@ function MaterialWarning() {
 
 
 export function CanvasContextMenu() {
+  const open = useFdtdContextMenuOpen("canvasContextMenu");
   return (
             <div
               id="canvasContextMenu"
@@ -74,7 +75,7 @@ export function CanvasContextMenu() {
               role="region"
               aria-labelledby="canvasContextMenuTitle"
               aria-describedby="canvasContextMenuHint"
-              hidden
+              hidden={!open}
             >
               <div className="source-menu-header">
                 <div>
@@ -95,6 +96,7 @@ export function CanvasContextMenu() {
 
 
 export function SourceEditor() {
+  const open = useFdtdContextMenuOpen("sourceMenu");
   const [editor, setEditor] = useEditorSnapshot<SourceEditorSnapshot>("fdtd:source-editor", {
     source: { type: "sine", shape: "point", xLambda: 1.2, yLambda: 3, multipoleOrder: 3, multipolePhase: "cos" },
     mode: "add",
@@ -118,7 +120,7 @@ export function SourceEditor() {
               role="region"
               aria-labelledby="sourceMenuTitle"
               aria-describedby="sourceMenuHint"
-              hidden
+              hidden={!open}
             >
               <div className="source-menu-header">
                 <div>
@@ -223,6 +225,7 @@ export function SourceEditor() {
 
 
 export function MonitorEditor() {
+  const open = useFdtdContextMenuOpen("monitorMenu");
   const [editor, setEditor] = useEditorSnapshot<MonitorEditorSnapshot>("fdtd:monitor-editor", {
     monitor: { quantity: "scalar", xLambda: 4.5, yLambda: 3 },
     mode: "add",
@@ -243,7 +246,7 @@ export function MonitorEditor() {
               role="region"
               aria-labelledby="monitorMenuTitle"
               aria-describedby="monitorMenuHint"
-              hidden
+              hidden={!open}
             >
               <div className="source-menu-header">
                 <div>
@@ -296,6 +299,7 @@ export function MonitorEditor() {
 
 
 export function BrushEditor() {
+  const open = useFdtdContextMenuOpen("brushMenu");
   useFdtdRuntimeSelector((current) => current ? [
     current.brush, current.brushTool, current.brushGeometry,
     current.geometryWidthLambda, current.geometryHeightLambda, current.geometryRadiusLambda, current.geometryInnerRadiusLambda,
@@ -336,7 +340,7 @@ export function BrushEditor() {
               role="region"
               aria-labelledby="brushMenuTitle"
               aria-describedby="brushMenuHint"
-              hidden
+              hidden={!open}
             >
               <div className="source-menu-header">
                 <div>
@@ -652,6 +656,7 @@ export function BrushEditor() {
 
 
 export function BoundaryEditor() {
+  const open = useFdtdContextMenuOpen("boundaryMenu");
   const [hint, setHint] = useState("CPML region");
   useEffect(() => {
     const sync = (event: Event) => {
@@ -668,7 +673,7 @@ export function BoundaryEditor() {
               role="region"
               aria-labelledby="boundaryMenuTitle"
               aria-describedby="boundaryMenuHint"
-              hidden
+              hidden={!open}
             >
               <div className="source-menu-header">
                 <div>
