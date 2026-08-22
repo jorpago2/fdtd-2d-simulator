@@ -1161,6 +1161,7 @@ function updateStats() {
     reflectedPower: powerBalance?.reflectedPower ?? sim.diagnosticReflectedPower ?? 0,
     reflectance: diagnosticReflectance,
     samples: sim.diagnosticSamples || 0,
+    step: sim.time,
     transmittedPower: powerBalance?.transmittedPower ?? sim.diagnosticTransmittedPower ?? 0,
     transmittance: diagnosticTransmittance,
     maxwellCheckEnabled: state.maxwellCheckEnabled,

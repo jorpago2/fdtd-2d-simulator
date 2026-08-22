@@ -145,6 +145,7 @@
       reflectedPower,
       reflectance,
       samples,
+      step = 0,
       transmittedPower,
       transmittance,
       engineText,
@@ -164,6 +165,8 @@
       global.dispatchEvent?.(new CustomEvent("fdtd:results-snapshot", {
         detail: {
           angle: angleText,
+          balanceMethod: balanceMethod || "line monitors",
+          balanceReady: monitorDataReady,
           balance: balanceText,
           diagnosticsEnabled,
           engine: engineText,
@@ -171,6 +174,8 @@
           incidentPower: incidentPowerText,
           reflectedPower: reflectedPowerText,
           reflectance: reflectanceText,
+          samples: Number(samples) || 0,
+          step: Number(step) || 0,
           transmittedPower: transmittedPowerText,
           transmittance: transmittanceText,
         },

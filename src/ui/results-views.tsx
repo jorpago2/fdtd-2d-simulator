@@ -174,11 +174,15 @@ export function CustomMonitorResults() {
 
 type LineMonitorSnapshot = {
   angle?: string;
+  balanceMethod?: string;
+  balanceReady?: boolean;
   incidentPower?: string;
   reflectedPower?: string;
   transmittedPower?: string;
   reflectance?: string;
   transmittance?: string;
+  samples?: number;
+  step?: number;
 };
 
 export function LineMonitorResults() {
@@ -186,11 +190,11 @@ export function LineMonitorResults() {
   const enabled = useFdtdRuntimeState()?.diagnosticsEnabled ?? false;
   const metrics = [
     ["θₖ", snapshot.angle || "0°"],
-    ["Pinc", snapshot.incidentPower || "—"],
-    ["Pref", snapshot.reflectedPower || "—"],
-    ["Ptrn", snapshot.transmittedPower || "—"],
-    ["Rest", snapshot.reflectance || "—"],
-    ["Test", snapshot.transmittance || "—"],
+    ["Pinc (normalized)", snapshot.incidentPower || "—"],
+    ["Pref (normalized)", snapshot.reflectedPower || "—"],
+    ["Ptrn (normalized)", snapshot.transmittedPower || "—"],
+    ["R (fraction)", snapshot.reflectance || "—"],
+    ["T (fraction)", snapshot.transmittance || "—"],
   ];
   return (
     <div className="results-detail-body">
@@ -204,6 +208,7 @@ export function LineMonitorResults() {
       <div className="diagnostics-grid">
         {metrics.map(([label, value]) => <div className="diagnostic-metric" key={label}><span>{label}</span><output>{value}</output></div>)}
       </div>
+      <p className="monitor-evidence-note">Step {(snapshot.step ?? 0).toLocaleString()} · {snapshot.samples ?? 0} samples · {snapshot.balanceReady ? "stable estimator" : "collecting samples"} · {snapshot.balanceMethod || "line monitors"}.</p>
       <p className="results-insight-note">Steady-state powers use a discrete transverse line integral and single-direction wave separation; Floquet orders use a transverse-line mean-field DFT. For bends, multimode guides, or multiple sources, prefer the scene-specific port observable.</p>
       <Button id="diagnosticsResetBtn" kind="ghost" size="sm" type="button">Reset monitors</Button>
     </div>

@@ -408,7 +408,11 @@ export function FdtdRunOutcome() {
     reflectance: "—",
     transmittance: "—",
     balance: "—",
+    balanceMethod: "line monitors",
+    balanceReady: false,
     angle: "0°",
+    samples: 0,
+    step: 0,
     insight: "Run the simulation to collect monitor samples.",
   });
 
@@ -442,36 +446,39 @@ export function FdtdRunOutcome() {
     onReveal: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "results" } })),
   });
 
-  return <ScientificOutcomeSummary
-    className="fdtd-run-outcome"
-    title="Monitor outcome"
-    headingRef={outcomeHeading}
-    status={{
-      state: outcomeState,
-      label: simulationStatus.state === "running"
-        ? "Collecting field samples"
-        : simulationStatus.state === "failed"
-          ? simulationStatus.label
-          : hasMonitorResult
-            ? "Monitor result current"
-            : "No monitor result",
-    }}
-    summary={resultSnapshot.insight}
-    metrics={hasMonitorResult ? [
-      { id: "reflectance", label: "Estimated reflectance", value: resultSnapshot.reflectance },
-      { id: "transmittance", label: "Estimated transmittance", value: resultSnapshot.transmittance },
-      { id: "balance", label: "Power-balance residual", value: resultSnapshot.balance },
-      { id: "angle", label: "Propagation angle", value: resultSnapshot.angle },
-    ] : []}
-    actions={hasMonitorResult ? [
-      { id: "save-field", label: "Save field PNG", emphasis: "primary", disabled: !runtimeReady, onClick: () => requestRuntimeAction("save-png") },
-      { id: "review-validation", label: "Review validation", emphasis: "secondary", collapseAt: "sm", onClick: () => document.getElementById("sceneObservableResults")?.scrollIntoView({ behavior: "smooth", block: "start" }) },
-      { id: "reset-field", label: "Reset field", emphasis: "tertiary", disabled: !runtimeReady, overflowOnly: true, onClick: () => requestRuntimeAction("reset-simulation") },
-    ] : [
-      { id: "start-simulation", label: "Start simulation", emphasis: "primary", disabled: !runtimeReady || simulationStatus.state === "running", onClick: () => requestRuntimeAction("toggle-running") },
-      { id: "review-numerics", label: "Review numerics", emphasis: "secondary", collapseAt: "sm", onClick: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "config" } })) },
-    ]}
-  />;
+  return <div className="fdtd-outcome-group">
+    <ScientificOutcomeSummary
+      className="fdtd-run-outcome"
+      title="Monitor outcome"
+      headingRef={outcomeHeading}
+      status={{
+        state: outcomeState,
+        label: simulationStatus.state === "running"
+          ? "Collecting field samples"
+          : simulationStatus.state === "failed"
+            ? simulationStatus.label
+            : hasMonitorResult
+              ? `Monitor result current · ${resultSnapshot.samples} samples`
+              : "No monitor result",
+      }}
+      summary={resultSnapshot.insight}
+      metrics={hasMonitorResult ? [
+        { id: "reflectance", label: "Estimated reflectance (fraction)", value: resultSnapshot.reflectance },
+        { id: "transmittance", label: "Estimated transmittance (fraction)", value: resultSnapshot.transmittance },
+        { id: "balance", label: "Power-balance residual (fraction)", value: resultSnapshot.balance },
+        { id: "angle", label: "Propagation angle", value: resultSnapshot.angle },
+      ] : []}
+      actions={hasMonitorResult ? [
+        { id: "save-field", label: "Save field PNG", emphasis: "primary", disabled: !runtimeReady, onClick: () => requestRuntimeAction("save-png") },
+        { id: "review-validation", label: "Review validation", emphasis: "secondary", collapseAt: "sm", onClick: () => document.getElementById("sceneObservableResults")?.scrollIntoView({ behavior: "smooth", block: "start" }) },
+        { id: "reset-field", label: "Reset field", emphasis: "tertiary", disabled: !runtimeReady, overflowOnly: true, onClick: () => requestRuntimeAction("reset-simulation") },
+      ] : [
+        { id: "start-simulation", label: "Start simulation", emphasis: "primary", disabled: !runtimeReady || simulationStatus.state === "running", onClick: () => requestRuntimeAction("toggle-running") },
+        { id: "review-numerics", label: "Review numerics", emphasis: "secondary", collapseAt: "sm", onClick: () => window.dispatchEvent(new CustomEvent("fdtd:workflow-change", { detail: { layer: "config" } })) },
+      ]}
+    />
+    {hasMonitorResult && <p className="fdtd-result-context">Step {resultSnapshot.step.toLocaleString()} · {resultSnapshot.samples} samples · estimator: {resultSnapshot.balanceMethod}. R/T are dimensionless; power readouts use the simulator's normalized monitor units.</p>}
+  </div>;
 }
 
 export function NumericalPreflight() {

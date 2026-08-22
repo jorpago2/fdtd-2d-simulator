@@ -831,6 +831,26 @@ fieldset {
   container-type: inline-size;
 }
 
+.fdtd-outcome-group {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.fdtd-result-context,
+.monitor-evidence-note {
+  margin: 0;
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-helper-text-01-font-size, 0.75rem);
+  line-height: var(--cds-helper-text-01-line-height, 1.33333);
+  letter-spacing: var(--cds-helper-text-01-letter-spacing, 0.32px);
+}
+
+.fdtd-result-context {
+  padding-inline: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .control-panel .scientific-evidence-summary.fdtd-preflight[data-density="compact"] > .scientific-evidence-summary__checks {
   /* The scoped selector outranks scientific-ui's late compact grid rule. */
   grid-template-columns: minmax(0, 1fr);
@@ -1568,18 +1588,18 @@ fieldset {
   }
 }
 
-@media (min-width: 60rem) and (max-width: 65.99rem) {
-  .app-shell.controls-open .canvas-frame.is-surface-orbit-available > .colorbar {
-    right: 10rem;
+/* The FDTD header has a wider action footprint than the other labs. Keep the
+   shared shell geometry intact while giving its context track enough room at
+   the first desktop breakpoint. */
+@media (min-width: 78rem) and (max-width: 84.99rem) {
+  html .app-shell.app-shell > header {
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, 34rem) max-content;
   }
 }
 
-@media (min-width: 78rem) and (max-width: 84.99rem) {
-  body header.scientific-header.scientific-app-header {
-    grid-template-columns:
-      minmax(var(--scientific-ui-rail-inline-size), 1fr)
-      minmax(0, 34rem)
-      minmax(24.0625rem, 1fr);
+@media (min-width: 60rem) and (max-width: 65.99rem) {
+  .app-shell.controls-open .canvas-frame.is-surface-orbit-available > .colorbar {
+    right: 10rem;
   }
 }
 
@@ -1599,8 +1619,7 @@ fieldset {
   .header-simulation-controls .canvas-reset-button,
   .header-simulation-controls .header-step-button,
   .header-simulation-controls .header-save-button,
-  .header-simulation-controls .interaction-toggle,
-  .scientific-header.scientific-app-header .scientific-header__theme {
+  .header-simulation-controls .interaction-toggle {
     display: none;
   }
 
@@ -1608,6 +1627,10 @@ fieldset {
     display: flex;
     inline-size: var(--scientific-ui-header-block-size);
     block-size: var(--scientific-ui-header-block-size);
+  }
+
+  .app-shell > header .scientific-theme-toggle {
+    display: none;
   }
 
   .fdtd-header-overflow-item,
