@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
+import { Button } from "@carbon/react";
 import { ScientificAppShell } from "@jorpago2/scientific-ui";
 import { ApplicationHeader, SessionRecovery, StatusFooter, WorkflowNavigation, useFdtdAutosave } from "./carbon-shell";
 import { CarbonButton } from "./carbon-primitives";
 import { CanvasStage } from "./canvas-stage";
 import { ControlPanel } from "./control-panel";
 import { BoundaryEditor, BrushEditor, CanvasContextMenu, MonitorEditor, SourceEditor } from "./context-editors";
-import { requestRuntimeAction, useFdtdContextMenuOpen } from "./runtime-state";
+import { requestRuntimeAction, useFdtdContextMenuOpen, useFdtdRuntimeError } from "./runtime-state";
 
 export function FdtdWorkspace() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const contextInspectorOpen = useFdtdContextMenuOpen();
+  const runtimeError = useFdtdRuntimeError();
   const autosave = useFdtdAutosave();
   useEffect(() => {
     const syncDrawer = (event: Event) => setDrawerOpen(Boolean((event as CustomEvent<{ open?: unknown }>).detail?.open));
@@ -55,6 +57,11 @@ export function FdtdWorkspace() {
           <h1 id="simulator-title" className="scientific-visually-hidden">
             EM Wave Simulator — 2D FDTD laboratory
           </h1>
+          {runtimeError && <div className="fdtd-runtime-error" role="alert" aria-live="assertive">
+            <strong>Simulation runtime unavailable</strong>
+            <span>{runtimeError}</span>
+            <Button kind="primary" size="sm" type="button" onClick={() => window.location.reload()}>Reload application</Button>
+          </div>}
           <CanvasStage />
           <CarbonButton
             id="controlDrawerBackdrop"

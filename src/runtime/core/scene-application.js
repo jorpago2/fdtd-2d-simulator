@@ -95,45 +95,47 @@
     const updateStats = requireFunction(dependencies.updateStats, "updateStats");
     const drawSweepChart = requireFunction(dependencies.drawSweepChart, "drawSweepChart");
     const applyTheme = typeof dependencies.applyTheme === "function" ? dependencies.applyTheme : null;
+    const validateSceneSnapshot = typeof dependencies.validateSceneSnapshot === "function"
+      ? dependencies.validateSceneSnapshot
+      : (snapshot) => isPlainObject(snapshot)
+        && snapshot.kind === "fdtd-2d-scene"
+        && isPlainObject(snapshot.grid)
+        && isPlainObject(snapshot.view)
+        && isPlainObject(snapshot.state);
+    const snapshotMaterials = typeof dependencies.snapshotMaterials === "function" ? dependencies.snapshotMaterials : null;
 
-    function applySceneState(snapshot) {
-      if (!isPlainObject(snapshot)) {
-        throw new Error("Invalid scene JSON.");
+    function captureCurrentScene() {
+      return {
+        gridNx: sim.nx,
+        gridNy: sim.ny,
+        materials: snapshotMaterials ? snapshotMaterials() : null,
+        state: clonePlainData(state),
+        theme: documentElement?.dataset?.theme,
+        view: { x: sim.viewX, y: sim.viewY, zoom: sim.viewZoom },
+      };
+    }
+
+    function restoreCurrentScene(previous) {
+      const currentKeys = Object.keys(state);
+      currentKeys.forEach((key) => delete state[key]);
+      Object.assign(state, clonePlainData(previous.state));
+      if (applyTheme && previous.theme) applyTheme(previous.theme, false);
+      else if (documentElement && previous.theme) documentElement.dataset.theme = previous.theme;
+
+      if (Number.isInteger(previous.gridNx) && Number.isInteger(previous.gridNy)) sim.resize(previous.gridNx, previous.gridNy);
+      if (previous.materials && Array.isArray(previous.materials)) {
+        sim.clearMaterials(false);
+        previous.materials.forEach((cell) => {
+          sim.writeMaterialCell(clampInt(cell.x, 1, sim.nx - 2), clampInt(cell.y, 1, sim.ny - 2), cell);
+        });
+        sim.refreshCpmlMaterialContinuation(false);
       }
-
-      disableResponsiveGridOrientation();
-
-      const importedState = isPlainObject(snapshot.state) ? snapshot.state : {};
-      const grid = isPlainObject(snapshot.grid) ? snapshot.grid : {};
-      assignSerializableImportedState({
-        clonePlainData,
-        importedState,
-        serializableStateKeys,
-        state,
-      });
-
-      state.gridNx = clampInt(grid.nx ?? importedState.gridNx ?? state.gridNx, 80, maxGrid.nx);
-      state.gridNy = clampInt(grid.ny ?? importedState.gridNy ?? state.gridNy, 60, maxGrid.ny);
-      normalizeImportedStateValues();
-      if (applyTheme) {
-        applyTheme(state.theme, false);
-      } else if (documentElement) {
-        documentElement.dataset.theme = state.theme;
+      if (previous.view) {
+        sim.viewZoom = clampNumber(Number(previous.view.zoom) || 1, 1, sim.maxViewZoom());
+        sim.viewX = Number(previous.view.x) || 0;
+        sim.viewY = Number(previous.view.y) || 0;
+        sim.clampView();
       }
-      clearMaterialSelection(false);
-      clearCanvasHover(false);
-      closeContextMenus();
-      state.sweepResults = [];
-      state.sweepRunning = false;
-      state.sweepCancelRequested = false;
-      state.retiringSources = [];
-
-      sim.resize(state.gridNx, state.gridNy);
-      sanitizeImportedSources(importedState);
-      sanitizeImportedMonitors(importedState);
-      applyMaterialPayload({ clampInt, sim, snapshot, state });
-      restoreView({ clampNumber, sim, snapshot });
-
       sim.resetFields();
       sim.resetDiagnostics();
       sim.measure();
@@ -141,6 +143,63 @@
       updateStats();
       drawSweepChart();
       sim.render();
+    }
+
+    function applySceneState(snapshot) {
+      if (!validateSceneSnapshot(snapshot)) {
+        throw new Error("Invalid scene JSON: required scene, grid, view, state or material fields are missing");
+      }
+
+      const previous = captureCurrentScene();
+      try {
+        disableResponsiveGridOrientation();
+
+        const importedState = snapshot.state;
+        const grid = snapshot.grid;
+        assignSerializableImportedState({
+          clonePlainData,
+          importedState,
+          serializableStateKeys,
+          state,
+        });
+
+        state.gridNx = clampInt(grid.nx ?? importedState.gridNx ?? state.gridNx, 80, maxGrid.nx);
+        state.gridNy = clampInt(grid.ny ?? importedState.gridNy ?? state.gridNy, 60, maxGrid.ny);
+        normalizeImportedStateValues();
+        if (applyTheme) {
+          applyTheme(state.theme, false);
+        } else if (documentElement) {
+          documentElement.dataset.theme = state.theme;
+        }
+        clearMaterialSelection(false);
+        clearCanvasHover(false);
+        closeContextMenus();
+        state.sweepResults = [];
+        state.sweepRunning = false;
+        state.sweepCancelRequested = false;
+        state.retiringSources = [];
+
+        sim.resize(state.gridNx, state.gridNy);
+        sanitizeImportedSources(importedState);
+        sanitizeImportedMonitors(importedState);
+        applyMaterialPayload({ clampInt, sim, snapshot, state });
+        restoreView({ clampNumber, sim, snapshot });
+
+        sim.resetFields();
+        sim.resetDiagnostics();
+        sim.measure();
+        updateControlText();
+        updateStats();
+        drawSweepChart();
+        sim.render();
+      } catch (error) {
+        try {
+          restoreCurrentScene(previous);
+        } catch (restoreError) {
+          global.console?.error?.("Unable to restore the previous FDTD scene after import failure.", restoreError);
+        }
+        throw error;
+      }
     }
 
     return Object.freeze({ applySceneState });

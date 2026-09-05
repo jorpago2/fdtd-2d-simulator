@@ -158,12 +158,14 @@
     }
 
     function applyDomSnapshot(snapshot) {
+      const compact = typeof windowRef.matchMedia === "function" && windowRef.matchMedia("(max-width: 47.99rem)").matches;
       const signature = [
         snapshot.titleHtml,
         snapshot.maxText,
         snapshot.midText,
         snapshot.minText,
         snapshot.gradient,
+        compact ? "compact" : "full",
         snapshot.epsilonMap ? "material" : "field",
       ].join("|");
 
@@ -173,7 +175,7 @@
       el.colorbarMax.textContent = snapshot.maxText;
       el.colorbarMid.textContent = snapshot.midText;
       el.colorbarMin.textContent = snapshot.minText;
-      el.colorbarGradient.style.background = snapshot.gradient;
+      el.colorbarGradient.style.background = compact ? snapshot.gradient.replace("to bottom", "to right") : snapshot.gradient;
       el.colorbarGradient.classList.toggle("is-epsilon-map", snapshot.epsilonMap);
       currentSnapshot = {
         ...snapshot,

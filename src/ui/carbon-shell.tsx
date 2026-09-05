@@ -34,15 +34,38 @@ import {
   useScientificTheme,
   type ScientificStatusDescriptor,
 } from "@jorpago2/scientific-ui";
-import { requestRuntimeAction, runtimeState, runtimeStep, useFdtdRuntimeReady, useFdtdRuntimeSelector, useFdtdRuntimeState } from "./runtime-state";
+import { requestRuntimeAction, runtimeState, runtimeStep, useFdtdRuntimeError, useFdtdRuntimeReady, useFdtdRuntimeSelector, useFdtdRuntimeState } from "./runtime-state";
 
 type SimulationStatus = {
   state: "ready" | "running" | "modified" | "failed";
   label: string;
 };
 
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isSceneSnapshot(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value) && (value as { kind?: unknown }).kind === "fdtd-2d-scene";
+  if (!isPlainRecord(value) || value.kind !== "fdtd-2d-scene" || value.version !== 1) return false;
+  const grid = value.grid;
+  const view = value.view;
+  const state = value.state;
+  if (!isPlainRecord(grid)
+    || !isFiniteNumber(grid.nx) || !Number.isInteger(grid.nx) || grid.nx < 1
+    || !isFiniteNumber(grid.ny) || !Number.isInteger(grid.ny) || grid.ny < 1
+    || !isPlainRecord(view)
+    || !["x", "y", "zoom"].every((key) => isFiniteNumber(view[key]))
+    || !isPlainRecord(state)) return false;
+  if (value.materials === undefined) return true;
+  return Array.isArray(value.materials) && value.materials.every((cell) => isPlainRecord(cell)
+    && isFiniteNumber(cell.x) && Number.isInteger(cell.x) && cell.x >= 0
+    && isFiniteNumber(cell.y) && Number.isInteger(cell.y) && cell.y >= 0
+    && ["material", "eps", "loss", "epsY", "lossY", "mu", "muLoss", "muY", "muLossY"]
+      .every((key) => isFiniteNumber(cell[key])));
 }
 
 export function useFdtdAutosave() {
@@ -115,6 +138,7 @@ export function ApplicationHeader() {
   const simulationStatus = useSimulationStatus();
   const sceneTitle = useSceneTitle();
   const runtimeReady = useFdtdRuntimeReady();
+  const runtimeError = useFdtdRuntimeError();
 
   const openFullGuide = () => {
     const runtimeWindow = window as Window & {
@@ -130,8 +154,8 @@ export function ApplicationHeader() {
   };
 
   const status: ScientificStatusDescriptor = {
-    state: runtimeReady ? simulationStatus.state : "needs-input",
-    label: runtimeReady ? simulationStatus.label : "Loading",
+    state: runtimeError ? "failed" : runtimeReady ? simulationStatus.state : "needs-input",
+    label: runtimeError ? "Startup failed" : runtimeReady ? simulationStatus.label : "Loading",
   };
 
   return (

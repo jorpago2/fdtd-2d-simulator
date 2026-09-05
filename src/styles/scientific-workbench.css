@@ -128,6 +128,27 @@ fieldset {
   min-height: 0;
 }
 
+.fdtd-runtime-error {
+  display: grid;
+  gap: 0.5rem;
+  position: absolute;
+  z-index: 40;
+  top: 1rem;
+  right: 1rem;
+  left: 1rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+  border: 1px solid var(--cds-support-error);
+  color: var(--cds-text-primary);
+  background: var(--cds-layer-01);
+  box-shadow: 0 0.5rem 1.5rem var(--cds-shadow);
+}
+
+.fdtd-runtime-error > span {
+  color: var(--cds-text-secondary);
+}
+
 .nav-step {
   position: absolute;
   top: 0.5rem;
@@ -1693,11 +1714,31 @@ fieldset {
   .colorbar {
     top: 0.5rem;
     right: 0.5rem;
+    width: min(8rem, calc(100% - 1rem));
+    min-width: 0;
     padding: 0.5rem;
   }
 
+  .colorbar-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .colorbar-body {
-    height: 6rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: 0.5rem auto;
+    height: auto;
+    gap: 0.25rem;
+  }
+
+  .colorbar-gradient {
+    min-height: 0.5rem;
+  }
+
+  .colorbar-labels {
+    flex-direction: row;
+    align-items: center;
   }
 
   .surface-orbit-controls {

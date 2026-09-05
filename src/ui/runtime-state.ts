@@ -10,6 +10,7 @@ type RuntimeWindow = Window & {
 
 let version = 0;
 let runtimeReady = false;
+let runtimeError: string | null = null;
 let activeContextMenuId: string | null = null;
 const listeners = new Set<() => void>();
 const pendingActions: Array<{ name: string; detail: unknown }> = [];
@@ -45,6 +46,17 @@ export function useFdtdRuntimeReady() {
   return useSyncExternalStore(subscribe, () => runtimeReady, () => false);
 }
 
+export function useFdtdRuntimeError() {
+  return useSyncExternalStore(subscribe, () => runtimeError, () => null);
+}
+
+export function reportFdtdRuntimeError(error: unknown) {
+  runtimeReady = false;
+  runtimeError = error instanceof Error && error.message ? error.message : "The simulation runtime could not start.";
+  pendingActions.splice(0);
+  notify();
+}
+
 export function useFdtdContextMenuOpen(menuId?: string) {
   return useSyncExternalStore(
     subscribe,
@@ -72,6 +84,7 @@ export function requestRuntimeAction<T>(name: string, detail?: T) {
 (window as RuntimeWindow).FdtdReactUI = Object.freeze({ notify });
 window.addEventListener("fdtd:runtime-ready", () => {
   runtimeReady = true;
+  runtimeError = null;
   pendingActions.splice(0).forEach(({ name, detail }) => {
     window.dispatchEvent(new CustomEvent(`fdtd:${name}`, { detail }));
   });

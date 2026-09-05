@@ -42,6 +42,31 @@
     let animationStarted = false;
     let previousFrameTimeMs = null;
     let lastRenderTimeMs = -Infinity;
+    let runtimeFailureReported = false;
+
+    function runtimeErrorMessage(error) {
+      const message = error instanceof Error && error.message ? error.message : String(error || "unknown error");
+      return message.length > 160 ? `${message.slice(0, 157)}…` : message;
+    }
+
+    function reportRuntimeFailure(error) {
+      runtimeFailureReported = true;
+      state.running = false;
+      stepAccumulator = 0;
+      animationStarted = false;
+      previousFrameTimeMs = null;
+      try {
+        updateControlText();
+      } catch (controlError) {
+        global.console?.error?.("Unable to update FDTD controls after a runtime failure.", controlError);
+      }
+      if (typeof global.dispatchEvent === "function" && typeof global.CustomEvent === "function") {
+        global.dispatchEvent(new global.CustomEvent("fdtd:simulation-status", {
+          detail: { state: "failed", label: `Simulation failed: ${runtimeErrorMessage(error)}` },
+        }));
+      }
+      global.console?.error?.("FDTD simulation runtime failed.", error);
+    }
 
     function currentTimeMs() {
       const now = global.performance?.now;
@@ -122,12 +147,18 @@
     function setRunning(nextRunning) {
       const shouldRun = Boolean(nextRunning);
       const wasRunning = Boolean(state.running);
+      if (shouldRun) runtimeFailureReported = false;
       state.running = shouldRun;
       if (!wasRunning && shouldRun) {
         resetRuntimePacing();
         startAnimationLoop();
       }
       updateControlText();
+      if (runtimeFailureReported && typeof global.dispatchEvent === "function" && typeof global.CustomEvent === "function") {
+        global.dispatchEvent(new global.CustomEvent("fdtd:simulation-status", {
+          detail: { state: "failed", label: "Simulation failed; inspect the console and reset the field." },
+        }));
+      }
       if (wasRunning && !shouldRun) {
         global.setTimeout(finalizeDeferredResults, 0);
       }
@@ -139,21 +170,30 @@
     }
 
     function advanceOneStep() {
-      timeStepBatch(1, () => {
-        sim.step();
-      });
-      sim.measure();
-      updateStats();
-      sim.render();
+      try {
+        timeStepBatch(1, () => {
+          sim.step();
+        });
+        sim.measure();
+        updateStats();
+        sim.render();
+      } catch (error) {
+        reportRuntimeFailure(error);
+      }
     }
 
     function resetSimulationFields() {
-      resetRuntimePacing();
-      sim.resetFields();
-      sim.measure();
-      updateStats();
-      sim.render();
-      updateControlText();
+      try {
+        runtimeFailureReported = false;
+        resetRuntimePacing();
+        sim.resetFields();
+        sim.measure();
+        updateStats();
+        sim.render();
+        updateControlText();
+      } catch (error) {
+        reportRuntimeFailure(error);
+      }
     }
 
     function clampStepAccumulator(maxSteps = effectiveStepsPerFrame()) {
@@ -163,42 +203,46 @@
     }
 
     function animationFrame(frameTimeMs) {
-      const nowMs = Number.isFinite(Number(frameTimeMs)) ? Number(frameTimeMs) : currentTimeMs();
-      const elapsedSeconds =
-        previousFrameTimeMs == null
-          ? 1 / DEFAULT_VISUAL_REFRESH_HZ
-          : Math.min(MAX_FRAME_DELTA_SECONDS, Math.max(0, (nowMs - previousFrameTimeMs) / 1000));
-      previousFrameTimeMs = nowMs;
+      try {
+        const nowMs = Number.isFinite(Number(frameTimeMs)) ? Number(frameTimeMs) : currentTimeMs();
+        const elapsedSeconds =
+          previousFrameTimeMs == null
+            ? 1 / DEFAULT_VISUAL_REFRESH_HZ
+            : Math.min(MAX_FRAME_DELTA_SECONDS, Math.max(0, (nowMs - previousFrameTimeMs) / 1000));
+        previousFrameTimeMs = nowMs;
 
-      let advancedSimulation = false;
-      if (state.running) {
-        const renderDue = renderFrameDue(nowMs);
-        const frameStepCap = numericalStepBudget(renderDue);
-        stepAccumulator += targetStepsPerSecond() * elapsedSeconds;
-        const stepsThisFrame = Math.min(Math.floor(stepAccumulator), frameStepCap);
-        stepAccumulator -= stepsThisFrame;
-        const accumulatorLimit = maxAccumulatedSteps();
-        if (Number.isFinite(accumulatorLimit)) {
-          stepAccumulator = Math.min(stepAccumulator, accumulatorLimit);
+        let advancedSimulation = false;
+        if (state.running) {
+          const renderDue = renderFrameDue(nowMs);
+          const frameStepCap = numericalStepBudget(renderDue);
+          stepAccumulator += targetStepsPerSecond() * elapsedSeconds;
+          const stepsThisFrame = Math.min(Math.floor(stepAccumulator), frameStepCap);
+          stepAccumulator -= stepsThisFrame;
+          const accumulatorLimit = maxAccumulatedSteps();
+          if (Number.isFinite(accumulatorLimit)) {
+            stepAccumulator = Math.min(stepAccumulator, accumulatorLimit);
+          }
+          if (stepsThisFrame > 0) {
+            timeStepBatch(stepsThisFrame, () => {
+              for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
+                sim.step();
+              }
+            });
+            advancedSimulation = true;
+          }
         }
-        if (stepsThisFrame > 0) {
-          timeStepBatch(stepsThisFrame, () => {
-            for (let stepIndex = 0; stepIndex < stepsThisFrame; stepIndex += 1) {
-              sim.step();
-            }
-          });
-          advancedSimulation = true;
+        if (advancedSimulation && shouldRenderFrame(nowMs)) {
+          sim.render();
         }
-      }
-      if (advancedSimulation && shouldRenderFrame(nowMs)) {
-        sim.render();
-      }
-      updatePerformanceStats();
-      if (state.running) {
-        scheduleFrame(animationFrame);
-      } else {
-        animationStarted = false;
-        previousFrameTimeMs = null;
+        updatePerformanceStats();
+        if (state.running) {
+          scheduleFrame(animationFrame);
+        } else {
+          animationStarted = false;
+          previousFrameTimeMs = null;
+        }
+      } catch (error) {
+        reportRuntimeFailure(error);
       }
     }
 

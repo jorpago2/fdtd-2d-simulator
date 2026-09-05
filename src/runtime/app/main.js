@@ -1661,6 +1661,8 @@ sceneApplication = sceneApplicationModule.createSceneApplicationController({
   clonePlainData,
   clampInt,
   clampNumber: clamp,
+  validateSceneSnapshot: sceneCodec.validateSceneSnapshot,
+  snapshotMaterials: snapshotDrawnMaterialCells,
   disableResponsiveGridOrientation,
   normalizeImportedStateValues,
   clearMaterialSelection,

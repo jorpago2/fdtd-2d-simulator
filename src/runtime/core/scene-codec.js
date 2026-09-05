@@ -139,6 +139,41 @@
     };
   }
 
+  function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function isJsonData(value, depth = 0) {
+    if (depth > 32) return false;
+    if (value === null || typeof value === "string" || typeof value === "boolean") return true;
+    if (typeof value === "number") return Number.isFinite(value);
+    if (Array.isArray(value)) return value.every((entry) => isJsonData(entry, depth + 1));
+    if (!isPlainObject(value)) return false;
+    return Object.entries(value).every(([key, entry]) => typeof key === "string" && isJsonData(entry, depth + 1));
+  }
+
+  function isFiniteInteger(value, minimum = 1) {
+    return Number.isInteger(value) && value >= minimum;
+  }
+
+  function validMaterialCell(cell) {
+    if (!isPlainObject(cell) || !isFiniteInteger(cell.x, 0) || !isFiniteInteger(cell.y, 0)) return false;
+    const required = ["material", "eps", "loss", "epsY", "lossY", "mu", "muLoss", "muY", "muLossY"];
+    if (!required.every((key) => Number.isFinite(cell[key]))) return false;
+    return Object.entries(cell).every(([key, value]) => key === "x" || key === "y"
+      || (typeof value === "number" && Number.isFinite(value))
+      || typeof value === "boolean");
+  }
+
+  function validateSceneSnapshot(snapshot) {
+    if (!isPlainObject(snapshot) || snapshot.kind !== "fdtd-2d-scene" || snapshot.version !== SCENE_SNAPSHOT_VERSION) return false;
+    if (!isPlainObject(snapshot.grid) || !isFiniteInteger(snapshot.grid.nx) || !isFiniteInteger(snapshot.grid.ny)) return false;
+    if (!isPlainObject(snapshot.view) || !["x", "y", "zoom"].every((key) => Number.isFinite(snapshot.view[key]))) return false;
+    if (!isPlainObject(snapshot.state) || !isJsonData(snapshot.state)) return false;
+    if (snapshot.materials !== undefined && (!Array.isArray(snapshot.materials) || !snapshot.materials.every(validMaterialCell))) return false;
+    return true;
+  }
+
   function encodeSceneSnapshot(snapshot) {
     const bytes = new TextEncoder().encode(JSON.stringify(snapshot));
     let binary = "";
@@ -166,5 +201,6 @@
     encodeSceneSnapshot,
     safeFilePart,
     serializableStateSnapshot,
+    validateSceneSnapshot,
   });
 })(window);

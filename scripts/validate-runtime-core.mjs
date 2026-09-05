@@ -298,6 +298,32 @@ function compareSceneCodecModules(runtime, next) {
   );
   const encoded = nextCodec.encodeSceneSnapshot(snapshot);
   assertDeepEqual(nextCodec.decodeSceneSnapshot(encoded), snapshot, "next encode/decode roundtrip");
+
+  const exportedMaterialCell = {
+    x: 2,
+    y: 3,
+    material: 1,
+    eps: 4,
+    loss: 0,
+    epsY: 4,
+    lossY: 0,
+    mu: 1,
+    muLoss: 0,
+    muY: 1,
+    muLossY: 0,
+  };
+  const exportedScene = runtimeCodec.createSceneSnapshot({
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    grid: { nx: 10, ny: 8 },
+    view: { x: 1, y: 2, zoom: 1.5 },
+    state: { theme: "dark", preset: "empty" },
+    materials: [exportedMaterialCell],
+  });
+  const importedScene = runtimeCodec.decodeSceneSnapshot(runtimeCodec.encodeSceneSnapshot(exportedScene));
+  assertEqual(runtimeCodec.validateSceneSnapshot(importedScene), true, "export/import scene fixture validates");
+  let deepValue = null;
+  for (let depth = 0; depth < 34; depth += 1) deepValue = { value: deepValue };
+  assertEqual(runtimeCodec.validateSceneSnapshot({ ...importedScene, state: { deepValue } }), false, "overly deep scene state is rejected");
 }
 
 function makeFakeElement(dataset = {}) {

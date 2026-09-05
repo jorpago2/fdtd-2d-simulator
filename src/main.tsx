@@ -1,3 +1,4 @@
+import DevelopmentNotice from "./DevelopmentNotice";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import Plotly from "plotly.js-basic-dist-min";
@@ -16,7 +17,7 @@ import "./data/scene-catalog-loader";
 import "./ui/entity-selection-controller";
 import "./ui/material-selection-controller";
 import "./ui/visual-layer-model";
-import "./ui/runtime-state";
+import { reportFdtdRuntimeError } from "./ui/runtime-state";
 import { FdtdWorkspace } from "./ui/fdtd-workspace";
 import { installCarbonSceneBrowser } from "./ui/scene-browser";
 import { installCarbonDisclosures } from "./ui/carbon-disclosures";
@@ -45,7 +46,7 @@ async function startApplication() {
   flushSync(() => createRoot(root).render(
     <ScientificUiProvider themeStorageKey="fdtdTheme">
       <FdtdThemeBridge />
-      <FdtdWorkspace />
+      <FdtdWorkspace /><DevelopmentNotice />
     </ScientificUiProvider>,
   ));
 
@@ -58,5 +59,6 @@ async function startApplication() {
 const applicationReady = startApplication();
 (window as typeof window & { FdtdReady: Promise<void> }).FdtdReady = applicationReady;
 void applicationReady.catch((error: unknown) => {
+  reportFdtdRuntimeError(error);
   console.error("FDTD runtime startup failed", error);
 });
