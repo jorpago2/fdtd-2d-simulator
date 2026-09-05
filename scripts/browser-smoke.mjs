@@ -215,10 +215,21 @@ async function launchBrowser(chromium) {
   }
 }
 
-async function openApplication(page, url) {
+async function dismissDevelopmentNotice(page) {
+  const notice = page.locator("dialog.development-notice");
+  await notice.waitFor({ state: "visible", timeout: 10_000 });
+  await notice.getByRole("button", { name: "I understand — Continue", exact: true }).click();
+  await page.waitForFunction(() => {
+    const dialog = document.querySelector("dialog.development-notice");
+    return dialog instanceof HTMLDialogElement && !dialog.open;
+  });
+}
+
+async function openApplication(page, url, { dismissNotice = true } = {}) {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.waitForFunction(() => Boolean(window.FdtdReady), null, { timeout: 60_000 });
   await page.evaluate(() => window.FdtdReady);
+  if (dismissNotice) await dismissDevelopmentNotice(page);
 }
 
 async function openFullHelpGuide(page) {
@@ -6633,6 +6644,60 @@ async function runReactBootstrapSmoke(page) {
   };
 }
 
+async function runDevelopmentNoticeSmoke(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  try {
+    const notice = page.locator("dialog.development-notice");
+    await notice.waitFor({ state: "visible", timeout: 10_000 });
+    const beforeClick = await page.evaluate(() => {
+      const dialog = document.querySelector("dialog.development-notice");
+      return {
+        open: dialog instanceof HTMLDialogElement && dialog.open,
+        width: dialog?.getBoundingClientRect().width || 0,
+        withinViewport: Boolean(
+          dialog &&
+          dialog.getBoundingClientRect().left >= 0 &&
+          dialog.getBoundingClientRect().right <= window.innerWidth,
+        ),
+      };
+    });
+    await notice.getByRole("button", { name: "I understand — Continue", exact: true }).click();
+    await page.waitForFunction(() => {
+      const dialog = document.querySelector("dialog.development-notice");
+      return dialog instanceof HTMLDialogElement && !dialog.open;
+    });
+    const afterClick = await page.evaluate(() => {
+      const dialog = document.querySelector("dialog.development-notice");
+      const workflowButton = document.querySelector('.mobile-layer-button[data-mobile-layer="scenes"]');
+      const workflowStyle = workflowButton ? getComputedStyle(workflowButton) : null;
+      return {
+        open: dialog instanceof HTMLDialogElement && dialog.open,
+        workflowVisible: Boolean(
+          workflowButton &&
+          workflowStyle?.display !== "none" &&
+          workflowButton.getClientRects().length > 0,
+        ),
+      };
+    });
+    const failures = [];
+    if (!beforeClick.open) failures.push("development notice did not block the mobile page");
+    if (!beforeClick.withinViewport || beforeClick.width <= 0) failures.push("development notice is not visible within the mobile viewport");
+    if (afterClick.open) failures.push("Continue click did not close the development notice");
+    if (!afterClick.workflowVisible) failures.push("mobile workflow was not available after Continue");
+    return {
+      id: "development_notice_mobile",
+      preset: "current",
+      priority: "P0",
+      beforeClick,
+      afterClick,
+      passed: failures.length === 0,
+      failures,
+    };
+  } finally {
+    await page.setViewportSize({ width: viewportWidth, height: viewportHeight });
+  }
+}
+
 async function runCarbonTypographySmoke(page) {
   const status = await page.evaluate(async () => {
     await document.fonts?.ready;
@@ -10582,6 +10647,11 @@ async function main() {
   const url = `http://127.0.0.1:${port}/index.html`;
   const browser = await launchBrowser(chromium);
   const page = await browser.newPage({ viewport: { width: viewportWidth, height: viewportHeight } });
+  const verifyDevelopmentNotice =
+    mode === "smoke" &&
+    (selectedCaseIds.size === 0
+      ? selectedUiCaseIds.size === 0 || selectedUiCaseIds.has("development_notice_mobile")
+      : selectedCaseIds.has("development_notice_mobile"));
 
   page.on("console", (message) => {
     if (message.type() === "error") report.consoleErrors.push(message.text());
@@ -10591,7 +10661,7 @@ async function main() {
   });
 
   try {
-    await openApplication(page, url);
+    await openApplication(page, url, { dismissNotice: !verifyDevelopmentNotice });
     const recordCase = async (id, run) => {
       if (selectedUiCaseIds.size > 0 && !selectedUiCaseIds.has(id)) return;
       const startedAt = performance.now();
@@ -10617,6 +10687,7 @@ async function main() {
     }
     if (mode === "smoke") {
       const uiCases = [
+        ["development_notice_mobile", () => runDevelopmentNoticeSmoke(page)],
         ["react_carbon_bootstrap", () => runReactBootstrapSmoke(page)],
         ["carbon_typography", () => runCarbonTypographySmoke(page)],
         ["scene_observables_panel", () => runSceneObservablesSmoke(browser, url)],
